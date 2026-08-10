@@ -2,25 +2,42 @@
 //  Workout.swift
 //  IOS Frontend
 //
-//  The core workout + weekday types used by the weekly schedule.
+//  The core workout / exercise / weekday types.
 //
 
 import Foundation
 
-/// A workout the user can perform and assign to a day of the week
-/// (e.g. "Upper Body", "Core & Mobility").
-///
-/// Intentionally minimal for now — it holds just enough to drive the weekly
-/// schedule. Fields like exercises or duration can be added later without
-/// changing how the schedule is stored or read.
+/// A single exercise within a workout (e.g. "Bench Press"), with a target
+/// number of sets. Reps and weight are logged per-session later, not here.
+struct Exercise: Identifiable, Hashable {
+    let id: UUID
+    var name: String
+    /// Target number of sets for this exercise.
+    var sets: Int
+
+    init(id: UUID = UUID(), name: String, sets: Int = 3) {
+        self.id = id
+        self.name = name
+        self.sets = sets
+    }
+}
+
+/// A workout the user builds and assigns to a day of the week (e.g. "Pull") —
+/// a named group of exercises.
 struct Workout: Identifiable, Hashable {
     let id: UUID
     var name: String
+    /// The exercises that make up this workout, in order.
+    var exercises: [Exercise]
 
-    init(id: UUID = UUID(), name: String) {
+    init(id: UUID = UUID(), name: String, exercises: [Exercise] = []) {
         self.id = id
         self.name = name
+        self.exercises = exercises
     }
+
+    /// Total number of sets across all exercises.
+    var totalSets: Int { exercises.reduce(0) { $0 + $1.sets } }
 }
 
 /// The seven days of the week, ordered Monday-first to match the weekly widget.
