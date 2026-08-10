@@ -7,26 +7,26 @@
 
 import SwiftUI
 
+/// The app's main / home screen. Hosts the home widgets — currently the weekly
+/// workout schedule. Wrapped in a `NavigationStack` so widgets can push their
+/// detail pages (the weekly widget → Workouts).
 struct ContentView: View {
     var body: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "hand.wave.fill")
-                .font(.system(size: 48))
-                .foregroundStyle(.tint)
-            Text("Hello from VSCode + Claude! 🎉")
-                .font(.title2)
-                .bold()
-            Text("Edited on Windows, running on Mac.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            Text("Round-trip test · 2026-08-09")
-                .font(.caption)
-                .foregroundStyle(.green)
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 20) {
+                    WeeklyScheduleWidget()
+                }
+                .padding(.horizontal)
+                .padding(.top, 8)
+            }
+            .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
+            .navigationTitle("Home")
         }
-        .padding()
     }
 }
 
 #Preview {
     ContentView()
+        .environment(WorkoutStore())
 }
