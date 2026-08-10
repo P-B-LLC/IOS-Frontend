@@ -10,8 +10,8 @@ import SwiftUI
 /// A compact home-screen strip showing the user's workout schedule for the
 /// current week. All seven days sit in a single row across the width of the
 /// screen. Each day is a square tile holding the workout name, with the
-/// weekday label below the square (outside it). Days with no workout stay
-/// clean; the current day is subtly highlighted. Tapping anywhere on the
+/// weekday label below the square (outside it). Days with no workout show
+/// an "Assign" prompt; the current day is subtly highlighted. Tapping on the
 /// strip opens the Workouts page.
 struct WeeklyScheduleWidget: View {
     @Environment(WorkoutStore.self) private var store
@@ -81,22 +81,23 @@ private struct DayTile: View {
 
     var body: some View {
         VStack(spacing: 6) {
-            // The square tile. The workout name lives inside; empty days stay
-            // clean. Long names scale down / wrap / truncate rather than
-            // stretching the square.
+            // The square tile. Scheduled days show the workout name; unscheduled
+            // days show an "Assign" prompt. Long names scale down / wrap /
+            // truncate rather than stretching the square.
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(tileFill)
                 .aspectRatio(1, contentMode: .fit)
                 .overlay {
-                    if let workout {
-                        Text(workout.name)
-                            .font(.caption2.weight(.semibold))
-                            .multilineTextAlignment(.center)
-                            .lineLimit(2)
-                            .minimumScaleFactor(0.55)
-                            .foregroundStyle(.primary)
-                            .padding(4)
-                    }
+                    // Scheduled days show the workout name; unscheduled days show
+                    // a muted "Assign" prompt (tapping the strip opens Workouts).
+                    Text(workout?.name ?? "Assign")
+                        .font(.caption2)
+                        .fontWeight(workout == nil ? .regular : .semibold)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.55)
+                        .foregroundStyle(workout == nil ? Color.secondary : Color.primary)
+                        .padding(4)
                 }
                 // Subtle "today" highlight: a thin accent ring on the square.
                 .overlay {
