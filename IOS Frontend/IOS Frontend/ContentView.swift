@@ -19,6 +19,9 @@ struct ContentView: View {
             Text("Edited on Windows, running on Mac.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+            Text("Round-trip test · 2026-08-09")
+                .font(.caption)
+                .foregroundStyle(.green)
         }
         .padding()
     }
