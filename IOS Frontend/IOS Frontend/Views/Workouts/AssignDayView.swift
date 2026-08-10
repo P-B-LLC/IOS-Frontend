@@ -7,40 +7,44 @@
 
 import SwiftUI
 
-/// Pick which workout is scheduled on a given day — an existing one from the
-/// library, a rest day, or a brand-new workout. Pushed from the Workouts page.
+/// Pick what's scheduled on a given day: type a custom workout name, choose an
+/// existing workout from the library, build a new one with exercises, or make
+/// it a rest day. Pushed from the Workouts page.
 struct AssignDayView: View {
     let day: Weekday
 
     @Environment(WorkoutStore.self) private var store
     @Environment(\.dismiss) private var dismiss
+    @State private var customName = ""
     @State private var creatingWorkout = false
 
     private var isRestDay: Bool { store.assignments[day] == nil }
 
+    private var trimmedCustomName: String {
+        customName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     var body: some View {
         List {
+            // Primary path: let the user type any workout name for this day.
             Section {
-                Button {
-                    store.clearAssignment(on: day)
-                    dismiss()
-                } label: {
-                    HStack {
-                        Text("Rest day (no workout)")
-                            .foregroundStyle(.primary)
-                        Spacer()
-                        if isRestDay {
-                            Image(systemName: "checkmark")
-                                .foregroundStyle(.tint)
-                        }
-                    }
+                HStack {
+                    TextField("e.g. Leg Day", text: $customName)
+                        .submitLabel(.done)
+                        .onSubmit(assignCustomWorkout)
+                    Button("Assign", action: assignCustomWorkout)
+                        .buttonStyle(.borderless)
+                        .disabled(trimmedCustomName.isEmpty)
                 }
-                .buttonStyle(.plain)
+            } header: {
+                Text("Name this day's workout")
+            } footer: {
+                Text("Type any name to schedule it on \(day.fullName). You can add exercises to it later.")
             }
 
-            Section("Choose a workout") {
+            Section("Or choose an existing workout") {
                 if store.workouts.isEmpty {
-                    Text("No workouts yet. Create one below.")
+                    Text("No workouts yet.")
                         .foregroundStyle(.secondary)
                 }
 
@@ -72,8 +76,24 @@ struct AssignDayView: View {
                 Button {
                     creatingWorkout = true
                 } label: {
-                    Label("New Workout", systemImage: "plus")
+                    Label("Build a new workout…", systemImage: "plus")
                 }
+
+                Button {
+                    store.clearAssignment(on: day)
+                    dismiss()
+                } label: {
+                    HStack {
+                        Text("Rest day (no workout)")
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        if isRestDay {
+                            Image(systemName: "checkmark")
+                                .foregroundStyle(.tint)
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
             }
         }
         .navigationTitle(day.fullName)
@@ -85,6 +105,17 @@ struct AssignDayView: View {
                 store.assign(newWorkout.id, to: day)
             }
         }
+    }
+
+    /// Create a workout from the typed name, add it to the library, and schedule
+    /// it on this day. Exercises can be added later by editing it.
+    private func assignCustomWorkout() {
+        let name = trimmedCustomName
+        guard !name.isEmpty else { return }
+        let workout = Workout(name: name)
+        store.addWorkout(workout)
+        store.assign(workout.id, to: day)
+        dismiss()
     }
 }
 
