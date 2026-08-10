@@ -9,9 +9,10 @@ import SwiftUI
 
 /// A compact home-screen strip showing the user's workout schedule for the
 /// current week. All seven days sit in a single row across the width of the
-/// screen; each tile shows the workout name (primary) with the weekday below
-/// (secondary). Days with no workout stay clean. Tapping anywhere on the strip
-/// opens the Workouts page.
+/// screen. Each day is a square tile holding the workout name, with the
+/// weekday label below the square (outside it). Days with no workout stay
+/// clean; the current day is subtly highlighted. Tapping anywhere on the
+/// strip opens the Workouts page.
 struct WeeklyScheduleWidget: View {
     @Environment(WorkoutStore.self) private var store
 
@@ -32,8 +33,8 @@ struct WeeklyScheduleWidget: View {
         VStack(alignment: .leading, spacing: 10) {
             header
             // One row across the full width: all seven days always visible,
-            // each tile an equal share of the width.
-            HStack(spacing: 6) {
+            // each an equal share of the width.
+            HStack(alignment: .top, spacing: 6) {
                 ForEach(Weekday.allCases) { day in
                     DayTile(
                         day: day,
@@ -71,48 +72,48 @@ struct WeeklyScheduleWidget: View {
     }
 }
 
-/// A single day within the weekly strip: workout name on top (primary),
-/// short weekday label pinned to the bottom (secondary).
+/// A single day within the weekly strip: a square tile holding the workout
+/// name (primary), with the short weekday label below the square (secondary).
 private struct DayTile: View {
     let day: Weekday
     let workout: Workout?
     let isToday: Bool
 
     var body: some View {
-        VStack(spacing: 4) {
-            // Primary: the workout name. Empty days stay clean (no placeholder).
-            // In a narrow tile long names scale down / wrap to 2 lines / truncate
-            // rather than breaking the row.
-            ZStack {
-                if let workout {
-                    Text(workout.name)
-                        .font(.caption2.weight(.semibold))
-                        .multilineTextAlignment(.center)
-                        .lineLimit(2)
-                        .minimumScaleFactor(0.6)
-                        .foregroundStyle(.primary)
+        VStack(spacing: 6) {
+            // The square tile. The workout name lives inside; empty days stay
+            // clean. Long names scale down / wrap / truncate rather than
+            // stretching the square.
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(tileFill)
+                .aspectRatio(1, contentMode: .fit)
+                .overlay {
+                    if let workout {
+                        Text(workout.name)
+                            .font(.caption2.weight(.semibold))
+                            .multilineTextAlignment(.center)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.55)
+                            .foregroundStyle(.primary)
+                            .padding(4)
+                    }
                 }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                // Subtle "today" highlight: a thin accent ring on the square.
+                .overlay {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(Color.accentColor.opacity(isToday ? 1 : 0), lineWidth: 1)
+                }
 
-            // Secondary: short weekday label, toward the bottom of the tile.
+            // The weekday label sits below the square (outside the tile).
+            // The current day is subtly highlighted in the accent color.
             Text(day.shortName)
                 .font(.caption2)
-                .foregroundStyle(.secondary)
+                .fontWeight(isToday ? .semibold : .regular)
+                .foregroundStyle(isToday ? Color.accentColor : Color.secondary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 3)
-        .frame(maxWidth: .infinity, minHeight: 66)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(tileFill)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(Color.accentColor, lineWidth: isToday ? 1.5 : 0)
-        )
+        .frame(maxWidth: .infinity)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityText)
     }
