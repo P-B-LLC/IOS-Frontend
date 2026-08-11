@@ -53,7 +53,7 @@ struct WorkoutDayTile: View {
         .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityText)
-        .accessibilityHint("Opens the (day.fullName) workout")
+        .accessibilityHint("Opens the \(day.fullName) workout")
     }
 
     private var tileFill: AnyShapeStyle {
@@ -72,7 +72,7 @@ struct WorkoutDayTile: View {
     }
 
     private var accessibilityText: String {
-        var value = workout.map { "(day.fullName): ($0.name)" } ?? "(day.fullName): add a workout"
+        var value = workout.map { "\(day.fullName): \($0.name)" } ?? "\(day.fullName): add a workout"
         if isToday { value += ", today" }
         if isSessionActive { value += ", session in progress" }
         return value
