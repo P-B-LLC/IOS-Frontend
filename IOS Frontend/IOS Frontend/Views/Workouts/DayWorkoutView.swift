@@ -76,13 +76,15 @@ struct DayWorkoutView: View {
             titleVisibility: .visible
         ) {
             Button("End Session") {
-                if let count = store.endSession(on: day) {
-                    completionNotice = "Workout complete - \(count) set\(count == 1 ? "" : "s") logged."
+                Task {
+                    if let count = await store.endSession(on: day) {
+                        completionNotice = "Workout complete - \(count) set\(count == 1 ? "" : "s") logged."
+                    }
                 }
             }
             Button("Keep Training", role: .cancel) { }
         } message: {
-            Text("Your logged sets will be kept for this session history.")
+            Text("Your logged sets and completed session will be saved to Repbase.")
         }
         .confirmationDialog(
             "Discard this session?",
@@ -90,11 +92,27 @@ struct DayWorkoutView: View {
             titleVisibility: .visible
         ) {
             Button("Discard Session", role: .destructive) {
-                store.discardSession(on: day)
+                Task {
+                    await store.discardSession(on: day)
+                }
             }
             Button("Cancel", role: .cancel) { }
         } message: {
             Text("Weight and rep entries from this session will be lost.")
+        }
+        .overlay {
+            if store.isSaving {
+                ZStack {
+                    Color.black.opacity(0.08)
+                        .ignoresSafeArea()
+                    ProgressView("Saving to Repbase...")
+                        .padding(18)
+                        .background(
+                            .regularMaterial,
+                            in: RoundedRectangle(cornerRadius: 16)
+                        )
+                }
+            }
         }
     }
 
@@ -159,7 +177,7 @@ struct DayWorkoutView: View {
             .controlSize(.large)
             .disabled(!canSaveSetup || !store.isEditingEnabled)
 
-            Text("Each day stays fully customizable. Saved workout templates can be added when the database is connected.")
+            Text("This creates a reusable workout template and assigns it to this date in Repbase.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -324,6 +342,7 @@ struct DayWorkoutView: View {
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
             .tint(Color.green)
+            .disabled(store.isSaving || store.hasPendingSetChanges)
 
             Button(role: .destructive) {
                 showingDiscardConfirmation = true
@@ -331,6 +350,7 @@ struct DayWorkoutView: View {
                 Text("Discard Session")
                     .frame(maxWidth: .infinity)
             }
+            .disabled(store.isSaving || store.hasPendingSetChanges)
         }
     }
 
@@ -396,13 +416,22 @@ struct DayWorkoutView: View {
                     Button {
                         store.toggleSessionSetLogged(on: day, exerciseID: exercise.id, setID: set.id)
                     } label: {
-                        Image(systemName: set.isLogged ? "checkmark.circle.fill" : "circle")
-                            .font(.title2)
-                            .foregroundStyle(set.isLogged ? Color.green : Color.secondary)
-                            .frame(width: 40, height: 40)
+                        Group {
+                            if store.isSetPending(set.id) {
+                                ProgressView()
+                            } else {
+                                Image(systemName: set.isLogged ? "checkmark.circle.fill" : "circle")
+                                    .font(.title2)
+                                    .foregroundStyle(set.isLogged ? Color.green : Color.secondary)
+                            }
+                        }
+                        .frame(width: 40, height: 40)
                     }
                     .buttonStyle(.plain)
-                    .disabled(!set.isLogged && !set.canBeLogged)
+                    .disabled(
+                        store.isSetPending(set.id)
+                            || (!set.isLogged && !set.canBeLogged)
+                    )
                     .accessibilityLabel(set.isLogged ? "Mark set \(set.setNumber) incomplete" : "Log set \(set.setNumber)")
                 }
             }
@@ -423,7 +452,10 @@ struct DayWorkoutView: View {
                 } label: {
                     Label("Remove Last", systemImage: "minus")
                 }
-                .disabled(exercise.sets.count <= 1)
+                .disabled(
+                    exercise.sets.count <= 1
+                        || exercise.sets.last.map(store.isSetPending) == true
+                )
             }
             .font(.subheadline.weight(.semibold))
         }

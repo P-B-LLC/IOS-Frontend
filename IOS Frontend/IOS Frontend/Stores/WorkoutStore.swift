@@ -2,53 +2,65 @@
 //  WorkoutStore.swift
 //  IOS Frontend
 //
-//  Single source of truth for the weekly workout schedule.
+//  Main-actor state backed by the generated Repbase API client.
 //
 
 import Foundation
 import Observation
 
-/// The app-facing workout state.
-///
-/// Each scheduled workout belongs to one day. Views use this store without
-/// knowing whether the schedule comes from temporary memory or a local
-/// database. Production starts empty until a real `WorkoutPersistence`
-/// implementation is injected.
 @Observable
 final class WorkoutStore {
-    private let persistence: any WorkoutPersistence
+    private var repository: WorkoutAPIRepository?
+    private var connectionGeneration = UUID()
 
-    /// The workout configured for each weekday. A missing day is unconfigured.
+    /// Current-week projection of concrete API WorkoutSchedule records.
     private(set) var schedule: [Weekday: Workout]
-    /// A database adapter can surface load/save failures here later.
     private(set) var persistenceError: String?
-    /// Prevents a failed load from being overwritten by an empty snapshot.
-    private var didLoadSnapshot: Bool
-    /// Remains true when an optimistic change has not reached persistence yet.
-    private(set) var hasUnsavedChanges: Bool
-    /// Session logging is deliberately separate from the persisted plan. It is
-    /// kept in memory until the OAS-backed session repository is connected.
+    private(set) var isLoading = false
+    private(set) var isSaving = false
     private(set) var activeSession: ActiveWorkoutSession?
-    /// Completed sessions are retained for this app run so ending a session
-    /// does not immediately discard the user's entries.
-    private(set) var completedSessions: [CompletedWorkoutSession]
+    private(set) var completedSessions: [CompletedWorkoutSession] = []
+    private(set) var pendingSetIDs: Set<WorkoutSetDraft.ID> = []
 
-    init(persistence: any WorkoutPersistence = EphemeralWorkoutPersistence()) {
-        self.persistence = persistence
+    init(initialSchedule: [Weekday: Workout] = [:]) {
+        schedule = initialSchedule
+    }
+
+    // MARK: - Connection
+
+    func connect(configuration: APIConfiguration, token: String) async {
+        let generation = UUID()
+        connectionGeneration = generation
         activeSession = nil
-        completedSessions = []
+        pendingSetIDs = []
 
         do {
-            schedule = try persistence.load().schedule
-            persistenceError = nil
-            didLoadSnapshot = true
-            hasUnsavedChanges = false
+            let repository = try WorkoutAPIRepository(
+                configuration: configuration,
+                token: token
+            )
+            self.repository = repository
+            await reloadWeek(
+                using: repository,
+                generation: generation,
+                showsLoadingState: true
+            )
         } catch {
+            self.repository = nil
             schedule = [:]
-            persistenceError = "Workout data could not be loaded: \(error.localizedDescription)"
-            didLoadSnapshot = false
-            hasUnsavedChanges = false
+            persistenceError = error.localizedDescription
         }
+    }
+
+    func disconnect() {
+        connectionGeneration = UUID()
+        repository = nil
+        schedule = [:]
+        activeSession = nil
+        pendingSetIDs = []
+        persistenceError = nil
+        isLoading = false
+        isSaving = false
     }
 
     // MARK: - Lookups
@@ -62,68 +74,111 @@ final class WorkoutStore {
         return activeSession
     }
 
-    /// Today's weekday, derived from the user's current calendar.
     var today: Weekday? {
-        Weekday(calendarWeekday: Calendar.current.component(.weekday, from: Date()))
+        Weekday(
+            calendarWeekday: Calendar.current.component(
+                .weekday,
+                from: Date()
+            )
+        )
     }
 
-    /// Editing stays disabled if the initial database load fails.
-    var isEditingEnabled: Bool { didLoadSnapshot }
+    var isEditingEnabled: Bool {
+        repository != nil && !isLoading && !isSaving
+    }
+
+    var hasPendingSetChanges: Bool {
+        !pendingSetIDs.isEmpty
+    }
+
+    func isSetPending(_ id: WorkoutSetDraft.ID) -> Bool {
+        pendingSetIDs.contains(id)
+    }
 
     // MARK: - Day management
 
-    /// Creates or replaces the workout for one day and persists the schedule.
     func saveWorkout(_ workout: Workout, on day: Weekday) {
-        guard didLoadSnapshot else { return }
-        if activeSession?.day == day {
-            activeSession = nil
+        guard let repository, !isSaving else { return }
+        let generation = connectionGeneration
+        let existing = schedule[day]
+        let date = dateString(for: day)
+        isSaving = true
+        persistenceError = nil
+
+        Task {
+            do {
+                try await repository.saveWorkout(
+                    workout,
+                    replacing: existing,
+                    scheduledDate: date
+                )
+                await reloadWeek(
+                    using: repository,
+                    generation: generation,
+                    showsLoadingState: false
+                )
+            } catch {
+                guard connectionGeneration == generation else { return }
+                persistenceError = error.localizedDescription
+            }
+            guard connectionGeneration == generation else { return }
+            isSaving = false
         }
-        schedule[day] = workout
-        hasUnsavedChanges = true
-        persist()
     }
 
-    /// Clears the workout from one day without affecting any other day.
     func removeWorkout(on day: Weekday) {
-        guard didLoadSnapshot else { return }
-        guard schedule.removeValue(forKey: day) != nil else { return }
-        if activeSession?.day == day {
-            activeSession = nil
+        guard let repository,
+              let workout = schedule[day],
+              !isSaving else {
+            return
         }
-        hasUnsavedChanges = true
-        persist()
+        let generation = connectionGeneration
+        isSaving = true
+        persistenceError = nil
+
+        Task {
+            do {
+                try await repository.removeSchedule(workout)
+                guard connectionGeneration == generation else { return }
+                schedule.removeValue(forKey: day)
+            } catch {
+                guard connectionGeneration == generation else { return }
+                persistenceError = error.localizedDescription
+            }
+            guard connectionGeneration == generation else { return }
+            isSaving = false
+        }
     }
 
     // MARK: - Session logging
 
-    /// Starts one active session from the selected day's current workout plan.
-    /// A blank row is created for every target set.
-    @discardableResult
-    func startSession(on day: Weekday) -> Bool {
-        guard didLoadSnapshot,
+    func startSession(on day: Weekday) {
+        guard let repository,
               activeSession == nil,
               let workout = schedule[day],
-              !workout.exercises.isEmpty else { return false }
-
-        let exercises = workout.exercises.map { exercise in
-            SessionExerciseDraft(
-                id: exercise.id,
-                name: exercise.name,
-                sets: (1...max(exercise.sets, 1)).map { setNumber in
-                    WorkoutSetDraft(setNumber: setNumber)
-                }
-            )
+              !workout.exercises.isEmpty,
+              !isSaving else {
+            return
         }
+        let generation = connectionGeneration
+        isSaving = true
+        persistenceError = nil
 
-        activeSession = ActiveWorkoutSession(
-            id: UUID(),
-            day: day,
-            workoutID: workout.id,
-            workoutName: workout.name,
-            startedAt: Date(),
-            exercises: exercises
-        )
-        return true
+        Task {
+            do {
+                let session = try await repository.startSession(
+                    for: workout,
+                    on: day
+                )
+                guard connectionGeneration == generation else { return }
+                activeSession = session
+            } catch {
+                guard connectionGeneration == generation else { return }
+                persistenceError = error.localizedDescription
+            }
+            guard connectionGeneration == generation else { return }
+            isSaving = false
+        }
     }
 
     func updateSessionSet(
@@ -133,17 +188,12 @@ final class WorkoutStore {
         weightKilograms: String? = nil,
         reps: String? = nil
     ) {
-        mutateSession(on: day) { session in
-            guard let exerciseIndex = session.exercises.firstIndex(where: { $0.id == exerciseID }),
-                  let setIndex = session.exercises[exerciseIndex].sets.firstIndex(where: { $0.id == setID }) else {
-                return
-            }
-
+        mutateSet(on: day, exerciseID: exerciseID, setID: setID) { set in
             if let weightKilograms {
-                session.exercises[exerciseIndex].sets[setIndex].weightKilograms = weightKilograms
+                set.weightKilograms = weightKilograms
             }
             if let reps {
-                session.exercises[exerciseIndex].sets[setIndex].reps = reps
+                set.reps = reps
             }
         }
     }
@@ -153,52 +203,210 @@ final class WorkoutStore {
         exerciseID: Exercise.ID,
         setID: WorkoutSetDraft.ID
     ) {
-        mutateSession(on: day) { session in
-            guard let exerciseIndex = session.exercises.firstIndex(where: { $0.id == exerciseID }),
-                  let setIndex = session.exercises[exerciseIndex].sets.firstIndex(where: { $0.id == setID }) else {
-                return
+        guard let repository,
+              !pendingSetIDs.contains(setID),
+              let exercise = sessionExercise(on: day, id: exerciseID),
+              let set = exercise.sets.first(where: { $0.id == setID }) else {
+            return
+        }
+
+        pendingSetIDs.insert(setID)
+        persistenceError = nil
+        Task {
+            do {
+                if set.isLogged {
+                    guard let entryID = set.serverID else {
+                        throw APIServiceError.missingServerIdentifier("Set entry")
+                    }
+                    try await repository.deleteSetEntry(id: entryID)
+                    mutateSet(on: day, exerciseID: exerciseID, setID: setID) {
+                        $0.serverID = nil
+                        $0.isLogged = false
+                    }
+                } else {
+                    let entryID = try await repository.logSet(
+                        set,
+                        sessionExerciseID: exercise.sessionExerciseID
+                    )
+                    mutateSet(on: day, exerciseID: exerciseID, setID: setID) {
+                        $0.serverID = entryID
+                        $0.isLogged = true
+                    }
+                }
+            } catch {
+                persistenceError = error.localizedDescription
             }
-            session.exercises[exerciseIndex].sets[setIndex].isLogged.toggle()
+            pendingSetIDs.remove(setID)
         }
     }
 
     func addSessionSet(on day: Weekday, exerciseID: Exercise.ID) {
         mutateSession(on: day) { session in
-            guard let exerciseIndex = session.exercises.firstIndex(where: { $0.id == exerciseID }) else {
+            guard let index = session.exercises.firstIndex(
+                where: { $0.id == exerciseID }
+            ) else {
                 return
             }
-            let nextNumber = session.exercises[exerciseIndex].sets.count + 1
-            session.exercises[exerciseIndex].sets.append(
+            let nextNumber = session.exercises[index].sets.count + 1
+            session.exercises[index].sets.append(
                 WorkoutSetDraft(setNumber: nextNumber)
             )
         }
     }
 
     func removeLastSessionSet(on day: Weekday, exerciseID: Exercise.ID) {
-        mutateSession(on: day) { session in
-            guard let exerciseIndex = session.exercises.firstIndex(where: { $0.id == exerciseID }),
-                  session.exercises[exerciseIndex].sets.count > 1 else {
-                return
+        guard let repository,
+              let exercise = sessionExercise(on: day, id: exerciseID),
+              exercise.sets.count > 1,
+              let lastSet = exercise.sets.last,
+              !pendingSetIDs.contains(lastSet.id) else {
+            return
+        }
+
+        guard let entryID = lastSet.serverID else {
+            removeSessionSet(
+                on: day,
+                exerciseID: exerciseID,
+                setID: lastSet.id
+            )
+            return
+        }
+
+        pendingSetIDs.insert(lastSet.id)
+        Task {
+            do {
+                try await repository.deleteSetEntry(id: entryID)
+                removeSessionSet(
+                    on: day,
+                    exerciseID: exerciseID,
+                    setID: lastSet.id
+                )
+            } catch {
+                persistenceError = error.localizedDescription
             }
-            session.exercises[exerciseIndex].sets.removeLast()
+            pendingSetIDs.remove(lastSet.id)
         }
     }
 
-    /// Completes the active session and keeps it available in memory for later
-    /// progress/API work. Returns the number of sets explicitly logged.
-    @discardableResult
-    func endSession(on day: Weekday) -> Int? {
-        guard let session = activeSession, session.day == day else { return nil }
-        completedSessions.append(
-            CompletedWorkoutSession(session: session, endedAt: Date())
-        )
-        activeSession = nil
-        return session.loggedSetCount
+    func endSession(on day: Weekday) async -> Int? {
+        guard let repository,
+              let session = activeSession,
+              session.day == day,
+              pendingSetIDs.isEmpty,
+              !isSaving else {
+            return nil
+        }
+
+        isSaving = true
+        persistenceError = nil
+        defer { isSaving = false }
+        do {
+            try await repository.endSession(id: session.serverID)
+            completedSessions.append(
+                CompletedWorkoutSession(session: session, endedAt: Date())
+            )
+            activeSession = nil
+            return session.loggedSetCount
+        } catch {
+            persistenceError = error.localizedDescription
+            return nil
+        }
     }
 
-    func discardSession(on day: Weekday) {
-        guard activeSession?.day == day else { return }
-        activeSession = nil
+    func discardSession(on day: Weekday) async {
+        guard let repository,
+              let session = activeSession,
+              session.day == day,
+              pendingSetIDs.isEmpty,
+              !isSaving else {
+            return
+        }
+
+        isSaving = true
+        persistenceError = nil
+        defer { isSaving = false }
+        do {
+            try await repository.discardSession(id: session.serverID)
+            activeSession = nil
+        } catch {
+            persistenceError = error.localizedDescription
+        }
+    }
+
+    // MARK: - Retry and mapping
+
+    func retryPersistence() {
+        guard let repository, !isLoading, !isSaving else { return }
+        let generation = connectionGeneration
+        Task {
+            await reloadWeek(
+                using: repository,
+                generation: generation,
+                showsLoadingState: true
+            )
+        }
+    }
+
+    private func reloadWeek(
+        using repository: WorkoutAPIRepository,
+        generation: UUID,
+        showsLoadingState: Bool
+    ) async {
+        if showsLoadingState { isLoading = true }
+        persistenceError = nil
+        do {
+            let loaded = try await repository.loadWeek(
+                dateByDay: dateStringsForCurrentWeek()
+            )
+            guard connectionGeneration == generation else { return }
+            schedule = loaded
+        } catch {
+            guard connectionGeneration == generation else { return }
+            persistenceError = error.localizedDescription
+        }
+        if showsLoadingState, connectionGeneration == generation {
+            isLoading = false
+        }
+    }
+
+    private func sessionExercise(
+        on day: Weekday,
+        id: Exercise.ID
+    ) -> SessionExerciseDraft? {
+        activeSession(on: day)?.exercises.first(where: { $0.id == id })
+    }
+
+    private func mutateSet(
+        on day: Weekday,
+        exerciseID: Exercise.ID,
+        setID: WorkoutSetDraft.ID,
+        _ mutation: (inout WorkoutSetDraft) -> Void
+    ) {
+        mutateSession(on: day) { session in
+            guard let exerciseIndex = session.exercises.firstIndex(
+                where: { $0.id == exerciseID }
+            ),
+                  let setIndex = session.exercises[exerciseIndex].sets
+                    .firstIndex(where: { $0.id == setID }) else {
+                return
+            }
+            mutation(&session.exercises[exerciseIndex].sets[setIndex])
+        }
+    }
+
+    private func removeSessionSet(
+        on day: Weekday,
+        exerciseID: Exercise.ID,
+        setID: WorkoutSetDraft.ID
+    ) {
+        mutateSession(on: day) { session in
+            guard let index = session.exercises.firstIndex(
+                where: { $0.id == exerciseID }
+            ) else {
+                return
+            }
+            session.exercises[index].sets.removeAll { $0.id == setID }
+        }
     }
 
     private func mutateSession(
@@ -210,47 +418,50 @@ final class WorkoutStore {
         activeSession = session
     }
 
-    /// Retries either the failed initial load or the most recent failed save.
-    func retryPersistence() {
-        if didLoadSnapshot {
-            guard hasUnsavedChanges else { return }
-            persist()
-        } else {
-            reloadSnapshot()
-        }
+    private func dateStringsForCurrentWeek(
+        referenceDate: Date = Date()
+    ) -> [Weekday: String] {
+        Dictionary(
+            uniqueKeysWithValues: Weekday.allCases.map {
+                ($0, dateString(for: $0, referenceDate: referenceDate))
+            }
+        )
     }
 
-    private func reloadSnapshot() {
-        do {
-            schedule = try persistence.load().schedule
-            persistenceError = nil
-            didLoadSnapshot = true
-            hasUnsavedChanges = false
-        } catch {
-            persistenceError = "Workout data could not be loaded: \(error.localizedDescription)"
-        }
-    }
-
-    private func persist() {
-        // If loading failed, keep the in-session state visible but never write
-        // an empty-derived snapshot over data that may still exist on disk.
-        guard didLoadSnapshot else { return }
-
-        do {
-            try persistence.save(WorkoutSnapshot(schedule: schedule))
-            persistenceError = nil
-            hasUnsavedChanges = false
-        } catch {
-            persistenceError = "Workout changes could not be saved: \(error.localizedDescription)"
-            hasUnsavedChanges = true
-        }
+    private func dateString(
+        for day: Weekday,
+        referenceDate: Date = Date()
+    ) -> String {
+        let calendar = Calendar.current
+        let start = calendar.startOfDay(for: referenceDate)
+        let calendarWeekday = calendar.component(.weekday, from: start)
+        let daysSinceMonday = (calendarWeekday + 5) % 7
+        let monday = calendar.date(
+            byAdding: .day,
+            value: -daysSinceMonday,
+            to: start
+        ) ?? start
+        let date = calendar.date(
+            byAdding: .day,
+            value: day.rawValue - 1,
+            to: monday
+        ) ?? monday
+        let components = calendar.dateComponents(
+            [.year, .month, .day],
+            from: date
+        )
+        return String(
+            format: "%04d-%02d-%02d",
+            components.year ?? 0,
+            components.month ?? 0,
+            components.day ?? 0
+        )
     }
 }
 
 // MARK: - Preview fixtures
 
 extension WorkoutStore {
-    /// Samples are opt-in for SwiftUI previews only; production never seeds them.
     static let previewWorkouts: [Workout] = [
         Workout(name: "Upper Body", exercises: [
             Exercise(name: "Bench Press", sets: 4),
@@ -272,21 +483,15 @@ extension WorkoutStore {
         ])
     ]
 
-    static let previewSnapshot: WorkoutSnapshot = {
+    static var preview: WorkoutStore {
         let workouts = previewWorkouts
-        return WorkoutSnapshot(
-            schedule: [
+        return WorkoutStore(
+            initialSchedule: [
                 .monday: workouts[0],
                 .tuesday: workouts[1],
                 .thursday: workouts[2],
                 .friday: workouts[3]
             ]
-        )
-    }()
-
-    static var preview: WorkoutStore {
-        WorkoutStore(
-            persistence: EphemeralWorkoutPersistence(initialSnapshot: previewSnapshot)
         )
     }
 }

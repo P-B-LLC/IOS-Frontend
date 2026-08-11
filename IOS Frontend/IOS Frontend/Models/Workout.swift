@@ -11,12 +11,25 @@ import Foundation
 /// number of sets. Reps and weight are logged per-session later, not here.
 struct Exercise: Identifiable, Hashable, Codable, Sendable {
     let id: UUID
+    var serverID: Int?
+    var workoutExerciseID: Int?
+    var serverName: String?
     var name: String
     /// Target number of sets for this exercise.
     var sets: Int
 
-    init(id: UUID = UUID(), name: String, sets: Int = 3) {
+    init(
+        id: UUID = UUID(),
+        serverID: Int? = nil,
+        workoutExerciseID: Int? = nil,
+        serverName: String? = nil,
+        name: String,
+        sets: Int = 3
+    ) {
         self.id = id
+        self.serverID = serverID
+        self.workoutExerciseID = workoutExerciseID
+        self.serverName = serverName
         self.name = name
         self.sets = sets
     }
@@ -26,12 +39,26 @@ struct Exercise: Identifiable, Hashable, Codable, Sendable {
 /// a named group of exercises.
 struct Workout: Identifiable, Hashable, Codable, Sendable {
     let id: UUID
+    var serverID: Int?
+    var scheduleID: Int?
+    /// Literal OAS YYYY-MM-DD scheduled_date.
+    var scheduledDate: String?
     var name: String
     /// The exercises that make up this workout, in order.
     var exercises: [Exercise]
 
-    init(id: UUID = UUID(), name: String, exercises: [Exercise] = []) {
+    init(
+        id: UUID = UUID(),
+        serverID: Int? = nil,
+        scheduleID: Int? = nil,
+        scheduledDate: String? = nil,
+        name: String,
+        exercises: [Exercise] = []
+    ) {
         self.id = id
+        self.serverID = serverID
+        self.scheduleID = scheduleID
+        self.scheduledDate = scheduledDate
         self.name = name
         self.exercises = exercises
     }
@@ -45,6 +72,7 @@ struct Workout: Identifiable, Hashable, Codable, Sendable {
 /// backend's decimal-string `weight_kg` field.
 struct WorkoutSetDraft: Identifiable, Hashable, Sendable {
     let id: UUID
+    var serverID: Int?
     var setNumber: Int
     var weightKilograms: String
     var reps: String
@@ -52,12 +80,14 @@ struct WorkoutSetDraft: Identifiable, Hashable, Sendable {
 
     init(
         id: UUID = UUID(),
+        serverID: Int? = nil,
         setNumber: Int,
         weightKilograms: String = "",
         reps: String = "",
         isLogged: Bool = false
     ) {
         self.id = id
+        self.serverID = serverID
         self.setNumber = setNumber
         self.weightKilograms = weightKilograms
         self.reps = reps
@@ -90,17 +120,20 @@ struct WorkoutSetDraft: Identifiable, Hashable, Sendable {
 /// The set-entry rows for one planned exercise in an active session.
 struct SessionExerciseDraft: Identifiable, Hashable, Sendable {
     let id: Exercise.ID
+    let exerciseServerID: Int
+    let sessionExerciseID: Int
     let name: String
     var sets: [WorkoutSetDraft]
 }
 
-/// In-memory state for the single workout session currently being logged.
-/// This mirrors the backend's planned -> active -> completed lifecycle without
-/// pretending the session has a server ID before the API is connected.
+/// App-facing state for the single API workout session currently being logged.
+/// Both local view identity and the backend integer session ID are retained.
 struct ActiveWorkoutSession: Identifiable, Hashable, Sendable {
     let id: UUID
+    let serverID: Int
     let day: Weekday
     let workoutID: Workout.ID
+    let workoutServerID: Int
     let workoutName: String
     let startedAt: Date
     var exercises: [SessionExerciseDraft]
@@ -116,8 +149,8 @@ struct ActiveWorkoutSession: Identifiable, Hashable, Sendable {
     }
 }
 
-/// A completed local session retained for the current app run. A future API
-/// repository maps this state to WorkoutSession, SessionExercise, and SetEntry.
+/// A completed session retained for immediate UI feedback. Its session and set
+/// records have already been written through the generated API operations.
 struct CompletedWorkoutSession: Identifiable, Hashable, Sendable {
     let session: ActiveWorkoutSession
     let endedAt: Date

@@ -10,15 +10,57 @@ import SwiftUI
 
 @main
 struct IOS_FrontendApp: App {
-    /// App-wide single source of truth. Swap this adapter when the database is ready.
-    @State private var store = WorkoutStore(
-        persistence: EphemeralWorkoutPersistence()
-    )
+    @State private var authentication: AuthenticationStore
+    @State private var workoutStore = WorkoutStore()
+
+    init() {
+        let configuration = APIConfiguration.current
+        _authentication = State(
+            initialValue: AuthenticationStore(configuration: configuration)
+        )
+    }
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environment(store)
+            AppRootView()
+                .environment(authentication)
+                .environment(workoutStore)
+        }
+    }
+}
+
+private struct AppRootView: View {
+    @Environment(AuthenticationStore.self) private var authentication
+    @Environment(WorkoutStore.self) private var workoutStore
+
+    var body: some View {
+        Group {
+            switch authentication.phase {
+            case .checking:
+                VStack(spacing: 14) {
+                    ProgressView()
+                    Text("Connecting to Repbase...")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+            case .signedOut:
+                AuthenticationView()
+            case .signedIn:
+                ContentView()
+            }
+        }
+        .task {
+            await authentication.restoreSession()
+        }
+        .task(id: authentication.token) {
+            guard let token = authentication.token else {
+                workoutStore.disconnect()
+                return
+            }
+            await workoutStore.connect(
+                configuration: authentication.configuration,
+                token: token
+            )
         }
     }
 }

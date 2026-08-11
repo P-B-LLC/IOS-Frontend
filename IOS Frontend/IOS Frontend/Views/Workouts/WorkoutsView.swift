@@ -19,9 +19,16 @@ struct WorkoutsView: View {
                     persistenceErrorCard(persistenceError)
                 }
 
-                weekCard
-                focusCard
-                weeklySummary
+                if store.isLoading {
+                    ProgressView("Loading this week from Repbase...")
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 30)
+                        .workoutCard()
+                } else {
+                    weekCard
+                    focusCard
+                    weeklySummary
+                }
             }
             .padding(.horizontal)
             .padding(.vertical, 12)

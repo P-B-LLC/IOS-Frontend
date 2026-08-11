@@ -15,6 +15,7 @@ public enum RepbaseAPIClientError: LocalizedError {
     case insecureServerURL
     case serverURLMustBeOrigin
     case emptyToken
+    case insecureLocalhostOverrideRequired
 
     public var errorDescription: String? {
         switch self {
@@ -26,6 +27,8 @@ public enum RepbaseAPIClientError: LocalizedError {
             return "The Repbase API URL must be an origin without a path, query, or fragment."
         case .emptyToken:
             return "The Repbase API token cannot be empty."
+        case .insecureLocalhostOverrideRequired:
+            return "HTTP is permitted only for an explicitly enabled localhost development server."
         }
     }
 }
@@ -34,8 +37,14 @@ public enum RepbaseAPIClientError: LocalizedError {
 /// `API/openapi.yaml` by the Swift OpenAPI Generator build plugin.
 public enum RepbaseAPIClientFactory {
     /// Used only for the anonymous login and registration operations.
-    public static func makeAnonymous(serverURL: URL) throws -> Client {
-        try validate(serverURL: serverURL)
+    public static func makeAnonymous(
+        serverURL: URL,
+        allowInsecureLocalhost: Bool = false
+    ) throws -> Client {
+        try validate(
+            serverURL: serverURL,
+            allowInsecureLocalhost: allowInsecureLocalhost
+        )
         return Client(
             serverURL: serverURL,
             transport: URLSessionTransport()
@@ -45,8 +54,15 @@ public enum RepbaseAPIClientFactory {
     /// Used for every protected operation after loading the opaque token from
     /// Keychain. The OAS defines an API-key header and requires the `Token`
     /// prefix, which generated clients do not add automatically.
-    public static func makeAuthenticated(serverURL: URL, token: String) throws -> Client {
-        try validate(serverURL: serverURL)
+    public static func makeAuthenticated(
+        serverURL: URL,
+        token: String,
+        allowInsecureLocalhost: Bool = false
+    ) throws -> Client {
+        try validate(
+            serverURL: serverURL,
+            allowInsecureLocalhost: allowInsecureLocalhost
+        )
 
         let token = token.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !token.isEmpty else { throw RepbaseAPIClientError.emptyToken }
@@ -58,12 +74,20 @@ public enum RepbaseAPIClientFactory {
         )
     }
 
-    private static func validate(serverURL: URL) throws {
+    private static func validate(
+        serverURL: URL,
+        allowInsecureLocalhost: Bool
+    ) throws {
         guard serverURL.host?.isEmpty == false else {
             throw RepbaseAPIClientError.invalidServerURL
         }
-        guard serverURL.scheme?.lowercased() == "https" else {
-            throw RepbaseAPIClientError.insecureServerURL
+        let scheme = serverURL.scheme?.lowercased()
+        if scheme != "https" {
+            guard scheme == "http",
+                  allowInsecureLocalhost,
+                  isLoopbackHost(serverURL.host) else {
+                throw RepbaseAPIClientError.insecureServerURL
+            }
         }
         guard serverURL.path.isEmpty || serverURL.path == "/",
               serverURL.query == nil,
@@ -72,6 +96,11 @@ public enum RepbaseAPIClientFactory {
               serverURL.password == nil else {
             throw RepbaseAPIClientError.serverURLMustBeOrigin
         }
+    }
+
+    private static func isLoopbackHost(_ host: String?) -> Bool {
+        guard let host = host?.lowercased() else { return false }
+        return host == "localhost" || host == "127.0.0.1" || host == "::1"
     }
 }
 
