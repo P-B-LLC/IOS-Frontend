@@ -5,6 +5,7 @@
 //  Created by user299988 on 8/9/26.
 //
 
+import RepbaseAPI
 import SwiftUI
 
 @main

@@ -8,6 +8,7 @@ backend data model.
 
 ```text
 API/openapi.yaml
+    -> local RepbaseAPI package
     -> generated Swift operations and DTOs
     -> HTTPS transport with Token authentication
     -> async repositories and DTO/domain mapping
@@ -15,10 +16,11 @@ API/openapi.yaml
     -> SwiftUI
 ```
 
-Use Apple's Swift OpenAPI Generator, Swift OpenAPI Runtime, and URLSession
-transport so operation paths and wire shapes stay synchronized with the
-committed schema. Supply the server URL at runtime because the OAS does not
-declare one.
+The root `Package.swift` isolates generated code in a local `RepbaseAPI` module
+and pins Apple's Swift OpenAPI Generator, Swift OpenAPI Runtime, URLSession
+transport, and HTTP Types packages. This keeps the app target's actor-isolation
+settings from changing the generated wire code. Supply the server URL at
+runtime because the OAS does not declare one.
 
 ## Workout feature mapping
 

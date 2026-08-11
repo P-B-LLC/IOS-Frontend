@@ -1,6 +1,6 @@
 //
 //  RepbaseAPIClient.swift
-//  IOS Frontend
+//  RepbaseAPI
 //
 //  Construction and authentication for the OAS-generated API client.
 //
@@ -10,13 +10,13 @@ import HTTPTypes
 import OpenAPIRuntime
 import OpenAPIURLSession
 
-enum RepbaseAPIClientError: LocalizedError {
+public enum RepbaseAPIClientError: LocalizedError {
     case invalidServerURL
     case insecureServerURL
     case serverURLMustBeOrigin
     case emptyToken
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .invalidServerURL:
             return "The Repbase API URL must include a valid host."
@@ -32,9 +32,9 @@ enum RepbaseAPIClientError: LocalizedError {
 
 /// Creates clients whose operations and wire types are generated from
 /// `API/openapi.yaml` by the Swift OpenAPI Generator build plugin.
-enum RepbaseAPIClientFactory {
+public enum RepbaseAPIClientFactory {
     /// Used only for the anonymous login and registration operations.
-    static func makeAnonymous(serverURL: URL) throws -> Client {
+    public static func makeAnonymous(serverURL: URL) throws -> Client {
         try validate(serverURL: serverURL)
         return Client(
             serverURL: serverURL,
@@ -45,7 +45,7 @@ enum RepbaseAPIClientFactory {
     /// Used for every protected operation after loading the opaque token from
     /// Keychain. The OAS defines an API-key header and requires the `Token`
     /// prefix, which generated clients do not add automatically.
-    static func makeAuthenticated(serverURL: URL, token: String) throws -> Client {
+    public static func makeAuthenticated(serverURL: URL, token: String) throws -> Client {
         try validate(serverURL: serverURL)
 
         let token = token.trimmingCharacters(in: .whitespacesAndNewlines)
