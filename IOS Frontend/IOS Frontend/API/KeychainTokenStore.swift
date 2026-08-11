@@ -34,6 +34,12 @@ struct KeychainTokenStore: Sendable {
         var result: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
         if status == errSecItemNotFound { return nil }
+#if targetEnvironment(simulator)
+        // A command-line simulator build with code signing disabled has no
+        // Keychain entitlement. Treat that exactly like a first launch; normal
+        // Xcode-signed runs still store and restore only through Keychain.
+        if status == errSecMissingEntitlement { return nil }
+#endif
         guard status == errSecSuccess else {
             throw KeychainTokenStoreError.unexpectedStatus(status)
         }

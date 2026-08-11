@@ -83,9 +83,11 @@ public enum RepbaseAPIClientFactory {
         }
         let scheme = serverURL.scheme?.lowercased()
         if scheme != "https" {
-            guard scheme == "http",
-                  allowInsecureLocalhost,
-                  isLoopbackHost(serverURL.host) else {
+            if scheme == "http", isLoopbackHost(serverURL.host) {
+                guard allowInsecureLocalhost else {
+                    throw RepbaseAPIClientError.insecureLocalhostOverrideRequired
+                }
+            } else {
                 throw RepbaseAPIClientError.insecureServerURL
             }
         }
