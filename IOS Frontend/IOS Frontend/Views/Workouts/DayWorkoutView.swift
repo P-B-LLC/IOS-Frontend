@@ -454,7 +454,9 @@ struct DayWorkoutView: View {
                 }
                 .disabled(
                     exercise.sets.count <= 1
-                        || exercise.sets.last.map(store.isSetPending) == true
+                        || exercise.sets.last.map {
+                            store.isSetPending($0.id)
+                        } == true
                 )
             }
             .font(.subheadline.weight(.semibold))

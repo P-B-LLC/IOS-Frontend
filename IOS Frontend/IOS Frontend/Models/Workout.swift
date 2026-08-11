@@ -9,7 +9,7 @@ import Foundation
 
 /// A single exercise within a workout (e.g. "Bench Press"), with a target
 /// number of sets. Reps and weight are logged per-session later, not here.
-struct Exercise: Identifiable, Hashable, Codable, Sendable {
+nonisolated struct Exercise: Identifiable, Hashable, Codable, Sendable {
     let id: UUID
     var serverID: Int?
     var workoutExerciseID: Int?
@@ -37,7 +37,7 @@ struct Exercise: Identifiable, Hashable, Codable, Sendable {
 
 /// A workout the user builds and assigns to a day of the week (e.g. "Pull") —
 /// a named group of exercises.
-struct Workout: Identifiable, Hashable, Codable, Sendable {
+nonisolated struct Workout: Identifiable, Hashable, Codable, Sendable {
     let id: UUID
     var serverID: Int?
     var scheduleID: Int?
@@ -70,7 +70,7 @@ struct Workout: Identifiable, Hashable, Codable, Sendable {
 /// One editable set while a workout session is in progress. Weight remains a
 /// string so decimal precision is preserved when this draft is mapped to the
 /// backend's decimal-string `weight_kg` field.
-struct WorkoutSetDraft: Identifiable, Hashable, Sendable {
+nonisolated struct WorkoutSetDraft: Identifiable, Hashable, Sendable {
     let id: UUID
     var serverID: Int?
     var setNumber: Int
@@ -118,7 +118,7 @@ struct WorkoutSetDraft: Identifiable, Hashable, Sendable {
 }
 
 /// The set-entry rows for one planned exercise in an active session.
-struct SessionExerciseDraft: Identifiable, Hashable, Sendable {
+nonisolated struct SessionExerciseDraft: Identifiable, Hashable, Sendable {
     let id: Exercise.ID
     let exerciseServerID: Int
     let sessionExerciseID: Int
@@ -128,7 +128,7 @@ struct SessionExerciseDraft: Identifiable, Hashable, Sendable {
 
 /// App-facing state for the single API workout session currently being logged.
 /// Both local view identity and the backend integer session ID are retained.
-struct ActiveWorkoutSession: Identifiable, Hashable, Sendable {
+nonisolated struct ActiveWorkoutSession: Identifiable, Hashable, Sendable {
     let id: UUID
     let serverID: Int
     let day: Weekday
@@ -151,7 +151,7 @@ struct ActiveWorkoutSession: Identifiable, Hashable, Sendable {
 
 /// A completed session retained for immediate UI feedback. Its session and set
 /// records have already been written through the generated API operations.
-struct CompletedWorkoutSession: Identifiable, Hashable, Sendable {
+nonisolated struct CompletedWorkoutSession: Identifiable, Hashable, Sendable {
     let session: ActiveWorkoutSession
     let endedAt: Date
 
@@ -159,7 +159,7 @@ struct CompletedWorkoutSession: Identifiable, Hashable, Sendable {
 }
 
 /// The seven days of the week, ordered Monday-first to match the weekly widget.
-enum Weekday: Int, CaseIterable, Identifiable, Hashable, Codable, Sendable {
+nonisolated enum Weekday: Int, CaseIterable, Identifiable, Hashable, Codable, Sendable {
     case monday = 1, tuesday, wednesday, thursday, friday, saturday, sunday
 
     var id: Int { rawValue }
