@@ -12,9 +12,10 @@
   operation code from the committed OAS; never hand-edit generated output.
 - Generated sources are committed under `API/GeneratedSources`. After any OAS
   or generator-config change, run `bash Scripts/generate-api-client.sh` on
-  macOS and commit the complete regenerated diff. The command plugin is used
+  macOS and commit the complete regenerated diff. The generator CLI is run
   ahead of time because Xcode 26.6 incorrectly links the build plugin's
-  host-only implementation into iOS builds.
+  host-only implementation into iOS builds. The script derives a temporary
+  JSON-only client contract; never edit or commit that derivative.
 - Preserve the trailing slash on documented endpoint paths.
 
 ## iOS integration rules

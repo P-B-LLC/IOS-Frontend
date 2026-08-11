@@ -25,14 +25,15 @@ transport, and HTTP Types packages. Generated sources are committed under
 bash Scripts/generate-api-client.sh
 ```
 
-This ahead-of-time command-plugin workflow avoids an Xcode 26.6 issue that
-links the build plugin's host-only implementation into iOS builds. The result
-is still generated from the committed OAS and compiled on every app build.
-Supply the server URL at runtime because the OAS does not declare one.
-
-The generator currently warns that optional multipart bodies are skipped.
-Repbase's iOS layer uses the generated JSON request-body variants, so those
-multipart warnings do not block the client.
+This ahead-of-time CLI workflow avoids an Xcode 26.6 issue that links the build
+plugin's host-only implementation into iOS builds. The script also derives a
+temporary generation document by removing only
+`application/x-www-form-urlencoded` and `multipart/form-data` request variants.
+Those variants reuse JSON component schemas in a way that Swift OpenAPI
+Generator cannot encode correctly. The canonical OAS remains unchanged, and
+the iOS client intentionally uses its JSON variants. The generated result is
+compiled on every app build. Supply the server URL at runtime because the OAS
+does not declare one.
 
 ## Workout feature mapping
 
