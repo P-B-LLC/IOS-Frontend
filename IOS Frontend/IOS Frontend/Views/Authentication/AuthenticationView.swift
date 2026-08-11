@@ -82,6 +82,13 @@ struct AuthenticationView: View {
                         SecureField("Password", text: $password)
                             .textContentType(mode == .login ? .password : .newPassword)
                             .authenticationField()
+
+                        if mode == .register {
+                            Text("Use at least 8 characters.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
                     }
 
                     if let error = authentication.errorMessage {
@@ -131,6 +138,7 @@ struct AuthenticationView: View {
         let hasCredentials = !username.trimmed.isEmpty && !password.isEmpty
         guard mode == .register else { return hasCredentials }
         return hasCredentials
+            && password.count >= 8
             && !email.trimmed.isEmpty
             && !firstName.trimmed.isEmpty
             && !lastName.trimmed.isEmpty

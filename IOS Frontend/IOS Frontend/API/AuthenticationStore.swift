@@ -88,8 +88,11 @@ final class AuthenticationStore {
             switch output {
             case .ok(let response):
                 user = try response.body.json
-            case .undocumented(let statusCode, _):
-                throw APIServiceError.undocumentedStatus(statusCode)
+            case .undocumented(let statusCode, let payload):
+                throw await RepbaseAPIHTTPError.decode(
+                    statusCode: statusCode,
+                    payload: payload
+                )
             }
 
             token = savedToken
@@ -116,8 +119,11 @@ final class AuthenticationStore {
             switch output {
             case .ok(let response):
                 return try response.body.json
-            case .undocumented(let statusCode, _):
-                throw APIServiceError.undocumentedStatus(statusCode)
+            case .undocumented(let statusCode, let payload):
+                throw await RepbaseAPIHTTPError.decode(
+                    statusCode: statusCode,
+                    payload: payload
+                )
             }
         }
     }
@@ -145,8 +151,11 @@ final class AuthenticationStore {
             switch output {
             case .created(let response):
                 return try response.body.json
-            case .undocumented(let statusCode, _):
-                throw APIServiceError.undocumentedStatus(statusCode)
+            case .undocumented(let statusCode, let payload):
+                throw await RepbaseAPIHTTPError.decode(
+                    statusCode: statusCode,
+                    payload: payload
+                )
             }
         }
     }
