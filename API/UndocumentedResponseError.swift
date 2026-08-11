@@ -83,7 +83,7 @@ public struct RepbaseAPIHTTPError: LocalizedError, Sendable {
             return array.flatMap(textValues)
         }
         if let dictionary = value as? [String: Any] {
-            return dictionary.keys.sorted().flatMap { key in
+            return dictionary.keys.sorted().flatMap { key -> [String] in
                 guard let nestedValue = dictionary[key] else { return [] }
                 return textValues(from: nestedValue)
             }
