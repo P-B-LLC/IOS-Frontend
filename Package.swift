@@ -41,9 +41,6 @@ let package = Package(
             exclude: [
                 "API.md",
                 "INTEGRATION.md"
-            ],
-            plugins: [
-                .plugin(name: "OpenAPIGenerator", package: "swift-openapi-generator")
             ]
         )
     ]

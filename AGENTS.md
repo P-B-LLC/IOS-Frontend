@@ -10,6 +10,11 @@
   feature cannot be represented by the OAS.
 - Keep API DTOs separate from SwiftUI/domain models. Generate wire types and
   operation code from the committed OAS; never hand-edit generated output.
+- Generated sources are committed under `API/GeneratedSources`. After any OAS
+  or generator-config change, run `bash Scripts/generate-api-client.sh` on
+  macOS and commit the complete regenerated diff. The command plugin is used
+  ahead of time because Xcode 26.6 incorrectly links the build plugin's
+  host-only implementation into iOS builds.
 - Preserve the trailing slash on documented endpoint paths.
 
 ## iOS integration rules
@@ -41,5 +46,6 @@
 
 - Validate that `API/openapi.yaml` still parses before committing contract
   changes.
-- Build the app on macOS after generator or API-boundary changes. Generated
-  code is validated by the Xcode build, not by manually editing it.
+- Regenerate and build the app on macOS after generator or API-boundary
+  changes. Generated code is validated by the Xcode build, not by manually
+  editing it.

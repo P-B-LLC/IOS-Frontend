@@ -18,9 +18,21 @@ API/openapi.yaml
 
 The root `Package.swift` isolates generated code in a local `RepbaseAPI` module
 and pins Apple's Swift OpenAPI Generator, Swift OpenAPI Runtime, URLSession
-transport, and HTTP Types packages. This keeps the app target's actor-isolation
-settings from changing the generated wire code. Supply the server URL at
-runtime because the OAS does not declare one.
+transport, and HTTP Types packages. Generated sources are committed under
+`API/GeneratedSources` and refreshed with:
+
+```bash
+bash Scripts/generate-api-client.sh
+```
+
+This ahead-of-time command-plugin workflow avoids an Xcode 26.6 issue that
+links the build plugin's host-only implementation into iOS builds. The result
+is still generated from the committed OAS and compiled on every app build.
+Supply the server URL at runtime because the OAS does not declare one.
+
+The generator currently warns that optional multipart bodies are skipped.
+Repbase's iOS layer uses the generated JSON request-body variants, so those
+multipart warnings do not block the client.
 
 ## Workout feature mapping
 
