@@ -6,7 +6,17 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		B218230A0000000000000001 /* OpenAPIRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = B218230A000000000000000E /* OpenAPIRuntime */; };
+		B218230A0000000000000002 /* OpenAPIURLSession in Frameworks */ = {isa = PBXBuildFile; productRef = B218230A000000000000000F /* OpenAPIURLSession */; };
+		B218230A0000000000000003 /* HTTPTypes in Frameworks */ = {isa = PBXBuildFile; productRef = B218230A0000000000000010 /* HTTPTypes */; };
+		B218230A0000000000000004 /* openapi.yaml in Resources */ = {isa = PBXBuildFile; fileRef = B218230A0000000000000006 /* openapi.yaml */; };
+		B218230A0000000000000005 /* openapi-generator-config.yaml in Resources */ = {isa = PBXBuildFile; fileRef = B218230A0000000000000007 /* openapi-generator-config.yaml */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
+		B218230A0000000000000006 /* openapi.yaml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.yaml; path = openapi.yaml; sourceTree = "<group>"; };
+		B218230A0000000000000007 /* openapi-generator-config.yaml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.yaml; path = "openapi-generator-config.yaml"; sourceTree = "<group>"; };
 		FA6A73D9302913740028C89A /* IOS Frontend.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "IOS Frontend.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -23,6 +33,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B218230A0000000000000003 /* HTTPTypes in Frameworks */,
+				B218230A0000000000000002 /* OpenAPIURLSession in Frameworks */,
+				B218230A0000000000000001 /* OpenAPIRuntime in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -32,9 +45,19 @@
 		FA6A73D0302913740028C89A = {
 			isa = PBXGroup;
 			children = (
+				B218230A0000000000000008 /* API */,
 				FA6A73DB302913740028C89A /* IOS Frontend */,
 				FA6A73DA302913740028C89A /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		B218230A0000000000000008 /* API */ = {
+			isa = PBXGroup;
+			children = (
+				B218230A0000000000000007 /* openapi-generator-config.yaml */,
+				B218230A0000000000000006 /* openapi.yaml */,
+			);
+			path = ../API;
 			sourceTree = "<group>";
 		};
 		FA6A73DA302913740028C89A /* Products */ = {
@@ -59,12 +82,16 @@
 			buildRules = (
 			);
 			dependencies = (
+				B218230A0000000000000009 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				FA6A73DB302913740028C89A /* IOS Frontend */,
 			);
 			name = "IOS Frontend";
 			packageProductDependencies = (
+				B218230A000000000000000E /* OpenAPIRuntime */,
+				B218230A000000000000000F /* OpenAPIURLSession */,
+				B218230A0000000000000010 /* HTTPTypes */,
 			);
 			productName = "IOS Frontend";
 			productReference = FA6A73D9302913740028C89A /* IOS Frontend.app */;
@@ -94,6 +121,12 @@
 			);
 			mainGroup = FA6A73D0302913740028C89A;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				B218230A000000000000000A /* XCRemoteSwiftPackageReference "swift-openapi-generator" */,
+				B218230A000000000000000B /* XCRemoteSwiftPackageReference "swift-openapi-runtime" */,
+				B218230A000000000000000C /* XCRemoteSwiftPackageReference "swift-openapi-urlsession" */,
+				B218230A000000000000000D /* XCRemoteSwiftPackageReference "swift-http-types" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = FA6A73DA302913740028C89A /* Products */;
 			projectDirPath = "";
@@ -109,6 +142,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B218230A0000000000000004 /* openapi.yaml in Resources */,
+				B218230A0000000000000005 /* openapi-generator-config.yaml in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -123,6 +158,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		B218230A0000000000000009 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			productRef = B218230A0000000000000011 /* OpenAPIGenerator */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		FA6A73E2302913750028C89A /* Debug */ = {
@@ -328,6 +370,64 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		B218230A000000000000000A /* XCRemoteSwiftPackageReference "swift-openapi-generator" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-openapi-generator.git";
+			requirement = {
+				kind = exactVersion;
+				version = 1.13.0;
+			};
+		};
+		B218230A000000000000000B /* XCRemoteSwiftPackageReference "swift-openapi-runtime" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-openapi-runtime.git";
+			requirement = {
+				kind = exactVersion;
+				version = 1.12.0;
+			};
+		};
+		B218230A000000000000000C /* XCRemoteSwiftPackageReference "swift-openapi-urlsession" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-openapi-urlsession.git";
+			requirement = {
+				kind = exactVersion;
+				version = 1.3.1;
+			};
+		};
+		B218230A000000000000000D /* XCRemoteSwiftPackageReference "swift-http-types" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-http-types.git";
+			requirement = {
+				kind = exactVersion;
+				version = 1.6.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B218230A000000000000000E /* OpenAPIRuntime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B218230A000000000000000B /* XCRemoteSwiftPackageReference "swift-openapi-runtime" */;
+			productName = OpenAPIRuntime;
+		};
+		B218230A000000000000000F /* OpenAPIURLSession */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B218230A000000000000000C /* XCRemoteSwiftPackageReference "swift-openapi-urlsession" */;
+			productName = OpenAPIURLSession;
+		};
+		B218230A0000000000000010 /* HTTPTypes */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B218230A000000000000000D /* XCRemoteSwiftPackageReference "swift-http-types" */;
+			productName = HTTPTypes;
+		};
+		B218230A0000000000000011 /* OpenAPIGenerator */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B218230A000000000000000A /* XCRemoteSwiftPackageReference "swift-openapi-generator" */;
+			productName = "plugin:OpenAPIGenerator";
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = FA6A73D1302913740028C89A /* Project object */;
 }
