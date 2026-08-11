@@ -40,7 +40,9 @@ let package = Package(
             path: "API",
             exclude: [
                 "API.md",
-                "INTEGRATION.md"
+                "INTEGRATION.md",
+                "openapi-generator-config.yaml",
+                "openapi.yaml"
             ]
         )
     ]
