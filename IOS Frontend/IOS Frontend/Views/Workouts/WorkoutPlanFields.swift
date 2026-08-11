@@ -175,13 +175,12 @@ private struct ExercisePlanEditorCard: View {
                         .frame(minWidth: 22)
 
                     Button {
-                        exercise.sets = min(20, exercise.sets + 1)
+                        exercise.sets += 1
                     } label: {
                         Image(systemName: "plus")
                             .frame(width: 30, height: 30)
                     }
                     .buttonStyle(.bordered)
-                    .disabled(exercise.sets >= 20)
                     .accessibilityLabel("Increase target sets")
                 }
             }

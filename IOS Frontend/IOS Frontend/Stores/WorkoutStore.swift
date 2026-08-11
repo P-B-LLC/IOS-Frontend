@@ -95,6 +95,14 @@ final class WorkoutStore {
         pendingSetIDs.contains(id)
     }
 
+    func dateLabel(for day: Weekday) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = .current
+        formatter.calendar = .current
+        formatter.dateFormat = "MMM d"
+        return formatter.string(from: workoutDate(for: day))
+    }
+
     // MARK: - Day management
 
     func saveWorkout(_ workout: Workout, on day: Weekday) {
@@ -433,19 +441,7 @@ final class WorkoutStore {
         referenceDate: Date = Date()
     ) -> String {
         let calendar = Calendar.current
-        let start = calendar.startOfDay(for: referenceDate)
-        let calendarWeekday = calendar.component(.weekday, from: start)
-        let daysSinceMonday = (calendarWeekday + 5) % 7
-        let monday = calendar.date(
-            byAdding: .day,
-            value: -daysSinceMonday,
-            to: start
-        ) ?? start
-        let date = calendar.date(
-            byAdding: .day,
-            value: day.rawValue - 1,
-            to: monday
-        ) ?? monday
+        let date = workoutDate(for: day, referenceDate: referenceDate)
         let components = calendar.dateComponents(
             [.year, .month, .day],
             from: date
@@ -456,6 +452,26 @@ final class WorkoutStore {
             components.month ?? 0,
             components.day ?? 0
         )
+    }
+
+    private func workoutDate(
+        for day: Weekday,
+        referenceDate: Date = Date()
+    ) -> Date {
+        let calendar = Calendar.current
+        let start = calendar.startOfDay(for: referenceDate)
+        let calendarWeekday = calendar.component(.weekday, from: start)
+        let daysSinceMonday = (calendarWeekday + 5) % 7
+        let monday = calendar.date(
+            byAdding: .day,
+            value: -daysSinceMonday,
+            to: start
+        ) ?? start
+        return calendar.date(
+            byAdding: .day,
+            value: day.rawValue - 1,
+            to: monday
+        ) ?? monday
     }
 }
 

@@ -1,8 +1,8 @@
 # iOS integration map
 
-`openapi.yaml` is the source of truth for the Repbase backend. The current app
-is an empty, local workout-planning prototype; it must not be treated as the
-backend data model.
+`openapi.yaml` is the source of truth for the Repbase backend. Authentication,
+the current-week workout plan, and workout-session logging are now connected
+through the generated client rather than a parallel local persistence model.
 
 ## Required boundary
 
@@ -32,8 +32,10 @@ temporary generation document by removing only
 Those variants reuse JSON component schemas in a way that Swift OpenAPI
 Generator cannot encode correctly. The canonical OAS remains unchanged, and
 the iOS client intentionally uses its JSON variants. The generated result is
-compiled on every app build. Supply the server URL at runtime because the OAS
-does not declare one.
+compiled on every app build. The OAS has no `servers` entry, so Release reads
+`REPBASE_API_URL` from its generated Info.plist. Debug uses
+`http://localhost:5000/` with an explicit loopback-only HTTP exception for the
+Mac-hosted development backend; that exception cannot enable remote HTTP.
 
 ## Workout feature mapping
 
@@ -47,6 +49,9 @@ does not declare one.
 | Create a workout | Create `WorkoutTemplate`, then its `WorkoutExercise` rows |
 | Edit planned targets | Update the relevant `WorkoutExercise` relation |
 | Delete a template | `DELETE /api/v1/workouts/{id}/`; never infer this from unassigning a day |
+| Start a session | Create `WorkoutSession`, then call its `start` action |
+| Log/unlog a set | Create/delete the matching `SetEntry` |
+| Finish a session | Call the `WorkoutSession` `end` action |
 
 Workout creation is a multi-request flow: resolve or create catalog exercises,
 create the workout template, create ordered workout-exercise relations, and
@@ -54,17 +59,17 @@ then create the schedule entry. The contract does not define a transaction or
 idempotency key, so the UI must await each result and surface partial failure
 recovery rather than dismissing optimistically.
 
-## Domain changes required before live workout data
+## Implemented domain boundary
 
-- Replace recurring `[Weekday: Workout]` persistence with a date-based schedule.
-  Weekday names remain presentation only.
-- Preserve integer IDs for the schedule, workout template, exercise catalog
-  record, and workout-exercise relation.
-- Separate editable drafts from persisted domain objects and generated DTOs.
-- Represent `target_sets`, `target_reps`, and `target_weight_kg` as optional;
-  zero is permitted by the current contract.
-- Decide whether editing a template from a day changes every scheduled use or
-  clones the template. The API models templates as reusable.
+- Weekday tiles are a current-week presentation projection of literal
+  `scheduled_date` values, not recurring backend assignments.
+- Domain values retain integer schedule, template, exercise,
+  workout-exercise, session, session-exercise, and set-entry IDs. UUIDs are
+  used only for local draft/view identity.
+- `target_sets` preserves nil and zero from the API. Reps and decimal-string
+  kilogram weight are written on `SetEntry` records during live sessions.
+- Editing from a scheduled day updates its reusable workout template; removing
+  a day deletes only the schedule record.
 
 ## Authentication and loading
 
@@ -76,14 +81,12 @@ The list APIs accept only `page`; schedules cannot currently be filtered by
 date and child resources cannot be filtered by parent. Follow every trusted
 `next` URL, then join and filter results locally until the backend adds filters.
 
-## Contract gaps blocking live integration
+## Remaining contract gaps
 
-1. The deployment HTTPS origin/base URL is not supplied.
-2. Error response status codes and bodies are absent from the OAS.
+1. A production HTTPS origin still needs to be supplied at deployment time.
+2. Error response status codes and bodies are absent from the OAS, so the app
+   can only provide generic status-based errors.
 3. Schedule uniqueness and timezone behavior are not specified.
-4. Multi-request workout creation has no transactional or rollback contract.
-
-The first safe live slice is authentication plus a read-only current-week view:
-fetch every page of schedules and workouts, join them by workout ID, and map the
-results into seven concrete dates. Enable remote create/edit/delete only after
-the template-edit and partial-failure behavior above is decided.
+4. Multi-request workout creation has no transaction or idempotency key. The
+   app reports partial creation instead of pretending the operation rolled
+   back.

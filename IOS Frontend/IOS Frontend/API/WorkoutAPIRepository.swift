@@ -133,7 +133,7 @@ actor WorkoutAPIRepository {
                             workout: template.id,
                             exercise: exerciseID,
                             order: Int64(index + 1),
-                            targetSets: Int64(exercise.sets)
+                            targetSets: exercise.targetSets.map(Int64.init)
                         )
                     )
                 )
@@ -220,7 +220,7 @@ actor WorkoutAPIRepository {
                             Components.Schemas.PatchedWorkoutExerciseRequest(
                                 exercise: exerciseID,
                                 order: Int64(index + 1),
-                                targetSets: Int64(exercise.sets)
+                                targetSets: exercise.targetSets.map(Int64.init)
                             )
                         )
                     )
@@ -237,7 +237,7 @@ actor WorkoutAPIRepository {
                                 workout: workoutID,
                                 exercise: exerciseID,
                                 order: Int64(index + 1),
-                                targetSets: Int64(exercise.sets)
+                                targetSets: exercise.targetSets.map(Int64.init)
                             )
                         )
                     )
@@ -341,9 +341,7 @@ actor WorkoutAPIRepository {
                     exerciseServerID: exerciseServerID,
                     sessionExerciseID: relation.id,
                     name: relation.exerciseName,
-                    sets: (1...max(exercise.sets, 1)).map {
-                        WorkoutSetDraft(setNumber: $0)
-                    }
+                    sets: Self.makeSetDrafts(count: exercise.sets)
                 )
             )
         }
@@ -537,10 +535,14 @@ actor WorkoutAPIRepository {
         value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 
-    private static func safeSetCount(_ value: Int64?) -> Int {
-        guard let value, value > 0, let count = Int(exactly: value) else {
-            return 1
-        }
-        return min(count, 20)
+    private static func safeSetCount(_ value: Int64?) -> Int? {
+        guard let value else { return nil }
+        guard value >= 0, let count = Int(exactly: value) else { return 0 }
+        return count
+    }
+
+    private static func makeSetDrafts(count: Int) -> [WorkoutSetDraft] {
+        guard count > 0 else { return [] }
+        return (1...count).map { WorkoutSetDraft(setNumber: $0) }
     }
 }

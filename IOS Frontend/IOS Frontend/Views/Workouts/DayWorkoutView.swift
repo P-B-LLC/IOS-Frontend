@@ -478,8 +478,13 @@ struct DayWorkoutView: View {
     }
 
     private var headerEyebrow: String {
-        if activeSession != nil { return "ACTIVE WORKOUT" }
-        return workout == nil ? "PLAN YOUR DAY" : "WORKOUT PLAN"
+        let state: String
+        if activeSession != nil {
+            state = "ACTIVE WORKOUT"
+        } else {
+            state = workout == nil ? "PLAN YOUR DAY" : "WORKOUT PLAN"
+        }
+        return "\(state) | \(store.dateLabel(for: day).uppercased())"
     }
 
     private var headerDescription: String {

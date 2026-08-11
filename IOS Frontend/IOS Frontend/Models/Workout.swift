@@ -15,8 +15,12 @@ nonisolated struct Exercise: Identifiable, Hashable, Codable, Sendable {
     var workoutExerciseID: Int?
     var serverName: String?
     var name: String
-    /// Target number of sets for this exercise.
-    var sets: Int
+    /// Optional OAS target_sets value. Nil and zero remain distinct.
+    var targetSets: Int?
+    var sets: Int {
+        get { targetSets ?? 0 }
+        set { targetSets = newValue }
+    }
 
     init(
         id: UUID = UUID(),
@@ -24,14 +28,14 @@ nonisolated struct Exercise: Identifiable, Hashable, Codable, Sendable {
         workoutExerciseID: Int? = nil,
         serverName: String? = nil,
         name: String,
-        sets: Int = 3
+        sets: Int? = 3
     ) {
         self.id = id
         self.serverID = serverID
         self.workoutExerciseID = workoutExerciseID
         self.serverName = serverName
         self.name = name
-        self.sets = sets
+        targetSets = sets
     }
 }
 
