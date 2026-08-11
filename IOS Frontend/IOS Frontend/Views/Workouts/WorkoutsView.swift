@@ -2,97 +2,139 @@
 //  WorkoutsView.swift
 //  IOS Frontend
 //
-//  The Workouts page: this week's schedule + the user's workout library.
+//  A day-first weekly workout dashboard.
 //
 
 import SwiftUI
 
-/// The Workouts page. "This Week" lets the user tap a day to assign a workout;
-/// "My Workouts" is the library, where workouts are created and edited. Reads
-/// and writes the shared `WorkoutStore` single source of truth.
+/// The weekly workout dashboard. Every day is its own card and opens a complete
+/// day workspace for creating, viewing, editing, or removing that workout.
 struct WorkoutsView: View {
     @Environment(WorkoutStore.self) private var store
-    @State private var editor: WorkoutEditorView.Mode?
 
     var body: some View {
-        List {
-            Section("This Week") {
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("This Week")
+                        .font(.title2.weight(.bold))
+                    Text("Choose a day to build or manage its workout.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.bottom, 4)
+
+                if let persistenceError = store.persistenceError {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Label(persistenceError, systemImage: "exclamationmark.triangle.fill")
+                            .font(.footnote)
+                            .foregroundStyle(.orange)
+                        Button("Retry") {
+                            store.retryPersistence()
+                        }
+                        .font(.footnote.weight(.semibold))
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 14))
+                }
+
                 ForEach(Weekday.allCases) { day in
                     NavigationLink {
-                        AssignDayView(day: day)
+                        DayWorkoutView(day: day)
                     } label: {
-                        DayAssignmentRow(day: day, workout: store.workout(on: day))
+                        DayWorkoutCard(
+                            day: day,
+                            workout: store.workout(on: day),
+                            isToday: store.today == day
+                        )
                     }
+                    .buttonStyle(.plain)
                 }
             }
-
-            Section("My Workouts") {
-                if store.workouts.isEmpty {
-                    Text("No workouts yet. Tap + to create one.")
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(store.workouts) { workout in
-                        Button {
-                            editor = .edit(workout)
-                        } label: {
-                            WorkoutSummaryRow(workout: workout)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    .onDelete { offsets in
-                        offsets.map { store.workouts[$0] }.forEach(store.deleteWorkout)
-                    }
-                }
-            }
+            .padding(.horizontal)
+            .padding(.vertical, 12)
         }
+        .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
         .navigationTitle("Workouts")
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    editor = .create
-                } label: {
-                    Label("New Workout", systemImage: "plus")
-                }
-            }
-        }
-        .sheet(item: $editor) { mode in
-            WorkoutEditorView(mode: mode)
-        }
     }
 }
 
-/// A "This Week" row: the weekday and its assigned workout (or an Assign prompt).
-private struct DayAssignmentRow: View {
+/// One tappable weekday widget in the weekly dashboard.
+private struct DayWorkoutCard: View {
     let day: Weekday
     let workout: Workout?
+    let isToday: Bool
 
     var body: some View {
-        HStack {
-            Text(day.fullName)
-            Spacer()
-            if let workout {
-                Text(workout.name)
+        HStack(spacing: 14) {
+            Text(day.shortName.uppercased())
+                .font(.caption.weight(.bold))
+                .foregroundStyle(isToday ? Color.white : Color.accentColor)
+                .frame(width: 54, height: 54)
+                .background(
+                    isToday ? Color.accentColor : Color.accentColor.opacity(0.12),
+                    in: RoundedRectangle(cornerRadius: 15, style: .continuous)
+                )
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 8) {
+                    Text(day.fullName)
+                        .font(.headline)
+                    if isToday {
+                        Text("Today")
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(.tint)
+                    }
+                }
+
+                Text(workout?.name ?? "Add a workout")
+                    .font(.subheadline.weight(workout == nil ? .regular : .semibold))
+                    .foregroundStyle(workout == nil ? Color.secondary : Color.primary)
+
+                Text(summary)
+                    .font(.caption)
                     .foregroundStyle(.secondary)
-            } else {
-                Text("Assign")
-                    .foregroundStyle(.tertiary)
             }
+
+            Spacer(minLength: 8)
+
+            Image(systemName: "chevron.forward")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.tertiary)
         }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(uiColor: .secondarySystemGroupedBackground))
+                .shadow(color: .black.opacity(0.05), radius: 7, y: 2)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .strokeBorder(
+                    isToday ? Color.accentColor.opacity(0.35) : Color.primary.opacity(0.05),
+                    lineWidth: 1
+                )
+        }
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityText)
+        .accessibilityHint("Opens the \(day.fullName) workout")
     }
-}
 
-/// A "My Workouts" row: the workout name and a summary of its contents.
-private struct WorkoutSummaryRow: View {
-    let workout: Workout
+    private var summary: String {
+        guard let workout else { return "No workout scheduled" }
+        let exerciseCount = workout.exercises.count
+        let setCount = workout.totalSets
+        let exercises = "\(exerciseCount) exercise\(exerciseCount == 1 ? "" : "s")"
+        let sets = "\(setCount) set\(setCount == 1 ? "" : "s")"
+        return "\(exercises) · \(sets)"
+    }
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(workout.name)
-                .foregroundStyle(.primary)
-            Text("^[\(workout.exercises.count) exercise](inflect: true) · ^[\(workout.totalSets) set](inflect: true)")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
+    private var accessibilityText: String {
+        let status = workout.map { "\($0.name), \(summary)" } ?? "no workout scheduled"
+        return isToday ? "\(day.fullName), today, \(status)" : "\(day.fullName), \(status)"
     }
 }
 
@@ -100,5 +142,5 @@ private struct WorkoutSummaryRow: View {
     NavigationStack {
         WorkoutsView()
     }
-    .environment(WorkoutStore())
+    .environment(WorkoutStore.preview)
 }

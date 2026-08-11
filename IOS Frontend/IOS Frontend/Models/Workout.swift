@@ -9,7 +9,7 @@ import Foundation
 
 /// A single exercise within a workout (e.g. "Bench Press"), with a target
 /// number of sets. Reps and weight are logged per-session later, not here.
-struct Exercise: Identifiable, Hashable {
+struct Exercise: Identifiable, Hashable, Codable, Sendable {
     let id: UUID
     var name: String
     /// Target number of sets for this exercise.
@@ -24,7 +24,7 @@ struct Exercise: Identifiable, Hashable {
 
 /// A workout the user builds and assigns to a day of the week (e.g. "Pull") —
 /// a named group of exercises.
-struct Workout: Identifiable, Hashable {
+struct Workout: Identifiable, Hashable, Codable, Sendable {
     let id: UUID
     var name: String
     /// The exercises that make up this workout, in order.
@@ -41,7 +41,7 @@ struct Workout: Identifiable, Hashable {
 }
 
 /// The seven days of the week, ordered Monday-first to match the weekly widget.
-enum Weekday: Int, CaseIterable, Identifiable, Hashable {
+enum Weekday: Int, CaseIterable, Identifiable, Hashable, Codable, Sendable {
     case monday = 1, tuesday, wednesday, thursday, friday, saturday, sunday
 
     var id: Int { rawValue }

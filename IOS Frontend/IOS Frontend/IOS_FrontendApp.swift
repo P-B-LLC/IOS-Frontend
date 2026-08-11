@@ -9,8 +9,10 @@ import SwiftUI
 
 @main
 struct IOS_FrontendApp: App {
-    /// App-wide single source of truth for workout scheduling.
-    @State private var store = WorkoutStore()
+    /// App-wide single source of truth. Swap this adapter when the database is ready.
+    @State private var store = WorkoutStore(
+        persistence: EphemeralWorkoutPersistence()
+    )
 
     var body: some Scene {
         WindowGroup {

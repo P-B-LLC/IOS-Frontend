@@ -7,7 +7,8 @@
 
 import SwiftUI
 
-/// Create a new workout or edit an existing one. Presented as a sheet.
+/// Create a new workout or edit an existing one. Presented by a day screen.
+/// The editor returns a finished value; the day owns where that workout lives.
 struct WorkoutEditorView: View {
     /// Whether the editor is creating a new workout or editing an existing one.
     /// `Identifiable` so it can drive a `.sheet(item:)`.
@@ -24,10 +25,9 @@ struct WorkoutEditorView: View {
     }
 
     let mode: Mode
-    /// Called after a successful save (e.g. so a caller can assign the workout to a day).
+    /// Called after a successful save so the owning day can persist the workout.
     var onSaved: ((Workout) -> Void)?
 
-    @Environment(WorkoutStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     @State private var draft: Workout
 
@@ -65,12 +65,23 @@ struct WorkoutEditorView: View {
                     }
 
                     ForEach($draft.exercises) { $exercise in
-                        VStack(alignment: .leading, spacing: 8) {
-                            TextField("Exercise name", text: $exercise.name)
-                            Stepper(value: $exercise.sets, in: 1...20) {
-                                Text("^[\(exercise.sets) set](inflect: true)")
-                                    .foregroundStyle(.secondary)
+                        HStack(alignment: .top, spacing: 12) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                TextField("Exercise name", text: $exercise.name)
+                                Stepper(value: $exercise.sets, in: 1...20) {
+                                    Text("^[\(exercise.sets) set](inflect: true)")
+                                        .foregroundStyle(.secondary)
+                                }
                             }
+
+                            Button(role: .destructive) {
+                                removeExercise(id: exercise.id)
+                            } label: {
+                                Image(systemName: "trash")
+                                    .frame(width: 32, height: 32)
+                            }
+                            .buttonStyle(.borderless)
+                            .accessibilityLabel("Remove exercise")
                         }
                         .padding(.vertical, 2)
                     }
@@ -106,21 +117,19 @@ struct WorkoutEditorView: View {
             exercise.name = exercise.name.trimmingCharacters(in: .whitespacesAndNewlines)
             return exercise.name.isEmpty ? nil : exercise
         }
-        switch mode {
-        case .create: store.addWorkout(draft)
-        case .edit: store.updateWorkout(draft)
-        }
         onSaved?(draft)
         dismiss()
+    }
+
+    private func removeExercise(id: Exercise.ID) {
+        draft.exercises.removeAll { $0.id == id }
     }
 }
 
 #Preview("Create") {
     WorkoutEditorView(mode: .create)
-        .environment(WorkoutStore())
 }
 
 #Preview("Edit") {
-    WorkoutEditorView(mode: .edit(WorkoutStore.sampleWorkouts[0]))
-        .environment(WorkoutStore())
+    WorkoutEditorView(mode: .edit(WorkoutStore.previewWorkouts[0]))
 }

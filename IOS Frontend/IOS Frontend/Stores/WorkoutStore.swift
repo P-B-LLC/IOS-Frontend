@@ -2,45 +2,51 @@
 //  WorkoutStore.swift
 //  IOS Frontend
 //
-//  Single source of truth for the user's workout library and weekly schedule.
+//  Single source of truth for the weekly workout schedule.
 //
 
 import Foundation
 import Observation
 
-/// The single source of truth for the user's workouts and weekly schedule.
+/// The app-facing workout state.
 ///
-/// - `workouts` is the library of workouts the user has built.
-/// - `assignments` maps a weekday to a workout **by id**, referencing the
-///   library rather than copying workout data — so there is no second source
-///   of truth to keep in sync.
-///
-/// For now everything lives in memory and is seeded with sample data. When
-/// persistence (SwiftData) or a backend is added, only this type changes.
+/// Each scheduled workout belongs to one day. Views use this store without
+/// knowing whether the schedule comes from temporary memory or a local
+/// database. Production starts empty until a real `WorkoutPersistence`
+/// implementation is injected.
 @Observable
 final class WorkoutStore {
-    /// The user's library of workouts.
-    private(set) var workouts: [Workout]
-    /// Which workout (by id) is scheduled on each weekday.
-    private(set) var assignments: [Weekday: Workout.ID]
+    private let persistence: any WorkoutPersistence
 
-    init(workouts: [Workout] = WorkoutStore.sampleWorkouts,
-         assignments: [Weekday: Workout.ID]? = nil) {
-        self.workouts = workouts
-        self.assignments = assignments ?? WorkoutStore.sampleAssignments(for: workouts)
+    /// The workout configured for each weekday. A missing day is unconfigured.
+    private(set) var schedule: [Weekday: Workout]
+    /// A database adapter can surface load/save failures here later.
+    private(set) var persistenceError: String?
+    /// Prevents a failed load from being overwritten by an empty snapshot.
+    private var didLoadSnapshot: Bool
+    /// Remains true when an optimistic change has not reached persistence yet.
+    private(set) var hasUnsavedChanges: Bool
+
+    init(persistence: any WorkoutPersistence = EphemeralWorkoutPersistence()) {
+        self.persistence = persistence
+
+        do {
+            schedule = try persistence.load().schedule
+            persistenceError = nil
+            didLoadSnapshot = true
+            hasUnsavedChanges = false
+        } catch {
+            schedule = [:]
+            persistenceError = "Workout data could not be loaded: \(error.localizedDescription)"
+            didLoadSnapshot = false
+            hasUnsavedChanges = false
+        }
     }
 
     // MARK: - Lookups
 
-    /// The workout with the given id, if it exists in the library.
-    func workout(with id: Workout.ID) -> Workout? {
-        workouts.first { $0.id == id }
-    }
-
-    /// The workout scheduled on `day`, or `nil` if it's a rest day.
     func workout(on day: Weekday) -> Workout? {
-        guard let id = assignments[day] else { return nil }
-        return workout(with: id)
+        schedule[day]
     }
 
     /// Today's weekday, derived from the user's current calendar.
@@ -48,42 +54,69 @@ final class WorkoutStore {
         Weekday(calendarWeekday: Calendar.current.component(.weekday, from: Date()))
     }
 
-    // MARK: - Scheduling
+    /// Editing stays disabled if the initial database load fails.
+    var isEditingEnabled: Bool { didLoadSnapshot }
 
-    /// Assign `workoutID` to `day` (pass `nil` to clear it into a rest day).
-    func assign(_ workoutID: Workout.ID?, to day: Weekday) {
-        assignments[day] = workoutID
+    // MARK: - Day management
+
+    /// Creates or replaces the workout for one day and persists the schedule.
+    func saveWorkout(_ workout: Workout, on day: Weekday) {
+        guard didLoadSnapshot else { return }
+        schedule[day] = workout
+        hasUnsavedChanges = true
+        persist()
     }
 
-    /// Clear the workout on `day`, making it a rest day.
-    func clearAssignment(on day: Weekday) {
-        assignments[day] = nil
+    /// Clears the workout from one day without affecting any other day.
+    func removeWorkout(on day: Weekday) {
+        guard didLoadSnapshot else { return }
+        guard schedule.removeValue(forKey: day) != nil else { return }
+        hasUnsavedChanges = true
+        persist()
     }
 
-    // MARK: - Library management
-
-    func addWorkout(_ workout: Workout) {
-        workouts.append(workout)
+    /// Retries either the failed initial load or the most recent failed save.
+    func retryPersistence() {
+        if didLoadSnapshot {
+            guard hasUnsavedChanges else { return }
+            persist()
+        } else {
+            reloadSnapshot()
+        }
     }
 
-    func updateWorkout(_ workout: Workout) {
-        guard let index = workouts.firstIndex(where: { $0.id == workout.id }) else { return }
-        workouts[index] = workout
+    private func reloadSnapshot() {
+        do {
+            schedule = try persistence.load().schedule
+            persistenceError = nil
+            didLoadSnapshot = true
+            hasUnsavedChanges = false
+        } catch {
+            persistenceError = "Workout data could not be loaded: \(error.localizedDescription)"
+        }
     }
 
-    /// Remove a workout from the library and any day it was assigned to.
-    func deleteWorkout(_ workout: Workout) {
-        workouts.removeAll { $0.id == workout.id }
-        for (day, id) in assignments where id == workout.id {
-            assignments[day] = nil
+    private func persist() {
+        // If loading failed, keep the in-session state visible but never write
+        // an empty-derived snapshot over data that may still exist on disk.
+        guard didLoadSnapshot else { return }
+
+        do {
+            try persistence.save(WorkoutSnapshot(schedule: schedule))
+            persistenceError = nil
+            hasUnsavedChanges = false
+        } catch {
+            persistenceError = "Workout changes could not be saved: \(error.localizedDescription)"
+            hasUnsavedChanges = true
         }
     }
 }
 
+// MARK: - Preview fixtures
+
 extension WorkoutStore {
-    /// Sample library used until real persistence exists. The widget and pages
-    /// read through the store, so these specific values can be replaced freely.
-    static let sampleWorkouts: [Workout] = [
+    /// Samples are opt-in for SwiftUI previews only; production never seeds them.
+    static let previewWorkouts: [Workout] = [
         Workout(name: "Upper Body", exercises: [
             Exercise(name: "Bench Press", sets: 4),
             Exercise(name: "Overhead Press", sets: 3),
@@ -104,14 +137,21 @@ extension WorkoutStore {
         ])
     ]
 
-    /// Seeds Mon/Tue/Thu/Fri from the sample library, leaving the rest as rest days.
-    static func sampleAssignments(for workouts: [Workout]) -> [Weekday: Workout.ID] {
-        func id(_ name: String) -> Workout.ID? { workouts.first { $0.name == name }?.id }
-        var result: [Weekday: Workout.ID] = [:]
-        if let value = id("Upper Body") { result[.monday] = value }
-        if let value = id("Lower Body") { result[.tuesday] = value }
-        if let value = id("Full Body Conditioning") { result[.thursday] = value }
-        if let value = id("Core & Mobility") { result[.friday] = value }
-        return result
+    static let previewSnapshot: WorkoutSnapshot = {
+        let workouts = previewWorkouts
+        return WorkoutSnapshot(
+            schedule: [
+                .monday: workouts[0],
+                .tuesday: workouts[1],
+                .thursday: workouts[2],
+                .friday: workouts[3]
+            ]
+        )
+    }()
+
+    static var preview: WorkoutStore {
+        WorkoutStore(
+            persistence: EphemeralWorkoutPersistence(initialSnapshot: previewSnapshot)
+        )
     }
 }

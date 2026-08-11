@@ -10,9 +10,9 @@ import SwiftUI
 /// A compact home-screen strip showing the user's workout schedule for the
 /// current week. All seven days sit in a single row across the width of the
 /// screen. Each day is a square tile holding the workout name, with the
-/// weekday label below the square (outside it). Days with no workout show
-/// an "Assign" prompt; the current day is subtly highlighted. Tapping on the
-/// strip opens the Workouts page.
+/// weekday label below the square (outside it). Days with no workout show an
+/// add prompt; the current day is subtly highlighted. Tapping the strip opens
+/// the day-first Workouts page.
 struct WeeklyScheduleWidget: View {
     @Environment(WorkoutStore.self) private var store
 
@@ -82,15 +82,15 @@ private struct DayTile: View {
     var body: some View {
         VStack(spacing: 6) {
             // The square tile. Scheduled days show the workout name; unscheduled
-            // days show an "Assign" prompt. Long names scale down / wrap /
+            // days show an add prompt. Long names scale down / wrap /
             // truncate rather than stretching the square.
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(tileFill)
                 .aspectRatio(1, contentMode: .fit)
                 .overlay {
                     // Scheduled days show the workout name; unscheduled days show
-                    // a muted "Assign" prompt (tapping the strip opens Workouts).
-                    Text(workout?.name ?? "Assign")
+                    // a muted add prompt (tapping the strip opens Workouts).
+                    Text(workout?.name ?? "Add")
                         .font(.caption2)
                         .fontWeight(workout == nil ? .regular : .semibold)
                         .multilineTextAlignment(.center)
@@ -143,5 +143,5 @@ private struct DayTile: View {
         }
         .background(Color(uiColor: .systemGroupedBackground))
     }
-    .environment(WorkoutStore())
+    .environment(WorkoutStore.preview)
 }
