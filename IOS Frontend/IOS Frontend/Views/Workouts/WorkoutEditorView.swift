@@ -2,16 +2,12 @@
 //  WorkoutEditorView.swift
 //  IOS Frontend
 //
-//  Create or edit a workout: a name plus a list of exercises with set counts.
+//  Create or edit a workout plan.
 //
 
 import SwiftUI
 
-/// Create a new workout or edit an existing one. Presented by a day screen.
-/// The editor returns a finished value; the day owns where that workout lives.
 struct WorkoutEditorView: View {
-    /// Whether the editor is creating a new workout or editing an existing one.
-    /// `Identifiable` so it can drive a `.sheet(item:)`.
     enum Mode: Identifiable {
         case create
         case edit(Workout)
@@ -25,7 +21,6 @@ struct WorkoutEditorView: View {
     }
 
     let mode: Mode
-    /// Called after a successful save so the owning day can persist the workout.
     var onSaved: ((Workout) -> Void)?
 
     @Environment(\.dismiss) private var dismiss
@@ -47,53 +42,38 @@ struct WorkoutEditorView: View {
         return false
     }
 
-    private var trimmedName: String {
-        draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
+    private var canSave: Bool {
+        !draft.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section("Workout") {
-                    TextField("Workout name", text: $draft.name)
-                }
-
-                Section("Exercises") {
-                    if draft.exercises.isEmpty {
-                        Text("No exercises yet")
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(isCreate ? "Build your workout" : "Customize your plan")
+                            .font(.title2.weight(.bold))
+                        Text("Set the structure now. Log weight and reps when you train.")
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
 
-                    ForEach($draft.exercises) { $exercise in
-                        HStack(alignment: .top, spacing: 12) {
-                            VStack(alignment: .leading, spacing: 8) {
-                                TextField("Exercise name", text: $exercise.name)
-                                Stepper(value: $exercise.sets, in: 1...20) {
-                                    Text("^[\(exercise.sets) set](inflect: true)")
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-
-                            Button(role: .destructive) {
-                                removeExercise(id: exercise.id)
-                            } label: {
-                                Image(systemName: "trash")
-                                    .frame(width: 32, height: 32)
-                            }
-                            .buttonStyle(.borderless)
-                            .accessibilityLabel("Remove exercise")
-                        }
-                        .padding(.vertical, 2)
-                    }
-                    .onDelete { draft.exercises.remove(atOffsets: $0) }
+                    WorkoutPlanFields(draft: $draft)
 
                     Button {
-                        draft.exercises.append(Exercise(name: "", sets: 3))
+                        save()
                     } label: {
-                        Label("Add Exercise", systemImage: "plus.circle.fill")
+                        Label(isCreate ? "Create Workout" : "Save Changes", systemImage: "checkmark.circle.fill")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
                     }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .disabled(!canSave)
                 }
+                .padding()
             }
+            .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
             .navigationTitle(isCreate ? "New Workout" : "Edit Workout")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -102,16 +82,14 @@ struct WorkoutEditorView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") { save() }
-                        .disabled(trimmedName.isEmpty)
+                        .disabled(!canSave)
                 }
             }
         }
     }
 
     private func save() {
-        draft.name = trimmedName
-        // Trim exercise names and drop blank ones so empty rows don't inflate
-        // the workout's exercise / set counts.
+        draft.name = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
         draft.exercises = draft.exercises.compactMap { exercise in
             var exercise = exercise
             exercise.name = exercise.name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -119,10 +97,6 @@ struct WorkoutEditorView: View {
         }
         onSaved?(draft)
         dismiss()
-    }
-
-    private func removeExercise(id: Exercise.ID) {
-        draft.exercises.removeAll { $0.id == id }
     }
 }
 

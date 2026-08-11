@@ -40,6 +40,91 @@ struct Workout: Identifiable, Hashable, Codable, Sendable {
     var totalSets: Int { exercises.reduce(0) { $0 + $1.sets } }
 }
 
+/// One editable set while a workout session is in progress. Weight remains a
+/// string so decimal precision is preserved when this draft is mapped to the
+/// backend's decimal-string `weight_kg` field.
+struct WorkoutSetDraft: Identifiable, Hashable, Sendable {
+    let id: UUID
+    var setNumber: Int
+    var weightKilograms: String
+    var reps: String
+    var isLogged: Bool
+
+    init(
+        id: UUID = UUID(),
+        setNumber: Int,
+        weightKilograms: String = "",
+        reps: String = "",
+        isLogged: Bool = false
+    ) {
+        self.id = id
+        self.setNumber = setNumber
+        self.weightKilograms = weightKilograms
+        self.reps = reps
+        self.isLogged = isLogged
+    }
+
+    /// Matches the OAS decimal-string contract (up to five integer digits and
+    /// two fractional digits). Weight is nullable, so a blank bodyweight entry
+    /// is valid.
+    var isWeightValid: Bool {
+        let value = weightKilograms.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else { return true }
+        return value.range(
+            of: #"^-?\d{0,5}(?:\.\d{0,2})?$"#,
+            options: .regularExpression
+        ) != nil
+    }
+
+    /// The interface requires reps before a set can be marked complete even
+    /// though the API permits null reps for partially entered set records.
+    var areRepsValid: Bool {
+        let value = reps.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let integer = Int(value) else { return false }
+        return integer >= 0
+    }
+
+    var canBeLogged: Bool { isWeightValid && areRepsValid }
+}
+
+/// The set-entry rows for one planned exercise in an active session.
+struct SessionExerciseDraft: Identifiable, Hashable, Sendable {
+    let id: Exercise.ID
+    let name: String
+    var sets: [WorkoutSetDraft]
+}
+
+/// In-memory state for the single workout session currently being logged.
+/// This mirrors the backend's planned -> active -> completed lifecycle without
+/// pretending the session has a server ID before the API is connected.
+struct ActiveWorkoutSession: Identifiable, Hashable, Sendable {
+    let id: UUID
+    let day: Weekday
+    let workoutID: Workout.ID
+    let workoutName: String
+    let startedAt: Date
+    var exercises: [SessionExerciseDraft]
+
+    var totalSetCount: Int {
+        exercises.reduce(0) { $0 + $1.sets.count }
+    }
+
+    var loggedSetCount: Int {
+        exercises.reduce(0) { total, exercise in
+            total + exercise.sets.filter(\.isLogged).count
+        }
+    }
+}
+
+/// A completed local session retained for the current app run. A future API
+/// repository maps this state to WorkoutSession, SessionExercise, and SetEntry.
+struct CompletedWorkoutSession: Identifiable, Hashable, Sendable {
+    let session: ActiveWorkoutSession
+    let endedAt: Date
+
+    var id: ActiveWorkoutSession.ID { session.id }
+}
+
 /// The seven days of the week, ordered Monday-first to match the weekly widget.
 enum Weekday: Int, CaseIterable, Identifiable, Hashable, Codable, Sendable {
     case monday = 1, tuesday, wednesday, thursday, friday, saturday, sunday
