@@ -312,16 +312,17 @@ private struct FilledNutritionMetric: View {
                     .minimumScaleFactor(0.67)
             }
         }
+        .frame(maxWidth: .infinity, minHeight: isPrimary ? 62 : 42, alignment: .leading)
+        .padding(isPrimary ? 11 : 8)
         .overlay(alignment: .bottomTrailing) {
             if isPrimary, let detail {
                 Text(detail)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+                    .padding(11)
             }
         }
-        .frame(maxWidth: .infinity, minHeight: isPrimary ? 62 : 42, alignment: .leading)
-        .padding(isPrimary ? 11 : 8)
         .background {
             GeometryReader { proxy in
                 ZStack(alignment: .leading) {
