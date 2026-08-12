@@ -14,7 +14,7 @@ struct FoodTrackingView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 14) {
                 dayPicker
                 dailySummary
 
@@ -25,7 +25,7 @@ struct FoodTrackingView: View {
                 mealsSection
             }
             .padding(.horizontal)
-            .padding(.vertical, 12)
+            .padding(.vertical, 8)
         }
         .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
         .navigationTitle("Food Tracking")
@@ -45,14 +45,16 @@ struct FoodTrackingView: View {
     }
 
     private var dayPicker: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 8) {
             Button {
                 changeDay(by: -1)
             } label: {
                 Image(systemName: "chevron.left")
-                    .frame(width: 34, height: 34)
+                    .font(.caption.weight(.semibold))
+                    .frame(width: 28, height: 28)
             }
             .buttonStyle(.bordered)
+            .buttonBorderShape(.circle)
 
             DatePicker(
                 "Tracking date",
@@ -60,25 +62,32 @@ struct FoodTrackingView: View {
                 displayedComponents: .date
             )
             .labelsHidden()
+            .font(.subheadline.weight(.medium))
             .frame(maxWidth: .infinity)
 
             Button {
                 changeDay(by: 1)
             } label: {
                 Image(systemName: "chevron.right")
-                    .frame(width: 34, height: 34)
+                    .font(.caption.weight(.semibold))
+                    .frame(width: 28, height: 28)
             }
             .buttonStyle(.bordered)
+            .buttonBorderShape(.circle)
         }
-        .padding(10)
+        .padding(8)
         .background(
             Color(uiColor: .secondarySystemGroupedBackground),
-            in: RoundedRectangle(cornerRadius: 16)
+            in: RoundedRectangle(cornerRadius: 14)
         )
+        .overlay {
+            RoundedRectangle(cornerRadius: 14)
+                .strokeBorder(Color.primary.opacity(0.04), lineWidth: 0.75)
+        }
     }
 
     private var dailySummary: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             FilledNutritionMetric(
                 title: "Calories",
                 value: total.calories,
@@ -89,7 +98,7 @@ struct FoodTrackingView: View {
                 detail: "\(loggedFoodCount) foods logged"
             )
 
-            HStack(spacing: 8) {
+            HStack(spacing: 6) {
                 FilledNutritionMetric(
                     title: "Carbs",
                     value: total.carbohydrateGrams,
@@ -118,32 +127,35 @@ struct FoodTrackingView: View {
     }
 
     private var localDraftNotice: some View {
-        Label(
-            "Saved only while the app is open. Food sync and search will activate when those endpoints are added to the API spec.",
-            systemImage: "externaldrive.badge.exclamationmark"
-        )
+        HStack(spacing: 8) {
+            Image(systemName: "icloud.slash")
+                .foregroundStyle(Color.orange)
+            Text("Food entries are temporary until API sync is available.")
+                .foregroundStyle(.secondary)
+            Spacer(minLength: 0)
+        }
         .font(.caption)
-        .foregroundStyle(Color.orange)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(13)
-        .background(Color.orange.opacity(0.09), in: RoundedRectangle(cornerRadius: 14))
+        .padding(.horizontal, 11)
+        .padding(.vertical, 9)
+        .background(Color.orange.opacity(0.055), in: RoundedRectangle(cornerRadius: 12))
     }
 
     private var mealsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 9) {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Meals")
-                        .font(.title3.weight(.bold))
+                        .font(.headline)
                     Text("Tap a meal to log or update food.")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
                 Button("Add Meal", systemImage: "plus") {
                     store.addMeal(on: selectedDate)
                 }
-                .font(.subheadline.weight(.semibold))
+                .font(.footnote.weight(.semibold))
             }
 
             ForEach(store.meals(on: selectedDate)) { meal in
@@ -184,13 +196,13 @@ private struct FilledNutritionMetric: View {
     var detail: String? = nil
 
     var body: some View {
-        VStack(alignment: .leading, spacing: isPrimary ? 7 : 5) {
+        VStack(alignment: .leading, spacing: isPrimary ? 5 : 4) {
             Text(title)
-                .font(isPrimary ? .caption.weight(.semibold) : .caption2.weight(.semibold))
+                .font(.caption2.weight(.semibold))
                 .foregroundStyle(.secondary)
             HStack(alignment: .firstTextBaseline, spacing: 3) {
                 Text("\(value.nutritionText) \(unit)")
-                    .font(isPrimary ? .headline : .subheadline.weight(.bold))
+                    .font(isPrimary ? .subheadline.weight(.bold) : .caption.weight(.bold))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
@@ -208,23 +220,23 @@ private struct FilledNutritionMetric: View {
                     .lineLimit(1)
             }
         }
-        .frame(maxWidth: .infinity, minHeight: isPrimary ? 82 : 72, alignment: .leading)
-        .padding(isPrimary ? 13 : 10)
+        .frame(maxWidth: .infinity, minHeight: isPrimary ? 66 : 58, alignment: .leading)
+        .padding(isPrimary ? 11 : 9)
         .background {
             GeometryReader { proxy in
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(color.opacity(0.08))
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(color.opacity(0.06))
                     Rectangle()
-                        .fill(color.opacity(0.22))
+                        .fill(color.opacity(0.16))
                         .frame(width: proxy.size.width * progress)
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
         }
         .overlay {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(color.opacity(0.13), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(color.opacity(0.1), lineWidth: 0.75)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(title), \(value.nutritionText) of \(goal.nutritionText) \(unit)")
@@ -240,27 +252,32 @@ private struct MealRow: View {
     let meal: FoodMeal
 
     var body: some View {
-        HStack(spacing: 13) {
-            Image(systemName: meal.isComplete ? "checkmark.circle.fill" : "fork.knife.circle.fill")
-                .font(.title2)
+        HStack(spacing: 11) {
+            Image(systemName: meal.isComplete ? "checkmark" : "fork.knife")
+                .font(.caption.weight(.bold))
                 .foregroundStyle(meal.isComplete ? Color.green : Color.orange)
+                .frame(width: 30, height: 30)
+                .background(
+                    (meal.isComplete ? Color.green : Color.orange).opacity(0.08),
+                    in: Circle()
+                )
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(meal.name)
-                    .font(.headline)
+                    .font(.subheadline.weight(.semibold))
                 Text(subtitle)
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
 
             Spacer()
-            VStack(alignment: .trailing, spacing: 3) {
+            HStack(spacing: 6) {
                 Text("\(meal.totalNutrition.calories.nutritionText) cal")
-                    .font(.subheadline.weight(.semibold))
-                Image(systemName: "chevron.forward")
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                Image(systemName: "chevron.forward")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(.tertiary)
             }
         }
         .foodCard()
@@ -274,15 +291,15 @@ private struct MealRow: View {
 
 extension View {
     func foodCard() -> some View {
-        padding(16)
+        padding(12)
             .background(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(Color(uiColor: .secondarySystemGroupedBackground))
-                    .shadow(color: .black.opacity(0.05), radius: 7, y: 2)
+                    .shadow(color: .black.opacity(0.03), radius: 5, y: 1)
             )
             .overlay {
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .strokeBorder(Color.primary.opacity(0.05), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(Color.primary.opacity(0.04), lineWidth: 0.75)
             }
     }
 }

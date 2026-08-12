@@ -14,19 +14,20 @@ struct FoodSummaryWidget: View {
         NavigationLink {
             FoodTrackingView()
         } label: {
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 8) {
                     Image(systemName: "fork.knife")
+                        .font(.caption.weight(.semibold))
                         .foregroundStyle(Color.orange)
                     Text("Food Today")
-                        .font(.subheadline.weight(.semibold))
+                        .font(.footnote.weight(.semibold))
                     Spacer()
                     Image(systemName: "chevron.forward")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(.tertiary)
                 }
 
-                HStack(spacing: 8) {
+                HStack(spacing: 6) {
                     HomeCalorieTotal(
                         value: total.calories,
                         goal: store.goals.calories
@@ -51,15 +52,15 @@ struct FoodSummaryWidget: View {
                     )
                 }
             }
-            .padding(14)
+            .padding(12)
             .background(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .fill(Color(uiColor: .secondarySystemBackground))
-                    .shadow(color: .black.opacity(0.06), radius: 8, y: 3)
+                    .shadow(color: .black.opacity(0.035), radius: 6, y: 2)
             )
             .overlay {
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .strokeBorder(Color.primary.opacity(0.06), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .strokeBorder(Color.primary.opacity(0.045), lineWidth: 0.75)
             }
             .contentShape(Rectangle())
         }
@@ -82,7 +83,7 @@ private struct HomeCalorieTotal: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(value.nutritionText)
-                .font(.title2.weight(.bold))
+                .font(.headline.weight(.bold))
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
             Text("of \(goal.nutritionText)")
@@ -92,9 +93,9 @@ private struct HomeCalorieTotal: View {
                 .font(.system(size: 9, weight: .bold))
                 .foregroundStyle(Color.orange)
         }
-        .frame(maxWidth: .infinity, minHeight: 78, alignment: .center)
-        .padding(.horizontal, 8)
-        .background(Color.orange.opacity(0.08), in: RoundedRectangle(cornerRadius: 15))
+        .frame(maxWidth: .infinity, minHeight: 62, alignment: .center)
+        .padding(.horizontal, 7)
+        .background(Color.orange.opacity(0.055), in: RoundedRectangle(cornerRadius: 13))
     }
 }
 
@@ -105,29 +106,29 @@ private struct HomeMacroGauge: View {
     let color: Color
 
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 3) {
             ZStack {
                 Circle()
-                    .stroke(color.opacity(0.15), lineWidth: 6)
+                    .stroke(color.opacity(0.12), lineWidth: 5)
                 Circle()
                     .trim(from: 0, to: progress)
                     .stroke(
                         color,
-                        style: StrokeStyle(lineWidth: 6, lineCap: .round)
+                        style: StrokeStyle(lineWidth: 5, lineCap: .round)
                     )
                     .rotationEffect(.degrees(-90))
                 Text(value.nutritionText)
-                    .font(.caption.weight(.bold))
+                    .font(.caption2.weight(.bold))
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
             }
-            .frame(width: 50, height: 50)
+            .frame(width: 42, height: 42)
             Text(title)
                 .font(.system(size: 9, weight: .semibold))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
         }
-        .frame(maxWidth: .infinity, minHeight: 78)
+        .frame(maxWidth: .infinity, minHeight: 62)
     }
 
     private var progress: CGFloat {
