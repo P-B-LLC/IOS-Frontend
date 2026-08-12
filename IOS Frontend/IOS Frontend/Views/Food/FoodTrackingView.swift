@@ -10,9 +10,7 @@ import SwiftUI
 struct FoodTrackingView: View {
     @Environment(FoodTrackingStore.self) private var store
     @State private var selectedDate = Date()
-    @State private var isAddingMeal = false
     @State private var isEditingGoals = false
-    @State private var newMealName = ""
 
     var body: some View {
         ScrollView {
@@ -40,18 +38,6 @@ struct FoodTrackingView: View {
         }
         .sheet(isPresented: $isEditingGoals) {
             NutritionGoalsView()
-        }
-        .alert("Add Meal", isPresented: $isAddingMeal) {
-            TextField("Meal name", text: $newMealName)
-            Button("Cancel", role: .cancel) {
-                newMealName = ""
-            }
-            Button("Add") {
-                store.addMeal(named: newMealName, on: selectedDate)
-                newMealName = ""
-            }
-        } message: {
-            Text("Create another section for this day.")
         }
         .onChange(of: selectedDate) {
             store.ensureDay(selectedDate)
@@ -92,48 +78,49 @@ struct FoodTrackingView: View {
     }
 
     private var dailySummary: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(alignment: .center, spacing: 20) {
-                CalorieProgressRing(
-                    consumed: total.calories,
-                    goal: store.goals.calories
-                )
-
-                VStack(alignment: .leading, spacing: 5) {
-                    Text("Daily nutrition")
-                        .font(.title3.weight(.bold))
-                    Text(remainingCalorieText)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    Text("\(loggedFoodCount) foods logged")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer(minLength: 0)
-            }
-
-            HStack(spacing: 9) {
-                MacroProgressCard(
-                    title: "Protein",
-                    value: total.proteinGrams,
-                    goal: store.goals.proteinGrams,
-                    color: .blue
-                )
-                MacroProgressCard(
-                    title: "Carbs",
-                    value: total.carbohydrateGrams,
-                    goal: store.goals.carbohydrateGrams,
-                    color: .green
-                )
-                MacroProgressCard(
-                    title: "Fat",
-                    value: total.fatGrams,
-                    goal: store.goals.fatGrams,
-                    color: .purple
-                )
-            }
+        LazyVGrid(
+            columns: [
+                GridItem(.flexible(), spacing: 12),
+                GridItem(.flexible(), spacing: 12)
+            ],
+            spacing: 12
+        ) {
+            NutritionTotalCard(
+                title: "Calories",
+                value: total.calories,
+                goal: store.goals.calories,
+                unit: "cal",
+                icon: "flame.fill",
+                color: .orange,
+                detail: "\(loggedFoodCount) foods logged"
+            )
+            NutritionTotalCard(
+                title: "Protein",
+                value: total.proteinGrams,
+                goal: store.goals.proteinGrams,
+                unit: "g",
+                icon: "dumbbell.fill",
+                color: .blue
+            )
+            NutritionTotalCard(
+                title: "Carbs",
+                value: total.carbohydrateGrams,
+                goal: store.goals.carbohydrateGrams,
+                unit: "g",
+                icon: "leaf.fill",
+                color: .green
+            )
+            NutritionTotalCard(
+                title: "Fat",
+                value: total.fatGrams,
+                goal: store.goals.fatGrams,
+                unit: "g",
+                icon: "drop.fill",
+                color: .purple
+            )
         }
-        .foodCard()
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Daily nutrition totals")
     }
 
     private var localDraftNotice: some View {
@@ -160,7 +147,7 @@ struct FoodTrackingView: View {
                 }
                 Spacer()
                 Button("Add Meal", systemImage: "plus") {
-                    isAddingMeal = true
+                    store.addMeal(on: selectedDate)
                 }
                 .font(.subheadline.weight(.semibold))
             }
@@ -184,14 +171,6 @@ struct FoodTrackingView: View {
         store.meals(on: selectedDate).reduce(0) { $0 + $1.entries.count }
     }
 
-    private var remainingCalorieText: String {
-        let remaining = store.goals.calories - total.calories
-        if remaining >= 0 {
-            return "\(remaining.nutritionText) calories remaining"
-        }
-        return "\((-remaining).nutritionText) calories over goal"
-    }
-
     private func changeDay(by amount: Int) {
         selectedDate = Calendar.current.date(
             byAdding: .day,
@@ -201,28 +180,48 @@ struct FoodTrackingView: View {
     }
 }
 
-private struct MacroProgressCard: View {
+private struct NutritionTotalCard: View {
     let title: String
     let value: Decimal
     let goal: Decimal
+    let unit: String
+    let icon: String
     let color: Color
+    var detail: String? = nil
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
-            Text("\(value.nutritionText)g")
-                .font(.headline)
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Label(title, systemImage: icon)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(color)
+                Spacer()
+            }
+            HStack(alignment: .firstTextBaseline, spacing: 3) {
+                Text(value.nutritionText)
+                    .font(.title2.weight(.bold))
+                Text(unit)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
             ProgressView(value: progress)
                 .tint(color)
-            Text("of \(goal.nutritionText)g")
+            Text("of \(goal.nutritionText) \(unit)")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
+            if let detail {
+                Text(detail)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background(color.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
+        .frame(maxWidth: .infinity, minHeight: 118, alignment: .topLeading)
+        .foodCard()
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            "\(title), \(value.nutritionText) of \(goal.nutritionText) \(unit)"
+        )
     }
 
     private var progress: Double {

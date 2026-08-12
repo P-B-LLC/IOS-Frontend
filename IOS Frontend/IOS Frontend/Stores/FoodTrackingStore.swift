@@ -36,19 +36,21 @@ final class FoodTrackingStore {
         days[key] = FoodTrackingDay(
             dateKey: key,
             meals: [
-                FoodMeal(name: "Breakfast"),
-                FoodMeal(name: "Lunch"),
-                FoodMeal(name: "Dinner"),
-                FoodMeal(name: "Snacks")
+                FoodMeal(name: "Meal 1"),
+                FoodMeal(name: "Meal 2"),
+                FoodMeal(name: "Meal 3"),
+                FoodMeal(name: "Meal 4")
             ]
         )
     }
 
-    func addMeal(named name: String, on date: Date) {
-        let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !name.isEmpty else { return }
+    func addMeal(on date: Date) {
         mutateDay(on: date) { day in
-            day.meals.append(FoodMeal(name: name))
+            let nextNumber = day.meals.compactMap { meal -> Int? in
+                guard meal.name.hasPrefix("Meal ") else { return nil }
+                return Int(meal.name.dropFirst("Meal ".count))
+            }.max().map { $0 + 1 } ?? (day.meals.count + 1)
+            day.meals.append(FoodMeal(name: "Meal \(nextNumber)"))
         }
     }
 
@@ -141,7 +143,7 @@ extension FoodTrackingStore {
     static var preview: FoodTrackingStore {
         let store = FoodTrackingStore()
         let meals = store.meals(on: Date())
-        if let breakfast = meals.first {
+        if let firstMeal = meals.first {
             store.saveFood(
                 FoodEntry(
                     name: "Greek yogurt & berries",
@@ -152,7 +154,7 @@ extension FoodTrackingStore {
                         fatGrams: 5
                     )
                 ),
-                in: breakfast.id,
+                in: firstMeal.id,
                 on: Date()
             )
         }
