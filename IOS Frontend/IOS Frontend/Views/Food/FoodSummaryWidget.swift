@@ -2,7 +2,7 @@
 //  FoodSummaryWidget.swift
 //  IOS Frontend
 //
-//  Compact home entry point for today's calories and macronutrients.
+//  One compact home widget for today's calories and macronutrients.
 //
 
 import SwiftUI
@@ -11,142 +11,144 @@ struct FoodSummaryWidget: View {
     @Environment(FoodTrackingStore.self) private var store
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 8) {
-                Image(systemName: "fork.knife")
-                    .foregroundStyle(Color.orange)
-                Text("Food Today")
-                    .font(.subheadline.weight(.semibold))
-                Spacer()
-                Text("Tap a total")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+        NavigationLink {
+            FoodTrackingView()
+        } label: {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 8) {
+                    Image(systemName: "fork.knife")
+                        .foregroundStyle(Color.orange)
+                    Text("Food Today")
+                        .font(.subheadline.weight(.semibold))
+                    Spacer()
+                    Image(systemName: "chevron.forward")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
 
-            LazyVGrid(
-                columns: [
-                    GridItem(.flexible(), spacing: 10),
-                    GridItem(.flexible(), spacing: 10)
-                ],
-                spacing: 10
-            ) {
-                metricLink(
+                FilledNutritionMetric(
                     title: "Calories",
                     value: total.calories,
                     goal: store.goals.calories,
                     unit: "cal",
-                    icon: "flame.fill",
-                    color: .orange
+                    color: .blue,
+                    isPrimary: true
                 )
-                metricLink(
-                    title: "Protein",
-                    value: total.proteinGrams,
-                    goal: store.goals.proteinGrams,
-                    unit: "g",
-                    icon: "dumbbell.fill",
-                    color: .blue
-                )
-                metricLink(
-                    title: "Carbs",
-                    value: total.carbohydrateGrams,
-                    goal: store.goals.carbohydrateGrams,
-                    unit: "g",
-                    icon: "leaf.fill",
-                    color: .green
-                )
-                metricLink(
-                    title: "Fat",
-                    value: total.fatGrams,
-                    goal: store.goals.fatGrams,
-                    unit: "g",
-                    icon: "drop.fill",
-                    color: .purple
-                )
+
+                HStack(spacing: 8) {
+                    FilledNutritionMetric(
+                        title: "Carbs",
+                        value: total.carbohydrateGrams,
+                        goal: store.goals.carbohydrateGrams,
+                        unit: "g",
+                        color: .teal
+                    )
+                    FilledNutritionMetric(
+                        title: "Fat",
+                        value: total.fatGrams,
+                        goal: store.goals.fatGrams,
+                        unit: "g",
+                        color: .purple
+                    )
+                    FilledNutritionMetric(
+                        title: "Protein",
+                        value: total.proteinGrams,
+                        goal: store.goals.proteinGrams,
+                        unit: "g",
+                        color: .orange
+                    )
+                }
             }
+            .padding(14)
+            .background(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(Color(uiColor: .secondarySystemBackground))
+                    .shadow(color: .black.opacity(0.06), radius: 8, y: 3)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .strokeBorder(Color.primary.opacity(0.06), lineWidth: 1)
+            }
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
+        .accessibilityLabel(
+            "Food today, \(total.calories.nutritionText) of \(store.goals.calories.nutritionText) calories"
+        )
+        .accessibilityHint("Opens food tracking")
     }
 
     private var total: NutritionAmount {
         store.total(on: Date())
     }
-
-    private func metricLink(
-        title: String,
-        value: Decimal,
-        goal: Decimal,
-        unit: String,
-        icon: String,
-        color: Color
-    ) -> some View {
-        NavigationLink {
-            FoodTrackingView()
-        } label: {
-            HomeNutritionCard(
-                title: title,
-                value: value,
-                goal: goal,
-                unit: unit,
-                icon: icon,
-                color: color
-            )
-        }
-        .buttonStyle(.plain)
-    }
 }
 
-private struct HomeNutritionCard: View {
+private struct FilledNutritionMetric: View {
     let title: String
     let value: Decimal
     let goal: Decimal
     let unit: String
-    let icon: String
     let color: Color
+    var isPrimary = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Image(systemName: icon)
-                    .foregroundStyle(color)
-                Text(title)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Image(systemName: "chevron.forward")
-                    .font(.caption2.weight(.bold))
-                    .foregroundStyle(.tertiary)
-            }
+        VStack(alignment: .leading, spacing: isPrimary ? 7 : 5) {
+            Text(title)
+                .font(isPrimary ? .caption.weight(.semibold) : .caption2.weight(.semibold))
+                .foregroundStyle(.secondary)
+
             HStack(alignment: .firstTextBaseline, spacing: 3) {
-                Text(value.nutritionText)
-                    .font(.title3.weight(.bold))
-                Text(unit)
+                Text("\(value.nutritionText) \(unit)")
+                    .font(isPrimary ? .headline : .subheadline.weight(.bold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+                Spacer(minLength: 2)
+                Text("/ \(goal.nutritionText)")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             }
-            ProgressView(value: progress)
-                .tint(color)
-            Text("of \(goal.nutritionText) \(unit)")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+
+            if isPrimary {
+                Text(statusText)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
         }
-        .padding(13)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color(uiColor: .secondarySystemBackground))
-                .shadow(color: .black.opacity(0.05), radius: 6, y: 2)
-        )
+        .frame(maxWidth: .infinity, minHeight: isPrimary ? 76 : 68, alignment: .leading)
+        .padding(isPrimary ? 12 : 10)
+        .background {
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(color.opacity(0.08))
+                    Rectangle()
+                        .fill(color.opacity(0.22))
+                        .frame(width: proxy.size.width * progress)
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            }
+        }
         .overlay {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(color.opacity(0.12), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(color.opacity(0.13), lineWidth: 1)
         }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(
-            "\(title), \(value.nutritionText) of \(goal.nutritionText) \(unit)"
-        )
     }
 
-    private var progress: Double {
+    private var progress: CGFloat {
         guard goal > 0 else { return 0 }
         return min(max(value.nutritionDouble / goal.nutritionDouble, 0), 1)
+    }
+
+    private var statusText: String {
+        let remaining = goal - value
+        if remaining >= 0 {
+            return "\(remaining.nutritionText) \(unit) remaining"
+        }
+        return "\((-remaining).nutritionText) \(unit) over goal"
     }
 }
 

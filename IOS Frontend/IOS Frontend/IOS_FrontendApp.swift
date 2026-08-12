@@ -12,13 +12,21 @@ import SwiftUI
 struct IOS_FrontendApp: App {
     @State private var authentication: AuthenticationStore
     @State private var workoutStore = WorkoutStore()
-    @State private var foodTrackingStore = FoodTrackingStore()
+    @State private var foodTrackingStore: FoodTrackingStore
 
     init() {
         let configuration = APIConfiguration.current
         _authentication = State(
             initialValue: AuthenticationStore(configuration: configuration)
         )
+#if DEBUG
+        let isPreviewingFood = ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] != nil
+        _foodTrackingStore = State(
+            initialValue: isPreviewingFood ? .preview : FoodTrackingStore()
+        )
+#else
+        _foodTrackingStore = State(initialValue: FoodTrackingStore())
+#endif
     }
 
     var body: some Scene {
@@ -39,7 +47,16 @@ private struct AppRootView: View {
     var body: some View {
         Group {
 #if DEBUG
-            if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "1" {
+            if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "home" {
+                NavigationStack {
+                    ScrollView {
+                        FoodSummaryWidget()
+                            .padding()
+                    }
+                    .background(Color(uiColor: .systemGroupedBackground))
+                    .navigationTitle("Home")
+                }
+            } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] != nil {
                 NavigationStack {
                     FoodTrackingView()
                 }
@@ -52,7 +69,7 @@ private struct AppRootView: View {
         }
         .task {
 #if DEBUG
-            guard ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] != "1" else {
+            guard ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == nil else {
                 return
             }
 #endif
@@ -60,7 +77,7 @@ private struct AppRootView: View {
         }
         .task(id: authentication.token) {
 #if DEBUG
-            guard ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] != "1" else {
+            guard ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == nil else {
                 return
             }
 #endif
