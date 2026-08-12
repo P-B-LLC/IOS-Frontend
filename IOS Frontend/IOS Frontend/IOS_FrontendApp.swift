@@ -38,6 +38,47 @@ private struct AppRootView: View {
 
     var body: some View {
         Group {
+#if DEBUG
+            if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "1" {
+                NavigationStack {
+                    FoodTrackingView()
+                }
+            } else {
+                authenticatedContent
+            }
+#else
+            authenticatedContent
+#endif
+        }
+        .task {
+#if DEBUG
+            guard ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] != "1" else {
+                return
+            }
+#endif
+            await authentication.restoreSession()
+        }
+        .task(id: authentication.token) {
+#if DEBUG
+            guard ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] != "1" else {
+                return
+            }
+#endif
+            guard let token = authentication.token else {
+                workoutStore.disconnect()
+                foodTrackingStore.reset()
+                return
+            }
+            await workoutStore.connect(
+                configuration: authentication.configuration,
+                token: token
+            )
+        }
+    }
+
+    @ViewBuilder
+    private var authenticatedContent: some View {
+        Group {
             switch authentication.phase {
             case .checking:
                 VStack(spacing: 14) {
@@ -51,20 +92,6 @@ private struct AppRootView: View {
             case .signedIn:
                 ContentView()
             }
-        }
-        .task {
-            await authentication.restoreSession()
-        }
-        .task(id: authentication.token) {
-            guard let token = authentication.token else {
-                workoutStore.disconnect()
-                foodTrackingStore.reset()
-                return
-            }
-            await workoutStore.connect(
-                configuration: authentication.configuration,
-                token: token
-            )
         }
     }
 }

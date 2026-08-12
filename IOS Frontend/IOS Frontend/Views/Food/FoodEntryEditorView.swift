@@ -14,6 +14,7 @@ struct FoodEntryEditorView: View {
     let date: Date
     let mealID: FoodMeal.ID
     private let existingID: FoodEntry.ID
+    private let isEditing: Bool
 
     @State private var name: String
     @State private var servings: String
@@ -26,6 +27,7 @@ struct FoodEntryEditorView: View {
         self.date = date
         self.mealID = mealID
         existingID = existing?.id ?? UUID()
+        isEditing = existing != nil
         _name = State(initialValue: existing?.name ?? "")
         _servings = State(initialValue: existing?.servings.nutritionText ?? "1")
         _calories = State(initialValue: existing?.nutritionPerServing.calories.nutritionText ?? "")
@@ -67,6 +69,15 @@ struct FoodEntryEditorView: View {
                 )
                 .font(.caption)
                 .foregroundStyle(.secondary)
+            }
+
+            if isEditing {
+                Section {
+                    Button("Delete Food", systemImage: "trash", role: .destructive) {
+                        store.removeFood(id: existingID, from: mealID, on: date)
+                        dismiss()
+                    }
+                }
             }
         }
         .navigationTitle(name.isEmpty ? "Add Food" : name)
