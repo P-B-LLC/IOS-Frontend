@@ -78,46 +78,40 @@ struct FoodTrackingView: View {
     }
 
     private var dailySummary: some View {
-        LazyVGrid(
-            columns: [
-                GridItem(.flexible(), spacing: 12),
-                GridItem(.flexible(), spacing: 12)
-            ],
-            spacing: 12
-        ) {
-            NutritionTotalCard(
+        VStack(alignment: .leading, spacing: 10) {
+            FilledNutritionMetric(
                 title: "Calories",
                 value: total.calories,
                 goal: store.goals.calories,
                 unit: "cal",
-                icon: "flame.fill",
-                color: .orange,
+                color: .blue,
+                isPrimary: true,
                 detail: "\(loggedFoodCount) foods logged"
             )
-            NutritionTotalCard(
-                title: "Protein",
-                value: total.proteinGrams,
-                goal: store.goals.proteinGrams,
-                unit: "g",
-                icon: "dumbbell.fill",
-                color: .blue
-            )
-            NutritionTotalCard(
-                title: "Carbs",
-                value: total.carbohydrateGrams,
-                goal: store.goals.carbohydrateGrams,
-                unit: "g",
-                icon: "leaf.fill",
-                color: .green
-            )
-            NutritionTotalCard(
-                title: "Fat",
-                value: total.fatGrams,
-                goal: store.goals.fatGrams,
-                unit: "g",
-                icon: "drop.fill",
-                color: .purple
-            )
+
+            HStack(spacing: 8) {
+                FilledNutritionMetric(
+                    title: "Carbs",
+                    value: total.carbohydrateGrams,
+                    goal: store.goals.carbohydrateGrams,
+                    unit: "g",
+                    color: .teal
+                )
+                FilledNutritionMetric(
+                    title: "Fat",
+                    value: total.fatGrams,
+                    goal: store.goals.fatGrams,
+                    unit: "g",
+                    color: .purple
+                )
+                FilledNutritionMetric(
+                    title: "Protein",
+                    value: total.proteinGrams,
+                    goal: store.goals.proteinGrams,
+                    unit: "g",
+                    color: .orange
+                )
+            }
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Daily nutrition totals")
@@ -180,35 +174,33 @@ struct FoodTrackingView: View {
     }
 }
 
-private struct NutritionTotalCard: View {
+private struct FilledNutritionMetric: View {
     let title: String
     let value: Decimal
     let goal: Decimal
     let unit: String
-    let icon: String
     let color: Color
+    var isPrimary = false
     var detail: String? = nil
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Label(title, systemImage: icon)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(color)
-                Spacer()
-            }
-            HStack(alignment: .firstTextBaseline, spacing: 3) {
-                Text(value.nutritionText)
-                    .font(.title2.weight(.bold))
-                Text(unit)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            ProgressView(value: progress)
-                .tint(color)
-            Text("of \(goal.nutritionText) \(unit)")
-                .font(.caption2)
+        VStack(alignment: .leading, spacing: isPrimary ? 7 : 5) {
+            Text(title)
+                .font(isPrimary ? .caption.weight(.semibold) : .caption2.weight(.semibold))
                 .foregroundStyle(.secondary)
+            HStack(alignment: .firstTextBaseline, spacing: 3) {
+                Text("\(value.nutritionText) \(unit)")
+                    .font(isPrimary ? .headline : .subheadline.weight(.bold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+                Spacer(minLength: 2)
+                Text("/ \(goal.nutritionText)")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
             if let detail {
                 Text(detail)
                     .font(.caption2)
@@ -216,15 +208,29 @@ private struct NutritionTotalCard: View {
                     .lineLimit(1)
             }
         }
-        .frame(maxWidth: .infinity, minHeight: 118, alignment: .topLeading)
-        .foodCard()
+        .frame(maxWidth: .infinity, minHeight: isPrimary ? 82 : 72, alignment: .leading)
+        .padding(isPrimary ? 13 : 10)
+        .background {
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(color.opacity(0.08))
+                    Rectangle()
+                        .fill(color.opacity(0.22))
+                        .frame(width: proxy.size.width * progress)
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            }
+        }
+        .overlay {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(color.opacity(0.13), lineWidth: 1)
+        }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(
-            "\(title), \(value.nutritionText) of \(goal.nutritionText) \(unit)"
-        )
+        .accessibilityLabel("\(title), \(value.nutritionText) of \(goal.nutritionText) \(unit)")
     }
 
-    private var progress: Double {
+    private var progress: CGFloat {
         guard goal > 0 else { return 0 }
         return min(max(value.nutritionDouble / goal.nutritionDouble, 0), 1)
     }
