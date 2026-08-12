@@ -12,6 +12,7 @@ import SwiftUI
 struct IOS_FrontendApp: App {
     @State private var authentication: AuthenticationStore
     @State private var workoutStore = WorkoutStore()
+    @State private var foodTrackingStore = FoodTrackingStore()
 
     init() {
         let configuration = APIConfiguration.current
@@ -25,6 +26,7 @@ struct IOS_FrontendApp: App {
             AppRootView()
                 .environment(authentication)
                 .environment(workoutStore)
+                .environment(foodTrackingStore)
         }
     }
 }
@@ -32,6 +34,7 @@ struct IOS_FrontendApp: App {
 private struct AppRootView: View {
     @Environment(AuthenticationStore.self) private var authentication
     @Environment(WorkoutStore.self) private var workoutStore
+    @Environment(FoodTrackingStore.self) private var foodTrackingStore
 
     var body: some View {
         Group {
@@ -55,6 +58,7 @@ private struct AppRootView: View {
         .task(id: authentication.token) {
             guard let token = authentication.token else {
                 workoutStore.disconnect()
+                foodTrackingStore.reset()
                 return
             }
             await workoutStore.connect(

@@ -40,6 +40,7 @@ struct ContentView: View {
                     }
 
                     WeeklyScheduleWidget()
+                    FoodSummaryWidget()
                 }
                 .padding(.horizontal)
                 .padding(.top, 8)
@@ -94,6 +95,7 @@ struct ContentView: View {
 #Preview {
     ContentView()
         .environment(WorkoutStore.preview)
+        .environment(FoodTrackingStore.preview)
         .environment(
             AuthenticationStore(configuration: .current)
         )
