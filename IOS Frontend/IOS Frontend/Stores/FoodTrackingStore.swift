@@ -12,6 +12,7 @@ import Observation
 @Observable
 final class FoodTrackingStore {
     private(set) var days: [String: FoodTrackingDay] = [:]
+    private(set) var savedMeals: [SavedFoodMeal] = []
     private(set) var goals: NutritionGoals
 
     /// Remains true until food/meal operations are added to API/openapi.yaml.
@@ -28,6 +29,10 @@ final class FoodTrackingStore {
 
     func total(on date: Date) -> NutritionAmount {
         days[dateKey(for: date)]?.totalNutrition ?? .zero
+    }
+
+    func hasLoggedFood(on date: Date) -> Bool {
+        meals(on: date).contains { !$0.entries.isEmpty }
     }
 
     func ensureDay(_ date: Date) {
@@ -91,12 +96,54 @@ final class FoodTrackingStore {
         }
     }
 
+    func saveReusableMeal(_ savedMeal: SavedFoodMeal) {
+        if let index = savedMeals.firstIndex(where: { $0.id == savedMeal.id }) {
+            savedMeals[index] = savedMeal
+        } else {
+            savedMeals.append(savedMeal)
+        }
+        savedMeals.sort {
+            $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+        }
+    }
+
+    func removeReusableMeal(id: SavedFoodMeal.ID) {
+        savedMeals.removeAll { $0.id == id }
+    }
+
+    /// Adds one combined entry for the saved recipe to the chosen meal number
+    /// on every selected date. A fresh identifier prevents cross-day edits.
+    func applyReusableMeal(
+        _ savedMeal: SavedFoodMeal,
+        to dates: [Date],
+        mealNumber: Int
+    ) {
+        guard mealNumber > 0, !savedMeal.ingredients.isEmpty else { return }
+
+        for date in dates {
+            mutateDay(on: date) { day in
+                while day.meals.count < mealNumber {
+                    day.meals.append(FoodMeal(name: "Meal \(day.meals.count + 1)"))
+                }
+
+                day.meals[mealNumber - 1].entries.append(
+                    FoodEntry(
+                        name: savedMeal.name,
+                        nutritionPerServing: savedMeal.totalNutrition
+                    )
+                )
+                day.meals[mealNumber - 1].isComplete = false
+            }
+        }
+    }
+
     func updateGoals(_ goals: NutritionGoals) {
         self.goals = goals
     }
 
     func reset() {
         days = [:]
+        savedMeals = []
         goals = .default
         ensureDay(Date())
     }
@@ -173,6 +220,31 @@ extension FoodTrackingStore {
                 on: Date()
             )
         }
+        store.saveReusableMeal(
+            SavedFoodMeal(
+                name: "Chicken rice bowl",
+                ingredients: [
+                    FoodEntry(
+                        name: "Chicken breast",
+                        nutritionPerServing: NutritionAmount(
+                            calories: 280,
+                            proteinGrams: 52,
+                            carbohydrateGrams: 0,
+                            fatGrams: 6
+                        )
+                    ),
+                    FoodEntry(
+                        name: "Rice and vegetables",
+                        nutritionPerServing: NutritionAmount(
+                            calories: 330,
+                            proteinGrams: 6,
+                            carbohydrateGrams: 72,
+                            fatGrams: 4
+                        )
+                    )
+                ]
+            )
+        )
         return store
     }
 }

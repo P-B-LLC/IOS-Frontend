@@ -52,10 +52,10 @@ struct FoodEntryEditorView: View {
             }
 
             Section {
-                NutritionField(title: "Calories", unit: "cal", text: $calories)
-                NutritionField(title: "Protein", unit: "g", text: $protein)
-                NutritionField(title: "Carbohydrates", unit: "g", text: $carbohydrates)
-                NutritionField(title: "Fat", unit: "g", text: $fat)
+                FoodNutritionField(title: "Calories", unit: "cal", text: $calories)
+                FoodNutritionField(title: "Protein", unit: "g", text: $protein)
+                FoodNutritionField(title: "Carbohydrates", unit: "g", text: $carbohydrates)
+                FoodNutritionField(title: "Fat", unit: "g", text: $fat)
             } header: {
                 Text("Nutrition per serving")
             } footer: {
@@ -144,7 +144,7 @@ struct FoodEntryEditorView: View {
     }
 }
 
-private struct NutritionField: View {
+struct FoodNutritionField: View {
     let title: String
     let unit: String
     @Binding var text: String

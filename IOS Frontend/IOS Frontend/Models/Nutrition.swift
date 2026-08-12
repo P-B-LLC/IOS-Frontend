@@ -109,6 +109,28 @@ nonisolated struct FoodTrackingDay: Equatable, Hashable, Codable, Sendable {
     }
 }
 
+/// A reusable recipe or meal assembled from manual food entries.
+/// This remains an app-facing model until the OAS defines nutrition resources.
+nonisolated struct SavedFoodMeal: Identifiable, Equatable, Hashable, Codable, Sendable {
+    let id: UUID
+    var name: String
+    var ingredients: [FoodEntry]
+
+    init(
+        id: UUID = UUID(),
+        name: String,
+        ingredients: [FoodEntry] = []
+    ) {
+        self.id = id
+        self.name = name
+        self.ingredients = ingredients
+    }
+
+    var totalNutrition: NutritionAmount {
+        ingredients.reduce(.zero) { $0 + $1.totalNutrition }
+    }
+}
+
 nonisolated extension Decimal {
     var nutritionDouble: Double {
         NSDecimalNumber(decimal: self).doubleValue
