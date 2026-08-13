@@ -215,36 +215,61 @@ final class FoodTrackingStore {
 extension FoodTrackingStore {
     static var preview: FoodTrackingStore {
         let store = FoodTrackingStore()
-        let meals = store.meals(on: Date())
-        if let firstMeal = meals.first {
-            store.saveFood(
-                FoodEntry(
-                    name: "Greek yogurt & berries",
-                    nutritionPerServing: NutritionAmount(
-                        calories: 280,
-                        proteinGrams: 24,
-                        carbohydrateGrams: 36,
-                        fatGrams: 5
-                    )
-                ),
-                in: firstMeal.id,
-                on: Date()
-            )
-        }
-        if meals.count > 1 {
-            store.saveFood(
-                FoodEntry(
-                    name: "Chicken rice bowl",
-                    nutritionPerServing: NutritionAmount(
-                        calories: 610,
-                        proteinGrams: 48,
-                        carbohydrateGrams: 72,
-                        fatGrams: 14
-                    )
-                ),
-                in: meals[1].id,
-                on: Date()
-            )
+        let today = Date()
+        let meals = store.meals(on: today)
+
+        // Individual ingredients rather than combined dishes, so the breakdown
+        // demonstrates foods being categorized by what they actually are.
+        let sampleFoods: [(mealIndex: Int, entry: FoodEntry)] = [
+            (0, FoodEntry(
+                name: "Greek yogurt",
+                nutritionPerServing: NutritionAmount(
+                    calories: 120,
+                    proteinGrams: 20,
+                    carbohydrateGrams: 9,
+                    fatGrams: 0
+                )
+            )),
+            (0, FoodEntry(
+                name: "Blueberries",
+                nutritionPerServing: NutritionAmount(
+                    calories: 85,
+                    proteinGrams: 1,
+                    carbohydrateGrams: 21,
+                    fatGrams: 0
+                )
+            )),
+            (1, FoodEntry(
+                name: "Grilled chicken breast",
+                nutritionPerServing: NutritionAmount(
+                    calories: 280,
+                    proteinGrams: 52,
+                    carbohydrateGrams: 0,
+                    fatGrams: 6
+                )
+            )),
+            (1, FoodEntry(
+                name: "White rice",
+                nutritionPerServing: NutritionAmount(
+                    calories: 330,
+                    proteinGrams: 6,
+                    carbohydrateGrams: 72,
+                    fatGrams: 4
+                )
+            )),
+            (2, FoodEntry(
+                name: "Almonds",
+                nutritionPerServing: NutritionAmount(
+                    calories: 160,
+                    proteinGrams: 6,
+                    carbohydrateGrams: 6,
+                    fatGrams: 14
+                )
+            ))
+        ]
+
+        for sample in sampleFoods where meals.count > sample.mealIndex {
+            store.saveFood(sample.entry, in: meals[sample.mealIndex].id, on: today)
         }
         store.saveReusableMeal(
             SavedFoodMeal(
