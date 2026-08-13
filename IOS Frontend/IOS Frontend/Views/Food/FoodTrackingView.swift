@@ -354,12 +354,13 @@ private struct MealRow: View {
 
     var body: some View {
         HStack(spacing: 11) {
-            Image(systemName: meal.isComplete ? "checkmark" : "fork.knife")
+            // A meal counts as logged as soon as it holds food.
+            Image(systemName: isLogged ? "checkmark" : "fork.knife")
                 .font(.caption.weight(.bold))
-                .foregroundStyle(meal.isComplete ? Color.green : Color.orange)
+                .foregroundStyle(isLogged ? Color.green : Color.orange)
                 .frame(width: 30, height: 30)
                 .background(
-                    (meal.isComplete ? Color.green : Color.orange).opacity(0.08),
+                    (isLogged ? Color.green : Color.orange).opacity(0.08),
                     in: Circle()
                 )
 
@@ -382,6 +383,10 @@ private struct MealRow: View {
             }
         }
         .foodCard()
+    }
+
+    private var isLogged: Bool {
+        !meal.entries.isEmpty
     }
 
     private var subtitle: String {

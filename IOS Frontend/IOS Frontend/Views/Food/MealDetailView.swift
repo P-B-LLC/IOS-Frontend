@@ -28,7 +28,6 @@ struct MealDetailView: View {
                         mealSummary(meal)
                         foodList(meal)
                         addFoodButton
-                        completeButton(meal)
                     }
                     .padding(.horizontal)
                     .padding(.vertical, 12)
@@ -46,7 +45,7 @@ struct MealDetailView: View {
         }
         .sheet(isPresented: $isAddingFood) {
             NavigationStack {
-                FoodEntryEditorView(date: date, mealID: mealID)
+                FoodPickerView(date: date, mealID: mealID)
             }
         }
         .sheet(item: $editingFood) { food in
@@ -77,7 +76,9 @@ struct MealDetailView: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(meal.isComplete ? "Meal logged" : "Meal in progress")
+                    // Food counts the moment it is added, so a meal holding any
+                    // food is logged. There is no separate confirmation step.
+                    Text(meal.entries.isEmpty ? "No food yet" : "Meal logged")
                         .font(.headline)
                     Text("\(meal.entries.count) food\(meal.entries.count == 1 ? "" : "s")")
                         .font(.caption)
@@ -140,22 +141,6 @@ struct MealDetailView: View {
         .buttonStyle(.borderedProminent)
         .controlSize(.large)
         .tint(Color.orange)
-    }
-
-    private func completeButton(_ meal: FoodMeal) -> some View {
-        Button {
-            store.toggleMealComplete(id: mealID, on: date)
-        } label: {
-            Label(
-                meal.isComplete ? "Reopen Meal" : "Log Meal",
-                systemImage: meal.isComplete ? "arrow.uturn.backward" : "checkmark.circle.fill"
-            )
-            .font(.headline)
-            .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(.bordered)
-        .controlSize(.large)
-        .disabled(meal.entries.isEmpty)
     }
 
     @ToolbarContentBuilder

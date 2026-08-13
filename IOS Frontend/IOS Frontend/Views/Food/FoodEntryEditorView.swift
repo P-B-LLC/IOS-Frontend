@@ -15,6 +15,9 @@ struct FoodEntryEditorView: View {
     let mealID: FoodMeal.ID
     private let existingID: FoodEntry.ID
     private let isEditing: Bool
+    /// Called instead of `dismiss()` after a successful save. Lets a presenting
+    /// picker close its whole sheet rather than only popping this screen.
+    private let onSaved: (() -> Void)?
 
     @State private var name: String
     @State private var servings: String
@@ -23,9 +26,15 @@ struct FoodEntryEditorView: View {
     @State private var carbohydrates: String
     @State private var fat: String
 
-    init(date: Date, mealID: FoodMeal.ID, existing: FoodEntry? = nil) {
+    init(
+        date: Date,
+        mealID: FoodMeal.ID,
+        existing: FoodEntry? = nil,
+        onSaved: (() -> Void)? = nil
+    ) {
         self.date = date
         self.mealID = mealID
+        self.onSaved = onSaved
         existingID = existing?.id ?? UUID()
         isEditing = existing != nil
         _name = State(initialValue: existing?.name ?? "")
@@ -60,15 +69,6 @@ struct FoodEntryEditorView: View {
                 Text("Nutrition per serving")
             } footer: {
                 Text("Enter the values shown on the food label for one serving.")
-            }
-
-            Section {
-                Label(
-                    "Food database search is waiting for a documented backend endpoint. Manual entries stay in this app session for now.",
-                    systemImage: "magnifyingglass"
-                )
-                .font(.caption)
-                .foregroundStyle(.secondary)
             }
 
             if isEditing {
@@ -126,7 +126,11 @@ struct FoodEntryEditorView: View {
             in: mealID,
             on: date
         )
-        dismiss()
+        if let onSaved {
+            onSaved()
+        } else {
+            dismiss()
+        }
     }
 
     private func positiveDecimal(_ value: String) -> Decimal? {

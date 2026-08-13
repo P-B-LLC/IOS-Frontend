@@ -35,6 +35,32 @@ final class FoodTrackingStore {
         meals(on: date).contains { !$0.entries.isEmpty }
     }
 
+    /// Distinct foods the user has logged before, most recent day first.
+    ///
+    /// Backs the "previously used" list when adding food. Names are matched
+    /// case-insensitively so the same food logged repeatedly appears once,
+    /// carrying the servings and nutrition of its most recent use.
+    var recentFoods: [FoodEntry] {
+        var seenNames: Set<String> = []
+        var result: [FoodEntry] = []
+
+        for key in days.keys.sorted(by: >) {
+            guard let day = days[key] else { continue }
+            // Within a day, later entries were added more recently.
+            for entry in day.meals.flatMap(\.entries).reversed() {
+                let name = entry.name
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                    .lowercased()
+                guard !name.isEmpty, seenNames.insert(name).inserted else {
+                    continue
+                }
+                result.append(entry)
+            }
+        }
+
+        return result
+    }
+
     func ensureDay(_ date: Date) {
         let key = dateKey(for: date)
         guard days[key] == nil else { return }
