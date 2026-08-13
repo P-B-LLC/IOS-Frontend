@@ -24,6 +24,7 @@ struct FoodTrackingView: View {
                 }
 
                 mealsSection
+                NutritionBreakdownView(meals: store.meals(on: selectedDate))
             }
             .padding(.horizontal)
             .padding(.vertical, 8)
