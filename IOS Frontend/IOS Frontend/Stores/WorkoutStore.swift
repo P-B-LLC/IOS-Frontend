@@ -110,6 +110,7 @@ final class WorkoutStore {
         let generation = connectionGeneration
         let existing = schedule[day]
         let date = dateString(for: day)
+        let workout = Self.normalized(workout)
         isSaving = true
         persistenceError = nil
 
@@ -194,7 +195,8 @@ final class WorkoutStore {
         exerciseID: Exercise.ID,
         setID: WorkoutSetDraft.ID,
         weightKilograms: String? = nil,
-        reps: String? = nil
+        reps: String? = nil,
+        distanceKilometers: String? = nil
     ) {
         mutateSet(on: day, exerciseID: exerciseID, setID: setID) { set in
             if let weightKilograms {
@@ -202,6 +204,9 @@ final class WorkoutStore {
             }
             if let reps {
                 set.reps = reps
+            }
+            if let distanceKilometers {
+                set.distanceKilometers = distanceKilometers
             }
         }
     }
@@ -213,10 +218,12 @@ final class WorkoutStore {
     ) {
         guard let repository,
               !pendingSetIDs.contains(setID),
+              let session = activeSession(on: day),
               let exercise = sessionExercise(on: day, id: exerciseID),
               let set = exercise.sets.first(where: { $0.id == setID }) else {
             return
         }
+        let workoutType = session.workoutType
 
         pendingSetIDs.insert(setID)
         persistenceError = nil
@@ -234,7 +241,8 @@ final class WorkoutStore {
                 } else {
                     let entryID = try await repository.logSet(
                         set,
-                        sessionExerciseID: exercise.sessionExerciseID
+                        sessionExerciseID: exercise.sessionExerciseID,
+                        workoutType: workoutType
                     )
                     mutateSet(on: day, exerciseID: exerciseID, setID: setID) {
                         $0.serverID = entryID
@@ -472,6 +480,20 @@ final class WorkoutStore {
             value: day.rawValue - 1,
             to: monday
         ) ?? monday
+    }
+
+    /// A distance workout is logged as a single effort, but the API records
+    /// every effort against a session exercise. Give one to a run, ride, or
+    /// swim that has none so the user never has to invent an exercise for it.
+    private static func normalized(_ workout: Workout) -> Workout {
+        guard workout.type.tracksDistance, workout.exercises.isEmpty else {
+            return workout
+        }
+        var workout = workout
+        workout.exercises = [
+            Exercise(name: workout.type.title, sets: 1)
+        ]
+        return workout
     }
 }
 

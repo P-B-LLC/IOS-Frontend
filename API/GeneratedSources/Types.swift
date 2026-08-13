@@ -1654,6 +1654,8 @@ public enum Components {
             public var weightKg: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PatchedSetEntryRequest/reps`.
             public var reps: Swift.Int64?
+            /// - Remark: Generated from `#/components/schemas/PatchedSetEntryRequest/distance_km`.
+            public var distanceKm: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PatchedSetEntryRequest/completed_at`.
             public var completedAt: Foundation.Date?
             /// Creates a new `PatchedSetEntryRequest`.
@@ -1663,18 +1665,21 @@ public enum Components {
             ///   - setNumber:
             ///   - weightKg:
             ///   - reps:
+            ///   - distanceKm:
             ///   - completedAt:
             public init(
                 sessionExercise: Swift.Int? = nil,
                 setNumber: Swift.Int64? = nil,
                 weightKg: Swift.String? = nil,
                 reps: Swift.Int64? = nil,
+                distanceKm: Swift.String? = nil,
                 completedAt: Foundation.Date? = nil
             ) {
                 self.sessionExercise = sessionExercise
                 self.setNumber = setNumber
                 self.weightKg = weightKg
                 self.reps = reps
+                self.distanceKm = distanceKm
                 self.completedAt = completedAt
             }
             public enum CodingKeys: String, CodingKey {
@@ -1682,6 +1687,7 @@ public enum Components {
                 case setNumber = "set_number"
                 case weightKg = "weight_kg"
                 case reps
+                case distanceKm = "distance_km"
                 case completedAt = "completed_at"
             }
         }
@@ -1786,22 +1792,28 @@ public enum Components {
         public struct PatchedWorkoutTemplateRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PatchedWorkoutTemplateRequest/name`.
             public var name: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedWorkoutTemplateRequest/workout_type`.
+            public var workoutType: Components.Schemas.WorkoutTypeEnum?
             /// - Remark: Generated from `#/components/schemas/PatchedWorkoutTemplateRequest/description`.
             public var description: Swift.String?
             /// Creates a new `PatchedWorkoutTemplateRequest`.
             ///
             /// - Parameters:
             ///   - name:
+            ///   - workoutType:
             ///   - description:
             public init(
                 name: Swift.String? = nil,
+                workoutType: Components.Schemas.WorkoutTypeEnum? = nil,
                 description: Swift.String? = nil
             ) {
                 self.name = name
+                self.workoutType = workoutType
                 self.description = description
             }
             public enum CodingKeys: String, CodingKey {
                 case name
+                case workoutType = "workout_type"
                 case description
             }
         }
@@ -2405,6 +2417,8 @@ public enum Components {
             public var weightKg: Swift.String?
             /// - Remark: Generated from `#/components/schemas/SetEntry/reps`.
             public var reps: Swift.Int64?
+            /// - Remark: Generated from `#/components/schemas/SetEntry/distance_km`.
+            public var distanceKm: Swift.String?
             /// - Remark: Generated from `#/components/schemas/SetEntry/completed_at`.
             public var completedAt: Foundation.Date?
             /// - Remark: Generated from `#/components/schemas/SetEntry/created_at`.
@@ -2419,6 +2433,7 @@ public enum Components {
             ///   - setNumber:
             ///   - weightKg:
             ///   - reps:
+            ///   - distanceKm:
             ///   - completedAt:
             ///   - createdAt:
             ///   - updatedAt:
@@ -2428,6 +2443,7 @@ public enum Components {
                 setNumber: Swift.Int64,
                 weightKg: Swift.String? = nil,
                 reps: Swift.Int64? = nil,
+                distanceKm: Swift.String? = nil,
                 completedAt: Foundation.Date? = nil,
                 createdAt: Foundation.Date,
                 updatedAt: Foundation.Date
@@ -2437,6 +2453,7 @@ public enum Components {
                 self.setNumber = setNumber
                 self.weightKg = weightKg
                 self.reps = reps
+                self.distanceKm = distanceKm
                 self.completedAt = completedAt
                 self.createdAt = createdAt
                 self.updatedAt = updatedAt
@@ -2447,6 +2464,7 @@ public enum Components {
                 case setNumber = "set_number"
                 case weightKg = "weight_kg"
                 case reps
+                case distanceKm = "distance_km"
                 case completedAt = "completed_at"
                 case createdAt = "created_at"
                 case updatedAt = "updated_at"
@@ -2462,6 +2480,8 @@ public enum Components {
             public var weightKg: Swift.String?
             /// - Remark: Generated from `#/components/schemas/SetEntryRequest/reps`.
             public var reps: Swift.Int64?
+            /// - Remark: Generated from `#/components/schemas/SetEntryRequest/distance_km`.
+            public var distanceKm: Swift.String?
             /// - Remark: Generated from `#/components/schemas/SetEntryRequest/completed_at`.
             public var completedAt: Foundation.Date?
             /// Creates a new `SetEntryRequest`.
@@ -2471,18 +2491,21 @@ public enum Components {
             ///   - setNumber:
             ///   - weightKg:
             ///   - reps:
+            ///   - distanceKm:
             ///   - completedAt:
             public init(
                 sessionExercise: Swift.Int,
                 setNumber: Swift.Int64,
                 weightKg: Swift.String? = nil,
                 reps: Swift.Int64? = nil,
+                distanceKm: Swift.String? = nil,
                 completedAt: Foundation.Date? = nil
             ) {
                 self.sessionExercise = sessionExercise
                 self.setNumber = setNumber
                 self.weightKg = weightKg
                 self.reps = reps
+                self.distanceKm = distanceKm
                 self.completedAt = completedAt
             }
             public enum CodingKeys: String, CodingKey {
@@ -2490,6 +2513,7 @@ public enum Components {
                 case setNumber = "set_number"
                 case weightKg = "weight_kg"
                 case reps
+                case distanceKm = "distance_km"
                 case completedAt = "completed_at"
             }
         }
@@ -2841,6 +2865,8 @@ public enum Components {
             public var owner: Swift.Int
             /// - Remark: Generated from `#/components/schemas/WorkoutTemplate/name`.
             public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/WorkoutTemplate/workout_type`.
+            public var workoutType: Components.Schemas.WorkoutTypeEnum?
             /// - Remark: Generated from `#/components/schemas/WorkoutTemplate/description`.
             public var description: Swift.String?
             /// - Remark: Generated from `#/components/schemas/WorkoutTemplate/exercises`.
@@ -2855,6 +2881,7 @@ public enum Components {
             ///   - id:
             ///   - owner:
             ///   - name:
+            ///   - workoutType:
             ///   - description:
             ///   - exercises:
             ///   - createdAt:
@@ -2863,6 +2890,7 @@ public enum Components {
                 id: Swift.Int,
                 owner: Swift.Int,
                 name: Swift.String,
+                workoutType: Components.Schemas.WorkoutTypeEnum? = nil,
                 description: Swift.String? = nil,
                 exercises: [Components.Schemas.WorkoutExercise],
                 createdAt: Foundation.Date,
@@ -2871,6 +2899,7 @@ public enum Components {
                 self.id = id
                 self.owner = owner
                 self.name = name
+                self.workoutType = workoutType
                 self.description = description
                 self.exercises = exercises
                 self.createdAt = createdAt
@@ -2880,6 +2909,7 @@ public enum Components {
                 case id
                 case owner
                 case name
+                case workoutType = "workout_type"
                 case description
                 case exercises
                 case createdAt = "created_at"
@@ -2890,24 +2920,42 @@ public enum Components {
         public struct WorkoutTemplateRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/WorkoutTemplateRequest/name`.
             public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/WorkoutTemplateRequest/workout_type`.
+            public var workoutType: Components.Schemas.WorkoutTypeEnum?
             /// - Remark: Generated from `#/components/schemas/WorkoutTemplateRequest/description`.
             public var description: Swift.String?
             /// Creates a new `WorkoutTemplateRequest`.
             ///
             /// - Parameters:
             ///   - name:
+            ///   - workoutType:
             ///   - description:
             public init(
                 name: Swift.String,
+                workoutType: Components.Schemas.WorkoutTypeEnum? = nil,
                 description: Swift.String? = nil
             ) {
                 self.name = name
+                self.workoutType = workoutType
                 self.description = description
             }
             public enum CodingKeys: String, CodingKey {
                 case name
+                case workoutType = "workout_type"
                 case description
             }
+        }
+        /// * `lifting` - Lifting
+        /// * `running` - Running
+        /// * `biking` - Biking
+        /// * `swimming` - Swimming
+        ///
+        /// - Remark: Generated from `#/components/schemas/WorkoutTypeEnum`.
+        @frozen public enum WorkoutTypeEnum: String, Codable, Hashable, Sendable, CaseIterable {
+            case lifting = "lifting"
+            case running = "running"
+            case biking = "biking"
+            case swimming = "swimming"
         }
     }
     /// Types generated from the `#/components/parameters` section of the OpenAPI document.

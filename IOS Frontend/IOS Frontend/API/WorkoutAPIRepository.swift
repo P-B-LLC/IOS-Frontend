@@ -62,6 +62,7 @@ actor WorkoutAPIRepository {
                 scheduleID: schedule.id,
                 scheduledDate: schedule.scheduledDate,
                 name: template.name,
+                type: Self.workoutType(from: template.workoutType),
                 exercises: exercises
             )
         }
@@ -108,7 +109,10 @@ actor WorkoutAPIRepository {
     ) async throws {
         let templateOutput = try await client.workoutsCreate(
             body: .json(
-                Components.Schemas.WorkoutTemplateRequest(name: draft.name)
+                Components.Schemas.WorkoutTemplateRequest(
+                    name: draft.name,
+                    workoutType: Self.workoutTypePayload(draft.type)
+                )
             )
         )
 
@@ -175,7 +179,8 @@ actor WorkoutAPIRepository {
             path: .init(id: workoutID),
             body: .json(
                 Components.Schemas.PatchedWorkoutTemplateRequest(
-                    name: draft.name
+                    name: draft.name,
+                    workoutType: Self.workoutTypePayload(draft.type)
                 )
             )
         )
@@ -353,6 +358,7 @@ actor WorkoutAPIRepository {
             workoutID: workout.id,
             workoutServerID: workoutServerID,
             workoutName: started.workoutName,
+            workoutType: workout.type,
             startedAt: started.startedAt ?? Date(),
             exercises: exercises
         )
@@ -360,13 +366,32 @@ actor WorkoutAPIRepository {
 
     func logSet(
         _ set: WorkoutSetDraft,
-        sessionExerciseID: Int
+        sessionExerciseID: Int,
+        workoutType: WorkoutType
     ) async throws -> Int {
-        guard let reps = Int64(
-            set.reps.trimmingCharacters(in: .whitespacesAndNewlines)
-        ) else {
-            throw APIServiceError.malformedResponse
+        let reps: Int64?
+        let distanceKilometers: String?
+
+        if workoutType.tracksDistance {
+            // A run, ride, or swim is recorded as a distance; reps do not apply
+            // and the elapsed time comes from the session's own start and end.
+            let trimmedDistance = set.distanceKilometers
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmedDistance.isEmpty else {
+                throw APIServiceError.malformedResponse
+            }
+            reps = nil
+            distanceKilometers = trimmedDistance
+        } else {
+            guard let value = Int64(
+                set.reps.trimmingCharacters(in: .whitespacesAndNewlines)
+            ) else {
+                throw APIServiceError.malformedResponse
+            }
+            reps = value
+            distanceKilometers = nil
         }
+
         let trimmedWeight = set.weightKilograms
             .trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -377,6 +402,7 @@ actor WorkoutAPIRepository {
                     setNumber: Int64(set.setNumber),
                     weightKg: trimmedWeight.isEmpty ? nil : trimmedWeight,
                     reps: reps,
+                    distanceKm: distanceKilometers,
                     completedAt: Date()
                 )
             )
@@ -544,5 +570,31 @@ actor WorkoutAPIRepository {
     private static func makeSetDrafts(count: Int) -> [WorkoutSetDraft] {
         guard count > 0 else { return [] }
         return (1...count).map { WorkoutSetDraft(setNumber: $0) }
+    }
+
+    /// Maps the generated `workout_type` enum onto the app-facing type. An
+    /// unrecognized or absent value falls back to lifting, matching the
+    /// backend default for records created before the field existed.
+    private static func workoutType(
+        from value: Components.Schemas.WorkoutTypeEnum?
+    ) -> WorkoutType {
+        guard let value else { return .lifting }
+        switch value {
+        case .lifting: return .lifting
+        case .running: return .running
+        case .biking: return .biking
+        case .swimming: return .swimming
+        }
+    }
+
+    private static func workoutTypePayload(
+        _ type: WorkoutType
+    ) -> Components.Schemas.WorkoutTypeEnum {
+        switch type {
+        case .lifting: return .lifting
+        case .running: return .running
+        case .biking: return .biking
+        case .swimming: return .swimming
+        }
     }
 }

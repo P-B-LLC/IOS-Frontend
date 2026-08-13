@@ -314,22 +314,34 @@ struct DayWorkoutView: View {
                 )
                 .tint(Color.green)
 
-                Text("\(session.loggedSetCount) of \(session.totalSetCount) sets logged")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                Text(
+                    session.tracksDistance
+                        ? "Timing your \(session.workoutType.title.lowercased()) — end the session to save it."
+                        : "\(session.loggedSetCount) of \(session.totalSetCount) sets logged"
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
             }
             .workoutCard()
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("Log Your Sets")
+                Text(session.tracksDistance ? "Log Your Distance" : "Log Your Sets")
                     .font(.title3.weight(.bold))
-                Text("Enter reps and optional weight, then tap the checkmark.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                Text(
+                    session.tracksDistance
+                        ? "Enter how far you went, then tap the checkmark. Your time is recorded automatically."
+                        : "Enter reps and optional weight, then tap the checkmark."
+                )
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
             }
 
             ForEach(session.exercises) { exercise in
-                sessionExerciseCard(exercise)
+                if session.tracksDistance {
+                    distanceEffortCard(exercise, type: session.workoutType)
+                } else {
+                    sessionExerciseCard(exercise)
+                }
             }
 
             Button {
@@ -352,6 +364,80 @@ struct DayWorkoutView: View {
             }
             .disabled(store.isSaving || store.hasPendingSetChanges)
         }
+    }
+
+    /// Logging card for a run, ride, or swim: one distance entry. The elapsed
+    /// time is the session's own, computed by the backend from start to end.
+    private func distanceEffortCard(
+        _ exercise: SessionExerciseDraft,
+        type: WorkoutType
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            ForEach(exercise.sets) { set in
+                VStack(alignment: .leading, spacing: 10) {
+                    Text(type.distanceTitle.uppercased())
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(.secondary)
+
+                    HStack(spacing: 10) {
+                        TextField(
+                            "0.0",
+                            text: distanceBinding(exerciseID: exercise.id, setID: set.id)
+                        )
+                        .keyboardType(.decimalPad)
+                        .font(.title3.weight(.semibold))
+                        .multilineTextAlignment(.center)
+                        .padding(.vertical, 12)
+                        .frame(maxWidth: .infinity)
+                        .background(
+                            Color.primary.opacity(0.045),
+                            in: RoundedRectangle(cornerRadius: 10)
+                        )
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 10)
+                                .strokeBorder(
+                                    Color.red.opacity(
+                                        set.distanceKilometers.isEmpty || set.isDistanceValid ? 0 : 0.8
+                                    ),
+                                    lineWidth: 1
+                                )
+                        }
+                        .disabled(set.isLogged)
+                        .accessibilityLabel("\(type.distanceTitle) in kilometers")
+
+                        Text("km")
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(.secondary)
+
+                        Button {
+                            store.toggleSessionSetLogged(
+                                on: day,
+                                exerciseID: exercise.id,
+                                setID: set.id
+                            )
+                        } label: {
+                            Group {
+                                if store.isSetPending(set.id) {
+                                    ProgressView()
+                                } else {
+                                    Image(systemName: set.isLogged ? "checkmark.circle.fill" : "circle")
+                                        .font(.title2)
+                                        .foregroundStyle(set.isLogged ? Color.green : Color.secondary)
+                                }
+                            }
+                            .frame(width: 40, height: 40)
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(
+                            store.isSetPending(set.id)
+                                || (!set.isLogged && !set.canBeLoggedAsDistance)
+                        )
+                        .accessibilityLabel(set.isLogged ? "Unlog distance" : "Log distance")
+                    }
+                }
+            }
+        }
+        .workoutCard()
     }
 
     private func sessionExerciseCard(_ exercise: SessionExerciseDraft) -> some View {
@@ -513,6 +599,23 @@ struct DayWorkoutView: View {
         Binding(
             get: { sessionSet(exerciseID: exerciseID, setID: setID)?.weightKilograms ?? "" },
             set: { store.updateSessionSet(on: day, exerciseID: exerciseID, setID: setID, weightKilograms: $0) }
+        )
+    }
+
+    private func distanceBinding(
+        exerciseID: Exercise.ID,
+        setID: WorkoutSetDraft.ID
+    ) -> Binding<String> {
+        Binding(
+            get: { sessionSet(exerciseID: exerciseID, setID: setID)?.distanceKilometers ?? "" },
+            set: {
+                store.updateSessionSet(
+                    on: day,
+                    exerciseID: exerciseID,
+                    setID: setID,
+                    distanceKilometers: $0
+                )
+            }
         )
     }
 

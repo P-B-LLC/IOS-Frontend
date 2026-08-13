@@ -15,13 +15,97 @@ struct WorkoutPlanFields: View {
             VStack(alignment: .leading, spacing: 8) {
                 Label("Workout Name", systemImage: "character.cursor.ibeam")
                     .font(.subheadline.weight(.semibold))
-                TextField("Example: Push Day", text: $draft.name)
+                TextField(namePlaceholder, text: $draft.name)
                     .textInputAutocapitalization(.words)
                     .padding(12)
                     .background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 12))
             }
             .workoutCard()
 
+            typeCard
+
+            if draft.type.tracksDistance {
+                distanceCard
+            } else {
+                exerciseSection
+            }
+        }
+    }
+
+    private var namePlaceholder: String {
+        switch draft.type {
+        case .lifting: return "Example: Push Day"
+        case .running: return "Example: Morning Run"
+        case .biking: return "Example: Long Ride"
+        case .swimming: return "Example: Pool Laps"
+        }
+    }
+
+    private var typeCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("Workout Type", systemImage: "figure.mixed.cardio")
+                .font(.subheadline.weight(.semibold))
+            HStack(spacing: 7) {
+                ForEach(WorkoutType.allCases) { type in
+                    Button {
+                        withAnimation(.snappy) { draft.type = type }
+                    } label: {
+                        VStack(spacing: 5) {
+                            Image(systemName: type.symbolName)
+                                .font(.title3)
+                            Text(type.title)
+                                .font(.caption2.weight(.medium))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.75)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .foregroundStyle(
+                            draft.type == type ? Color.accentColor : Color.secondary
+                        )
+                        .background(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(
+                                    draft.type == type
+                                        ? Color.accentColor.opacity(0.14)
+                                        : Color.primary.opacity(0.045)
+                                )
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .strokeBorder(
+                                    Color.accentColor,
+                                    lineWidth: draft.type == type ? 1.5 : 0
+                                )
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(type.title)
+                    .accessibilityAddTraits(
+                        draft.type == type ? [.isButton, .isSelected] : .isButton
+                    )
+                }
+            }
+        }
+        .workoutCard()
+    }
+
+    /// Distance workouts have nothing to plan up front: the distance is entered
+    /// while training and the time comes from starting and ending the session.
+    private var distanceCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("How this is logged", systemImage: "stopwatch")
+                .font(.subheadline.weight(.semibold))
+            Text("Start the session when you set off and end it when you finish. Repbase times it for you, and you enter your \(draft.type.distanceTitle.lowercased()) before ending.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .workoutCard()
+    }
+
+    private var exerciseSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Exercises")

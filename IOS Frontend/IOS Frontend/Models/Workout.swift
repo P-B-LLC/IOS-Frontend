@@ -7,6 +7,49 @@
 
 import Foundation
 
+/// What kind of training a workout is. Mirrors the API `workout_type` values;
+/// the raw values must stay in step with the generated `WorkoutTypeEnum`.
+nonisolated enum WorkoutType: String, CaseIterable, Identifiable, Hashable, Codable, Sendable {
+    case lifting
+    case running
+    case biking
+    case swimming
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .lifting: return "Lifting"
+        case .running: return "Running"
+        case .biking: return "Biking"
+        case .swimming: return "Swimming"
+        }
+    }
+
+    var symbolName: String {
+        switch self {
+        case .lifting: return "figure.strengthtraining.traditional"
+        case .running: return "figure.run"
+        case .biking: return "figure.outdoor.cycle"
+        case .swimming: return "figure.pool.swim"
+        }
+    }
+
+    /// Distance types log a distance covered and a session time instead of
+    /// weighted reps.
+    var tracksDistance: Bool { self != .lifting }
+
+    /// How the logged distance is described for this type.
+    var distanceTitle: String {
+        switch self {
+        case .running: return "Distance ran"
+        case .biking: return "Distance biked"
+        case .swimming: return "Distance swum"
+        case .lifting: return "Distance"
+        }
+    }
+}
+
 /// A single exercise within a workout (e.g. "Bench Press"), with a target
 /// number of sets. Reps and weight are logged per-session later, not here.
 nonisolated struct Exercise: Identifiable, Hashable, Codable, Sendable {
@@ -48,6 +91,8 @@ nonisolated struct Workout: Identifiable, Hashable, Codable, Sendable {
     /// Literal OAS YYYY-MM-DD scheduled_date.
     var scheduledDate: String?
     var name: String
+    /// Mirrors the API `workout_type`; existing records default to lifting.
+    var type: WorkoutType
     /// The exercises that make up this workout, in order.
     var exercises: [Exercise]
 
@@ -57,6 +102,7 @@ nonisolated struct Workout: Identifiable, Hashable, Codable, Sendable {
         scheduleID: Int? = nil,
         scheduledDate: String? = nil,
         name: String,
+        type: WorkoutType = .lifting,
         exercises: [Exercise] = []
     ) {
         self.id = id
@@ -64,11 +110,14 @@ nonisolated struct Workout: Identifiable, Hashable, Codable, Sendable {
         self.scheduleID = scheduleID
         self.scheduledDate = scheduledDate
         self.name = name
+        self.type = type
         self.exercises = exercises
     }
 
     /// Total number of sets across all exercises.
     var totalSets: Int { exercises.reduce(0) { $0 + $1.sets } }
+
+    var tracksDistance: Bool { type.tracksDistance }
 }
 
 /// One editable set while a workout session is in progress. Weight remains a
@@ -80,6 +129,10 @@ nonisolated struct WorkoutSetDraft: Identifiable, Hashable, Sendable {
     var setNumber: Int
     var weightKilograms: String
     var reps: String
+    /// Distance covered, in kilometers, for running/biking/swimming efforts.
+    /// Kept as a string so decimal precision survives the round trip to the
+    /// backend's decimal-string `distance_km` field.
+    var distanceKilometers: String
     var isLogged: Bool
 
     init(
@@ -88,6 +141,7 @@ nonisolated struct WorkoutSetDraft: Identifiable, Hashable, Sendable {
         setNumber: Int,
         weightKilograms: String = "",
         reps: String = "",
+        distanceKilometers: String = "",
         isLogged: Bool = false
     ) {
         self.id = id
@@ -95,6 +149,7 @@ nonisolated struct WorkoutSetDraft: Identifiable, Hashable, Sendable {
         self.setNumber = setNumber
         self.weightKilograms = weightKilograms
         self.reps = reps
+        self.distanceKilometers = distanceKilometers
         self.isLogged = isLogged
     }
 
@@ -118,7 +173,30 @@ nonisolated struct WorkoutSetDraft: Identifiable, Hashable, Sendable {
         return integer >= 0
     }
 
+    /// Matches the OAS decimal-string contract for `distance_km` (up to four
+    /// integer digits and three fractional digits).
+    var isDistanceValid: Bool {
+        let value = distanceKilometers.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else { return false }
+        guard value.range(
+            of: #"^\d{0,4}(?:\.\d{0,3})?$"#,
+            options: .regularExpression
+        ) != nil else {
+            return false
+        }
+        // The backend rejects anything below 0.01 km.
+        return (Decimal(string: value) ?? 0) >= Decimal(string: "0.01")!
+    }
+
     var canBeLogged: Bool { isWeightValid && areRepsValid }
+
+    /// Distance efforts are logged on distance alone; reps and weight do not
+    /// apply to a run, ride, or swim.
+    var canBeLoggedAsDistance: Bool { isDistanceValid }
+
+    func canBeLogged(as type: WorkoutType) -> Bool {
+        type.tracksDistance ? canBeLoggedAsDistance : canBeLogged
+    }
 }
 
 /// The set-entry rows for one planned exercise in an active session.
@@ -139,8 +217,12 @@ nonisolated struct ActiveWorkoutSession: Identifiable, Hashable, Sendable {
     let workoutID: Workout.ID
     let workoutServerID: Int
     let workoutName: String
+    /// Decides whether this session logs distance or weighted reps.
+    let workoutType: WorkoutType
     let startedAt: Date
     var exercises: [SessionExerciseDraft]
+
+    var tracksDistance: Bool { workoutType.tracksDistance }
 
     var totalSetCount: Int {
         exercises.reduce(0) { $0 + $1.sets.count }
