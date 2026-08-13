@@ -214,48 +214,104 @@ struct NutritionBreakdownView: View {
             .joined(separator: " · ")
     }
 
-    /// Foods supplying a macro on this day, largest first. Repeats of the same
-    /// food are combined, and anything past the top few rolls into one row.
+    /// Foods that are a real source of a macro, largest first.
+    ///
+    /// A food only earns a place in a macro's list when that macro is what the
+    /// food mostly is, or when it supplies a meaningful slice of the food's own
+    /// calories. That keeps a mixed food like Greek yogurt out of the fat list
+    /// for a few trailing grams while still crediting it as protein and carbs.
+    /// Everything filtered out, plus anything past the top few, is still
+    /// counted in a trailing "Other foods" row so the percentages reconcile.
     private func sources(for macro: Macro) -> [MacroSource] {
-        var combined: [String: (name: String, grams: Double)] = [:]
+        var combined: [String: (name: String, amount: NutritionAmount)] = [:]
 
         for entry in entries {
-            let value = grams(of: macro, in: entry.totalNutrition)
-            guard value > 0 else { continue }
             let key = entry.name
                 .trimmingCharacters(in: .whitespacesAndNewlines)
                 .lowercased()
             guard !key.isEmpty else { continue }
-            combined[key, default: (entry.name, 0)].grams += value
+
+            if let existing = combined[key] {
+                combined[key] = (
+                    existing.name,
+                    existing.amount + entry.totalNutrition
+                )
+            } else {
+                combined[key] = (entry.name, entry.totalNutrition)
+            }
         }
 
-        let total = combined.values.reduce(0) { $0 + $1.grams }
+        let foods = combined.compactMap { key, value -> MacroSource? in
+            let macroGrams = grams(of: macro, in: value.amount)
+            guard macroGrams > 0 else { return nil }
+            let primary = primaryMacro(of: value.amount)
+            return MacroSource(
+                id: key,
+                name: value.name,
+                grams: macroGrams,
+                share: 0,
+                primary: primary,
+                isMeaningful: primary == macro
+                    || share(of: macro, within: value.amount) >= Self.sourceThreshold
+            )
+        }
+
+        let total = foods.reduce(0) { $0 + $1.grams }
         guard total > 0 else { return [] }
 
-        let ranked = combined
-            .map {
-                MacroSource(
-                    id: $0.key,
-                    name: $0.value.name,
-                    grams: $0.value.grams,
-                    share: $0.value.grams / total
-                )
-            }
+        var listed = foods
+            .filter(\.isMeaningful)
             .sorted { $0.grams > $1.grams }
 
-        let limit = 5
-        guard ranked.count > limit else { return ranked }
+        // Every food supplies only a trace of this macro. Naming them beats a
+        // lone anonymous "Other foods" row that accounts for everything.
+        if listed.isEmpty {
+            listed = foods.sorted { $0.grams > $1.grams }
+        }
 
-        let remainder = ranked.dropFirst(limit).reduce(0) { $0 + $1.grams }
-        return Array(ranked.prefix(limit)) + [
-            MacroSource(
-                id: "other",
-                name: "Other foods",
-                grams: remainder,
-                share: remainder / total
+        let limit = 5
+        let shown = Array(listed.prefix(limit))
+
+        let remainder = total - shown.reduce(0) { $0 + $1.grams }
+        var result = shown.map { $0.withShare($0.grams / total) }
+
+        if remainder > 0.05 {
+            result.append(
+                MacroSource(
+                    id: "other",
+                    name: "Other foods",
+                    grams: remainder,
+                    share: remainder / total,
+                    primary: nil,
+                    isMeaningful: true
+                )
             )
-        ]
+        }
+
+        return result
     }
+
+    /// Share of a food's own macro calories supplied by one macro.
+    private func share(of macro: Macro, within amount: NutritionAmount) -> Double {
+        let total = Macro.allCases.reduce(0) {
+            $0 + grams(of: $1, in: amount) * $1.caloriesPerGram
+        }
+        guard total > 0 else { return 0 }
+        return grams(of: macro, in: amount) * macro.caloriesPerGram / total
+    }
+
+    /// What a food mostly is, by whichever macro supplies most of its calories.
+    private func primaryMacro(of amount: NutritionAmount) -> Macro? {
+        let ranked = Macro.allCases
+            .map { ($0, grams(of: $0, in: amount) * $0.caloriesPerGram) }
+            .filter { $0.1 > 0 }
+        guard !ranked.isEmpty else { return nil }
+        return ranked.max { $0.1 < $1.1 }?.0
+    }
+
+    /// A macro must supply at least this much of a food's own calories before
+    /// that food is listed as a source of it.
+    private static let sourceThreshold = 0.25
 }
 
 // MARK: - Supporting types
@@ -304,7 +360,23 @@ struct MacroSource: Identifiable {
     let id: String
     let name: String
     let grams: Double
+    /// Share of the day's (or meal's) total for the macro being listed.
     let share: Double
+    /// The macro this food mostly is, used as its category tag.
+    let primary: Macro?
+    /// Whether the food is a real source of the macro being listed.
+    let isMeaningful: Bool
+
+    func withShare(_ share: Double) -> MacroSource {
+        MacroSource(
+            id: id,
+            name: name,
+            grams: grams,
+            share: share,
+            primary: primary,
+            isMeaningful: isMeaningful
+        )
+    }
 }
 
 /// Whole grams read as "5g"; only a fractional amount keeps a decimal.
@@ -380,10 +452,23 @@ private struct MacroSourceRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            HStack(spacing: 8) {
+            HStack(spacing: 6) {
                 Text(source.name)
                     .font(.caption.weight(.medium))
                     .lineLimit(1)
+
+                // What the food mostly is, so "chicken" reads as a protein and
+                // "rice" as a carb regardless of which list it appears in.
+                if let primary = source.primary {
+                    Text(primary.title)
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundStyle(primary.color)
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 1.5)
+                        .background(primary.color.opacity(0.14), in: Capsule())
+                        .layoutPriority(1)
+                }
+
                 Spacer(minLength: 0)
                 Text("\(gramsText(source.grams))g")
                     .font(.caption.weight(.semibold))
