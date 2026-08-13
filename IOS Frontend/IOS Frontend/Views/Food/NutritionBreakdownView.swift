@@ -9,7 +9,15 @@
 import SwiftUI
 
 struct NutritionBreakdownView: View {
+    /// Whether the breakdown covers a whole day or a single meal. A meal-scoped
+    /// breakdown drops the per-meal comparison, which would only repeat itself.
+    enum Scope {
+        case day
+        case meal
+    }
+
     let meals: [FoodMeal]
+    var scope: Scope = .day
 
     @State private var selectedMacro: Macro = .protein
 
@@ -22,7 +30,9 @@ struct NutritionBreakdownView: View {
             } else {
                 calorieSplitCard
                 sourcesCard
-                perMealCard
+                if scope == .day {
+                    perMealCard
+                }
             }
 
             micronutrientNote
@@ -35,7 +45,9 @@ struct NutritionBreakdownView: View {
         VStack(alignment: .leading, spacing: 2) {
             Text("Nutrition Breakdown")
                 .font(.headline)
-            Text("See where this day's macros come from.")
+            Text(scope == .day
+                 ? "See where this day's macros come from."
+                 : "See where this meal's macros come from.")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         }

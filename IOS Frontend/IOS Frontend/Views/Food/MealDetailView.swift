@@ -28,6 +28,12 @@ struct MealDetailView: View {
                         mealSummary(meal)
                         foodList(meal)
                         addFoodButton
+
+                        // An empty meal already states that in the food list,
+                        // so the breakdown only appears once there is food.
+                        if !meal.entries.isEmpty {
+                            NutritionBreakdownView(meals: [meal], scope: .meal)
+                        }
                     }
                     .padding(.horizontal)
                     .padding(.vertical, 12)
@@ -90,10 +96,16 @@ struct MealDetailView: View {
                     .foregroundStyle(Color.orange)
             }
 
+            // Shares the app-wide macro colors so this card and the breakdown
+            // below it never disagree about what protein or carbs look like.
             HStack(spacing: 8) {
-                MealMacro(title: "Protein", value: meal.totalNutrition.proteinGrams, color: .blue)
-                MealMacro(title: "Carbs", value: meal.totalNutrition.carbohydrateGrams, color: .green)
-                MealMacro(title: "Fat", value: meal.totalNutrition.fatGrams, color: .purple)
+                ForEach(Macro.allCases) { macro in
+                    MealMacro(
+                        title: macro.title,
+                        value: macro.grams(in: meal.totalNutrition),
+                        color: macro.color
+                    )
+                }
             }
         }
         .foodCard()
