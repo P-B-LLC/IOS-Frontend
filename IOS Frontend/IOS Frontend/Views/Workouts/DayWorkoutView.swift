@@ -13,13 +13,18 @@ struct DayWorkoutView: View {
     @Environment(WorkoutStore.self) private var store
     @State private var setupDraft = Workout(name: "", exercises: [])
     @State private var editor: WorkoutEditorView.Mode?
-    @State private var showingRemoveConfirmation = false
+    /// The workout awaiting a delete confirmation, if any.
+    @State private var workoutPendingRemoval: Workout?
     @State private var showingEndConfirmation = false
     @State private var showingDiscardConfirmation = false
     @State private var completionNotice: String?
 
     private var workout: Workout? {
         store.workout(on: day)
+    }
+
+    private var plannedWorkouts: [Workout] {
+        store.workouts(on: day)
     }
 
     private var activeSession: ActiveWorkoutSession? {
@@ -41,8 +46,8 @@ struct DayWorkoutView: View {
 
                 if let activeSession {
                     activeSessionWorkspace(activeSession)
-                } else if let workout {
-                    plannedWorkout(workout)
+                } else if !plannedWorkouts.isEmpty {
+                    plannedDay
                 } else {
                     emptyDaySetup
                 }
@@ -70,16 +75,22 @@ struct DayWorkoutView: View {
             }
         }
         .confirmationDialog(
-            "Remove \(workout?.name ?? "this workout")?",
-            isPresented: $showingRemoveConfirmation,
+            "Remove \(workoutPendingRemoval?.name ?? "this workout")?",
+            isPresented: Binding(
+                get: { workoutPendingRemoval != nil },
+                set: { if !$0 { workoutPendingRemoval = nil } }
+            ),
             titleVisibility: .visible
         ) {
             Button("Remove from \(day.fullName)", role: .destructive) {
-                store.removeWorkout(on: day)
+                if let target = workoutPendingRemoval {
+                    store.removeWorkout(target, on: day)
+                }
+                workoutPendingRemoval = nil
             }
-            Button("Cancel", role: .cancel) { }
+            Button("Cancel", role: .cancel) { workoutPendingRemoval = nil }
         } message: {
-            Text("You can create a new plan for this day at any time.")
+            Text("This unschedules it from \(day.fullName). The workout itself is kept and can be scheduled again.")
         }
         .confirmationDialog(
             "Finish this workout?",
@@ -188,6 +199,28 @@ struct DayWorkoutView: View {
             .controlSize(.large)
             .disabled(!canSaveSetup || !store.isEditingEnabled)
 
+            // A greyed-out button with no explanation reads as a broken app.
+            if let reason = store.editingBlockedReason {
+                HStack(spacing: 7) {
+                    Image(systemName: "exclamationmark.circle.fill")
+                        .foregroundStyle(Color.orange)
+                    Text(reason)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer(minLength: 0)
+                    if store.repositoryIsMissing {
+                        Button("Retry") { store.retryPersistence() }
+                            .font(.caption.weight(.semibold))
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            } else if !canSaveSetup {
+                Text("Give this workout a name to save it.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+            }
+
             Text("This creates a reusable workout template and assigns it to this date in Repbase.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -258,9 +291,52 @@ struct DayWorkoutView: View {
             }
 
             Button(role: .destructive) {
-                showingRemoveConfirmation = true
+                workoutPendingRemoval = workout
             } label: {
-                Label("Remove Workout from \(day.fullName)", systemImage: "trash")
+                Label("Remove \(workout.name) from \(day.fullName)", systemImage: "trash")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            .disabled(!store.isEditingEnabled)
+        }
+    }
+
+    /// Everything scheduled for the day. Days often hold one workout, but a
+    /// date can carry several, and all of them are shown.
+    private var plannedDay: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            if plannedWorkouts.count > 1 {
+                HStack(spacing: 8) {
+                    Image(systemName: "square.stack.3d.up.fill")
+                        .foregroundStyle(Color.accentColor)
+                    Text("^[\(plannedWorkouts.count) workout](inflect: true) planned for \(day.fullName)")
+                        .font(.subheadline.weight(.semibold))
+                    Spacer(minLength: 0)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(12)
+                .background(
+                    Color.accentColor.opacity(0.1),
+                    in: RoundedRectangle(cornerRadius: 14)
+                )
+            }
+
+            ForEach(Array(plannedWorkouts.enumerated()), id: \.element.id) { index, planned in
+                VStack(alignment: .leading, spacing: 18) {
+                    if plannedWorkouts.count > 1 {
+                        Text("WORKOUT \(index + 1) OF \(plannedWorkouts.count)")
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(.secondary)
+                    }
+                    plannedWorkout(planned)
+                }
+            }
+
+            Button {
+                setupDraft = Workout(name: "", exercises: [])
+                editor = .create
+            } label: {
+                Label("Add Another Workout to \(day.fullName)", systemImage: "plus")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)
@@ -294,7 +370,7 @@ struct DayWorkoutView: View {
                    store.routeTracker.permission == .notDetermined {
                     store.routeTracker.requestPermission()
                 }
-                store.startSession(on: day)
+                store.startSession(on: day, workoutID: workout.id)
             } label: {
                 Label("Start Session", systemImage: "play.fill")
                     .font(.headline)
@@ -302,7 +378,30 @@ struct DayWorkoutView: View {
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
-            .disabled(workout.exercises.isEmpty || !store.isEditingEnabled)
+            // A run, ride, or swim needs no planned exercises to start.
+            .disabled(
+                (!workout.tracksDistance && workout.exercises.isEmpty)
+                    || !store.isEditingEnabled
+            )
+
+            if let reason = store.editingBlockedReason {
+                HStack(spacing: 7) {
+                    Image(systemName: "exclamationmark.circle.fill")
+                        .foregroundStyle(Color.orange)
+                    Text(reason)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer(minLength: 0)
+                    if store.repositoryIsMissing {
+                        Button("Retry") { store.retryPersistence() }
+                            .font(.caption.weight(.semibold))
+                    }
+                }
+            } else if !workout.tracksDistance && workout.exercises.isEmpty {
+                Text("Add at least one exercise to start this workout.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 

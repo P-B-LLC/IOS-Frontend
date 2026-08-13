@@ -23,7 +23,10 @@ actor WorkoutAPIRepository {
 
     // MARK: - Week loading
 
-    func loadWeek(dateByDay: [Weekday: String]) async throws -> [Weekday: Workout] {
+    /// Every workout scheduled in the week, grouped by day. A date can carry
+    /// more than one schedule, so each day maps to a list in schedule order
+    /// rather than a single workout.
+    func loadWeek(dateByDay: [Weekday: String]) async throws -> [Weekday: [Workout]] {
         async let schedulesRequest = fetchAllSchedules()
         async let workoutsRequest = fetchAllWorkouts()
         let (schedules, templates) = try await (schedulesRequest, workoutsRequest)
@@ -35,10 +38,9 @@ actor WorkoutAPIRepository {
             uniqueKeysWithValues: templates.map { ($0.id, $0) }
         )
 
-        var result: [Weekday: Workout] = [:]
+        var result: [Weekday: [Workout]] = [:]
         for schedule in schedules.sorted(by: { $0.id < $1.id }) {
             guard let day = dayByDate[schedule.scheduledDate],
-                  result[day] == nil,
                   let template = templateByID[schedule.workout] else {
                 continue
             }
@@ -57,13 +59,15 @@ actor WorkoutAPIRepository {
                     )
                 }
 
-            result[day] = Workout(
-                serverID: template.id,
-                scheduleID: schedule.id,
-                scheduledDate: schedule.scheduledDate,
-                name: template.name,
-                type: Self.workoutType(from: template.workoutType),
-                exercises: exercises
+            result[day, default: []].append(
+                Workout(
+                    serverID: template.id,
+                    scheduleID: schedule.id,
+                    scheduledDate: schedule.scheduledDate,
+                    name: template.name,
+                    type: Self.workoutType(from: template.workoutType),
+                    exercises: exercises
+                )
             )
         }
         return result

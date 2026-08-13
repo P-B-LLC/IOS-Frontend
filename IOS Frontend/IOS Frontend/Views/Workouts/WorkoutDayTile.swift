@@ -13,6 +13,8 @@ struct WorkoutDayTile: View {
     let workout: Workout?
     let isToday: Bool
     var isSessionActive = false
+    /// How many workouts the day holds, so a day with more than one says so.
+    var workoutCount = 0
 
     var body: some View {
         VStack(spacing: 6) {
@@ -40,6 +42,19 @@ struct WorkoutDayTile: View {
                 .overlay {
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .strokeBorder(borderColor, lineWidth: isSessionActive ? 2 : 1)
+                }
+                // A badge rather than a second name: the tile is too small to
+                // list them, but the day must not look like it holds only one.
+                .overlay(alignment: .topTrailing) {
+                    if workoutCount > 1 {
+                        Text("\(workoutCount)")
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(width: 15, height: 15)
+                            .background(Color.accentColor, in: Circle())
+                            .offset(x: 4, y: -4)
+                            .accessibilityLabel("^[\(workoutCount) workout](inflect: true) planned")
+                    }
                 }
 
             Text(day.shortName)

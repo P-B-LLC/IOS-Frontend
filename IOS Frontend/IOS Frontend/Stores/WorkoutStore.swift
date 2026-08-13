@@ -13,8 +13,9 @@ final class WorkoutStore {
     private var repository: WorkoutAPIRepository?
     private var connectionGeneration = UUID()
 
-    /// Current-week projection of concrete API WorkoutSchedule records.
-    private(set) var schedule: [Weekday: Workout]
+    /// Current-week projection of concrete API WorkoutSchedule records. A date
+    /// can hold more than one schedule, so each day maps to a list.
+    private(set) var schedule: [Weekday: [Workout]]
     private(set) var persistenceError: String?
     private(set) var isLoading = false
     private(set) var isSaving = false
@@ -26,7 +27,7 @@ final class WorkoutStore {
     /// Distance and pace for the last finished route, as computed by the server.
     private(set) var routeSummary: SessionRouteSummary?
 
-    init(initialSchedule: [Weekday: Workout] = [:]) {
+    init(initialSchedule: [Weekday: [Workout]] = [:]) {
         schedule = initialSchedule
     }
 
@@ -37,6 +38,9 @@ final class WorkoutStore {
         connectionGeneration = generation
         activeSession = nil
         pendingSetIDs = []
+        // A fresh connection owns these flags; never inherit a stuck one.
+        isLoading = false
+        isSaving = false
 
         do {
             let repository = try WorkoutAPIRepository(
@@ -69,8 +73,25 @@ final class WorkoutStore {
 
     // MARK: - Lookups
 
+    /// Everything planned for a day, in schedule order.
+    func workouts(on day: Weekday) -> [Workout] {
+        schedule[day] ?? []
+    }
+
+    /// The day's primary workout — the first one scheduled. Days with a single
+    /// workout behave exactly as before.
     func workout(on day: Weekday) -> Workout? {
-        schedule[day]
+        schedule[day]?.first
+    }
+
+    /// How many workouts are planned for a day, so the UI can show when there
+    /// is more than one rather than silently hiding the rest.
+    func workoutCount(on day: Weekday) -> Int {
+        schedule[day]?.count ?? 0
+    }
+
+    func workout(id: Workout.ID, on day: Weekday) -> Workout? {
+        schedule[day]?.first { $0.id == id }
     }
 
     func activeSession(on day: Weekday) -> ActiveWorkoutSession? {
@@ -89,6 +110,21 @@ final class WorkoutStore {
 
     var isEditingEnabled: Bool {
         repository != nil && !isLoading && !isSaving
+    }
+
+    /// True when there is no API connection at all, as opposed to a transient
+    /// load or save. Only this state is worth offering a retry for.
+    var repositoryIsMissing: Bool { repository == nil }
+
+    /// Why editing is unavailable, so a disabled control can say so instead of
+    /// looking broken. Nil when editing is available.
+    var editingBlockedReason: String? {
+        if repository == nil {
+            return "Not connected to Repbase. Check your connection and retry."
+        }
+        if isLoading { return "Loading this week…" }
+        if isSaving { return "Saving…" }
+        return nil
     }
 
     var hasPendingSetChanges: Bool {
@@ -112,7 +148,9 @@ final class WorkoutStore {
     func saveWorkout(_ workout: Workout, on day: Weekday) {
         guard let repository, !isSaving else { return }
         let generation = connectionGeneration
-        let existing = schedule[day]
+        // Only an edit of a workout already on this day replaces it; anything
+        // else is scheduled alongside whatever is already planned.
+        let existing = schedule[day]?.first { $0.id == workout.id }
         let date = dateString(for: day)
         let workout = Self.normalized(workout)
         isSaving = true
@@ -134,17 +172,18 @@ final class WorkoutStore {
                 guard connectionGeneration == generation else { return }
                 persistenceError = error.localizedDescription
             }
-            guard connectionGeneration == generation else { return }
+            // Cleared unconditionally. Operations are serialized by the
+            // `!isSaving` guard at entry, so no newer save can be running, and
+            // a stale return must not leave the day editor permanently
+            // disabled with nothing on screen explaining it.
             isSaving = false
         }
     }
 
-    func removeWorkout(on day: Weekday) {
-        guard let repository,
-              let workout = schedule[day],
-              !isSaving else {
-            return
-        }
+    /// Removes one workout from a day. Other workouts planned for that day are
+    /// untouched, and the workout template itself is kept.
+    func removeWorkout(_ workout: Workout, on day: Weekday) {
+        guard let repository, !isSaving else { return }
         let generation = connectionGeneration
         isSaving = true
         persistenceError = nil
@@ -153,23 +192,34 @@ final class WorkoutStore {
             do {
                 try await repository.removeSchedule(workout)
                 guard connectionGeneration == generation else { return }
-                schedule.removeValue(forKey: day)
+                schedule[day]?.removeAll { $0.id == workout.id }
+                if schedule[day]?.isEmpty == true {
+                    schedule.removeValue(forKey: day)
+                }
             } catch {
                 guard connectionGeneration == generation else { return }
                 persistenceError = error.localizedDescription
             }
-            guard connectionGeneration == generation else { return }
+            // Cleared unconditionally. Operations are serialized by the
+            // `!isSaving` guard at entry, so no newer save can be running, and
+            // a stale return must not leave the day editor permanently
+            // disabled with nothing on screen explaining it.
             isSaving = false
         }
     }
 
     // MARK: - Session logging
 
-    func startSession(on day: Weekday) {
+    /// Starts a session for one of the day's workouts, defaulting to the first.
+    func startSession(on day: Weekday, workoutID: Workout.ID? = nil) {
+        let candidate = workoutID.flatMap { workout(id: $0, on: day) }
+            ?? workout(on: day)
         guard let repository,
               activeSession == nil,
-              let workout = schedule[day],
-              !workout.exercises.isEmpty,
+              let workout = candidate,
+              // A run, ride, or swim is logged as a distance, so it needs no
+              // planned exercises before it can start.
+              workout.tracksDistance || !workout.exercises.isEmpty,
               !isSaving else {
             return
         }
@@ -195,7 +245,10 @@ final class WorkoutStore {
                 guard connectionGeneration == generation else { return }
                 persistenceError = error.localizedDescription
             }
-            guard connectionGeneration == generation else { return }
+            // Cleared unconditionally. Operations are serialized by the
+            // `!isSaving` guard at entry, so no newer save can be running, and
+            // a stale return must not leave the day editor permanently
+            // disabled with nothing on screen explaining it.
             isSaving = false
         }
     }
@@ -381,8 +434,10 @@ final class WorkoutStore {
 
     // MARK: - Retry and mapping
 
+    /// Reconnects and reloads. Callable whenever a repository exists, so a
+    /// failed load can always be retried.
     func retryPersistence() {
-        guard let repository, !isLoading, !isSaving else { return }
+        guard let repository, !isSaving else { return }
         let generation = connectionGeneration
         Task {
             await reloadWeek(
@@ -399,6 +454,11 @@ final class WorkoutStore {
         showsLoadingState: Bool
     ) async {
         if showsLoadingState { isLoading = true }
+        // The flag is cleared no matter how this exits. Leaving it set after a
+        // stale return would disable every editing control with nothing on
+        // screen to explain why, and retryPersistence() would refuse to run.
+        defer { if showsLoadingState { isLoading = false } }
+
         persistenceError = nil
         do {
             let loaded = try await repository.loadWeek(
@@ -409,9 +469,6 @@ final class WorkoutStore {
         } catch {
             guard connectionGeneration == generation else { return }
             persistenceError = error.localizedDescription
-        }
-        if showsLoadingState, connectionGeneration == generation {
-            isLoading = false
         }
     }
 
@@ -555,10 +612,12 @@ extension WorkoutStore {
         let workouts = previewWorkouts
         return WorkoutStore(
             initialSchedule: [
-                .monday: workouts[0],
-                .tuesday: workouts[1],
-                .thursday: workouts[2],
-                .friday: workouts[3]
+                .monday: [workouts[0]],
+                .tuesday: [workouts[1]],
+                // Thursday carries two, so previews exercise the
+                // multiple-workouts-in-a-day layout.
+                .thursday: [workouts[2], workouts[3]],
+                .friday: [workouts[3]]
             ]
         )
     }

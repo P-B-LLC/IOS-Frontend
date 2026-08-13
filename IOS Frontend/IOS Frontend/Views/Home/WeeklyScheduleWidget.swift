@@ -25,7 +25,8 @@ struct WeeklyScheduleWidget: View {
                             day: day,
                             workout: store.workout(on: day),
                             isToday: store.today == day,
-                            isSessionActive: store.activeSession?.day == day
+                            isSessionActive: store.activeSession?.day == day,
+                            workoutCount: store.workoutCount(on: day)
                         )
                     }
                     .buttonStyle(.plain)
