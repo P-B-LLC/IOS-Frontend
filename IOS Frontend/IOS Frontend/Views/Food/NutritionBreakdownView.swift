@@ -295,10 +295,13 @@ struct MacroSource: Identifiable {
     let share: Double
 }
 
+/// Whole grams read as "5g"; only a fractional amount keeps a decimal.
 private func gramsText(_ value: Double) -> String {
-    value < 10 && value > 0
-        ? String(format: "%.1f", value)
-        : String(Int(value.rounded()))
+    let rounded = (value * 10).rounded() / 10
+    if rounded == rounded.rounded() {
+        return String(Int(rounded))
+    }
+    return String(format: "%.1f", rounded)
 }
 
 private func percentText(_ share: Double) -> String {
