@@ -199,6 +199,27 @@ nonisolated struct WorkoutSetDraft: Identifiable, Hashable, Sendable {
     }
 }
 
+/// Distance and pace for a session, exactly as the backend computed them from
+/// the uploaded GPS track. Neither value is calculated on the device.
+nonisolated struct SessionRouteSummary: Hashable, Sendable {
+    let distanceKilometers: Double?
+    let paceSecondsPerKilometer: Double?
+
+    /// Pace formatted as minutes and seconds per kilometer, e.g. "5:30 /km".
+    var paceText: String? {
+        guard let paceSecondsPerKilometer, paceSecondsPerKilometer > 0 else {
+            return nil
+        }
+        let total = Int(paceSecondsPerKilometer.rounded())
+        return String(format: "%d:%02d /km", total / 60, total % 60)
+    }
+
+    var distanceText: String? {
+        guard let distanceKilometers else { return nil }
+        return String(format: "%.2f km", distanceKilometers)
+    }
+}
+
 /// The set-entry rows for one planned exercise in an active session.
 nonisolated struct SessionExerciseDraft: Identifiable, Hashable, Sendable {
     let id: Exercise.ID

@@ -2422,6 +2422,152 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// Read or append the GPS track recorded during a session.
+    ///
+    /// Uploaded points are stored raw; distance and pace are derived from them
+    /// on the server so every client agrees on the result.
+    ///
+    /// - Remark: HTTP `GET /api/v1/sessions/{id}/route/`.
+    /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/route//get(sessions_route_list)`.
+    public func sessionsRouteList(_ input: Operations.SessionsRouteList.Input) async throws -> Operations.SessionsRouteList.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SessionsRouteList.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/sessions/{}/route/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .get
+                )
+                suppressMutabilityWarning(&request)
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "page",
+                    value: input.query.page
+                )
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SessionsRouteList.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.PaginatedSessionRoutePointList.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Read or append the GPS track recorded during a session.
+    ///
+    /// Uploaded points are stored raw; distance and pace are derived from them
+    /// on the server so every client agrees on the result.
+    ///
+    /// - Remark: HTTP `POST /api/v1/sessions/{id}/route/`.
+    /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/route//post(sessions_route_create)`.
+    public func sessionsRouteCreate(_ input: Operations.SessionsRouteCreate.Input) async throws -> Operations.SessionsRouteCreate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SessionsRouteCreate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/sessions/{}/route/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .post
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                let body: OpenAPIRuntime.HTTPBody?
+                switch input.body {
+                case let .json(value):
+                    body = try converter.setRequiredRequestBodyAsJSON(
+                        value,
+                        headerFields: &request.headerFields,
+                        contentType: "application/json; charset=utf-8"
+                    )
+                }
+                return (request, body)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SessionsRouteCreate.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.WorkoutSession.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
     /// - Remark: HTTP `POST /api/v1/sessions/{id}/start/`.
     /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/start//post(sessions_start_create)`.
     public func sessionsStartCreate(_ input: Operations.SessionsStartCreate.Input) async throws -> Operations.SessionsStartCreate.Output {

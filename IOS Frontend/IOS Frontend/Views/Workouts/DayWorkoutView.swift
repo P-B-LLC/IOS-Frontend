@@ -53,6 +53,17 @@ struct DayWorkoutView: View {
         .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
         .navigationTitle(day.fullName)
         .navigationBarTitleDisplayMode(.inline)
+        .onChange(of: store.routeTracker.permission) {
+            // Granting access part way through a session starts tracking for
+            // the remainder of it.
+            guard let session = activeSession,
+                  session.tracksDistance,
+                  store.routeTracker.permission.allowsTracking,
+                  !store.routeTracker.isTracking else {
+                return
+            }
+            store.routeTracker.startTracking()
+        }
         .sheet(item: $editor) { mode in
             WorkoutEditorView(mode: mode) { savedWorkout in
                 store.saveWorkout(savedWorkout, on: day)
@@ -277,6 +288,12 @@ struct DayWorkoutView: View {
         } else {
             Button {
                 completionNotice = nil
+                // Ask before the session begins so tracking can start with the
+                // first stride rather than after the prompt is answered.
+                if workout.tracksDistance,
+                   store.routeTracker.permission == .notDetermined {
+                    store.routeTracker.requestPermission()
+                }
                 store.startSession(on: day)
             } label: {
                 Label("Start Session", systemImage: "play.fill")
@@ -323,6 +340,13 @@ struct DayWorkoutView: View {
                 .foregroundStyle(.secondary)
             }
             .workoutCard()
+
+            if session.tracksDistance {
+                RouteTrackingCard(
+                    tracker: store.routeTracker,
+                    workoutType: session.workoutType
+                )
+            }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(session.tracksDistance ? "Log Your Distance" : "Log Your Sets")
@@ -657,24 +681,64 @@ struct DayWorkoutView: View {
     }
 
     private func completionCard(_ message: String) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.title2)
-                .foregroundStyle(Color.green)
-            Text(message)
-                .font(.subheadline.weight(.semibold))
-            Spacer()
-            Button {
-                completionNotice = nil
-            } label: {
-                Image(systemName: "xmark")
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 12) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(Color.green)
+                Text(message)
+                    .font(.subheadline.weight(.semibold))
+                Spacer()
+                Button {
+                    completionNotice = nil
+                } label: {
+                    Image(systemName: "xmark")
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+                .accessibilityLabel("Dismiss")
             }
-            .buttonStyle(.plain)
-            .foregroundStyle(.secondary)
-            .accessibilityLabel("Dismiss")
+
+            // Distance and pace as the backend measured them from the track.
+            if let summary = store.routeSummary,
+               summary.distanceText != nil || summary.paceText != nil {
+                HStack(spacing: 10) {
+                    if let distance = summary.distanceText {
+                        RouteStat(title: "Distance", value: distance, icon: "point.topleft.down.to.point.bottomright.curvepath")
+                    }
+                    if let pace = summary.paceText {
+                        RouteStat(title: "Avg pace", value: pace, icon: "speedometer")
+                    }
+                }
+            }
         }
         .padding(14)
         .background(Color.green.opacity(0.1), in: RoundedRectangle(cornerRadius: 16))
+    }
+}
+
+/// One backend-computed route figure shown after a cardio session.
+private struct RouteStat: View {
+    let title: String
+    let value: String
+    let icon: String
+
+    var body: some View {
+        HStack(spacing: 7) {
+            Image(systemName: icon)
+                .font(.caption)
+                .foregroundStyle(Color.green)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                Text(value)
+                    .font(.subheadline.weight(.bold).monospacedDigit())
+            }
+        }
+        .padding(.horizontal, 11)
+        .padding(.vertical, 7)
+        .background(Color.green.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
     }
 }
 

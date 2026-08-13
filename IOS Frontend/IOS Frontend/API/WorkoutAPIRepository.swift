@@ -415,6 +415,50 @@ actor WorkoutAPIRepository {
         }
     }
 
+    /// Uploads a recorded GPS track. The response carries the session with the
+    /// server's own distance and pace, which is what the app displays; the
+    /// device never computes either.
+    @discardableResult
+    func uploadRoute(
+        _ points: [RoutePoint],
+        sessionID: Int
+    ) async throws -> SessionRouteSummary {
+        guard !points.isEmpty else {
+            throw APIServiceError.malformedResponse
+        }
+
+        let payload = points.map { point in
+            Components.Schemas.SessionRoutePointRequest(
+                latitude: Self.coordinateString(point.latitude),
+                longitude: Self.coordinateString(point.longitude),
+                recordedAt: point.recordedAt
+            )
+        }
+
+        let output = try await client.sessionsRouteCreate(
+            path: .init(id: sessionID),
+            body: .json(
+                Components.Schemas.SessionRouteUploadRequest(points: payload)
+            )
+        )
+        switch output {
+        case .ok(let response):
+            let session = try response.body.json
+            return SessionRouteSummary(
+                distanceKilometers: session.routeDistanceKm,
+                paceSecondsPerKilometer: session.paceSecondsPerKm
+            )
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// Six decimal places is roughly a tenth of a metre and matches the
+    /// contract's `^-?\d{0,3}(?:\.\d{0,6})?$` style decimal strings.
+    private static func coordinateString(_ value: Double) -> String {
+        String(format: "%.6f", value)
+    }
+
     func deleteSetEntry(id: Int) async throws {
         let output = try await client.setEntriesDestroy(path: .init(id: id))
         switch output {

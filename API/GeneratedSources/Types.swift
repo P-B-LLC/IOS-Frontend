@@ -128,6 +128,22 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /api/v1/sessions/{id}/end/`.
     /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/end//post(sessions_end_create)`.
     func sessionsEndCreate(_ input: Operations.SessionsEndCreate.Input) async throws -> Operations.SessionsEndCreate.Output
+    /// Read or append the GPS track recorded during a session.
+    ///
+    /// Uploaded points are stored raw; distance and pace are derived from them
+    /// on the server so every client agrees on the result.
+    ///
+    /// - Remark: HTTP `GET /api/v1/sessions/{id}/route/`.
+    /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/route//get(sessions_route_list)`.
+    func sessionsRouteList(_ input: Operations.SessionsRouteList.Input) async throws -> Operations.SessionsRouteList.Output
+    /// Read or append the GPS track recorded during a session.
+    ///
+    /// Uploaded points are stored raw; distance and pace are derived from them
+    /// on the server so every client agrees on the result.
+    ///
+    /// - Remark: HTTP `POST /api/v1/sessions/{id}/route/`.
+    /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/route//post(sessions_route_create)`.
+    func sessionsRouteCreate(_ input: Operations.SessionsRouteCreate.Input) async throws -> Operations.SessionsRouteCreate.Output
     /// - Remark: HTTP `POST /api/v1/sessions/{id}/start/`.
     /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/start//post(sessions_start_create)`.
     func sessionsStartCreate(_ input: Operations.SessionsStartCreate.Input) async throws -> Operations.SessionsStartCreate.Output
@@ -594,6 +610,42 @@ extension APIProtocol {
         try await sessionsEndCreate(Operations.SessionsEndCreate.Input(
             path: path,
             headers: headers
+        ))
+    }
+    /// Read or append the GPS track recorded during a session.
+    ///
+    /// Uploaded points are stored raw; distance and pace are derived from them
+    /// on the server so every client agrees on the result.
+    ///
+    /// - Remark: HTTP `GET /api/v1/sessions/{id}/route/`.
+    /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/route//get(sessions_route_list)`.
+    public func sessionsRouteList(
+        path: Operations.SessionsRouteList.Input.Path,
+        query: Operations.SessionsRouteList.Input.Query = .init(),
+        headers: Operations.SessionsRouteList.Input.Headers = .init()
+    ) async throws -> Operations.SessionsRouteList.Output {
+        try await sessionsRouteList(Operations.SessionsRouteList.Input(
+            path: path,
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Read or append the GPS track recorded during a session.
+    ///
+    /// Uploaded points are stored raw; distance and pace are derived from them
+    /// on the server so every client agrees on the result.
+    ///
+    /// - Remark: HTTP `POST /api/v1/sessions/{id}/route/`.
+    /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/route//post(sessions_route_create)`.
+    public func sessionsRouteCreate(
+        path: Operations.SessionsRouteCreate.Input.Path,
+        headers: Operations.SessionsRouteCreate.Input.Headers = .init(),
+        body: Operations.SessionsRouteCreate.Input.Body
+    ) async throws -> Operations.SessionsRouteCreate.Output {
+        try await sessionsRouteCreate(Operations.SessionsRouteCreate.Input(
+            path: path,
+            headers: headers,
+            body: body
         ))
     }
     /// - Remark: HTTP `POST /api/v1/sessions/{id}/start/`.
@@ -1210,6 +1262,41 @@ public enum Components {
                 next: Swift.String? = nil,
                 previous: Swift.String? = nil,
                 results: [Components.Schemas.SessionExercise]
+            ) {
+                self.count = count
+                self.next = next
+                self.previous = previous
+                self.results = results
+            }
+            public enum CodingKeys: String, CodingKey {
+                case count
+                case next
+                case previous
+                case results
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PaginatedSessionRoutePointList`.
+        public struct PaginatedSessionRoutePointList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PaginatedSessionRoutePointList/count`.
+            public var count: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PaginatedSessionRoutePointList/next`.
+            public var next: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedSessionRoutePointList/previous`.
+            public var previous: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedSessionRoutePointList/results`.
+            public var results: [Components.Schemas.SessionRoutePoint]
+            /// Creates a new `PaginatedSessionRoutePointList`.
+            ///
+            /// - Parameters:
+            ///   - count:
+            ///   - next:
+            ///   - previous:
+            ///   - results:
+            public init(
+                count: Swift.Int,
+                next: Swift.String? = nil,
+                previous: Swift.String? = nil,
+                results: [Components.Schemas.SessionRoutePoint]
             ) {
                 self.count = count
                 self.next = next
@@ -2405,6 +2492,87 @@ public enum Components {
                 case notes
             }
         }
+        /// - Remark: Generated from `#/components/schemas/SessionRoutePoint`.
+        public struct SessionRoutePoint: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SessionRoutePoint/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/SessionRoutePoint/latitude`.
+            public var latitude: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SessionRoutePoint/longitude`.
+            public var longitude: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SessionRoutePoint/recorded_at`.
+            public var recordedAt: Foundation.Date
+            /// Creates a new `SessionRoutePoint`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - latitude:
+            ///   - longitude:
+            ///   - recordedAt:
+            public init(
+                id: Swift.Int,
+                latitude: Swift.String,
+                longitude: Swift.String,
+                recordedAt: Foundation.Date
+            ) {
+                self.id = id
+                self.latitude = latitude
+                self.longitude = longitude
+                self.recordedAt = recordedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case latitude
+                case longitude
+                case recordedAt = "recorded_at"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SessionRoutePointRequest`.
+        public struct SessionRoutePointRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SessionRoutePointRequest/latitude`.
+            public var latitude: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SessionRoutePointRequest/longitude`.
+            public var longitude: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SessionRoutePointRequest/recorded_at`.
+            public var recordedAt: Foundation.Date
+            /// Creates a new `SessionRoutePointRequest`.
+            ///
+            /// - Parameters:
+            ///   - latitude:
+            ///   - longitude:
+            ///   - recordedAt:
+            public init(
+                latitude: Swift.String,
+                longitude: Swift.String,
+                recordedAt: Foundation.Date
+            ) {
+                self.latitude = latitude
+                self.longitude = longitude
+                self.recordedAt = recordedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case latitude
+                case longitude
+                case recordedAt = "recorded_at"
+            }
+        }
+        /// A batch of GPS fixes recorded during one session.
+        ///
+        /// - Remark: Generated from `#/components/schemas/SessionRouteUploadRequest`.
+        public struct SessionRouteUploadRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SessionRouteUploadRequest/points`.
+            public var points: [Components.Schemas.SessionRoutePointRequest]
+            /// Creates a new `SessionRouteUploadRequest`.
+            ///
+            /// - Parameters:
+            ///   - points:
+            public init(points: [Components.Schemas.SessionRoutePointRequest]) {
+                self.points = points
+            }
+            public enum CodingKeys: String, CodingKey {
+                case points
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/SetEntry`.
         public struct SetEntry: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/SetEntry/id`.
@@ -2789,6 +2957,10 @@ public enum Components {
             public var endedAt: Foundation.Date?
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/duration_seconds`.
             public var durationSeconds: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/route_distance_km`.
+            public var routeDistanceKm: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/pace_seconds_per_km`.
+            public var paceSecondsPerKm: Swift.Double?
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/created_at`.
             public var createdAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/updated_at`.
@@ -2804,6 +2976,8 @@ public enum Components {
             ///   - startedAt:
             ///   - endedAt:
             ///   - durationSeconds:
+            ///   - routeDistanceKm:
+            ///   - paceSecondsPerKm:
             ///   - createdAt:
             ///   - updatedAt:
             public init(
@@ -2815,6 +2989,8 @@ public enum Components {
                 startedAt: Foundation.Date? = nil,
                 endedAt: Foundation.Date? = nil,
                 durationSeconds: Swift.Double? = nil,
+                routeDistanceKm: Swift.Double? = nil,
+                paceSecondsPerKm: Swift.Double? = nil,
                 createdAt: Foundation.Date,
                 updatedAt: Foundation.Date
             ) {
@@ -2826,6 +3002,8 @@ public enum Components {
                 self.startedAt = startedAt
                 self.endedAt = endedAt
                 self.durationSeconds = durationSeconds
+                self.routeDistanceKm = routeDistanceKm
+                self.paceSecondsPerKm = paceSecondsPerKm
                 self.createdAt = createdAt
                 self.updatedAt = updatedAt
             }
@@ -2838,6 +3016,8 @@ public enum Components {
                 case startedAt = "started_at"
                 case endedAt = "ended_at"
                 case durationSeconds = "duration_seconds"
+                case routeDistanceKm = "route_distance_km"
+                case paceSecondsPerKm = "pace_seconds_per_km"
                 case createdAt = "created_at"
                 case updatedAt = "updated_at"
             }
@@ -7518,6 +7698,299 @@ public enum Operations {
             /// - Throws: An error if `self` is not `.ok`.
             /// - SeeAlso: `.ok`.
             public var ok: Operations.SessionsEndCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Read or append the GPS track recorded during a session.
+    ///
+    /// Uploaded points are stored raw; distance and pace are derived from them
+    /// on the server so every client agrees on the result.
+    ///
+    /// - Remark: HTTP `GET /api/v1/sessions/{id}/route/`.
+    /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/route//get(sessions_route_list)`.
+    public enum SessionsRouteList {
+        public static let id: Swift.String = "sessions_route_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/route/GET/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this workout session.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/route/GET/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this workout session.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SessionsRouteList.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/route/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/route/GET/query/page`.
+                public var page: Swift.Int?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - page: A page number within the paginated result set.
+                public init(page: Swift.Int? = nil) {
+                    self.page = page
+                }
+            }
+            public var query: Operations.SessionsRouteList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/route/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SessionsRouteList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SessionsRouteList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SessionsRouteList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - query:
+            ///   - headers:
+            public init(
+                path: Operations.SessionsRouteList.Input.Path,
+                query: Operations.SessionsRouteList.Input.Query = .init(),
+                headers: Operations.SessionsRouteList.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/route/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/route/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedSessionRoutePointList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedSessionRoutePointList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SessionsRouteList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SessionsRouteList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/route//get(sessions_route_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SessionsRouteList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SessionsRouteList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Read or append the GPS track recorded during a session.
+    ///
+    /// Uploaded points are stored raw; distance and pace are derived from them
+    /// on the server so every client agrees on the result.
+    ///
+    /// - Remark: HTTP `POST /api/v1/sessions/{id}/route/`.
+    /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/route//post(sessions_route_create)`.
+    public enum SessionsRouteCreate {
+        public static let id: Swift.String = "sessions_route_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/route/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this workout session.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/route/POST/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this workout session.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SessionsRouteCreate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/route/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SessionsRouteCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SessionsRouteCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SessionsRouteCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/route/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/route/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.SessionRouteUploadRequest)
+            }
+            public var body: Operations.SessionsRouteCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.SessionsRouteCreate.Input.Path,
+                headers: Operations.SessionsRouteCreate.Input.Headers = .init(),
+                body: Operations.SessionsRouteCreate.Input.Body
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/route/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/route/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.WorkoutSession)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.WorkoutSession {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SessionsRouteCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SessionsRouteCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/route//post(sessions_route_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SessionsRouteCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SessionsRouteCreate.Output.Ok {
                 get throws {
                     switch self {
                     case let .ok(response):

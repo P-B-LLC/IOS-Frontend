@@ -21,6 +21,10 @@ final class WorkoutStore {
     private(set) var activeSession: ActiveWorkoutSession?
     private(set) var completedSessions: [CompletedWorkoutSession] = []
     private(set) var pendingSetIDs: Set<WorkoutSetDraft.ID> = []
+    /// Records the GPS track for cardio sessions.
+    let routeTracker = RouteTracker()
+    /// Distance and pace for the last finished route, as computed by the server.
+    private(set) var routeSummary: SessionRouteSummary?
 
     init(initialSchedule: [Weekday: Workout] = [:]) {
         schedule = initialSchedule
@@ -181,6 +185,12 @@ final class WorkoutStore {
                 )
                 guard connectionGeneration == generation else { return }
                 activeSession = session
+                routeSummary = nil
+                // Only a run, ride, or swim records a track, and only for as
+                // long as its session is active.
+                if session.tracksDistance {
+                    routeTracker.startTracking()
+                }
             } catch {
                 guard connectionGeneration == generation else { return }
                 persistenceError = error.localizedDescription
@@ -317,11 +327,28 @@ final class WorkoutStore {
         persistenceError = nil
         defer { isSaving = false }
         do {
+            // Upload the track before ending so the session's distance and
+            // pace are already computed when the completion summary appears.
+            let recorded = routeTracker.stopTracking()
+            if session.tracksDistance, recorded.count >= 2 {
+                do {
+                    routeSummary = try await repository.uploadRoute(
+                        recorded,
+                        sessionID: session.serverID
+                    )
+                } catch {
+                    // The workout itself still counts; say the track failed
+                    // rather than losing the session over it.
+                    persistenceError = "Session saved, but the route could not be uploaded: \(error.localizedDescription)"
+                }
+            }
+
             try await repository.endSession(id: session.serverID)
             completedSessions.append(
                 CompletedWorkoutSession(session: session, endedAt: Date())
             )
             activeSession = nil
+            routeTracker.reset()
             return session.loggedSetCount
         } catch {
             persistenceError = error.localizedDescription
@@ -344,6 +371,9 @@ final class WorkoutStore {
         do {
             try await repository.discardSession(id: session.serverID)
             activeSession = nil
+            // A discarded session keeps no track.
+            routeTracker.reset()
+            routeSummary = nil
         } catch {
             persistenceError = error.localizedDescription
         }
