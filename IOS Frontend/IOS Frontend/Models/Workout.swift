@@ -199,24 +199,83 @@ nonisolated struct WorkoutSetDraft: Identifiable, Hashable, Sendable {
     }
 }
 
-/// Distance and pace for a session, exactly as the backend computed them from
-/// the uploaded GPS track. Neither value is calculated on the device.
+/// One kilometer of a session, as timed by the backend. The last split of a
+/// run usually covers less than a kilometer.
+nonisolated struct SessionSplit: Identifiable, Hashable, Sendable {
+    let kilometer: Int
+    let seconds: Double
+    let distanceKilometers: Double
+
+    var id: Int { kilometer }
+
+    var isPartial: Bool { distanceKilometers < 0.995 }
+
+    /// Pace for this split, normalized so a partial final kilometer is
+    /// comparable with the full ones rather than looking impossibly fast.
+    var paceSecondsPerKilometer: Double? {
+        guard distanceKilometers > 0 else { return nil }
+        return seconds / distanceKilometers
+    }
+}
+
+/// Distance, pace and speed for a session, exactly as the backend computed
+/// them from the uploaded GPS track. None of it is calculated on the device.
 nonisolated struct SessionRouteSummary: Hashable, Sendable {
     let distanceKilometers: Double?
     let paceSecondsPerKilometer: Double?
+    let movingPaceSecondsPerKilometer: Double?
+    let averageSpeedKilometersPerHour: Double?
+    let maxSpeedKilometersPerHour: Double?
+    let movingSeconds: Double?
+    let splits: [SessionSplit]
 
-    /// Pace formatted as minutes and seconds per kilometer, e.g. "5:30 /km".
-    var paceText: String? {
-        guard let paceSecondsPerKilometer, paceSecondsPerKilometer > 0 else {
-            return nil
-        }
-        let total = Int(paceSecondsPerKilometer.rounded())
-        return String(format: "%d:%02d /km", total / 60, total % 60)
+    init(
+        distanceKilometers: Double? = nil,
+        paceSecondsPerKilometer: Double? = nil,
+        movingPaceSecondsPerKilometer: Double? = nil,
+        averageSpeedKilometersPerHour: Double? = nil,
+        maxSpeedKilometersPerHour: Double? = nil,
+        movingSeconds: Double? = nil,
+        splits: [SessionSplit] = []
+    ) {
+        self.distanceKilometers = distanceKilometers
+        self.paceSecondsPerKilometer = paceSecondsPerKilometer
+        self.movingPaceSecondsPerKilometer = movingPaceSecondsPerKilometer
+        self.averageSpeedKilometersPerHour = averageSpeedKilometersPerHour
+        self.maxSpeedKilometersPerHour = maxSpeedKilometersPerHour
+        self.movingSeconds = movingSeconds
+        self.splits = splits
+    }
+
+    var paceText: String? { Self.paceText(paceSecondsPerKilometer) }
+    var movingPaceText: String? { Self.paceText(movingPaceSecondsPerKilometer) }
+
+    var averageSpeedText: String? {
+        guard let averageSpeedKilometersPerHour else { return nil }
+        return String(format: "%.1f km/h", averageSpeedKilometersPerHour)
+    }
+
+    var maxSpeedText: String? {
+        guard let maxSpeedKilometersPerHour else { return nil }
+        return String(format: "%.1f km/h", maxSpeedKilometersPerHour)
     }
 
     var distanceText: String? {
         guard let distanceKilometers else { return nil }
         return String(format: "%.2f km", distanceKilometers)
+    }
+
+    /// Formats seconds-per-kilometer as "5:30 /km".
+    static func paceText(_ seconds: Double?) -> String? {
+        guard let seconds, seconds > 0, seconds.isFinite else { return nil }
+        let total = Int(seconds.rounded())
+        return String(format: "%d:%02d /km", total / 60, total % 60)
+    }
+
+    /// Formats a duration as m:ss, used for split times.
+    static func durationText(_ seconds: Double) -> String {
+        let total = Int(seconds.rounded())
+        return String(format: "%d:%02d", total / 60, total % 60)
     }
 }
 

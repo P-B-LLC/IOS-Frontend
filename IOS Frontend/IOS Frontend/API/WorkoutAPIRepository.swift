@@ -435,7 +435,10 @@ actor WorkoutAPIRepository {
             Components.Schemas.SessionRoutePointRequest(
                 latitude: Self.coordinateString(point.latitude),
                 longitude: Self.coordinateString(point.longitude),
-                recordedAt: point.recordedAt
+                recordedAt: point.recordedAt,
+                speedMps: point.speedMetersPerSecond.map {
+                    String(format: "%.2f", max(0, $0))
+                }
             )
         }
 
@@ -450,7 +453,18 @@ actor WorkoutAPIRepository {
             let session = try response.body.json
             return SessionRouteSummary(
                 distanceKilometers: session.routeDistanceKm,
-                paceSecondsPerKilometer: session.paceSecondsPerKm
+                paceSecondsPerKilometer: session.paceSecondsPerKm,
+                movingPaceSecondsPerKilometer: session.movingPaceSecondsPerKm,
+                averageSpeedKilometersPerHour: session.averageSpeedKmh,
+                maxSpeedKilometersPerHour: session.maxSpeedKmh,
+                movingSeconds: session.movingSeconds,
+                splits: (session.splits ?? []).map {
+                    SessionSplit(
+                        kilometer: Int($0.kilometer ?? 0),
+                        seconds: $0.seconds ?? 0,
+                        distanceKilometers: $0.distanceKm ?? 1
+                    )
+                }
             )
         case .undocumented(let statusCode, _):
             throw APIServiceError.undocumentedStatus(statusCode)

@@ -16,17 +16,23 @@ nonisolated struct RoutePoint: Identifiable, Hashable, Sendable {
     let latitude: Double
     let longitude: Double
     let recordedAt: Date
+    /// The device's own speed reading in meters per second, taken from the
+    /// GPS Doppler shift rather than derived from consecutive positions, so it
+    /// carries no accumulated positional error. Nil when unavailable.
+    let speedMetersPerSecond: Double?
 
     init(
         id: UUID = UUID(),
         latitude: Double,
         longitude: Double,
-        recordedAt: Date
+        recordedAt: Date,
+        speedMetersPerSecond: Double? = nil
     ) {
         self.id = id
         self.latitude = latitude
         self.longitude = longitude
         self.recordedAt = recordedAt
+        self.speedMetersPerSecond = speedMetersPerSecond
     }
 
     var coordinate: CLLocationCoordinate2D {
@@ -55,6 +61,23 @@ final class RouteTracker: NSObject, CLLocationManagerDelegate {
     private(set) var points: [RoutePoint] = []
     /// Set when a fix cannot be obtained, so the session UI can say so.
     private(set) var trackingError: String?
+    /// Latest speed reading, shown live during a session. Display only — every
+    /// saved figure is computed by the backend from the uploaded track.
+    private(set) var currentSpeedMetersPerSecond: Double?
+
+    /// Current speed in km/h, the natural unit for a ride.
+    var currentSpeedKilometersPerHour: Double? {
+        currentSpeedMetersPerSecond.map { $0 * 3.6 }
+    }
+
+    /// Current pace in seconds per km, the natural unit for a run or swim.
+    /// Nil below a slow walk, where pace becomes meaningless.
+    var currentPaceSecondsPerKilometer: Double? {
+        guard let speed = currentSpeedMetersPerSecond, speed > 0.5 else {
+            return nil
+        }
+        return 1000 / speed
+    }
 
     private let manager: CLLocationManager
 
@@ -86,6 +109,7 @@ final class RouteTracker: NSObject, CLLocationManagerDelegate {
         guard permission.allowsTracking, !isTracking else { return }
         points = []
         trackingError = nil
+        currentSpeedMetersPerSecond = nil
         isTracking = true
 
         // Keeps fixes coming with the screen locked or the app backgrounded,
@@ -150,13 +174,17 @@ final class RouteTracker: NSObject, CLLocationManagerDelegate {
                   location.horizontalAccuracy <= 100 else {
                 continue
             }
+            // A negative speed means the device could not measure it.
+            let speed = location.speed >= 0 ? location.speed : nil
             points.append(
                 RoutePoint(
                     latitude: location.coordinate.latitude,
                     longitude: location.coordinate.longitude,
-                    recordedAt: location.timestamp
+                    recordedAt: location.timestamp,
+                    speedMetersPerSecond: speed
                 )
             )
+            if let speed { currentSpeedMetersPerSecond = speed }
         }
     }
 

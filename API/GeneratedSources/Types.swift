@@ -2502,6 +2502,8 @@ public enum Components {
             public var longitude: Swift.String
             /// - Remark: Generated from `#/components/schemas/SessionRoutePoint/recorded_at`.
             public var recordedAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/SessionRoutePoint/speed_mps`.
+            public var speedMps: Swift.String?
             /// Creates a new `SessionRoutePoint`.
             ///
             /// - Parameters:
@@ -2509,22 +2511,26 @@ public enum Components {
             ///   - latitude:
             ///   - longitude:
             ///   - recordedAt:
+            ///   - speedMps:
             public init(
                 id: Swift.Int,
                 latitude: Swift.String,
                 longitude: Swift.String,
-                recordedAt: Foundation.Date
+                recordedAt: Foundation.Date,
+                speedMps: Swift.String? = nil
             ) {
                 self.id = id
                 self.latitude = latitude
                 self.longitude = longitude
                 self.recordedAt = recordedAt
+                self.speedMps = speedMps
             }
             public enum CodingKeys: String, CodingKey {
                 case id
                 case latitude
                 case longitude
                 case recordedAt = "recorded_at"
+                case speedMps = "speed_mps"
             }
         }
         /// - Remark: Generated from `#/components/schemas/SessionRoutePointRequest`.
@@ -2535,25 +2541,31 @@ public enum Components {
             public var longitude: Swift.String
             /// - Remark: Generated from `#/components/schemas/SessionRoutePointRequest/recorded_at`.
             public var recordedAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/SessionRoutePointRequest/speed_mps`.
+            public var speedMps: Swift.String?
             /// Creates a new `SessionRoutePointRequest`.
             ///
             /// - Parameters:
             ///   - latitude:
             ///   - longitude:
             ///   - recordedAt:
+            ///   - speedMps:
             public init(
                 latitude: Swift.String,
                 longitude: Swift.String,
-                recordedAt: Foundation.Date
+                recordedAt: Foundation.Date,
+                speedMps: Swift.String? = nil
             ) {
                 self.latitude = latitude
                 self.longitude = longitude
                 self.recordedAt = recordedAt
+                self.speedMps = speedMps
             }
             public enum CodingKeys: String, CodingKey {
                 case latitude
                 case longitude
                 case recordedAt = "recorded_at"
+                case speedMps = "speed_mps"
             }
         }
         /// A batch of GPS fixes recorded during one session.
@@ -2571,6 +2583,40 @@ public enum Components {
             }
             public enum CodingKeys: String, CodingKey {
                 case points
+            }
+        }
+        /// Time taken for one kilometer of a session.
+        ///
+        /// The final entry may cover less than a kilometer, which `distance_km`
+        /// reports so a partial split is not mistaken for a fast one.
+        ///
+        /// - Remark: Generated from `#/components/schemas/SessionSplit`.
+        public struct SessionSplit: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SessionSplit/kilometer`.
+            public var kilometer: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/SessionSplit/seconds`.
+            public var seconds: Swift.Double
+            /// - Remark: Generated from `#/components/schemas/SessionSplit/distance_km`.
+            public var distanceKm: Swift.Double
+            /// Creates a new `SessionSplit`.
+            ///
+            /// - Parameters:
+            ///   - kilometer:
+            ///   - seconds:
+            ///   - distanceKm:
+            public init(
+                kilometer: Swift.Int,
+                seconds: Swift.Double,
+                distanceKm: Swift.Double
+            ) {
+                self.kilometer = kilometer
+                self.seconds = seconds
+                self.distanceKm = distanceKm
+            }
+            public enum CodingKeys: String, CodingKey {
+                case kilometer
+                case seconds
+                case distanceKm = "distance_km"
             }
         }
         /// - Remark: Generated from `#/components/schemas/SetEntry`.
@@ -2961,6 +3007,16 @@ public enum Components {
             public var routeDistanceKm: Swift.Double?
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/pace_seconds_per_km`.
             public var paceSecondsPerKm: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/moving_pace_seconds_per_km`.
+            public var movingPaceSecondsPerKm: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/average_speed_kmh`.
+            public var averageSpeedKmh: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/max_speed_kmh`.
+            public var maxSpeedKmh: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/moving_seconds`.
+            public var movingSeconds: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/splits`.
+            public var splits: [Components.Schemas.SessionSplit]
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/created_at`.
             public var createdAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/updated_at`.
@@ -2978,6 +3034,11 @@ public enum Components {
             ///   - durationSeconds:
             ///   - routeDistanceKm:
             ///   - paceSecondsPerKm:
+            ///   - movingPaceSecondsPerKm:
+            ///   - averageSpeedKmh:
+            ///   - maxSpeedKmh:
+            ///   - movingSeconds:
+            ///   - splits:
             ///   - createdAt:
             ///   - updatedAt:
             public init(
@@ -2991,6 +3052,11 @@ public enum Components {
                 durationSeconds: Swift.Double? = nil,
                 routeDistanceKm: Swift.Double? = nil,
                 paceSecondsPerKm: Swift.Double? = nil,
+                movingPaceSecondsPerKm: Swift.Double? = nil,
+                averageSpeedKmh: Swift.Double? = nil,
+                maxSpeedKmh: Swift.Double? = nil,
+                movingSeconds: Swift.Double? = nil,
+                splits: [Components.Schemas.SessionSplit],
                 createdAt: Foundation.Date,
                 updatedAt: Foundation.Date
             ) {
@@ -3004,6 +3070,11 @@ public enum Components {
                 self.durationSeconds = durationSeconds
                 self.routeDistanceKm = routeDistanceKm
                 self.paceSecondsPerKm = paceSecondsPerKm
+                self.movingPaceSecondsPerKm = movingPaceSecondsPerKm
+                self.averageSpeedKmh = averageSpeedKmh
+                self.maxSpeedKmh = maxSpeedKmh
+                self.movingSeconds = movingSeconds
+                self.splits = splits
                 self.createdAt = createdAt
                 self.updatedAt = updatedAt
             }
@@ -3018,6 +3089,11 @@ public enum Components {
                 case durationSeconds = "duration_seconds"
                 case routeDistanceKm = "route_distance_km"
                 case paceSecondsPerKm = "pace_seconds_per_km"
+                case movingPaceSecondsPerKm = "moving_pace_seconds_per_km"
+                case averageSpeedKmh = "average_speed_kmh"
+                case maxSpeedKmh = "max_speed_kmh"
+                case movingSeconds = "moving_seconds"
+                case splits
                 case createdAt = "created_at"
                 case updatedAt = "updated_at"
             }
