@@ -68,11 +68,24 @@ struct SessionProgressChart: View {
     @ViewBuilder
     private var chart: some View {
         Chart(points) { point in
+            AreaMark(
+                x: .value("Session", point.date),
+                y: .value(metric.title(for: workoutType), point.value)
+            )
+            .foregroundStyle(
+                .linearGradient(
+                    colors: [phase.accent.opacity(0.28), phase.accent.opacity(0.02)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+
             LineMark(
                 x: .value("Session", point.date),
                 y: .value(metric.title(for: workoutType), point.value)
             )
             .foregroundStyle(phase.accent)
+            .lineStyle(StrokeStyle(lineWidth: 2.5, lineCap: .round))
             .interpolationMethod(.monotone)
 
             PointMark(
@@ -80,6 +93,7 @@ struct SessionProgressChart: View {
                 y: .value(metric.title(for: workoutType), point.value)
             )
             .foregroundStyle(phase.accent)
+            .symbolSize(45)
         }
         .chartYAxis {
             AxisMarks { value in

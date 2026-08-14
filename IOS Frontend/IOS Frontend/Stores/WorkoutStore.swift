@@ -415,7 +415,7 @@ final class WorkoutStore {
             // reported as saved either way.
             if session.tracksDistance {
                 sessionHistory = (try? await repository.sessionHistory(
-                    workoutServerID: session.workoutServerID
+                    workoutName: session.workoutName
                 )) ?? []
             } else {
                 personalRecords = (try? await repository.personalRecords(
@@ -426,7 +426,8 @@ final class WorkoutStore {
                 for exercise in session.exercises {
                     if let series = try? await repository.liftProgress(
                         exerciseID: exercise.exerciseServerID,
-                        exerciseName: exercise.name
+                        exerciseName: exercise.name,
+                        workoutName: session.workoutName
                     ), series.hasEnoughToPlot {
                         progress.append(series)
                     }

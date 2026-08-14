@@ -410,10 +410,12 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//api/v1/progress/exercises/{exercise_id}//get(progress_exercises_list)`.
     public func progressExercisesList(
         path: Operations.ProgressExercisesList.Input.Path,
+        query: Operations.ProgressExercisesList.Input.Query = .init(),
         headers: Operations.ProgressExercisesList.Input.Headers = .init()
     ) async throws -> Operations.ProgressExercisesList.Output {
         try await progressExercisesList(Operations.ProgressExercisesList.Input(
             path: path,
+            query: query,
             headers: headers
         ))
     }
@@ -5553,6 +5555,21 @@ public enum Operations {
                 }
             }
             public var path: Operations.ProgressExercisesList.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/progress/exercises/{exercise_id}/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// Only count sets performed in workouts with this name, matched without regard to case. Keeps one workout's history of a lift separate from another's.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/progress/exercises/{exercise_id}/GET/query/workout_name`.
+                public var workoutName: Swift.String?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - workoutName: Only count sets performed in workouts with this name, matched without regard to case. Keeps one workout's history of a lift separate from another's.
+                public init(workoutName: Swift.String? = nil) {
+                    self.workoutName = workoutName
+                }
+            }
+            public var query: Operations.ProgressExercisesList.Input.Query
             /// - Remark: Generated from `#/paths/api/v1/progress/exercises/{exercise_id}/GET/header`.
             public struct Headers: Sendable, Hashable {
                 public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.ProgressExercisesList.AcceptableContentType>]
@@ -5569,12 +5586,15 @@ public enum Operations {
             ///
             /// - Parameters:
             ///   - path:
+            ///   - query:
             ///   - headers:
             public init(
                 path: Operations.ProgressExercisesList.Input.Path,
+                query: Operations.ProgressExercisesList.Input.Query = .init(),
                 headers: Operations.ProgressExercisesList.Input.Headers = .init()
             ) {
                 self.path = path
+                self.query = query
                 self.headers = headers
             }
         }
@@ -7124,20 +7144,27 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/sessions/GET/query/workout`.
                 public var workout: Swift.Int?
+                /// Return only sessions whose workout has this name, matched without regard to case. Groups a workout's history by what it is called rather than by record.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/sessions/GET/query/workout_name`.
+                public var workoutName: Swift.String?
                 /// Creates a new `Query`.
                 ///
                 /// - Parameters:
                 ///   - page: A page number within the paginated result set.
                 ///   - status: Return only sessions in this state.
                 ///   - workout: Return only sessions for this workout template.
+                ///   - workoutName: Return only sessions whose workout has this name, matched without regard to case. Groups a workout's history by what it is called rather than by record.
                 public init(
                     page: Swift.Int? = nil,
                     status: Operations.SessionsList.Input.Query.StatusPayload? = nil,
-                    workout: Swift.Int? = nil
+                    workout: Swift.Int? = nil,
+                    workoutName: Swift.String? = nil
                 ) {
                     self.page = page
                     self.status = status
                     self.workout = workout
+                    self.workoutName = workoutName
                 }
             }
             public var query: Operations.SessionsList.Input.Query

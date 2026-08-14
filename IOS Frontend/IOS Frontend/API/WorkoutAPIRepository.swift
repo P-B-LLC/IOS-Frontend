@@ -520,10 +520,12 @@ actor WorkoutAPIRepository {
     /// weights and volumes themselves are the server's numbers.
     func liftProgress(
         exerciseID: Int,
-        exerciseName: String
+        exerciseName: String,
+        workoutName: String
     ) async throws -> LiftProgressSeries {
         let output = try await client.progressExercisesList(
-            path: .init(exerciseId: exerciseID)
+            path: .init(exerciseId: exerciseID),
+            query: .init(workoutName: workoutName)
         )
         let points: [Components.Schemas.ExerciseProgressPoint]
         switch output {
@@ -602,11 +604,13 @@ actor WorkoutAPIRepository {
     /// run has progressed. Only sessions that actually recorded a route are
     /// returned, since the rest have nothing to plot.
     func sessionHistory(
-        workoutServerID: Int,
+        workoutName: String,
         limit: Int = 20
     ) async throws -> [SessionHistoryPoint] {
+        // Matched by name rather than by template id, so a workout's history
+        // is everything the user called by that name.
         let output = try await client.sessionsList(
-            query: .init(status: .completed, workout: workoutServerID)
+            query: .init(status: .completed, workoutName: workoutName)
         )
         let page: Components.Schemas.PaginatedWorkoutSessionList
         switch output {

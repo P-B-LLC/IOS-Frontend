@@ -96,13 +96,36 @@ struct LiftProgressChart: View {
 
     private func chart(for entry: LiftProgressSeries) -> some View {
         Chart(entry.days) { day in
-            BarMark(
-                x: .value("Session", day.date, unit: .day),
+            // A line reads as a trend across sessions in a way separate bars
+            // do not, which is the point of the chart.
+            AreaMark(
+                x: .value("Session", day.date),
+                y: .value(metric.title, value(for: day))
+            )
+            .foregroundStyle(
+                .linearGradient(
+                    colors: [phase.accent.opacity(0.28), phase.accent.opacity(0.02)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+
+            LineMark(
+                x: .value("Session", day.date),
                 y: .value(metric.title, value(for: day))
             )
             .foregroundStyle(phase.accent)
-            .cornerRadius(4)
+            .lineStyle(StrokeStyle(lineWidth: 2.5, lineCap: .round))
+            .interpolationMethod(.monotone)
+
+            PointMark(
+                x: .value("Session", day.date),
+                y: .value(metric.title, value(for: day))
+            )
+            .foregroundStyle(phase.accent)
+            .symbolSize(45)
         }
+        .chartYScale(domain: .automatic(includesZero: false))
         .chartYAxis {
             AxisMarks { value in
                 AxisGridLine().foregroundStyle(phase.secondaryText.opacity(0.25))

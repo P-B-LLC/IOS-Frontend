@@ -1212,6 +1212,13 @@ public struct Client: APIProtocol {
                     method: .get
                 )
                 suppressMutabilityWarning(&request)
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "workout_name",
+                    value: input.query.workoutName
+                )
                 converter.setAcceptHeader(
                     in: &request.headerFields,
                     contentTypes: input.headers.accept
@@ -2026,6 +2033,13 @@ public struct Client: APIProtocol {
                     explode: true,
                     name: "workout",
                     value: input.query.workout
+                )
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "workout_name",
+                    value: input.query.workoutName
                 )
                 converter.setAcceptHeader(
                     in: &request.headerFields,
