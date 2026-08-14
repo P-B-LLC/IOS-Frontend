@@ -15,6 +15,8 @@ struct DayWorkoutView: View {
     @State private var editor: WorkoutEditorView.Mode?
     /// The workout awaiting a delete confirmation, if any.
     @State private var workoutPendingRemoval: Workout?
+    /// Which workout page is on screen when a day holds several.
+    @State private var visibleWorkoutID: Workout.ID?
     @State private var showingEndConfirmation = false
     @State private var showingDiscardConfirmation = false
     @State private var completionNotice: String?
@@ -301,35 +303,17 @@ struct DayWorkoutView: View {
         }
     }
 
-    /// Everything scheduled for the day. Days often hold one workout, but a
-    /// date can carry several, and all of them are shown.
+    /// Everything scheduled for the day. A single workout fills the page; when
+    /// a day holds several, each gets its own page and the user swipes between
+    /// them rather than scrolling past one to reach the next.
     private var plannedDay: some View {
         VStack(alignment: .leading, spacing: 18) {
             if plannedWorkouts.count > 1 {
-                HStack(spacing: 8) {
-                    Image(systemName: "square.stack.3d.up.fill")
-                        .foregroundStyle(Color.accentColor)
-                    Text("^[\(plannedWorkouts.count) workout](inflect: true) planned for \(day.fullName)")
-                        .font(.subheadline.weight(.semibold))
-                    Spacer(minLength: 0)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(12)
-                .background(
-                    Color.accentColor.opacity(0.1),
-                    in: RoundedRectangle(cornerRadius: 14)
-                )
-            }
-
-            ForEach(Array(plannedWorkouts.enumerated()), id: \.element.id) { index, planned in
-                VStack(alignment: .leading, spacing: 18) {
-                    if plannedWorkouts.count > 1 {
-                        Text("WORKOUT \(index + 1) OF \(plannedWorkouts.count)")
-                            .font(.caption2.weight(.bold))
-                            .foregroundStyle(.secondary)
-                    }
-                    plannedWorkout(planned)
-                }
+                multiWorkoutBanner
+                workoutPager
+                pageIndicator
+            } else if let only = plannedWorkouts.first {
+                plannedWorkout(only)
             }
 
             Button {
@@ -342,6 +326,75 @@ struct DayWorkoutView: View {
             .buttonStyle(.bordered)
             .disabled(!store.isEditingEnabled)
         }
+        .onAppear {
+            if visibleWorkoutID == nil {
+                visibleWorkoutID = plannedWorkouts.first?.id
+            }
+        }
+    }
+
+    private var multiWorkoutBanner: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "square.stack.3d.up.fill")
+                .foregroundStyle(Color.accentColor)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("^[\(plannedWorkouts.count) workout](inflect: true) planned")
+                    .font(.subheadline.weight(.semibold))
+                Text("Swipe to see the rest")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.compact.left")
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(
+            Color.accentColor.opacity(0.1),
+            in: RoundedRectangle(cornerRadius: 14)
+        )
+    }
+
+    /// One page per workout. A horizontal scroll view nests cleanly inside the
+    /// screen's vertical one, unlike a second vertical scroller would.
+    private var workoutPager: some View {
+        ScrollView(.horizontal) {
+            LazyHStack(spacing: 14) {
+                ForEach(Array(plannedWorkouts.enumerated()), id: \.element.id) { index, planned in
+                    VStack(alignment: .leading, spacing: 14) {
+                        Text("WORKOUT \(index + 1) OF \(plannedWorkouts.count)")
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(.secondary)
+                        plannedWorkout(planned)
+                        Spacer(minLength: 0)
+                    }
+                    .containerRelativeFrame(.horizontal)
+                    .id(planned.id)
+                }
+            }
+            .scrollTargetLayout()
+        }
+        .scrollTargetBehavior(.paging)
+        .scrollIndicators(.hidden)
+        .scrollPosition(id: $visibleWorkoutID)
+    }
+
+    private var pageIndicator: some View {
+        HStack(spacing: 6) {
+            ForEach(plannedWorkouts) { planned in
+                Circle()
+                    .fill(
+                        planned.id == visibleWorkoutID
+                            ? Color.accentColor
+                            : Color.secondary.opacity(0.3)
+                    )
+                    .frame(width: 7, height: 7)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityHidden(true)
     }
 
     @ViewBuilder
