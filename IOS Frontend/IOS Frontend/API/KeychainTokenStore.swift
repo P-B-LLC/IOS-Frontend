@@ -57,12 +57,14 @@ struct KeychainTokenStore: Sendable {
             baseQuery as CFDictionary,
             [kSecValueData as String: data] as CFDictionary
         )
+        if isUnavailableOnSimulator(updateStatus) { return }
 
         if updateStatus == errSecItemNotFound {
             var item = baseQuery
             item[kSecValueData as String] = data
             item[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
             let addStatus = SecItemAdd(item as CFDictionary, nil)
+            if isUnavailableOnSimulator(addStatus) { return }
             guard addStatus == errSecSuccess else {
                 throw KeychainTokenStoreError.unexpectedStatus(addStatus)
             }
@@ -76,9 +78,27 @@ struct KeychainTokenStore: Sendable {
 
     func delete() throws {
         let status = SecItemDelete(baseQuery as CFDictionary)
+        if isUnavailableOnSimulator(status) { return }
         guard status == errSecSuccess || status == errSecItemNotFound else {
             throw KeychainTokenStoreError.unexpectedStatus(status)
         }
+    }
+
+    /// A simulator build produced without code signing carries no Keychain
+    /// entitlement, so every item operation returns `errSecMissingEntitlement`.
+    ///
+    /// Reading already treats that as "nothing stored". Writing has to match:
+    /// signing in saves the token before the session is marked active, so
+    /// throwing here blocks sign-in outright on a build that is otherwise
+    /// perfectly usable. The session simply lasts until the app is relaunched.
+    /// Device and Xcode-signed builds are unaffected and still require the
+    /// Keychain to work.
+    private func isUnavailableOnSimulator(_ status: OSStatus) -> Bool {
+#if targetEnvironment(simulator)
+        return status == errSecMissingEntitlement
+#else
+        return false
+#endif
     }
 
     private var baseQuery: [String: Any] {
