@@ -513,6 +513,45 @@ actor WorkoutAPIRepository {
         String(format: "%.6f", value)
     }
 
+    /// Past completed sessions for a workout, newest first, for showing how a
+    /// run has progressed. Only sessions that actually recorded a route are
+    /// returned, since the rest have nothing to plot.
+    func sessionHistory(
+        workoutServerID: Int,
+        limit: Int = 20
+    ) async throws -> [SessionHistoryPoint] {
+        let output = try await client.sessionsList(
+            query: .init(status: .completed, workout: workoutServerID)
+        )
+        let page: Components.Schemas.PaginatedWorkoutSessionList
+        switch output {
+        case .ok(let response):
+            page = try response.body.json
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+
+        return page.results
+            .compactMap { session -> SessionHistoryPoint? in
+                guard let endedAt = session.endedAt ?? session.startedAt,
+                      let distance = session.routeDistanceKm,
+                      distance > 0 else {
+                    return nil
+                }
+                return SessionHistoryPoint(
+                    sessionID: session.id,
+                    date: endedAt,
+                    distanceKilometers: distance,
+                    paceSecondsPerKilometer: session.movingPaceSecondsPerKm
+                        ?? session.paceSecondsPerKm,
+                    elevationGainMeters: session.elevationGainM
+                )
+            }
+            .sorted { $0.date < $1.date }
+            .suffix(limit)
+            .map { $0 }
+    }
+
     func deleteSetEntry(id: Int) async throws {
         let output = try await client.setEntriesDestroy(path: .init(id: id))
         switch output {

@@ -7005,12 +7005,34 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/sessions/GET/query/page`.
                 public var page: Swift.Int?
+                /// - Remark: Generated from `#/paths/api/v1/sessions/GET/query/status`.
+                @frozen public enum StatusPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case active = "active"
+                    case completed = "completed"
+                    case planned = "planned"
+                }
+                /// Return only sessions in this state.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/sessions/GET/query/status`.
+                public var status: Operations.SessionsList.Input.Query.StatusPayload?
+                /// Return only sessions for this workout template.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/sessions/GET/query/workout`.
+                public var workout: Swift.Int?
                 /// Creates a new `Query`.
                 ///
                 /// - Parameters:
                 ///   - page: A page number within the paginated result set.
-                public init(page: Swift.Int? = nil) {
+                ///   - status: Return only sessions in this state.
+                ///   - workout: Return only sessions for this workout template.
+                public init(
+                    page: Swift.Int? = nil,
+                    status: Operations.SessionsList.Input.Query.StatusPayload? = nil,
+                    workout: Swift.Int? = nil
+                ) {
                     self.page = page
+                    self.status = status
+                    self.workout = workout
                 }
             }
             public var query: Operations.SessionsList.Input.Query

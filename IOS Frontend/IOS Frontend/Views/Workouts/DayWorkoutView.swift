@@ -749,29 +749,66 @@ struct DayWorkoutView: View {
                     .font(.caption2.weight(.bold))
                     .foregroundStyle(phase.secondaryText)
                 Spacer()
-                Text("SAVED TO REPBASE")
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(phase.accent)
             }
 
-            HStack(spacing: 10) {
-                RecoveryMetricCard(
-                    title: "SETS",
-                    value: "\(session.loggedSetCount)",
-                    detail: "OF \(session.totalSetCount) LOGGED",
-                    isEmphasized: false
-                )
-                RecoveryMetricCard(
-                    title: "EXERCISES",
-                    value: "\(session.exercises.count)",
-                    detail: "IN SESSION",
-                    isEmphasized: false
-                )
-                RecoveryMetricCard(
-                    title: "COMPLETION",
-                    value: "\(completionPercentage)%",
-                    detail: "FINISHED",
-                    isEmphasized: true
+            // A run is measured in distance, pace and climb. Sets and
+            // completion belong to lifting and say nothing about a run.
+            if session.tracksDistance {
+                HStack(spacing: 10) {
+                    RecoveryMetricCard(
+                        title: "DISTANCE",
+                        value: store.routeSummary?.distanceText
+                            .map { $0.replacingOccurrences(of: " km", with: "") } ?? "--",
+                        detail: "KILOMETERS",
+                        isEmphasized: true
+                    )
+                    RecoveryMetricCard(
+                        title: session.workoutType == .biking ? "AVG SPEED" : "AVG PACE",
+                        value: session.workoutType == .biking
+                            ? (store.routeSummary?.averageSpeedText
+                                .map { $0.replacingOccurrences(of: " km/h", with: "") } ?? "--")
+                            : (store.routeSummary?.movingPaceText
+                                ?? store.routeSummary?.paceText)?
+                                .replacingOccurrences(of: " /km", with: "") ?? "--",
+                        detail: session.workoutType == .biking ? "KM/H" : "PER KM",
+                        isEmphasized: false
+                    )
+                    RecoveryMetricCard(
+                        title: "CLIMB",
+                        value: store.routeSummary?.elevationGainText
+                            .map { $0.replacingOccurrences(of: " m", with: "") } ?? "0",
+                        detail: "METERS",
+                        isEmphasized: false
+                    )
+                }
+            } else {
+                HStack(spacing: 10) {
+                    RecoveryMetricCard(
+                        title: "SETS",
+                        value: "\(session.loggedSetCount)",
+                        detail: "OF \(session.totalSetCount) LOGGED",
+                        isEmphasized: false
+                    )
+                    RecoveryMetricCard(
+                        title: "EXERCISES",
+                        value: "\(session.exercises.count)",
+                        detail: "IN SESSION",
+                        isEmphasized: false
+                    )
+                    RecoveryMetricCard(
+                        title: "COMPLETION",
+                        value: "\(completionPercentage)%",
+                        detail: "FINISHED",
+                        isEmphasized: true
+                    )
+                }
+            }
+
+            if session.tracksDistance, store.sessionHistory.count > 1 {
+                SessionProgressChart(
+                    history: store.sessionHistory,
+                    workoutType: session.workoutType,
+                    phase: phase
                 )
             }
 

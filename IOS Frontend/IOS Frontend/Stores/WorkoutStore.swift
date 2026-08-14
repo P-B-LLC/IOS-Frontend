@@ -26,6 +26,9 @@ final class WorkoutStore {
     let routeTracker = RouteTracker()
     /// Distance and pace for the last finished route, as computed by the server.
     private(set) var routeSummary: SessionRouteSummary?
+    /// Past finished runs of the same workout, oldest first, for the progress
+    /// chart shown once a session ends.
+    private(set) var sessionHistory: [SessionHistoryPoint] = []
 
     init(initialSchedule: [Weekday: [Workout]] = [:]) {
         schedule = initialSchedule
@@ -402,6 +405,16 @@ final class WorkoutStore {
             )
             activeSession = nil
             routeTracker.reset()
+
+            // Load the run's history so the summary can show progress. A
+            // failure here costs only the chart, so the finished workout is
+            // still reported as saved.
+            if session.tracksDistance {
+                sessionHistory = (try? await repository.sessionHistory(
+                    workoutServerID: session.workoutServerID
+                )) ?? []
+            }
+
             return session.loggedSetCount
         } catch {
             persistenceError = error.localizedDescription

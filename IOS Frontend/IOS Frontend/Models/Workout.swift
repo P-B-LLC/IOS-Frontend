@@ -199,6 +199,17 @@ nonisolated struct WorkoutSetDraft: Identifiable, Hashable, Sendable {
     }
 }
 
+/// One finished run, ride, or swim, reduced to what a progress chart needs.
+nonisolated struct SessionHistoryPoint: Identifiable, Hashable, Sendable {
+    let sessionID: Int
+    let date: Date
+    let distanceKilometers: Double
+    let paceSecondsPerKilometer: Double?
+    let elevationGainMeters: Double?
+
+    var id: Int { sessionID }
+}
+
 /// One kilometer of a session, as timed by the backend. The last split of a
 /// run usually covers less than a kilometer.
 nonisolated struct SessionSplit: Identifiable, Hashable, Sendable {
