@@ -33,6 +33,9 @@ final class WorkoutStore {
     private(set) var personalRecords: [PersonalRecord] = []
     /// How each exercise in the finished lifting session has progressed.
     private(set) var liftProgress: [LiftProgressSeries] = []
+    /// Workouts the user has already created, offered when naming a new one so
+    /// a workout's history is not split across two spellings.
+    private(set) var knownWorkouts: [WorkoutSummary] = []
 
     init(initialSchedule: [Weekday: [Workout]] = [:]) {
         schedule = initialSchedule
@@ -76,6 +79,12 @@ final class WorkoutStore {
         persistenceError = nil
         isLoading = false
         isSaving = false
+        // One user's workout names must never be offered to the next.
+        knownWorkouts = []
+        sessionHistory = []
+        personalRecords = []
+        liftProgress = []
+        routeSummary = nil
     }
 
     // MARK: - Lookups
@@ -499,6 +508,13 @@ final class WorkoutStore {
             )
             guard connectionGeneration == generation else { return }
             schedule = loaded
+
+            // Names to offer when creating a workout. A failure here costs
+            // only the suggestions, so it does not fail the week's load.
+            if let library = try? await repository.workoutLibrary(),
+               connectionGeneration == generation {
+                knownWorkouts = library
+            }
         } catch {
             guard connectionGeneration == generation else { return }
             persistenceError = error.localizedDescription

@@ -513,6 +513,19 @@ actor WorkoutAPIRepository {
         String(format: "%.6f", value)
     }
 
+    /// Every workout the user has created, for offering as a name to reuse.
+    func workoutLibrary() async throws -> [WorkoutSummary] {
+        try await fetchAllWorkouts()
+            .map {
+                WorkoutSummary(
+                    serverID: $0.id,
+                    name: $0.name,
+                    type: Self.workoutType(from: $0.workoutType)
+                )
+            }
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
     /// How an exercise has progressed over every set ever logged for it.
     ///
     /// The server returns each set; they are grouped into days here so a

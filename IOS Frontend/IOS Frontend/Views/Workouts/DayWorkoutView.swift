@@ -39,38 +39,7 @@ struct DayWorkoutView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                if let completedSession {
-                    recoveryWorkspace(completedSession)
-                } else {
-                    if activeSession == nil {
-                        dayHeader
-                    }
-
-                    if let persistenceError = store.persistenceError {
-                        persistenceErrorCard(persistenceError)
-                    }
-
-                    if let activeSession {
-                        activeSessionWorkspace(activeSession)
-                    } else if !plannedWorkouts.isEmpty {
-                        plannedDay
-                    } else {
-                        emptyDaySetup
-                    }
-                }
-            }
-            .padding(.horizontal)
-            .padding(.vertical, 12)
-        }
-        .background { WorkoutPhaseBackground(phase: visualPhase) }
-        .workoutVisualPhase(visualPhase)
-        .tint(visualPhase.accent)
-        .preferredColorScheme(visualPhase.usesDarkAppearance ? .dark : .light)
-        .toolbar(visualPhase == .prepare ? .visible : .hidden, for: .navigationBar)
-        .navigationTitle(day.fullName)
-        .navigationBarTitleDisplayMode(.inline)
+        styledContent
         .onChange(of: store.routeTracker.permission) {
             // Granting access part way through a session starts tracking for
             // the remainder of it.
@@ -83,7 +52,10 @@ struct DayWorkoutView: View {
             store.routeTracker.startTracking()
         }
         .sheet(item: $editor) { mode in
-            WorkoutEditorView(mode: mode) { savedWorkout in
+            WorkoutEditorView(
+                mode: mode,
+                suggestions: store.knownWorkouts
+            ) { savedWorkout in
                 store.saveWorkout(savedWorkout, on: day)
             }
         }
@@ -130,6 +102,52 @@ struct DayWorkoutView: View {
                             .regularMaterial,
                             in: RoundedRectangle(cornerRadius: 16)
                         )
+                }
+            }
+        }
+    }
+
+    /// The scrolling page with its appearance applied.
+    ///
+    /// Kept apart from the sheets and dialogs in `body`: as one chain the
+    /// type-checker could no longer resolve the expression.
+    private var styledContent: some View {
+        ScrollView {
+            content
+                .padding(.horizontal)
+                .padding(.vertical, 12)
+        }
+        .background { WorkoutPhaseBackground(phase: visualPhase) }
+        .workoutVisualPhase(visualPhase)
+        .tint(visualPhase.accent)
+        .preferredColorScheme(visualPhase.usesDarkAppearance ? .dark : .light)
+        .toolbar(visualPhase == .prepare ? .visible : .hidden, for: .navigationBar)
+        .navigationTitle(day.fullName)
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    /// Split out of `body` because the type-checker could not resolve the two
+    /// together once the session summary grew.
+    @ViewBuilder
+    private var content: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            if let completedSession {
+                recoveryWorkspace(completedSession)
+            } else {
+                if activeSession == nil {
+                    dayHeader
+                }
+
+                if let persistenceError = store.persistenceError {
+                    persistenceErrorCard(persistenceError)
+                }
+
+                if let activeSession {
+                    activeSessionWorkspace(activeSession)
+                } else if !plannedWorkouts.isEmpty {
+                    plannedDay
+                } else {
+                    emptyDaySetup
                 }
             }
         }
@@ -183,7 +201,10 @@ struct DayWorkoutView: View {
                     .foregroundStyle(.secondary)
             }
 
-            WorkoutPlanFields(draft: $setupDraft)
+            WorkoutPlanFields(
+                draft: $setupDraft,
+                suggestions: store.knownWorkouts
+            )
 
             Button {
                 saveSetupDraft()

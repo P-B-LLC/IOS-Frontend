@@ -9,6 +9,9 @@ import SwiftUI
 
 struct WorkoutPlanFields: View {
     @Binding var draft: Workout
+    /// Workouts the user already has, offered so a name is reused exactly
+    /// rather than retyped slightly differently.
+    var suggestions: [WorkoutSummary] = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -19,6 +22,8 @@ struct WorkoutPlanFields: View {
                     .textInputAutocapitalization(.words)
                     .padding(12)
                     .background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 12))
+
+                nameGuidance
             }
             .workoutCard()
 
@@ -30,6 +35,63 @@ struct WorkoutPlanFields: View {
                 exerciseSection
             }
         }
+    }
+
+    /// Either confirms the name will join an existing workout's history, or
+    /// offers the names already in use so it can.
+    @ViewBuilder
+    private var nameGuidance: some View {
+        if let existing = matchedWorkout {
+            Label(
+                "Continues your \(existing.name) history",
+                systemImage: "checkmark.circle.fill"
+            )
+            .font(.caption2)
+            .foregroundStyle(WorkoutVisualPhase.prepare.accent)
+        } else if !suggestions.isEmpty {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Previously used")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.secondary)
+
+                ScrollView(.horizontal) {
+                    HStack(spacing: 6) {
+                        ForEach(suggestions) { workout in
+                            Button {
+                                // Take the name exactly, and its type with it,
+                                // so the reused workout stays consistent.
+                                draft.name = workout.name
+                                draft.type = workout.type
+                            } label: {
+                                HStack(spacing: 5) {
+                                    Image(systemName: workout.type.symbolName)
+                                        .font(.caption2)
+                                    Text(workout.name)
+                                        .font(.caption)
+                                        .lineLimit(1)
+                                }
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(
+                                    Color.primary.opacity(0.05),
+                                    in: Capsule()
+                                )
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+                .scrollIndicators(.hidden)
+
+                Text("Tap one to keep its progress together. A new name starts its own history.")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private var matchedWorkout: WorkoutSummary? {
+        suggestions.first { WorkoutSummary.matches($0.name, draft.name) }
     }
 
     private var namePlaceholder: String {

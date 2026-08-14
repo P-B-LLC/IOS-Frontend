@@ -21,13 +21,21 @@ struct WorkoutEditorView: View {
     }
 
     let mode: Mode
+    /// Existing workout names, passed in rather than read from the
+    /// environment so previews stand alone.
+    var suggestions: [WorkoutSummary] = []
     var onSaved: ((Workout) -> Void)?
 
     @Environment(\.dismiss) private var dismiss
     @State private var draft: Workout
 
-    init(mode: Mode, onSaved: ((Workout) -> Void)? = nil) {
+    init(
+        mode: Mode,
+        suggestions: [WorkoutSummary] = [],
+        onSaved: ((Workout) -> Void)? = nil
+    ) {
         self.mode = mode
+        self.suggestions = suggestions
         self.onSaved = onSaved
         switch mode {
         case .create:
@@ -58,7 +66,7 @@ struct WorkoutEditorView: View {
                             .foregroundStyle(.secondary)
                     }
 
-                    WorkoutPlanFields(draft: $draft)
+                    WorkoutPlanFields(draft: $draft, suggestions: suggestions)
 
                     Button {
                         save()

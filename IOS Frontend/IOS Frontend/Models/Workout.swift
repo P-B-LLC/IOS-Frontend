@@ -199,6 +199,25 @@ nonisolated struct WorkoutSetDraft: Identifiable, Hashable, Sendable {
     }
 }
 
+/// A workout the user has already created, offered when naming a new one.
+///
+/// Progress is gathered by name, so reusing an existing name keeps a workout's
+/// history together while a near-miss spelling quietly starts a second one.
+nonisolated struct WorkoutSummary: Identifiable, Hashable, Sendable {
+    let serverID: Int
+    let name: String
+    let type: WorkoutType
+
+    var id: Int { serverID }
+
+    /// Names match the way the backend matches them: ignoring case and
+    /// surrounding spaces.
+    static func matches(_ lhs: String, _ rhs: String) -> Bool {
+        lhs.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            == rhs.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    }
+}
+
 /// How one exercise has progressed, as a series the backend supplies. Every
 /// figure here is the server's; the app only groups them by day to plot.
 nonisolated struct LiftProgressSeries: Identifiable, Hashable, Sendable {
