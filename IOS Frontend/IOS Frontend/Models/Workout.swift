@@ -199,6 +199,62 @@ nonisolated struct WorkoutSetDraft: Identifiable, Hashable, Sendable {
     }
 }
 
+/// A best set during a session that beat everything logged before it.
+nonisolated struct PersonalRecord: Identifiable, Hashable, Sendable {
+    enum Kind: Hashable, Sendable {
+        /// The heaviest single lift, which is what a lifter usually means.
+        case heaviestWeight
+        /// Epley estimate, which catches progress raw weight misses: five reps
+        /// at 80 kg beats one at 85, but only the estimate shows it.
+        case estimatedOneRepMax
+
+        var title: String {
+            switch self {
+            case .heaviestWeight: return "Heaviest Lift"
+            case .estimatedOneRepMax: return "Best Est. 1RM"
+            }
+        }
+    }
+
+    let exerciseID: Int
+    let exerciseName: String
+    let kind: Kind
+    let valueKilograms: Double
+    /// Nil the first time an exercise is logged, when everything is a first.
+    let previousValueKilograms: Double?
+    let reps: Int?
+
+    var id: String { "\(exerciseID)-\(kind)" }
+
+    var isFirstEver: Bool { previousValueKilograms == nil }
+
+    var valueText: String {
+        String(format: "%.1f kg", valueKilograms)
+            .replacingOccurrences(of: ".0 kg", with: " kg")
+    }
+
+    /// How much this beat the old best by, e.g. "+2.5 kg".
+    var improvementText: String? {
+        guard let previousValueKilograms else { return nil }
+        let delta = valueKilograms - previousValueKilograms
+        guard delta > 0 else { return nil }
+        return String(format: "+%.1f kg", delta)
+            .replacingOccurrences(of: ".0 kg", with: " kg")
+    }
+
+    var detailText: String {
+        if isFirstEver {
+            return reps.map { "First time · \($0) reps" } ?? "First time"
+        }
+        let previous = previousValueKilograms.map {
+            String(format: "was %.1f kg", $0)
+                .replacingOccurrences(of: ".0 kg", with: " kg")
+        } ?? ""
+        guard let reps else { return previous }
+        return "\(reps) reps · \(previous)"
+    }
+}
+
 /// One finished run, ride, or swim, reduced to what a progress chart needs.
 nonisolated struct SessionHistoryPoint: Identifiable, Hashable, Sendable {
     let sessionID: Int

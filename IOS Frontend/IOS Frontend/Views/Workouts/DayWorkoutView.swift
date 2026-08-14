@@ -235,6 +235,31 @@ struct DayWorkoutView: View {
         }
     }
 
+    /// Records set this session, judged by the backend against every set
+    /// logged before it. Shown only when there is something to celebrate.
+    private func personalRecordsSection(phase: WorkoutVisualPhase) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 7) {
+                Image(systemName: "trophy.fill")
+                    .font(.caption)
+                    .foregroundStyle(phase.accent)
+                Text("^[\(store.personalRecords.count) new personal record](inflect: true)")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(phase.accent)
+                Spacer(minLength: 0)
+            }
+
+            ForEach(store.personalRecords) { record in
+                PersonalRecordRow(record: record, phase: phase)
+            }
+        }
+        .padding(14)
+        .background(
+            phase.accent.opacity(0.12),
+            in: RoundedRectangle(cornerRadius: 18, style: .continuous)
+        )
+    }
+
     /// Everything the backend measured from the track. A ride leads with speed
     /// and a run with pace, and the splits show how the effort was paced.
     private func routeSummarySection(
@@ -812,6 +837,10 @@ struct DayWorkoutView: View {
                 )
             }
 
+            if !session.tracksDistance, !store.personalRecords.isEmpty {
+                personalRecordsSection(phase: phase)
+            }
+
             if let persistenceError = store.persistenceError {
                 persistenceErrorCard(persistenceError)
             }
@@ -1078,6 +1107,48 @@ private struct RecoveryMetricCard: View {
                 .strokeBorder(Color.white.opacity(0.72), lineWidth: 1)
         }
         .shadow(color: phase.shadow, radius: 10, x: 4, y: 7)
+    }
+}
+
+/// One record, with the size of the jump over the previous best.
+private struct PersonalRecordRow: View {
+    let record: PersonalRecord
+    let phase: WorkoutVisualPhase
+
+    var body: some View {
+        HStack(spacing: 11) {
+            Image(systemName: record.isFirstEver ? "star.fill" : "arrow.up.right")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(phase.accent)
+                .frame(width: 28, height: 28)
+                .background(phase.accent.opacity(0.16), in: Circle())
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(record.exerciseName)
+                    .font(.subheadline.weight(.semibold))
+                    .lineLimit(1)
+                Text("\(record.kind.title) · \(record.detailText)")
+                    .font(.caption2)
+                    .foregroundStyle(phase.secondaryText)
+                    .lineLimit(1)
+            }
+
+            Spacer(minLength: 0)
+
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(record.valueText)
+                    .font(.subheadline.weight(.bold).monospacedDigit())
+                if let improvement = record.improvementText {
+                    Text(improvement)
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(phase.accent)
+                }
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+            "\(record.exerciseName), \(record.kind.title), \(record.valueText), \(record.detailText)"
+        )
     }
 }
 

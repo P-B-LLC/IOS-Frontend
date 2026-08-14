@@ -29,6 +29,8 @@ final class WorkoutStore {
     /// Past finished runs of the same workout, oldest first, for the progress
     /// chart shown once a session ends.
     private(set) var sessionHistory: [SessionHistoryPoint] = []
+    /// Records set by the session that just finished.
+    private(set) var personalRecords: [PersonalRecord] = []
 
     init(initialSchedule: [Weekday: [Workout]] = [:]) {
         schedule = initialSchedule
@@ -406,12 +408,16 @@ final class WorkoutStore {
             activeSession = nil
             routeTracker.reset()
 
-            // Load the run's history so the summary can show progress. A
-            // failure here costs only the chart, so the finished workout is
-            // still reported as saved.
+            // Load what the summary needs. A failure here costs only the
+            // chart or the record list, so the finished workout is still
+            // reported as saved either way.
             if session.tracksDistance {
                 sessionHistory = (try? await repository.sessionHistory(
                     workoutServerID: session.workoutServerID
+                )) ?? []
+            } else {
+                personalRecords = (try? await repository.personalRecords(
+                    sessionID: session.serverID
                 )) ?? []
             }
 

@@ -513,6 +513,37 @@ actor WorkoutAPIRepository {
         String(format: "%.6f", value)
     }
 
+    /// Records set during a session, as judged by the backend against every
+    /// set logged before it.
+    func personalRecords(sessionID: Int) async throws -> [PersonalRecord] {
+        let output = try await client.sessionsRecordsList(
+            path: .init(id: sessionID)
+        )
+        let records: [Components.Schemas.PersonalRecord]
+        switch output {
+        case .ok(let response):
+            records = try response.body.json
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+
+        return records.compactMap { record in
+            let kind: PersonalRecord.Kind
+            switch record.kind.value1 {
+            case .heaviestWeight: kind = .heaviestWeight
+            case .bestEstimated1rm: kind = .estimatedOneRepMax
+            }
+            return PersonalRecord(
+                exerciseID: record.exercise,
+                exerciseName: record.exerciseName,
+                kind: kind,
+                valueKilograms: record.value,
+                previousValueKilograms: record.previousValue,
+                reps: record.reps
+            )
+        }
+    }
+
     /// Past completed sessions for a workout, newest first, for showing how a
     /// run has progressed. Only sessions that actually recorded a route are
     /// returned, since the rest have nothing to plot.
