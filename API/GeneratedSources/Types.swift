@@ -1088,6 +1088,8 @@ public enum Components {
             public var reps: Swift.Int
             /// - Remark: Generated from `#/components/schemas/ExerciseProgressPoint/volume_kg`.
             public var volumeKg: Swift.String
+            /// - Remark: Generated from `#/components/schemas/ExerciseProgressPoint/session`.
+            public var session: Swift.Int
             /// Creates a new `ExerciseProgressPoint`.
             ///
             /// - Parameters:
@@ -1095,22 +1097,26 @@ public enum Components {
             ///   - weightKg:
             ///   - reps:
             ///   - volumeKg:
+            ///   - session:
             public init(
                 completedAt: Foundation.Date,
                 weightKg: Swift.String,
                 reps: Swift.Int,
-                volumeKg: Swift.String
+                volumeKg: Swift.String,
+                session: Swift.Int
             ) {
                 self.completedAt = completedAt
                 self.weightKg = weightKg
                 self.reps = reps
                 self.volumeKg = volumeKg
+                self.session = session
             }
             public enum CodingKeys: String, CodingKey {
                 case completedAt = "completed_at"
                 case weightKg = "weight_kg"
                 case reps
                 case volumeKg = "volume_kg"
+                case session
             }
         }
         /// - Remark: Generated from `#/components/schemas/ExerciseRequest`.

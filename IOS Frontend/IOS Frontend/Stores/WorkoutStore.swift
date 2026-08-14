@@ -31,6 +31,8 @@ final class WorkoutStore {
     private(set) var sessionHistory: [SessionHistoryPoint] = []
     /// Records set by the session that just finished.
     private(set) var personalRecords: [PersonalRecord] = []
+    /// How each exercise in the finished lifting session has progressed.
+    private(set) var liftProgress: [LiftProgressSeries] = []
 
     init(initialSchedule: [Weekday: [Workout]] = [:]) {
         schedule = initialSchedule
@@ -419,6 +421,17 @@ final class WorkoutStore {
                 personalRecords = (try? await repository.personalRecords(
                     sessionID: session.serverID
                 )) ?? []
+
+                var progress: [LiftProgressSeries] = []
+                for exercise in session.exercises {
+                    if let series = try? await repository.liftProgress(
+                        exerciseID: exercise.exerciseServerID,
+                        exerciseName: exercise.name
+                    ), series.hasEnoughToPlot {
+                        progress.append(series)
+                    }
+                }
+                liftProgress = progress
             }
 
             return session.loggedSetCount

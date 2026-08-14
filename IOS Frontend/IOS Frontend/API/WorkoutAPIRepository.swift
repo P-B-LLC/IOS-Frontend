@@ -513,6 +513,60 @@ actor WorkoutAPIRepository {
         String(format: "%.6f", value)
     }
 
+    /// How an exercise has progressed over every set ever logged for it.
+    ///
+    /// The server returns each set; they are grouped into days here so a
+    /// chart shows one point per training day rather than one per set. The
+    /// weights and volumes themselves are the server's numbers.
+    func liftProgress(
+        exerciseID: Int,
+        exerciseName: String
+    ) async throws -> LiftProgressSeries {
+        let output = try await client.progressExercisesList(
+            path: .init(exerciseId: exerciseID)
+        )
+        let points: [Components.Schemas.ExerciseProgressPoint]
+        switch output {
+        case .ok(let response):
+            points = try response.body.json
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+
+        // Grouped by session rather than by date: two workouts trained on the
+        // same day are two points, not one.
+        var bySession: [Int: (date: Date, heaviest: Double, volume: Double)] = [:]
+
+        for point in points {
+            guard let weight = Double(point.weightKg),
+                  let volume = Double(point.volumeKg) else {
+                continue
+            }
+            var entry = bySession[point.session]
+                ?? (date: point.completedAt, heaviest: 0, volume: 0)
+            entry.date = min(entry.date, point.completedAt)
+            entry.heaviest = max(entry.heaviest, weight)
+            entry.volume += volume
+            bySession[point.session] = entry
+        }
+
+        let days = bySession.values
+            .map {
+                LiftProgressSeries.Day(
+                    date: $0.date,
+                    heaviestKilograms: $0.heaviest,
+                    volumeKilograms: $0.volume
+                )
+            }
+            .sorted { $0.date < $1.date }
+
+        return LiftProgressSeries(
+            exerciseID: exerciseID,
+            exerciseName: exerciseName,
+            days: days
+        )
+    }
+
     /// Records set during a session, as judged by the backend against every
     /// set logged before it.
     func personalRecords(sessionID: Int) async throws -> [PersonalRecord] {

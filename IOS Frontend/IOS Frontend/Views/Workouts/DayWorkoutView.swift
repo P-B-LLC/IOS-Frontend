@@ -841,6 +841,10 @@ struct DayWorkoutView: View {
                 personalRecordsSection(phase: phase)
             }
 
+            if !session.tracksDistance, !store.liftProgress.isEmpty {
+                LiftProgressChart(series: store.liftProgress, phase: phase)
+            }
+
             if let persistenceError = store.persistenceError {
                 persistenceErrorCard(persistenceError)
             }

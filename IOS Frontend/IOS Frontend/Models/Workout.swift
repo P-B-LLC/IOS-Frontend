@@ -199,6 +199,28 @@ nonisolated struct WorkoutSetDraft: Identifiable, Hashable, Sendable {
     }
 }
 
+/// How one exercise has progressed, as a series the backend supplies. Every
+/// figure here is the server's; the app only groups them by day to plot.
+nonisolated struct LiftProgressSeries: Identifiable, Hashable, Sendable {
+    struct Day: Identifiable, Hashable, Sendable {
+        let date: Date
+        /// Heaviest single set that day.
+        let heaviestKilograms: Double
+        /// Everything lifted that day, weight times reps summed.
+        let volumeKilograms: Double
+
+        var id: Date { date }
+    }
+
+    let exerciseID: Int
+    let exerciseName: String
+    let days: [Day]
+
+    var id: Int { exerciseID }
+
+    var hasEnoughToPlot: Bool { days.count > 1 }
+}
+
 /// A best set during a session that beat everything logged before it.
 nonisolated struct PersonalRecord: Identifiable, Hashable, Sendable {
     enum Kind: Hashable, Sendable {
