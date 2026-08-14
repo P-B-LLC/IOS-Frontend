@@ -33,9 +33,60 @@ public enum RepbaseAPIClientError: LocalizedError {
     }
 }
 
+/// Reads the ISO8601 timestamps the backend actually sends.
+///
+/// Django REST Framework includes fractional seconds only when they are
+/// non-zero, so the same field arrives as either
+/// `2026-08-14T20:40:12.345678Z` or `2026-08-14T20:40:12Z`. The runtime's
+/// default transcoder is configured for internet date-time without fractional
+/// seconds and rejects the first form outright, which fails the whole response
+/// with "Expected date string to be ISO8601-formatted".
+struct RepbaseDateTranscoder: DateTranscoder {
+    // Configured once here and only read afterwards. Formatting and parsing on
+    // ISO8601DateFormatter is thread-safe; the type simply predates Sendable.
+    // Shared instances matter because a single response can carry thousands of
+    // timestamps, as a recorded GPS route does.
+    nonisolated(unsafe) private static let withFractionalSeconds: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter
+    }()
+
+    nonisolated(unsafe) private static let withoutFractionalSeconds: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter
+    }()
+
+    func encode(_ date: Date) throws -> String {
+        Self.withFractionalSeconds.string(from: date)
+    }
+
+    func decode(_ string: String) throws -> Date {
+        if let date = Self.withFractionalSeconds.date(from: string) {
+            return date
+        }
+        if let date = Self.withoutFractionalSeconds.date(from: string) {
+            return date
+        }
+        throw DecodingError.dataCorrupted(
+            .init(
+                codingPath: [],
+                debugDescription: "Expected an ISO8601 date-time, got \"\(string)\"."
+            )
+        )
+    }
+}
+
 /// Creates clients whose operations and wire types are generated from
 /// `API/openapi.yaml` by the Swift OpenAPI Generator build plugin.
 public enum RepbaseAPIClientFactory {
+    /// Shared by every client so anonymous and authenticated calls decode
+    /// timestamps identically.
+    private static var configuration: Configuration {
+        Configuration(dateTranscoder: RepbaseDateTranscoder())
+    }
+
     /// Used only for the anonymous login and registration operations.
     public static func makeAnonymous(
         serverURL: URL,
@@ -47,6 +98,7 @@ public enum RepbaseAPIClientFactory {
         )
         return Client(
             serverURL: serverURL,
+            configuration: configuration,
             transport: URLSessionTransport()
         )
     }
@@ -69,6 +121,7 @@ public enum RepbaseAPIClientFactory {
 
         return Client(
             serverURL: serverURL,
+            configuration: configuration,
             transport: URLSessionTransport(),
             middlewares: [TokenAuthenticationMiddleware(token: token)]
         )
