@@ -111,6 +111,22 @@ actor WorkoutAPIRepository {
         _ draft: Workout,
         scheduledDate: String
     ) async throws {
+        let template: Components.Schemas.WorkoutTemplate
+
+        // Workout names are unique per user, and a template is meant to be
+        // scheduled on as many days as the user likes. Reuse one they already
+        // have by that name instead of failing on the uniqueness constraint.
+        if let existing = try await fetchAllWorkouts().first(
+            where: { Self.normalizedName($0.name) == Self.normalizedName(draft.name) }
+        ) {
+            template = existing
+            try await scheduleWorkout(
+                templateID: template.id,
+                scheduledDate: scheduledDate
+            )
+            return
+        }
+
         let templateOutput = try await client.workoutsCreate(
             body: .json(
                 Components.Schemas.WorkoutTemplateRequest(
@@ -120,7 +136,6 @@ actor WorkoutAPIRepository {
             )
         )
 
-        let template: Components.Schemas.WorkoutTemplate
         switch templateOutput {
         case .created(let response):
             template = try response.body.json
@@ -153,25 +168,41 @@ actor WorkoutAPIRepository {
                 }
             }
 
-            let scheduleOutput = try await client.schedulesCreate(
-                body: .json(
-                    Components.Schemas.WorkoutScheduleRequest(
-                        workout: template.id,
-                        scheduledDate: scheduledDate
-                    )
-                )
+            try await scheduleWorkout(
+                templateID: template.id,
+                scheduledDate: scheduledDate
             )
-            switch scheduleOutput {
-            case .created:
-                return
-            case .undocumented(let statusCode, _):
-                throw APIServiceError.undocumentedStatus(statusCode)
-            }
         } catch {
             throw APIServiceError.partialWorkoutCreation(
                 "The template exists on the server, but its exercises or date assignment need attention. \(error.localizedDescription)"
             )
         }
+    }
+
+    private func scheduleWorkout(
+        templateID: Int,
+        scheduledDate: String
+    ) async throws {
+        let output = try await client.schedulesCreate(
+            body: .json(
+                Components.Schemas.WorkoutScheduleRequest(
+                    workout: templateID,
+                    scheduledDate: scheduledDate
+                )
+            )
+        )
+        switch output {
+        case .created:
+            return
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// Compares workout names the way a person would, so "Morning Run" and
+    /// "morning run " are the same workout.
+    private static func normalizedName(_ value: String) -> String {
+        value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 
     private func updateWorkout(
