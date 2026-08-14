@@ -13,5 +13,12 @@
 	<array>
 		<string>location</string>
 	</array>
+	<!--
+	  The barometric altimeter is read through CoreMotion, which requires
+	  this description. It measures height change far more precisely than
+	  GPS, so climb during a run or ride is worth reporting.
+	-->
+	<key>NSMotionUsageDescription</key>
+	<string>Repbase reads your device's barometer during a run, ride, or swim to measure the elevation you climb. It is only used while a session you started is running.</string>
 </dict>
 </plist>

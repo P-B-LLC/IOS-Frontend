@@ -11,6 +11,33 @@ import CoreLocation
 import MapKit
 import SwiftUI
 
+/// One live figure in the route card's readout.
+private struct LiveStat: View {
+    let title: String
+    let value: String
+    let unit: String
+    let accent: Color
+    let secondary: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(secondary)
+            HStack(alignment: .firstTextBaseline, spacing: 3) {
+                Text(value)
+                    .font(.title3.weight(.bold).monospacedDigit())
+                Text(unit)
+                    .font(.caption2)
+                    .foregroundStyle(secondary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title.lowercased()) \(value) \(unit)")
+    }
+}
+
 struct RouteTrackingCard: View {
     let tracker: RouteTracker
     let workoutType: WorkoutType
@@ -99,26 +126,47 @@ struct RouteTrackingCard: View {
         }
     }
 
-    /// Live speed straight from the GPS sensor. A ride reads in km/h and a run
-    /// or swim in pace, since that is how each is normally judged.
-    @ViewBuilder
+    /// Distance, pace or speed, and climb as the activity unfolds. A ride reads
+    /// in km/h and a run or swim in pace, since that is how each is judged.
+    ///
+    /// These are running estimates for the screen. When the session ends, the
+    /// track is measured by the backend and those are the figures that count.
     private var liveReadout: some View {
         let isRide = workoutType == .biking
-        let value: String? = isRide
-            ? tracker.currentSpeedKilometersPerHour.map { String(format: "%.1f", $0) }
-            : SessionRouteSummary.paceText(tracker.currentPaceSecondsPerKilometer)
-                .map { $0.replacingOccurrences(of: " /km", with: "") }
 
-        HStack(alignment: .firstTextBaseline, spacing: 6) {
-            Text(isRide ? "SPEED" : "PACE")
-                .font(.caption2.weight(.bold))
-                .foregroundStyle(.secondary)
-            Text(value ?? "--")
-                .font(.title2.weight(.bold).monospacedDigit())
-            Text(isRide ? "km/h" : "/km")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Spacer(minLength: 0)
+        // Prefer the average over the run so far: it is steadier to read than
+        // the instantaneous value, which jitters with every fix.
+        let rate: String = isRide
+            ? (tracker.liveAverageSpeedKilometersPerHour
+                ?? tracker.currentSpeedKilometersPerHour)
+                .map { String(format: "%.1f", $0) } ?? "--"
+            : SessionRouteSummary.paceText(
+                tracker.liveAveragePaceSecondsPerKilometer
+                    ?? tracker.currentPaceSecondsPerKilometer
+              )?.replacingOccurrences(of: " /km", with: "") ?? "--"
+
+        return HStack(alignment: .top, spacing: 0) {
+            LiveStat(
+                title: "DISTANCE",
+                value: String(format: "%.2f", tracker.liveDistanceKilometers),
+                unit: "km",
+                accent: phase.accent,
+                secondary: phase.secondaryText
+            )
+            LiveStat(
+                title: isRide ? "SPEED" : "PACE",
+                value: rate,
+                unit: isRide ? "km/h" : "/km",
+                accent: phase.accent,
+                secondary: phase.secondaryText
+            )
+            LiveStat(
+                title: "CLIMB",
+                value: String(format: "%.0f", tracker.liveElevationGainMeters),
+                unit: "m",
+                accent: phase.accent,
+                secondary: phase.secondaryText
+            )
         }
     }
 
@@ -161,7 +209,7 @@ struct RouteTrackingCard: View {
 
             liveReadout
 
-            Text("^[\(tracker.points.count) point](inflect: true) recorded · your distance, pace and splits are calculated when you end the session")
+            Text("Live estimate · your distance, pace, climb and splits are measured from the full track when you end the session")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         }

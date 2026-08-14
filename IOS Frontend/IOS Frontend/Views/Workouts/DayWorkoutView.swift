@@ -268,10 +268,10 @@ struct DayWorkoutView: View {
                 if let top = summary.maxSpeedText {
                     RouteStat(title: "Top speed", value: top, icon: "bolt.fill")
                 }
-                if !isRide, let elapsed = summary.paceText {
+                if let climb = summary.elevationGainText {
+                    RouteStat(title: "Climb", value: climb, icon: "mountain.2.fill")
+                } else if !isRide, let elapsed = summary.paceText {
                     RouteStat(title: "Overall pace", value: elapsed, icon: "clock")
-                } else if isRide, let pace = summary.movingPaceText {
-                    RouteStat(title: "Moving pace", value: pace, icon: "clock")
                 }
             }
 

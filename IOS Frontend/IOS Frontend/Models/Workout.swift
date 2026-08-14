@@ -227,6 +227,8 @@ nonisolated struct SessionRouteSummary: Hashable, Sendable {
     let averageSpeedKilometersPerHour: Double?
     let maxSpeedKilometersPerHour: Double?
     let movingSeconds: Double?
+    let elevationGainMeters: Double?
+    let elevationLossMeters: Double?
     let splits: [SessionSplit]
 
     init(
@@ -236,6 +238,8 @@ nonisolated struct SessionRouteSummary: Hashable, Sendable {
         averageSpeedKilometersPerHour: Double? = nil,
         maxSpeedKilometersPerHour: Double? = nil,
         movingSeconds: Double? = nil,
+        elevationGainMeters: Double? = nil,
+        elevationLossMeters: Double? = nil,
         splits: [SessionSplit] = []
     ) {
         self.distanceKilometers = distanceKilometers
@@ -244,7 +248,14 @@ nonisolated struct SessionRouteSummary: Hashable, Sendable {
         self.averageSpeedKilometersPerHour = averageSpeedKilometersPerHour
         self.maxSpeedKilometersPerHour = maxSpeedKilometersPerHour
         self.movingSeconds = movingSeconds
+        self.elevationGainMeters = elevationGainMeters
+        self.elevationLossMeters = elevationLossMeters
         self.splits = splits
+    }
+
+    var elevationGainText: String? {
+        guard let elevationGainMeters, elevationGainMeters > 0 else { return nil }
+        return String(format: "%.0f m", elevationGainMeters)
     }
 
     var paceText: String? { Self.paceText(paceSecondsPerKilometer) }

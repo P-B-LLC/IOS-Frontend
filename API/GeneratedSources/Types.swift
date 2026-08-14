@@ -2504,6 +2504,8 @@ public enum Components {
             public var recordedAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/SessionRoutePoint/speed_mps`.
             public var speedMps: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/SessionRoutePoint/altitude_m`.
+            public var altitudeM: Swift.String?
             /// Creates a new `SessionRoutePoint`.
             ///
             /// - Parameters:
@@ -2512,18 +2514,21 @@ public enum Components {
             ///   - longitude:
             ///   - recordedAt:
             ///   - speedMps:
+            ///   - altitudeM:
             public init(
                 id: Swift.Int,
                 latitude: Swift.String,
                 longitude: Swift.String,
                 recordedAt: Foundation.Date,
-                speedMps: Swift.String? = nil
+                speedMps: Swift.String? = nil,
+                altitudeM: Swift.String? = nil
             ) {
                 self.id = id
                 self.latitude = latitude
                 self.longitude = longitude
                 self.recordedAt = recordedAt
                 self.speedMps = speedMps
+                self.altitudeM = altitudeM
             }
             public enum CodingKeys: String, CodingKey {
                 case id
@@ -2531,6 +2536,7 @@ public enum Components {
                 case longitude
                 case recordedAt = "recorded_at"
                 case speedMps = "speed_mps"
+                case altitudeM = "altitude_m"
             }
         }
         /// - Remark: Generated from `#/components/schemas/SessionRoutePointRequest`.
@@ -2543,6 +2549,8 @@ public enum Components {
             public var recordedAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/SessionRoutePointRequest/speed_mps`.
             public var speedMps: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/SessionRoutePointRequest/altitude_m`.
+            public var altitudeM: Swift.String?
             /// Creates a new `SessionRoutePointRequest`.
             ///
             /// - Parameters:
@@ -2550,22 +2558,26 @@ public enum Components {
             ///   - longitude:
             ///   - recordedAt:
             ///   - speedMps:
+            ///   - altitudeM:
             public init(
                 latitude: Swift.String,
                 longitude: Swift.String,
                 recordedAt: Foundation.Date,
-                speedMps: Swift.String? = nil
+                speedMps: Swift.String? = nil,
+                altitudeM: Swift.String? = nil
             ) {
                 self.latitude = latitude
                 self.longitude = longitude
                 self.recordedAt = recordedAt
                 self.speedMps = speedMps
+                self.altitudeM = altitudeM
             }
             public enum CodingKeys: String, CodingKey {
                 case latitude
                 case longitude
                 case recordedAt = "recorded_at"
                 case speedMps = "speed_mps"
+                case altitudeM = "altitude_m"
             }
         }
         /// A batch of GPS fixes recorded during one session.
@@ -3015,6 +3027,10 @@ public enum Components {
             public var maxSpeedKmh: Swift.Double?
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/moving_seconds`.
             public var movingSeconds: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/elevation_gain_m`.
+            public var elevationGainM: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/elevation_loss_m`.
+            public var elevationLossM: Swift.Double?
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/splits`.
             public var splits: [Components.Schemas.SessionSplit]
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/created_at`.
@@ -3038,6 +3054,8 @@ public enum Components {
             ///   - averageSpeedKmh:
             ///   - maxSpeedKmh:
             ///   - movingSeconds:
+            ///   - elevationGainM:
+            ///   - elevationLossM:
             ///   - splits:
             ///   - createdAt:
             ///   - updatedAt:
@@ -3056,6 +3074,8 @@ public enum Components {
                 averageSpeedKmh: Swift.Double? = nil,
                 maxSpeedKmh: Swift.Double? = nil,
                 movingSeconds: Swift.Double? = nil,
+                elevationGainM: Swift.Double? = nil,
+                elevationLossM: Swift.Double? = nil,
                 splits: [Components.Schemas.SessionSplit],
                 createdAt: Foundation.Date,
                 updatedAt: Foundation.Date
@@ -3074,6 +3094,8 @@ public enum Components {
                 self.averageSpeedKmh = averageSpeedKmh
                 self.maxSpeedKmh = maxSpeedKmh
                 self.movingSeconds = movingSeconds
+                self.elevationGainM = elevationGainM
+                self.elevationLossM = elevationLossM
                 self.splits = splits
                 self.createdAt = createdAt
                 self.updatedAt = updatedAt
@@ -3093,6 +3115,8 @@ public enum Components {
                 case averageSpeedKmh = "average_speed_kmh"
                 case maxSpeedKmh = "max_speed_kmh"
                 case movingSeconds = "moving_seconds"
+                case elevationGainM = "elevation_gain_m"
+                case elevationLossM = "elevation_loss_m"
                 case splits
                 case createdAt = "created_at"
                 case updatedAt = "updated_at"

@@ -469,6 +469,9 @@ actor WorkoutAPIRepository {
                 recordedAt: point.recordedAt,
                 speedMps: point.speedMetersPerSecond.map {
                     String(format: "%.2f", max(0, $0))
+                },
+                altitudeM: point.altitudeMeters.map {
+                    String(format: "%.2f", $0)
                 }
             )
         }
@@ -489,6 +492,8 @@ actor WorkoutAPIRepository {
                 averageSpeedKilometersPerHour: session.averageSpeedKmh,
                 maxSpeedKilometersPerHour: session.maxSpeedKmh,
                 movingSeconds: session.movingSeconds,
+                elevationGainMeters: session.elevationGainM,
+                elevationLossMeters: session.elevationLossM,
                 splits: (session.splits ?? []).map {
                     SessionSplit(
                         kilometer: Int($0.kilometer ?? 0),
