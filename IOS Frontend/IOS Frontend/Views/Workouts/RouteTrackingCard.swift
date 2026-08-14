@@ -15,6 +15,7 @@ struct RouteTrackingCard: View {
     let tracker: RouteTracker
     let workoutType: WorkoutType
 
+    @Environment(\.workoutVisualPhase) private var phase
     @State private var cameraPosition: MapCameraPosition = .automatic
 
     var body: some View {
@@ -43,17 +44,17 @@ struct RouteTrackingCard: View {
         HStack(spacing: 8) {
             Image(systemName: "location.fill")
                 .font(.subheadline)
-                .foregroundStyle(tracker.isTracking ? Color.green : Color.secondary)
+                .foregroundStyle(tracker.isTracking ? phase.accent : phase.secondaryText)
             Text("Route")
                 .font(.subheadline.weight(.semibold))
             Spacer()
             if tracker.isTracking {
                 Text("TRACKING")
                     .font(.caption2.weight(.bold))
-                    .foregroundStyle(Color.green)
+                    .foregroundStyle(phase.accent)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
-                    .background(Color.green.opacity(0.14), in: Capsule())
+                    .background(phase.accent.opacity(0.14), in: Capsule())
             }
         }
     }
@@ -73,7 +74,7 @@ struct RouteTrackingCard: View {
                     .font(.subheadline.weight(.semibold))
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(WorkoutPrimaryButtonStyle(phase: phase))
         }
     }
 
@@ -85,7 +86,7 @@ struct RouteTrackingCard: View {
                     : "Location access is off."
             )
             .font(.callout.weight(.semibold))
-            Text("Your \(workoutType.title.lowercased()) is still timed and saved — it just won't have a map or a measured distance. You can enter the distance yourself below.")
+            Text("Your \(workoutType.title.lowercased()) is still timed and saved — it just won't have a map or a measured distance.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
             if tracker.permission == .denied,
@@ -95,6 +96,29 @@ struct RouteTrackingCard: View {
                         .font(.subheadline.weight(.semibold))
                 }
             }
+        }
+    }
+
+    /// Live speed straight from the GPS sensor. A ride reads in km/h and a run
+    /// or swim in pace, since that is how each is normally judged.
+    @ViewBuilder
+    private var liveReadout: some View {
+        let isRide = workoutType == .biking
+        let value: String? = isRide
+            ? tracker.currentSpeedKilometersPerHour.map { String(format: "%.1f", $0) }
+            : SessionRouteSummary.paceText(tracker.currentPaceSecondsPerKilometer)
+                .map { $0.replacingOccurrences(of: " /km", with: "") }
+
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Text(isRide ? "SPEED" : "PACE")
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(.secondary)
+            Text(value ?? "--")
+                .font(.title2.weight(.bold).monospacedDigit())
+            Text(isRide ? "km/h" : "/km")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Spacer(minLength: 0)
         }
     }
 
@@ -112,11 +136,11 @@ struct RouteTrackingCard: View {
         } else {
             Map(position: $cameraPosition) {
                 MapPolyline(coordinates: tracker.points.map(\.coordinate))
-                    .stroke(Color.accentColor, lineWidth: 4)
+                    .stroke(phase.accent, lineWidth: 4)
                 if let last = tracker.points.last {
                     Annotation("You", coordinate: last.coordinate) {
                         Circle()
-                            .fill(Color.green)
+                            .fill(phase.accent)
                             .frame(width: 12, height: 12)
                             .overlay(Circle().strokeBorder(.white, lineWidth: 2))
                     }
@@ -135,7 +159,9 @@ struct RouteTrackingCard: View {
                 )
             }
 
-            Text("^[\(tracker.points.count) point](inflect: true) recorded · distance and pace are calculated when you end the session")
+            liveReadout
+
+            Text("^[\(tracker.points.count) point](inflect: true) recorded · your distance, pace and splits are calculated when you end the session")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         }

@@ -26,7 +26,7 @@ struct WorkoutDayTile: View {
                         if isSessionActive {
                             Image(systemName: "bolt.fill")
                                 .font(.caption2.weight(.bold))
-                                .foregroundStyle(Color.green)
+                                .foregroundStyle(WorkoutVisualPhase.focus.accent)
                         }
 
                         Text(workout?.name ?? "Add")
@@ -51,7 +51,7 @@ struct WorkoutDayTile: View {
                             .font(.system(size: 9, weight: .bold))
                             .foregroundStyle(.white)
                             .frame(width: 15, height: 15)
-                            .background(Color.accentColor, in: Circle())
+                            .background(WorkoutVisualPhase.prepare.accent, in: Circle())
                             .offset(x: 4, y: -4)
                             .accessibilityLabel("^[\(workoutCount) workout](inflect: true) planned")
                     }
@@ -60,7 +60,9 @@ struct WorkoutDayTile: View {
             Text(day.shortName)
                 .font(.caption2)
                 .fontWeight(isToday ? .semibold : .regular)
-                .foregroundStyle(isToday ? Color.accentColor : Color.secondary)
+                .foregroundStyle(
+                    isToday ? WorkoutVisualPhase.prepare.accent : Color.secondary
+                )
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
         }
@@ -73,17 +75,17 @@ struct WorkoutDayTile: View {
 
     private var tileFill: AnyShapeStyle {
         if isSessionActive {
-            return AnyShapeStyle(Color.green.opacity(0.14))
+            return AnyShapeStyle(WorkoutVisualPhase.focus.accent.opacity(0.14))
         }
         if workout != nil {
-            return AnyShapeStyle(Color.accentColor.opacity(0.14))
+            return AnyShapeStyle(WorkoutVisualPhase.prepare.accent.opacity(0.14))
         }
         return AnyShapeStyle(Color.primary.opacity(0.04))
     }
 
     private var borderColor: Color {
         if isSessionActive { return .green }
-        return Color.accentColor.opacity(isToday ? 1 : 0)
+        return WorkoutVisualPhase.prepare.accent.opacity(isToday ? 1 : 0)
     }
 
     private var accessibilityText: String {

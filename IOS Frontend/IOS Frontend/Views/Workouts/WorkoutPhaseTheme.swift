@@ -1,0 +1,235 @@
+//
+//  WorkoutPhaseTheme.swift
+//  IOS Frontend
+//
+//  Visual tokens for the prepare, focus, and recovery workout states.
+//
+
+import SwiftUI
+
+enum WorkoutVisualPhase: Sendable, Equatable {
+    case prepare
+    case focus
+    case recover
+
+    var canvasStart: Color {
+        switch self {
+        case .prepare: Color(hex: 0xF7F7F8)
+        case .focus: Color(hex: 0x1B1415)
+        case .recover: Color(hex: 0xF3F7F5)
+        }
+    }
+
+    var canvasEnd: Color {
+        switch self {
+        case .prepare: Color(hex: 0xEEDBD1)
+        case .focus: Color(hex: 0x080607)
+        case .recover: Color(hex: 0xD9E7E0)
+        }
+    }
+
+    var accent: Color {
+        switch self {
+        case .prepare: Color(hex: 0xF86722)
+        case .focus: Color(hex: 0xFF5A1F)
+        case .recover: Color(hex: 0x5DAA86)
+        }
+    }
+
+    var primaryText: Color {
+        switch self {
+        case .prepare: Color(hex: 0x1B1415)
+        case .focus: Color(hex: 0xF7F7F8)
+        case .recover: Color(hex: 0x17211D)
+        }
+    }
+
+    var secondaryText: Color {
+        switch self {
+        case .prepare: Color(hex: 0x67534D)
+        case .focus: Color(hex: 0xACA6A5)
+        case .recover: Color(hex: 0x5F756A)
+        }
+    }
+
+    var surfaceStart: Color {
+        switch self {
+        case .prepare: Color(hex: 0xF9F9FA)
+        case .focus: Color(hex: 0x2C2426)
+        case .recover: Color(hex: 0xF9FCFA)
+        }
+    }
+
+    var surfaceEnd: Color {
+        switch self {
+        case .prepare: Color(hex: 0xE6D9D3)
+        case .focus: Color(hex: 0x171214)
+        case .recover: Color(hex: 0xDFEBE5)
+        }
+    }
+
+    var heroStart: Color {
+        switch self {
+        case .prepare: Color(hex: 0x1B1415)
+        case .focus: Color(hex: 0x0E0A0B)
+        case .recover: Color(hex: 0x17211D)
+        }
+    }
+
+    var heroEnd: Color {
+        switch self {
+        case .prepare: Color(hex: 0x67534D)
+        case .focus: Color(hex: 0x5B2414)
+        case .recover: Color(hex: 0x5A8A73)
+        }
+    }
+
+    var onAccent: Color {
+        switch self {
+        case .focus: Color(hex: 0x1B1415)
+        case .prepare, .recover: Color(hex: 0xF7F7F8)
+        }
+    }
+
+    var shadow: Color {
+        switch self {
+        case .prepare: Color(hex: 0x67534D).opacity(0.20)
+        case .focus: Color.black.opacity(0.42)
+        case .recover: Color(hex: 0x385246).opacity(0.22)
+        }
+    }
+
+    var usesDarkAppearance: Bool { self == .focus }
+}
+
+private struct WorkoutVisualPhaseKey: EnvironmentKey {
+    static let defaultValue: WorkoutVisualPhase = .prepare
+}
+
+extension EnvironmentValues {
+    var workoutVisualPhase: WorkoutVisualPhase {
+        get { self[WorkoutVisualPhaseKey.self] }
+        set { self[WorkoutVisualPhaseKey.self] = newValue }
+    }
+}
+
+struct WorkoutPhaseBackground: View {
+    let phase: WorkoutVisualPhase
+
+    var body: some View {
+        LinearGradient(
+            colors: [phase.canvasStart, phase.canvasEnd],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        .overlay(alignment: .bottomLeading) {
+            RadialGradient(
+                colors: [phase.accent.opacity(phase == .focus ? 0.20 : 0.16), .clear],
+                center: .bottomLeading,
+                startRadius: 0,
+                endRadius: 330
+            )
+        }
+        .ignoresSafeArea()
+    }
+}
+
+struct WorkoutHeroBackground: View {
+    let phase: WorkoutVisualPhase
+
+    var body: some View {
+        LinearGradient(
+            colors: [phase.heroStart, phase.heroEnd],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        .overlay(alignment: .bottomLeading) {
+            RadialGradient(
+                colors: [phase.accent.opacity(0.36), .clear],
+                center: .bottomLeading,
+                startRadius: 0,
+                endRadius: 220
+            )
+        }
+    }
+}
+
+private struct WorkoutCardModifier: ViewModifier {
+    @Environment(\.workoutVisualPhase) private var phase
+
+    func body(content: Content) -> some View {
+        content
+            .padding(16)
+            .foregroundStyle(phase.primaryText)
+            .background {
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [phase.surfaceStart, phase.surfaceEnd],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .shadow(color: phase.shadow, radius: phase == .focus ? 16 : 12, x: 5, y: 8)
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .strokeBorder(
+                        phase == .focus ? Color.white.opacity(0.16) : Color.white.opacity(0.72),
+                        lineWidth: 1
+                    )
+            }
+    }
+}
+
+struct WorkoutPrimaryButtonStyle: ButtonStyle {
+    let phase: WorkoutVisualPhase
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.headline)
+            .foregroundStyle(phase.onAccent)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 14)
+            .background {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [phase.accent, phase.accent.opacity(0.82)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .shadow(color: phase.accent.opacity(0.30), radius: 13, x: 4, y: 8)
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.28), lineWidth: 1)
+            }
+            .opacity(configuration.isPressed ? 0.78 : 1)
+            .scaleEffect(configuration.isPressed ? 0.985 : 1)
+            .animation(.easeOut(duration: 0.14), value: configuration.isPressed)
+    }
+}
+
+extension View {
+    func workoutCard() -> some View {
+        modifier(WorkoutCardModifier())
+    }
+
+    func workoutVisualPhase(_ phase: WorkoutVisualPhase) -> some View {
+        environment(\.workoutVisualPhase, phase)
+    }
+}
+
+extension Color {
+    init(hex: UInt32, alpha: Double = 1) {
+        self.init(
+            .sRGB,
+            red: Double((hex >> 16) & 0xFF) / 255,
+            green: Double((hex >> 8) & 0xFF) / 255,
+            blue: Double(hex & 0xFF) / 255,
+            opacity: alpha
+        )
+    }
+}

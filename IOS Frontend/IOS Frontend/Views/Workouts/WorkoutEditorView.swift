@@ -67,13 +67,14 @@ struct WorkoutEditorView: View {
                             .font(.headline)
                             .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
+                    .buttonStyle(WorkoutPrimaryButtonStyle(phase: .prepare))
                     .disabled(!canSave)
                 }
                 .padding()
             }
-            .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
+            .background { WorkoutPhaseBackground(phase: .prepare) }
+            .workoutVisualPhase(.prepare)
+            .tint(WorkoutVisualPhase.prepare.accent)
             .navigationTitle(isCreate ? "New Workout" : "Edit Workout")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

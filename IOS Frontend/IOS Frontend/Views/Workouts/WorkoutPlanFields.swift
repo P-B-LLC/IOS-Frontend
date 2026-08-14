@@ -61,20 +61,20 @@ struct WorkoutPlanFields: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
                         .foregroundStyle(
-                            draft.type == type ? Color.accentColor : Color.secondary
+                            draft.type == type ? WorkoutVisualPhase.prepare.accent : Color.secondary
                         )
                         .background(
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
                                 .fill(
                                     draft.type == type
-                                        ? Color.accentColor.opacity(0.14)
+                                        ? WorkoutVisualPhase.prepare.accent.opacity(0.14)
                                         : Color.primary.opacity(0.045)
                                 )
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
                                 .strokeBorder(
-                                    Color.accentColor,
+                                    WorkoutVisualPhase.prepare.accent,
                                     lineWidth: draft.type == type ? 1.5 : 0
                                 )
                         )
@@ -90,13 +90,13 @@ struct WorkoutPlanFields: View {
         .workoutCard()
     }
 
-    /// Distance workouts have nothing to plan up front: the distance is entered
-    /// while training and the time comes from starting and ending the session.
+    /// Distance workouts have nothing to plan up front and nothing to enter
+    /// while training: GPS measures the distance and the session gives the time.
     private var distanceCard: some View {
         VStack(alignment: .leading, spacing: 8) {
             Label("How this is logged", systemImage: "stopwatch")
                 .font(.subheadline.weight(.semibold))
-            Text("Start the session when you set off and end it when you finish. Repbase times it for you, and you enter your \(draft.type.distanceTitle.lowercased()) before ending.")
+            Text("Start the session when you set off and end it when you finish. Repbase follows your route by GPS and works out your distance, time, and pace — there is nothing to type in.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -117,17 +117,17 @@ struct WorkoutPlanFields: View {
                 Spacer()
                 Text("\(draft.exercises.count)")
                     .font(.subheadline.weight(.bold))
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundStyle(WorkoutVisualPhase.prepare.accent)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .background(Color.accentColor.opacity(0.12), in: Capsule())
+                    .background(WorkoutVisualPhase.prepare.accent.opacity(0.12), in: Capsule())
             }
 
             if draft.exercises.isEmpty {
                 VStack(spacing: 10) {
                     Image(systemName: "list.bullet.clipboard")
                         .font(.title2)
-                        .foregroundStyle(Color.accentColor)
+                        .foregroundStyle(WorkoutVisualPhase.prepare.accent)
                     Text("Start with your first exercise")
                         .font(.subheadline.weight(.semibold))
                     Text("You can always reorder, edit, or add more later.")
@@ -209,7 +209,7 @@ private struct ExercisePlanEditorCard: View {
             HStack {
                 Text("Exercise \(position)")
                     .font(.caption.weight(.bold))
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundStyle(WorkoutVisualPhase.prepare.accent)
                 Spacer()
                 Menu {
                     Button("Move Up", systemImage: "arrow.up", action: onMoveUp)

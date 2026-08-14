@@ -2,7 +2,7 @@
 //  FoodSummaryWidget.swift
 //  IOS Frontend
 //
-//  Compact home widget: calories plus three circular macro gauges.
+//  Compact home widget: calorie progress around the card plus macro gauges.
 //
 
 import SwiftUI
@@ -59,8 +59,24 @@ struct FoodSummaryWidget: View {
                     .shadow(color: .black.opacity(0.035), radius: 6, y: 2)
             )
             .overlay {
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .strokeBorder(Color.primary.opacity(0.045), lineWidth: 0.75)
+                ZStack {
+                    FoodWidgetProgressBorder(cornerRadius: 18)
+                        .stroke(
+                            Color.orange.opacity(0.14),
+                            style: StrokeStyle(lineWidth: 4, lineCap: .round)
+                        )
+
+                    FoodWidgetProgressBorder(cornerRadius: 18)
+                        .trim(from: 0, to: calorieProgress)
+                        .stroke(
+                            Color.orange,
+                            style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round)
+                        )
+                        .shadow(color: Color.orange.opacity(0.24), radius: 3)
+                        .animation(.easeInOut(duration: 0.55), value: calorieProgress)
+                }
+                .padding(2)
+                .allowsHitTesting(false)
             }
             .contentShape(Rectangle())
         }
@@ -73,6 +89,60 @@ struct FoodSummaryWidget: View {
 
     private var total: NutritionAmount {
         store.total(on: Date())
+    }
+
+    private var calorieProgress: CGFloat {
+        let goal = store.goals.calories.nutritionDouble
+        guard goal > 0 else { return 0 }
+        return CGFloat(min(max(total.calories.nutritionDouble / goal, 0), 1))
+    }
+}
+
+/// A clockwise rounded path that begins at the card's top-left tangent. Its
+/// first visible segment therefore grows left-to-right across the top edge,
+/// then continues down the right, across the bottom, and back up the left.
+private struct FoodWidgetProgressBorder: Shape {
+    let cornerRadius: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        let radius = min(cornerRadius, min(rect.width, rect.height) / 2)
+        var path = Path()
+
+        path.move(to: CGPoint(x: rect.minX + radius, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX - radius, y: rect.minY))
+        path.addArc(
+            center: CGPoint(x: rect.maxX - radius, y: rect.minY + radius),
+            radius: radius,
+            startAngle: .degrees(-90),
+            endAngle: .degrees(0),
+            clockwise: false
+        )
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - radius))
+        path.addArc(
+            center: CGPoint(x: rect.maxX - radius, y: rect.maxY - radius),
+            radius: radius,
+            startAngle: .degrees(0),
+            endAngle: .degrees(90),
+            clockwise: false
+        )
+        path.addLine(to: CGPoint(x: rect.minX + radius, y: rect.maxY))
+        path.addArc(
+            center: CGPoint(x: rect.minX + radius, y: rect.maxY - radius),
+            radius: radius,
+            startAngle: .degrees(90),
+            endAngle: .degrees(180),
+            clockwise: false
+        )
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.minY + radius))
+        path.addArc(
+            center: CGPoint(x: rect.minX + radius, y: rect.minY + radius),
+            radius: radius,
+            startAngle: .degrees(180),
+            endAngle: .degrees(270),
+            clockwise: false
+        )
+        path.closeSubpath()
+        return path
     }
 }
 
@@ -133,7 +203,7 @@ private struct HomeMacroGauge: View {
 
     private var progress: CGFloat {
         guard goal > 0 else { return 0 }
-        return min(max(value.nutritionDouble / goal.nutritionDouble, 0), 1)
+        return CGFloat(min(max(value.nutritionDouble / goal.nutritionDouble, 0), 1))
     }
 }
 

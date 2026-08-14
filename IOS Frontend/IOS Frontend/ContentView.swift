@@ -14,6 +14,10 @@ struct ContentView: View {
     @Environment(AuthenticationStore.self) private var authentication
     @Environment(WorkoutStore.self) private var workoutStore
 
+    private var visualPhase: WorkoutVisualPhase {
+        workoutStore.activeSession == nil ? .prepare : .focus
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -45,7 +49,10 @@ struct ContentView: View {
                 .padding(.horizontal)
                 .padding(.top, 8)
             }
-            .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
+            .background { WorkoutPhaseBackground(phase: visualPhase) }
+            .workoutVisualPhase(visualPhase)
+            .tint(visualPhase.accent)
+            .preferredColorScheme(visualPhase.usesDarkAppearance ? .dark : .light)
             .navigationTitle("Home")
             .overlay {
                 if workoutStore.isLoading {
