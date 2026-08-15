@@ -2,91 +2,17 @@
 //  HomeCalendarCards.swift
 //  IOS Frontend
 //
-//  The calendar pair on the home page: what is on today, and where today sits
-//  in the month.
+//  One card on the home page: what is on today, and where today sits in the
+//  month.
 //
 
 import SwiftUI
 
-/// The two cards side by side, sized so the square one keeps its shape.
-struct HomeCalendarRow: View {
-    var body: some View {
-        HStack(alignment: .top, spacing: 16) {
-            TodaysEventsCard()
-                .frame(width: 132)
-            HomeMonthCard()
-        }
-    }
-}
-
-/// Today's events. Events only: a task belongs in `TodaysActivityCard`, where
-/// it can be ticked off, and an event is not something to finish.
-struct TodaysEventsCard: View {
-    @Environment(PlannerStore.self) private var store
-    @Environment(\.homeTimeOfDay) private var timeOfDay
-
-    var body: some View {
-        NavigationLink {
-            PlannerView()
-        } label: {
-            VStack(alignment: .leading, spacing: 0) {
-                Text("Today's")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(timeOfDay.secondaryText)
-                Text("Events")
-                    .font(.system(size: 21, weight: .bold, design: .rounded))
-                    .foregroundStyle(timeOfDay.primaryText)
-
-                Spacer(minLength: 10)
-
-                if events.isEmpty {
-                    Text("Nothing on")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(timeOfDay.secondaryText)
-                } else {
-                    Text("\(events.count)")
-                        .font(.system(size: 40, weight: .bold, design: .rounded))
-                        .foregroundStyle(timeOfDay.primaryText)
-                    VStack(alignment: .leading, spacing: 3) {
-                        ForEach(events.prefix(2)) { event in
-                            eventRow(event)
-                        }
-                    }
-                    .padding(.top, 4)
-                }
-            }
-            .padding(14)
-            .frame(maxWidth: .infinity, minHeight: 158, alignment: .topLeading)
-            .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 24))
-            .overlay {
-                RoundedRectangle(cornerRadius: 24)
-                    .strokeBorder(timeOfDay.border, lineWidth: 1)
-            }
-            .shadow(color: timeOfDay.shadow, radius: 12, x: 5, y: 8)
-        }
-        .buttonStyle(.plain)
-        .accessibilityHint("Opens the planner")
-    }
-
-    private func eventRow(_ event: PlannerEntry) -> some View {
-        HStack(spacing: 5) {
-            Circle()
-                .fill(event.category.tint)
-                .frame(width: 5, height: 5)
-            Text(event.title)
-                .font(.system(size: 10, weight: .medium))
-                .foregroundStyle(timeOfDay.secondaryText)
-                .lineLimit(1)
-        }
-    }
-
-    private var events: [PlannerEntry] {
-        store.entries(on: Date()).filter { $0.kind == .event }
-    }
-}
-
-/// The month, the week today sits in, and the next thing due.
-struct HomeMonthCard: View {
+/// Today's events and the month, split by a rule down the middle.
+///
+/// One card rather than two, so the pair reads as a single widget the way the
+/// design it came from does.
+struct HomeCalendarCard: View {
     @Environment(PlannerStore.self) private var store
     @Environment(\.homeTimeOfDay) private var timeOfDay
 
@@ -96,57 +22,150 @@ struct HomeMonthCard: View {
         NavigationLink {
             PlannerView()
         } label: {
-            VStack(alignment: .leading, spacing: 0) {
-                header
-                Spacer(minLength: 10)
-                week
-                Spacer(minLength: 10)
-                Divider().overlay(timeOfDay.border)
-                nextUp
-                    .padding(.top, 8)
+            HStack(spacing: 0) {
+                eventsPane
+                    .frame(width: 104)
+                Rectangle()
+                    .fill(timeOfDay.border)
+                    .frame(width: 1)
+                calendarPane
             }
-            .padding(14)
-            .frame(maxWidth: .infinity, minHeight: 158, alignment: .topLeading)
+            .frame(minHeight: 162)
             .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 24))
             .overlay {
                 RoundedRectangle(cornerRadius: 24)
                     .strokeBorder(timeOfDay.border, lineWidth: 1)
             }
+            .clipShape(RoundedRectangle(cornerRadius: 24))
             .shadow(color: timeOfDay.shadow, radius: 12, x: 5, y: 8)
         }
         .buttonStyle(.plain)
         .accessibilityHint("Opens the planner")
     }
 
-    private var header: some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(Date().formatted(.dateTime.month(.wide)).uppercased())
-                .font(.system(size: 13, weight: .bold))
-                .tracking(0.8)
-                .foregroundStyle(timeOfDay.primaryText)
-            Spacer(minLength: 4)
-            Text(Date().formatted(.dateTime.year()))
+    // MARK: - Events
+
+    private var eventsPane: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("Today's")
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(timeOfDay.secondaryText)
+            Text("Events")
+                .font(.system(size: 19, weight: .bold, design: .rounded))
+                .foregroundStyle(timeOfDay.primaryText)
+
+            Spacer(minLength: 6)
+
+            if events.isEmpty {
+                Text("Nothing on")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(timeOfDay.secondaryText)
+            } else {
+                Text("\(events.count)")
+                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                    .foregroundStyle(timeOfDay.primaryText)
+                VStack(alignment: .leading, spacing: 3) {
+                    ForEach(events.prefix(2)) { event in
+                        HStack(spacing: 4) {
+                            Circle()
+                                .fill(event.category.tint)
+                                .frame(width: 4, height: 4)
+                            Text(event.title)
+                                .font(.system(size: 9, weight: .medium))
+                                .foregroundStyle(timeOfDay.secondaryText)
+                                .lineLimit(1)
+                        }
+                    }
+                }
+                .padding(.top, 3)
+            }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .padding(13)
     }
 
-    /// Monday first, matching every other week in the app.
+    private var events: [PlannerEntry] {
+        store.entries(on: Date()).filter { $0.kind == .event }
+    }
+
+    // MARK: - Calendar
+
+    private var calendarPane: some View {
+        HStack(spacing: 7) {
+            monthSpine
+            VStack(alignment: .leading, spacing: 0) {
+                Text(Date().formatted(.dateTime.year()))
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(timeOfDay.secondaryText)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+
+                Spacer(minLength: 6)
+                week
+                Spacer(minLength: 6)
+
+                Rectangle()
+                    .fill(timeOfDay.border)
+                    .frame(height: 1)
+                nextUp
+                    .padding(.top, 7)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .padding(13)
+    }
+
+    /// The month name set on its side, as in the design this came from. The
+    /// stripe beside it carries the category colours the rest of the planner
+    /// uses.
+    private var monthSpine: some View {
+        HStack(spacing: 5) {
+            Capsule()
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            PlannerCategory.birthday.tint,
+                            PlannerCategory.workout.tint,
+                            PlannerCategory.holiday.tint,
+                            PlannerCategory.travel.tint,
+                            PlannerCategory.study.tint,
+                        ],
+                        startPoint: .bottom,
+                        endPoint: .top
+                    )
+                )
+                .frame(width: 3)
+
+            Text(Date().formatted(.dateTime.month(.wide)).uppercased())
+                .font(.system(size: 13, weight: .heavy))
+                .tracking(0.5)
+                .foregroundStyle(timeOfDay.primaryText)
+                .fixedSize()
+                .rotationEffect(.degrees(-90))
+                .frame(width: 16)
+        }
+        // Sized to the word rather than the card, as in the design. Long
+        // enough for SEPTEMBER, the longest of them.
+        .frame(height: 96)
+        .frame(maxHeight: .infinity, alignment: .center)
+    }
+
+    /// Monday first, matching every other week in the app rather than the
+    /// Sunday-first reference.
     private var week: some View {
         HStack(spacing: 0) {
             ForEach(weekDays, id: \.timeIntervalSince1970) { date in
-                VStack(spacing: 4) {
+                VStack(spacing: 3) {
                     Text(date.formatted(.dateTime.weekday(.narrow)))
                         .font(.system(size: 8, weight: .semibold))
                         .foregroundStyle(timeOfDay.secondaryText)
                     Text("\(calendar.component(.day, from: date))")
-                        .font(.system(size: 12, weight: calendar.isDateInToday(date) ? .bold : .medium))
+                        .font(.system(size: 11, weight: calendar.isDateInToday(date) ? .bold : .medium))
                         .foregroundStyle(
                             calendar.isDateInToday(date)
                                 ? Color(hex: 0xFFFFFF)
                                 : timeOfDay.primaryText
                         )
-                        .frame(width: 22, height: 22)
+                        .frame(width: 20, height: 20)
                         .background {
                             if calendar.isDateInToday(date) {
                                 Circle().fill(timeOfDay.accent)
@@ -162,11 +181,11 @@ struct HomeMonthCard: View {
     }
 
     private var nextUp: some View {
-        HStack(spacing: 5) {
+        HStack(spacing: 4) {
             if let entry = nextEntry {
                 Circle()
                     .fill(entry.category.tint)
-                    .frame(width: 5, height: 5)
+                    .frame(width: 4, height: 4)
                 Text(entry.displayTime.map { "Today, \($0)" } ?? "Today")
                     .font(.system(size: 9, weight: .semibold))
                     .foregroundStyle(timeOfDay.secondaryText)
@@ -189,7 +208,7 @@ struct HomeMonthCard: View {
     private var nextEntry: PlannerEntry? {
         let now = Self.currentTimeString()
         let remaining = store.entries(on: Date()).filter { !$0.isComplete }
-        let upcoming = remaining.filter { ($0.time ?? "") >= now && $0.time != nil }
+        let upcoming = remaining.filter { $0.time != nil && ($0.time ?? "") >= now }
         return upcoming.min { ($0.time ?? "") < ($1.time ?? "") } ?? remaining.first
     }
 
