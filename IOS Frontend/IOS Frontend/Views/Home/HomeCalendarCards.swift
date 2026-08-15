@@ -194,7 +194,7 @@ struct HomeCalendarCard: View {
                     .foregroundStyle(timeOfDay.primaryText)
                     .lineLimit(1)
             } else {
-                Text("Nothing planned today")
+                Text("No events today")
                     .font(.system(size: 9, weight: .medium))
                     .foregroundStyle(timeOfDay.secondaryText)
             }
@@ -202,14 +202,15 @@ struct HomeCalendarCard: View {
         }
     }
 
-    /// The next thing still to come today, or the first thing on it once the
-    /// day's timed entries have passed. Finished tasks are left out: they are
-    /// not what is next.
+    /// The next event still to come today, or the first one on it once the
+    /// day's timed events have passed.
+    ///
+    /// Events only, like the pane beside it. Drawing a task here made the card
+    /// say "Nothing on" and then name a chore underneath it.
     private var nextEntry: PlannerEntry? {
         let now = Self.currentTimeString()
-        let remaining = store.entries(on: Date()).filter { !$0.isComplete }
-        let upcoming = remaining.filter { $0.time != nil && ($0.time ?? "") >= now }
-        return upcoming.min { ($0.time ?? "") < ($1.time ?? "") } ?? remaining.first
+        let upcoming = events.filter { $0.time != nil && ($0.time ?? "") >= now }
+        return upcoming.min { ($0.time ?? "") < ($1.time ?? "") } ?? events.first
     }
 
     private var weekDays: [Date] {
