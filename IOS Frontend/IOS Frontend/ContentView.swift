@@ -29,10 +29,9 @@ struct ContentView: View {
                             TodayWorkoutCard()
                         }
 
-                        HomeCalendarRow()
-
                         FoodSummaryWidget()
 
+                        HomeCalendarRow()
                         TodaysActivityCard()
 
                         if let error = workoutStore.persistenceError {
