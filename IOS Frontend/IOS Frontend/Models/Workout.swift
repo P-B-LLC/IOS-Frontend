@@ -199,24 +199,202 @@ nonisolated struct WorkoutSetDraft: Identifiable, Hashable, Sendable {
     }
 }
 
-/// Distance and pace for a session, exactly as the backend computed them from
-/// the uploaded GPS track. Neither value is calculated on the device.
+/// A workout the user has already created, offered when naming a new one.
+///
+/// Progress is gathered by name, so reusing an existing name keeps a workout's
+/// history together while a near-miss spelling quietly starts a second one.
+nonisolated struct WorkoutSummary: Identifiable, Hashable, Sendable {
+    let serverID: Int
+    let name: String
+    let type: WorkoutType
+
+    var id: Int { serverID }
+
+    /// Names match the way the backend matches them: ignoring case and
+    /// surrounding spaces.
+    static func matches(_ lhs: String, _ rhs: String) -> Bool {
+        lhs.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            == rhs.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    }
+}
+
+/// How one exercise has progressed, as a series the backend supplies. Every
+/// figure here is the server's; the app only groups them by day to plot.
+nonisolated struct LiftProgressSeries: Identifiable, Hashable, Sendable {
+    struct Day: Identifiable, Hashable, Sendable {
+        let date: Date
+        /// Heaviest single set that day.
+        let heaviestKilograms: Double
+        /// Everything lifted that day, weight times reps summed.
+        let volumeKilograms: Double
+
+        var id: Date { date }
+    }
+
+    let exerciseID: Int
+    let exerciseName: String
+    let days: [Day]
+
+    var id: Int { exerciseID }
+
+    var hasEnoughToPlot: Bool { days.count > 1 }
+}
+
+/// A best set during a session that beat everything logged before it.
+nonisolated struct PersonalRecord: Identifiable, Hashable, Sendable {
+    enum Kind: Hashable, Sendable {
+        /// The heaviest single lift, which is what a lifter usually means.
+        case heaviestWeight
+        /// Epley estimate, which catches progress raw weight misses: five reps
+        /// at 80 kg beats one at 85, but only the estimate shows it.
+        case estimatedOneRepMax
+
+        var title: String {
+            switch self {
+            case .heaviestWeight: return "Heaviest Lift"
+            case .estimatedOneRepMax: return "Best Est. 1RM"
+            }
+        }
+    }
+
+    let exerciseID: Int
+    let exerciseName: String
+    let kind: Kind
+    let valueKilograms: Double
+    /// Nil the first time an exercise is logged, when everything is a first.
+    let previousValueKilograms: Double?
+    let reps: Int?
+
+    var id: String { "\(exerciseID)-\(kind)" }
+
+    var isFirstEver: Bool { previousValueKilograms == nil }
+
+    var valueText: String {
+        String(format: "%.1f kg", valueKilograms)
+            .replacingOccurrences(of: ".0 kg", with: " kg")
+    }
+
+    /// How much this beat the old best by, e.g. "+2.5 kg".
+    var improvementText: String? {
+        guard let previousValueKilograms else { return nil }
+        let delta = valueKilograms - previousValueKilograms
+        guard delta > 0 else { return nil }
+        return String(format: "+%.1f kg", delta)
+            .replacingOccurrences(of: ".0 kg", with: " kg")
+    }
+
+    var detailText: String {
+        if isFirstEver {
+            return reps.map { "First time · \($0) reps" } ?? "First time"
+        }
+        let previous = previousValueKilograms.map {
+            String(format: "was %.1f kg", $0)
+                .replacingOccurrences(of: ".0 kg", with: " kg")
+        } ?? ""
+        guard let reps else { return previous }
+        return "\(reps) reps · \(previous)"
+    }
+}
+
+/// One finished run, ride, or swim, reduced to what a progress chart needs.
+nonisolated struct SessionHistoryPoint: Identifiable, Hashable, Sendable {
+    let sessionID: Int
+    let date: Date
+    let distanceKilometers: Double
+    let paceSecondsPerKilometer: Double?
+    let elevationGainMeters: Double?
+
+    var id: Int { sessionID }
+}
+
+/// One kilometer of a session, as timed by the backend. The last split of a
+/// run usually covers less than a kilometer.
+nonisolated struct SessionSplit: Identifiable, Hashable, Sendable {
+    let kilometer: Int
+    let seconds: Double
+    let distanceKilometers: Double
+
+    var id: Int { kilometer }
+
+    var isPartial: Bool { distanceKilometers < 0.995 }
+
+    /// Pace for this split, normalized so a partial final kilometer is
+    /// comparable with the full ones rather than looking impossibly fast.
+    var paceSecondsPerKilometer: Double? {
+        guard distanceKilometers > 0 else { return nil }
+        return seconds / distanceKilometers
+    }
+}
+
+/// Distance, pace and speed for a session, exactly as the backend computed
+/// them from the uploaded GPS track. None of it is calculated on the device.
 nonisolated struct SessionRouteSummary: Hashable, Sendable {
     let distanceKilometers: Double?
     let paceSecondsPerKilometer: Double?
+    let movingPaceSecondsPerKilometer: Double?
+    let averageSpeedKilometersPerHour: Double?
+    let maxSpeedKilometersPerHour: Double?
+    let movingSeconds: Double?
+    let elevationGainMeters: Double?
+    let elevationLossMeters: Double?
+    let splits: [SessionSplit]
 
-    /// Pace formatted as minutes and seconds per kilometer, e.g. "5:30 /km".
-    var paceText: String? {
-        guard let paceSecondsPerKilometer, paceSecondsPerKilometer > 0 else {
-            return nil
-        }
-        let total = Int(paceSecondsPerKilometer.rounded())
-        return String(format: "%d:%02d /km", total / 60, total % 60)
+    init(
+        distanceKilometers: Double? = nil,
+        paceSecondsPerKilometer: Double? = nil,
+        movingPaceSecondsPerKilometer: Double? = nil,
+        averageSpeedKilometersPerHour: Double? = nil,
+        maxSpeedKilometersPerHour: Double? = nil,
+        movingSeconds: Double? = nil,
+        elevationGainMeters: Double? = nil,
+        elevationLossMeters: Double? = nil,
+        splits: [SessionSplit] = []
+    ) {
+        self.distanceKilometers = distanceKilometers
+        self.paceSecondsPerKilometer = paceSecondsPerKilometer
+        self.movingPaceSecondsPerKilometer = movingPaceSecondsPerKilometer
+        self.averageSpeedKilometersPerHour = averageSpeedKilometersPerHour
+        self.maxSpeedKilometersPerHour = maxSpeedKilometersPerHour
+        self.movingSeconds = movingSeconds
+        self.elevationGainMeters = elevationGainMeters
+        self.elevationLossMeters = elevationLossMeters
+        self.splits = splits
+    }
+
+    var elevationGainText: String? {
+        guard let elevationGainMeters, elevationGainMeters > 0 else { return nil }
+        return String(format: "%.0f m", elevationGainMeters)
+    }
+
+    var paceText: String? { Self.paceText(paceSecondsPerKilometer) }
+    var movingPaceText: String? { Self.paceText(movingPaceSecondsPerKilometer) }
+
+    var averageSpeedText: String? {
+        guard let averageSpeedKilometersPerHour else { return nil }
+        return String(format: "%.1f km/h", averageSpeedKilometersPerHour)
+    }
+
+    var maxSpeedText: String? {
+        guard let maxSpeedKilometersPerHour else { return nil }
+        return String(format: "%.1f km/h", maxSpeedKilometersPerHour)
     }
 
     var distanceText: String? {
         guard let distanceKilometers else { return nil }
         return String(format: "%.2f km", distanceKilometers)
+    }
+
+    /// Formats seconds-per-kilometer as "5:30 /km".
+    static func paceText(_ seconds: Double?) -> String? {
+        guard let seconds, seconds > 0, seconds.isFinite else { return nil }
+        let total = Int(seconds.rounded())
+        return String(format: "%d:%02d /km", total / 60, total % 60)
+    }
+
+    /// Formats a duration as m:ss, used for split times.
+    static func durationText(_ seconds: Double) -> String {
+        let total = Int(seconds.rounded())
+        return String(format: "%d:%02d", total / 60, total % 60)
     }
 }
 

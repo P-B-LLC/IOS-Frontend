@@ -7,6 +7,7 @@
 //
 
 import CoreLocation
+import CoreMotion
 import Foundation
 import Observation
 
@@ -16,17 +17,27 @@ nonisolated struct RoutePoint: Identifiable, Hashable, Sendable {
     let latitude: Double
     let longitude: Double
     let recordedAt: Date
+    /// The device's own speed reading in meters per second, taken from the
+    /// GPS Doppler shift rather than derived from consecutive positions, so it
+    /// carries no accumulated positional error. Nil when unavailable.
+    let speedMetersPerSecond: Double?
+    /// Height above sea level in meters, when the device had a vertical fix.
+    let altitudeMeters: Double?
 
     init(
         id: UUID = UUID(),
         latitude: Double,
         longitude: Double,
-        recordedAt: Date
+        recordedAt: Date,
+        speedMetersPerSecond: Double? = nil,
+        altitudeMeters: Double? = nil
     ) {
         self.id = id
         self.latitude = latitude
         self.longitude = longitude
         self.recordedAt = recordedAt
+        self.speedMetersPerSecond = speedMetersPerSecond
+        self.altitudeMeters = altitudeMeters
     }
 
     var coordinate: CLLocationCoordinate2D {
@@ -55,6 +66,78 @@ final class RouteTracker: NSObject, CLLocationManagerDelegate {
     private(set) var points: [RoutePoint] = []
     /// Set when a fix cannot be obtained, so the session UI can say so.
     private(set) var trackingError: String?
+    /// Latest speed reading, shown live during a session. Display only — every
+    /// saved figure is computed by the backend from the uploaded track.
+    private(set) var currentSpeedMetersPerSecond: Double?
+
+    // MARK: - Live estimates
+    //
+    // These exist so the user can watch their run unfold. They are running
+    // estimates for display only: when the session ends, the uploaded track is
+    // measured by the backend and those figures are what get recorded.
+
+    /// Distance covered so far, accumulated fix by fix.
+    private(set) var liveDistanceMeters: Double = 0
+    /// Height climbed so far, ignoring drift smaller than a meter.
+    private(set) var liveElevationGainMeters: Double = 0
+    /// The last accepted fix, used to measure each new step.
+    private var lastLocation: CLLocation?
+    /// Altitude the current climb is measured from.
+    private var elevationReference: Double?
+
+    // MARK: - Barometric elevation
+    //
+    // GPS is poor at height, often several meters out, which is enough to
+    // invent hills. The barometer measures *change* in height to roughly a
+    // third of a meter, and change is exactly what climb is. A single GPS
+    // reading anchors it to sea level; every movement after that comes from
+    // the barometer.
+
+    private let altimeter = CMAltimeter()
+    private var isReadingBarometer = false
+    /// Meters gained or lost since the barometer started, per CoreMotion.
+    private var relativeAltitudeMeters: Double?
+    /// The GPS altitude the barometric series is anchored to.
+    private var altitudeAnchorMeters: Double?
+
+    /// Whether height is coming from the barometer rather than GPS.
+    private(set) var usesBarometricAltitude = false
+
+    var liveDistanceKilometers: Double { liveDistanceMeters / 1000 }
+
+    /// Pace averaged over the whole run so far, which is steadier to read than
+    /// the instantaneous value and matches what the backend will report.
+    var liveAveragePaceSecondsPerKilometer: Double? {
+        guard liveDistanceMeters > 20,
+              let first = points.first?.recordedAt,
+              let last = points.last?.recordedAt else {
+            return nil
+        }
+        let elapsed = last.timeIntervalSince(first)
+        guard elapsed > 0 else { return nil }
+        return elapsed / (liveDistanceMeters / 1000)
+    }
+
+    var liveAverageSpeedKilometersPerHour: Double? {
+        guard let pace = liveAveragePaceSecondsPerKilometer, pace > 0 else {
+            return nil
+        }
+        return 3600 / pace
+    }
+
+    /// Current speed in km/h, the natural unit for a ride.
+    var currentSpeedKilometersPerHour: Double? {
+        currentSpeedMetersPerSecond.map { $0 * 3.6 }
+    }
+
+    /// Current pace in seconds per km, the natural unit for a run or swim.
+    /// Nil below a slow walk, where pace becomes meaningless.
+    var currentPaceSecondsPerKilometer: Double? {
+        guard let speed = currentSpeedMetersPerSecond, speed > 0.5 else {
+            return nil
+        }
+        return 1000 / speed
+    }
 
     private let manager: CLLocationManager
 
@@ -86,6 +169,11 @@ final class RouteTracker: NSObject, CLLocationManagerDelegate {
         guard permission.allowsTracking, !isTracking else { return }
         points = []
         trackingError = nil
+        currentSpeedMetersPerSecond = nil
+        liveDistanceMeters = 0
+        liveElevationGainMeters = 0
+        lastLocation = nil
+        elevationReference = nil
         isTracking = true
 
         // Keeps fixes coming with the screen locked or the app backgrounded,
@@ -101,6 +189,7 @@ final class RouteTracker: NSObject, CLLocationManagerDelegate {
         }
         manager.pausesLocationUpdatesAutomatically = false
         manager.startUpdatingLocation()
+        startReadingBarometer()
     }
 
     /// Stops recording and returns the track captured so far.
@@ -111,8 +200,70 @@ final class RouteTracker: NSObject, CLLocationManagerDelegate {
         if Self.declaresLocationBackgroundMode {
             manager.allowsBackgroundLocationUpdates = false
         }
+        stopReadingBarometer()
         isTracking = false
         return points
+    }
+
+    /// Only sustained height changes count as climbing. Matches the backend's
+    /// threshold, which keeps the live figure close to the one recorded.
+    private static let elevationNoiseMeters: Double = 3
+
+    /// Fixes less certain than this are discarded. Roughly a running track's
+    /// width: loose enough to keep tracking under trees, tight enough that
+    /// drift is not mistaken for distance covered.
+    private static let maximumAccuracyMeters: Double = 25
+
+    /// CoreLocation replays its last known fix when updates begin; anything
+    /// this old describes where the user was, not where they are.
+    private static let maximumFixAgeSeconds: TimeInterval = 10
+
+    /// Beyond any human-powered speed, including a fast descent on a bike, so
+    /// a step above it is a bad fix rather than movement. Meters per second.
+    private static let maximumPlausibleSpeed: Double = 30
+
+    /// Below a slow walk the device is drifting, not travelling. Matches the
+    /// floor the backend uses for moving time. Meters per second.
+    private static let movingSpeedFloor: Double = 0.5
+
+    // MARK: - Barometer
+
+    private func startReadingBarometer() {
+        guard CMAltimeter.isRelativeAltitudeAvailable(),
+              CMAltimeter.authorizationStatus() != .denied,
+              CMAltimeter.authorizationStatus() != .restricted,
+              !isReadingBarometer else {
+            return
+        }
+        isReadingBarometer = true
+        altimeter.startRelativeAltitudeUpdates(to: .main) { [weak self] data, _ in
+            guard let self, let data else { return }
+            relativeAltitudeMeters = data.relativeAltitude.doubleValue
+            usesBarometricAltitude = true
+        }
+    }
+
+    private func stopReadingBarometer() {
+        guard isReadingBarometer else { return }
+        altimeter.stopRelativeAltitudeUpdates()
+        isReadingBarometer = false
+    }
+
+    /// Height for a fix. Once the barometer is running its change is added to
+    /// the GPS altitude it was anchored to, which keeps the absolute reference
+    /// while taking every rise and fall from the far more precise sensor.
+    private func altitude(for location: CLLocation) -> Double? {
+        let gpsAltitude = location.verticalAccuracy >= 0 ? location.altitude : nil
+
+        guard let relative = relativeAltitudeMeters else {
+            return gpsAltitude
+        }
+        if altitudeAnchorMeters == nil, let gpsAltitude {
+            // Anchor to the first usable GPS height, then never move it.
+            altitudeAnchorMeters = gpsAltitude - relative
+        }
+        guard let anchor = altitudeAnchorMeters else { return gpsAltitude }
+        return anchor + relative
     }
 
     /// Whether the app bundle declares the location background mode. Without
@@ -145,18 +296,72 @@ final class RouteTracker: NSObject, CLLocationManagerDelegate {
         trackingError = nil
 
         for location in locations {
-            // Drop obviously bad fixes; a negative accuracy means invalid.
+            // A negative accuracy means the fix is invalid. The limit is tight
+            // because a loose one lets the position wander, and every wander
+            // is counted as distance the user never covered.
             guard location.horizontalAccuracy >= 0,
-                  location.horizontalAccuracy <= 100 else {
+                  location.horizontalAccuracy <= Self.maximumAccuracyMeters else {
                 continue
             }
+
+            // Ignore stale fixes replayed by CoreLocation on start-up.
+            guard location.timestamp.timeIntervalSinceNow > -Self.maximumFixAgeSeconds else {
+                continue
+            }
+
+            // A jump no human could make is a bad fix, not a sprint.
+            if let previous = lastLocation {
+                let step = location.distance(from: previous)
+                let gap = location.timestamp.timeIntervalSince(previous.timestamp)
+                if gap > 0, step / gap > Self.maximumPlausibleSpeed {
+                    continue
+                }
+            }
+            // A negative accuracy means the device could not measure that
+            // component of the fix.
+            let speed = location.speed >= 0 ? location.speed : nil
+            let altitude = altitude(for: location)
+
             points.append(
                 RoutePoint(
                     latitude: location.coordinate.latitude,
                     longitude: location.coordinate.longitude,
-                    recordedAt: location.timestamp
+                    recordedAt: location.timestamp,
+                    speedMetersPerSecond: speed,
+                    altitudeMeters: altitude
                 )
             )
+            if let speed { currentSpeedMetersPerSecond = speed }
+
+            // Accumulate the live figures. CLLocation measures the step
+            // geodesically, so this matches the server's own distance closely.
+            //
+            // Distance only grows while the device reports actual movement.
+            // Standing still, the position keeps drifting a few meters between
+            // fixes, and counting that would add hundreds of meters to a run
+            // that paused at a crossing. The Doppler speed reading is the
+            // reliable way to tell moving from drifting.
+            if let previous = lastLocation {
+                let isMoving = speed.map { $0 >= Self.movingSpeedFloor } ?? true
+                if isMoving {
+                    liveDistanceMeters += location.distance(from: previous)
+                }
+            }
+            lastLocation = location
+
+            if let altitude {
+                if let reference = elevationReference {
+                    let change = altitude - reference
+                    if change >= Self.elevationNoiseMeters {
+                        liveElevationGainMeters += change
+                        elevationReference = altitude
+                    } else if change <= -Self.elevationNoiseMeters {
+                        elevationReference = altitude
+                    }
+                } else {
+                    elevationReference = altitude
+                }
+            }
         }
     }
 

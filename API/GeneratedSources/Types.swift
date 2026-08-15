@@ -128,6 +128,14 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /api/v1/sessions/{id}/end/`.
     /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/end//post(sessions_end_create)`.
     func sessionsEndCreate(_ input: Operations.SessionsEndCreate.Input) async throws -> Operations.SessionsEndCreate.Output
+    /// Bests set during this session that beat everything logged before.
+    ///
+    /// Kept off the session list, where it would run a history query per
+    /// exercise for every session returned.
+    ///
+    /// - Remark: HTTP `GET /api/v1/sessions/{id}/records/`.
+    /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/records//get(sessions_records_list)`.
+    func sessionsRecordsList(_ input: Operations.SessionsRecordsList.Input) async throws -> Operations.SessionsRecordsList.Output
     /// Read or append the GPS track recorded during a session.
     ///
     /// Uploaded points are stored raw; distance and pace are derived from them
@@ -402,10 +410,12 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//api/v1/progress/exercises/{exercise_id}//get(progress_exercises_list)`.
     public func progressExercisesList(
         path: Operations.ProgressExercisesList.Input.Path,
+        query: Operations.ProgressExercisesList.Input.Query = .init(),
         headers: Operations.ProgressExercisesList.Input.Headers = .init()
     ) async throws -> Operations.ProgressExercisesList.Output {
         try await progressExercisesList(Operations.ProgressExercisesList.Input(
             path: path,
+            query: query,
             headers: headers
         ))
     }
@@ -608,6 +618,22 @@ extension APIProtocol {
         headers: Operations.SessionsEndCreate.Input.Headers = .init()
     ) async throws -> Operations.SessionsEndCreate.Output {
         try await sessionsEndCreate(Operations.SessionsEndCreate.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Bests set during this session that beat everything logged before.
+    ///
+    /// Kept off the session list, where it would run a history query per
+    /// exercise for every session returned.
+    ///
+    /// - Remark: HTTP `GET /api/v1/sessions/{id}/records/`.
+    /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/records//get(sessions_records_list)`.
+    public func sessionsRecordsList(
+        path: Operations.SessionsRecordsList.Input.Path,
+        headers: Operations.SessionsRecordsList.Input.Headers = .init()
+    ) async throws -> Operations.SessionsRecordsList.Output {
+        try await sessionsRecordsList(Operations.SessionsRecordsList.Input(
             path: path,
             headers: headers
         ))
@@ -1064,6 +1090,8 @@ public enum Components {
             public var reps: Swift.Int
             /// - Remark: Generated from `#/components/schemas/ExerciseProgressPoint/volume_kg`.
             public var volumeKg: Swift.String
+            /// - Remark: Generated from `#/components/schemas/ExerciseProgressPoint/session`.
+            public var session: Swift.Int
             /// Creates a new `ExerciseProgressPoint`.
             ///
             /// - Parameters:
@@ -1071,22 +1099,26 @@ public enum Components {
             ///   - weightKg:
             ///   - reps:
             ///   - volumeKg:
+            ///   - session:
             public init(
                 completedAt: Foundation.Date,
                 weightKg: Swift.String,
                 reps: Swift.Int,
-                volumeKg: Swift.String
+                volumeKg: Swift.String,
+                session: Swift.Int
             ) {
                 self.completedAt = completedAt
                 self.weightKg = weightKg
                 self.reps = reps
                 self.volumeKg = volumeKg
+                self.session = session
             }
             public enum CodingKeys: String, CodingKey {
                 case completedAt = "completed_at"
                 case weightKg = "weight_kg"
                 case reps
                 case volumeKg = "volume_kg"
+                case session
             }
         }
         /// - Remark: Generated from `#/components/schemas/ExerciseRequest`.
@@ -1111,6 +1143,14 @@ public enum Components {
                 case name
                 case muscleGroup = "muscle_group"
             }
+        }
+        /// * `heaviest_weight` - heaviest_weight
+        /// * `best_estimated_1rm` - best_estimated_1rm
+        ///
+        /// - Remark: Generated from `#/components/schemas/KindEnum`.
+        @frozen public enum KindEnum: String, Codable, Hashable, Sendable, CaseIterable {
+            case heaviestWeight = "heaviest_weight"
+            case bestEstimated1rm = "best_estimated_1rm"
         }
         /// - Remark: Generated from `#/components/schemas/LoginRequest`.
         public struct LoginRequest: Codable, Hashable, Sendable {
@@ -1904,6 +1944,73 @@ public enum Components {
                 case description
             }
         }
+        /// A best set during a session that beat everything logged before it.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PersonalRecord`.
+        public struct PersonalRecord: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PersonalRecord/exercise`.
+            public var exercise: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PersonalRecord/exercise_name`.
+            public var exerciseName: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PersonalRecord/kind`.
+            public struct KindPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PersonalRecord/kind/value1`.
+                public var value1: Components.Schemas.KindEnum
+                /// Creates a new `KindPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.KindEnum) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try decoder.decodeFromSingleValueContainer()
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeToSingleValueContainer(self.value1)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/PersonalRecord/kind`.
+            public var kind: Components.Schemas.PersonalRecord.KindPayload
+            /// - Remark: Generated from `#/components/schemas/PersonalRecord/value`.
+            public var value: Swift.Double
+            /// - Remark: Generated from `#/components/schemas/PersonalRecord/previous_value`.
+            public var previousValue: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/PersonalRecord/reps`.
+            public var reps: Swift.Int?
+            /// Creates a new `PersonalRecord`.
+            ///
+            /// - Parameters:
+            ///   - exercise:
+            ///   - exerciseName:
+            ///   - kind:
+            ///   - value:
+            ///   - previousValue:
+            ///   - reps:
+            public init(
+                exercise: Swift.Int,
+                exerciseName: Swift.String,
+                kind: Components.Schemas.PersonalRecord.KindPayload,
+                value: Swift.Double,
+                previousValue: Swift.Double? = nil,
+                reps: Swift.Int? = nil
+            ) {
+                self.exercise = exercise
+                self.exerciseName = exerciseName
+                self.kind = kind
+                self.value = value
+                self.previousValue = previousValue
+                self.reps = reps
+            }
+            public enum CodingKeys: String, CodingKey {
+                case exercise
+                case exerciseName = "exercise_name"
+                case kind
+                case value
+                case previousValue = "previous_value"
+                case reps
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser`.
         public struct PublicRepbaseUser: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/id`.
@@ -2502,6 +2609,10 @@ public enum Components {
             public var longitude: Swift.String
             /// - Remark: Generated from `#/components/schemas/SessionRoutePoint/recorded_at`.
             public var recordedAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/SessionRoutePoint/speed_mps`.
+            public var speedMps: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/SessionRoutePoint/altitude_m`.
+            public var altitudeM: Swift.String?
             /// Creates a new `SessionRoutePoint`.
             ///
             /// - Parameters:
@@ -2509,22 +2620,30 @@ public enum Components {
             ///   - latitude:
             ///   - longitude:
             ///   - recordedAt:
+            ///   - speedMps:
+            ///   - altitudeM:
             public init(
                 id: Swift.Int,
                 latitude: Swift.String,
                 longitude: Swift.String,
-                recordedAt: Foundation.Date
+                recordedAt: Foundation.Date,
+                speedMps: Swift.String? = nil,
+                altitudeM: Swift.String? = nil
             ) {
                 self.id = id
                 self.latitude = latitude
                 self.longitude = longitude
                 self.recordedAt = recordedAt
+                self.speedMps = speedMps
+                self.altitudeM = altitudeM
             }
             public enum CodingKeys: String, CodingKey {
                 case id
                 case latitude
                 case longitude
                 case recordedAt = "recorded_at"
+                case speedMps = "speed_mps"
+                case altitudeM = "altitude_m"
             }
         }
         /// - Remark: Generated from `#/components/schemas/SessionRoutePointRequest`.
@@ -2535,25 +2654,37 @@ public enum Components {
             public var longitude: Swift.String
             /// - Remark: Generated from `#/components/schemas/SessionRoutePointRequest/recorded_at`.
             public var recordedAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/SessionRoutePointRequest/speed_mps`.
+            public var speedMps: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/SessionRoutePointRequest/altitude_m`.
+            public var altitudeM: Swift.String?
             /// Creates a new `SessionRoutePointRequest`.
             ///
             /// - Parameters:
             ///   - latitude:
             ///   - longitude:
             ///   - recordedAt:
+            ///   - speedMps:
+            ///   - altitudeM:
             public init(
                 latitude: Swift.String,
                 longitude: Swift.String,
-                recordedAt: Foundation.Date
+                recordedAt: Foundation.Date,
+                speedMps: Swift.String? = nil,
+                altitudeM: Swift.String? = nil
             ) {
                 self.latitude = latitude
                 self.longitude = longitude
                 self.recordedAt = recordedAt
+                self.speedMps = speedMps
+                self.altitudeM = altitudeM
             }
             public enum CodingKeys: String, CodingKey {
                 case latitude
                 case longitude
                 case recordedAt = "recorded_at"
+                case speedMps = "speed_mps"
+                case altitudeM = "altitude_m"
             }
         }
         /// A batch of GPS fixes recorded during one session.
@@ -2571,6 +2702,40 @@ public enum Components {
             }
             public enum CodingKeys: String, CodingKey {
                 case points
+            }
+        }
+        /// Time taken for one kilometer of a session.
+        ///
+        /// The final entry may cover less than a kilometer, which `distance_km`
+        /// reports so a partial split is not mistaken for a fast one.
+        ///
+        /// - Remark: Generated from `#/components/schemas/SessionSplit`.
+        public struct SessionSplit: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SessionSplit/kilometer`.
+            public var kilometer: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/SessionSplit/seconds`.
+            public var seconds: Swift.Double
+            /// - Remark: Generated from `#/components/schemas/SessionSplit/distance_km`.
+            public var distanceKm: Swift.Double
+            /// Creates a new `SessionSplit`.
+            ///
+            /// - Parameters:
+            ///   - kilometer:
+            ///   - seconds:
+            ///   - distanceKm:
+            public init(
+                kilometer: Swift.Int,
+                seconds: Swift.Double,
+                distanceKm: Swift.Double
+            ) {
+                self.kilometer = kilometer
+                self.seconds = seconds
+                self.distanceKm = distanceKm
+            }
+            public enum CodingKeys: String, CodingKey {
+                case kilometer
+                case seconds
+                case distanceKm = "distance_km"
             }
         }
         /// - Remark: Generated from `#/components/schemas/SetEntry`.
@@ -2961,6 +3126,20 @@ public enum Components {
             public var routeDistanceKm: Swift.Double?
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/pace_seconds_per_km`.
             public var paceSecondsPerKm: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/moving_pace_seconds_per_km`.
+            public var movingPaceSecondsPerKm: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/average_speed_kmh`.
+            public var averageSpeedKmh: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/max_speed_kmh`.
+            public var maxSpeedKmh: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/moving_seconds`.
+            public var movingSeconds: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/elevation_gain_m`.
+            public var elevationGainM: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/elevation_loss_m`.
+            public var elevationLossM: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/splits`.
+            public var splits: [Components.Schemas.SessionSplit]
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/created_at`.
             public var createdAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/updated_at`.
@@ -2978,6 +3157,13 @@ public enum Components {
             ///   - durationSeconds:
             ///   - routeDistanceKm:
             ///   - paceSecondsPerKm:
+            ///   - movingPaceSecondsPerKm:
+            ///   - averageSpeedKmh:
+            ///   - maxSpeedKmh:
+            ///   - movingSeconds:
+            ///   - elevationGainM:
+            ///   - elevationLossM:
+            ///   - splits:
             ///   - createdAt:
             ///   - updatedAt:
             public init(
@@ -2991,6 +3177,13 @@ public enum Components {
                 durationSeconds: Swift.Double? = nil,
                 routeDistanceKm: Swift.Double? = nil,
                 paceSecondsPerKm: Swift.Double? = nil,
+                movingPaceSecondsPerKm: Swift.Double? = nil,
+                averageSpeedKmh: Swift.Double? = nil,
+                maxSpeedKmh: Swift.Double? = nil,
+                movingSeconds: Swift.Double? = nil,
+                elevationGainM: Swift.Double? = nil,
+                elevationLossM: Swift.Double? = nil,
+                splits: [Components.Schemas.SessionSplit],
                 createdAt: Foundation.Date,
                 updatedAt: Foundation.Date
             ) {
@@ -3004,6 +3197,13 @@ public enum Components {
                 self.durationSeconds = durationSeconds
                 self.routeDistanceKm = routeDistanceKm
                 self.paceSecondsPerKm = paceSecondsPerKm
+                self.movingPaceSecondsPerKm = movingPaceSecondsPerKm
+                self.averageSpeedKmh = averageSpeedKmh
+                self.maxSpeedKmh = maxSpeedKmh
+                self.movingSeconds = movingSeconds
+                self.elevationGainM = elevationGainM
+                self.elevationLossM = elevationLossM
+                self.splits = splits
                 self.createdAt = createdAt
                 self.updatedAt = updatedAt
             }
@@ -3018,6 +3218,13 @@ public enum Components {
                 case durationSeconds = "duration_seconds"
                 case routeDistanceKm = "route_distance_km"
                 case paceSecondsPerKm = "pace_seconds_per_km"
+                case movingPaceSecondsPerKm = "moving_pace_seconds_per_km"
+                case averageSpeedKmh = "average_speed_kmh"
+                case maxSpeedKmh = "max_speed_kmh"
+                case movingSeconds = "moving_seconds"
+                case elevationGainM = "elevation_gain_m"
+                case elevationLossM = "elevation_loss_m"
+                case splits
                 case createdAt = "created_at"
                 case updatedAt = "updated_at"
             }
@@ -5348,6 +5555,21 @@ public enum Operations {
                 }
             }
             public var path: Operations.ProgressExercisesList.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/progress/exercises/{exercise_id}/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// Only count sets performed in workouts with this name, matched without regard to case. Keeps one workout's history of a lift separate from another's.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/progress/exercises/{exercise_id}/GET/query/workout_name`.
+                public var workoutName: Swift.String?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - workoutName: Only count sets performed in workouts with this name, matched without regard to case. Keeps one workout's history of a lift separate from another's.
+                public init(workoutName: Swift.String? = nil) {
+                    self.workoutName = workoutName
+                }
+            }
+            public var query: Operations.ProgressExercisesList.Input.Query
             /// - Remark: Generated from `#/paths/api/v1/progress/exercises/{exercise_id}/GET/header`.
             public struct Headers: Sendable, Hashable {
                 public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.ProgressExercisesList.AcceptableContentType>]
@@ -5364,12 +5586,15 @@ public enum Operations {
             ///
             /// - Parameters:
             ///   - path:
+            ///   - query:
             ///   - headers:
             public init(
                 path: Operations.ProgressExercisesList.Input.Path,
+                query: Operations.ProgressExercisesList.Input.Query = .init(),
                 headers: Operations.ProgressExercisesList.Input.Headers = .init()
             ) {
                 self.path = path
+                self.query = query
                 self.headers = headers
             }
         }
@@ -6905,12 +7130,41 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/sessions/GET/query/page`.
                 public var page: Swift.Int?
+                /// - Remark: Generated from `#/paths/api/v1/sessions/GET/query/status`.
+                @frozen public enum StatusPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case active = "active"
+                    case completed = "completed"
+                    case planned = "planned"
+                }
+                /// Return only sessions in this state.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/sessions/GET/query/status`.
+                public var status: Operations.SessionsList.Input.Query.StatusPayload?
+                /// Return only sessions for this workout template.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/sessions/GET/query/workout`.
+                public var workout: Swift.Int?
+                /// Return only sessions whose workout has this name, matched without regard to case. Groups a workout's history by what it is called rather than by record.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/sessions/GET/query/workout_name`.
+                public var workoutName: Swift.String?
                 /// Creates a new `Query`.
                 ///
                 /// - Parameters:
                 ///   - page: A page number within the paginated result set.
-                public init(page: Swift.Int? = nil) {
+                ///   - status: Return only sessions in this state.
+                ///   - workout: Return only sessions for this workout template.
+                ///   - workoutName: Return only sessions whose workout has this name, matched without regard to case. Groups a workout's history by what it is called rather than by record.
+                public init(
+                    page: Swift.Int? = nil,
+                    status: Operations.SessionsList.Input.Query.StatusPayload? = nil,
+                    workout: Swift.Int? = nil,
+                    workoutName: Swift.String? = nil
+                ) {
                     self.page = page
+                    self.status = status
+                    self.workout = workout
+                    self.workoutName = workoutName
                 }
             }
             public var query: Operations.SessionsList.Input.Query
@@ -7698,6 +7952,139 @@ public enum Operations {
             /// - Throws: An error if `self` is not `.ok`.
             /// - SeeAlso: `.ok`.
             public var ok: Operations.SessionsEndCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Bests set during this session that beat everything logged before.
+    ///
+    /// Kept off the session list, where it would run a history query per
+    /// exercise for every session returned.
+    ///
+    /// - Remark: HTTP `GET /api/v1/sessions/{id}/records/`.
+    /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/records//get(sessions_records_list)`.
+    public enum SessionsRecordsList {
+        public static let id: Swift.String = "sessions_records_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/records/GET/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this workout session.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/records/GET/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this workout session.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SessionsRecordsList.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/records/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SessionsRecordsList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SessionsRecordsList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SessionsRecordsList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.SessionsRecordsList.Input.Path,
+                headers: Operations.SessionsRecordsList.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/records/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/records/GET/responses/200/content/application\/json`.
+                    case json([Components.Schemas.PersonalRecord])
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: [Components.Schemas.PersonalRecord] {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SessionsRecordsList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SessionsRecordsList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/records//get(sessions_records_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SessionsRecordsList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SessionsRecordsList.Output.Ok {
                 get throws {
                     switch self {
                     case let .ok(response):

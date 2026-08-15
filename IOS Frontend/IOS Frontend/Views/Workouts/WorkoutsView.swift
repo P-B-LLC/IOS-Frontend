@@ -9,6 +9,7 @@ import SwiftUI
 
 struct WorkoutsView: View {
     @Environment(WorkoutStore.self) private var store
+    private let phase = WorkoutVisualPhase.prepare
 
     var body: some View {
         ScrollView {
@@ -33,7 +34,9 @@ struct WorkoutsView: View {
             .padding(.horizontal)
             .padding(.vertical, 12)
         }
-        .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
+        .background { WorkoutPhaseBackground(phase: phase) }
+        .workoutVisualPhase(phase)
+        .tint(phase.accent)
         .navigationTitle("Workouts")
     }
 
@@ -41,9 +44,10 @@ struct WorkoutsView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Your Week")
                 .font(.title2.weight(.bold))
+                .foregroundStyle(phase.primaryText)
             Text("Choose any day to plan, customize, or log a workout.")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(phase.secondaryText)
         }
     }
 
@@ -53,9 +57,9 @@ struct WorkoutsView: View {
                 Label("Workout Plan", systemImage: "calendar")
                     .font(.headline)
                 Spacer()
-                Text("Tap a day")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                        Text("Tap a day")
+                            .font(.caption)
+                            .foregroundStyle(phase.secondaryText)
             }
 
             HStack(alignment: .top, spacing: 6) {
@@ -87,28 +91,29 @@ struct WorkoutsView: View {
                 HStack(spacing: 14) {
                     Image(systemName: "bolt.fill")
                         .font(.title3)
-                        .foregroundStyle(Color.white)
+                        .foregroundStyle(WorkoutVisualPhase.focus.onAccent)
                         .frame(width: 48, height: 48)
-                        .background(Color.green, in: RoundedRectangle(cornerRadius: 14))
+                        .background(WorkoutVisualPhase.focus.accent, in: RoundedRectangle(cornerRadius: 14))
 
                     VStack(alignment: .leading, spacing: 3) {
                         Text("SESSION IN PROGRESS")
                             .font(.caption2.weight(.bold))
-                            .foregroundStyle(Color.green)
+                            .foregroundStyle(WorkoutVisualPhase.focus.accent)
                         Text(session.workoutName)
                             .font(.headline)
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(WorkoutVisualPhase.focus.primaryText)
                         Text("\(session.loggedSetCount) of \(session.totalSetCount) sets logged")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(WorkoutVisualPhase.focus.secondaryText)
                     }
 
                     Spacer()
                     Image(systemName: "chevron.forward")
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(WorkoutVisualPhase.focus.secondaryText)
                 }
                 .workoutCard()
+                .workoutVisualPhase(.focus)
             }
             .buttonStyle(.plain)
         } else if let focusDay = store.today ?? Weekday.allCases.first {
@@ -118,28 +123,37 @@ struct WorkoutsView: View {
                 HStack(spacing: 14) {
                     Image(systemName: store.workout(on: focusDay) == nil ? "plus" : "figure.strengthtraining.traditional")
                         .font(.title3.weight(.semibold))
-                        .foregroundStyle(Color.accentColor)
+                        .foregroundStyle(phase.accent)
                         .frame(width: 48, height: 48)
-                        .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
+                        .background(phase.accent.opacity(0.14), in: RoundedRectangle(cornerRadius: 14))
 
                     VStack(alignment: .leading, spacing: 3) {
                         Text("TODAY")
                             .font(.caption2.weight(.bold))
-                            .foregroundStyle(Color.accentColor)
+                            .foregroundStyle(Color(hex: 0xFDC094))
                         Text(store.workout(on: focusDay)?.name ?? "Plan today's workout")
                             .font(.headline)
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(Color(hex: 0xF7F7F8))
                         Text(focusDescription(for: focusDay))
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color(hex: 0xCFCFD0))
                     }
 
                     Spacer()
                     Image(systemName: "chevron.forward")
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color(hex: 0xFDC094))
                 }
-                .workoutCard()
+                .padding(16)
+                .background {
+                    WorkoutHeroBackground(phase: phase)
+                        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        .shadow(color: phase.shadow, radius: 14, x: 5, y: 8)
+                }
+                .overlay {
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.16), lineWidth: 1)
+                }
             }
             .buttonStyle(.plain)
         }
@@ -155,9 +169,9 @@ struct WorkoutsView: View {
                 .font(.headline)
 
             HStack(spacing: 10) {
-                WeekStat(value: workouts.count, label: "Planned", icon: "calendar.badge.checkmark")
-                WeekStat(value: exerciseCount, label: "Exercises", icon: "list.bullet")
-                WeekStat(value: setCount, label: "Target Sets", icon: "checklist")
+                WeekStat(value: workouts.count, label: "Planned", icon: "calendar.badge.checkmark", accent: phase.accent)
+                WeekStat(value: exerciseCount, label: "Exercises", icon: "list.bullet", accent: phase.accent)
+                WeekStat(value: setCount, label: "Target Sets", icon: "checklist", accent: phase.accent)
             }
         }
         .workoutCard()
@@ -190,12 +204,13 @@ private struct WeekStat: View {
     let value: Int
     let label: String
     let icon: String
+    let accent: Color
 
     var body: some View {
         VStack(spacing: 6) {
             Image(systemName: icon)
                 .font(.subheadline)
-                .foregroundStyle(Color.accentColor)
+                .foregroundStyle(accent)
             Text("\(value)")
                 .font(.title3.weight(.bold))
             Text(label)
@@ -209,22 +224,6 @@ private struct WeekStat: View {
         .background(Color.primary.opacity(0.035), in: RoundedRectangle(cornerRadius: 14))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(value) \(label)")
-    }
-}
-
-extension View {
-    /// The shared surface treatment for workout planning and logging cards.
-    func workoutCard() -> some View {
-        padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(Color(uiColor: .secondarySystemGroupedBackground))
-                    .shadow(color: .black.opacity(0.05), radius: 7, y: 2)
-            )
-            .overlay {
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .strokeBorder(Color.primary.opacity(0.05), lineWidth: 1)
-            }
     }
 }
 

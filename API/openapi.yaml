@@ -461,6 +461,13 @@ paths:
         schema:
           type: integer
         required: true
+      - in: query
+        name: workout_name
+        schema:
+          type: string
+        description: Only count sets performed in workouts with this name, matched
+          without regard to case. Keeps one workout's history of a lift separate from
+          another's.
       tags:
       - progress
       security:
@@ -789,6 +796,27 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - active
+          - completed
+          - planned
+        description: Return only sessions in this state.
+      - in: query
+        name: workout
+        schema:
+          type: integer
+        description: Return only sessions for this workout template.
+      - in: query
+        name: workout_name
+        schema:
+          type: string
+        description: Return only sessions whose workout has this name, matched without
+          regard to case. Groups a workout's history by what it is called rather than
+          by record.
       tags:
       - sessions
       security:
@@ -950,6 +978,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/WorkoutSession'
+          description: ''
+  /api/v1/sessions/{id}/records/:
+    get:
+      operationId: sessions_records_list
+      description: |-
+        Bests set during this session that beat everything logged before.
+
+        Kept off the session list, where it would run a history query per
+        exercise for every session returned.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this workout session.
+        required: true
+      tags:
+      - sessions
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PersonalRecord'
           description: ''
   /api/v1/sessions/{id}/route/:
     get:
@@ -1655,9 +1712,12 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        session:
+          type: integer
       required:
       - completed_at
       - reps
+      - session
       - volume_kg
       - weight_kg
     ExerciseRequest:
@@ -1672,6 +1732,14 @@ components:
           maxLength: 100
       required:
       - name
+    KindEnum:
+      enum:
+      - heaviest_weight
+      - best_estimated_1rm
+      type: string
+      description: |-
+        * `heaviest_weight` - heaviest_weight
+        * `best_estimated_1rm` - best_estimated_1rm
     LoginRequest:
       type: object
       properties:
@@ -2101,6 +2169,41 @@ components:
           $ref: '#/components/schemas/WorkoutTypeEnum'
         description:
           type: string
+    PersonalRecord:
+      type: object
+      description: A best set during a session that beat everything logged before
+        it.
+      properties:
+        exercise:
+          type: integer
+          readOnly: true
+        exercise_name:
+          type: string
+          readOnly: true
+        kind:
+          allOf:
+          - $ref: '#/components/schemas/KindEnum'
+          readOnly: true
+        value:
+          type: number
+          format: double
+          readOnly: true
+        previous_value:
+          type: number
+          format: double
+          readOnly: true
+          nullable: true
+        reps:
+          type: integer
+          readOnly: true
+          nullable: true
+      required:
+      - exercise
+      - exercise_name
+      - kind
+      - previous_value
+      - reps
+      - value
     PublicRepbaseUser:
       type: object
       properties:
@@ -2366,6 +2469,16 @@ components:
         recorded_at:
           type: string
           format: date-time
+        speed_mps:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+          nullable: true
+        altitude_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,2})?$
+          nullable: true
       required:
       - id
       - latitude
@@ -2385,6 +2498,16 @@ components:
         recorded_at:
           type: string
           format: date-time
+        speed_mps:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+          nullable: true
+        altitude_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,2})?$
+          nullable: true
       required:
       - latitude
       - longitude
@@ -2399,6 +2522,29 @@ components:
             $ref: '#/components/schemas/SessionRoutePointRequest'
       required:
       - points
+    SessionSplit:
+      type: object
+      description: |-
+        Time taken for one kilometer of a session.
+
+        The final entry may cover less than a kilometer, which `distance_km`
+        reports so a partial split is not mistaken for a fast one.
+      properties:
+        kilometer:
+          type: integer
+          readOnly: true
+        seconds:
+          type: number
+          format: double
+          readOnly: true
+        distance_km:
+          type: number
+          format: double
+          readOnly: true
+      required:
+      - distance_km
+      - kilometer
+      - seconds
     SetEntry:
       type: object
       properties:
@@ -2681,6 +2827,41 @@ components:
           format: double
           readOnly: true
           nullable: true
+        moving_pace_seconds_per_km:
+          type: number
+          format: double
+          readOnly: true
+          nullable: true
+        average_speed_kmh:
+          type: number
+          format: double
+          readOnly: true
+          nullable: true
+        max_speed_kmh:
+          type: number
+          format: double
+          readOnly: true
+          nullable: true
+        moving_seconds:
+          type: number
+          format: double
+          readOnly: true
+          nullable: true
+        elevation_gain_m:
+          type: number
+          format: double
+          readOnly: true
+          nullable: true
+        elevation_loss_m:
+          type: number
+          format: double
+          readOnly: true
+          nullable: true
+        splits:
+          type: array
+          items:
+            $ref: '#/components/schemas/SessionSplit'
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -2690,13 +2871,20 @@ components:
           format: date-time
           readOnly: true
       required:
+      - average_speed_kmh
       - created_at
       - duration_seconds
+      - elevation_gain_m
+      - elevation_loss_m
       - ended_at
       - id
+      - max_speed_kmh
+      - moving_pace_seconds_per_km
+      - moving_seconds
       - pace_seconds_per_km
       - repbase_user
       - route_distance_km
+      - splits
       - started_at
       - status
       - updated_at

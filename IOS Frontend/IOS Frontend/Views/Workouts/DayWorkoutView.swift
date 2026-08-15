@@ -17,9 +17,8 @@ struct DayWorkoutView: View {
     @State private var workoutPendingRemoval: Workout?
     /// Which workout page is on screen when a day holds several.
     @State private var visibleWorkoutID: Workout.ID?
-    @State private var showingEndConfirmation = false
     @State private var showingDiscardConfirmation = false
-    @State private var completionNotice: String?
+    @State private var completedSession: CompletedWorkoutSession?
 
     private var workout: Workout? {
         store.workout(on: day)
@@ -33,33 +32,14 @@ struct DayWorkoutView: View {
         store.activeSession(on: day)
     }
 
+    private var visualPhase: WorkoutVisualPhase {
+        if completedSession != nil { return .recover }
+        if activeSession != nil { return .focus }
+        return .prepare
+    }
+
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                dayHeader
-
-                if let persistenceError = store.persistenceError {
-                    persistenceErrorCard(persistenceError)
-                }
-
-                if let completionNotice {
-                    completionCard(completionNotice)
-                }
-
-                if let activeSession {
-                    activeSessionWorkspace(activeSession)
-                } else if !plannedWorkouts.isEmpty {
-                    plannedDay
-                } else {
-                    emptyDaySetup
-                }
-            }
-            .padding(.horizontal)
-            .padding(.vertical, 12)
-        }
-        .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
-        .navigationTitle(day.fullName)
-        .navigationBarTitleDisplayMode(.inline)
+        styledContent
         .onChange(of: store.routeTracker.permission) {
             // Granting access part way through a session starts tracking for
             // the remainder of it.
@@ -72,7 +52,10 @@ struct DayWorkoutView: View {
             store.routeTracker.startTracking()
         }
         .sheet(item: $editor) { mode in
-            WorkoutEditorView(mode: mode) { savedWorkout in
+            WorkoutEditorView(
+                mode: mode,
+                suggestions: store.knownWorkouts
+            ) { savedWorkout in
                 store.saveWorkout(savedWorkout, on: day)
             }
         }
@@ -93,22 +76,6 @@ struct DayWorkoutView: View {
             Button("Cancel", role: .cancel) { workoutPendingRemoval = nil }
         } message: {
             Text("This unschedules it from \(day.fullName). The workout itself is kept and can be scheduled again.")
-        }
-        .confirmationDialog(
-            "Finish this workout?",
-            isPresented: $showingEndConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("End Session") {
-                Task {
-                    if let count = await store.endSession(on: day) {
-                        completionNotice = "Workout complete - \(count) set\(count == 1 ? "" : "s") logged."
-                    }
-                }
-            }
-            Button("Keep Training", role: .cancel) { }
-        } message: {
-            Text("Your logged sets and completed session will be saved to Repbase.")
         }
         .confirmationDialog(
             "Discard this session?",
@@ -140,6 +107,52 @@ struct DayWorkoutView: View {
         }
     }
 
+    /// The scrolling page with its appearance applied.
+    ///
+    /// Kept apart from the sheets and dialogs in `body`: as one chain the
+    /// type-checker could no longer resolve the expression.
+    private var styledContent: some View {
+        ScrollView {
+            content
+                .padding(.horizontal)
+                .padding(.vertical, 12)
+        }
+        .background { WorkoutPhaseBackground(phase: visualPhase) }
+        .workoutVisualPhase(visualPhase)
+        .tint(visualPhase.accent)
+        .preferredColorScheme(visualPhase.usesDarkAppearance ? .dark : .light)
+        .toolbar(visualPhase == .prepare ? .visible : .hidden, for: .navigationBar)
+        .navigationTitle(day.fullName)
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    /// Split out of `body` because the type-checker could not resolve the two
+    /// together once the session summary grew.
+    @ViewBuilder
+    private var content: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            if let completedSession {
+                recoveryWorkspace(completedSession)
+            } else {
+                if activeSession == nil {
+                    dayHeader
+                }
+
+                if let persistenceError = store.persistenceError {
+                    persistenceErrorCard(persistenceError)
+                }
+
+                if let activeSession {
+                    activeSessionWorkspace(activeSession)
+                } else if !plannedWorkouts.isEmpty {
+                    plannedDay
+                } else {
+                    emptyDaySetup
+                }
+            }
+        }
+    }
+
     private var dayHeader: some View {
         HStack(spacing: 14) {
             VStack(spacing: 1) {
@@ -160,10 +173,10 @@ struct DayWorkoutView: View {
                     if store.today == day {
                         Text("TODAY")
                             .font(.caption2.weight(.bold))
-                            .foregroundStyle(Color.accentColor)
+                            .foregroundStyle(WorkoutVisualPhase.prepare.accent)
                             .padding(.horizontal, 7)
                             .padding(.vertical, 3)
-                            .background(Color.accentColor.opacity(0.12), in: Capsule())
+                            .background(WorkoutVisualPhase.prepare.accent.opacity(0.12), in: Capsule())
                     }
                 }
 
@@ -188,7 +201,10 @@ struct DayWorkoutView: View {
                     .foregroundStyle(.secondary)
             }
 
-            WorkoutPlanFields(draft: $setupDraft)
+            WorkoutPlanFields(
+                draft: $setupDraft,
+                suggestions: store.knownWorkouts
+            )
 
             Button {
                 saveSetupDraft()
@@ -231,6 +247,103 @@ struct DayWorkoutView: View {
         }
     }
 
+    /// Saves the active session after the user confirms they are finished.
+    private func endSession() {
+        Task {
+            if await store.endSession(on: day) != nil {
+                completedSession = store.completedSessions.last
+            }
+        }
+    }
+
+    /// Records set this session, judged by the backend against every set
+    /// logged before it. Shown only when there is something to celebrate.
+    private func personalRecordsSection(phase: WorkoutVisualPhase) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 7) {
+                Image(systemName: "trophy.fill")
+                    .font(.caption)
+                    .foregroundStyle(phase.accent)
+                Text("^[\(store.personalRecords.count) new personal record](inflect: true)")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(phase.accent)
+                Spacer(minLength: 0)
+            }
+
+            ForEach(store.personalRecords) { record in
+                PersonalRecordRow(record: record, phase: phase)
+            }
+        }
+        .padding(14)
+        .background(
+            phase.accent.opacity(0.12),
+            in: RoundedRectangle(cornerRadius: 18, style: .continuous)
+        )
+    }
+
+    /// Everything the backend measured from the track. A ride leads with speed
+    /// and a run with pace, and the splits show how the effort was paced.
+    private func routeSummarySection(
+        _ summary: SessionRouteSummary,
+        phase: WorkoutVisualPhase
+    ) -> some View {
+        let isRide = completedSession?.session.workoutType == .biking
+        let slowest = summary.splits.compactMap(\.paceSecondsPerKilometer).max()
+
+        return VStack(alignment: .leading, spacing: 12) {
+            Text("ROUTE SUMMARY")
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(phase.secondaryText)
+
+            HStack(spacing: 10) {
+                if let distance = summary.distanceText {
+                    RouteStat(
+                        title: "Distance",
+                        value: distance,
+                        icon: "point.topleft.down.to.point.bottomright.curvepath"
+                    )
+                }
+                if isRide, let speed = summary.averageSpeedText {
+                    RouteStat(title: "Avg speed", value: speed, icon: "speedometer")
+                } else if let pace = summary.movingPaceText ?? summary.paceText {
+                    RouteStat(title: "Moving pace", value: pace, icon: "speedometer")
+                }
+            }
+
+            HStack(spacing: 10) {
+                if let top = summary.maxSpeedText {
+                    RouteStat(title: "Top speed", value: top, icon: "bolt.fill")
+                }
+                if let climb = summary.elevationGainText {
+                    RouteStat(title: "Climb", value: climb, icon: "mountain.2.fill")
+                } else if !isRide, let elapsed = summary.paceText {
+                    RouteStat(title: "Overall pace", value: elapsed, icon: "clock")
+                }
+            }
+
+            if !summary.splits.isEmpty {
+                VStack(alignment: .leading, spacing: 7) {
+                    Text("SPLITS")
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(phase.secondaryText)
+
+                    ForEach(summary.splits) { split in
+                        SplitRow(
+                            split: split,
+                            slowestPace: slowest,
+                            accent: phase.accent,
+                            secondary: phase.secondaryText
+                        )
+                    }
+
+                    Text("Each bar is one kilometer — shorter is faster. Even bars mean an evenly paced effort.")
+                        .font(.caption2)
+                        .foregroundStyle(phase.secondaryText)
+                }
+            }
+        }
+    }
+
     private func plannedWorkout(_ workout: Workout) -> some View {
         VStack(alignment: .leading, spacing: 18) {
             VStack(alignment: .leading, spacing: 14) {
@@ -238,14 +351,14 @@ struct DayWorkoutView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("READY WHEN YOU ARE")
                             .font(.caption.weight(.bold))
-                            .foregroundStyle(Color.accentColor)
+                            .foregroundStyle(WorkoutVisualPhase.prepare.accent)
                         Text(workout.name)
                             .font(.title2.weight(.bold))
                     }
                     Spacer()
                     Image(systemName: "figure.strengthtraining.traditional")
                         .font(.title2)
-                        .foregroundStyle(Color.accentColor)
+                        .foregroundStyle(WorkoutVisualPhase.prepare.accent)
                 }
 
                 HStack(spacing: 10) {
@@ -273,7 +386,7 @@ struct DayWorkoutView: View {
                     VStack(spacing: 10) {
                         Image(systemName: "plus.circle")
                             .font(.title2)
-                            .foregroundStyle(Color.accentColor)
+                            .foregroundStyle(WorkoutVisualPhase.prepare.accent)
                         Text("Add at least one exercise before starting.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
@@ -336,7 +449,7 @@ struct DayWorkoutView: View {
     private var multiWorkoutBanner: some View {
         HStack(spacing: 8) {
             Image(systemName: "square.stack.3d.up.fill")
-                .foregroundStyle(Color.accentColor)
+                .foregroundStyle(WorkoutVisualPhase.prepare.accent)
             VStack(alignment: .leading, spacing: 1) {
                 Text("^[\(plannedWorkouts.count) workout](inflect: true) planned")
                     .font(.subheadline.weight(.semibold))
@@ -352,7 +465,7 @@ struct DayWorkoutView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
         .background(
-            Color.accentColor.opacity(0.1),
+            WorkoutVisualPhase.prepare.accent.opacity(0.1),
             in: RoundedRectangle(cornerRadius: 14)
         )
     }
@@ -387,7 +500,7 @@ struct DayWorkoutView: View {
                 Circle()
                     .fill(
                         planned.id == visibleWorkoutID
-                            ? Color.accentColor
+                            ? WorkoutVisualPhase.prepare.accent
                             : Color.secondary.opacity(0.3)
                     )
                     .frame(width: 7, height: 7)
@@ -412,11 +525,11 @@ struct DayWorkoutView: View {
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(Color.orange)
+                .tint(WorkoutVisualPhase.focus.accent)
             }
         } else {
             Button {
-                completionNotice = nil
+                completedSession = nil
                 // Ask before the session begins so tracking can start with the
                 // first stride rather than after the prompt is answered.
                 if workout.tracksDistance,
@@ -429,8 +542,7 @@ struct DayWorkoutView: View {
                     .font(.headline)
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
+            .buttonStyle(WorkoutPrimaryButtonStyle(phase: .prepare))
             // A run, ride, or swim needs no planned exercises to start.
             .disabled(
                 (!workout.tracksDistance && workout.exercises.isEmpty)
@@ -459,21 +571,68 @@ struct DayWorkoutView: View {
     }
 
     private func activeSessionWorkspace(_ session: ActiveWorkoutSession) -> some View {
-        VStack(alignment: .leading, spacing: 18) {
+        let phase = WorkoutVisualPhase.focus
+
+        return VStack(alignment: .leading, spacing: 18) {
+            HStack {
+                Button {
+                    showingDiscardConfirmation = true
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.subheadline.weight(.bold))
+                        .frame(width: 34, height: 34)
+                }
+                .buttonStyle(.bordered)
+                .buttonBorderShape(.circle)
+                .tint(phase.primaryText)
+                .accessibilityLabel("Discard session")
+
+                Spacer()
+
+                TimelineView(.periodic(from: .now, by: 1)) { context in
+                    HStack(spacing: 7) {
+                        Circle()
+                            .fill(phase.onAccent)
+                            .frame(width: 7, height: 7)
+                        Text("LIVE  \(elapsedTime(from: session.startedAt, to: context.date))")
+                            .font(.caption2.weight(.bold).monospacedDigit())
+                    }
+                    .foregroundStyle(phase.onAccent)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(phase.accent, in: Capsule())
+                    .shadow(color: phase.accent.opacity(0.30), radius: 12, y: 6)
+                }
+
+                Spacer()
+
+                Button("Finish") {
+                    endSession()
+                }
+                .font(.caption.weight(.bold))
+                .buttonStyle(.borderedProminent)
+                .tint(phase.primaryText)
+                .foregroundStyle(phase.heroStart)
+                .disabled(store.isSaving || store.hasPendingSetChanges)
+            }
+
             VStack(alignment: .leading, spacing: 14) {
                 HStack {
                     VStack(alignment: .leading, spacing: 3) {
                         Label("SESSION IN PROGRESS", systemImage: "bolt.fill")
                             .font(.caption.weight(.bold))
-                            .foregroundStyle(Color.green)
+                            .foregroundStyle(Color(hex: 0xFDC094))
                         Text(session.workoutName)
-                            .font(.title2.weight(.bold))
+                            .font(.largeTitle.weight(.bold))
+                            .foregroundStyle(phase.primaryText)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.72)
                     }
                     Spacer()
                     TimelineView(.periodic(from: .now, by: 1)) { context in
                         Text(elapsedTime(from: session.startedAt, to: context.date))
                             .font(.headline.monospacedDigit())
-                            .foregroundStyle(Color.green)
+                            .foregroundStyle(phase.accent)
                     }
                 }
 
@@ -481,7 +640,7 @@ struct DayWorkoutView: View {
                     value: Double(session.loggedSetCount),
                     total: Double(max(session.totalSetCount, 1))
                 )
-                .tint(Color.green)
+                .tint(phase.accent)
 
                 Text(
                     session.tracksDistance
@@ -489,9 +648,18 @@ struct DayWorkoutView: View {
                         : "\(session.loggedSetCount) of \(session.totalSetCount) sets logged"
                 )
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color(hex: 0xFDC094))
             }
-            .workoutCard()
+            .padding(18)
+            .background {
+                WorkoutHeroBackground(phase: phase)
+                    .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+                    .shadow(color: phase.shadow, radius: 16, x: 5, y: 9)
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: 26, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.14), lineWidth: 1)
+            }
 
             if session.tracksDistance {
                 RouteTrackingCard(
@@ -500,36 +668,32 @@ struct DayWorkoutView: View {
                 )
             }
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(session.tracksDistance ? "Log Your Distance" : "Log Your Sets")
-                    .font(.title3.weight(.bold))
-                Text(
-                    session.tracksDistance
-                        ? "Enter how far you went, then tap the checkmark. Your time is recorded automatically."
-                        : "Enter reps and optional weight, then tap the checkmark."
-                )
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            }
+            // A run, ride, or swim needs nothing entered: GPS measures the
+            // distance and the session measures the time. Only lifting has
+            // sets to fill in.
+            if !session.tracksDistance {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Log Your Sets")
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(phase.primaryText)
+                    Text("Enter reps and optional weight, then tap the checkmark.")
+                        .font(.subheadline)
+                        .foregroundStyle(phase.secondaryText)
+                }
 
-            ForEach(session.exercises) { exercise in
-                if session.tracksDistance {
-                    distanceEffortCard(exercise, type: session.workoutType)
-                } else {
+                ForEach(session.exercises) { exercise in
                     sessionExerciseCard(exercise)
                 }
             }
 
             Button {
-                showingEndConfirmation = true
+                endSession()
             } label: {
                 Label("End Session", systemImage: "flag.checkered")
                     .font(.headline)
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .tint(Color.green)
+            .buttonStyle(WorkoutPrimaryButtonStyle(phase: phase))
             .disabled(store.isSaving || store.hasPendingSetChanges)
 
             Button(role: .destructive) {
@@ -540,80 +704,178 @@ struct DayWorkoutView: View {
             }
             .disabled(store.isSaving || store.hasPendingSetChanges)
         }
+        .foregroundStyle(phase.primaryText)
     }
 
-    /// Logging card for a run, ride, or swim: one distance entry. The elapsed
-    /// time is the session's own, computed by the backend from start to end.
-    private func distanceEffortCard(
-        _ exercise: SessionExerciseDraft,
-        type: WorkoutType
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            ForEach(exercise.sets) { set in
-                VStack(alignment: .leading, spacing: 10) {
-                    Text(type.distanceTitle.uppercased())
+    private func recoveryWorkspace(_ completed: CompletedWorkoutSession) -> some View {
+        let phase = WorkoutVisualPhase.recover
+        let session = completed.session
+        let totalSets = max(session.totalSetCount, 1)
+        let completionPercentage = Int(
+            (Double(session.loggedSetCount) / Double(totalSets) * 100).rounded()
+        )
+
+        return VStack(alignment: .leading, spacing: 18) {
+            HStack {
+                Image(systemName: "checkmark")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(Color(hex: 0xF3F7F5))
+                    .frame(width: 34, height: 34)
+                    .background(Color(hex: 0x274438), in: Circle())
+                    .shadow(color: phase.shadow, radius: 10, y: 5)
+
+                Spacer()
+
+                HStack(spacing: 7) {
+                    Circle()
+                        .fill(Color(hex: 0xF86722))
+                        .frame(width: 7, height: 7)
+                    Text("COMPLETE")
                         .font(.caption2.weight(.bold))
-                        .foregroundStyle(.secondary)
+                }
+                .foregroundStyle(Color(hex: 0xF3F7F5))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(phase.accent, in: Capsule())
+                .shadow(color: phase.accent.opacity(0.25), radius: 10, y: 5)
 
-                    HStack(spacing: 10) {
-                        TextField(
-                            "0.0",
-                            text: distanceBinding(exerciseID: exercise.id, setID: set.id)
-                        )
-                        .keyboardType(.decimalPad)
-                        .font(.title3.weight(.semibold))
-                        .multilineTextAlignment(.center)
-                        .padding(.vertical, 12)
-                        .frame(maxWidth: .infinity)
-                        .background(
-                            Color.primary.opacity(0.045),
-                            in: RoundedRectangle(cornerRadius: 10)
-                        )
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 10)
-                                .strokeBorder(
-                                    Color.red.opacity(
-                                        set.distanceKilometers.isEmpty || set.isDistanceValid ? 0 : 0.8
-                                    ),
-                                    lineWidth: 1
-                                )
-                        }
-                        .disabled(set.isLogged)
-                        .accessibilityLabel("\(type.distanceTitle) in kilometers")
+                Spacer()
 
-                        Text("km")
-                            .font(.subheadline.weight(.medium))
-                            .foregroundStyle(.secondary)
+                Button("Done") {
+                    completedSession = nil
+                }
+                .font(.caption.weight(.bold))
+                .buttonStyle(.borderedProminent)
+                .tint(Color(hex: 0xF3F7F5))
+                .foregroundStyle(phase.primaryText)
+            }
 
-                        Button {
-                            store.toggleSessionSetLogged(
-                                on: day,
-                                exerciseID: exercise.id,
-                                setID: set.id
-                            )
-                        } label: {
-                            Group {
-                                if store.isSetPending(set.id) {
-                                    ProgressView()
-                                } else {
-                                    Image(systemName: set.isLogged ? "checkmark.circle.fill" : "circle")
-                                        .font(.title2)
-                                        .foregroundStyle(set.isLogged ? Color.green : Color.secondary)
-                                }
-                            }
-                            .frame(width: 40, height: 40)
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(
-                            store.isSetPending(set.id)
-                                || (!set.isLogged && !set.canBeLoggedAsDistance)
-                        )
-                        .accessibilityLabel(set.isLogged ? "Unlog distance" : "Log distance")
-                    }
+            VStack(alignment: .leading, spacing: 11) {
+                Text("WORKOUT COMPLETE")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(Color(hex: 0xB7DCCB))
+
+                Text(session.workoutName.uppercased())
+                    .font(.largeTitle.weight(.bold))
+                    .foregroundStyle(Color(hex: 0xF3F7F5))
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.72)
+
+                HStack(alignment: .lastTextBaseline, spacing: 8) {
+                    Text(elapsedTime(from: session.startedAt, to: completed.endedAt))
+                        .font(.system(.largeTitle, design: .default, weight: .bold))
+                        .monospacedDigit()
+                        .foregroundStyle(Color(hex: 0xF3F7F5))
+                    Text("WORKOUT TIME")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(Color(hex: 0xB7DCCB))
+                }
+
+                HStack {
+                    Text("START  \(session.startedAt.formatted(date: .omitted, time: .shortened))")
+                    Spacer()
+                    Text("END  \(completed.endedAt.formatted(date: .omitted, time: .shortened))")
+                }
+                .font(.caption)
+                .foregroundStyle(Color(hex: 0xB7DCCB))
+            }
+            .padding(18)
+            .background {
+                WorkoutHeroBackground(phase: phase)
+                    .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+                    .shadow(color: phase.shadow, radius: 14, x: 5, y: 8)
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: 26, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.20), lineWidth: 1)
+            }
+
+            HStack {
+                Text("SESSION HIGHLIGHTS")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(phase.secondaryText)
+                Spacer()
+            }
+
+            // A run is measured in distance, pace and climb. Sets and
+            // completion belong to lifting and say nothing about a run.
+            if session.tracksDistance {
+                HStack(spacing: 10) {
+                    RecoveryMetricCard(
+                        title: "DISTANCE",
+                        value: store.routeSummary?.distanceText
+                            .map { $0.replacingOccurrences(of: " km", with: "") } ?? "--",
+                        detail: "KILOMETERS",
+                        isEmphasized: true
+                    )
+                    RecoveryMetricCard(
+                        title: session.workoutType == .biking ? "AVG SPEED" : "AVG PACE",
+                        value: session.workoutType == .biking
+                            ? (store.routeSummary?.averageSpeedText
+                                .map { $0.replacingOccurrences(of: " km/h", with: "") } ?? "--")
+                            : (store.routeSummary?.movingPaceText
+                                ?? store.routeSummary?.paceText)?
+                                .replacingOccurrences(of: " /km", with: "") ?? "--",
+                        detail: session.workoutType == .biking ? "KM/H" : "PER KM",
+                        isEmphasized: false
+                    )
+                    RecoveryMetricCard(
+                        title: "CLIMB",
+                        value: store.routeSummary?.elevationGainText
+                            .map { $0.replacingOccurrences(of: " m", with: "") } ?? "0",
+                        detail: "METERS",
+                        isEmphasized: false
+                    )
+                }
+            } else {
+                HStack(spacing: 10) {
+                    RecoveryMetricCard(
+                        title: "SETS",
+                        value: "\(session.loggedSetCount)",
+                        detail: "OF \(session.totalSetCount) LOGGED",
+                        isEmphasized: false
+                    )
+                    RecoveryMetricCard(
+                        title: "EXERCISES",
+                        value: "\(session.exercises.count)",
+                        detail: "IN SESSION",
+                        isEmphasized: false
+                    )
+                    RecoveryMetricCard(
+                        title: "COMPLETION",
+                        value: "\(completionPercentage)%",
+                        detail: "FINISHED",
+                        isEmphasized: true
+                    )
                 }
             }
+
+            if session.tracksDistance, store.sessionHistory.count > 1 {
+                SessionProgressChart(
+                    history: store.sessionHistory,
+                    workoutType: session.workoutType,
+                    phase: phase
+                )
+            }
+
+            if !session.tracksDistance, !store.personalRecords.isEmpty {
+                personalRecordsSection(phase: phase)
+            }
+
+            if !session.tracksDistance, !store.liftProgress.isEmpty {
+                LiftProgressChart(series: store.liftProgress, phase: phase)
+            }
+
+            if let persistenceError = store.persistenceError {
+                persistenceErrorCard(persistenceError)
+            }
+
+            if let summary = store.routeSummary,
+               summary.distanceText != nil || summary.paceText != nil {
+                routeSummarySection(summary, phase: phase)
+            }
         }
-        .workoutCard()
+        .foregroundStyle(phase.primaryText)
     }
 
     private func sessionExerciseCard(_ exercise: SessionExerciseDraft) -> some View {
@@ -624,10 +886,10 @@ struct DayWorkoutView: View {
                 Spacer()
                 Text("\(exercise.sets.filter(\.isLogged).count)/\(exercise.sets.count)")
                     .font(.caption.weight(.bold).monospacedDigit())
-                    .foregroundStyle(Color.green)
+                    .foregroundStyle(WorkoutVisualPhase.focus.accent)
                     .padding(.horizontal, 9)
                     .padding(.vertical, 5)
-                    .background(Color.green.opacity(0.12), in: Capsule())
+                    .background(WorkoutVisualPhase.focus.accent.opacity(0.14), in: Capsule())
             }
 
             HStack(spacing: 8) {
@@ -684,7 +946,11 @@ struct DayWorkoutView: View {
                             } else {
                                 Image(systemName: set.isLogged ? "checkmark.circle.fill" : "circle")
                                     .font(.title2)
-                                    .foregroundStyle(set.isLogged ? Color.green : Color.secondary)
+                                    .foregroundStyle(
+                                        set.isLogged
+                                            ? WorkoutVisualPhase.focus.accent
+                                            : WorkoutVisualPhase.focus.secondaryText
+                                    )
                             }
                         }
                         .frame(width: 40, height: 40)
@@ -736,7 +1002,9 @@ struct DayWorkoutView: View {
     }
 
     private var headerColor: Color {
-        activeSession == nil ? Color.accentColor : Color.green
+        activeSession == nil
+            ? WorkoutVisualPhase.prepare.accent
+            : WorkoutVisualPhase.focus.accent
     }
 
     private var headerEyebrow: String {
@@ -778,23 +1046,6 @@ struct DayWorkoutView: View {
         )
     }
 
-    private func distanceBinding(
-        exerciseID: Exercise.ID,
-        setID: WorkoutSetDraft.ID
-    ) -> Binding<String> {
-        Binding(
-            get: { sessionSet(exerciseID: exerciseID, setID: setID)?.distanceKilometers ?? "" },
-            set: {
-                store.updateSessionSet(
-                    on: day,
-                    exerciseID: exerciseID,
-                    setID: setID,
-                    distanceKilometers: $0
-                )
-            }
-        )
-    }
-
     private func repsBinding(exerciseID: Exercise.ID, setID: WorkoutSetDraft.ID) -> Binding<String> {
         Binding(
             get: { sessionSet(exerciseID: exerciseID, setID: setID)?.reps ?? "" },
@@ -832,44 +1083,150 @@ struct DayWorkoutView: View {
         .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 16))
     }
 
-    private func completionCard(_ message: String) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 12) {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.title2)
-                    .foregroundStyle(Color.green)
-                Text(message)
+}
+
+private struct RecoveryMetricCard: View {
+    let title: String
+    let value: String
+    let detail: String
+    let isEmphasized: Bool
+
+    private let phase = WorkoutVisualPhase.recover
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Text(title)
+                .font(.caption2.weight(.bold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+            Text(value)
+                .font(.title3.weight(.bold).monospacedDigit())
+            Text(detail)
+                .font(.caption2)
+                .lineLimit(1)
+                .minimumScaleFactor(0.65)
+        }
+        .foregroundStyle(
+            isEmphasized ? Color(hex: 0xF3F7F5) : phase.primaryText
+        )
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background {
+            if isEmphasized {
+                LinearGradient(
+                    colors: [phase.accent, Color(hex: 0x3D7860)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            } else {
+                LinearGradient(
+                    colors: [phase.surfaceStart, phase.surfaceEnd],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.72), lineWidth: 1)
+        }
+        .shadow(color: phase.shadow, radius: 10, x: 4, y: 7)
+    }
+}
+
+/// One record, with the size of the jump over the previous best.
+private struct PersonalRecordRow: View {
+    let record: PersonalRecord
+    let phase: WorkoutVisualPhase
+
+    var body: some View {
+        HStack(spacing: 11) {
+            Image(systemName: record.isFirstEver ? "star.fill" : "arrow.up.right")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(phase.accent)
+                .frame(width: 28, height: 28)
+                .background(phase.accent.opacity(0.16), in: Circle())
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(record.exerciseName)
                     .font(.subheadline.weight(.semibold))
-                Spacer()
-                Button {
-                    completionNotice = nil
-                } label: {
-                    Image(systemName: "xmark")
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(.secondary)
-                .accessibilityLabel("Dismiss")
+                    .lineLimit(1)
+                Text("\(record.kind.title) · \(record.detailText)")
+                    .font(.caption2)
+                    .foregroundStyle(phase.secondaryText)
+                    .lineLimit(1)
             }
 
-            // Distance and pace as the backend measured them from the track.
-            if let summary = store.routeSummary,
-               summary.distanceText != nil || summary.paceText != nil {
-                HStack(spacing: 10) {
-                    if let distance = summary.distanceText {
-                        RouteStat(title: "Distance", value: distance, icon: "point.topleft.down.to.point.bottomright.curvepath")
-                    }
-                    if let pace = summary.paceText {
-                        RouteStat(title: "Avg pace", value: pace, icon: "speedometer")
-                    }
+            Spacer(minLength: 0)
+
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(record.valueText)
+                    .font(.subheadline.weight(.bold).monospacedDigit())
+                if let improvement = record.improvementText {
+                    Text(improvement)
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(phase.accent)
                 }
             }
         }
-        .padding(14)
-        .background(Color.green.opacity(0.1), in: RoundedRectangle(cornerRadius: 16))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+            "\(record.exerciseName), \(record.kind.title), \(record.valueText), \(record.detailText)"
+        )
     }
 }
 
 /// One backend-computed route figure shown after a cardio session.
+/// One kilometer split as a bar, so an uneven effort is visible at a glance.
+private struct SplitRow: View {
+    let split: SessionSplit
+    let slowestPace: Double?
+    let accent: Color
+    let secondary: Color
+
+    var body: some View {
+        HStack(spacing: 9) {
+            Text(label)
+                .font(.caption2.weight(.semibold).monospacedDigit())
+                .foregroundStyle(secondary)
+                .frame(width: 54, alignment: .leading)
+
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(accent.opacity(0.18))
+                    Capsule()
+                        .fill(accent)
+                        .frame(width: max(proxy.size.width * fraction, 6))
+                }
+            }
+            .frame(height: 8)
+
+            Text(SessionRouteSummary.durationText(split.seconds))
+                .font(.caption.weight(.bold).monospacedDigit())
+                .frame(width: 48, alignment: .trailing)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label), \(SessionRouteSummary.durationText(split.seconds))")
+    }
+
+    private var label: String {
+        split.isPartial
+            ? String(format: "km %d (%.2f)", split.kilometer, split.distanceKilometers)
+            : "km \(split.kilometer)"
+    }
+
+    /// Bars are scaled by pace, not raw time, so a partial final kilometer is
+    /// compared fairly against the full ones.
+    private var fraction: Double {
+        guard let slowestPace, slowestPace > 0,
+              let pace = split.paceSecondsPerKilometer else {
+            return 1
+        }
+        return min(max(pace / slowestPace, 0.08), 1)
+    }
+}
+
 private struct RouteStat: View {
     let title: String
     let value: String
@@ -879,7 +1236,7 @@ private struct RouteStat: View {
         HStack(spacing: 7) {
             Image(systemName: icon)
                 .font(.caption)
-                .foregroundStyle(Color.green)
+                .foregroundStyle(WorkoutVisualPhase.recover.accent)
             VStack(alignment: .leading, spacing: 1) {
                 Text(title)
                     .font(.caption2)
@@ -890,7 +1247,10 @@ private struct RouteStat: View {
         }
         .padding(.horizontal, 11)
         .padding(.vertical, 7)
-        .background(Color.green.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+        .background(
+            WorkoutVisualPhase.recover.accent.opacity(0.12),
+            in: RoundedRectangle(cornerRadius: 10)
+        )
     }
 }
 
@@ -920,9 +1280,9 @@ private struct PlannedExerciseRow: View {
         HStack(spacing: 12) {
             Text("\(position)")
                 .font(.subheadline.weight(.bold).monospacedDigit())
-                .foregroundStyle(Color.accentColor)
+                .foregroundStyle(WorkoutVisualPhase.prepare.accent)
                 .frame(width: 34, height: 34)
-                .background(Color.accentColor.opacity(0.12), in: Circle())
+                .background(WorkoutVisualPhase.prepare.accent.opacity(0.12), in: Circle())
             Text(exercise.name)
                 .font(.body.weight(.medium))
             Spacer()

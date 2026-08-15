@@ -26,6 +26,16 @@ final class WorkoutStore {
     let routeTracker = RouteTracker()
     /// Distance and pace for the last finished route, as computed by the server.
     private(set) var routeSummary: SessionRouteSummary?
+    /// Past finished runs of the same workout, oldest first, for the progress
+    /// chart shown once a session ends.
+    private(set) var sessionHistory: [SessionHistoryPoint] = []
+    /// Records set by the session that just finished.
+    private(set) var personalRecords: [PersonalRecord] = []
+    /// How each exercise in the finished lifting session has progressed.
+    private(set) var liftProgress: [LiftProgressSeries] = []
+    /// Workouts the user has already created, offered when naming a new one so
+    /// a workout's history is not split across two spellings.
+    private(set) var knownWorkouts: [WorkoutSummary] = []
 
     init(initialSchedule: [Weekday: [Workout]] = [:]) {
         schedule = initialSchedule
@@ -69,6 +79,12 @@ final class WorkoutStore {
         persistenceError = nil
         isLoading = false
         isSaving = false
+        // One user's workout names must never be offered to the next.
+        knownWorkouts = []
+        sessionHistory = []
+        personalRecords = []
+        liftProgress = []
+        routeSummary = nil
     }
 
     // MARK: - Lookups
@@ -402,6 +418,32 @@ final class WorkoutStore {
             )
             activeSession = nil
             routeTracker.reset()
+
+            // Load what the summary needs. A failure here costs only the
+            // chart or the record list, so the finished workout is still
+            // reported as saved either way.
+            if session.tracksDistance {
+                sessionHistory = (try? await repository.sessionHistory(
+                    workoutName: session.workoutName
+                )) ?? []
+            } else {
+                personalRecords = (try? await repository.personalRecords(
+                    sessionID: session.serverID
+                )) ?? []
+
+                var progress: [LiftProgressSeries] = []
+                for exercise in session.exercises {
+                    if let series = try? await repository.liftProgress(
+                        exerciseID: exercise.exerciseServerID,
+                        exerciseName: exercise.name,
+                        workoutName: session.workoutName
+                    ), series.hasEnoughToPlot {
+                        progress.append(series)
+                    }
+                }
+                liftProgress = progress
+            }
+
             return session.loggedSetCount
         } catch {
             persistenceError = error.localizedDescription
@@ -466,6 +508,13 @@ final class WorkoutStore {
             )
             guard connectionGeneration == generation else { return }
             schedule = loaded
+
+            // Names to offer when creating a workout. A failure here costs
+            // only the suggestions, so it does not fail the week's load.
+            if let library = try? await repository.workoutLibrary(),
+               connectionGeneration == generation {
+                knownWorkouts = library
+            }
         } catch {
             guard connectionGeneration == generation else { return }
             persistenceError = error.localizedDescription

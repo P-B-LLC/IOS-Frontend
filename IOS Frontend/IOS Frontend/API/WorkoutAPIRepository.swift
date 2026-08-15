@@ -111,6 +111,22 @@ actor WorkoutAPIRepository {
         _ draft: Workout,
         scheduledDate: String
     ) async throws {
+        let template: Components.Schemas.WorkoutTemplate
+
+        // Workout names are unique per user, and a template is meant to be
+        // scheduled on as many days as the user likes. Reuse one they already
+        // have by that name instead of failing on the uniqueness constraint.
+        if let existing = try await fetchAllWorkouts().first(
+            where: { Self.normalizedName($0.name) == Self.normalizedName(draft.name) }
+        ) {
+            template = existing
+            try await scheduleWorkout(
+                templateID: template.id,
+                scheduledDate: scheduledDate
+            )
+            return
+        }
+
         let templateOutput = try await client.workoutsCreate(
             body: .json(
                 Components.Schemas.WorkoutTemplateRequest(
@@ -120,7 +136,6 @@ actor WorkoutAPIRepository {
             )
         )
 
-        let template: Components.Schemas.WorkoutTemplate
         switch templateOutput {
         case .created(let response):
             template = try response.body.json
@@ -153,25 +168,41 @@ actor WorkoutAPIRepository {
                 }
             }
 
-            let scheduleOutput = try await client.schedulesCreate(
-                body: .json(
-                    Components.Schemas.WorkoutScheduleRequest(
-                        workout: template.id,
-                        scheduledDate: scheduledDate
-                    )
-                )
+            try await scheduleWorkout(
+                templateID: template.id,
+                scheduledDate: scheduledDate
             )
-            switch scheduleOutput {
-            case .created:
-                return
-            case .undocumented(let statusCode, _):
-                throw APIServiceError.undocumentedStatus(statusCode)
-            }
         } catch {
             throw APIServiceError.partialWorkoutCreation(
                 "The template exists on the server, but its exercises or date assignment need attention. \(error.localizedDescription)"
             )
         }
+    }
+
+    private func scheduleWorkout(
+        templateID: Int,
+        scheduledDate: String
+    ) async throws {
+        let output = try await client.schedulesCreate(
+            body: .json(
+                Components.Schemas.WorkoutScheduleRequest(
+                    workout: templateID,
+                    scheduledDate: scheduledDate
+                )
+            )
+        )
+        switch output {
+        case .created:
+            return
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// Compares workout names the way a person would, so "Morning Run" and
+    /// "morning run " are the same workout.
+    private static func normalizedName(_ value: String) -> String {
+        value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 
     private func updateWorkout(
@@ -435,7 +466,13 @@ actor WorkoutAPIRepository {
             Components.Schemas.SessionRoutePointRequest(
                 latitude: Self.coordinateString(point.latitude),
                 longitude: Self.coordinateString(point.longitude),
-                recordedAt: point.recordedAt
+                recordedAt: point.recordedAt,
+                speedMps: point.speedMetersPerSecond.map {
+                    String(format: "%.2f", max(0, $0))
+                },
+                altitudeM: point.altitudeMeters.map {
+                    String(format: "%.2f", $0)
+                }
             )
         }
 
@@ -450,7 +487,20 @@ actor WorkoutAPIRepository {
             let session = try response.body.json
             return SessionRouteSummary(
                 distanceKilometers: session.routeDistanceKm,
-                paceSecondsPerKilometer: session.paceSecondsPerKm
+                paceSecondsPerKilometer: session.paceSecondsPerKm,
+                movingPaceSecondsPerKilometer: session.movingPaceSecondsPerKm,
+                averageSpeedKilometersPerHour: session.averageSpeedKmh,
+                maxSpeedKilometersPerHour: session.maxSpeedKmh,
+                movingSeconds: session.movingSeconds,
+                elevationGainMeters: session.elevationGainM,
+                elevationLossMeters: session.elevationLossM,
+                splits: (session.splits ?? []).map {
+                    SessionSplit(
+                        kilometer: Int($0.kilometer ?? 0),
+                        seconds: $0.seconds ?? 0,
+                        distanceKilometers: $0.distanceKm ?? 1
+                    )
+                }
             )
         case .undocumented(let statusCode, _):
             throw APIServiceError.undocumentedStatus(statusCode)
@@ -461,6 +511,147 @@ actor WorkoutAPIRepository {
     /// contract's `^-?\d{0,3}(?:\.\d{0,6})?$` style decimal strings.
     private static func coordinateString(_ value: Double) -> String {
         String(format: "%.6f", value)
+    }
+
+    /// Every workout the user has created, for offering as a name to reuse.
+    func workoutLibrary() async throws -> [WorkoutSummary] {
+        try await fetchAllWorkouts()
+            .map {
+                WorkoutSummary(
+                    serverID: $0.id,
+                    name: $0.name,
+                    type: Self.workoutType(from: $0.workoutType)
+                )
+            }
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
+    /// How an exercise has progressed over every set ever logged for it.
+    ///
+    /// The server returns each set; they are grouped into days here so a
+    /// chart shows one point per training day rather than one per set. The
+    /// weights and volumes themselves are the server's numbers.
+    func liftProgress(
+        exerciseID: Int,
+        exerciseName: String,
+        workoutName: String
+    ) async throws -> LiftProgressSeries {
+        let output = try await client.progressExercisesList(
+            path: .init(exerciseId: exerciseID),
+            query: .init(workoutName: workoutName)
+        )
+        let points: [Components.Schemas.ExerciseProgressPoint]
+        switch output {
+        case .ok(let response):
+            points = try response.body.json
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+
+        // Grouped by session rather than by date: two workouts trained on the
+        // same day are two points, not one.
+        var bySession: [Int: (date: Date, heaviest: Double, volume: Double)] = [:]
+
+        for point in points {
+            guard let weight = Double(point.weightKg),
+                  let volume = Double(point.volumeKg) else {
+                continue
+            }
+            var entry = bySession[point.session]
+                ?? (date: point.completedAt, heaviest: 0, volume: 0)
+            entry.date = min(entry.date, point.completedAt)
+            entry.heaviest = max(entry.heaviest, weight)
+            entry.volume += volume
+            bySession[point.session] = entry
+        }
+
+        let days = bySession.values
+            .map {
+                LiftProgressSeries.Day(
+                    date: $0.date,
+                    heaviestKilograms: $0.heaviest,
+                    volumeKilograms: $0.volume
+                )
+            }
+            .sorted { $0.date < $1.date }
+
+        return LiftProgressSeries(
+            exerciseID: exerciseID,
+            exerciseName: exerciseName,
+            days: days
+        )
+    }
+
+    /// Records set during a session, as judged by the backend against every
+    /// set logged before it.
+    func personalRecords(sessionID: Int) async throws -> [PersonalRecord] {
+        let output = try await client.sessionsRecordsList(
+            path: .init(id: sessionID)
+        )
+        let records: [Components.Schemas.PersonalRecord]
+        switch output {
+        case .ok(let response):
+            records = try response.body.json
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+
+        return records.compactMap { record in
+            let kind: PersonalRecord.Kind
+            switch record.kind.value1 {
+            case .heaviestWeight: kind = .heaviestWeight
+            case .bestEstimated1rm: kind = .estimatedOneRepMax
+            }
+            return PersonalRecord(
+                exerciseID: record.exercise,
+                exerciseName: record.exerciseName,
+                kind: kind,
+                valueKilograms: record.value,
+                previousValueKilograms: record.previousValue,
+                reps: record.reps
+            )
+        }
+    }
+
+    /// Past completed sessions for a workout, newest first, for showing how a
+    /// run has progressed. Only sessions that actually recorded a route are
+    /// returned, since the rest have nothing to plot.
+    func sessionHistory(
+        workoutName: String,
+        limit: Int = 20
+    ) async throws -> [SessionHistoryPoint] {
+        // Matched by name rather than by template id, so a workout's history
+        // is everything the user called by that name.
+        let output = try await client.sessionsList(
+            query: .init(status: .completed, workoutName: workoutName)
+        )
+        let page: Components.Schemas.PaginatedWorkoutSessionList
+        switch output {
+        case .ok(let response):
+            page = try response.body.json
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+
+        return page.results
+            .compactMap { session -> SessionHistoryPoint? in
+                guard let endedAt = session.endedAt ?? session.startedAt,
+                      let distance = session.routeDistanceKm,
+                      distance > 0 else {
+                    return nil
+                }
+                return SessionHistoryPoint(
+                    sessionID: session.id,
+                    date: endedAt,
+                    distanceKilometers: distance,
+                    paceSecondsPerKilometer: session.movingPaceSecondsPerKm
+                        ?? session.paceSecondsPerKm,
+                    elevationGainMeters: session.elevationGainM
+                )
+            }
+            .sorted { $0.date < $1.date }
+            .suffix(limit)
+            .map { $0 }
     }
 
     func deleteSetEntry(id: Int) async throws {

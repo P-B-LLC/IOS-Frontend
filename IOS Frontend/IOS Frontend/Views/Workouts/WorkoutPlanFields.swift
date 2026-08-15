@@ -9,6 +9,9 @@ import SwiftUI
 
 struct WorkoutPlanFields: View {
     @Binding var draft: Workout
+    /// Workouts the user already has, offered so a name is reused exactly
+    /// rather than retyped slightly differently.
+    var suggestions: [WorkoutSummary] = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -19,6 +22,8 @@ struct WorkoutPlanFields: View {
                     .textInputAutocapitalization(.words)
                     .padding(12)
                     .background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 12))
+
+                nameGuidance
             }
             .workoutCard()
 
@@ -30,6 +35,63 @@ struct WorkoutPlanFields: View {
                 exerciseSection
             }
         }
+    }
+
+    /// Either confirms the name will join an existing workout's history, or
+    /// offers the names already in use so it can.
+    @ViewBuilder
+    private var nameGuidance: some View {
+        if let existing = matchedWorkout {
+            Label(
+                "Continues your \(existing.name) history",
+                systemImage: "checkmark.circle.fill"
+            )
+            .font(.caption2)
+            .foregroundStyle(WorkoutVisualPhase.prepare.accent)
+        } else if !suggestions.isEmpty {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Previously used")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.secondary)
+
+                ScrollView(.horizontal) {
+                    HStack(spacing: 6) {
+                        ForEach(suggestions) { workout in
+                            Button {
+                                // Take the name exactly, and its type with it,
+                                // so the reused workout stays consistent.
+                                draft.name = workout.name
+                                draft.type = workout.type
+                            } label: {
+                                HStack(spacing: 5) {
+                                    Image(systemName: workout.type.symbolName)
+                                        .font(.caption2)
+                                    Text(workout.name)
+                                        .font(.caption)
+                                        .lineLimit(1)
+                                }
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(
+                                    Color.primary.opacity(0.05),
+                                    in: Capsule()
+                                )
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+                .scrollIndicators(.hidden)
+
+                Text("Tap one to keep its progress together. A new name starts its own history.")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private var matchedWorkout: WorkoutSummary? {
+        suggestions.first { WorkoutSummary.matches($0.name, draft.name) }
     }
 
     private var namePlaceholder: String {
@@ -61,20 +123,20 @@ struct WorkoutPlanFields: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
                         .foregroundStyle(
-                            draft.type == type ? Color.accentColor : Color.secondary
+                            draft.type == type ? WorkoutVisualPhase.prepare.accent : Color.secondary
                         )
                         .background(
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
                                 .fill(
                                     draft.type == type
-                                        ? Color.accentColor.opacity(0.14)
+                                        ? WorkoutVisualPhase.prepare.accent.opacity(0.14)
                                         : Color.primary.opacity(0.045)
                                 )
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
                                 .strokeBorder(
-                                    Color.accentColor,
+                                    WorkoutVisualPhase.prepare.accent,
                                     lineWidth: draft.type == type ? 1.5 : 0
                                 )
                         )
@@ -90,13 +152,13 @@ struct WorkoutPlanFields: View {
         .workoutCard()
     }
 
-    /// Distance workouts have nothing to plan up front: the distance is entered
-    /// while training and the time comes from starting and ending the session.
+    /// Distance workouts have nothing to plan up front and nothing to enter
+    /// while training: GPS measures the distance and the session gives the time.
     private var distanceCard: some View {
         VStack(alignment: .leading, spacing: 8) {
             Label("How this is logged", systemImage: "stopwatch")
                 .font(.subheadline.weight(.semibold))
-            Text("Start the session when you set off and end it when you finish. Repbase times it for you, and you enter your \(draft.type.distanceTitle.lowercased()) before ending.")
+            Text("Start the session when you set off and end it when you finish. Repbase follows your route by GPS and works out your distance, time, and pace — there is nothing to type in.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -117,17 +179,17 @@ struct WorkoutPlanFields: View {
                 Spacer()
                 Text("\(draft.exercises.count)")
                     .font(.subheadline.weight(.bold))
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundStyle(WorkoutVisualPhase.prepare.accent)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .background(Color.accentColor.opacity(0.12), in: Capsule())
+                    .background(WorkoutVisualPhase.prepare.accent.opacity(0.12), in: Capsule())
             }
 
             if draft.exercises.isEmpty {
                 VStack(spacing: 10) {
                     Image(systemName: "list.bullet.clipboard")
                         .font(.title2)
-                        .foregroundStyle(Color.accentColor)
+                        .foregroundStyle(WorkoutVisualPhase.prepare.accent)
                     Text("Start with your first exercise")
                         .font(.subheadline.weight(.semibold))
                     Text("You can always reorder, edit, or add more later.")
@@ -209,7 +271,7 @@ private struct ExercisePlanEditorCard: View {
             HStack {
                 Text("Exercise \(position)")
                     .font(.caption.weight(.bold))
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundStyle(WorkoutVisualPhase.prepare.accent)
                 Spacer()
                 Menu {
                     Button("Move Up", systemImage: "arrow.up", action: onMoveUp)
