@@ -48,10 +48,10 @@ struct PlannerView: View {
         .sheet(item: $editor) { mode in
             PlannerEntryEditorView(
                 mode: mode,
-                workouts: workoutStore.knownWorkouts
-            ) { entry in
-                store.save(entry)
-            }
+                workouts: workoutStore.knownWorkouts,
+                onSaved: { entry in store.save(entry) },
+                onDeleted: { entry in store.delete(entry) }
+            )
         }
         // Selecting another day can only narrow what is on screen; a filter
         // left over from yesterday would read as an empty day.

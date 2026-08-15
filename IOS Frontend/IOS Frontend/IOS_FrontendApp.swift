@@ -85,6 +85,18 @@ private struct AppRootView: View {
                 // cannot be tapped from a script. This is the only way to see
                 // it before it ships.
                 PlannerEntryEditorView(mode: .create(.event, Date()))
+            } else if ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"] == "edit-editor" {
+                PlannerEntryEditorView(
+                    mode: .edit(
+                        PlannerEntry(
+                            serverID: 1,
+                            kind: .event,
+                            title: "Sophie's birthday",
+                            category: .birthday,
+                            date: PlannerStore.dateString(Date())
+                        )
+                    )
+                )
             } else if ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"] != nil {
                 NavigationStack {
                     PlannerView()

@@ -28,6 +28,7 @@ struct PlannerEntryEditorView: View {
     /// environment so previews stand alone.
     var workouts: [WorkoutSummary] = []
     var onSaved: ((PlannerEntry) -> Void)?
+    var onDeleted: ((PlannerEntry) -> Void)?
 
     @Environment(\.dismiss) private var dismiss
     @State private var draft: PlannerEntry
@@ -38,11 +39,13 @@ struct PlannerEntryEditorView: View {
     init(
         mode: Mode,
         workouts: [WorkoutSummary] = [],
-        onSaved: ((PlannerEntry) -> Void)? = nil
+        onSaved: ((PlannerEntry) -> Void)? = nil,
+        onDeleted: ((PlannerEntry) -> Void)? = nil
     ) {
         self.mode = mode
         self.workouts = workouts
         self.onSaved = onSaved
+        self.onDeleted = onDeleted
 
         switch mode {
         case .create(let kind, let day):
@@ -78,6 +81,7 @@ struct PlannerEntryEditorView: View {
                 if !draft.notes.isEmpty || isEditing {
                     notesSection
                 }
+                deleteSection
             }
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
@@ -184,6 +188,30 @@ struct PlannerEntryEditorView: View {
         Section("Notes") {
             TextField("Anything worth remembering", text: $draft.notes, axis: .vertical)
                 .lineLimit(1...4)
+        }
+    }
+
+    /// Only when there is something to delete. A draft that has never been
+    /// saved is discarded with Cancel.
+    ///
+    /// Acts on the first tap: the button names the thing it removes, and no
+    /// destructive action in this app asks first.
+    @ViewBuilder
+    private var deleteSection: some View {
+        if case .edit(let entry) = mode {
+            Section {
+                Button(role: .destructive) {
+                    onDeleted?(entry)
+                    dismiss()
+                } label: {
+                    // The destructive role reddens the text but leaves the
+                    // icon on the accent tint, which reads as two different
+                    // controls. Tinting the button does not reach it either.
+                    Label("Delete \(draft.kind.title)", systemImage: "trash")
+                        .foregroundStyle(.red)
+                        .frame(maxWidth: .infinity)
+                }
+            }
         }
     }
 
