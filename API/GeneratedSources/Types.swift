@@ -68,6 +68,54 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /api/v1/me/`.
     /// - Remark: Generated from `#/paths//api/v1/me//put(me_update)`.
     func meUpdate(_ input: Operations.MeUpdate.Input) async throws -> Operations.MeUpdate.Output
+    /// Tasks and events on the planner.
+    ///
+    /// The date range is a filter rather than a required window so the same
+    /// endpoint draws a month of calendar marks, a week strip, and one day's list.
+    ///
+    /// - Remark: HTTP `GET /api/v1/planner/`.
+    /// - Remark: Generated from `#/paths//api/v1/planner//get(planner_list)`.
+    func plannerList(_ input: Operations.PlannerList.Input) async throws -> Operations.PlannerList.Output
+    /// Tasks and events on the planner.
+    ///
+    /// The date range is a filter rather than a required window so the same
+    /// endpoint draws a month of calendar marks, a week strip, and one day's list.
+    ///
+    /// - Remark: HTTP `POST /api/v1/planner/`.
+    /// - Remark: Generated from `#/paths//api/v1/planner//post(planner_create)`.
+    func plannerCreate(_ input: Operations.PlannerCreate.Input) async throws -> Operations.PlannerCreate.Output
+    /// Tasks and events on the planner.
+    ///
+    /// The date range is a filter rather than a required window so the same
+    /// endpoint draws a month of calendar marks, a week strip, and one day's list.
+    ///
+    /// - Remark: HTTP `GET /api/v1/planner/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/planner/{id}//get(planner_retrieve)`.
+    func plannerRetrieve(_ input: Operations.PlannerRetrieve.Input) async throws -> Operations.PlannerRetrieve.Output
+    /// Tasks and events on the planner.
+    ///
+    /// The date range is a filter rather than a required window so the same
+    /// endpoint draws a month of calendar marks, a week strip, and one day's list.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/planner/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/planner/{id}//patch(planner_partial_update)`.
+    func plannerPartialUpdate(_ input: Operations.PlannerPartialUpdate.Input) async throws -> Operations.PlannerPartialUpdate.Output
+    /// Tasks and events on the planner.
+    ///
+    /// The date range is a filter rather than a required window so the same
+    /// endpoint draws a month of calendar marks, a week strip, and one day's list.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/planner/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/planner/{id}//put(planner_update)`.
+    func plannerUpdate(_ input: Operations.PlannerUpdate.Input) async throws -> Operations.PlannerUpdate.Output
+    /// Tasks and events on the planner.
+    ///
+    /// The date range is a filter rather than a required window so the same
+    /// endpoint draws a month of calendar marks, a week strip, and one day's list.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/planner/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/planner/{id}//delete(planner_destroy)`.
+    func plannerDestroy(_ input: Operations.PlannerDestroy.Input) async throws -> Operations.PlannerDestroy.Output
     /// - Remark: HTTP `GET /api/v1/progress/exercises/{exercise_id}/`.
     /// - Remark: Generated from `#/paths//api/v1/progress/exercises/{exercise_id}//get(progress_exercises_list)`.
     func progressExercisesList(_ input: Operations.ProgressExercisesList.Input) async throws -> Operations.ProgressExercisesList.Output
@@ -472,6 +520,100 @@ extension APIProtocol {
             headers: headers,
             body: body
         ))
+    }
+    /// Tasks and events on the planner.
+    ///
+    /// The date range is a filter rather than a required window so the same
+    /// endpoint draws a month of calendar marks, a week strip, and one day's list.
+    ///
+    /// - Remark: HTTP `GET /api/v1/planner/`.
+    /// - Remark: Generated from `#/paths//api/v1/planner//get(planner_list)`.
+    public func plannerList(
+        query: Operations.PlannerList.Input.Query = .init(),
+        headers: Operations.PlannerList.Input.Headers = .init()
+    ) async throws -> Operations.PlannerList.Output {
+        try await plannerList(Operations.PlannerList.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Tasks and events on the planner.
+    ///
+    /// The date range is a filter rather than a required window so the same
+    /// endpoint draws a month of calendar marks, a week strip, and one day's list.
+    ///
+    /// - Remark: HTTP `POST /api/v1/planner/`.
+    /// - Remark: Generated from `#/paths//api/v1/planner//post(planner_create)`.
+    public func plannerCreate(
+        headers: Operations.PlannerCreate.Input.Headers = .init(),
+        body: Operations.PlannerCreate.Input.Body
+    ) async throws -> Operations.PlannerCreate.Output {
+        try await plannerCreate(Operations.PlannerCreate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Tasks and events on the planner.
+    ///
+    /// The date range is a filter rather than a required window so the same
+    /// endpoint draws a month of calendar marks, a week strip, and one day's list.
+    ///
+    /// - Remark: HTTP `GET /api/v1/planner/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/planner/{id}//get(planner_retrieve)`.
+    public func plannerRetrieve(
+        path: Operations.PlannerRetrieve.Input.Path,
+        headers: Operations.PlannerRetrieve.Input.Headers = .init()
+    ) async throws -> Operations.PlannerRetrieve.Output {
+        try await plannerRetrieve(Operations.PlannerRetrieve.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Tasks and events on the planner.
+    ///
+    /// The date range is a filter rather than a required window so the same
+    /// endpoint draws a month of calendar marks, a week strip, and one day's list.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/planner/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/planner/{id}//patch(planner_partial_update)`.
+    public func plannerPartialUpdate(
+        path: Operations.PlannerPartialUpdate.Input.Path,
+        headers: Operations.PlannerPartialUpdate.Input.Headers = .init(),
+        body: Operations.PlannerPartialUpdate.Input.Body? = nil
+    ) async throws -> Operations.PlannerPartialUpdate.Output {
+        try await plannerPartialUpdate(Operations.PlannerPartialUpdate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Tasks and events on the planner.
+    ///
+    /// The date range is a filter rather than a required window so the same
+    /// endpoint draws a month of calendar marks, a week strip, and one day's list.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/planner/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/planner/{id}//put(planner_update)`.
+    public func plannerUpdate(
+        path: Operations.PlannerUpdate.Input.Path,
+        headers: Operations.PlannerUpdate.Input.Headers = .init(),
+        body: Operations.PlannerUpdate.Input.Body
+    ) async throws -> Operations.PlannerUpdate.Output {
+        try await plannerUpdate(Operations.PlannerUpdate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Tasks and events on the planner.
+    ///
+    /// The date range is a filter rather than a required window so the same
+    /// endpoint draws a month of calendar marks, a week strip, and one day's list.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/planner/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/planner/{id}//delete(planner_destroy)`.
+    public func plannerDestroy(path: Operations.PlannerDestroy.Input.Path) async throws -> Operations.PlannerDestroy.Output {
+        try await plannerDestroy(Operations.PlannerDestroy.Input(path: path))
     }
     /// - Remark: HTTP `GET /api/v1/progress/exercises/{exercise_id}/`.
     /// - Remark: Generated from `#/paths//api/v1/progress/exercises/{exercise_id}//get(progress_exercises_list)`.
@@ -1231,6 +1373,28 @@ public enum Components {
             case skiErg = "ski_erg"
             case other = "other"
         }
+        /// * `habit` - Habit
+        /// * `workout` - Workout
+        /// * `errand` - Errand
+        /// * `study` - Study
+        /// * `sleep` - Sleep
+        /// * `health` - Health
+        /// * `work` - Work
+        /// * `home` - Home
+        /// * `other` - Other
+        ///
+        /// - Remark: Generated from `#/components/schemas/CategoryEnum`.
+        @frozen public enum CategoryEnum: String, Codable, Hashable, Sendable, CaseIterable {
+            case habit = "habit"
+            case workout = "workout"
+            case errand = "errand"
+            case study = "study"
+            case sleep = "sleep"
+            case health = "health"
+            case work = "work"
+            case home = "home"
+            case other = "other"
+        }
         /// - Remark: Generated from `#/components/schemas/Exercise`.
         public struct Exercise: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/Exercise/id`.
@@ -1342,14 +1506,6 @@ public enum Components {
                 case muscleGroup = "muscle_group"
             }
         }
-        /// * `heaviest_weight` - heaviest_weight
-        /// * `best_estimated_1rm` - best_estimated_1rm
-        ///
-        /// - Remark: Generated from `#/components/schemas/KindEnum`.
-        @frozen public enum KindEnum: String, Codable, Hashable, Sendable, CaseIterable {
-            case heaviestWeight = "heaviest_weight"
-            case bestEstimated1rm = "best_estimated_1rm"
-        }
         /// - Remark: Generated from `#/components/schemas/LoginRequest`.
         public struct LoginRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/LoginRequest/username`.
@@ -1452,6 +1608,41 @@ public enum Components {
                 next: Swift.String? = nil,
                 previous: Swift.String? = nil,
                 results: [Components.Schemas.Exercise]
+            ) {
+                self.count = count
+                self.next = next
+                self.previous = previous
+                self.results = results
+            }
+            public enum CodingKeys: String, CodingKey {
+                case count
+                case next
+                case previous
+                case results
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PaginatedPlannerEntryList`.
+        public struct PaginatedPlannerEntryList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PaginatedPlannerEntryList/count`.
+            public var count: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PaginatedPlannerEntryList/next`.
+            public var next: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedPlannerEntryList/previous`.
+            public var previous: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedPlannerEntryList/results`.
+            public var results: [Components.Schemas.PlannerEntry]
+            /// Creates a new `PaginatedPlannerEntryList`.
+            ///
+            /// - Parameters:
+            ///   - count:
+            ///   - next:
+            ///   - previous:
+            ///   - results:
+            public init(
+                count: Swift.Int,
+                next: Swift.String? = nil,
+                previous: Swift.String? = nil,
+                results: [Components.Schemas.PlannerEntry]
             ) {
                 self.count = count
                 self.next = next
@@ -1830,6 +2021,71 @@ public enum Components {
             public enum CodingKeys: String, CodingKey {
                 case name
                 case muscleGroup = "muscle_group"
+            }
+        }
+        /// A task or event on the planner.
+        ///
+        /// ``is_complete`` is what the client writes; ``completed_at`` is the record
+        /// of when it happened and is read-only. Keeping both means ticking a task off
+        /// does not throw away the time it was done.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest`.
+        public struct PatchedPlannerEntryRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/kind`.
+            public var kind: Components.Schemas.PlannerEntryKindEnum?
+            /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/title`.
+            public var title: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/category`.
+            public var category: Components.Schemas.CategoryEnum?
+            /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/scheduled_date`.
+            public var scheduledDate: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/scheduled_time`.
+            public var scheduledTime: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/is_complete`.
+            public var isComplete: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/workout`.
+            public var workout: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/notes`.
+            public var notes: Swift.String?
+            /// Creates a new `PatchedPlannerEntryRequest`.
+            ///
+            /// - Parameters:
+            ///   - kind:
+            ///   - title:
+            ///   - category:
+            ///   - scheduledDate:
+            ///   - scheduledTime:
+            ///   - isComplete:
+            ///   - workout:
+            ///   - notes:
+            public init(
+                kind: Components.Schemas.PlannerEntryKindEnum? = nil,
+                title: Swift.String? = nil,
+                category: Components.Schemas.CategoryEnum? = nil,
+                scheduledDate: Swift.String? = nil,
+                scheduledTime: Swift.String? = nil,
+                isComplete: Swift.Bool? = nil,
+                workout: Swift.Int? = nil,
+                notes: Swift.String? = nil
+            ) {
+                self.kind = kind
+                self.title = title
+                self.category = category
+                self.scheduledDate = scheduledDate
+                self.scheduledTime = scheduledTime
+                self.isComplete = isComplete
+                self.workout = workout
+                self.notes = notes
+            }
+            public enum CodingKeys: String, CodingKey {
+                case kind
+                case title
+                case category
+                case scheduledDate = "scheduled_date"
+                case scheduledTime = "scheduled_time"
+                case isComplete = "is_complete"
+                case workout
+                case notes
             }
         }
         /// - Remark: Generated from `#/components/schemas/PatchedRepbaseUserRequest`.
@@ -2257,12 +2513,12 @@ public enum Components {
             /// - Remark: Generated from `#/components/schemas/PersonalRecord/kind`.
             public struct KindPayload: Codable, Hashable, Sendable {
                 /// - Remark: Generated from `#/components/schemas/PersonalRecord/kind/value1`.
-                public var value1: Components.Schemas.KindEnum
+                public var value1: Components.Schemas.PersonalRecordKindEnum
                 /// Creates a new `KindPayload`.
                 ///
                 /// - Parameters:
                 ///   - value1:
-                public init(value1: Components.Schemas.KindEnum) {
+                public init(value1: Components.Schemas.PersonalRecordKindEnum) {
                     self.value1 = value1
                 }
                 public init(from decoder: any Swift.Decoder) throws {
@@ -2313,6 +2569,14 @@ public enum Components {
                 case reps
             }
         }
+        /// * `heaviest_weight` - heaviest_weight
+        /// * `best_estimated_1rm` - best_estimated_1rm
+        ///
+        /// - Remark: Generated from `#/components/schemas/PersonalRecordKindEnum`.
+        @frozen public enum PersonalRecordKindEnum: String, Codable, Hashable, Sendable, CaseIterable {
+            case heaviestWeight = "heaviest_weight"
+            case bestEstimated1rm = "best_estimated_1rm"
+        }
         /// Which week to fill in from the user's weekly repeats.
         ///
         /// - Remark: Generated from `#/components/schemas/PlanWeekRequest`.
@@ -2330,6 +2594,180 @@ public enum Components {
             }
             public enum CodingKeys: String, CodingKey {
                 case start
+            }
+        }
+        /// A task or event on the planner.
+        ///
+        /// ``is_complete`` is what the client writes; ``completed_at`` is the record
+        /// of when it happened and is read-only. Keeping both means ticking a task off
+        /// does not throw away the time it was done.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PlannerEntry`.
+        public struct PlannerEntry: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/owner`.
+            public var owner: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/kind`.
+            public var kind: Components.Schemas.PlannerEntryKindEnum?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/title`.
+            public var title: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/category`.
+            public var category: Components.Schemas.CategoryEnum?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/scheduled_date`.
+            public var scheduledDate: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/scheduled_time`.
+            public var scheduledTime: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/is_complete`.
+            public var isComplete: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/completed_at`.
+            public var completedAt: Foundation.Date?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/workout`.
+            public var workout: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/workout_name`.
+            public var workoutName: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/notes`.
+            public var notes: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/created_at`.
+            public var createdAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/updated_at`.
+            public var updatedAt: Foundation.Date
+            /// Creates a new `PlannerEntry`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - owner:
+            ///   - kind:
+            ///   - title:
+            ///   - category:
+            ///   - scheduledDate:
+            ///   - scheduledTime:
+            ///   - isComplete:
+            ///   - completedAt:
+            ///   - workout:
+            ///   - workoutName:
+            ///   - notes:
+            ///   - createdAt:
+            ///   - updatedAt:
+            public init(
+                id: Swift.Int,
+                owner: Swift.Int,
+                kind: Components.Schemas.PlannerEntryKindEnum? = nil,
+                title: Swift.String,
+                category: Components.Schemas.CategoryEnum? = nil,
+                scheduledDate: Swift.String,
+                scheduledTime: Swift.String? = nil,
+                isComplete: Swift.Bool? = nil,
+                completedAt: Foundation.Date? = nil,
+                workout: Swift.Int? = nil,
+                workoutName: Swift.String? = nil,
+                notes: Swift.String? = nil,
+                createdAt: Foundation.Date,
+                updatedAt: Foundation.Date
+            ) {
+                self.id = id
+                self.owner = owner
+                self.kind = kind
+                self.title = title
+                self.category = category
+                self.scheduledDate = scheduledDate
+                self.scheduledTime = scheduledTime
+                self.isComplete = isComplete
+                self.completedAt = completedAt
+                self.workout = workout
+                self.workoutName = workoutName
+                self.notes = notes
+                self.createdAt = createdAt
+                self.updatedAt = updatedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case owner
+                case kind
+                case title
+                case category
+                case scheduledDate = "scheduled_date"
+                case scheduledTime = "scheduled_time"
+                case isComplete = "is_complete"
+                case completedAt = "completed_at"
+                case workout
+                case workoutName = "workout_name"
+                case notes
+                case createdAt = "created_at"
+                case updatedAt = "updated_at"
+            }
+        }
+        /// * `task` - Task
+        /// * `event` - Event
+        ///
+        /// - Remark: Generated from `#/components/schemas/PlannerEntryKindEnum`.
+        @frozen public enum PlannerEntryKindEnum: String, Codable, Hashable, Sendable, CaseIterable {
+            case task = "task"
+            case event = "event"
+        }
+        /// A task or event on the planner.
+        ///
+        /// ``is_complete`` is what the client writes; ``completed_at`` is the record
+        /// of when it happened and is read-only. Keeping both means ticking a task off
+        /// does not throw away the time it was done.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest`.
+        public struct PlannerEntryRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/kind`.
+            public var kind: Components.Schemas.PlannerEntryKindEnum?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/title`.
+            public var title: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/category`.
+            public var category: Components.Schemas.CategoryEnum?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/scheduled_date`.
+            public var scheduledDate: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/scheduled_time`.
+            public var scheduledTime: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/is_complete`.
+            public var isComplete: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/workout`.
+            public var workout: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/notes`.
+            public var notes: Swift.String?
+            /// Creates a new `PlannerEntryRequest`.
+            ///
+            /// - Parameters:
+            ///   - kind:
+            ///   - title:
+            ///   - category:
+            ///   - scheduledDate:
+            ///   - scheduledTime:
+            ///   - isComplete:
+            ///   - workout:
+            ///   - notes:
+            public init(
+                kind: Components.Schemas.PlannerEntryKindEnum? = nil,
+                title: Swift.String,
+                category: Components.Schemas.CategoryEnum? = nil,
+                scheduledDate: Swift.String,
+                scheduledTime: Swift.String? = nil,
+                isComplete: Swift.Bool? = nil,
+                workout: Swift.Int? = nil,
+                notes: Swift.String? = nil
+            ) {
+                self.kind = kind
+                self.title = title
+                self.category = category
+                self.scheduledDate = scheduledDate
+                self.scheduledTime = scheduledTime
+                self.isComplete = isComplete
+                self.workout = workout
+                self.notes = notes
+            }
+            public enum CodingKeys: String, CodingKey {
+                case kind
+                case title
+                case category
+                case scheduledDate = "scheduled_date"
+                case scheduledTime = "scheduled_time"
+                case isComplete = "is_complete"
+                case workout
+                case notes
             }
         }
         /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser`.
@@ -6190,6 +6628,790 @@ public enum Operations {
                     .json
                 ]
             }
+        }
+    }
+    /// Tasks and events on the planner.
+    ///
+    /// The date range is a filter rather than a required window so the same
+    /// endpoint draws a month of calendar marks, a week strip, and one day's list.
+    ///
+    /// - Remark: HTTP `GET /api/v1/planner/`.
+    /// - Remark: Generated from `#/paths//api/v1/planner//get(planner_list)`.
+    public enum PlannerList {
+        public static let id: Swift.String = "planner_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/planner/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/planner/GET/query/category`.
+                @frozen public enum CategoryPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case errand = "errand"
+                    case habit = "habit"
+                    case health = "health"
+                    case home = "home"
+                    case other = "other"
+                    case sleep = "sleep"
+                    case study = "study"
+                    case work = "work"
+                    case workout = "workout"
+                }
+                /// Return only entries in this category.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/planner/GET/query/category`.
+                public var category: Operations.PlannerList.Input.Query.CategoryPayload?
+                /// Return only entries on or before this date.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/planner/GET/query/end`.
+                public var end: Swift.String?
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/planner/GET/query/page`.
+                public var page: Swift.Int?
+                /// Return only entries on or after this date.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/planner/GET/query/start`.
+                public var start: Swift.String?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - category: Return only entries in this category.
+                ///   - end: Return only entries on or before this date.
+                ///   - page: A page number within the paginated result set.
+                ///   - start: Return only entries on or after this date.
+                public init(
+                    category: Operations.PlannerList.Input.Query.CategoryPayload? = nil,
+                    end: Swift.String? = nil,
+                    page: Swift.Int? = nil,
+                    start: Swift.String? = nil
+                ) {
+                    self.category = category
+                    self.end = end
+                    self.page = page
+                    self.start = start
+                }
+            }
+            public var query: Operations.PlannerList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/planner/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.PlannerList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.PlannerList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.PlannerList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.PlannerList.Input.Query = .init(),
+                headers: Operations.PlannerList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/planner/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/planner/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedPlannerEntryList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedPlannerEntryList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.PlannerList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.PlannerList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/planner//get(planner_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.PlannerList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.PlannerList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Tasks and events on the planner.
+    ///
+    /// The date range is a filter rather than a required window so the same
+    /// endpoint draws a month of calendar marks, a week strip, and one day's list.
+    ///
+    /// - Remark: HTTP `POST /api/v1/planner/`.
+    /// - Remark: Generated from `#/paths//api/v1/planner//post(planner_create)`.
+    public enum PlannerCreate {
+        public static let id: Swift.String = "planner_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/planner/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.PlannerCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.PlannerCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.PlannerCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/planner/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/planner/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.PlannerEntryRequest)
+            }
+            public var body: Operations.PlannerCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.PlannerCreate.Input.Headers = .init(),
+                body: Operations.PlannerCreate.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Created: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/planner/POST/responses/201/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/planner/POST/responses/201/content/application\/json`.
+                    case json(Components.Schemas.PlannerEntry)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PlannerEntry {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.PlannerCreate.Output.Created.Body
+                /// Creates a new `Created`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.PlannerCreate.Output.Created.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/planner//post(planner_create)/responses/201`.
+            ///
+            /// HTTP response code: `201 created`.
+            case created(Operations.PlannerCreate.Output.Created)
+            /// The associated value of the enum case if `self` is `.created`.
+            ///
+            /// - Throws: An error if `self` is not `.created`.
+            /// - SeeAlso: `.created`.
+            public var created: Operations.PlannerCreate.Output.Created {
+                get throws {
+                    switch self {
+                    case let .created(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "created",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Tasks and events on the planner.
+    ///
+    /// The date range is a filter rather than a required window so the same
+    /// endpoint draws a month of calendar marks, a week strip, and one day's list.
+    ///
+    /// - Remark: HTTP `GET /api/v1/planner/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/planner/{id}//get(planner_retrieve)`.
+    public enum PlannerRetrieve {
+        public static let id: Swift.String = "planner_retrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/planner/{id}/GET/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this planner entry.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/planner/{id}/GET/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this planner entry.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.PlannerRetrieve.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/planner/{id}/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.PlannerRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.PlannerRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.PlannerRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.PlannerRetrieve.Input.Path,
+                headers: Operations.PlannerRetrieve.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/planner/{id}/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/planner/{id}/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PlannerEntry)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PlannerEntry {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.PlannerRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.PlannerRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/planner/{id}//get(planner_retrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.PlannerRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.PlannerRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Tasks and events on the planner.
+    ///
+    /// The date range is a filter rather than a required window so the same
+    /// endpoint draws a month of calendar marks, a week strip, and one day's list.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/planner/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/planner/{id}//patch(planner_partial_update)`.
+    public enum PlannerPartialUpdate {
+        public static let id: Swift.String = "planner_partial_update"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/planner/{id}/PATCH/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this planner entry.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/planner/{id}/PATCH/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this planner entry.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.PlannerPartialUpdate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/planner/{id}/PATCH/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.PlannerPartialUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.PlannerPartialUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.PlannerPartialUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/planner/{id}/PATCH/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/planner/{id}/PATCH/requestBody/content/application\/json`.
+                case json(Components.Schemas.PatchedPlannerEntryRequest)
+            }
+            public var body: Operations.PlannerPartialUpdate.Input.Body?
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.PlannerPartialUpdate.Input.Path,
+                headers: Operations.PlannerPartialUpdate.Input.Headers = .init(),
+                body: Operations.PlannerPartialUpdate.Input.Body? = nil
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/planner/{id}/PATCH/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/planner/{id}/PATCH/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PlannerEntry)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PlannerEntry {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.PlannerPartialUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.PlannerPartialUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/planner/{id}//patch(planner_partial_update)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.PlannerPartialUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.PlannerPartialUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Tasks and events on the planner.
+    ///
+    /// The date range is a filter rather than a required window so the same
+    /// endpoint draws a month of calendar marks, a week strip, and one day's list.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/planner/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/planner/{id}//put(planner_update)`.
+    public enum PlannerUpdate {
+        public static let id: Swift.String = "planner_update"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/planner/{id}/PUT/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this planner entry.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/planner/{id}/PUT/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this planner entry.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.PlannerUpdate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/planner/{id}/PUT/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.PlannerUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.PlannerUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.PlannerUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/planner/{id}/PUT/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/planner/{id}/PUT/requestBody/content/application\/json`.
+                case json(Components.Schemas.PlannerEntryRequest)
+            }
+            public var body: Operations.PlannerUpdate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.PlannerUpdate.Input.Path,
+                headers: Operations.PlannerUpdate.Input.Headers = .init(),
+                body: Operations.PlannerUpdate.Input.Body
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/planner/{id}/PUT/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/planner/{id}/PUT/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PlannerEntry)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PlannerEntry {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.PlannerUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.PlannerUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/planner/{id}//put(planner_update)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.PlannerUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.PlannerUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Tasks and events on the planner.
+    ///
+    /// The date range is a filter rather than a required window so the same
+    /// endpoint draws a month of calendar marks, a week strip, and one day's list.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/planner/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/planner/{id}//delete(planner_destroy)`.
+    public enum PlannerDestroy {
+        public static let id: Swift.String = "planner_destroy"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/planner/{id}/DELETE/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this planner entry.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/planner/{id}/DELETE/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this planner entry.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.PlannerDestroy.Input.Path
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            public init(path: Operations.PlannerDestroy.Input.Path) {
+                self.path = path
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct NoContent: Sendable, Hashable {
+                /// Creates a new `NoContent`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/planner/{id}//delete(planner_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            case noContent(Operations.PlannerDestroy.Output.NoContent)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/planner/{id}//delete(planner_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            public static var noContent: Self {
+                .noContent(.init())
+            }
+            /// The associated value of the enum case if `self` is `.noContent`.
+            ///
+            /// - Throws: An error if `self` is not `.noContent`.
+            /// - SeeAlso: `.noContent`.
+            public var noContent: Operations.PlannerDestroy.Output.NoContent {
+                get throws {
+                    switch self {
+                    case let .noContent(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "noContent",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
         }
     }
     /// - Remark: HTTP `GET /api/v1/progress/exercises/{exercise_id}/`.

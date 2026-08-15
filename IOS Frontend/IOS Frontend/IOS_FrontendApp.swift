@@ -12,6 +12,7 @@ import SwiftUI
 struct IOS_FrontendApp: App {
     @State private var authentication: AuthenticationStore
     @State private var workoutStore = WorkoutStore()
+    @State private var plannerStore = PlannerStore()
     @State private var foodTrackingStore: FoodTrackingStore
 
     init() {
@@ -24,8 +25,13 @@ struct IOS_FrontendApp: App {
         _foodTrackingStore = State(
             initialValue: isPreviewingFood ? .preview : FoodTrackingStore()
         )
+        let isPreviewingPlanner = ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"] != nil
+        _plannerStore = State(
+            initialValue: isPreviewingPlanner ? .preview : PlannerStore()
+        )
 #else
         _foodTrackingStore = State(initialValue: FoodTrackingStore())
+        _plannerStore = State(initialValue: PlannerStore())
 #endif
     }
 
@@ -34,14 +40,26 @@ struct IOS_FrontendApp: App {
             AppRootView()
                 .environment(authentication)
                 .environment(workoutStore)
+                .environment(plannerStore)
                 .environment(foodTrackingStore)
         }
     }
 }
 
 private struct AppRootView: View {
+#if DEBUG
+    /// Whether the app was launched to look at one page with sample data,
+    /// rather than as the real signed-in app.
+    static var isPreviewing: Bool {
+        let environment = ProcessInfo.processInfo.environment
+        return environment["REPBASE_FOOD_PREVIEW"] != nil
+            || environment["REPBASE_PLANNER_PREVIEW"] != nil
+    }
+#endif
+
     @Environment(AuthenticationStore.self) private var authentication
     @Environment(WorkoutStore.self) private var workoutStore
+    @Environment(PlannerStore.self) private var plannerStore
     @Environment(FoodTrackingStore.self) private var foodTrackingStore
 
     var body: some View {
@@ -60,6 +78,10 @@ private struct AppRootView: View {
                 NavigationStack {
                     FoodTrackingView()
                 }
+            } else if ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"] != nil {
+                NavigationStack {
+                    PlannerView()
+                }
             } else {
                 authenticatedContent
             }
@@ -69,24 +91,29 @@ private struct AppRootView: View {
         }
         .task {
 #if DEBUG
-            guard ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == nil else {
-                return
-            }
+            // A preview run must not touch the network or the stores; without
+            // this, signing out would clear the sample data it exists to show.
+            guard Self.isPreviewing == false else { return }
 #endif
             await authentication.restoreSession()
         }
         .task(id: authentication.token) {
 #if DEBUG
-            guard ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == nil else {
-                return
-            }
+            // A preview run must not touch the network or the stores; without
+            // this, signing out would clear the sample data it exists to show.
+            guard Self.isPreviewing == false else { return }
 #endif
             guard let token = authentication.token else {
                 workoutStore.disconnect()
+                plannerStore.disconnect()
                 foodTrackingStore.reset()
                 return
             }
             await workoutStore.connect(
+                configuration: authentication.configuration,
+                token: token
+            )
+            await plannerStore.connect(
                 configuration: authentication.configuration,
                 token: token
             )

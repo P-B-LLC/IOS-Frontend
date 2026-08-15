@@ -425,6 +425,7 @@ private struct HomeBottomNavigation: View {
                 .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 16))
 
             navLink("Workouts", systemImage: "dumbbell.fill") { WorkoutsView() }
+            navLink("Planner", systemImage: "checklist") { PlannerView() }
             navLink("Food", systemImage: "fork.knife") { FoodTrackingView() }
 
             Menu {
@@ -477,6 +478,7 @@ private struct HomeBottomNavigation: View {
 #Preview {
     ContentView()
         .environment(WorkoutStore.preview)
+        .environment(PlannerStore())
         .environment(FoodTrackingStore.preview)
         .environment(
             AuthenticationStore(configuration: .current)
