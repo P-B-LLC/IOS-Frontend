@@ -125,6 +125,16 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/sessions/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/sessions/{id}//delete(sessions_destroy)`.
     func sessionsDestroy(_ input: Operations.SessionsDestroy.Input) async throws -> Operations.SessionsDestroy.Output
+    /// Record the cardio finisher performed after this session.
+    ///
+    /// Written onto the session rather than creating a second one, because a
+    /// workout and the cardio that followed it are one training session.
+    /// Allowed after the session has ended, since the finisher happens after
+    /// the exercises are done.
+    ///
+    /// - Remark: HTTP `POST /api/v1/sessions/{id}/cardio/`.
+    /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/cardio//post(sessions_cardio_create)`.
+    func sessionsCardioCreate(_ input: Operations.SessionsCardioCreate.Input) async throws -> Operations.SessionsCardioCreate.Output
     /// - Remark: HTTP `POST /api/v1/sessions/{id}/end/`.
     /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/end//post(sessions_end_create)`.
     func sessionsEndCreate(_ input: Operations.SessionsEndCreate.Input) async throws -> Operations.SessionsEndCreate.Output
@@ -611,6 +621,26 @@ extension APIProtocol {
     public func sessionsDestroy(path: Operations.SessionsDestroy.Input.Path) async throws -> Operations.SessionsDestroy.Output {
         try await sessionsDestroy(Operations.SessionsDestroy.Input(path: path))
     }
+    /// Record the cardio finisher performed after this session.
+    ///
+    /// Written onto the session rather than creating a second one, because a
+    /// workout and the cardio that followed it are one training session.
+    /// Allowed after the session has ended, since the finisher happens after
+    /// the exercises are done.
+    ///
+    /// - Remark: HTTP `POST /api/v1/sessions/{id}/cardio/`.
+    /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/cardio//post(sessions_cardio_create)`.
+    public func sessionsCardioCreate(
+        path: Operations.SessionsCardioCreate.Input.Path,
+        headers: Operations.SessionsCardioCreate.Input.Headers = .init(),
+        body: Operations.SessionsCardioCreate.Input.Body
+    ) async throws -> Operations.SessionsCardioCreate.Output {
+        try await sessionsCardioCreate(Operations.SessionsCardioCreate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
     /// - Remark: HTTP `POST /api/v1/sessions/{id}/end/`.
     /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/end//post(sessions_end_create)`.
     public func sessionsEndCreate(
@@ -1033,6 +1063,26 @@ public enum Components {
                 case notes
             }
         }
+        /// * `treadmill` - Treadmill
+        /// * `stationary_bike` - Stationary Bike
+        /// * `stair_master` - Stair Master
+        /// * `elliptical` - Elliptical
+        /// * `rowing_machine` - Rowing Machine
+        /// * `assault_bike` - Assault Bike
+        /// * `ski_erg` - Ski Erg
+        /// * `other` - Other
+        ///
+        /// - Remark: Generated from `#/components/schemas/CardioMachineEnum`.
+        @frozen public enum CardioMachineEnum: String, Codable, Hashable, Sendable, CaseIterable {
+            case treadmill = "treadmill"
+            case stationaryBike = "stationary_bike"
+            case stairMaster = "stair_master"
+            case elliptical = "elliptical"
+            case rowingMachine = "rowing_machine"
+            case assaultBike = "assault_bike"
+            case skiErg = "ski_erg"
+            case other = "other"
+        }
         /// - Remark: Generated from `#/components/schemas/Exercise`.
         public struct Exercise: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/Exercise/id`.
@@ -1175,6 +1225,28 @@ public enum Components {
                 case password
             }
         }
+        /// * `treadmill` - Treadmill
+        /// * `stationary_bike` - Stationary Bike
+        /// * `stair_master` - Stair Master
+        /// * `elliptical` - Elliptical
+        /// * `rowing_machine` - Rowing Machine
+        /// * `assault_bike` - Assault Bike
+        /// * `ski_erg` - Ski Erg
+        /// * `other` - Other
+        ///
+        /// - Remark: Generated from `#/components/schemas/MachineEnum`.
+        @frozen public enum MachineEnum: String, Codable, Hashable, Sendable, CaseIterable {
+            case treadmill = "treadmill"
+            case stationaryBike = "stationary_bike"
+            case stairMaster = "stair_master"
+            case elliptical = "elliptical"
+            case rowingMachine = "rowing_machine"
+            case assaultBike = "assault_bike"
+            case skiErg = "ski_erg"
+            case other = "other"
+        }
+        /// - Remark: Generated from `#/components/schemas/NullEnum`.
+        public typealias NullEnum = OpenAPIRuntime.OpenAPIValueContainer
         /// - Remark: Generated from `#/components/schemas/PaginatedBodyWeightEntryList`.
         public struct PaginatedBodyWeightEntryList: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PaginatedBodyWeightEntryList/count`.
@@ -1921,6 +1993,45 @@ public enum Components {
             public var name: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PatchedWorkoutTemplateRequest/workout_type`.
             public var workoutType: Components.Schemas.WorkoutTypeEnum?
+            /// - Remark: Generated from `#/components/schemas/PatchedWorkoutTemplateRequest/cardio_machine`.
+            @frozen public enum CardioMachinePayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PatchedWorkoutTemplateRequest/cardio_machine/case1`.
+                case CardioMachineEnum(Components.Schemas.CardioMachineEnum)
+                /// - Remark: Generated from `#/components/schemas/PatchedWorkoutTemplateRequest/cardio_machine/case2`.
+                case NullEnum(Components.Schemas.NullEnum)
+                public init(from decoder: any Swift.Decoder) throws {
+                    var errors: [any Swift.Error] = []
+                    do {
+                        self = .CardioMachineEnum(try decoder.decodeFromSingleValueContainer())
+                        return
+                    } catch {
+                        errors.append(error)
+                    }
+                    do {
+                        self = .NullEnum(try .init(from: decoder))
+                        return
+                    } catch {
+                        errors.append(error)
+                    }
+                    throw Swift.DecodingError.failedToDecodeOneOfSchema(
+                        type: Self.self,
+                        codingPath: decoder.codingPath,
+                        errors: errors
+                    )
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    switch self {
+                    case let .CardioMachineEnum(value):
+                        try encoder.encodeToSingleValueContainer(value)
+                    case let .NullEnum(value):
+                        try value.encode(to: encoder)
+                    }
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/PatchedWorkoutTemplateRequest/cardio_machine`.
+            public var cardioMachine: Components.Schemas.PatchedWorkoutTemplateRequest.CardioMachinePayload?
+            /// - Remark: Generated from `#/components/schemas/PatchedWorkoutTemplateRequest/cardio_target_minutes`.
+            public var cardioTargetMinutes: Swift.Int64?
             /// - Remark: Generated from `#/components/schemas/PatchedWorkoutTemplateRequest/description`.
             public var description: Swift.String?
             /// Creates a new `PatchedWorkoutTemplateRequest`.
@@ -1928,19 +2039,27 @@ public enum Components {
             /// - Parameters:
             ///   - name:
             ///   - workoutType:
+            ///   - cardioMachine:
+            ///   - cardioTargetMinutes:
             ///   - description:
             public init(
                 name: Swift.String? = nil,
                 workoutType: Components.Schemas.WorkoutTypeEnum? = nil,
+                cardioMachine: Components.Schemas.PatchedWorkoutTemplateRequest.CardioMachinePayload? = nil,
+                cardioTargetMinutes: Swift.Int64? = nil,
                 description: Swift.String? = nil
             ) {
                 self.name = name
                 self.workoutType = workoutType
+                self.cardioMachine = cardioMachine
+                self.cardioTargetMinutes = cardioTargetMinutes
                 self.description = description
             }
             public enum CodingKeys: String, CodingKey {
                 case name
                 case workoutType = "workout_type"
+                case cardioMachine = "cardio_machine"
+                case cardioTargetMinutes = "cardio_target_minutes"
                 case description
             }
         }
@@ -2515,6 +2634,37 @@ public enum Components {
                 case trainingStyle = "training_style"
                 case gym
                 case isBodyMetricsPublic = "is_body_metrics_public"
+            }
+        }
+        /// A cardio finisher performed after a session's exercises.
+        ///
+        /// - Remark: Generated from `#/components/schemas/SessionCardioRequest`.
+        public struct SessionCardioRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SessionCardioRequest/machine`.
+            public var machine: Components.Schemas.MachineEnum
+            /// - Remark: Generated from `#/components/schemas/SessionCardioRequest/seconds`.
+            public var seconds: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/SessionCardioRequest/distance_km`.
+            public var distanceKm: Swift.String?
+            /// Creates a new `SessionCardioRequest`.
+            ///
+            /// - Parameters:
+            ///   - machine:
+            ///   - seconds:
+            ///   - distanceKm:
+            public init(
+                machine: Components.Schemas.MachineEnum,
+                seconds: Swift.Int,
+                distanceKm: Swift.String? = nil
+            ) {
+                self.machine = machine
+                self.seconds = seconds
+                self.distanceKm = distanceKm
+            }
+            public enum CodingKeys: String, CodingKey {
+                case machine
+                case seconds
+                case distanceKm = "distance_km"
             }
         }
         /// - Remark: Generated from `#/components/schemas/SessionExercise`.
@@ -3122,6 +3272,47 @@ public enum Components {
             public var endedAt: Foundation.Date?
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/duration_seconds`.
             public var durationSeconds: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/cardio_machine`.
+            @frozen public enum CardioMachinePayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/WorkoutSession/cardio_machine/case1`.
+                case CardioMachineEnum(Components.Schemas.CardioMachineEnum)
+                /// - Remark: Generated from `#/components/schemas/WorkoutSession/cardio_machine/case2`.
+                case NullEnum(Components.Schemas.NullEnum)
+                public init(from decoder: any Swift.Decoder) throws {
+                    var errors: [any Swift.Error] = []
+                    do {
+                        self = .CardioMachineEnum(try decoder.decodeFromSingleValueContainer())
+                        return
+                    } catch {
+                        errors.append(error)
+                    }
+                    do {
+                        self = .NullEnum(try .init(from: decoder))
+                        return
+                    } catch {
+                        errors.append(error)
+                    }
+                    throw Swift.DecodingError.failedToDecodeOneOfSchema(
+                        type: Self.self,
+                        codingPath: decoder.codingPath,
+                        errors: errors
+                    )
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    switch self {
+                    case let .CardioMachineEnum(value):
+                        try encoder.encodeToSingleValueContainer(value)
+                    case let .NullEnum(value):
+                        try value.encode(to: encoder)
+                    }
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/cardio_machine`.
+            public var cardioMachine: Components.Schemas.WorkoutSession.CardioMachinePayload?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/cardio_seconds`.
+            public var cardioSeconds: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/cardio_distance_km`.
+            public var cardioDistanceKm: Swift.String?
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/route_distance_km`.
             public var routeDistanceKm: Swift.Double?
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/pace_seconds_per_km`.
@@ -3155,6 +3346,9 @@ public enum Components {
             ///   - startedAt:
             ///   - endedAt:
             ///   - durationSeconds:
+            ///   - cardioMachine:
+            ///   - cardioSeconds:
+            ///   - cardioDistanceKm:
             ///   - routeDistanceKm:
             ///   - paceSecondsPerKm:
             ///   - movingPaceSecondsPerKm:
@@ -3175,6 +3369,9 @@ public enum Components {
                 startedAt: Foundation.Date? = nil,
                 endedAt: Foundation.Date? = nil,
                 durationSeconds: Swift.Double? = nil,
+                cardioMachine: Components.Schemas.WorkoutSession.CardioMachinePayload? = nil,
+                cardioSeconds: Swift.Int? = nil,
+                cardioDistanceKm: Swift.String? = nil,
                 routeDistanceKm: Swift.Double? = nil,
                 paceSecondsPerKm: Swift.Double? = nil,
                 movingPaceSecondsPerKm: Swift.Double? = nil,
@@ -3195,6 +3392,9 @@ public enum Components {
                 self.startedAt = startedAt
                 self.endedAt = endedAt
                 self.durationSeconds = durationSeconds
+                self.cardioMachine = cardioMachine
+                self.cardioSeconds = cardioSeconds
+                self.cardioDistanceKm = cardioDistanceKm
                 self.routeDistanceKm = routeDistanceKm
                 self.paceSecondsPerKm = paceSecondsPerKm
                 self.movingPaceSecondsPerKm = movingPaceSecondsPerKm
@@ -3216,6 +3416,9 @@ public enum Components {
                 case startedAt = "started_at"
                 case endedAt = "ended_at"
                 case durationSeconds = "duration_seconds"
+                case cardioMachine = "cardio_machine"
+                case cardioSeconds = "cardio_seconds"
+                case cardioDistanceKm = "cardio_distance_km"
                 case routeDistanceKm = "route_distance_km"
                 case paceSecondsPerKm = "pace_seconds_per_km"
                 case movingPaceSecondsPerKm = "moving_pace_seconds_per_km"
@@ -3254,6 +3457,45 @@ public enum Components {
             public var name: Swift.String
             /// - Remark: Generated from `#/components/schemas/WorkoutTemplate/workout_type`.
             public var workoutType: Components.Schemas.WorkoutTypeEnum?
+            /// - Remark: Generated from `#/components/schemas/WorkoutTemplate/cardio_machine`.
+            @frozen public enum CardioMachinePayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/WorkoutTemplate/cardio_machine/case1`.
+                case CardioMachineEnum(Components.Schemas.CardioMachineEnum)
+                /// - Remark: Generated from `#/components/schemas/WorkoutTemplate/cardio_machine/case2`.
+                case NullEnum(Components.Schemas.NullEnum)
+                public init(from decoder: any Swift.Decoder) throws {
+                    var errors: [any Swift.Error] = []
+                    do {
+                        self = .CardioMachineEnum(try decoder.decodeFromSingleValueContainer())
+                        return
+                    } catch {
+                        errors.append(error)
+                    }
+                    do {
+                        self = .NullEnum(try .init(from: decoder))
+                        return
+                    } catch {
+                        errors.append(error)
+                    }
+                    throw Swift.DecodingError.failedToDecodeOneOfSchema(
+                        type: Self.self,
+                        codingPath: decoder.codingPath,
+                        errors: errors
+                    )
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    switch self {
+                    case let .CardioMachineEnum(value):
+                        try encoder.encodeToSingleValueContainer(value)
+                    case let .NullEnum(value):
+                        try value.encode(to: encoder)
+                    }
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/WorkoutTemplate/cardio_machine`.
+            public var cardioMachine: Components.Schemas.WorkoutTemplate.CardioMachinePayload?
+            /// - Remark: Generated from `#/components/schemas/WorkoutTemplate/cardio_target_minutes`.
+            public var cardioTargetMinutes: Swift.Int64?
             /// - Remark: Generated from `#/components/schemas/WorkoutTemplate/description`.
             public var description: Swift.String?
             /// - Remark: Generated from `#/components/schemas/WorkoutTemplate/exercises`.
@@ -3269,6 +3511,8 @@ public enum Components {
             ///   - owner:
             ///   - name:
             ///   - workoutType:
+            ///   - cardioMachine:
+            ///   - cardioTargetMinutes:
             ///   - description:
             ///   - exercises:
             ///   - createdAt:
@@ -3278,6 +3522,8 @@ public enum Components {
                 owner: Swift.Int,
                 name: Swift.String,
                 workoutType: Components.Schemas.WorkoutTypeEnum? = nil,
+                cardioMachine: Components.Schemas.WorkoutTemplate.CardioMachinePayload? = nil,
+                cardioTargetMinutes: Swift.Int64? = nil,
                 description: Swift.String? = nil,
                 exercises: [Components.Schemas.WorkoutExercise],
                 createdAt: Foundation.Date,
@@ -3287,6 +3533,8 @@ public enum Components {
                 self.owner = owner
                 self.name = name
                 self.workoutType = workoutType
+                self.cardioMachine = cardioMachine
+                self.cardioTargetMinutes = cardioTargetMinutes
                 self.description = description
                 self.exercises = exercises
                 self.createdAt = createdAt
@@ -3297,6 +3545,8 @@ public enum Components {
                 case owner
                 case name
                 case workoutType = "workout_type"
+                case cardioMachine = "cardio_machine"
+                case cardioTargetMinutes = "cardio_target_minutes"
                 case description
                 case exercises
                 case createdAt = "created_at"
@@ -3309,6 +3559,45 @@ public enum Components {
             public var name: Swift.String
             /// - Remark: Generated from `#/components/schemas/WorkoutTemplateRequest/workout_type`.
             public var workoutType: Components.Schemas.WorkoutTypeEnum?
+            /// - Remark: Generated from `#/components/schemas/WorkoutTemplateRequest/cardio_machine`.
+            @frozen public enum CardioMachinePayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/WorkoutTemplateRequest/cardio_machine/case1`.
+                case CardioMachineEnum(Components.Schemas.CardioMachineEnum)
+                /// - Remark: Generated from `#/components/schemas/WorkoutTemplateRequest/cardio_machine/case2`.
+                case NullEnum(Components.Schemas.NullEnum)
+                public init(from decoder: any Swift.Decoder) throws {
+                    var errors: [any Swift.Error] = []
+                    do {
+                        self = .CardioMachineEnum(try decoder.decodeFromSingleValueContainer())
+                        return
+                    } catch {
+                        errors.append(error)
+                    }
+                    do {
+                        self = .NullEnum(try .init(from: decoder))
+                        return
+                    } catch {
+                        errors.append(error)
+                    }
+                    throw Swift.DecodingError.failedToDecodeOneOfSchema(
+                        type: Self.self,
+                        codingPath: decoder.codingPath,
+                        errors: errors
+                    )
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    switch self {
+                    case let .CardioMachineEnum(value):
+                        try encoder.encodeToSingleValueContainer(value)
+                    case let .NullEnum(value):
+                        try value.encode(to: encoder)
+                    }
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/WorkoutTemplateRequest/cardio_machine`.
+            public var cardioMachine: Components.Schemas.WorkoutTemplateRequest.CardioMachinePayload?
+            /// - Remark: Generated from `#/components/schemas/WorkoutTemplateRequest/cardio_target_minutes`.
+            public var cardioTargetMinutes: Swift.Int64?
             /// - Remark: Generated from `#/components/schemas/WorkoutTemplateRequest/description`.
             public var description: Swift.String?
             /// Creates a new `WorkoutTemplateRequest`.
@@ -3316,19 +3605,27 @@ public enum Components {
             /// - Parameters:
             ///   - name:
             ///   - workoutType:
+            ///   - cardioMachine:
+            ///   - cardioTargetMinutes:
             ///   - description:
             public init(
                 name: Swift.String,
                 workoutType: Components.Schemas.WorkoutTypeEnum? = nil,
+                cardioMachine: Components.Schemas.WorkoutTemplateRequest.CardioMachinePayload? = nil,
+                cardioTargetMinutes: Swift.Int64? = nil,
                 description: Swift.String? = nil
             ) {
                 self.name = name
                 self.workoutType = workoutType
+                self.cardioMachine = cardioMachine
+                self.cardioTargetMinutes = cardioTargetMinutes
                 self.description = description
             }
             public enum CodingKeys: String, CodingKey {
                 case name
                 case workoutType = "workout_type"
+                case cardioMachine = "cardio_machine"
+                case cardioTargetMinutes = "cardio_target_minutes"
                 case description
             }
         }
@@ -7865,6 +8162,150 @@ public enum Operations {
             ///
             /// A response with a code that is not documented in the OpenAPI document.
             case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// Record the cardio finisher performed after this session.
+    ///
+    /// Written onto the session rather than creating a second one, because a
+    /// workout and the cardio that followed it are one training session.
+    /// Allowed after the session has ended, since the finisher happens after
+    /// the exercises are done.
+    ///
+    /// - Remark: HTTP `POST /api/v1/sessions/{id}/cardio/`.
+    /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/cardio//post(sessions_cardio_create)`.
+    public enum SessionsCardioCreate {
+        public static let id: Swift.String = "sessions_cardio_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/cardio/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this workout session.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/cardio/POST/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this workout session.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SessionsCardioCreate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/cardio/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SessionsCardioCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SessionsCardioCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SessionsCardioCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/cardio/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/cardio/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.SessionCardioRequest)
+            }
+            public var body: Operations.SessionsCardioCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.SessionsCardioCreate.Input.Path,
+                headers: Operations.SessionsCardioCreate.Input.Headers = .init(),
+                body: Operations.SessionsCardioCreate.Input.Body
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/cardio/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/cardio/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.WorkoutSession)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.WorkoutSession {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SessionsCardioCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SessionsCardioCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/cardio//post(sessions_cardio_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SessionsCardioCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SessionsCardioCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
         }
     }
     /// - Remark: HTTP `POST /api/v1/sessions/{id}/end/`.

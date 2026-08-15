@@ -37,6 +37,22 @@ final class WorkoutStore {
     /// a workout's history is not split across two spellings.
     private(set) var knownWorkouts: [WorkoutSummary] = []
 
+    // MARK: - Cardio finisher
+    //
+    // The cardio that follows a workout is timed after its session has ended,
+    // then written onto that same session. It is part of the workout, not a
+    // second one.
+
+    /// Set while a finisher is being timed.
+    private(set) var cardioStartedAt: Date?
+    private(set) var cardioMachine: CardioMachine?
+    /// The session the finisher will be recorded against.
+    private var cardioSessionID: Int?
+    /// Set once a finisher has been saved, so the summary can report it.
+    private(set) var recordedCardioSeconds: Int?
+
+    var isTimingCardio: Bool { cardioStartedAt != nil }
+
     init(initialSchedule: [Weekday: [Workout]] = [:]) {
         schedule = initialSchedule
     }
@@ -81,6 +97,10 @@ final class WorkoutStore {
         isSaving = false
         // One user's workout names must never be offered to the next.
         knownWorkouts = []
+        cardioStartedAt = nil
+        cardioMachine = nil
+        cardioSessionID = nil
+        recordedCardioSeconds = nil
         sessionHistory = []
         personalRecords = []
         liftProgress = []
@@ -616,6 +636,53 @@ final class WorkoutStore {
             value: day.rawValue - 1,
             to: monday
         ) ?? monday
+    }
+
+    /// Begins timing a cardio finisher for a session that has already ended.
+    func startCardio(machine: CardioMachine, sessionID: Int) {
+        guard cardioStartedAt == nil else { return }
+        cardioMachine = machine
+        cardioSessionID = sessionID
+        cardioStartedAt = Date()
+        recordedCardioSeconds = nil
+    }
+
+    /// Stops timing and records the finisher against its session.
+    @discardableResult
+    func finishCardio(distanceKilometers: Double? = nil) async -> Bool {
+        guard let repository,
+              let startedAt = cardioStartedAt,
+              let machine = cardioMachine,
+              let sessionID = cardioSessionID else {
+            return false
+        }
+
+        let seconds = max(1, Int(Date().timeIntervalSince(startedAt).rounded()))
+        cardioStartedAt = nil
+        persistenceError = nil
+
+        do {
+            try await repository.recordCardio(
+                sessionID: sessionID,
+                machine: machine,
+                seconds: seconds,
+                distanceKilometers: distanceKilometers
+            )
+            recordedCardioSeconds = seconds
+            cardioSessionID = nil
+            return true
+        } catch {
+            // The time is kept on screen so it is not lost to a failed save.
+            cardioStartedAt = startedAt
+            persistenceError = "Cardio could not be saved: \(error.localizedDescription)"
+            return false
+        }
+    }
+
+    func cancelCardio() {
+        cardioStartedAt = nil
+        cardioMachine = nil
+        cardioSessionID = nil
     }
 
     /// A distance workout is logged as a single effort, but the API records

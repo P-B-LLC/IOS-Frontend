@@ -402,6 +402,35 @@ struct DayWorkoutView: View {
                 }
             }
 
+            // The finisher sits at the end of the workout it belongs to, not
+            // as another workout in the day.
+            if let machine = workout.cardioMachine {
+                HStack(spacing: 11) {
+                    Image(systemName: machine.symbolName)
+                        .font(.subheadline)
+                        .foregroundStyle(WorkoutVisualPhase.prepare.accent)
+                        .frame(width: 34, height: 34)
+                        .background(
+                            WorkoutVisualPhase.prepare.accent.opacity(0.14),
+                            in: RoundedRectangle(cornerRadius: 11)
+                        )
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Finish with \(machine.title)")
+                            .font(.subheadline.weight(.semibold))
+                        Text(
+                            workout.cardioTargetMinutes
+                                .map { "\($0) min target · start it after your last set" }
+                                ?? "Start it after your last set"
+                        )
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 0)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .workoutCard()
+            }
+
             Button(role: .destructive) {
                 workoutPendingRemoval = workout
             } label: {
@@ -851,6 +880,16 @@ struct DayWorkoutView: View {
                 SessionProgressChart(
                     history: store.sessionHistory,
                     workoutType: session.workoutType,
+                    phase: phase
+                )
+            }
+
+            // Offered after a lifting session, whether or not one was planned:
+            // the finisher is the natural next step from this screen.
+            if !session.tracksDistance {
+                CardioFinisherCard(
+                    plannedMachine: store.workout(on: day)?.cardioMachine,
+                    sessionID: session.serverID,
                     phase: phase
                 )
             }

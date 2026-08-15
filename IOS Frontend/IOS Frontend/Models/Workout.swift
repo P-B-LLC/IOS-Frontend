@@ -50,6 +50,48 @@ nonisolated enum WorkoutType: String, CaseIterable, Identifiable, Hashable, Coda
     }
 }
 
+/// A machine a workout can finish on.
+///
+/// A finisher belongs to the workout it follows: it appears at the bottom of
+/// that day's workout rather than as a second workout scheduled after it.
+nonisolated enum CardioMachine: String, CaseIterable, Identifiable, Hashable, Codable, Sendable {
+    case treadmill
+    case stationaryBike = "stationary_bike"
+    case stairMaster = "stair_master"
+    case elliptical
+    case rowingMachine = "rowing_machine"
+    case assaultBike = "assault_bike"
+    case skiErg = "ski_erg"
+    case other
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .treadmill: return "Treadmill"
+        case .stationaryBike: return "Bike"
+        case .stairMaster: return "Stair Master"
+        case .elliptical: return "Elliptical"
+        case .rowingMachine: return "Rower"
+        case .assaultBike: return "Assault Bike"
+        case .skiErg: return "Ski Erg"
+        case .other: return "Other"
+        }
+    }
+
+    var symbolName: String {
+        switch self {
+        case .treadmill: return "figure.run.treadmill"
+        case .stationaryBike, .assaultBike: return "figure.indoor.cycle"
+        case .stairMaster: return "figure.stair.stepper"
+        case .elliptical: return "figure.elliptical"
+        case .rowingMachine: return "figure.indoor.rowing"
+        case .skiErg: return "figure.skiing.crosscountry"
+        case .other: return "figure.mixed.cardio"
+        }
+    }
+}
+
 /// A single exercise within a workout (e.g. "Bench Press"), with a target
 /// number of sets. Reps and weight are logged per-session later, not here.
 nonisolated struct Exercise: Identifiable, Hashable, Codable, Sendable {
@@ -93,6 +135,10 @@ nonisolated struct Workout: Identifiable, Hashable, Codable, Sendable {
     var name: String
     /// Mirrors the API `workout_type`; existing records default to lifting.
     var type: WorkoutType
+    /// Optional cardio to finish on. Part of this workout, not a second one.
+    var cardioMachine: CardioMachine?
+    /// How long the finisher is meant to last, if a target was set.
+    var cardioTargetMinutes: Int?
     /// The exercises that make up this workout, in order.
     var exercises: [Exercise]
 
@@ -103,6 +149,8 @@ nonisolated struct Workout: Identifiable, Hashable, Codable, Sendable {
         scheduledDate: String? = nil,
         name: String,
         type: WorkoutType = .lifting,
+        cardioMachine: CardioMachine? = nil,
+        cardioTargetMinutes: Int? = nil,
         exercises: [Exercise] = []
     ) {
         self.id = id
@@ -111,8 +159,13 @@ nonisolated struct Workout: Identifiable, Hashable, Codable, Sendable {
         self.scheduledDate = scheduledDate
         self.name = name
         self.type = type
+        self.cardioMachine = cardioMachine
+        self.cardioTargetMinutes = cardioTargetMinutes
         self.exercises = exercises
     }
+
+    /// Whether this workout ends with cardio on a machine.
+    var hasCardioFinisher: Bool { cardioMachine != nil }
 
     /// Total number of sets across all exercises.
     var totalSets: Int { exercises.reduce(0) { $0 + $1.sets } }

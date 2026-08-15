@@ -6,6 +6,9 @@
 //
 
 import Foundation
+// Needed to build the null half of a nullable enum field, whose generated
+// type is an OpenAPIRuntime value container.
+import OpenAPIRuntime
 import RepbaseAPI
 
 actor WorkoutAPIRepository {
@@ -66,6 +69,8 @@ actor WorkoutAPIRepository {
                     scheduledDate: schedule.scheduledDate,
                     name: template.name,
                     type: Self.workoutType(from: template.workoutType),
+                    cardioMachine: Self.cardioMachine(from: template.cardioMachine),
+                    cardioTargetMinutes: template.cardioTargetMinutes.map(Int.init),
                     exercises: exercises
                 )
             )
@@ -131,7 +136,12 @@ actor WorkoutAPIRepository {
             body: .json(
                 Components.Schemas.WorkoutTemplateRequest(
                     name: draft.name,
-                    workoutType: Self.workoutTypePayload(draft.type)
+                    workoutType: Self.workoutTypePayload(draft.type),
+                    cardioMachine: draft.cardioMachine
+                        .flatMap(Self.cardioEnum)
+                        .map { .CardioMachineEnum($0) }
+                        ?? .NullEnum(.init()),
+                    cardioTargetMinutes: draft.cardioTargetMinutes.map(Int64.init)
                 )
             )
         )
@@ -215,7 +225,12 @@ actor WorkoutAPIRepository {
             body: .json(
                 Components.Schemas.PatchedWorkoutTemplateRequest(
                     name: draft.name,
-                    workoutType: Self.workoutTypePayload(draft.type)
+                    workoutType: Self.workoutTypePayload(draft.type),
+                    cardioMachine: draft.cardioMachine
+                        .flatMap(Self.cardioEnum)
+                        .map { .CardioMachineEnum($0) }
+                        ?? .NullEnum(.init()),
+                    cardioTargetMinutes: draft.cardioTargetMinutes.map(Int64.init)
                 )
             )
         )
@@ -582,6 +597,44 @@ actor WorkoutAPIRepository {
         )
     }
 
+    /// Records the cardio finisher performed after a session's exercises.
+    ///
+    /// Written onto the session that just finished rather than starting a new
+    /// one, because a workout and the cardio after it are one training session.
+    func recordCardio(
+        sessionID: Int,
+        machine: CardioMachine,
+        seconds: Int,
+        distanceKilometers: Double?
+    ) async throws {
+        // The request body declares its own enum for this field, distinct from
+        // the one on the workout and session schemas.
+        guard let machineValue = Components.Schemas.MachineEnum(
+            rawValue: machine.rawValue
+        ) else {
+            throw APIServiceError.malformedResponse
+        }
+
+        let output = try await client.sessionsCardioCreate(
+            path: .init(id: sessionID),
+            body: .json(
+                Components.Schemas.SessionCardioRequest(
+                    machine: machineValue,
+                    seconds: seconds,
+                    distanceKm: distanceKilometers.map {
+                        String(format: "%.3f", $0)
+                    }
+                )
+            )
+        )
+        switch output {
+        case .ok:
+            return
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
     /// Records set during a session, as judged by the backend against every
     /// set logged before it.
     func personalRecords(sessionID: Int) async throws -> [PersonalRecord] {
@@ -824,6 +877,25 @@ actor WorkoutAPIRepository {
         case .biking: return .biking
         case .swimming: return .swimming
         }
+    }
+
+    /// Reads a cardio finisher. Null means the workout ends with its exercises.
+    private static func cardioMachine(
+        from payload: Components.Schemas.WorkoutTemplate.CardioMachinePayload?
+    ) -> CardioMachine? {
+        guard let payload else { return nil }
+        switch payload {
+        case .CardioMachineEnum(let value):
+            return CardioMachine(rawValue: value.rawValue)
+        case .NullEnum:
+            return nil
+        }
+    }
+
+    private static func cardioEnum(
+        _ machine: CardioMachine
+    ) -> Components.Schemas.CardioMachineEnum? {
+        Components.Schemas.CardioMachineEnum(rawValue: machine.rawValue)
     }
 
     private static func workoutTypePayload(

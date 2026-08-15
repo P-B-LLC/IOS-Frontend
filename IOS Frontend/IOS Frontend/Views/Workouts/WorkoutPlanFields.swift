@@ -33,6 +33,7 @@ struct WorkoutPlanFields: View {
                 distanceCard
             } else {
                 exerciseSection
+                cardioFinisherCard
             }
         }
     }
@@ -163,6 +164,112 @@ struct WorkoutPlanFields: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .workoutCard()
+    }
+
+    /// Optional cardio to finish the workout on. Part of this workout, so it
+    /// is planned here rather than scheduled as a second workout.
+    private var cardioFinisherCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Label("Finish With Cardio", systemImage: "figure.mixed.cardio")
+                    .font(.subheadline.weight(.semibold))
+                Spacer()
+                if draft.cardioMachine != nil {
+                    Button("Remove") {
+                        withAnimation(.snappy) {
+                            draft.cardioMachine = nil
+                            draft.cardioTargetMinutes = nil
+                        }
+                    }
+                    .font(.caption.weight(.semibold))
+                }
+            }
+
+            Text("Optional. Added to the end of this workout — you start it from the summary when you finish lifting.")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+
+            ScrollView(.horizontal) {
+                HStack(spacing: 7) {
+                    ForEach(CardioMachine.allCases) { machine in
+                        let isSelected = draft.cardioMachine == machine
+                        Button {
+                            withAnimation(.snappy) {
+                                draft.cardioMachine = isSelected ? nil : machine
+                            }
+                        } label: {
+                            VStack(spacing: 5) {
+                                Image(systemName: machine.symbolName)
+                                    .font(.title3)
+                                Text(machine.title)
+                                    .font(.caption2.weight(.medium))
+                                    .lineLimit(1)
+                            }
+                            .frame(width: 78)
+                            .padding(.vertical, 10)
+                            .foregroundStyle(
+                                isSelected
+                                    ? WorkoutVisualPhase.prepare.accent
+                                    : Color.secondary
+                            )
+                            .background(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .fill(
+                                        isSelected
+                                            ? WorkoutVisualPhase.prepare.accent.opacity(0.14)
+                                            : Color.primary.opacity(0.045)
+                                    )
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .strokeBorder(
+                                        WorkoutVisualPhase.prepare.accent,
+                                        lineWidth: isSelected ? 1.5 : 0
+                                    )
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(machine.title)
+                        .accessibilityAddTraits(
+                            isSelected ? [.isButton, .isSelected] : .isButton
+                        )
+                    }
+                }
+            }
+            .scrollIndicators(.hidden)
+
+            if draft.cardioMachine != nil {
+                HStack {
+                    Text("Target")
+                        .font(.caption.weight(.medium))
+                    Spacer()
+                    Button {
+                        draft.cardioTargetMinutes = max(
+                            5,
+                            (draft.cardioTargetMinutes ?? 15) - 5
+                        )
+                    } label: {
+                        Image(systemName: "minus").frame(width: 28, height: 28)
+                    }
+                    .buttonStyle(.bordered)
+
+                    Text("\(draft.cardioTargetMinutes ?? 15) min")
+                        .font(.subheadline.weight(.semibold).monospacedDigit())
+                        .frame(minWidth: 62)
+
+                    Button {
+                        draft.cardioTargetMinutes = min(
+                            120,
+                            (draft.cardioTargetMinutes ?? 15) + 5
+                        )
+                    } label: {
+                        Image(systemName: "plus").frame(width: 28, height: 28)
+                    }
+                    .buttonStyle(.bordered)
+                }
+            }
+        }
         .workoutCard()
     }
 
