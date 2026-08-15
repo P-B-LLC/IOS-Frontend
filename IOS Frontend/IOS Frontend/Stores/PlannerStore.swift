@@ -147,6 +147,9 @@ final class PlannerStore {
         guard !draft.title.isEmpty else { return }
         // An event is not something to finish, so it never carries completion.
         if !draft.isCompletable { draft.isComplete = false }
+        // Tasks and events draw from different halves of the category list.
+        // The server refuses a mismatch, so never send it one.
+        if !draft.category.suits(draft.kind) { draft.category = .other }
         // Only a workout task points at a workout; changing the category away
         // from workout must not leave the link dangling behind it.
         if draft.category != .workout { draft.workoutID = nil }
@@ -300,7 +303,11 @@ extension PlannerStore {
             ),
             PlannerEntry(
                 serverID: 2, kind: .event, title: "Zoom team meeting",
-                category: .work, date: day(0), time: "10:00:00"
+                category: .meeting, date: day(0), time: "10:00:00"
+            ),
+            PlannerEntry(
+                serverID: 10, kind: .event, title: "Sophie's birthday",
+                category: .birthday, date: day(0)
             ),
             PlannerEntry(
                 serverID: 3, kind: .task, title: "Push Day",
@@ -326,11 +333,19 @@ extension PlannerStore {
             ),
             PlannerEntry(
                 serverID: 8, kind: .event, title: "Dentist",
-                category: .health, date: day(2), time: "08:15:00"
+                category: .appointment, date: day(2), time: "08:15:00"
             ),
             PlannerEntry(
                 serverID: 9, kind: .task, title: "Change the bed",
                 category: .home, date: day(4)
+            ),
+            PlannerEntry(
+                serverID: 11, kind: .event, title: "Bank holiday",
+                category: .holiday, date: day(5)
+            ),
+            PlannerEntry(
+                serverID: 12, kind: .event, title: "Flight to Lisbon",
+                category: .travel, date: day(6), time: "06:40:00"
             ),
         ]
         store.entriesByDate = Dictionary(grouping: samples, by: \.date)

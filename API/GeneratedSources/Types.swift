@@ -1381,6 +1381,12 @@ public enum Components {
         /// * `health` - Health
         /// * `work` - Work
         /// * `home` - Home
+        /// * `birthday` - Birthday
+        /// * `holiday` - Holiday
+        /// * `appointment` - Appointment
+        /// * `meeting` - Meeting
+        /// * `travel` - Travel
+        /// * `social` - Social
         /// * `other` - Other
         ///
         /// - Remark: Generated from `#/components/schemas/CategoryEnum`.
@@ -1393,6 +1399,12 @@ public enum Components {
             case health = "health"
             case work = "work"
             case home = "home"
+            case birthday = "birthday"
+            case holiday = "holiday"
+            case appointment = "appointment"
+            case meeting = "meeting"
+            case travel = "travel"
+            case social = "social"
             case other = "other"
         }
         /// - Remark: Generated from `#/components/schemas/Exercise`.
@@ -6644,13 +6656,19 @@ public enum Operations {
             public struct Query: Sendable, Hashable {
                 /// - Remark: Generated from `#/paths/api/v1/planner/GET/query/category`.
                 @frozen public enum CategoryPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case appointment = "appointment"
+                    case birthday = "birthday"
                     case errand = "errand"
                     case habit = "habit"
                     case health = "health"
+                    case holiday = "holiday"
                     case home = "home"
+                    case meeting = "meeting"
                     case other = "other"
                     case sleep = "sleep"
+                    case social = "social"
                     case study = "study"
+                    case travel = "travel"
                     case work = "work"
                     case workout = "workout"
                 }

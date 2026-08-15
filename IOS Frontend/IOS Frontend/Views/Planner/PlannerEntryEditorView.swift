@@ -109,6 +109,14 @@ struct PlannerEntryEditorView: View {
                 }
             }
             .pickerStyle(.segmented)
+            .onChange(of: draft.kind) { _, newKind in
+                // The two kinds draw from different halves of the category
+                // list, so switching can strand the one already chosen. Fall
+                // back to Other, which both share, rather than sending the
+                // server something it will refuse.
+                guard !draft.category.suits(newKind) else { return }
+                draft.category = .other
+            }
         } footer: {
             Text(
                 draft.kind == .task
@@ -120,8 +128,10 @@ struct PlannerEntryEditorView: View {
 
     private var categorySection: some View {
         Section("Category") {
+            // Only the half that fits what is being planned. A birthday is not
+            // something to tick off, and a habit is not an occasion.
             Picker("Category", selection: $draft.category) {
-                ForEach(PlannerCategory.allCases) { category in
+                ForEach(PlannerCategory.available(for: draft.kind)) { category in
                     Label(category.title, systemImage: category.symbolName)
                         .tag(category)
                 }
@@ -189,6 +199,7 @@ struct PlannerEntryEditorView: View {
         saved.date = PlannerStore.dateString(date)
         saved.time = hasTime ? Self.timeString(from: time) : nil
         if saved.kind == .event { saved.isComplete = false }
+        if !saved.category.suits(saved.kind) { saved.category = .other }
         if saved.category != .workout { saved.workoutID = nil }
         onSaved?(saved)
         dismiss()
