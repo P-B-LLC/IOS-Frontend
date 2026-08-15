@@ -9,7 +9,10 @@ import SwiftUI
 
 struct WorkoutsView: View {
     @Environment(WorkoutStore.self) private var store
-    private let phase = WorkoutVisualPhase.prepare
+
+    private var phase: WorkoutVisualPhase {
+        store.activeSession == nil ? .prepare : .focus
+    }
 
     var body: some View {
         ScrollView {
@@ -31,13 +34,10 @@ struct WorkoutsView: View {
                     weeklySummary
                 }
             }
-            .padding(.horizontal)
+            .padding(.horizontal, 20)
             .padding(.vertical, 12)
         }
-        .background { WorkoutPhaseBackground(phase: phase) }
-        .workoutVisualPhase(phase)
-        .tint(phase.accent)
-        .preferredColorScheme(.light)
+        .repbaseScreen(phase)
         .navigationTitle("Workouts")
     }
 

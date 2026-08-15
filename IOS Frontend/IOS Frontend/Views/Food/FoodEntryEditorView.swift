@@ -10,6 +10,7 @@ import SwiftUI
 struct FoodEntryEditorView: View {
     @Environment(FoodTrackingStore.self) private var store
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.workoutVisualPhase) private var phase
 
     let date: Date
     let mealID: FoodMeal.ID
@@ -91,6 +92,7 @@ struct FoodEntryEditorView: View {
                     .disabled(!isValid)
             }
         }
+        .repbaseScreen(phase)
     }
 
     private var isValid: Bool {

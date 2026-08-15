@@ -53,7 +53,7 @@ private struct AppRootView: View {
                         FoodSummaryWidget()
                             .padding()
                     }
-                    .background(Color(uiColor: .systemGroupedBackground))
+                    .repbaseScreen(.prepare)
                     .navigationTitle("Home")
                 }
             } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] != nil {
@@ -104,6 +104,8 @@ private struct AppRootView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .repbaseScreen(.prepare)
             case .signedOut:
                 AuthenticationView()
             case .signedIn:

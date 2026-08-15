@@ -80,9 +80,7 @@ struct WorkoutEditorView: View {
                 }
                 .padding()
             }
-            .background { WorkoutPhaseBackground(phase: .prepare) }
-            .workoutVisualPhase(.prepare)
-            .tint(WorkoutVisualPhase.prepare.accent)
+            .repbaseScreen(.prepare)
             .navigationTitle(isCreate ? "New Workout" : "Edit Workout")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

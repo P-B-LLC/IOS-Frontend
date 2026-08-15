@@ -9,6 +9,7 @@ import SwiftUI
 
 struct FoodSummaryWidget: View {
     @Environment(FoodTrackingStore.self) private var store
+    @Environment(\.workoutVisualPhase) private var phase
 
     var body: some View {
         NavigationLink {
@@ -18,7 +19,7 @@ struct FoodSummaryWidget: View {
                 HStack(spacing: 8) {
                     Image(systemName: "fork.knife")
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(Color.orange)
+                        .foregroundStyle(phase.accent)
                     Text("Food Today")
                         .font(.footnote.weight(.semibold))
                     Spacer()
@@ -53,26 +54,22 @@ struct FoodSummaryWidget: View {
                 }
             }
             .padding(12)
-            .background(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(Color(uiColor: .secondarySystemBackground))
-                    .shadow(color: .black.opacity(0.035), radius: 6, y: 2)
-            )
+            .repbaseCard(contentPadding: 0, cornerRadius: 17)
             .overlay {
                 ZStack {
-                    FoodWidgetProgressBorder(cornerRadius: 18)
+                    FoodWidgetProgressBorder(cornerRadius: 17)
                         .stroke(
-                            Color.orange.opacity(0.14),
+                            phase.accent.opacity(0.14),
                             style: StrokeStyle(lineWidth: 4, lineCap: .round)
                         )
 
-                    FoodWidgetProgressBorder(cornerRadius: 18)
+                    FoodWidgetProgressBorder(cornerRadius: 17)
                         .trim(from: 0, to: calorieProgress)
                         .stroke(
-                            Color.orange,
+                            phase.accent,
                             style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round)
                         )
-                        .shadow(color: Color.orange.opacity(0.24), radius: 3)
+                        .shadow(color: phase.accent.opacity(0.24), radius: 3)
                         .animation(.easeInOut(duration: 0.55), value: calorieProgress)
                 }
                 .padding(2)
@@ -147,6 +144,8 @@ private struct FoodWidgetProgressBorder: Shape {
 }
 
 private struct HomeCalorieTotal: View {
+    @Environment(\.workoutVisualPhase) private var phase
+
     let value: Decimal
     let goal: Decimal
 
@@ -161,11 +160,11 @@ private struct HomeCalorieTotal: View {
                 .foregroundStyle(.secondary)
             Text("CALORIES")
                 .font(.system(size: 9, weight: .bold))
-                .foregroundStyle(Color.orange)
+                .foregroundStyle(phase.accent)
         }
         .frame(maxWidth: .infinity, minHeight: 62, alignment: .center)
         .padding(.horizontal, 7)
-        .background(Color.orange.opacity(0.055), in: RoundedRectangle(cornerRadius: 13))
+        .background(phase.accent.opacity(0.055), in: RoundedRectangle(cornerRadius: 13))
     }
 }
 

@@ -30,10 +30,10 @@ struct AuthenticationView: View {
                     VStack(spacing: 10) {
                         Image(systemName: "figure.strengthtraining.traditional")
                             .font(.system(size: 40, weight: .semibold))
-                            .foregroundStyle(Color.accentColor)
+                            .foregroundStyle(WorkoutVisualPhase.prepare.accent)
                             .frame(width: 82, height: 82)
                             .background(
-                                Color.accentColor.opacity(0.12),
+                                WorkoutVisualPhase.prepare.accent.opacity(0.12),
                                 in: RoundedRectangle(cornerRadius: 24)
                             )
                         Text("Repbase")
@@ -113,8 +113,7 @@ struct AuthenticationView: View {
                         }
                         .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
+                    .buttonStyle(WorkoutPrimaryButtonStyle(phase: .prepare))
                     .disabled(!canSubmit || authentication.isWorking)
 
 #if DEBUG
@@ -130,7 +129,7 @@ struct AuthenticationView: View {
                 .frame(maxWidth: 520)
                 .frame(maxWidth: .infinity)
             }
-            .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
+            .repbaseScreen(.prepare)
         }
     }
 
@@ -167,7 +166,7 @@ struct AuthenticationView: View {
 private extension View {
     func authenticationField() -> some View {
         padding(13)
-            .background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 12))
+            .repbaseControlSurface(cornerRadius: 12)
     }
 }
 

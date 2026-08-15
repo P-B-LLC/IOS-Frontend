@@ -10,6 +10,7 @@ import SwiftUI
 struct NutritionGoalsView: View {
     @Environment(FoodTrackingStore.self) private var store
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.workoutVisualPhase) private var phase
 
     @State private var calories = ""
     @State private var protein = ""
@@ -47,6 +48,7 @@ struct NutritionGoalsView: View {
                 carbohydrates = store.goals.carbohydrateGrams.nutritionText
                 fat = store.goals.fatGrams.nutritionText
             }
+            .repbaseScreen(phase)
         }
     }
 

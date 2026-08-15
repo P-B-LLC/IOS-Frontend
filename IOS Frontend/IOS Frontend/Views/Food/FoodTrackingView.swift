@@ -9,6 +9,7 @@ import SwiftUI
 
 struct FoodTrackingView: View {
     @Environment(FoodTrackingStore.self) private var store
+    @Environment(\.workoutVisualPhase) private var phase
     @State private var selectedDate = Date()
     @State private var isEditingGoals = false
     @State private var isShowingSavedMeals = false
@@ -29,7 +30,7 @@ struct FoodTrackingView: View {
             .padding(.horizontal)
             .padding(.vertical, 8)
         }
-        .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
+        .repbaseScreen(phase)
         .navigationTitle("Food Tracking")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -129,14 +130,7 @@ struct FoodTrackingView: View {
             }
         }
         .padding(11)
-        .background(
-            Color(uiColor: .secondarySystemGroupedBackground),
-            in: RoundedRectangle(cornerRadius: 16)
-        )
-        .overlay {
-            RoundedRectangle(cornerRadius: 16)
-                .strokeBorder(Color.primary.opacity(0.04), lineWidth: 0.75)
-        }
+        .repbaseCard(contentPadding: 0, cornerRadius: 16)
     }
 
     private var dailySummary: some View {
@@ -398,16 +392,7 @@ private struct MealRow: View {
 
 extension View {
     func foodCard() -> some View {
-        padding(12)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(uiColor: .secondarySystemGroupedBackground))
-                    .shadow(color: .black.opacity(0.03), radius: 5, y: 1)
-            )
-            .overlay {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(Color.primary.opacity(0.04), lineWidth: 0.75)
-            }
+        repbaseCard(contentPadding: 12, cornerRadius: 16)
     }
 }
 

@@ -45,14 +45,12 @@ struct ContentView: View {
 
                     WeeklyScheduleWidget()
                     FoodSummaryWidget()
+                        .padding(.horizontal, 9)
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, 20)
                 .padding(.top, 8)
             }
-            .background { WorkoutPhaseBackground(phase: visualPhase) }
-            .workoutVisualPhase(visualPhase)
-            .tint(visualPhase.accent)
-            .preferredColorScheme(visualPhase.usesDarkAppearance ? .dark : .light)
+            .repbaseScreen(visualPhase)
             .navigationTitle("Home")
             .overlay {
                 if workoutStore.isLoading {

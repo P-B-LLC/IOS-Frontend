@@ -22,9 +22,17 @@ enum WorkoutVisualPhase: Sendable, Equatable {
 
     var canvasEnd: Color {
         switch self {
-        case .prepare: Color(hex: 0xEEDBD1)
+        case .prepare: Color(hex: 0xE8D4CA)
         case .focus: Color(hex: 0x080607)
         case .recover: Color(hex: 0xD9E7E0)
+        }
+    }
+
+    var canvasMiddle: Color {
+        switch self {
+        case .prepare: Color(hex: 0xF4F0EF)
+        case .focus: Color(hex: 0x161012)
+        case .recover: Color(hex: 0xE8F0EC)
         }
     }
 
@@ -118,18 +126,14 @@ struct WorkoutPhaseBackground: View {
 
     var body: some View {
         LinearGradient(
-            colors: [phase.canvasStart, phase.canvasEnd],
+            gradient: Gradient(stops: [
+                .init(color: phase.canvasStart, location: 0),
+                .init(color: phase.canvasMiddle, location: 0.56),
+                .init(color: phase.canvasEnd, location: 1)
+            ]),
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
-        .overlay(alignment: .bottomLeading) {
-            RadialGradient(
-                colors: [phase.accent.opacity(phase == .focus ? 0.20 : 0.16), .clear],
-                center: .bottomLeading,
-                startRadius: 0,
-                endRadius: 330
-            )
-        }
         .ignoresSafeArea()
     }
 }
@@ -154,15 +158,31 @@ struct WorkoutHeroBackground: View {
     }
 }
 
-private struct WorkoutCardModifier: ViewModifier {
-    @Environment(\.workoutVisualPhase) private var phase
+private struct RepbaseScreenModifier: ViewModifier {
+    let phase: WorkoutVisualPhase
 
     func body(content: Content) -> some View {
         content
-            .padding(16)
+            .scrollContentBackground(.hidden)
+            .foregroundStyle(phase.primaryText)
+            .background { WorkoutPhaseBackground(phase: phase) }
+            .workoutVisualPhase(phase)
+            .tint(phase.accent)
+            .preferredColorScheme(phase.usesDarkAppearance ? .dark : .light)
+    }
+}
+
+private struct RepbaseCardModifier: ViewModifier {
+    @Environment(\.workoutVisualPhase) private var phase
+    let contentPadding: CGFloat
+    let cornerRadius: CGFloat
+
+    func body(content: Content) -> some View {
+        content
+            .padding(contentPadding)
             .foregroundStyle(phase.primaryText)
             .background {
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .fill(
                         LinearGradient(
                             colors: [phase.surfaceStart, phase.surfaceEnd],
@@ -173,7 +193,7 @@ private struct WorkoutCardModifier: ViewModifier {
                     .shadow(color: phase.shadow, radius: phase == .focus ? 16 : 12, x: 5, y: 8)
             }
             .overlay {
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .strokeBorder(
                         phase == .focus ? Color.white.opacity(0.16) : Color.white.opacity(0.72),
                         lineWidth: 1
@@ -182,7 +202,36 @@ private struct WorkoutCardModifier: ViewModifier {
     }
 }
 
+private struct RepbaseControlSurfaceModifier: ViewModifier {
+    @Environment(\.workoutVisualPhase) private var phase
+    let cornerRadius: CGFloat
+
+    func body(content: Content) -> some View {
+        content
+            .background {
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [phase.surfaceStart, phase.surfaceEnd.opacity(0.82)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .shadow(color: phase.shadow.opacity(0.55), radius: 5, x: 2, y: 3)
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .strokeBorder(
+                        phase == .focus ? Color.white.opacity(0.12) : Color.white.opacity(0.64),
+                        lineWidth: 0.75
+                    )
+            }
+    }
+}
+
 struct WorkoutPrimaryButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
     let phase: WorkoutVisualPhase
 
     func makeBody(configuration: Configuration) -> some View {
@@ -206,7 +255,7 @@ struct WorkoutPrimaryButtonStyle: ButtonStyle {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .strokeBorder(Color.white.opacity(0.28), lineWidth: 1)
             }
-            .opacity(configuration.isPressed ? 0.78 : 1)
+            .opacity(isEnabled ? (configuration.isPressed ? 0.78 : 1) : 0.45)
             .scaleEffect(configuration.isPressed ? 0.985 : 1)
             .animation(.easeOut(duration: 0.14), value: configuration.isPressed)
     }
@@ -214,7 +263,24 @@ struct WorkoutPrimaryButtonStyle: ButtonStyle {
 
 extension View {
     func workoutCard() -> some View {
-        modifier(WorkoutCardModifier())
+        repbaseCard(contentPadding: 16, cornerRadius: 17)
+    }
+
+    func repbaseCard(contentPadding: CGFloat = 12, cornerRadius: CGFloat = 16) -> some View {
+        modifier(
+            RepbaseCardModifier(
+                contentPadding: contentPadding,
+                cornerRadius: cornerRadius
+            )
+        )
+    }
+
+    func repbaseScreen(_ phase: WorkoutVisualPhase) -> some View {
+        modifier(RepbaseScreenModifier(phase: phase))
+    }
+
+    func repbaseControlSurface(cornerRadius: CGFloat = 12) -> some View {
+        modifier(RepbaseControlSurfaceModifier(cornerRadius: cornerRadius))
     }
 
     func workoutVisualPhase(_ phase: WorkoutVisualPhase) -> some View {

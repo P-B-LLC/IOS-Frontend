@@ -12,6 +12,7 @@ import SwiftUI
 /// the header opens the full weekly dashboard.
 struct WeeklyScheduleWidget: View {
     @Environment(WorkoutStore.self) private var store
+    @Environment(\.workoutVisualPhase) private var phase
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -33,16 +34,7 @@ struct WeeklyScheduleWidget: View {
                 }
             }
         }
-        .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(uiColor: .secondarySystemBackground))
-                .shadow(color: .black.opacity(0.06), radius: 8, y: 3)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .strokeBorder(Color.primary.opacity(0.06), lineWidth: 1)
-        )
+        .repbaseCard(contentPadding: 14, cornerRadius: 17)
     }
 
     private var header: some View {
@@ -52,7 +44,7 @@ struct WeeklyScheduleWidget: View {
             HStack(spacing: 8) {
                 Image(systemName: "calendar")
                     .font(.subheadline)
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundStyle(phase.accent)
                 Text("This Week")
                     .font(.subheadline.weight(.semibold))
                 Spacer()
@@ -74,7 +66,7 @@ struct WeeklyScheduleWidget: View {
                 .padding()
             Spacer()
         }
-        .background(Color(uiColor: .systemGroupedBackground))
+        .repbaseScreen(.prepare)
     }
     .environment(WorkoutStore.preview)
 }

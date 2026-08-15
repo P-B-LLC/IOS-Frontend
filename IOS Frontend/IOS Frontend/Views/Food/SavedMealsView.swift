@@ -11,6 +11,7 @@ import SwiftUI
 struct SavedMealsView: View {
     @Environment(FoodTrackingStore.self) private var store
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.workoutVisualPhase) private var phase
 
     let referenceDate: Date
 
@@ -54,6 +55,7 @@ struct SavedMealsView: View {
                 }
             }
         }
+        .repbaseScreen(phase)
         .navigationTitle("Saved Meals")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -126,6 +128,7 @@ private struct SavedMealRow: View {
 private struct SavedMealEditorView: View {
     @Environment(FoodTrackingStore.self) private var store
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.workoutVisualPhase) private var phase
 
     @State private var draft: SavedFoodMeal
     @State private var isAddingIngredient = false
@@ -200,6 +203,7 @@ private struct SavedMealEditorView: View {
                 .disabled(!isValid)
             }
         }
+        .repbaseScreen(phase)
         .sheet(isPresented: $isAddingIngredient) {
             NavigationStack {
                 RecipeIngredientEditorView { ingredient in
@@ -277,6 +281,7 @@ private struct NutritionTotalRow: View {
 
 private struct RecipeIngredientEditorView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.workoutVisualPhase) private var phase
 
     private let ingredientID: FoodEntry.ID
     private let onSave: (FoodEntry) -> Void
@@ -324,6 +329,7 @@ private struct RecipeIngredientEditorView: View {
                     .disabled(!isValid)
             }
         }
+        .repbaseScreen(phase)
     }
 
     private var isValid: Bool {
@@ -378,6 +384,7 @@ private struct RecipeIngredientEditorView: View {
 private struct ApplySavedMealView: View {
     @Environment(FoodTrackingStore.self) private var store
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.workoutVisualPhase) private var phase
 
     let savedMeal: SavedFoodMeal
     let referenceDate: Date
@@ -454,6 +461,7 @@ private struct ApplySavedMealView: View {
                 .disabled(selectedDates.isEmpty)
             }
         }
+        .repbaseScreen(phase)
     }
 
     private var weekDates: [Date] {

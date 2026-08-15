@@ -500,5 +500,5 @@ private struct MacroSourceRow: View {
         NutritionBreakdownView(meals: store.meals(on: Date()))
             .padding()
     }
-    .background(Color(uiColor: .systemGroupedBackground))
+    .repbaseScreen(.prepare)
 }

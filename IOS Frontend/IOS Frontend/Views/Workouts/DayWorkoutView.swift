@@ -117,10 +117,7 @@ struct DayWorkoutView: View {
                 .padding(.horizontal)
                 .padding(.vertical, 12)
         }
-        .background { WorkoutPhaseBackground(phase: visualPhase) }
-        .workoutVisualPhase(visualPhase)
-        .tint(visualPhase.accent)
-        .preferredColorScheme(visualPhase.usesDarkAppearance ? .dark : .light)
+        .repbaseScreen(visualPhase)
         .toolbar(visualPhase == .prepare ? .visible : .hidden, for: .navigationBar)
         .navigationTitle(day.fullName)
         .navigationBarTitleDisplayMode(.inline)

@@ -9,6 +9,7 @@ import SwiftUI
 
 struct MealDetailView: View {
     @Environment(FoodTrackingStore.self) private var store
+    @Environment(\.workoutVisualPhase) private var phase
     @Environment(\.dismiss) private var dismiss
 
     let date: Date
@@ -38,7 +39,7 @@ struct MealDetailView: View {
                     .padding(.horizontal)
                     .padding(.vertical, 12)
                 }
-                .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
+                .repbaseScreen(phase)
                 .navigationTitle(meal.name)
                 .toolbar { mealToolbar(meal) }
             } else {
@@ -152,7 +153,7 @@ struct MealDetailView: View {
         }
         .buttonStyle(.borderedProminent)
         .controlSize(.large)
-        .tint(Color.orange)
+        .tint(phase.accent)
     }
 
     @ToolbarContentBuilder

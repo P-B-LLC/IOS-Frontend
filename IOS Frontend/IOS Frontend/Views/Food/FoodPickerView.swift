@@ -11,6 +11,7 @@ import SwiftUI
 struct FoodPickerView: View {
     @Environment(FoodTrackingStore.self) private var store
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.workoutVisualPhase) private var phase
 
     let date: Date
     let mealID: FoodMeal.ID
@@ -31,6 +32,7 @@ struct FoodPickerView: View {
                 Button("Cancel") { dismiss() }
             }
         }
+        .repbaseScreen(phase)
     }
 
     // MARK: - Sections

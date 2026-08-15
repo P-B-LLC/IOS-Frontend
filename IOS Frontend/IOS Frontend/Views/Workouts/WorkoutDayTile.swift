@@ -9,6 +9,8 @@ import SwiftUI
 
 /// A compact, glanceable entry point into one day's workout workspace.
 struct WorkoutDayTile: View {
+    @Environment(\.workoutVisualPhase) private var phase
+
     let day: Weekday
     let workout: Workout?
     let isToday: Bool
@@ -18,27 +20,41 @@ struct WorkoutDayTile: View {
 
     var body: some View {
         VStack(spacing: 6) {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(tileFill)
-                .aspectRatio(1, contentMode: .fit)
-                .overlay {
-                    VStack(spacing: 3) {
-                        if isSessionActive {
-                            Image(systemName: "bolt.fill")
-                                .font(.caption2.weight(.bold))
-                                .foregroundStyle(WorkoutVisualPhase.focus.accent)
-                        }
+            ZStack {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(phase.shadow)
+                    .offset(y: 3)
 
-                        Text(workout?.name ?? "Add")
-                            .font(.caption2)
-                            .fontWeight(workout == nil ? .regular : .semibold)
-                            .multilineTextAlignment(.center)
-                            .lineLimit(2)
-                            .minimumScaleFactor(0.55)
-                            .foregroundStyle(workout == nil ? Color.secondary : Color.primary)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(phase.surfaceStart)
+
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(tileFill)
+
+                Capsule()
+                    .fill(Color.white.opacity(phase == .focus ? 0.12 : 0.42))
+                    .frame(maxWidth: 28, maxHeight: 1.5)
+                    .frame(maxHeight: .infinity, alignment: .top)
+                    .padding(.top, 2)
+
+                VStack(spacing: 3) {
+                    if isSessionActive {
+                        Image(systemName: "bolt.fill")
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(WorkoutVisualPhase.focus.accent)
                     }
-                    .padding(4)
+
+                    Text(workout?.name ?? "Add")
+                        .font(.caption2)
+                        .fontWeight(workout == nil ? .regular : .semibold)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.55)
+                        .foregroundStyle(workout == nil ? phase.secondaryText : phase.primaryText)
                 }
+                .padding(4)
+            }
+            .aspectRatio(1, contentMode: .fit)
                 .overlay {
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .strokeBorder(borderColor, lineWidth: isSessionActive ? 2 : 1)
