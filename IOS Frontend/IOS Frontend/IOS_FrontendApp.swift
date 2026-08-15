@@ -11,8 +11,8 @@ import SwiftUI
 @main
 struct IOS_FrontendApp: App {
     @State private var authentication: AuthenticationStore
-    @State private var workoutStore = WorkoutStore()
-    @State private var plannerStore = PlannerStore()
+    @State private var workoutStore: WorkoutStore
+    @State private var plannerStore: PlannerStore
     @State private var foodTrackingStore: FoodTrackingStore
 
     init() {
@@ -25,13 +25,18 @@ struct IOS_FrontendApp: App {
         _foodTrackingStore = State(
             initialValue: isPreviewingFood ? .preview : FoodTrackingStore()
         )
-        let isPreviewingPlanner = ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"] != nil
+        let plannerPreview = ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"]
         _plannerStore = State(
-            initialValue: isPreviewingPlanner ? .preview : PlannerStore()
+            initialValue: plannerPreview != nil ? .preview : PlannerStore()
+        )
+        // The home page draws workouts too, so previewing it needs both.
+        _workoutStore = State(
+            initialValue: plannerPreview == "home" ? .preview : WorkoutStore()
         )
 #else
         _foodTrackingStore = State(initialValue: FoodTrackingStore())
         _plannerStore = State(initialValue: PlannerStore())
+        _workoutStore = State(initialValue: WorkoutStore())
 #endif
     }
 
@@ -78,6 +83,8 @@ private struct AppRootView: View {
                 NavigationStack {
                     FoodTrackingView()
                 }
+            } else if ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"] == "home" {
+                ContentView()
             } else if ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"] == "task-editor" {
                 PlannerEntryEditorView(mode: .create(.task, Date()))
             } else if ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"] == "event-editor" {
