@@ -19,7 +19,6 @@ struct MealDetailView: View {
     @State private var editingFood: FoodEntry?
     @State private var isRenamingMeal = false
     @State private var renamedMeal = ""
-    @State private var confirmsMealRemoval = false
 
     var body: some View {
         Group {
@@ -65,16 +64,6 @@ struct MealDetailView: View {
             Button("Cancel", role: .cancel) { }
             Button("Save") {
                 store.renameMeal(id: mealID, to: renamedMeal, on: date)
-            }
-        }
-        .confirmationDialog(
-            "Remove this meal and all of its foods?",
-            isPresented: $confirmsMealRemoval,
-            titleVisibility: .visible
-        ) {
-            Button("Remove Meal", role: .destructive) {
-                store.removeMeal(id: mealID, on: date)
-                dismiss()
             }
         }
     }
@@ -165,7 +154,8 @@ struct MealDetailView: View {
                     isRenamingMeal = true
                 }
                 Button("Remove Meal", systemImage: "trash", role: .destructive) {
-                    confirmsMealRemoval = true
+                    store.removeMeal(id: mealID, on: date)
+                    dismiss()
                 }
             } label: {
                 Image(systemName: "ellipsis.circle")

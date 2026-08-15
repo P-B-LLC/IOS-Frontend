@@ -14,10 +14,8 @@ struct DayWorkoutView: View {
     @State private var setupDraft = Workout(name: "", exercises: [])
     @State private var editor: WorkoutEditorView.Mode?
     /// The workout awaiting a delete confirmation, if any.
-    @State private var workoutPendingRemoval: Workout?
     /// Which workout page is on screen when a day holds several.
     @State private var visibleWorkoutID: Workout.ID?
-    @State private var showingDiscardConfirmation = false
     @State private var completedSession: CompletedWorkoutSession?
 
     private var workout: Workout? {
@@ -58,38 +56,6 @@ struct DayWorkoutView: View {
             ) { savedWorkout in
                 store.saveWorkout(savedWorkout, on: day)
             }
-        }
-        .confirmationDialog(
-            "Remove \(workoutPendingRemoval?.name ?? "this workout")?",
-            isPresented: Binding(
-                get: { workoutPendingRemoval != nil },
-                set: { if !$0 { workoutPendingRemoval = nil } }
-            ),
-            titleVisibility: .visible
-        ) {
-            Button("Remove from \(day.fullName)", role: .destructive) {
-                if let target = workoutPendingRemoval {
-                    store.removeWorkout(target, on: day)
-                }
-                workoutPendingRemoval = nil
-            }
-            Button("Cancel", role: .cancel) { workoutPendingRemoval = nil }
-        } message: {
-            Text("This unschedules it from \(day.fullName). The workout itself is kept and can be scheduled again.")
-        }
-        .confirmationDialog(
-            "Discard this session?",
-            isPresented: $showingDiscardConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("Discard Session", role: .destructive) {
-                Task {
-                    await store.discardSession(on: day)
-                }
-            }
-            Button("Cancel", role: .cancel) { }
-        } message: {
-            Text("Weight and rep entries from this session will be lost.")
         }
         .overlay {
             if store.isSaving {
@@ -433,8 +399,11 @@ struct DayWorkoutView: View {
 
             repeatToggle(for: workout)
 
+            // Acts straight away. The button says exactly what it does, and it
+            // only unschedules: the workout itself is kept and can be put back
+            // on any day.
             Button(role: .destructive) {
-                workoutPendingRemoval = workout
+                store.removeWorkout(workout, on: day)
             } label: {
                 Label("Remove \(workout.name) from \(day.fullName)", systemImage: "trash")
                     .frame(maxWidth: .infinity)
@@ -643,7 +612,7 @@ struct DayWorkoutView: View {
         return VStack(alignment: .leading, spacing: 18) {
             HStack {
                 Button {
-                    showingDiscardConfirmation = true
+                    Task { await store.discardSession(on: day) }
                 } label: {
                     Image(systemName: "xmark")
                         .font(.subheadline.weight(.bold))
@@ -764,7 +733,7 @@ struct DayWorkoutView: View {
             .disabled(store.isSaving || store.hasPendingSetChanges)
 
             Button(role: .destructive) {
-                showingDiscardConfirmation = true
+                Task { await store.discardSession(on: day) }
             } label: {
                 Text("Discard Session")
                     .frame(maxWidth: .infinity)
