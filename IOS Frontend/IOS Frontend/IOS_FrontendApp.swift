@@ -78,6 +78,13 @@ private struct AppRootView: View {
                 NavigationStack {
                     FoodTrackingView()
                 }
+            } else if ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"] == "task-editor" {
+                PlannerEntryEditorView(mode: .create(.task, Date()))
+            } else if ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"] == "event-editor" {
+                // The editor is only reachable by tapping, and the simulator
+                // cannot be tapped from a script. This is the only way to see
+                // it before it ships.
+                PlannerEntryEditorView(mode: .create(.event, Date()))
             } else if ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"] != nil {
                 NavigationStack {
                     PlannerView()
