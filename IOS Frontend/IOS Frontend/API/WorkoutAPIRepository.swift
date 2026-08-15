@@ -30,9 +30,22 @@ actor WorkoutAPIRepository {
     /// more than one schedule, so each day maps to a list in schedule order
     /// rather than a single workout.
     func loadWeek(dateByDay: [Weekday: String]) async throws -> [Weekday: [Workout]] {
+        // Fill the week in from the user's weekly repeats before reading it, so
+        // a new week arrives already planned rather than empty. The server
+        // leaves finished weeks alone, and adding a day it already planned is a
+        // no-op, so this is safe on every load.
+        if let weekStart = dateByDay[.monday] {
+            try await planWeek(start: weekStart)
+        }
+
         async let schedulesRequest = fetchAllSchedules()
         async let workoutsRequest = fetchAllWorkouts()
-        let (schedules, templates) = try await (schedulesRequest, workoutsRequest)
+        async let recurrencesRequest = fetchAllRecurrences()
+        let (schedules, templates, recurrences) = try await (
+            schedulesRequest,
+            workoutsRequest,
+            recurrencesRequest
+        )
 
         let dayByDate = Dictionary(
             uniqueKeysWithValues: dateByDay.map { ($0.value, $0.key) }
@@ -40,6 +53,14 @@ actor WorkoutAPIRepository {
         let templateByID = Dictionary(
             uniqueKeysWithValues: templates.map { ($0.id, $0) }
         )
+        var recurrenceIDs: [String: Int] = [:]
+        for rule in recurrences {
+            let key = Self.recurrenceKey(
+                workout: rule.workout,
+                weekday: rule.weekday.value1.rawValue
+            )
+            recurrenceIDs[key] = rule.id
+        }
 
         var result: [Weekday: [Workout]] = [:]
         for schedule in schedules.sorted(by: { $0.id < $1.id }) {
@@ -71,11 +92,83 @@ actor WorkoutAPIRepository {
                     type: Self.workoutType(from: template.workoutType),
                     cardioMachine: Self.cardioMachine(from: template.cardioMachine),
                     cardioTargetMinutes: template.cardioTargetMinutes.map(Int.init),
+                    recurrenceID: recurrenceIDs[
+                        Self.recurrenceKey(
+                            workout: template.id,
+                            weekday: day.apiValue
+                        )
+                    ],
                     exercises: exercises
                 )
             )
         }
         return result
+    }
+
+    /// Identifies a repeat by the workout it schedules and the day it lands on,
+    /// which is what the app has in hand when drawing a day.
+    private static func recurrenceKey(workout: Int, weekday: Int) -> String {
+        "\(workout)-\(weekday)"
+    }
+
+    /// Asks the server to turn this week's weekly repeats into scheduled days.
+    private func planWeek(start: String) async throws {
+        let output = try await client.schedulesPlanWeekCreate(
+            body: .json(Components.Schemas.PlanWeekRequest(start: start))
+        )
+        switch output {
+        case .ok:
+            return
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    // MARK: - Weekly repeats
+
+    /// Makes a workout come back on this weekday every week, and returns the
+    /// repeat's identifier.
+    func startRepeating(_ workout: Workout, on day: Weekday) async throws -> Int {
+        guard let templateID = workout.serverID else {
+            throw APIServiceError.missingServerIdentifier("Workout")
+        }
+
+        let output = try await client.recurrencesCreate(
+            body: .json(
+                Components.Schemas.WorkoutRecurrenceRequest(
+                    workout: templateID,
+                    weekday: .init(value1: Self.weekdayPayload(day))
+                )
+            )
+        )
+        switch output {
+        case .created(let response):
+            return try response.body.json.id
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// Stops a weekly repeat. The server clears the weeks it had planned ahead
+    /// and leaves this week, and every finished week, exactly as they are.
+    func stopRepeating(_ workout: Workout) async throws {
+        guard let recurrenceID = workout.recurrenceID else {
+            throw APIServiceError.missingServerIdentifier("Weekly repeat")
+        }
+
+        let output = try await client.recurrencesDestroy(
+            path: .init(id: recurrenceID)
+        )
+        switch output {
+        case .noContent:
+            return
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    private static func weekdayPayload(_ day: Weekday) -> Components.Schemas.WeekdayEnum {
+        Components.Schemas.WeekdayEnum(rawValue: day.apiValue) ?? ._0
     }
 
     // MARK: - Workout planning
@@ -738,6 +831,25 @@ actor WorkoutAPIRepository {
     }
 
     // MARK: - Pagination
+
+    private func fetchAllRecurrences() async throws -> [Components.Schemas.WorkoutRecurrence] {
+        var page: Int?
+        var visited: Set<Int> = []
+        var values: [Components.Schemas.WorkoutRecurrence] = []
+        repeat {
+            let output = try await client.recurrencesList(query: .init(page: page))
+            let response: Components.Schemas.PaginatedWorkoutRecurrenceList
+            switch output {
+            case .ok(let success):
+                response = try success.body.json
+            case .undocumented(let statusCode, _):
+                throw APIServiceError.undocumentedStatus(statusCode)
+            }
+            values.append(contentsOf: response.results)
+            page = try nextPage(response.next, visited: &visited)
+        } while page != nil
+        return values
+    }
 
     private func fetchAllSchedules() async throws -> [Components.Schemas.WorkoutSchedule] {
         var page: Int?

@@ -244,6 +244,51 @@ final class WorkoutStore {
         }
     }
 
+    /// Turns a workout's weekly repeat on or off.
+    ///
+    /// Turning it off leaves this week, and every week already finished, exactly
+    /// as they are: those days are on the calendar and some of them have been
+    /// trained. Only the weeks the repeat had planned ahead are cleared.
+    func setRepeat(_ workout: Workout, on day: Weekday, repeats: Bool) {
+        guard let repository, !isSaving else { return }
+        guard workout.repeatsWeekly != repeats else { return }
+        let generation = connectionGeneration
+        isSaving = true
+        persistenceError = nil
+
+        Task {
+            do {
+                let recurrenceID: Int?
+                if repeats {
+                    recurrenceID = try await repository.startRepeating(
+                        workout,
+                        on: day
+                    )
+                } else {
+                    try await repository.stopRepeating(workout)
+                    recurrenceID = nil
+                }
+                guard connectionGeneration == generation else { return }
+                mutateWorkout(workout, on: day) { $0.recurrenceID = recurrenceID }
+            } catch {
+                guard connectionGeneration == generation else { return }
+                persistenceError = error.localizedDescription
+            }
+            // Cleared unconditionally, for the same reason as the saves above.
+            isSaving = false
+        }
+    }
+
+    private func mutateWorkout(
+        _ workout: Workout,
+        on day: Weekday,
+        _ mutation: (inout Workout) -> Void
+    ) {
+        guard let index = schedule[day]?.firstIndex(where: { $0.id == workout.id })
+        else { return }
+        mutation(&schedule[day]![index])
+    }
+
     // MARK: - Session logging
 
     /// Starts a session for one of the day's workouts, defaulting to the first.

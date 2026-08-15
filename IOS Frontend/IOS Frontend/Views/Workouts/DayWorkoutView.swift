@@ -431,6 +431,8 @@ struct DayWorkoutView: View {
                 .workoutCard()
             }
 
+            repeatToggle(for: workout)
+
             Button(role: .destructive) {
                 workoutPendingRemoval = workout
             } label: {
@@ -440,6 +442,45 @@ struct DayWorkoutView: View {
             .buttonStyle(.bordered)
             .disabled(!store.isEditingEnabled)
         }
+    }
+
+    /// Keeps a workout on this weekday in the weeks ahead.
+    ///
+    /// Turning it off only clears weeks that have not arrived yet. This week
+    /// stays as it is, and so does every week already trained, because those
+    /// are a record of what happened rather than a plan.
+    private func repeatToggle(for workout: Workout) -> some View {
+        Toggle(
+            isOn: Binding(
+                get: { workout.repeatsWeekly },
+                set: { store.setRepeat(workout, on: day, repeats: $0) }
+            )
+        ) {
+            HStack(spacing: 11) {
+                Image(systemName: "arrow.triangle.2.circlepath")
+                    .font(.subheadline)
+                    .foregroundStyle(WorkoutVisualPhase.prepare.accent)
+                    .frame(width: 34, height: 34)
+                    .background(
+                        WorkoutVisualPhase.prepare.accent.opacity(0.14),
+                        in: RoundedRectangle(cornerRadius: 11)
+                    )
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Repeat every \(day.fullName)")
+                        .font(.subheadline.weight(.semibold))
+                    Text(
+                        workout.repeatsWeekly
+                            ? "On every \(day.fullName) from now on."
+                            : "Planned for this \(day.fullName) only."
+                    )
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .tint(WorkoutVisualPhase.prepare.accent)
+        .disabled(!store.isEditingEnabled || workout.serverID == nil)
+        .workoutCard()
     }
 
     /// Everything scheduled for the day. A single workout fills the page; when

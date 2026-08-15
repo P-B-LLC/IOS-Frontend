@@ -139,6 +139,9 @@ nonisolated struct Workout: Identifiable, Hashable, Codable, Sendable {
     var cardioMachine: CardioMachine?
     /// How long the finisher is meant to last, if a target was set.
     var cardioTargetMinutes: Int?
+    /// The weekly repeat that keeps this workout on this weekday, if any.
+    /// Nil means it was planned for this date alone.
+    var recurrenceID: Int?
     /// The exercises that make up this workout, in order.
     var exercises: [Exercise]
 
@@ -151,6 +154,7 @@ nonisolated struct Workout: Identifiable, Hashable, Codable, Sendable {
         type: WorkoutType = .lifting,
         cardioMachine: CardioMachine? = nil,
         cardioTargetMinutes: Int? = nil,
+        recurrenceID: Int? = nil,
         exercises: [Exercise] = []
     ) {
         self.id = id
@@ -161,8 +165,12 @@ nonisolated struct Workout: Identifiable, Hashable, Codable, Sendable {
         self.type = type
         self.cardioMachine = cardioMachine
         self.cardioTargetMinutes = cardioTargetMinutes
+        self.recurrenceID = recurrenceID
         self.exercises = exercises
     }
+
+    /// Whether this workout comes back on the same weekday every week.
+    var repeatsWeekly: Bool { recurrenceID != nil }
 
     /// Whether this workout ends with cardio on a machine.
     var hasCardioFinisher: Bool { cardioMachine != nil }
@@ -517,6 +525,15 @@ nonisolated enum Weekday: Int, CaseIterable, Identifiable, Hashable, Codable, Se
 
     /// Short display name, e.g. "Mon".
     var shortName: String { String(fullName.prefix(3)) }
+
+    /// The API's weekday number, which counts from Monday as zero to match
+    /// Python's `date.weekday()`. This enum counts from one.
+    var apiValue: Int { rawValue - 1 }
+
+    /// Reads back a weekday sent by the API.
+    init?(apiValue: Int) {
+        self.init(rawValue: apiValue + 1)
+    }
 
     /// Maps a `Calendar` weekday component (1 = Sunday … 7 = Saturday) to a `Weekday`.
     init?(calendarWeekday: Int) {

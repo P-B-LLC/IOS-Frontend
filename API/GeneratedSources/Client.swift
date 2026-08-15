@@ -1261,6 +1261,274 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// Workouts that repeat weekly.
+    ///
+    /// There is deliberately no update endpoint. Changing a repeat means ending
+    /// the rule in force at this week and starting a new one, which is delete
+    /// followed by create; expressing it that way keeps finished weeks resolving
+    /// through the plan that was actually in place then.
+    ///
+    /// Listing returns only rules still in force. A closed rule is history: it
+    /// explains what a past week held, and no screen lists it.
+    ///
+    /// - Remark: HTTP `GET /api/v1/recurrences/`.
+    /// - Remark: Generated from `#/paths//api/v1/recurrences//get(recurrences_list)`.
+    public func recurrencesList(_ input: Operations.RecurrencesList.Input) async throws -> Operations.RecurrencesList.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.RecurrencesList.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/recurrences/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .get
+                )
+                suppressMutabilityWarning(&request)
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "page",
+                    value: input.query.page
+                )
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.RecurrencesList.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.PaginatedWorkoutRecurrenceList.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Workouts that repeat weekly.
+    ///
+    /// There is deliberately no update endpoint. Changing a repeat means ending
+    /// the rule in force at this week and starting a new one, which is delete
+    /// followed by create; expressing it that way keeps finished weeks resolving
+    /// through the plan that was actually in place then.
+    ///
+    /// Listing returns only rules still in force. A closed rule is history: it
+    /// explains what a past week held, and no screen lists it.
+    ///
+    /// - Remark: HTTP `POST /api/v1/recurrences/`.
+    /// - Remark: Generated from `#/paths//api/v1/recurrences//post(recurrences_create)`.
+    public func recurrencesCreate(_ input: Operations.RecurrencesCreate.Input) async throws -> Operations.RecurrencesCreate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.RecurrencesCreate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/recurrences/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .post
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                let body: OpenAPIRuntime.HTTPBody?
+                switch input.body {
+                case let .json(value):
+                    body = try converter.setRequiredRequestBodyAsJSON(
+                        value,
+                        headerFields: &request.headerFields,
+                        contentType: "application/json; charset=utf-8"
+                    )
+                }
+                return (request, body)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 201:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.RecurrencesCreate.Output.Created.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.WorkoutRecurrence.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .created(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Workouts that repeat weekly.
+    ///
+    /// There is deliberately no update endpoint. Changing a repeat means ending
+    /// the rule in force at this week and starting a new one, which is delete
+    /// followed by create; expressing it that way keeps finished weeks resolving
+    /// through the plan that was actually in place then.
+    ///
+    /// Listing returns only rules still in force. A closed rule is history: it
+    /// explains what a past week held, and no screen lists it.
+    ///
+    /// - Remark: HTTP `GET /api/v1/recurrences/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/recurrences/{id}//get(recurrences_retrieve)`.
+    public func recurrencesRetrieve(_ input: Operations.RecurrencesRetrieve.Input) async throws -> Operations.RecurrencesRetrieve.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.RecurrencesRetrieve.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/recurrences/{}/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .get
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.RecurrencesRetrieve.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.WorkoutRecurrence.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Workouts that repeat weekly.
+    ///
+    /// There is deliberately no update endpoint. Changing a repeat means ending
+    /// the rule in force at this week and starting a new one, which is delete
+    /// followed by create; expressing it that way keeps finished weeks resolving
+    /// through the plan that was actually in place then.
+    ///
+    /// Listing returns only rules still in force. A closed rule is history: it
+    /// explains what a past week held, and no screen lists it.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/recurrences/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/recurrences/{id}//delete(recurrences_destroy)`.
+    public func recurrencesDestroy(_ input: Operations.RecurrencesDestroy.Input) async throws -> Operations.RecurrencesDestroy.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.RecurrencesDestroy.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/recurrences/{}/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .delete
+                )
+                suppressMutabilityWarning(&request)
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 204:
+                    return .noContent(.init())
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
     /// - Remark: HTTP `GET /api/v1/schedules/`.
     /// - Remark: Generated from `#/paths//api/v1/schedules//get(schedules_list)`.
     public func schedulesList(_ input: Operations.SchedulesList.Input) async throws -> Operations.SchedulesList.Output {
@@ -1617,6 +1885,75 @@ public struct Client: APIProtocol {
                 switch response.status.code {
                 case 204:
                     return .noContent(.init())
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Fill a week in from the user's weekly repeats and return everything scheduled in it. Safe to call on every load: it only adds days a repeat still owes, and it refuses to plan a week that has already finished, since a past week records what was trained.
+    ///
+    /// - Remark: HTTP `POST /api/v1/schedules/plan-week/`.
+    /// - Remark: Generated from `#/paths//api/v1/schedules/plan-week//post(schedules_plan_week_create)`.
+    public func schedulesPlanWeekCreate(_ input: Operations.SchedulesPlanWeekCreate.Input) async throws -> Operations.SchedulesPlanWeekCreate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SchedulesPlanWeekCreate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/schedules/plan-week/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .post
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                let body: OpenAPIRuntime.HTTPBody?
+                switch input.body {
+                case let .json(value):
+                    body = try converter.setRequiredRequestBodyAsJSON(
+                        value,
+                        headerFields: &request.headerFields,
+                        contentType: "application/json; charset=utf-8"
+                    )
+                }
+                return (request, body)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SchedulesPlanWeekCreate.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            [Components.Schemas.WorkoutSchedule].self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
                 default:
                     return .undocumented(
                         statusCode: response.status.code,

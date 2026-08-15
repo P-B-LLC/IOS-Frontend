@@ -71,6 +71,58 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /api/v1/progress/exercises/{exercise_id}/`.
     /// - Remark: Generated from `#/paths//api/v1/progress/exercises/{exercise_id}//get(progress_exercises_list)`.
     func progressExercisesList(_ input: Operations.ProgressExercisesList.Input) async throws -> Operations.ProgressExercisesList.Output
+    /// Workouts that repeat weekly.
+    ///
+    /// There is deliberately no update endpoint. Changing a repeat means ending
+    /// the rule in force at this week and starting a new one, which is delete
+    /// followed by create; expressing it that way keeps finished weeks resolving
+    /// through the plan that was actually in place then.
+    ///
+    /// Listing returns only rules still in force. A closed rule is history: it
+    /// explains what a past week held, and no screen lists it.
+    ///
+    /// - Remark: HTTP `GET /api/v1/recurrences/`.
+    /// - Remark: Generated from `#/paths//api/v1/recurrences//get(recurrences_list)`.
+    func recurrencesList(_ input: Operations.RecurrencesList.Input) async throws -> Operations.RecurrencesList.Output
+    /// Workouts that repeat weekly.
+    ///
+    /// There is deliberately no update endpoint. Changing a repeat means ending
+    /// the rule in force at this week and starting a new one, which is delete
+    /// followed by create; expressing it that way keeps finished weeks resolving
+    /// through the plan that was actually in place then.
+    ///
+    /// Listing returns only rules still in force. A closed rule is history: it
+    /// explains what a past week held, and no screen lists it.
+    ///
+    /// - Remark: HTTP `POST /api/v1/recurrences/`.
+    /// - Remark: Generated from `#/paths//api/v1/recurrences//post(recurrences_create)`.
+    func recurrencesCreate(_ input: Operations.RecurrencesCreate.Input) async throws -> Operations.RecurrencesCreate.Output
+    /// Workouts that repeat weekly.
+    ///
+    /// There is deliberately no update endpoint. Changing a repeat means ending
+    /// the rule in force at this week and starting a new one, which is delete
+    /// followed by create; expressing it that way keeps finished weeks resolving
+    /// through the plan that was actually in place then.
+    ///
+    /// Listing returns only rules still in force. A closed rule is history: it
+    /// explains what a past week held, and no screen lists it.
+    ///
+    /// - Remark: HTTP `GET /api/v1/recurrences/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/recurrences/{id}//get(recurrences_retrieve)`.
+    func recurrencesRetrieve(_ input: Operations.RecurrencesRetrieve.Input) async throws -> Operations.RecurrencesRetrieve.Output
+    /// Workouts that repeat weekly.
+    ///
+    /// There is deliberately no update endpoint. Changing a repeat means ending
+    /// the rule in force at this week and starting a new one, which is delete
+    /// followed by create; expressing it that way keeps finished weeks resolving
+    /// through the plan that was actually in place then.
+    ///
+    /// Listing returns only rules still in force. A closed rule is history: it
+    /// explains what a past week held, and no screen lists it.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/recurrences/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/recurrences/{id}//delete(recurrences_destroy)`.
+    func recurrencesDestroy(_ input: Operations.RecurrencesDestroy.Input) async throws -> Operations.RecurrencesDestroy.Output
     /// - Remark: HTTP `GET /api/v1/schedules/`.
     /// - Remark: Generated from `#/paths//api/v1/schedules//get(schedules_list)`.
     func schedulesList(_ input: Operations.SchedulesList.Input) async throws -> Operations.SchedulesList.Output
@@ -89,6 +141,11 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/schedules/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/schedules/{id}//delete(schedules_destroy)`.
     func schedulesDestroy(_ input: Operations.SchedulesDestroy.Input) async throws -> Operations.SchedulesDestroy.Output
+    /// Fill a week in from the user's weekly repeats and return everything scheduled in it. Safe to call on every load: it only adds days a repeat still owes, and it refuses to plan a week that has already finished, since a past week records what was trained.
+    ///
+    /// - Remark: HTTP `POST /api/v1/schedules/plan-week/`.
+    /// - Remark: Generated from `#/paths//api/v1/schedules/plan-week//post(schedules_plan_week_create)`.
+    func schedulesPlanWeekCreate(_ input: Operations.SchedulesPlanWeekCreate.Input) async throws -> Operations.SchedulesPlanWeekCreate.Output
     /// - Remark: HTTP `GET /api/v1/session-exercises/`.
     /// - Remark: Generated from `#/paths//api/v1/session-exercises//get(session_exercises_list)`.
     func sessionExercisesList(_ input: Operations.SessionExercisesList.Input) async throws -> Operations.SessionExercisesList.Output
@@ -429,6 +486,84 @@ extension APIProtocol {
             headers: headers
         ))
     }
+    /// Workouts that repeat weekly.
+    ///
+    /// There is deliberately no update endpoint. Changing a repeat means ending
+    /// the rule in force at this week and starting a new one, which is delete
+    /// followed by create; expressing it that way keeps finished weeks resolving
+    /// through the plan that was actually in place then.
+    ///
+    /// Listing returns only rules still in force. A closed rule is history: it
+    /// explains what a past week held, and no screen lists it.
+    ///
+    /// - Remark: HTTP `GET /api/v1/recurrences/`.
+    /// - Remark: Generated from `#/paths//api/v1/recurrences//get(recurrences_list)`.
+    public func recurrencesList(
+        query: Operations.RecurrencesList.Input.Query = .init(),
+        headers: Operations.RecurrencesList.Input.Headers = .init()
+    ) async throws -> Operations.RecurrencesList.Output {
+        try await recurrencesList(Operations.RecurrencesList.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Workouts that repeat weekly.
+    ///
+    /// There is deliberately no update endpoint. Changing a repeat means ending
+    /// the rule in force at this week and starting a new one, which is delete
+    /// followed by create; expressing it that way keeps finished weeks resolving
+    /// through the plan that was actually in place then.
+    ///
+    /// Listing returns only rules still in force. A closed rule is history: it
+    /// explains what a past week held, and no screen lists it.
+    ///
+    /// - Remark: HTTP `POST /api/v1/recurrences/`.
+    /// - Remark: Generated from `#/paths//api/v1/recurrences//post(recurrences_create)`.
+    public func recurrencesCreate(
+        headers: Operations.RecurrencesCreate.Input.Headers = .init(),
+        body: Operations.RecurrencesCreate.Input.Body
+    ) async throws -> Operations.RecurrencesCreate.Output {
+        try await recurrencesCreate(Operations.RecurrencesCreate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Workouts that repeat weekly.
+    ///
+    /// There is deliberately no update endpoint. Changing a repeat means ending
+    /// the rule in force at this week and starting a new one, which is delete
+    /// followed by create; expressing it that way keeps finished weeks resolving
+    /// through the plan that was actually in place then.
+    ///
+    /// Listing returns only rules still in force. A closed rule is history: it
+    /// explains what a past week held, and no screen lists it.
+    ///
+    /// - Remark: HTTP `GET /api/v1/recurrences/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/recurrences/{id}//get(recurrences_retrieve)`.
+    public func recurrencesRetrieve(
+        path: Operations.RecurrencesRetrieve.Input.Path,
+        headers: Operations.RecurrencesRetrieve.Input.Headers = .init()
+    ) async throws -> Operations.RecurrencesRetrieve.Output {
+        try await recurrencesRetrieve(Operations.RecurrencesRetrieve.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Workouts that repeat weekly.
+    ///
+    /// There is deliberately no update endpoint. Changing a repeat means ending
+    /// the rule in force at this week and starting a new one, which is delete
+    /// followed by create; expressing it that way keeps finished weeks resolving
+    /// through the plan that was actually in place then.
+    ///
+    /// Listing returns only rules still in force. A closed rule is history: it
+    /// explains what a past week held, and no screen lists it.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/recurrences/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/recurrences/{id}//delete(recurrences_destroy)`.
+    public func recurrencesDestroy(path: Operations.RecurrencesDestroy.Input.Path) async throws -> Operations.RecurrencesDestroy.Output {
+        try await recurrencesDestroy(Operations.RecurrencesDestroy.Input(path: path))
+    }
     /// - Remark: HTTP `GET /api/v1/schedules/`.
     /// - Remark: Generated from `#/paths//api/v1/schedules//get(schedules_list)`.
     public func schedulesList(
@@ -492,6 +627,19 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//api/v1/schedules/{id}//delete(schedules_destroy)`.
     public func schedulesDestroy(path: Operations.SchedulesDestroy.Input.Path) async throws -> Operations.SchedulesDestroy.Output {
         try await schedulesDestroy(Operations.SchedulesDestroy.Input(path: path))
+    }
+    /// Fill a week in from the user's weekly repeats and return everything scheduled in it. Safe to call on every load: it only adds days a repeat still owes, and it refuses to plan a week that has already finished, since a past week records what was trained.
+    ///
+    /// - Remark: HTTP `POST /api/v1/schedules/plan-week/`.
+    /// - Remark: Generated from `#/paths//api/v1/schedules/plan-week//post(schedules_plan_week_create)`.
+    public func schedulesPlanWeekCreate(
+        headers: Operations.SchedulesPlanWeekCreate.Input.Headers = .init(),
+        body: Operations.SchedulesPlanWeekCreate.Input.Body
+    ) async throws -> Operations.SchedulesPlanWeekCreate.Output {
+        try await schedulesPlanWeekCreate(Operations.SchedulesPlanWeekCreate.Input(
+            headers: headers,
+            body: body
+        ))
     }
     /// - Remark: HTTP `GET /api/v1/session-exercises/`.
     /// - Remark: Generated from `#/paths//api/v1/session-exercises//get(session_exercises_list)`.
@@ -1492,6 +1640,41 @@ public enum Components {
                 case results
             }
         }
+        /// - Remark: Generated from `#/components/schemas/PaginatedWorkoutRecurrenceList`.
+        public struct PaginatedWorkoutRecurrenceList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PaginatedWorkoutRecurrenceList/count`.
+            public var count: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PaginatedWorkoutRecurrenceList/next`.
+            public var next: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedWorkoutRecurrenceList/previous`.
+            public var previous: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedWorkoutRecurrenceList/results`.
+            public var results: [Components.Schemas.WorkoutRecurrence]
+            /// Creates a new `PaginatedWorkoutRecurrenceList`.
+            ///
+            /// - Parameters:
+            ///   - count:
+            ///   - next:
+            ///   - previous:
+            ///   - results:
+            public init(
+                count: Swift.Int,
+                next: Swift.String? = nil,
+                previous: Swift.String? = nil,
+                results: [Components.Schemas.WorkoutRecurrence]
+            ) {
+                self.count = count
+                self.next = next
+                self.previous = previous
+                self.results = results
+            }
+            public enum CodingKeys: String, CodingKey {
+                case count
+                case next
+                case previous
+                case results
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/PaginatedWorkoutScheduleList`.
         public struct PaginatedWorkoutScheduleList: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PaginatedWorkoutScheduleList/count`.
@@ -2128,6 +2311,25 @@ public enum Components {
                 case value
                 case previousValue = "previous_value"
                 case reps
+            }
+        }
+        /// Which week to fill in from the user's weekly repeats.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PlanWeekRequest`.
+        public struct PlanWeekRequest: Codable, Hashable, Sendable {
+            /// Any date in the week. The week's Monday is used.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlanWeekRequest/start`.
+            public var start: Swift.String
+            /// Creates a new `PlanWeekRequest`.
+            ///
+            /// - Parameters:
+            ///   - start: Any date in the week. The week's Monday is used.
+            public init(start: Swift.String) {
+                self.start = start
+            }
+            public enum CodingKeys: String, CodingKey {
+                case start
             }
         }
         /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser`.
@@ -3030,6 +3232,24 @@ public enum Components {
             case metric = "metric"
             case imperial = "imperial"
         }
+        /// * `0` - Monday
+        /// * `1` - Tuesday
+        /// * `2` - Wednesday
+        /// * `3` - Thursday
+        /// * `4` - Friday
+        /// * `5` - Saturday
+        /// * `6` - Sunday
+        ///
+        /// - Remark: Generated from `#/components/schemas/WeekdayEnum`.
+        @frozen public enum WeekdayEnum: Int, Codable, Hashable, Sendable, CaseIterable {
+            case _0 = 0
+            case _1 = 1
+            case _2 = 2
+            case _3 = 3
+            case _4 = 4
+            case _5 = 5
+            case _6 = 6
+        }
         /// - Remark: Generated from `#/components/schemas/WorkoutExercise`.
         public struct WorkoutExercise: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/WorkoutExercise/id`.
@@ -3146,6 +3366,144 @@ public enum Components {
                 case targetReps = "target_reps"
                 case targetWeightKg = "target_weight_kg"
                 case notes
+            }
+        }
+        /// A workout repeating weekly.
+        ///
+        /// ``effective_from`` and ``effective_until`` are read-only on purpose. The
+        /// server always opens a rule at the current week and closes it at the current
+        /// week, which is what stops a plan reaching backwards into weeks that have
+        /// already been trained.
+        ///
+        /// - Remark: Generated from `#/components/schemas/WorkoutRecurrence`.
+        public struct WorkoutRecurrence: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/WorkoutRecurrence/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/WorkoutRecurrence/owner`.
+            public var owner: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/WorkoutRecurrence/workout`.
+            public var workout: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/WorkoutRecurrence/workout_name`.
+            public var workoutName: Swift.String
+            /// - Remark: Generated from `#/components/schemas/WorkoutRecurrence/weekday`.
+            public struct WeekdayPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/WorkoutRecurrence/weekday/value1`.
+                public var value1: Components.Schemas.WeekdayEnum
+                /// Creates a new `WeekdayPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.WeekdayEnum) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try decoder.decodeFromSingleValueContainer()
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeToSingleValueContainer(self.value1)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/WorkoutRecurrence/weekday`.
+            public var weekday: Components.Schemas.WorkoutRecurrence.WeekdayPayload
+            /// - Remark: Generated from `#/components/schemas/WorkoutRecurrence/effective_from`.
+            public var effectiveFrom: Swift.String
+            /// - Remark: Generated from `#/components/schemas/WorkoutRecurrence/effective_until`.
+            public var effectiveUntil: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/WorkoutRecurrence/created_at`.
+            public var createdAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/WorkoutRecurrence/updated_at`.
+            public var updatedAt: Foundation.Date
+            /// Creates a new `WorkoutRecurrence`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - owner:
+            ///   - workout:
+            ///   - workoutName:
+            ///   - weekday:
+            ///   - effectiveFrom:
+            ///   - effectiveUntil:
+            ///   - createdAt:
+            ///   - updatedAt:
+            public init(
+                id: Swift.Int,
+                owner: Swift.Int,
+                workout: Swift.Int,
+                workoutName: Swift.String,
+                weekday: Components.Schemas.WorkoutRecurrence.WeekdayPayload,
+                effectiveFrom: Swift.String,
+                effectiveUntil: Swift.String? = nil,
+                createdAt: Foundation.Date,
+                updatedAt: Foundation.Date
+            ) {
+                self.id = id
+                self.owner = owner
+                self.workout = workout
+                self.workoutName = workoutName
+                self.weekday = weekday
+                self.effectiveFrom = effectiveFrom
+                self.effectiveUntil = effectiveUntil
+                self.createdAt = createdAt
+                self.updatedAt = updatedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case owner
+                case workout
+                case workoutName = "workout_name"
+                case weekday
+                case effectiveFrom = "effective_from"
+                case effectiveUntil = "effective_until"
+                case createdAt = "created_at"
+                case updatedAt = "updated_at"
+            }
+        }
+        /// A workout repeating weekly.
+        ///
+        /// ``effective_from`` and ``effective_until`` are read-only on purpose. The
+        /// server always opens a rule at the current week and closes it at the current
+        /// week, which is what stops a plan reaching backwards into weeks that have
+        /// already been trained.
+        ///
+        /// - Remark: Generated from `#/components/schemas/WorkoutRecurrenceRequest`.
+        public struct WorkoutRecurrenceRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/WorkoutRecurrenceRequest/workout`.
+            public var workout: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/WorkoutRecurrenceRequest/weekday`.
+            public struct WeekdayPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/WorkoutRecurrenceRequest/weekday/value1`.
+                public var value1: Components.Schemas.WeekdayEnum
+                /// Creates a new `WeekdayPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.WeekdayEnum) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try decoder.decodeFromSingleValueContainer()
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeToSingleValueContainer(self.value1)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/WorkoutRecurrenceRequest/weekday`.
+            public var weekday: Components.Schemas.WorkoutRecurrenceRequest.WeekdayPayload
+            /// Creates a new `WorkoutRecurrenceRequest`.
+            ///
+            /// - Parameters:
+            ///   - workout:
+            ///   - weekday:
+            public init(
+                workout: Swift.Int,
+                weekday: Components.Schemas.WorkoutRecurrenceRequest.WeekdayPayload
+            ) {
+                self.workout = workout
+                self.weekday = weekday
+            }
+            public enum CodingKeys: String, CodingKey {
+                case workout
+                case weekday
             }
         }
         /// - Remark: Generated from `#/components/schemas/WorkoutSchedule`.
@@ -5978,6 +6336,491 @@ public enum Operations {
             }
         }
     }
+    /// Workouts that repeat weekly.
+    ///
+    /// There is deliberately no update endpoint. Changing a repeat means ending
+    /// the rule in force at this week and starting a new one, which is delete
+    /// followed by create; expressing it that way keeps finished weeks resolving
+    /// through the plan that was actually in place then.
+    ///
+    /// Listing returns only rules still in force. A closed rule is history: it
+    /// explains what a past week held, and no screen lists it.
+    ///
+    /// - Remark: HTTP `GET /api/v1/recurrences/`.
+    /// - Remark: Generated from `#/paths//api/v1/recurrences//get(recurrences_list)`.
+    public enum RecurrencesList {
+        public static let id: Swift.String = "recurrences_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/recurrences/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/recurrences/GET/query/page`.
+                public var page: Swift.Int?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - page: A page number within the paginated result set.
+                public init(page: Swift.Int? = nil) {
+                    self.page = page
+                }
+            }
+            public var query: Operations.RecurrencesList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/recurrences/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.RecurrencesList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.RecurrencesList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.RecurrencesList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.RecurrencesList.Input.Query = .init(),
+                headers: Operations.RecurrencesList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/recurrences/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/recurrences/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedWorkoutRecurrenceList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedWorkoutRecurrenceList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.RecurrencesList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.RecurrencesList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/recurrences//get(recurrences_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.RecurrencesList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.RecurrencesList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Workouts that repeat weekly.
+    ///
+    /// There is deliberately no update endpoint. Changing a repeat means ending
+    /// the rule in force at this week and starting a new one, which is delete
+    /// followed by create; expressing it that way keeps finished weeks resolving
+    /// through the plan that was actually in place then.
+    ///
+    /// Listing returns only rules still in force. A closed rule is history: it
+    /// explains what a past week held, and no screen lists it.
+    ///
+    /// - Remark: HTTP `POST /api/v1/recurrences/`.
+    /// - Remark: Generated from `#/paths//api/v1/recurrences//post(recurrences_create)`.
+    public enum RecurrencesCreate {
+        public static let id: Swift.String = "recurrences_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/recurrences/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.RecurrencesCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.RecurrencesCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.RecurrencesCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/recurrences/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/recurrences/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.WorkoutRecurrenceRequest)
+            }
+            public var body: Operations.RecurrencesCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.RecurrencesCreate.Input.Headers = .init(),
+                body: Operations.RecurrencesCreate.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Created: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/recurrences/POST/responses/201/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/recurrences/POST/responses/201/content/application\/json`.
+                    case json(Components.Schemas.WorkoutRecurrence)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.WorkoutRecurrence {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.RecurrencesCreate.Output.Created.Body
+                /// Creates a new `Created`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.RecurrencesCreate.Output.Created.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/recurrences//post(recurrences_create)/responses/201`.
+            ///
+            /// HTTP response code: `201 created`.
+            case created(Operations.RecurrencesCreate.Output.Created)
+            /// The associated value of the enum case if `self` is `.created`.
+            ///
+            /// - Throws: An error if `self` is not `.created`.
+            /// - SeeAlso: `.created`.
+            public var created: Operations.RecurrencesCreate.Output.Created {
+                get throws {
+                    switch self {
+                    case let .created(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "created",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Workouts that repeat weekly.
+    ///
+    /// There is deliberately no update endpoint. Changing a repeat means ending
+    /// the rule in force at this week and starting a new one, which is delete
+    /// followed by create; expressing it that way keeps finished weeks resolving
+    /// through the plan that was actually in place then.
+    ///
+    /// Listing returns only rules still in force. A closed rule is history: it
+    /// explains what a past week held, and no screen lists it.
+    ///
+    /// - Remark: HTTP `GET /api/v1/recurrences/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/recurrences/{id}//get(recurrences_retrieve)`.
+    public enum RecurrencesRetrieve {
+        public static let id: Swift.String = "recurrences_retrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/recurrences/{id}/GET/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this workout recurrence.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/recurrences/{id}/GET/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this workout recurrence.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.RecurrencesRetrieve.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/recurrences/{id}/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.RecurrencesRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.RecurrencesRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.RecurrencesRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.RecurrencesRetrieve.Input.Path,
+                headers: Operations.RecurrencesRetrieve.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/recurrences/{id}/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/recurrences/{id}/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.WorkoutRecurrence)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.WorkoutRecurrence {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.RecurrencesRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.RecurrencesRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/recurrences/{id}//get(recurrences_retrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.RecurrencesRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.RecurrencesRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Workouts that repeat weekly.
+    ///
+    /// There is deliberately no update endpoint. Changing a repeat means ending
+    /// the rule in force at this week and starting a new one, which is delete
+    /// followed by create; expressing it that way keeps finished weeks resolving
+    /// through the plan that was actually in place then.
+    ///
+    /// Listing returns only rules still in force. A closed rule is history: it
+    /// explains what a past week held, and no screen lists it.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/recurrences/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/recurrences/{id}//delete(recurrences_destroy)`.
+    public enum RecurrencesDestroy {
+        public static let id: Swift.String = "recurrences_destroy"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/recurrences/{id}/DELETE/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this workout recurrence.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/recurrences/{id}/DELETE/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this workout recurrence.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.RecurrencesDestroy.Input.Path
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            public init(path: Operations.RecurrencesDestroy.Input.Path) {
+                self.path = path
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct NoContent: Sendable, Hashable {
+                /// Creates a new `NoContent`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/recurrences/{id}//delete(recurrences_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            case noContent(Operations.RecurrencesDestroy.Output.NoContent)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/recurrences/{id}//delete(recurrences_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            public static var noContent: Self {
+                .noContent(.init())
+            }
+            /// The associated value of the enum case if `self` is `.noContent`.
+            ///
+            /// - Throws: An error if `self` is not `.noContent`.
+            /// - SeeAlso: `.noContent`.
+            public var noContent: Operations.RecurrencesDestroy.Output.NoContent {
+                get throws {
+                    switch self {
+                    case let .noContent(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "noContent",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
     /// - Remark: HTTP `GET /api/v1/schedules/`.
     /// - Remark: Generated from `#/paths//api/v1/schedules//get(schedules_list)`.
     public enum SchedulesList {
@@ -6695,6 +7538,127 @@ public enum Operations {
             ///
             /// A response with a code that is not documented in the OpenAPI document.
             case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// Fill a week in from the user's weekly repeats and return everything scheduled in it. Safe to call on every load: it only adds days a repeat still owes, and it refuses to plan a week that has already finished, since a past week records what was trained.
+    ///
+    /// - Remark: HTTP `POST /api/v1/schedules/plan-week/`.
+    /// - Remark: Generated from `#/paths//api/v1/schedules/plan-week//post(schedules_plan_week_create)`.
+    public enum SchedulesPlanWeekCreate {
+        public static let id: Swift.String = "schedules_plan_week_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/schedules/plan-week/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SchedulesPlanWeekCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SchedulesPlanWeekCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SchedulesPlanWeekCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/schedules/plan-week/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/schedules/plan-week/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.PlanWeekRequest)
+            }
+            public var body: Operations.SchedulesPlanWeekCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.SchedulesPlanWeekCreate.Input.Headers = .init(),
+                body: Operations.SchedulesPlanWeekCreate.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/schedules/plan-week/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/schedules/plan-week/POST/responses/200/content/application\/json`.
+                    case json([Components.Schemas.WorkoutSchedule])
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: [Components.Schemas.WorkoutSchedule] {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SchedulesPlanWeekCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SchedulesPlanWeekCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/schedules/plan-week//post(schedules_plan_week_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SchedulesPlanWeekCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SchedulesPlanWeekCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
         }
     }
     /// - Remark: HTTP `GET /api/v1/session-exercises/`.
