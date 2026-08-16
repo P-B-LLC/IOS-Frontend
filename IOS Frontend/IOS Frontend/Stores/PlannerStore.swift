@@ -7,6 +7,9 @@
 
 import Foundation
 import Observation
+// For `withAnimation`: retiring a finished overdue task is a timed sequence,
+// and the timing belongs beside the state change that drives it.
+import SwiftUI
 
 @Observable
 @MainActor
@@ -264,7 +267,9 @@ final class PlannerStore {
         guard let repository, entry.isCompletable else { return }
         let generation = connectionGeneration
         let previous = entry.isComplete
-        apply(to: entry) { $0.isComplete = isComplete }
+        withAnimation(.easeOut(duration: 0.25)) {
+            apply(to: entry) { $0.isComplete = isComplete }
+        }
         persistenceError = nil
 
         Task {
@@ -272,9 +277,14 @@ final class PlannerStore {
                 let saved = try await repository.setComplete(entry, isComplete)
                 guard connectionGeneration == generation else { return }
                 apply(to: entry) { $0 = saved }
+                if saved.isComplete {
+                    retirePastDue(entry.id, generation: generation)
+                }
             } catch {
                 guard connectionGeneration == generation else { return }
-                apply(to: entry) { $0.isComplete = previous }
+                withAnimation(.easeOut(duration: 0.25)) {
+                    apply(to: entry) { $0.isComplete = previous }
+                }
                 persistenceError = error.localizedDescription
             }
         }
@@ -381,8 +391,26 @@ final class PlannerStore {
         if let index = pastDue.firstIndex(where: { $0.id == entry.id }) {
             mutation(&pastDue[index])
         }
-        // Overdue means outstanding; a task that has been done is no longer it.
-        pastDue.removeAll(where: \.isComplete)
+    }
+
+    /// Takes a finished task off the overdue list, but not instantly.
+    ///
+    /// Overdue means outstanding, so a task that has been done does not belong
+    /// there. Removing it the moment it is ticked makes the row vanish before
+    /// the line has finished being drawn through it, which reads as the tap
+    /// having deleted something. It leaves once the strikethrough has landed.
+    private func retirePastDue(_ id: PlannerEntry.ID, generation: UUID) {
+        guard pastDue.contains(where: { $0.id == id }) else { return }
+        Task {
+            try? await Task.sleep(for: .milliseconds(650))
+            guard connectionGeneration == generation else { return }
+            // It may have been unticked while the strikethrough was still on
+            // screen, in which case it is outstanding again and stays.
+            guard pastDue.first(where: { $0.id == id })?.isComplete == true else { return }
+            withAnimation(.easeInOut(duration: 0.35)) {
+                pastDue.removeAll { $0.id == id }
+            }
+        }
     }
 
     // MARK: - Dates

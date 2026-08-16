@@ -291,11 +291,30 @@ struct PlannerEntryRow: View {
             categoryBadge
 
             VStack(alignment: .leading, spacing: 2) {
+                // The line is drawn rather than switched on, so ticking a task
+                // off reads as crossing it out. `.strikethrough` appears whole
+                // in one frame, which a fade straight afterwards turns into a
+                // blink.
                 Text(entry.title)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(timeOfDay.primaryText)
-                    .strikethrough(entry.isComplete, color: timeOfDay.secondaryText)
                     .lineLimit(1)
+                    .overlay {
+                        GeometryReader { proxy in
+                            Rectangle()
+                                .fill(timeOfDay.secondaryText)
+                                .frame(width: proxy.size.width, height: 1.2)
+                                .scaleEffect(
+                                    x: entry.isComplete ? 1 : 0,
+                                    anchor: .leading
+                                )
+                                .position(
+                                    x: proxy.size.width / 2,
+                                    y: proxy.size.height / 2
+                                )
+                        }
+                    }
+                    .animation(.easeOut(duration: 0.28), value: entry.isComplete)
                 Text(subtitle)
                     .font(.system(size: 9, weight: .medium))
                     .foregroundStyle(timeOfDay.secondaryText)
@@ -311,6 +330,9 @@ struct PlannerEntryRow: View {
         .opacity(entry.isComplete ? 0.6 : 1)
         .padding(.vertical, 2)
         .repbaseCard(contentPadding: 12, cornerRadius: 16)
+        // Fades and collapses when it leaves, which is what a finished overdue
+        // task does once its line has been drawn.
+        .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))
         .contentShape(Rectangle())
         .onTapGesture(perform: onEdit)
         // Long press rather than swipe: these rows sit in a scroll view, not a
