@@ -10,11 +10,13 @@ import SwiftUI
 struct WorkoutEditorView: View {
     enum Mode: Identifiable {
         case create
+        case build(Workout)
         case edit(Workout)
 
         var id: String {
             switch self {
             case .create: return "create"
+            case .build(let workout): return "build-\(workout.id.uuidString)"
             case .edit(let workout): return workout.id.uuidString
             }
         }
@@ -40,14 +42,31 @@ struct WorkoutEditorView: View {
         switch mode {
         case .create:
             _draft = State(initialValue: Workout(name: "", exercises: []))
+        case .build(let workout):
+            _draft = State(initialValue: workout)
         case .edit(let workout):
             _draft = State(initialValue: workout)
         }
     }
 
     private var isCreate: Bool {
-        if case .create = mode { return true }
-        return false
+        switch mode {
+        case .create, .build: return true
+        case .edit: return false
+        }
+    }
+
+    private var sections: WorkoutPlanFields.Sections {
+        if case .build = mode { return .structure }
+        return .all
+    }
+
+    private var navigationTitle: String {
+        switch mode {
+        case .create: return "New Workout"
+        case .build: return "Build Workout"
+        case .edit: return "Edit Workout"
+        }
     }
 
     private var canSave: Bool {
@@ -66,7 +85,11 @@ struct WorkoutEditorView: View {
                             .foregroundStyle(.secondary)
                     }
 
-                    WorkoutPlanFields(draft: $draft, suggestions: suggestions)
+                    WorkoutPlanFields(
+                        draft: $draft,
+                        suggestions: suggestions,
+                        sections: sections
+                    )
 
                     Button {
                         save()
@@ -81,7 +104,7 @@ struct WorkoutEditorView: View {
                 .padding()
             }
             .repbaseScreen(.prepare)
-            .navigationTitle(isCreate ? "New Workout" : "Edit Workout")
+            .navigationTitle(navigationTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

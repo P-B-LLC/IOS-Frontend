@@ -8,35 +8,49 @@
 import SwiftUI
 
 struct WorkoutPlanFields: View {
+    enum Sections {
+        case all
+        case identity
+        case structure
+    }
+
     @Binding var draft: Workout
     @Environment(\.workoutVisualPhase) private var phase
     /// Workouts the user already has, offered so a name is reused exactly
     /// rather than retyped slightly differently.
     var suggestions: [WorkoutSummary] = []
+    var sections: Sections = .all
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            VStack(alignment: .leading, spacing: 8) {
-                Label("Workout Name", systemImage: "character.cursor.ibeam")
-                    .font(.subheadline.weight(.semibold))
-                TextField(namePlaceholder, text: $draft.name)
-                    .textInputAutocapitalization(.words)
-                    .padding(12)
-                    .background(phase.primaryText.opacity(0.045), in: RoundedRectangle(cornerRadius: 12))
-
-                nameGuidance
+            if sections != .structure {
+                nameCard
+                typeCard
             }
-            .workoutCard()
 
-            typeCard
-
-            if draft.type.tracksDistance {
-                distanceCard
-            } else {
-                exerciseSection
-                cardioFinisherCard
+            if sections != .identity {
+                if draft.type.tracksDistance {
+                    distanceCard
+                } else {
+                    exerciseSection
+                    cardioFinisherCard
+                }
             }
         }
+    }
+
+    private var nameCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("Workout Name", systemImage: "character.cursor.ibeam")
+                .font(.subheadline.weight(.semibold))
+            TextField(namePlaceholder, text: $draft.name)
+                .textInputAutocapitalization(.words)
+                .padding(12)
+                .background(phase.primaryText.opacity(0.045), in: RoundedRectangle(cornerRadius: 12))
+
+            nameGuidance
+        }
+        .workoutCard()
     }
 
     /// Either confirms the name will join an existing workout's history, or

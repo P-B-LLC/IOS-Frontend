@@ -11,6 +11,7 @@ struct DayWorkoutView: View {
     let day: Weekday
 
     @Environment(WorkoutStore.self) private var store
+    @State private var setupDraft = Workout(name: "", exercises: [])
     @State private var editor: WorkoutEditorView.Mode?
     /// The workout awaiting a delete confirmation, if any.
     /// Which workout page is on screen when a day holds several.
@@ -158,20 +159,32 @@ struct DayWorkoutView: View {
             VStack(alignment: .leading, spacing: 5) {
                 Text("Build \(day.fullName)'s Workout")
                     .font(.title2.weight(.bold))
-                Text("Create it on a focused page, reuse a previous workout, and add the exercises you need.")
+                Text("Name your workout, reuse a previous one, and choose its type.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
 
+            WorkoutPlanFields(
+                draft: $setupDraft,
+                suggestions: store.knownWorkouts,
+                sections: .identity
+            )
+
             Button {
-                editor = .create
+                editor = .build(setupDraft)
             } label: {
                 Label("Build Workout", systemImage: "plus.circle.fill")
                     .font(.headline)
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(WorkoutPrimaryButtonStyle(phase: .prepare))
-            .disabled(!store.isEditingEnabled)
+            .disabled(!canSaveSetup || !store.isEditingEnabled)
+
+            if !canSaveSetup && store.isEditingEnabled {
+                Text("Choose a previously used workout or give this one a name to continue.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
 
             // A greyed-out button with no explanation reads as a broken app.
             if let reason = store.editingBlockedReason {
@@ -190,6 +203,10 @@ struct DayWorkoutView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
+    }
+
+    private var canSaveSetup: Bool {
+        !setupDraft.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     /// Saves the active session after the user confirms they are finished.
