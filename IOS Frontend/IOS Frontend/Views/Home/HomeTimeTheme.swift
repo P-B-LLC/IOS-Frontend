@@ -170,3 +170,57 @@ extension View {
         modifier(HomeTimeScreenModifier(timeOfDay: timeOfDay))
     }
 }
+
+/// The tactile circular navigation control used for Back and Settings.
+struct RepbaseSculptedIconButtonStyle: ButtonStyle {
+    let timeOfDay: HomeTimeOfDay
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.body.weight(.semibold))
+            .foregroundStyle(timeOfDay.primaryText)
+            .frame(width: 44, height: 44)
+            .background {
+                Circle()
+                    .fill(timeOfDay.surfaceRaised)
+                    .shadow(color: timeOfDay.shadow.opacity(0.72), radius: 9, x: 3, y: 6)
+            }
+            .overlay {
+                Circle().strokeBorder(timeOfDay.border, lineWidth: 1)
+            }
+            .scaleEffect(configuration.isPressed ? 0.94 : 1)
+            .opacity(configuration.isPressed ? 0.78 : 1)
+            .animation(.easeOut(duration: 0.14), value: configuration.isPressed)
+    }
+}
+
+/// A compact, unmistakable primary navigation action such as Save or Goals.
+struct RepbaseAccentCapsuleButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+    let timeOfDay: HomeTimeOfDay
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.subheadline.weight(.bold))
+            .foregroundStyle(Color.white)
+            .padding(.horizontal, 15)
+            .frame(height: 42)
+            .background {
+                Capsule()
+                    .fill(
+                        LinearGradient(
+                            colors: [timeOfDay.accent, timeOfDay.accent.opacity(0.82)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .shadow(color: timeOfDay.accent.opacity(0.30), radius: 10, x: 3, y: 6)
+            }
+            .overlay {
+                Capsule().strokeBorder(Color.white.opacity(0.28), lineWidth: 1)
+            }
+            .scaleEffect(configuration.isPressed ? 0.96 : 1)
+            .opacity(isEnabled ? (configuration.isPressed ? 0.80 : 1) : 0.42)
+            .animation(.easeOut(duration: 0.14), value: configuration.isPressed)
+    }
+}

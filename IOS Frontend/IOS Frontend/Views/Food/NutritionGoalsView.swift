@@ -10,7 +10,6 @@ import SwiftUI
 struct NutritionGoalsView: View {
     @Environment(FoodTrackingStore.self) private var store
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.workoutVisualPhase) private var phase
 
     @State private var calories = ""
     @State private var protein = ""
@@ -18,38 +17,65 @@ struct NutritionGoalsView: View {
     @State private var fat = ""
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    NutritionGoalField(title: "Calories", unit: "cal", text: $calories)
-                    NutritionGoalField(title: "Protein", unit: "g", text: $protein)
-                    NutritionGoalField(title: "Carbohydrates", unit: "g", text: $carbohydrates)
-                    NutritionGoalField(title: "Fat", unit: "g", text: $fat)
-                } header: {
-                    Text("Daily targets")
-                } footer: {
-                    Text("These targets control the progress rings on Home and Food Tracking.")
-                }
-            }
-            .navigationTitle("Nutrition Goals")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { save() }
-                        .disabled(!isValid)
-                }
-            }
-            .onAppear {
-                calories = store.goals.calories.nutritionText
-                protein = store.goals.proteinGrams.nutritionText
-                carbohydrates = store.goals.carbohydrateGrams.nutritionText
-                fat = store.goals.fatGrams.nutritionText
-            }
-            .repbaseScreen(phase)
+        TimelineView(.periodic(from: .now, by: 60)) { context in
+            goalsScreen(timeOfDay: HomeTimeOfDay(date: context.date))
         }
+        .onAppear {
+            calories = store.goals.calories.nutritionText
+            protein = store.goals.proteinGrams.nutritionText
+            carbohydrates = store.goals.carbohydrateGrams.nutritionText
+            fat = store.goals.fatGrams.nutritionText
+        }
+    }
+
+    private func goalsScreen(timeOfDay: HomeTimeOfDay) -> some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                goalsHeader(timeOfDay: timeOfDay)
+
+                Form {
+                    Section {
+                        NutritionGoalField(title: "Calories", unit: "cal", text: $calories)
+                        NutritionGoalField(title: "Protein", unit: "g", text: $protein)
+                        NutritionGoalField(title: "Carbohydrates", unit: "g", text: $carbohydrates)
+                        NutritionGoalField(title: "Fat", unit: "g", text: $fat)
+                    } header: {
+                        Text("Daily targets")
+                    } footer: {
+                        Text("These targets control the progress rings on Home and Food Tracking.")
+                    }
+                }
+            }
+            .toolbar(.hidden, for: .navigationBar)
+            .homeTimeScreen(timeOfDay)
+        }
+    }
+
+    private func goalsHeader(timeOfDay: HomeTimeOfDay) -> some View {
+        HStack {
+            Button("Cancel") { dismiss() }
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(timeOfDay.secondaryText)
+                .buttonStyle(.plain)
+
+            Spacer()
+
+            Button {
+                save()
+            } label: {
+                Label("Save", systemImage: "checkmark")
+            }
+            .buttonStyle(RepbaseAccentCapsuleButtonStyle(timeOfDay: timeOfDay))
+            .disabled(!isValid)
+        }
+        .overlay {
+            Text("Nutrition Goals")
+                .font(.headline)
+                .foregroundStyle(timeOfDay.canvasPrimaryText)
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 10)
+        .padding(.bottom, 6)
     }
 
     private var isValid: Bool {

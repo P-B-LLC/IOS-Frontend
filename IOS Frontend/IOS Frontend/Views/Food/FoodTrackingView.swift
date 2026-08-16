@@ -9,6 +9,7 @@ import SwiftUI
 
 struct FoodTrackingView: View {
     @Environment(FoodTrackingStore.self) private var store
+    @Environment(\.dismiss) private var dismiss
     @State private var selectedDate = Date()
     @State private var isEditingGoals = false
     @State private var isShowingSavedMeals = false
@@ -33,6 +34,7 @@ struct FoodTrackingView: View {
     private func screen(timeOfDay: HomeTimeOfDay) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
+                foodHeader(timeOfDay: timeOfDay)
                 weekSelector(timeOfDay: timeOfDay)
                 dailySummary
 
@@ -48,16 +50,36 @@ struct FoodTrackingView: View {
             .padding(.bottom, 26)
         }
         .scrollIndicators(.hidden)
-        .navigationTitle("Food Logging")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("Goals", systemImage: "slider.horizontal.3") {
-                    isEditingGoals = true
-                }
-            }
-        }
+        .toolbar(.hidden, for: .navigationBar)
         .homeTimeScreen(timeOfDay)
+    }
+
+    private func foodHeader(timeOfDay: HomeTimeOfDay) -> some View {
+        HStack {
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "chevron.left")
+                    .accessibilityLabel("Back")
+            }
+            .buttonStyle(RepbaseSculptedIconButtonStyle(timeOfDay: timeOfDay))
+
+            Spacer()
+
+            Button {
+                isEditingGoals = true
+            } label: {
+                Label("Goals", systemImage: "scope")
+            }
+            .buttonStyle(RepbaseAccentCapsuleButtonStyle(timeOfDay: timeOfDay))
+            .accessibilityHint("Change calorie and macronutrient targets")
+        }
+        .overlay {
+            Text("Food Logging")
+                .font(.headline)
+                .foregroundStyle(timeOfDay.canvasPrimaryText)
+        }
+        .padding(.bottom, 2)
     }
 
     private func weekSelector(timeOfDay: HomeTimeOfDay) -> some View {

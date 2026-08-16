@@ -83,8 +83,11 @@ struct WorkoutEditorView: View {
         let visualPhase: WorkoutVisualPhase = timeOfDay.usesDarkAppearance ? .focus : .prepare
 
         return NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
+            VStack(spacing: 0) {
+                workoutHeader(timeOfDay: timeOfDay)
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 18) {
                     VStack(alignment: .leading, spacing: 5) {
                         Text(draft.type == .lifting ? "LIFTING · \(draft.name.isEmpty ? "NEW WORKOUT" : draft.name.uppercased())" : draft.type.title.uppercased())
                             .font(.caption2.weight(.bold))
@@ -112,24 +115,42 @@ struct WorkoutEditorView: View {
                     }
                     .buttonStyle(WorkoutPrimaryButtonStyle(phase: visualPhase))
                     .disabled(!canSave)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
+                .scrollIndicators(.hidden)
             }
-            .scrollIndicators(.hidden)
-            .navigationTitle(navigationTitle)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { save() }
-                        .disabled(!canSave)
-                }
-            }
+            .toolbar(.hidden, for: .navigationBar)
             .homeTimeScreen(timeOfDay)
         }
+    }
+
+    private func workoutHeader(timeOfDay: HomeTimeOfDay) -> some View {
+        HStack {
+            Button("Cancel") { dismiss() }
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(timeOfDay.secondaryText)
+                .buttonStyle(.plain)
+
+            Spacer()
+
+            Button {
+                save()
+            } label: {
+                Label("Save", systemImage: "checkmark")
+            }
+            .buttonStyle(RepbaseAccentCapsuleButtonStyle(timeOfDay: timeOfDay))
+            .disabled(!canSave)
+        }
+        .overlay {
+            Text(navigationTitle)
+                .font(.headline)
+                .foregroundStyle(timeOfDay.canvasPrimaryText)
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 10)
+        .padding(.bottom, 6)
     }
 
     private func save() {
