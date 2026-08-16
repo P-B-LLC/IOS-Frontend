@@ -59,6 +59,65 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/exercises/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/exercises/{id}//delete(exercises_destroy)`.
     func exercisesDestroy(_ input: Operations.ExercisesDestroy.Input) async throws -> Operations.ExercisesDestroy.Output
+    /// Gyms, shared by everyone who trains at them.
+    ///
+    /// Not owned by anyone: a gym one user adds is exactly the gym the next user
+    /// should be able to join, which is the whole point of the list. Anyone signed
+    /// in may add one; nobody may edit or delete somebody else's.
+    ///
+    /// - Remark: HTTP `GET /api/v1/gyms/`.
+    /// - Remark: Generated from `#/paths//api/v1/gyms//get(gyms_list)`.
+    func gymsList(_ input: Operations.GymsList.Input) async throws -> Operations.GymsList.Output
+    /// Gyms, shared by everyone who trains at them.
+    ///
+    /// Not owned by anyone: a gym one user adds is exactly the gym the next user
+    /// should be able to join, which is the whole point of the list. Anyone signed
+    /// in may add one; nobody may edit or delete somebody else's.
+    ///
+    /// - Remark: HTTP `POST /api/v1/gyms/`.
+    /// - Remark: Generated from `#/paths//api/v1/gyms//post(gyms_create)`.
+    func gymsCreate(_ input: Operations.GymsCreate.Input) async throws -> Operations.GymsCreate.Output
+    /// Gyms, shared by everyone who trains at them.
+    ///
+    /// Not owned by anyone: a gym one user adds is exactly the gym the next user
+    /// should be able to join, which is the whole point of the list. Anyone signed
+    /// in may add one; nobody may edit or delete somebody else's.
+    ///
+    /// - Remark: HTTP `GET /api/v1/gyms/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/gyms/{id}//get(gyms_retrieve)`.
+    func gymsRetrieve(_ input: Operations.GymsRetrieve.Input) async throws -> Operations.GymsRetrieve.Output
+    /// Gyms, shared by everyone who trains at them.
+    ///
+    /// Not owned by anyone: a gym one user adds is exactly the gym the next user
+    /// should be able to join, which is the whole point of the list. Anyone signed
+    /// in may add one; nobody may edit or delete somebody else's.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/gyms/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/gyms/{id}//patch(gyms_partial_update)`.
+    func gymsPartialUpdate(_ input: Operations.GymsPartialUpdate.Input) async throws -> Operations.GymsPartialUpdate.Output
+    /// Gyms, shared by everyone who trains at them.
+    ///
+    /// Not owned by anyone: a gym one user adds is exactly the gym the next user
+    /// should be able to join, which is the whole point of the list. Anyone signed
+    /// in may add one; nobody may edit or delete somebody else's.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/gyms/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/gyms/{id}//put(gyms_update)`.
+    func gymsUpdate(_ input: Operations.GymsUpdate.Input) async throws -> Operations.GymsUpdate.Output
+    /// Gyms, shared by everyone who trains at them.
+    ///
+    /// Not owned by anyone: a gym one user adds is exactly the gym the next user
+    /// should be able to join, which is the whole point of the list. Anyone signed
+    /// in may add one; nobody may edit or delete somebody else's.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/gyms/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/gyms/{id}//delete(gyms_destroy)`.
+    func gymsDestroy(_ input: Operations.GymsDestroy.Input) async throws -> Operations.GymsDestroy.Output
+    /// Who trains here. This is what makes a shared gym worth having.
+    ///
+    /// - Remark: HTTP `GET /api/v1/gyms/{id}/members/`.
+    /// - Remark: Generated from `#/paths//api/v1/gyms/{id}/members//get(gyms_members_list)`.
+    func gymsMembersList(_ input: Operations.GymsMembersList.Input) async throws -> Operations.GymsMembersList.Output
     /// - Remark: HTTP `GET /api/v1/me/`.
     /// - Remark: Generated from `#/paths//api/v1/me//get(me_retrieve)`.
     func meRetrieve(_ input: Operations.MeRetrieve.Input) async throws -> Operations.MeRetrieve.Output
@@ -68,6 +127,16 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /api/v1/me/`.
     /// - Remark: Generated from `#/paths//api/v1/me//put(me_update)`.
     func meUpdate(_ input: Operations.MeUpdate.Input) async throws -> Operations.MeUpdate.Output
+    /// Replace the profile photo. Any previous file is deleted.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/me/photo/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/photo//put(me_photo_update)`.
+    func mePhotoUpdate(_ input: Operations.MePhotoUpdate.Input) async throws -> Operations.MePhotoUpdate.Output
+    /// Remove the profile photo.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/me/photo/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/photo//delete(me_photo_destroy)`.
+    func mePhotoDestroy(_ input: Operations.MePhotoDestroy.Input) async throws -> Operations.MePhotoDestroy.Output
     /// Tasks and events on the planner.
     ///
     /// The date range is a filter rather than a required window so the same
@@ -494,6 +563,119 @@ extension APIProtocol {
     public func exercisesDestroy(path: Operations.ExercisesDestroy.Input.Path) async throws -> Operations.ExercisesDestroy.Output {
         try await exercisesDestroy(Operations.ExercisesDestroy.Input(path: path))
     }
+    /// Gyms, shared by everyone who trains at them.
+    ///
+    /// Not owned by anyone: a gym one user adds is exactly the gym the next user
+    /// should be able to join, which is the whole point of the list. Anyone signed
+    /// in may add one; nobody may edit or delete somebody else's.
+    ///
+    /// - Remark: HTTP `GET /api/v1/gyms/`.
+    /// - Remark: Generated from `#/paths//api/v1/gyms//get(gyms_list)`.
+    public func gymsList(
+        query: Operations.GymsList.Input.Query = .init(),
+        headers: Operations.GymsList.Input.Headers = .init()
+    ) async throws -> Operations.GymsList.Output {
+        try await gymsList(Operations.GymsList.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Gyms, shared by everyone who trains at them.
+    ///
+    /// Not owned by anyone: a gym one user adds is exactly the gym the next user
+    /// should be able to join, which is the whole point of the list. Anyone signed
+    /// in may add one; nobody may edit or delete somebody else's.
+    ///
+    /// - Remark: HTTP `POST /api/v1/gyms/`.
+    /// - Remark: Generated from `#/paths//api/v1/gyms//post(gyms_create)`.
+    public func gymsCreate(
+        headers: Operations.GymsCreate.Input.Headers = .init(),
+        body: Operations.GymsCreate.Input.Body
+    ) async throws -> Operations.GymsCreate.Output {
+        try await gymsCreate(Operations.GymsCreate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Gyms, shared by everyone who trains at them.
+    ///
+    /// Not owned by anyone: a gym one user adds is exactly the gym the next user
+    /// should be able to join, which is the whole point of the list. Anyone signed
+    /// in may add one; nobody may edit or delete somebody else's.
+    ///
+    /// - Remark: HTTP `GET /api/v1/gyms/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/gyms/{id}//get(gyms_retrieve)`.
+    public func gymsRetrieve(
+        path: Operations.GymsRetrieve.Input.Path,
+        headers: Operations.GymsRetrieve.Input.Headers = .init()
+    ) async throws -> Operations.GymsRetrieve.Output {
+        try await gymsRetrieve(Operations.GymsRetrieve.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Gyms, shared by everyone who trains at them.
+    ///
+    /// Not owned by anyone: a gym one user adds is exactly the gym the next user
+    /// should be able to join, which is the whole point of the list. Anyone signed
+    /// in may add one; nobody may edit or delete somebody else's.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/gyms/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/gyms/{id}//patch(gyms_partial_update)`.
+    public func gymsPartialUpdate(
+        path: Operations.GymsPartialUpdate.Input.Path,
+        headers: Operations.GymsPartialUpdate.Input.Headers = .init(),
+        body: Operations.GymsPartialUpdate.Input.Body? = nil
+    ) async throws -> Operations.GymsPartialUpdate.Output {
+        try await gymsPartialUpdate(Operations.GymsPartialUpdate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Gyms, shared by everyone who trains at them.
+    ///
+    /// Not owned by anyone: a gym one user adds is exactly the gym the next user
+    /// should be able to join, which is the whole point of the list. Anyone signed
+    /// in may add one; nobody may edit or delete somebody else's.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/gyms/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/gyms/{id}//put(gyms_update)`.
+    public func gymsUpdate(
+        path: Operations.GymsUpdate.Input.Path,
+        headers: Operations.GymsUpdate.Input.Headers = .init(),
+        body: Operations.GymsUpdate.Input.Body
+    ) async throws -> Operations.GymsUpdate.Output {
+        try await gymsUpdate(Operations.GymsUpdate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Gyms, shared by everyone who trains at them.
+    ///
+    /// Not owned by anyone: a gym one user adds is exactly the gym the next user
+    /// should be able to join, which is the whole point of the list. Anyone signed
+    /// in may add one; nobody may edit or delete somebody else's.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/gyms/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/gyms/{id}//delete(gyms_destroy)`.
+    public func gymsDestroy(path: Operations.GymsDestroy.Input.Path) async throws -> Operations.GymsDestroy.Output {
+        try await gymsDestroy(Operations.GymsDestroy.Input(path: path))
+    }
+    /// Who trains here. This is what makes a shared gym worth having.
+    ///
+    /// - Remark: HTTP `GET /api/v1/gyms/{id}/members/`.
+    /// - Remark: Generated from `#/paths//api/v1/gyms/{id}/members//get(gyms_members_list)`.
+    public func gymsMembersList(
+        path: Operations.GymsMembersList.Input.Path,
+        headers: Operations.GymsMembersList.Input.Headers = .init()
+    ) async throws -> Operations.GymsMembersList.Output {
+        try await gymsMembersList(Operations.GymsMembersList.Input(
+            path: path,
+            headers: headers
+        ))
+    }
     /// - Remark: HTTP `GET /api/v1/me/`.
     /// - Remark: Generated from `#/paths//api/v1/me//get(me_retrieve)`.
     public func meRetrieve(headers: Operations.MeRetrieve.Input.Headers = .init()) async throws -> Operations.MeRetrieve.Output {
@@ -520,6 +702,26 @@ extension APIProtocol {
             headers: headers,
             body: body
         ))
+    }
+    /// Replace the profile photo. Any previous file is deleted.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/me/photo/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/photo//put(me_photo_update)`.
+    public func mePhotoUpdate(
+        headers: Operations.MePhotoUpdate.Input.Headers = .init(),
+        body: Operations.MePhotoUpdate.Input.Body
+    ) async throws -> Operations.MePhotoUpdate.Output {
+        try await mePhotoUpdate(Operations.MePhotoUpdate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Remove the profile photo.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/me/photo/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/photo//delete(me_photo_destroy)`.
+    public func mePhotoDestroy(headers: Operations.MePhotoDestroy.Input.Headers = .init()) async throws -> Operations.MePhotoDestroy.Output {
+        try await mePhotoDestroy(Operations.MePhotoDestroy.Input(headers: headers))
     }
     /// Tasks and events on the planner.
     ///
@@ -1269,8 +1471,6 @@ public enum Components {
                 case user
             }
         }
-        /// - Remark: Generated from `#/components/schemas/BlankEnum`.
-        public typealias BlankEnum = OpenAPIRuntime.OpenAPIValueContainer
         /// - Remark: Generated from `#/components/schemas/BodyWeightEntry`.
         public struct BodyWeightEntry: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/BodyWeightEntry/id`.
@@ -1407,6 +1607,46 @@ public enum Components {
             case social = "social"
             case other = "other"
         }
+        /// * `image/heic` - image/heic
+        /// * `image/jpeg` - image/jpeg
+        /// * `image/png` - image/png
+        /// * `image/webp` - image/webp
+        ///
+        /// - Remark: Generated from `#/components/schemas/ContentTypeEnum`.
+        @frozen public enum ContentTypeEnum: String, Codable, Hashable, Sendable, CaseIterable {
+            case imageHeic = "image/heic"
+            case imageJpeg = "image/jpeg"
+            case imagePng = "image/png"
+            case imageWebp = "image/webp"
+        }
+        /// * `powerlifting` - Powerlifting
+        /// * `bodybuilding` - Bodybuilding
+        /// * `crossfit` - CrossFit
+        /// * `weightlifting` - Olympic weightlifting
+        /// * `rock_climbing` - Rock climbing
+        /// * `triathlon` - Triathlon
+        /// * `running` - Running
+        /// * `cycling` - Cycling
+        /// * `swimming` - Swimming
+        /// * `calisthenics` - Calisthenics
+        /// * `general_fitness` - General fitness
+        /// * `other` - Other
+        ///
+        /// - Remark: Generated from `#/components/schemas/DisciplinesEnum`.
+        @frozen public enum DisciplinesEnum: String, Codable, Hashable, Sendable, CaseIterable {
+            case powerlifting = "powerlifting"
+            case bodybuilding = "bodybuilding"
+            case crossfit = "crossfit"
+            case weightlifting = "weightlifting"
+            case rockClimbing = "rock_climbing"
+            case triathlon = "triathlon"
+            case running = "running"
+            case cycling = "cycling"
+            case swimming = "swimming"
+            case calisthenics = "calisthenics"
+            case generalFitness = "general_fitness"
+            case other = "other"
+        }
         /// - Remark: Generated from `#/components/schemas/Exercise`.
         public struct Exercise: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/Exercise/id`.
@@ -1518,6 +1758,98 @@ public enum Components {
                 case muscleGroup = "muscle_group"
             }
         }
+        /// A gym, and how many people say they train there.
+        ///
+        /// - Remark: Generated from `#/components/schemas/Gym`.
+        public struct Gym: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/Gym/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/Gym/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/Gym/city`.
+            public var city: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Gym/country`.
+            public var country: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Gym/member_count`.
+            public var memberCount: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/Gym/created_by`.
+            public var createdBy: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/Gym/created_at`.
+            public var createdAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/Gym/updated_at`.
+            public var updatedAt: Foundation.Date
+            /// Creates a new `Gym`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - name:
+            ///   - city:
+            ///   - country:
+            ///   - memberCount:
+            ///   - createdBy:
+            ///   - createdAt:
+            ///   - updatedAt:
+            public init(
+                id: Swift.Int,
+                name: Swift.String,
+                city: Swift.String? = nil,
+                country: Swift.String? = nil,
+                memberCount: Swift.Int,
+                createdBy: Swift.Int,
+                createdAt: Foundation.Date,
+                updatedAt: Foundation.Date
+            ) {
+                self.id = id
+                self.name = name
+                self.city = city
+                self.country = country
+                self.memberCount = memberCount
+                self.createdBy = createdBy
+                self.createdAt = createdAt
+                self.updatedAt = updatedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case name
+                case city
+                case country
+                case memberCount = "member_count"
+                case createdBy = "created_by"
+                case createdAt = "created_at"
+                case updatedAt = "updated_at"
+            }
+        }
+        /// A gym, and how many people say they train there.
+        ///
+        /// - Remark: Generated from `#/components/schemas/GymRequest`.
+        public struct GymRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/GymRequest/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/GymRequest/city`.
+            public var city: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/GymRequest/country`.
+            public var country: Swift.String?
+            /// Creates a new `GymRequest`.
+            ///
+            /// - Parameters:
+            ///   - name:
+            ///   - city:
+            ///   - country:
+            public init(
+                name: Swift.String,
+                city: Swift.String? = nil,
+                country: Swift.String? = nil
+            ) {
+                self.name = name
+                self.city = city
+                self.country = country
+            }
+            public enum CodingKeys: String, CodingKey {
+                case name
+                case city
+                case country
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/LoginRequest`.
         public struct LoginRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/LoginRequest/username`.
@@ -1620,6 +1952,41 @@ public enum Components {
                 next: Swift.String? = nil,
                 previous: Swift.String? = nil,
                 results: [Components.Schemas.Exercise]
+            ) {
+                self.count = count
+                self.next = next
+                self.previous = previous
+                self.results = results
+            }
+            public enum CodingKeys: String, CodingKey {
+                case count
+                case next
+                case previous
+                case results
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PaginatedGymList`.
+        public struct PaginatedGymList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PaginatedGymList/count`.
+            public var count: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PaginatedGymList/next`.
+            public var next: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedGymList/previous`.
+            public var previous: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedGymList/results`.
+            public var results: [Components.Schemas.Gym]
+            /// Creates a new `PaginatedGymList`.
+            ///
+            /// - Parameters:
+            ///   - count:
+            ///   - next:
+            ///   - previous:
+            ///   - results:
+            public init(
+                count: Swift.Int,
+                next: Swift.String? = nil,
+                previous: Swift.String? = nil,
+                results: [Components.Schemas.Gym]
             ) {
                 self.count = count
                 self.next = next
@@ -2035,6 +2402,37 @@ public enum Components {
                 case muscleGroup = "muscle_group"
             }
         }
+        /// A gym, and how many people say they train there.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PatchedGymRequest`.
+        public struct PatchedGymRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PatchedGymRequest/name`.
+            public var name: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedGymRequest/city`.
+            public var city: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedGymRequest/country`.
+            public var country: Swift.String?
+            /// Creates a new `PatchedGymRequest`.
+            ///
+            /// - Parameters:
+            ///   - name:
+            ///   - city:
+            ///   - country:
+            public init(
+                name: Swift.String? = nil,
+                city: Swift.String? = nil,
+                country: Swift.String? = nil
+            ) {
+                self.name = name
+                self.city = city
+                self.country = country
+            }
+            public enum CodingKeys: String, CodingKey {
+                case name
+                case city
+                case country
+            }
+        }
         /// A task or event on the planner.
         ///
         /// ``is_complete`` is what the client writes; ``completed_at`` is the record
@@ -2120,84 +2518,18 @@ public enum Components {
             public var targetWeightKg: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PatchedRepbaseUserRequest/unit_preference`.
             public var unitPreference: Components.Schemas.UnitPreferenceEnum?
-            /// - Remark: Generated from `#/components/schemas/PatchedRepbaseUserRequest/profile_photo_url`.
-            @frozen public enum ProfilePhotoUrlPayload: Codable, Hashable, Sendable {
-                /// - Remark: Generated from `#/components/schemas/PatchedRepbaseUserRequest/profile_photo_url/case1`.
-                case case1(Swift.String)
-                /// - Remark: Generated from `#/components/schemas/PatchedRepbaseUserRequest/profile_photo_url/case2`.
-                case case2(Swift.String)
-                public init(from decoder: any Swift.Decoder) throws {
-                    var errors: [any Swift.Error] = []
-                    do {
-                        self = .case1(try decoder.decodeFromSingleValueContainer())
-                        return
-                    } catch {
-                        errors.append(error)
-                    }
-                    do {
-                        self = .case2(try decoder.decodeFromSingleValueContainer())
-                        return
-                    } catch {
-                        errors.append(error)
-                    }
-                    throw Swift.DecodingError.failedToDecodeOneOfSchema(
-                        type: Self.self,
-                        codingPath: decoder.codingPath,
-                        errors: errors
-                    )
-                }
-                public func encode(to encoder: any Swift.Encoder) throws {
-                    switch self {
-                    case let .case1(value):
-                        try encoder.encodeToSingleValueContainer(value)
-                    case let .case2(value):
-                        try encoder.encodeToSingleValueContainer(value)
-                    }
-                }
-            }
-            /// - Remark: Generated from `#/components/schemas/PatchedRepbaseUserRequest/profile_photo_url`.
-            public var profilePhotoUrl: Components.Schemas.PatchedRepbaseUserRequest.ProfilePhotoUrlPayload?
-            /// - Remark: Generated from `#/components/schemas/PatchedRepbaseUserRequest/training_style`.
-            @frozen public enum TrainingStylePayload: Codable, Hashable, Sendable {
-                /// - Remark: Generated from `#/components/schemas/PatchedRepbaseUserRequest/training_style/case1`.
-                case TrainingStyleEnum(Components.Schemas.TrainingStyleEnum)
-                /// - Remark: Generated from `#/components/schemas/PatchedRepbaseUserRequest/training_style/case2`.
-                case BlankEnum(Components.Schemas.BlankEnum)
-                public init(from decoder: any Swift.Decoder) throws {
-                    var errors: [any Swift.Error] = []
-                    do {
-                        self = .TrainingStyleEnum(try decoder.decodeFromSingleValueContainer())
-                        return
-                    } catch {
-                        errors.append(error)
-                    }
-                    do {
-                        self = .BlankEnum(try .init(from: decoder))
-                        return
-                    } catch {
-                        errors.append(error)
-                    }
-                    throw Swift.DecodingError.failedToDecodeOneOfSchema(
-                        type: Self.self,
-                        codingPath: decoder.codingPath,
-                        errors: errors
-                    )
-                }
-                public func encode(to encoder: any Swift.Encoder) throws {
-                    switch self {
-                    case let .TrainingStyleEnum(value):
-                        try encoder.encodeToSingleValueContainer(value)
-                    case let .BlankEnum(value):
-                        try value.encode(to: encoder)
-                    }
-                }
-            }
-            /// - Remark: Generated from `#/components/schemas/PatchedRepbaseUserRequest/training_style`.
-            public var trainingStyle: Components.Schemas.PatchedRepbaseUserRequest.TrainingStylePayload?
+            /// - Remark: Generated from `#/components/schemas/PatchedRepbaseUserRequest/bio`.
+            public var bio: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedRepbaseUserRequest/disciplines`.
+            public var disciplines: [Components.Schemas.DisciplinesEnum]?
             /// - Remark: Generated from `#/components/schemas/PatchedRepbaseUserRequest/gym`.
-            public var gym: Swift.String?
-            /// - Remark: Generated from `#/components/schemas/PatchedRepbaseUserRequest/is_body_metrics_public`.
-            public var isBodyMetricsPublic: Swift.Bool?
+            public var gym: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PatchedRepbaseUserRequest/shows_height`.
+            public var showsHeight: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/PatchedRepbaseUserRequest/shows_weight`.
+            public var showsWeight: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/PatchedRepbaseUserRequest/shows_target_weight`.
+            public var showsTargetWeight: Swift.Bool?
             /// Creates a new `PatchedRepbaseUserRequest`.
             ///
             /// - Parameters:
@@ -2210,10 +2542,12 @@ public enum Components {
             ///   - weightKg:
             ///   - targetWeightKg:
             ///   - unitPreference:
-            ///   - profilePhotoUrl:
-            ///   - trainingStyle:
+            ///   - bio:
+            ///   - disciplines:
             ///   - gym:
-            ///   - isBodyMetricsPublic:
+            ///   - showsHeight:
+            ///   - showsWeight:
+            ///   - showsTargetWeight:
             public init(
                 username: Swift.String? = nil,
                 firstName: Swift.String? = nil,
@@ -2224,10 +2558,12 @@ public enum Components {
                 weightKg: Swift.String? = nil,
                 targetWeightKg: Swift.String? = nil,
                 unitPreference: Components.Schemas.UnitPreferenceEnum? = nil,
-                profilePhotoUrl: Components.Schemas.PatchedRepbaseUserRequest.ProfilePhotoUrlPayload? = nil,
-                trainingStyle: Components.Schemas.PatchedRepbaseUserRequest.TrainingStylePayload? = nil,
-                gym: Swift.String? = nil,
-                isBodyMetricsPublic: Swift.Bool? = nil
+                bio: Swift.String? = nil,
+                disciplines: [Components.Schemas.DisciplinesEnum]? = nil,
+                gym: Swift.Int? = nil,
+                showsHeight: Swift.Bool? = nil,
+                showsWeight: Swift.Bool? = nil,
+                showsTargetWeight: Swift.Bool? = nil
             ) {
                 self.username = username
                 self.firstName = firstName
@@ -2238,10 +2574,12 @@ public enum Components {
                 self.weightKg = weightKg
                 self.targetWeightKg = targetWeightKg
                 self.unitPreference = unitPreference
-                self.profilePhotoUrl = profilePhotoUrl
-                self.trainingStyle = trainingStyle
+                self.bio = bio
+                self.disciplines = disciplines
                 self.gym = gym
-                self.isBodyMetricsPublic = isBodyMetricsPublic
+                self.showsHeight = showsHeight
+                self.showsWeight = showsWeight
+                self.showsTargetWeight = showsTargetWeight
             }
             public enum CodingKeys: String, CodingKey {
                 case username
@@ -2253,10 +2591,12 @@ public enum Components {
                 case weightKg = "weight_kg"
                 case targetWeightKg = "target_weight_kg"
                 case unitPreference = "unit_preference"
-                case profilePhotoUrl = "profile_photo_url"
-                case trainingStyle = "training_style"
+                case bio
+                case disciplines
                 case gym
-                case isBodyMetricsPublic = "is_body_metrics_public"
+                case showsHeight = "shows_height"
+                case showsWeight = "shows_weight"
+                case showsTargetWeight = "shows_target_weight"
             }
         }
         /// - Remark: Generated from `#/components/schemas/PatchedSessionExerciseRequest`.
@@ -2782,6 +3122,37 @@ public enum Components {
                 case notes
             }
         }
+        /// A profile photo sent as base64.
+        ///
+        /// Base64 in JSON rather than multipart: every other call this API takes is
+        /// JSON, and keeping it that way means the generated client needs no separate
+        /// upload path.
+        ///
+        /// - Remark: Generated from `#/components/schemas/ProfilePhotoUploadRequest`.
+        public struct ProfilePhotoUploadRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ProfilePhotoUploadRequest/content_type`.
+            public var contentType: Components.Schemas.ContentTypeEnum
+            /// The image bytes, base64 encoded, without a data: prefix.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ProfilePhotoUploadRequest/image_base64`.
+            public var imageBase64: Swift.String
+            /// Creates a new `ProfilePhotoUploadRequest`.
+            ///
+            /// - Parameters:
+            ///   - contentType:
+            ///   - imageBase64: The image bytes, base64 encoded, without a data: prefix.
+            public init(
+                contentType: Components.Schemas.ContentTypeEnum,
+                imageBase64: Swift.String
+            ) {
+                self.contentType = contentType
+                self.imageBase64 = imageBase64
+            }
+            public enum CodingKeys: String, CodingKey {
+                case contentType = "content_type"
+                case imageBase64 = "image_base64"
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser`.
         public struct PublicRepbaseUser: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/id`.
@@ -2792,82 +3163,30 @@ public enum Components {
             public var firstName: Swift.String
             /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/last_name`.
             public var lastName: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/bio`.
+            public var bio: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/profile_photo_url`.
-            @frozen public enum ProfilePhotoUrlPayload: Codable, Hashable, Sendable {
-                /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/profile_photo_url/case1`.
-                case case1(Swift.String)
-                /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/profile_photo_url/case2`.
-                case case2(Swift.String)
-                public init(from decoder: any Swift.Decoder) throws {
-                    var errors: [any Swift.Error] = []
-                    do {
-                        self = .case1(try decoder.decodeFromSingleValueContainer())
-                        return
-                    } catch {
-                        errors.append(error)
-                    }
-                    do {
-                        self = .case2(try decoder.decodeFromSingleValueContainer())
-                        return
-                    } catch {
-                        errors.append(error)
-                    }
-                    throw Swift.DecodingError.failedToDecodeOneOfSchema(
-                        type: Self.self,
-                        codingPath: decoder.codingPath,
-                        errors: errors
-                    )
-                }
-                public func encode(to encoder: any Swift.Encoder) throws {
-                    switch self {
-                    case let .case1(value):
-                        try encoder.encodeToSingleValueContainer(value)
-                    case let .case2(value):
-                        try encoder.encodeToSingleValueContainer(value)
-                    }
-                }
-            }
-            /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/profile_photo_url`.
-            public var profilePhotoUrl: Components.Schemas.PublicRepbaseUser.ProfilePhotoUrlPayload?
-            /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/training_style`.
-            @frozen public enum TrainingStylePayload: Codable, Hashable, Sendable {
-                /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/training_style/case1`.
-                case TrainingStyleEnum(Components.Schemas.TrainingStyleEnum)
-                /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/training_style/case2`.
-                case BlankEnum(Components.Schemas.BlankEnum)
-                public init(from decoder: any Swift.Decoder) throws {
-                    var errors: [any Swift.Error] = []
-                    do {
-                        self = .TrainingStyleEnum(try decoder.decodeFromSingleValueContainer())
-                        return
-                    } catch {
-                        errors.append(error)
-                    }
-                    do {
-                        self = .BlankEnum(try .init(from: decoder))
-                        return
-                    } catch {
-                        errors.append(error)
-                    }
-                    throw Swift.DecodingError.failedToDecodeOneOfSchema(
-                        type: Self.self,
-                        codingPath: decoder.codingPath,
-                        errors: errors
-                    )
-                }
-                public func encode(to encoder: any Swift.Encoder) throws {
-                    switch self {
-                    case let .TrainingStyleEnum(value):
-                        try encoder.encodeToSingleValueContainer(value)
-                    case let .BlankEnum(value):
-                        try value.encode(to: encoder)
-                    }
-                }
-            }
-            /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/training_style`.
-            public var trainingStyle: Components.Schemas.PublicRepbaseUser.TrainingStylePayload?
+            public var profilePhotoUrl: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/disciplines`.
+            public var disciplines: [Swift.String]
             /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/gym`.
-            public var gym: Swift.String?
+            public var gym: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/gym_name`.
+            public var gymName: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/gym_city`.
+            public var gymCity: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/height_cm`.
+            public var heightCm: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/weight_kg`.
+            public var weightKg: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/target_weight_kg`.
+            public var targetWeightKg: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/shows_height`.
+            public var showsHeight: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/shows_weight`.
+            public var showsWeight: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/shows_target_weight`.
+            public var showsTargetWeight: Swift.Bool?
             /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/created_at`.
             public var createdAt: Foundation.Date
             /// Creates a new `PublicRepbaseUser`.
@@ -2877,27 +3196,54 @@ public enum Components {
             ///   - username:
             ///   - firstName:
             ///   - lastName:
+            ///   - bio:
             ///   - profilePhotoUrl:
-            ///   - trainingStyle:
+            ///   - disciplines:
             ///   - gym:
+            ///   - gymName:
+            ///   - gymCity:
+            ///   - heightCm:
+            ///   - weightKg:
+            ///   - targetWeightKg:
+            ///   - showsHeight:
+            ///   - showsWeight:
+            ///   - showsTargetWeight:
             ///   - createdAt:
             public init(
                 id: Swift.Int,
                 username: Swift.String,
                 firstName: Swift.String,
                 lastName: Swift.String,
-                profilePhotoUrl: Components.Schemas.PublicRepbaseUser.ProfilePhotoUrlPayload? = nil,
-                trainingStyle: Components.Schemas.PublicRepbaseUser.TrainingStylePayload? = nil,
-                gym: Swift.String? = nil,
+                bio: Swift.String? = nil,
+                profilePhotoUrl: Swift.String? = nil,
+                disciplines: [Swift.String],
+                gym: Swift.Int? = nil,
+                gymName: Swift.String? = nil,
+                gymCity: Swift.String? = nil,
+                heightCm: Swift.Int? = nil,
+                weightKg: Swift.String? = nil,
+                targetWeightKg: Swift.String? = nil,
+                showsHeight: Swift.Bool? = nil,
+                showsWeight: Swift.Bool? = nil,
+                showsTargetWeight: Swift.Bool? = nil,
                 createdAt: Foundation.Date
             ) {
                 self.id = id
                 self.username = username
                 self.firstName = firstName
                 self.lastName = lastName
+                self.bio = bio
                 self.profilePhotoUrl = profilePhotoUrl
-                self.trainingStyle = trainingStyle
+                self.disciplines = disciplines
                 self.gym = gym
+                self.gymName = gymName
+                self.gymCity = gymCity
+                self.heightCm = heightCm
+                self.weightKg = weightKg
+                self.targetWeightKg = targetWeightKg
+                self.showsHeight = showsHeight
+                self.showsWeight = showsWeight
+                self.showsTargetWeight = showsTargetWeight
                 self.createdAt = createdAt
             }
             public enum CodingKeys: String, CodingKey {
@@ -2905,9 +3251,18 @@ public enum Components {
                 case username
                 case firstName = "first_name"
                 case lastName = "last_name"
+                case bio
                 case profilePhotoUrl = "profile_photo_url"
-                case trainingStyle = "training_style"
+                case disciplines
                 case gym
+                case gymName = "gym_name"
+                case gymCity = "gym_city"
+                case heightCm = "height_cm"
+                case weightKg = "weight_kg"
+                case targetWeightKg = "target_weight_kg"
+                case showsHeight = "shows_height"
+                case showsWeight = "shows_weight"
+                case showsTargetWeight = "shows_target_weight"
                 case createdAt = "created_at"
             }
         }
@@ -2974,84 +3329,24 @@ public enum Components {
             public var targetWeightKg: Swift.String?
             /// - Remark: Generated from `#/components/schemas/RepbaseUser/unit_preference`.
             public var unitPreference: Components.Schemas.UnitPreferenceEnum?
+            /// - Remark: Generated from `#/components/schemas/RepbaseUser/bio`.
+            public var bio: Swift.String?
             /// - Remark: Generated from `#/components/schemas/RepbaseUser/profile_photo_url`.
-            @frozen public enum ProfilePhotoUrlPayload: Codable, Hashable, Sendable {
-                /// - Remark: Generated from `#/components/schemas/RepbaseUser/profile_photo_url/case1`.
-                case case1(Swift.String)
-                /// - Remark: Generated from `#/components/schemas/RepbaseUser/profile_photo_url/case2`.
-                case case2(Swift.String)
-                public init(from decoder: any Swift.Decoder) throws {
-                    var errors: [any Swift.Error] = []
-                    do {
-                        self = .case1(try decoder.decodeFromSingleValueContainer())
-                        return
-                    } catch {
-                        errors.append(error)
-                    }
-                    do {
-                        self = .case2(try decoder.decodeFromSingleValueContainer())
-                        return
-                    } catch {
-                        errors.append(error)
-                    }
-                    throw Swift.DecodingError.failedToDecodeOneOfSchema(
-                        type: Self.self,
-                        codingPath: decoder.codingPath,
-                        errors: errors
-                    )
-                }
-                public func encode(to encoder: any Swift.Encoder) throws {
-                    switch self {
-                    case let .case1(value):
-                        try encoder.encodeToSingleValueContainer(value)
-                    case let .case2(value):
-                        try encoder.encodeToSingleValueContainer(value)
-                    }
-                }
-            }
-            /// - Remark: Generated from `#/components/schemas/RepbaseUser/profile_photo_url`.
-            public var profilePhotoUrl: Components.Schemas.RepbaseUser.ProfilePhotoUrlPayload?
-            /// - Remark: Generated from `#/components/schemas/RepbaseUser/training_style`.
-            @frozen public enum TrainingStylePayload: Codable, Hashable, Sendable {
-                /// - Remark: Generated from `#/components/schemas/RepbaseUser/training_style/case1`.
-                case TrainingStyleEnum(Components.Schemas.TrainingStyleEnum)
-                /// - Remark: Generated from `#/components/schemas/RepbaseUser/training_style/case2`.
-                case BlankEnum(Components.Schemas.BlankEnum)
-                public init(from decoder: any Swift.Decoder) throws {
-                    var errors: [any Swift.Error] = []
-                    do {
-                        self = .TrainingStyleEnum(try decoder.decodeFromSingleValueContainer())
-                        return
-                    } catch {
-                        errors.append(error)
-                    }
-                    do {
-                        self = .BlankEnum(try .init(from: decoder))
-                        return
-                    } catch {
-                        errors.append(error)
-                    }
-                    throw Swift.DecodingError.failedToDecodeOneOfSchema(
-                        type: Self.self,
-                        codingPath: decoder.codingPath,
-                        errors: errors
-                    )
-                }
-                public func encode(to encoder: any Swift.Encoder) throws {
-                    switch self {
-                    case let .TrainingStyleEnum(value):
-                        try encoder.encodeToSingleValueContainer(value)
-                    case let .BlankEnum(value):
-                        try value.encode(to: encoder)
-                    }
-                }
-            }
-            /// - Remark: Generated from `#/components/schemas/RepbaseUser/training_style`.
-            public var trainingStyle: Components.Schemas.RepbaseUser.TrainingStylePayload?
+            public var profilePhotoUrl: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/RepbaseUser/disciplines`.
+            public var disciplines: [Components.Schemas.DisciplinesEnum]?
             /// - Remark: Generated from `#/components/schemas/RepbaseUser/gym`.
-            public var gym: Swift.String?
-            /// - Remark: Generated from `#/components/schemas/RepbaseUser/is_body_metrics_public`.
-            public var isBodyMetricsPublic: Swift.Bool?
+            public var gym: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/RepbaseUser/gym_name`.
+            public var gymName: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/RepbaseUser/gym_city`.
+            public var gymCity: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/RepbaseUser/shows_height`.
+            public var showsHeight: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/RepbaseUser/shows_weight`.
+            public var showsWeight: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/RepbaseUser/shows_target_weight`.
+            public var showsTargetWeight: Swift.Bool?
             /// - Remark: Generated from `#/components/schemas/RepbaseUser/created_at`.
             public var createdAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/RepbaseUser/updated_at`.
@@ -3069,10 +3364,15 @@ public enum Components {
             ///   - weightKg:
             ///   - targetWeightKg:
             ///   - unitPreference:
+            ///   - bio:
             ///   - profilePhotoUrl:
-            ///   - trainingStyle:
+            ///   - disciplines:
             ///   - gym:
-            ///   - isBodyMetricsPublic:
+            ///   - gymName:
+            ///   - gymCity:
+            ///   - showsHeight:
+            ///   - showsWeight:
+            ///   - showsTargetWeight:
             ///   - createdAt:
             ///   - updatedAt:
             public init(
@@ -3086,10 +3386,15 @@ public enum Components {
                 weightKg: Swift.String? = nil,
                 targetWeightKg: Swift.String? = nil,
                 unitPreference: Components.Schemas.UnitPreferenceEnum? = nil,
-                profilePhotoUrl: Components.Schemas.RepbaseUser.ProfilePhotoUrlPayload? = nil,
-                trainingStyle: Components.Schemas.RepbaseUser.TrainingStylePayload? = nil,
-                gym: Swift.String? = nil,
-                isBodyMetricsPublic: Swift.Bool? = nil,
+                bio: Swift.String? = nil,
+                profilePhotoUrl: Swift.String? = nil,
+                disciplines: [Components.Schemas.DisciplinesEnum]? = nil,
+                gym: Swift.Int? = nil,
+                gymName: Swift.String? = nil,
+                gymCity: Swift.String? = nil,
+                showsHeight: Swift.Bool? = nil,
+                showsWeight: Swift.Bool? = nil,
+                showsTargetWeight: Swift.Bool? = nil,
                 createdAt: Foundation.Date,
                 updatedAt: Foundation.Date
             ) {
@@ -3103,10 +3408,15 @@ public enum Components {
                 self.weightKg = weightKg
                 self.targetWeightKg = targetWeightKg
                 self.unitPreference = unitPreference
+                self.bio = bio
                 self.profilePhotoUrl = profilePhotoUrl
-                self.trainingStyle = trainingStyle
+                self.disciplines = disciplines
                 self.gym = gym
-                self.isBodyMetricsPublic = isBodyMetricsPublic
+                self.gymName = gymName
+                self.gymCity = gymCity
+                self.showsHeight = showsHeight
+                self.showsWeight = showsWeight
+                self.showsTargetWeight = showsTargetWeight
                 self.createdAt = createdAt
                 self.updatedAt = updatedAt
             }
@@ -3121,10 +3431,15 @@ public enum Components {
                 case weightKg = "weight_kg"
                 case targetWeightKg = "target_weight_kg"
                 case unitPreference = "unit_preference"
+                case bio
                 case profilePhotoUrl = "profile_photo_url"
-                case trainingStyle = "training_style"
+                case disciplines
                 case gym
-                case isBodyMetricsPublic = "is_body_metrics_public"
+                case gymName = "gym_name"
+                case gymCity = "gym_city"
+                case showsHeight = "shows_height"
+                case showsWeight = "shows_weight"
+                case showsTargetWeight = "shows_target_weight"
                 case createdAt = "created_at"
                 case updatedAt = "updated_at"
             }
@@ -3149,84 +3464,18 @@ public enum Components {
             public var targetWeightKg: Swift.String?
             /// - Remark: Generated from `#/components/schemas/RepbaseUserRequest/unit_preference`.
             public var unitPreference: Components.Schemas.UnitPreferenceEnum?
-            /// - Remark: Generated from `#/components/schemas/RepbaseUserRequest/profile_photo_url`.
-            @frozen public enum ProfilePhotoUrlPayload: Codable, Hashable, Sendable {
-                /// - Remark: Generated from `#/components/schemas/RepbaseUserRequest/profile_photo_url/case1`.
-                case case1(Swift.String)
-                /// - Remark: Generated from `#/components/schemas/RepbaseUserRequest/profile_photo_url/case2`.
-                case case2(Swift.String)
-                public init(from decoder: any Swift.Decoder) throws {
-                    var errors: [any Swift.Error] = []
-                    do {
-                        self = .case1(try decoder.decodeFromSingleValueContainer())
-                        return
-                    } catch {
-                        errors.append(error)
-                    }
-                    do {
-                        self = .case2(try decoder.decodeFromSingleValueContainer())
-                        return
-                    } catch {
-                        errors.append(error)
-                    }
-                    throw Swift.DecodingError.failedToDecodeOneOfSchema(
-                        type: Self.self,
-                        codingPath: decoder.codingPath,
-                        errors: errors
-                    )
-                }
-                public func encode(to encoder: any Swift.Encoder) throws {
-                    switch self {
-                    case let .case1(value):
-                        try encoder.encodeToSingleValueContainer(value)
-                    case let .case2(value):
-                        try encoder.encodeToSingleValueContainer(value)
-                    }
-                }
-            }
-            /// - Remark: Generated from `#/components/schemas/RepbaseUserRequest/profile_photo_url`.
-            public var profilePhotoUrl: Components.Schemas.RepbaseUserRequest.ProfilePhotoUrlPayload?
-            /// - Remark: Generated from `#/components/schemas/RepbaseUserRequest/training_style`.
-            @frozen public enum TrainingStylePayload: Codable, Hashable, Sendable {
-                /// - Remark: Generated from `#/components/schemas/RepbaseUserRequest/training_style/case1`.
-                case TrainingStyleEnum(Components.Schemas.TrainingStyleEnum)
-                /// - Remark: Generated from `#/components/schemas/RepbaseUserRequest/training_style/case2`.
-                case BlankEnum(Components.Schemas.BlankEnum)
-                public init(from decoder: any Swift.Decoder) throws {
-                    var errors: [any Swift.Error] = []
-                    do {
-                        self = .TrainingStyleEnum(try decoder.decodeFromSingleValueContainer())
-                        return
-                    } catch {
-                        errors.append(error)
-                    }
-                    do {
-                        self = .BlankEnum(try .init(from: decoder))
-                        return
-                    } catch {
-                        errors.append(error)
-                    }
-                    throw Swift.DecodingError.failedToDecodeOneOfSchema(
-                        type: Self.self,
-                        codingPath: decoder.codingPath,
-                        errors: errors
-                    )
-                }
-                public func encode(to encoder: any Swift.Encoder) throws {
-                    switch self {
-                    case let .TrainingStyleEnum(value):
-                        try encoder.encodeToSingleValueContainer(value)
-                    case let .BlankEnum(value):
-                        try value.encode(to: encoder)
-                    }
-                }
-            }
-            /// - Remark: Generated from `#/components/schemas/RepbaseUserRequest/training_style`.
-            public var trainingStyle: Components.Schemas.RepbaseUserRequest.TrainingStylePayload?
+            /// - Remark: Generated from `#/components/schemas/RepbaseUserRequest/bio`.
+            public var bio: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/RepbaseUserRequest/disciplines`.
+            public var disciplines: [Components.Schemas.DisciplinesEnum]?
             /// - Remark: Generated from `#/components/schemas/RepbaseUserRequest/gym`.
-            public var gym: Swift.String?
-            /// - Remark: Generated from `#/components/schemas/RepbaseUserRequest/is_body_metrics_public`.
-            public var isBodyMetricsPublic: Swift.Bool?
+            public var gym: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/RepbaseUserRequest/shows_height`.
+            public var showsHeight: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/RepbaseUserRequest/shows_weight`.
+            public var showsWeight: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/RepbaseUserRequest/shows_target_weight`.
+            public var showsTargetWeight: Swift.Bool?
             /// Creates a new `RepbaseUserRequest`.
             ///
             /// - Parameters:
@@ -3239,10 +3488,12 @@ public enum Components {
             ///   - weightKg:
             ///   - targetWeightKg:
             ///   - unitPreference:
-            ///   - profilePhotoUrl:
-            ///   - trainingStyle:
+            ///   - bio:
+            ///   - disciplines:
             ///   - gym:
-            ///   - isBodyMetricsPublic:
+            ///   - showsHeight:
+            ///   - showsWeight:
+            ///   - showsTargetWeight:
             public init(
                 username: Swift.String,
                 firstName: Swift.String,
@@ -3253,10 +3504,12 @@ public enum Components {
                 weightKg: Swift.String? = nil,
                 targetWeightKg: Swift.String? = nil,
                 unitPreference: Components.Schemas.UnitPreferenceEnum? = nil,
-                profilePhotoUrl: Components.Schemas.RepbaseUserRequest.ProfilePhotoUrlPayload? = nil,
-                trainingStyle: Components.Schemas.RepbaseUserRequest.TrainingStylePayload? = nil,
-                gym: Swift.String? = nil,
-                isBodyMetricsPublic: Swift.Bool? = nil
+                bio: Swift.String? = nil,
+                disciplines: [Components.Schemas.DisciplinesEnum]? = nil,
+                gym: Swift.Int? = nil,
+                showsHeight: Swift.Bool? = nil,
+                showsWeight: Swift.Bool? = nil,
+                showsTargetWeight: Swift.Bool? = nil
             ) {
                 self.username = username
                 self.firstName = firstName
@@ -3267,10 +3520,12 @@ public enum Components {
                 self.weightKg = weightKg
                 self.targetWeightKg = targetWeightKg
                 self.unitPreference = unitPreference
-                self.profilePhotoUrl = profilePhotoUrl
-                self.trainingStyle = trainingStyle
+                self.bio = bio
+                self.disciplines = disciplines
                 self.gym = gym
-                self.isBodyMetricsPublic = isBodyMetricsPublic
+                self.showsHeight = showsHeight
+                self.showsWeight = showsWeight
+                self.showsTargetWeight = showsTargetWeight
             }
             public enum CodingKeys: String, CodingKey {
                 case username
@@ -3282,10 +3537,12 @@ public enum Components {
                 case weightKg = "weight_kg"
                 case targetWeightKg = "target_weight_kg"
                 case unitPreference = "unit_preference"
-                case profilePhotoUrl = "profile_photo_url"
-                case trainingStyle = "training_style"
+                case bio
+                case disciplines
                 case gym
-                case isBodyMetricsPublic = "is_body_metrics_public"
+                case showsHeight = "shows_height"
+                case showsWeight = "shows_weight"
+                case showsTargetWeight = "shows_target_weight"
             }
         }
         /// A cardio finisher performed after a session's exercises.
@@ -3661,18 +3918,6 @@ public enum Components {
             case planned = "planned"
             case active = "active"
             case completed = "completed"
-        }
-        /// * `powerlifting` - Powerlifting
-        /// * `bodybuilding` - Bodybuilding
-        /// * `crossfit` - CrossFit
-        /// * `other` - Other
-        ///
-        /// - Remark: Generated from `#/components/schemas/TrainingStyleEnum`.
-        @frozen public enum TrainingStyleEnum: String, Codable, Hashable, Sendable, CaseIterable {
-            case powerlifting = "powerlifting"
-            case bodybuilding = "bodybuilding"
-            case crossfit = "crossfit"
-            case other = "other"
         }
         /// * `metric` - Metric (kg/cm)
         /// * `imperial` - Imperial (lb/in)
@@ -6296,6 +6541,900 @@ public enum Operations {
             case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
         }
     }
+    /// Gyms, shared by everyone who trains at them.
+    ///
+    /// Not owned by anyone: a gym one user adds is exactly the gym the next user
+    /// should be able to join, which is the whole point of the list. Anyone signed
+    /// in may add one; nobody may edit or delete somebody else's.
+    ///
+    /// - Remark: HTTP `GET /api/v1/gyms/`.
+    /// - Remark: Generated from `#/paths//api/v1/gyms//get(gyms_list)`.
+    public enum GymsList {
+        public static let id: Swift.String = "gyms_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/gyms/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/gyms/GET/query/page`.
+                public var page: Swift.Int?
+                /// Match gyms whose name or city contains this, ignoring case, punctuation and extra spaces.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/gyms/GET/query/search`.
+                public var search: Swift.String?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - page: A page number within the paginated result set.
+                ///   - search: Match gyms whose name or city contains this, ignoring case, punctuation and extra spaces.
+                public init(
+                    page: Swift.Int? = nil,
+                    search: Swift.String? = nil
+                ) {
+                    self.page = page
+                    self.search = search
+                }
+            }
+            public var query: Operations.GymsList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/gyms/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GymsList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GymsList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.GymsList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.GymsList.Input.Query = .init(),
+                headers: Operations.GymsList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/gyms/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/gyms/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedGymList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedGymList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.GymsList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.GymsList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/gyms//get(gyms_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.GymsList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.GymsList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Gyms, shared by everyone who trains at them.
+    ///
+    /// Not owned by anyone: a gym one user adds is exactly the gym the next user
+    /// should be able to join, which is the whole point of the list. Anyone signed
+    /// in may add one; nobody may edit or delete somebody else's.
+    ///
+    /// - Remark: HTTP `POST /api/v1/gyms/`.
+    /// - Remark: Generated from `#/paths//api/v1/gyms//post(gyms_create)`.
+    public enum GymsCreate {
+        public static let id: Swift.String = "gyms_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/gyms/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GymsCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GymsCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.GymsCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/gyms/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/gyms/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.GymRequest)
+            }
+            public var body: Operations.GymsCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.GymsCreate.Input.Headers = .init(),
+                body: Operations.GymsCreate.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Created: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/gyms/POST/responses/201/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/gyms/POST/responses/201/content/application\/json`.
+                    case json(Components.Schemas.Gym)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Gym {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.GymsCreate.Output.Created.Body
+                /// Creates a new `Created`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.GymsCreate.Output.Created.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/gyms//post(gyms_create)/responses/201`.
+            ///
+            /// HTTP response code: `201 created`.
+            case created(Operations.GymsCreate.Output.Created)
+            /// The associated value of the enum case if `self` is `.created`.
+            ///
+            /// - Throws: An error if `self` is not `.created`.
+            /// - SeeAlso: `.created`.
+            public var created: Operations.GymsCreate.Output.Created {
+                get throws {
+                    switch self {
+                    case let .created(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "created",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Gyms, shared by everyone who trains at them.
+    ///
+    /// Not owned by anyone: a gym one user adds is exactly the gym the next user
+    /// should be able to join, which is the whole point of the list. Anyone signed
+    /// in may add one; nobody may edit or delete somebody else's.
+    ///
+    /// - Remark: HTTP `GET /api/v1/gyms/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/gyms/{id}//get(gyms_retrieve)`.
+    public enum GymsRetrieve {
+        public static let id: Swift.String = "gyms_retrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/gyms/{id}/GET/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this gym.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/gyms/{id}/GET/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this gym.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.GymsRetrieve.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/gyms/{id}/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GymsRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GymsRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.GymsRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.GymsRetrieve.Input.Path,
+                headers: Operations.GymsRetrieve.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/gyms/{id}/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/gyms/{id}/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Gym)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Gym {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.GymsRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.GymsRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/gyms/{id}//get(gyms_retrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.GymsRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.GymsRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Gyms, shared by everyone who trains at them.
+    ///
+    /// Not owned by anyone: a gym one user adds is exactly the gym the next user
+    /// should be able to join, which is the whole point of the list. Anyone signed
+    /// in may add one; nobody may edit or delete somebody else's.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/gyms/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/gyms/{id}//patch(gyms_partial_update)`.
+    public enum GymsPartialUpdate {
+        public static let id: Swift.String = "gyms_partial_update"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/gyms/{id}/PATCH/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this gym.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/gyms/{id}/PATCH/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this gym.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.GymsPartialUpdate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/gyms/{id}/PATCH/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GymsPartialUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GymsPartialUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.GymsPartialUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/gyms/{id}/PATCH/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/gyms/{id}/PATCH/requestBody/content/application\/json`.
+                case json(Components.Schemas.PatchedGymRequest)
+            }
+            public var body: Operations.GymsPartialUpdate.Input.Body?
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.GymsPartialUpdate.Input.Path,
+                headers: Operations.GymsPartialUpdate.Input.Headers = .init(),
+                body: Operations.GymsPartialUpdate.Input.Body? = nil
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/gyms/{id}/PATCH/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/gyms/{id}/PATCH/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Gym)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Gym {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.GymsPartialUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.GymsPartialUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/gyms/{id}//patch(gyms_partial_update)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.GymsPartialUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.GymsPartialUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Gyms, shared by everyone who trains at them.
+    ///
+    /// Not owned by anyone: a gym one user adds is exactly the gym the next user
+    /// should be able to join, which is the whole point of the list. Anyone signed
+    /// in may add one; nobody may edit or delete somebody else's.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/gyms/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/gyms/{id}//put(gyms_update)`.
+    public enum GymsUpdate {
+        public static let id: Swift.String = "gyms_update"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/gyms/{id}/PUT/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this gym.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/gyms/{id}/PUT/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this gym.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.GymsUpdate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/gyms/{id}/PUT/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GymsUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GymsUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.GymsUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/gyms/{id}/PUT/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/gyms/{id}/PUT/requestBody/content/application\/json`.
+                case json(Components.Schemas.GymRequest)
+            }
+            public var body: Operations.GymsUpdate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.GymsUpdate.Input.Path,
+                headers: Operations.GymsUpdate.Input.Headers = .init(),
+                body: Operations.GymsUpdate.Input.Body
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/gyms/{id}/PUT/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/gyms/{id}/PUT/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Gym)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Gym {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.GymsUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.GymsUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/gyms/{id}//put(gyms_update)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.GymsUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.GymsUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Gyms, shared by everyone who trains at them.
+    ///
+    /// Not owned by anyone: a gym one user adds is exactly the gym the next user
+    /// should be able to join, which is the whole point of the list. Anyone signed
+    /// in may add one; nobody may edit or delete somebody else's.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/gyms/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/gyms/{id}//delete(gyms_destroy)`.
+    public enum GymsDestroy {
+        public static let id: Swift.String = "gyms_destroy"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/gyms/{id}/DELETE/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this gym.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/gyms/{id}/DELETE/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this gym.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.GymsDestroy.Input.Path
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            public init(path: Operations.GymsDestroy.Input.Path) {
+                self.path = path
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct NoContent: Sendable, Hashable {
+                /// Creates a new `NoContent`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/gyms/{id}//delete(gyms_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            case noContent(Operations.GymsDestroy.Output.NoContent)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/gyms/{id}//delete(gyms_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            public static var noContent: Self {
+                .noContent(.init())
+            }
+            /// The associated value of the enum case if `self` is `.noContent`.
+            ///
+            /// - Throws: An error if `self` is not `.noContent`.
+            /// - SeeAlso: `.noContent`.
+            public var noContent: Operations.GymsDestroy.Output.NoContent {
+                get throws {
+                    switch self {
+                    case let .noContent(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "noContent",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// Who trains here. This is what makes a shared gym worth having.
+    ///
+    /// - Remark: HTTP `GET /api/v1/gyms/{id}/members/`.
+    /// - Remark: Generated from `#/paths//api/v1/gyms/{id}/members//get(gyms_members_list)`.
+    public enum GymsMembersList {
+        public static let id: Swift.String = "gyms_members_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/gyms/{id}/members/GET/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this gym.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/gyms/{id}/members/GET/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this gym.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.GymsMembersList.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/gyms/{id}/members/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GymsMembersList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GymsMembersList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.GymsMembersList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.GymsMembersList.Input.Path,
+                headers: Operations.GymsMembersList.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/gyms/{id}/members/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/gyms/{id}/members/GET/responses/200/content/application\/json`.
+                    case json([Components.Schemas.PublicRepbaseUser])
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: [Components.Schemas.PublicRepbaseUser] {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.GymsMembersList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.GymsMembersList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/gyms/{id}/members//get(gyms_members_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.GymsMembersList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.GymsMembersList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
     /// - Remark: HTTP `GET /api/v1/me/`.
     /// - Remark: Generated from `#/paths//api/v1/me//get(me_retrieve)`.
     public enum MeRetrieve {
@@ -6599,6 +7738,237 @@ public enum Operations {
             /// - Throws: An error if `self` is not `.ok`.
             /// - SeeAlso: `.ok`.
             public var ok: Operations.MeUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Replace the profile photo. Any previous file is deleted.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/me/photo/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/photo//put(me_photo_update)`.
+    public enum MePhotoUpdate {
+        public static let id: Swift.String = "me_photo_update"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/me/photo/PUT/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MePhotoUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MePhotoUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.MePhotoUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/me/photo/PUT/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/me/photo/PUT/requestBody/content/application\/json`.
+                case json(Components.Schemas.ProfilePhotoUploadRequest)
+            }
+            public var body: Operations.MePhotoUpdate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.MePhotoUpdate.Input.Headers = .init(),
+                body: Operations.MePhotoUpdate.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/me/photo/PUT/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/me/photo/PUT/responses/200/content/application\/json`.
+                    case json(Components.Schemas.RepbaseUser)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.RepbaseUser {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.MePhotoUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.MePhotoUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/me/photo//put(me_photo_update)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.MePhotoUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.MePhotoUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Remove the profile photo.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/me/photo/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/photo//delete(me_photo_destroy)`.
+    public enum MePhotoDestroy {
+        public static let id: Swift.String = "me_photo_destroy"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/me/photo/DELETE/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MePhotoDestroy.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MePhotoDestroy.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.MePhotoDestroy.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            public init(headers: Operations.MePhotoDestroy.Input.Headers = .init()) {
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/me/photo/DELETE/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/me/photo/DELETE/responses/200/content/application\/json`.
+                    case json(Components.Schemas.RepbaseUser)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.RepbaseUser {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.MePhotoDestroy.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.MePhotoDestroy.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/me/photo//delete(me_photo_destroy)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.MePhotoDestroy.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.MePhotoDestroy.Output.Ok {
                 get throws {
                     switch self {
                     case let .ok(response):

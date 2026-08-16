@@ -386,6 +386,225 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/gyms/:
+    get:
+      operationId: gyms_list
+      description: |-
+        Gyms, shared by everyone who trains at them.
+
+        Not owned by anyone: a gym one user adds is exactly the gym the next user
+        should be able to join, which is the whole point of the list. Anyone signed
+        in may add one; nobody may edit or delete somebody else's.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Match gyms whose name or city contains this, ignoring case, punctuation
+          and extra spaces.
+      tags:
+      - gyms
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedGymList'
+          description: ''
+    post:
+      operationId: gyms_create
+      description: |-
+        Gyms, shared by everyone who trains at them.
+
+        Not owned by anyone: a gym one user adds is exactly the gym the next user
+        should be able to join, which is the whole point of the list. Anyone signed
+        in may add one; nobody may edit or delete somebody else's.
+      tags:
+      - gyms
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GymRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GymRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GymRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Gym'
+          description: ''
+  /api/v1/gyms/{id}/:
+    get:
+      operationId: gyms_retrieve
+      description: |-
+        Gyms, shared by everyone who trains at them.
+
+        Not owned by anyone: a gym one user adds is exactly the gym the next user
+        should be able to join, which is the whole point of the list. Anyone signed
+        in may add one; nobody may edit or delete somebody else's.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this gym.
+        required: true
+      tags:
+      - gyms
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Gym'
+          description: ''
+    put:
+      operationId: gyms_update
+      description: |-
+        Gyms, shared by everyone who trains at them.
+
+        Not owned by anyone: a gym one user adds is exactly the gym the next user
+        should be able to join, which is the whole point of the list. Anyone signed
+        in may add one; nobody may edit or delete somebody else's.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this gym.
+        required: true
+      tags:
+      - gyms
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GymRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GymRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GymRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Gym'
+          description: ''
+    patch:
+      operationId: gyms_partial_update
+      description: |-
+        Gyms, shared by everyone who trains at them.
+
+        Not owned by anyone: a gym one user adds is exactly the gym the next user
+        should be able to join, which is the whole point of the list. Anyone signed
+        in may add one; nobody may edit or delete somebody else's.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this gym.
+        required: true
+      tags:
+      - gyms
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedGymRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedGymRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedGymRequest'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Gym'
+          description: ''
+    delete:
+      operationId: gyms_destroy
+      description: |-
+        Gyms, shared by everyone who trains at them.
+
+        Not owned by anyone: a gym one user adds is exactly the gym the next user
+        should be able to join, which is the whole point of the list. Anyone signed
+        in may add one; nobody may edit or delete somebody else's.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this gym.
+        required: true
+      tags:
+      - gyms
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/gyms/{id}/members/:
+    get:
+      operationId: gyms_members_list
+      description: Who trains here. This is what makes a shared gym worth having.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this gym.
+        required: true
+      tags:
+      - gyms
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PublicRepbaseUser'
+          description: ''
   /api/v1/me/:
     get:
       operationId: me_retrieve
@@ -442,6 +661,49 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/PatchedRepbaseUserRequest'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepbaseUser'
+          description: ''
+  /api/v1/me/photo/:
+    put:
+      operationId: me_photo_update
+      description: Replace the profile photo. Any previous file is deleted.
+      tags:
+      - me
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfilePhotoUploadRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProfilePhotoUploadRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProfilePhotoUploadRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepbaseUser'
+          description: ''
+    delete:
+      operationId: me_photo_destroy
+      description: Remove the profile photo.
+      tags:
+      - me
       security:
       - tokenAuth: []
       - cookieAuth: []
@@ -2046,9 +2308,6 @@ components:
       required:
       - token
       - user
-    BlankEnum:
-      enum:
-      - ''
     BodyWeightEntry:
       type: object
       properties:
@@ -2151,6 +2410,46 @@ components:
         * `travel` - Travel
         * `social` - Social
         * `other` - Other
+    ContentTypeEnum:
+      enum:
+      - image/heic
+      - image/jpeg
+      - image/png
+      - image/webp
+      type: string
+      description: |-
+        * `image/heic` - image/heic
+        * `image/jpeg` - image/jpeg
+        * `image/png` - image/png
+        * `image/webp` - image/webp
+    DisciplinesEnum:
+      enum:
+      - powerlifting
+      - bodybuilding
+      - crossfit
+      - weightlifting
+      - rock_climbing
+      - triathlon
+      - running
+      - cycling
+      - swimming
+      - calisthenics
+      - general_fitness
+      - other
+      type: string
+      description: |-
+        * `powerlifting` - Powerlifting
+        * `bodybuilding` - Bodybuilding
+        * `crossfit` - CrossFit
+        * `weightlifting` - Olympic weightlifting
+        * `rock_climbing` - Rock climbing
+        * `triathlon` - Triathlon
+        * `running` - Running
+        * `cycling` - Cycling
+        * `swimming` - Swimming
+        * `calisthenics` - Calisthenics
+        * `general_fitness` - General fitness
+        * `other` - Other
     Exercise:
       type: object
       properties:
@@ -2212,6 +2511,59 @@ components:
           minLength: 1
           maxLength: 150
         muscle_group:
+          type: string
+          maxLength: 100
+      required:
+      - name
+    Gym:
+      type: object
+      description: A gym, and how many people say they train there.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 150
+        city:
+          type: string
+          maxLength: 100
+        country:
+          type: string
+          maxLength: 100
+        member_count:
+          type: integer
+          readOnly: true
+        created_by:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - created_by
+      - id
+      - member_count
+      - name
+      - updated_at
+    GymRequest:
+      type: object
+      description: A gym, and how many people say they train there.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        city:
+          type: string
+          maxLength: 100
+        country:
           type: string
           maxLength: 100
       required:
@@ -2298,6 +2650,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Exercise'
+    PaginatedGymList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Gym'
     PaginatedPlannerEntryList:
       type: object
       required:
@@ -2551,6 +2926,20 @@ components:
         muscle_group:
           type: string
           maxLength: 100
+    PatchedGymRequest:
+      type: object
+      description: A gym, and how many people say they train there.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        city:
+          type: string
+          maxLength: 100
+        country:
+          type: string
+          maxLength: 100
     PatchedPlannerEntryRequest:
       type: object
       description: |-
@@ -2624,21 +3013,21 @@ components:
           nullable: true
         unit_preference:
           $ref: '#/components/schemas/UnitPreferenceEnum'
-        profile_photo_url:
-          oneOf:
-          - type: string
-            format: uri
-            maxLength: 200
-          - type: string
-            maxLength: 0
-        training_style:
-          oneOf:
-          - $ref: '#/components/schemas/TrainingStyleEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-        gym:
+        bio:
           type: string
-          maxLength: 150
-        is_body_metrics_public:
+          maxLength: 300
+        disciplines:
+          type: array
+          items:
+            $ref: '#/components/schemas/DisciplinesEnum'
+        gym:
+          type: integer
+          nullable: true
+        shows_height:
+          type: boolean
+        shows_weight:
+          type: boolean
+        shows_target_weight:
           type: boolean
     PatchedSessionExerciseRequest:
       type: object
@@ -2916,6 +3305,24 @@ components:
       required:
       - scheduled_date
       - title
+    ProfilePhotoUploadRequest:
+      type: object
+      description: |-
+        A profile photo sent as base64.
+
+        Base64 in JSON rather than multipart: every other call this API takes is
+        JSON, and keeping it that way means the generated client needs no separate
+        upload path.
+      properties:
+        content_type:
+          $ref: '#/components/schemas/ContentTypeEnum'
+        image_base64:
+          type: string
+          minLength: 1
+          description: 'The image bytes, base64 encoded, without a data: prefix.'
+      required:
+      - content_type
+      - image_base64
     PublicRepbaseUser:
       type: object
       properties:
@@ -2931,30 +3338,68 @@ components:
         last_name:
           type: string
           readOnly: true
-        profile_photo_url:
-          oneOf:
-          - type: string
-            format: uri
-            maxLength: 200
-          - type: string
-            maxLength: 0
-        training_style:
-          oneOf:
-          - $ref: '#/components/schemas/TrainingStyleEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-        gym:
+        bio:
           type: string
-          maxLength: 150
+          maxLength: 300
+        profile_photo_url:
+          type: string
+          nullable: true
+          readOnly: true
+        disciplines:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        gym:
+          type: integer
+          nullable: true
+        gym_name:
+          type: string
+          readOnly: true
+          nullable: true
+        gym_city:
+          type: string
+          readOnly: true
+          nullable: true
+        height_cm:
+          type: integer
+          nullable: true
+          readOnly: true
+        weight_kg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+          nullable: true
+          readOnly: true
+        target_weight_kg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+          nullable: true
+          readOnly: true
+        shows_height:
+          type: boolean
+        shows_weight:
+          type: boolean
+        shows_target_weight:
+          type: boolean
         created_at:
           type: string
           format: date-time
           readOnly: true
       required:
       - created_at
+      - disciplines
       - first_name
+      - gym_city
+      - gym_name
+      - height_cm
       - id
       - last_name
+      - profile_photo_url
+      - target_weight_kg
       - username
+      - weight_kg
     RegisterRequest:
       type: object
       properties:
@@ -3024,21 +3469,33 @@ components:
           nullable: true
         unit_preference:
           $ref: '#/components/schemas/UnitPreferenceEnum'
-        profile_photo_url:
-          oneOf:
-          - type: string
-            format: uri
-            maxLength: 200
-          - type: string
-            maxLength: 0
-        training_style:
-          oneOf:
-          - $ref: '#/components/schemas/TrainingStyleEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-        gym:
+        bio:
           type: string
-          maxLength: 150
-        is_body_metrics_public:
+          maxLength: 300
+        profile_photo_url:
+          type: string
+          nullable: true
+          readOnly: true
+        disciplines:
+          type: array
+          items:
+            $ref: '#/components/schemas/DisciplinesEnum'
+        gym:
+          type: integer
+          nullable: true
+        gym_name:
+          type: string
+          readOnly: true
+          nullable: true
+        gym_city:
+          type: string
+          readOnly: true
+          nullable: true
+        shows_height:
+          type: boolean
+        shows_weight:
+          type: boolean
+        shows_target_weight:
           type: boolean
         created_at:
           type: string
@@ -3052,8 +3509,11 @@ components:
       - created_at
       - email
       - first_name
+      - gym_city
+      - gym_name
       - id
       - last_name
+      - profile_photo_url
       - updated_at
       - username
     RepbaseUserRequest:
@@ -3097,21 +3557,21 @@ components:
           nullable: true
         unit_preference:
           $ref: '#/components/schemas/UnitPreferenceEnum'
-        profile_photo_url:
-          oneOf:
-          - type: string
-            format: uri
-            maxLength: 200
-          - type: string
-            maxLength: 0
-        training_style:
-          oneOf:
-          - $ref: '#/components/schemas/TrainingStyleEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-        gym:
+        bio:
           type: string
-          maxLength: 150
-        is_body_metrics_public:
+          maxLength: 300
+        disciplines:
+          type: array
+          items:
+            $ref: '#/components/schemas/DisciplinesEnum'
+        gym:
+          type: integer
+          nullable: true
+        shows_height:
+          type: boolean
+        shows_weight:
+          type: boolean
+        shows_target_weight:
           type: boolean
       required:
       - email
@@ -3364,18 +3824,6 @@ components:
         * `planned` - Planned
         * `active` - Active
         * `completed` - Completed
-    TrainingStyleEnum:
-      enum:
-      - powerlifting
-      - bodybuilding
-      - crossfit
-      - other
-      type: string
-      description: |-
-        * `powerlifting` - Powerlifting
-        * `bodybuilding` - Bodybuilding
-        * `crossfit` - CrossFit
-        * `other` - Other
     UnitPreferenceEnum:
       enum:
       - metric

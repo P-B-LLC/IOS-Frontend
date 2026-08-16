@@ -177,9 +177,14 @@ private struct AppRootView: View {
             guard let token = authentication.token else {
                 workoutStore.disconnect()
                 plannerStore.disconnect()
+                socialProfileStore.disconnect()
                 foodTrackingStore.reset()
                 return
             }
+            await socialProfileStore.connect(
+                configuration: authentication.configuration,
+                token: token
+            )
             await workoutStore.connect(
                 configuration: authentication.configuration,
                 token: token
