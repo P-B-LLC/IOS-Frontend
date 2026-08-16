@@ -22,7 +22,6 @@ struct ContentView: View {
                 ScrollView {
                     VStack(spacing: 14) {
                         HomeHeader(date: context.date)
-                        HomeWeekdaySelector(date: context.date)
 
                         HStack(alignment: .top, spacing: 16) {
                             WeeklyPlanCard()
@@ -101,7 +100,7 @@ private struct HomeHeader: View {
                     .foregroundStyle(timeOfDay.secondaryText)
                 Text("Ready to train?")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
-                Text("Your plan and nutrition, in one place.")
+                Text(greeting)
                     .font(.system(size: 13))
                     .foregroundStyle(timeOfDay.secondaryText)
             }
@@ -148,79 +147,10 @@ private struct HomeHeader: View {
         guard case .signedIn(let user) = authentication.phase else { return "R" }
         return String(user.displayName.prefix(1)).uppercased()
     }
-}
 
-private struct HomeWeekdaySelector: View {
-    @Environment(WorkoutStore.self) private var store
-    @Environment(\.homeTimeOfDay) private var timeOfDay
-
-    let date: Date
-
-    var body: some View {
-        HStack(spacing: 3) {
-            ForEach(Weekday.allCases.indices, id: \.self) { index in
-                let day = Weekday.allCases[index]
-                NavigationLink {
-                    DayWorkoutView(day: day)
-                } label: {
-                    VStack(spacing: 0) {
-                        Text(day.shortName.uppercased())
-                            .font(.system(size: 8, weight: .semibold))
-                            .tracking(0.4)
-                        Text(dayDate(at: index).formatted(.dateTime.day()))
-                            .font(.system(size: 12, weight: .semibold))
-                    }
-                    .foregroundStyle(foreground(for: day))
-                    .frame(maxWidth: .infinity, minHeight: 44)
-                    .background(fill(for: day), in: RoundedRectangle(cornerRadius: isToday(day) ? 16 : 14))
-                }
-                .buttonStyle(.plain)
-                .accessibilityHint("Opens the \(day.fullName) workout")
-            }
-        }
-        .padding(6)
-        .background(timeOfDay.selectorSurface, in: RoundedRectangle(cornerRadius: 20))
-        .overlay {
-            RoundedRectangle(cornerRadius: 20).strokeBorder(timeOfDay.border, lineWidth: 1)
-        }
-        .shadow(color: timeOfDay.shadow, radius: 8, x: 5, y: 8)
-    }
-
-    private func isToday(_ day: Weekday) -> Bool { store.today == day }
-
-    private func isCompleted(_ day: Weekday) -> Bool {
-        store.completedSessions.contains { completion in
-            completion.session.day == day && Calendar.current.isDate(
-                completion.endedAt,
-                equalTo: date,
-                toGranularity: .weekOfYear
-            )
-        }
-    }
-
-    private func fill(for day: Weekday) -> Color {
-        if isToday(day) { return timeOfDay.accent }
-        if isCompleted(day) { return timeOfDay.completedDaySurface }
-        if store.workoutCount(on: day) > 0 { return timeOfDay.plannedDaySurface }
-        return timeOfDay.emptyDaySurface
-    }
-
-    private func foreground(for day: Weekday) -> Color {
-        if isToday(day) || isCompleted(day) { return Color(hex: 0x080607) }
-        if store.workoutCount(on: day) > 0 || timeOfDay.usesDarkAppearance { return Color(hex: 0xF7F7F8) }
-        return timeOfDay.primaryText
-    }
-
-    private func dayDate(at index: Int) -> Date {
-        Calendar.current.date(byAdding: .day, value: index, to: mondayOfCurrentWeek) ?? date
-    }
-
-    private var mondayOfCurrentWeek: Date {
-        let calendar = Calendar.current
-        let start = calendar.startOfDay(for: date)
-        let weekday = calendar.component(.weekday, from: start)
-        let daysSinceMonday = (weekday + 5) % 7
-        return calendar.date(byAdding: .day, value: -daysSinceMonday, to: start) ?? start
+    private var greeting: String {
+        guard case .signedIn(let user) = authentication.phase else { return "Hello" }
+        return "Hello, \(user.displayName)"
     }
 }
 
@@ -235,10 +165,10 @@ private struct WeeklyPlanCard: View {
     @Environment(\.homeTimeOfDay) private var timeOfDay
 
     var body: some View {
-        NavigationLink {
-            WorkoutsView()
-        } label: {
-            VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 0) {
+            NavigationLink {
+                WorkoutsView()
+            } label: {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("THIS WEEK")
@@ -254,11 +184,16 @@ private struct WeeklyPlanCard: View {
                         .frame(width: 34, height: 34)
                         .background(Color.white.opacity(0.18), in: Circle())
                 }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("Opens the weekly workout plan")
 
-                Spacer(minLength: 12)
+            Spacer(minLength: 12)
 
-                VStack(spacing: 7) {
-                    ForEach(Array(items.prefix(2))) { item in
+            ScrollView(.vertical) {
+                LazyVStack(spacing: 7) {
+                    ForEach(items) { item in
                         planRow(item)
                     }
                     if items.isEmpty {
@@ -266,18 +201,18 @@ private struct WeeklyPlanCard: View {
                     }
                 }
             }
-            .padding(16)
-            .frame(maxWidth: .infinity, minHeight: 214, alignment: .topLeading)
-            .foregroundStyle(Color(hex: 0x1B1415))
-            .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 24))
-            .overlay(alignment: .top) {
-                RoundedRectangle(cornerRadius: 24)
-                    .strokeBorder(Color.white.opacity(0.24), lineWidth: 1)
-            }
-            .shadow(color: timeOfDay.shadow, radius: 12, x: 5, y: 8)
+            .scrollIndicators(items.count > 2 ? .visible : .hidden)
+            .frame(height: 103)
         }
-        .buttonStyle(.plain)
-        .accessibilityHint("Opens the weekly workout plan")
+        .padding(16)
+        .frame(maxWidth: .infinity, minHeight: 214, maxHeight: 214, alignment: .topLeading)
+        .foregroundStyle(Color(hex: 0x1B1415))
+        .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 24))
+        .overlay(alignment: .top) {
+            RoundedRectangle(cornerRadius: 24)
+                .strokeBorder(Color.white.opacity(0.24), lineWidth: 1)
+        }
+        .shadow(color: timeOfDay.shadow, radius: 12, x: 5, y: 8)
     }
 
     private var items: [PlannedWorkoutItem] {
