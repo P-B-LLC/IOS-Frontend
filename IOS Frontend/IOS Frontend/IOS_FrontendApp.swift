@@ -67,6 +67,7 @@ private struct AppRootView: View {
         return environment["REPBASE_FOOD_PREVIEW"] != nil
             || environment["REPBASE_PLANNER_PREVIEW"] != nil
             || environment["REPBASE_PROFILE_PREVIEW"] != nil
+            || environment["REPBASE_AUTH_PREVIEW"] != nil
     }
 #endif
 
@@ -79,7 +80,9 @@ private struct AppRootView: View {
     var body: some View {
         Group {
 #if DEBUG
-            if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "home" {
+            if ProcessInfo.processInfo.environment["REPBASE_AUTH_PREVIEW"] != nil {
+                AuthenticationView()
+            } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "home" {
                 NavigationStack {
                     ScrollView {
                         FoodSummaryWidget()

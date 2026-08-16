@@ -21,99 +21,135 @@ struct AuthenticationView: View {
     @State private var isCreatingAccount = false
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 22) {
-                    VStack(spacing: 10) {
-                        Image(systemName: "figure.strengthtraining.traditional")
-                            .font(.system(size: 40, weight: .semibold))
-                            .foregroundStyle(WorkoutVisualPhase.prepare.accent)
-                            .frame(width: 82, height: 82)
-                            .background(
-                                WorkoutVisualPhase.prepare.accent.opacity(0.12),
-                                in: RoundedRectangle(cornerRadius: 24)
-                            )
-                        Text("Repbase")
-                            .font(.largeTitle.weight(.bold))
-                        Text("Sign in to sync workouts and sessions with your account.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
+        TimelineView(.periodic(from: .now, by: 60)) { context in
+            let timeOfDay = HomeTimeOfDay(date: context.date)
 
-                    // Signing in is a form; creating an account is a walk
-                    // through several pages. Putting both behind one segmented
-                    // control meant the whole of account creation had to fit on
-                    // this screen at once.
-                    VStack(spacing: 12) {
-                        TextField("Username", text: $username)
-                            .textContentType(.username)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
-                            .authenticationField()
+            GeometryReader { geometry in
+                ScrollView {
+                    VStack(spacing: 0) {
+                        Spacer(minLength: 44)
+                        brand(timeOfDay: timeOfDay)
 
-                        SecureField("Password", text: $password)
-                            .textContentType(.password)
-                            .authenticationField()
-                    }
+                        VStack(spacing: 14) {
+                            usernameField(timeOfDay: timeOfDay)
+                            passwordField(timeOfDay: timeOfDay)
 
-                    if let error = authentication.errorMessage {
-                        Label(error, systemImage: "exclamationmark.triangle.fill")
-                            .font(.footnote)
-                            .foregroundStyle(Color.red)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(12)
-                            .background(Color.red.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
-                    }
-
-                    Button {
-                        submit()
-                    } label: {
-                        HStack {
-                            if authentication.isWorking {
-                                ProgressView()
-                                    .tint(Color.white)
+                            if let error = authentication.errorMessage {
+                                Label(error, systemImage: "exclamationmark.triangle.fill")
+                                    .font(.footnote)
+                                    .foregroundStyle(Color.red)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(12)
+                                    .background(Color.red.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
                             }
-                            Text("Sign In")
-                                .font(.headline)
-                        }
-                        .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(WorkoutPrimaryButtonStyle(phase: .prepare))
-                    .disabled(!canSubmit || authentication.isWorking)
 
-                    Button {
-                        authentication.clearError()
-                        isCreatingAccount = true
-                    } label: {
-                        Text("Create Account")
-                            .font(.headline)
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.large)
-                    .disabled(authentication.isWorking)
+                            signInButton(timeOfDay: timeOfDay)
+                        }
+                        .padding(.top, 42)
+
+                        HStack(spacing: 5) {
+                            Text("New to Repbase?")
+                                .foregroundStyle(timeOfDay.secondaryText)
+                            Button("Create an account") {
+                                authentication.clearError()
+                                isCreatingAccount = true
+                            }
+                            .fontWeight(.semibold)
+                            .foregroundStyle(timeOfDay.accent)
+                            .disabled(authentication.isWorking)
+                        }
+                        .font(.subheadline)
+                        .padding(.top, 24)
+
+                        Spacer(minLength: 34)
 
 #if DEBUG
-                    Label(
-                        "Development server: \(authentication.configuration.displayName)",
-                        systemImage: "hammer.fill"
-                    )
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                        Label(
+                            "Development · \(authentication.configuration.displayName)",
+                            systemImage: "hammer"
+                        )
+                        .font(.caption2)
+                        .foregroundStyle(timeOfDay.secondaryText.opacity(0.72))
 #endif
+                    }
+                    .padding(.horizontal, 26)
+                    .padding(.bottom, 20)
+                    .frame(maxWidth: 480)
+                    .frame(maxWidth: .infinity)
+                    .frame(minHeight: geometry.size.height)
                 }
-                .padding()
-                .frame(maxWidth: 520)
-                .frame(maxWidth: .infinity)
+                .scrollDismissesKeyboard(.interactively)
             }
-            .repbaseScreen(.prepare)
+            .homeTimeScreen(timeOfDay)
         }
         .fullScreenCover(isPresented: $isCreatingAccount) {
             NavigationStack {
                 ProfileOnboardingView(seed: .empty)
             }
         }
+    }
+
+    private func brand(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(spacing: 12) {
+            Image(systemName: "figure.strengthtraining.traditional")
+                .font(.system(size: 25, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .frame(width: 54, height: 54)
+                .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 17))
+                .shadow(color: timeOfDay.accent.opacity(0.22), radius: 9, x: 3, y: 6)
+
+            VStack(spacing: 4) {
+                Text("Repbase")
+                    .font(.system(size: 30, weight: .bold, design: .rounded))
+                Text("Welcome back")
+                    .font(.subheadline)
+                    .foregroundStyle(timeOfDay.secondaryText)
+            }
+        }
+    }
+
+    private func usernameField(timeOfDay: HomeTimeOfDay) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "person")
+                .foregroundStyle(timeOfDay.secondaryText)
+                .frame(width: 20)
+            TextField("Username", text: $username)
+                .textContentType(.username)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+        }
+        .authenticationField(timeOfDay: timeOfDay)
+    }
+
+    private func passwordField(timeOfDay: HomeTimeOfDay) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "lock")
+                .foregroundStyle(timeOfDay.secondaryText)
+                .frame(width: 20)
+            SecureField("Password", text: $password)
+                .textContentType(.password)
+        }
+        .authenticationField(timeOfDay: timeOfDay)
+    }
+
+    private func signInButton(timeOfDay: HomeTimeOfDay) -> some View {
+        Button { submit() } label: {
+            HStack(spacing: 9) {
+                if authentication.isWorking {
+                    ProgressView().tint(Color.white)
+                }
+                Text("Sign In")
+                Image(systemName: "arrow.right")
+            }
+            .font(.headline.weight(.bold))
+            .foregroundStyle(Color.white)
+            .frame(maxWidth: .infinity, minHeight: 54)
+            .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 17))
+        }
+        .buttonStyle(.plain)
+        .disabled(!canSubmit || authentication.isWorking)
+        .opacity(canSubmit ? 1 : 0.42)
+        .padding(.top, 4)
     }
 
     private var canSubmit: Bool {
@@ -131,9 +167,14 @@ struct AuthenticationView: View {
 }
 
 private extension View {
-    func authenticationField() -> some View {
-        padding(13)
-            .repbaseControlSurface(cornerRadius: 12)
+    func authenticationField(timeOfDay: HomeTimeOfDay) -> some View {
+        padding(.horizontal, 15)
+            .frame(height: 55)
+            .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 17))
+            .overlay {
+                RoundedRectangle(cornerRadius: 17)
+                    .strokeBorder(timeOfDay.border, lineWidth: 1)
+            }
     }
 }
 
