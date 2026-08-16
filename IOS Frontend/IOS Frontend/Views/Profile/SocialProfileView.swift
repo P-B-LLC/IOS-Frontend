@@ -854,12 +854,18 @@ struct ProfileOnboardingView: View {
                 firstName: draft.firstName.trimmingCharacters(in: .whitespacesAndNewlines),
                 lastName: draft.lastName.trimmingCharacters(in: .whitespacesAndNewlines)
             )
-            guard authentication.errorMessage == nil else {
-                // Back to the page that owns the failure, with the message
-                // already on screen.
+
+            // Holding a token is the only thing that means signed in. An
+            // absent error does not: `authenticate` returns without doing
+            // anything if a request is already running, which left the flow
+            // closing on a login screen having created nothing.
+            guard authentication.token != nil else {
                 withAnimation(.easeOut(duration: 0.2)) { step = 0 }
                 return
             }
+
+            // Saved before the store has a connection, so it is kept and sent
+            // the moment one arrives.
             store.save(draft)
             dismiss()
         }

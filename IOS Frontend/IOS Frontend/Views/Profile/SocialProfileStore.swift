@@ -189,6 +189,9 @@ final class SocialProfileStore {
     private let storageKey = "repbase.social-profile.v1"
     private var repository: ProfileAPIRepository?
     private var connectionGeneration = UUID()
+    /// Set when a save happened with no connection to send it over, which is
+    /// what onboarding does: the profile is complete before the token exists.
+    private var hasUnsentChanges = false
 
     private(set) var profile: SocialProfile?
     private(set) var posts: [SocialPost] = []
@@ -205,7 +208,13 @@ final class SocialProfileStore {
     func save(_ profile: SocialProfile) {
         self.profile = profile
         cache(profile)
-        guard repository != nil else { return }
+        guard repository != nil else {
+            // Onboarding finishes before the token exists, so there is nothing
+            // to send to yet. Remember that this copy is newer than the
+            // server's and send it as soon as there is.
+            hasUnsentChanges = true
+            return
+        }
         Task { await push(profile) }
     }
 
@@ -232,6 +241,17 @@ final class SocialProfileStore {
                 token: token
             )
             self.repository = repository
+
+            // A profile filled in during onboarding was written before this
+            // connection existed. It is newer than anything on the server, so
+            // it goes up rather than being overwritten by the empty profile
+            // registration just created.
+            if hasUnsentChanges, let pending = profile {
+                hasUnsentChanges = false
+                await push(pending)
+                guard connectionGeneration == generation else { return }
+            }
+
             let remote = try await repository.profile()
             guard connectionGeneration == generation else { return }
             // The server is the record. A device copy that disagrees with it
