@@ -143,6 +143,14 @@ private struct AppRootView: View {
                 configuration: authentication.configuration,
                 token: token
             )
+            await plannerStore.syncScheduledWorkouts(workoutStore.currentWeekWorkouts)
+        }
+        .task(id: workoutStore.currentWeekWorkouts) {
+#if DEBUG
+            guard Self.isPreviewing == false else { return }
+#endif
+            guard authentication.token != nil else { return }
+            await plannerStore.syncScheduledWorkouts(workoutStore.currentWeekWorkouts)
         }
     }
 

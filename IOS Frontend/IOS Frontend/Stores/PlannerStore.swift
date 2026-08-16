@@ -31,6 +31,7 @@ final class PlannerStore {
     private(set) var isLoading = false
     private(set) var isSaving = false
     private(set) var persistenceError: String?
+    private var isSyncingScheduledWorkouts = false
 
     /// How far ahead "upcoming" looks. Stated rather than assumed, so the list
     /// being short means the diary is empty and not that it was truncated.
@@ -59,6 +60,7 @@ final class PlannerStore {
         connectionGeneration = generation
         isLoading = false
         isSaving = false
+        isSyncingScheduledWorkouts = false
 
         do {
             let repository = try PlannerAPIRepository(
@@ -84,6 +86,7 @@ final class PlannerStore {
         persistenceError = nil
         isLoading = false
         isSaving = false
+        isSyncingScheduledWorkouts = false
         selectedDate = Calendar.current.startOfDay(for: Date())
         visibleMonth = selectedDate
     }
@@ -134,6 +137,61 @@ final class PlannerStore {
     func taskCounts(on date: Date) -> (done: Int, total: Int) {
         let tasks = entries(on: date).filter(\.isCompletable)
         return (tasks.filter(\.isComplete).count, tasks.count)
+    }
+
+    /// Ensures every concrete workout scheduled for the current week has one
+    /// linked Planner task. The workout template identifier plus date is the
+    /// shared identity, so reconnecting or refreshing cannot create duplicate
+    /// to-do rows. The Planner entry owns the optional time; Home reads that
+    /// same entry, so a time assigned in Planner appears there automatically.
+    func syncScheduledWorkouts(_ workouts: [Workout]) async {
+        guard let repository, !isSyncingScheduledWorkouts else { return }
+        let generation = connectionGeneration
+        let scheduled = workouts.compactMap { workout -> (Workout, Int, String)? in
+            guard let workoutID = workout.serverID,
+                  let date = workout.scheduledDate else { return nil }
+            return (workout, workoutID, date)
+        }
+        guard !scheduled.isEmpty else { return }
+
+        isSyncingScheduledWorkouts = true
+        defer {
+            if connectionGeneration == generation {
+                isSyncingScheduledWorkouts = false
+            }
+        }
+
+        for (workout, workoutID, date) in scheduled {
+            guard connectionGeneration == generation else { return }
+            let alreadyLinked = entriesByDate[date]?.contains {
+                $0.kind == .task && $0.workoutID == workoutID
+            } ?? false
+            guard !alreadyLinked else { continue }
+
+            let draft = PlannerEntry(
+                kind: .task,
+                title: workout.name,
+                category: .workout,
+                date: date,
+                workoutID: workoutID,
+                workoutName: workout.name
+            )
+
+            do {
+                let saved = try await repository.create(draft)
+                guard connectionGeneration == generation else { return }
+                // Recheck after the await so overlapping refreshes cannot add
+                // the same returned row twice to local state.
+                if entriesByDate[saved.date]?.contains(where: {
+                    $0.serverID == saved.serverID
+                }) != true {
+                    entriesByDate[saved.date, default: []].append(saved)
+                }
+            } catch {
+                guard connectionGeneration == generation else { return }
+                persistenceError = "A scheduled workout could not be added to the planner: \(error.localizedDescription)"
+            }
+        }
     }
 
     // MARK: - Navigation

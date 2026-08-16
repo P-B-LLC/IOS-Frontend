@@ -17,6 +17,7 @@ import SwiftUI
 /// a checkbox.
 struct TodaysTasksList: View {
     @Environment(PlannerStore.self) private var store
+    @Environment(WorkoutStore.self) private var workoutStore
     @Environment(\.homeTimeOfDay) private var timeOfDay
 
     @State private var editor: PlannerEntryEditorView.Mode?
@@ -57,6 +58,7 @@ struct TodaysTasksList: View {
         .sheet(item: $editor) { mode in
             PlannerEntryEditorView(
                 mode: mode,
+                workouts: workoutStore.knownWorkouts,
                 onSaved: { store.save($0) },
                 onDeleted: { store.delete($0) }
             )

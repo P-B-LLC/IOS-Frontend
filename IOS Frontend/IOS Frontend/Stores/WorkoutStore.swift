@@ -114,6 +114,13 @@ final class WorkoutStore {
         schedule[day] ?? []
     }
 
+    /// Every concrete workout scheduled in the current week, in weekday and
+    /// schedule order. Planner synchronization reads this projection rather
+    /// than reaching into the store's private dictionary.
+    var currentWeekWorkouts: [Workout] {
+        Weekday.allCases.flatMap { workouts(on: $0) }
+    }
+
     /// The day's primary workout — the first one scheduled. Days with a single
     /// workout behave exactly as before.
     func workout(on day: Weekday) -> Workout? {
