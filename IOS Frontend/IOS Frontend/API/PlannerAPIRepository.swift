@@ -29,12 +29,40 @@ actor PlannerAPIRepository {
     /// are the same data at three ranges, and asking three times would let them
     /// disagree with each other.
     func entries(from start: String, to end: String) async throws -> [PlannerEntry] {
+        try await fetch(start: start, end: end)
+    }
+
+    /// Every task still unfinished before `day`, however old.
+    ///
+    /// Deliberately without a lower bound. Fetching a window and filtering on
+    /// the device would mean a task older than the window was never reported,
+    /// which is the one thing an overdue list must not do.
+    func pastDueTasks(before day: String) async throws -> [PlannerEntry] {
+        try await fetch(start: nil, end: day, kind: .task, isComplete: false)
+    }
+
+    func upcomingEvents(from start: String, to end: String) async throws -> [PlannerEntry] {
+        try await fetch(start: start, end: end, kind: .event)
+    }
+
+    private func fetch(
+        start: String?,
+        end: String?,
+        kind: Operations.PlannerList.Input.Query.KindPayload? = nil,
+        isComplete: Bool? = nil
+    ) async throws -> [PlannerEntry] {
         var page: Int?
         var visited: Set<Int> = []
         var values: [PlannerEntry] = []
         repeat {
             let output = try await client.plannerList(
-                query: .init(end: end, page: page, start: start)
+                query: .init(
+                    end: end,
+                    isComplete: isComplete,
+                    kind: kind,
+                    page: page,
+                    start: start
+                )
             )
             let response: Components.Schemas.PaginatedPlannerEntryList
             switch output {

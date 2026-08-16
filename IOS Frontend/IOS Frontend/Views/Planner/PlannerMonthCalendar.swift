@@ -11,6 +11,10 @@ struct PlannerMonthCalendar: View {
     @Environment(PlannerStore.self) private var store
     @Environment(\.homeTimeOfDay) private var timeOfDay
 
+    /// Closes the month, leaving the week strip. Absent when the calendar is
+    /// not something the user opened.
+    var onClose: (() -> Void)?
+
     private let calendar = Calendar.current
 
     var body: some View {
@@ -47,6 +51,18 @@ struct PlannerMonthCalendar: View {
 
             stepper(systemImage: "chevron.left", label: "Previous month", months: -1)
             stepper(systemImage: "chevron.right", label: "Next month", months: 1)
+
+            if let onClose {
+                Button(action: onClose) {
+                    Image(systemName: "xmark")
+                        .font(.footnote.weight(.bold))
+                        .frame(width: 32, height: 32)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(timeOfDay.primaryText)
+                .accessibilityLabel("Close the month")
+            }
         }
     }
 

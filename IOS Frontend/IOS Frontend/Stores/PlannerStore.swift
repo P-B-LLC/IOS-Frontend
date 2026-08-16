@@ -22,9 +22,19 @@ final class PlannerStore {
     private(set) var selectedDate: Date = Calendar.current.startOfDay(for: Date())
     /// Any day inside the month on screen.
     private(set) var visibleMonth: Date = Calendar.current.startOfDay(for: Date())
+    /// Tasks still unfinished from before today, oldest first. Fetched without
+    /// a lower bound rather than sliced out of the visible month, so nothing
+    /// falls off the back of it.
+    private(set) var pastDue: [PlannerEntry] = []
+    /// Events after today, soonest first, within `upcomingHorizonDays`.
+    private(set) var upcomingEvents: [PlannerEntry] = []
     private(set) var isLoading = false
     private(set) var isSaving = false
     private(set) var persistenceError: String?
+
+    /// How far ahead "upcoming" looks. Stated rather than assumed, so the list
+    /// being short means the diary is empty and not that it was truncated.
+    static let upcomingHorizonDays = 60
 
     var isConnected: Bool { repository != nil }
 
@@ -69,6 +79,8 @@ final class PlannerStore {
         repository = nil
         // One user's plans must never be shown to the next.
         entriesByDate = [:]
+        pastDue = []
+        upcomingEvents = []
         persistenceError = nil
         isLoading = false
         isSaving = false
@@ -81,6 +93,20 @@ final class PlannerStore {
     /// The entries on one day, tasks and events together in server order.
     func entries(on date: Date) -> [PlannerEntry] {
         entriesByDate[Self.dateString(date)] ?? []
+    }
+
+    /// The day's entries that happen at a stated time, earliest first. These
+    /// are the ones a schedule can place.
+    func timedEntries(on date: Date) -> [PlannerEntry] {
+        entries(on: date)
+            .filter { $0.time != nil }
+            .sorted { ($0.time ?? "") < ($1.time ?? "") }
+    }
+
+    /// The day's entries with no time on them, which belong under the schedule
+    /// rather than at some arbitrary hour inside it.
+    func untimedEntries(on date: Date) -> [PlannerEntry] {
+        entries(on: date).filter { $0.time == nil }
     }
 
     /// Whether a day has anything on it, which is what the calendar marks.
@@ -207,6 +233,8 @@ final class PlannerStore {
                 try await repository.delete(entry)
                 guard connectionGeneration == generation else { return }
                 entriesByDate[entry.date]?.removeAll { $0.id == entry.id }
+                pastDue.removeAll { $0.id == entry.id }
+                upcomingEvents.removeAll { $0.id == entry.id }
             } catch {
                 guard connectionGeneration == generation else { return }
                 persistenceError = error.localizedDescription
@@ -244,12 +272,59 @@ final class PlannerStore {
             guard connectionGeneration == generation else { return }
             persistenceError = error.localizedDescription
         }
+
+        await reloadSurroundings(generation: generation)
     }
 
-    private func apply(to entry: PlannerEntry, _ mutation: (inout PlannerEntry) -> Void) {
-        guard let index = entriesByDate[entry.date]?.firstIndex(where: { $0.id == entry.id })
+    /// What is overdue and what is coming, neither of which lives inside the
+    /// month on screen.
+    private func reloadSurroundings(generation: UUID) async {
+        guard let repository else { return }
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        guard let yesterday = calendar.date(byAdding: .day, value: -1, to: today),
+              let tomorrow = calendar.date(byAdding: .day, value: 1, to: today),
+              let horizon = calendar.date(
+                byAdding: .day,
+                value: Self.upcomingHorizonDays,
+                to: today
+              )
         else { return }
-        mutation(&entriesByDate[entry.date]![index])
+
+        do {
+            async let overdue = repository.pastDueTasks(
+                before: Self.dateString(yesterday)
+            )
+            async let ahead = repository.upcomingEvents(
+                from: Self.dateString(tomorrow),
+                to: Self.dateString(horizon)
+            )
+            let (loadedOverdue, loadedAhead) = try await (overdue, ahead)
+            guard connectionGeneration == generation else { return }
+            pastDue = loadedOverdue.sorted { $0.date < $1.date }
+            upcomingEvents = loadedAhead.sorted {
+                ($0.date, $0.time ?? "") < ($1.date, $1.time ?? "")
+            }
+        } catch {
+            guard connectionGeneration == generation else { return }
+            persistenceError = error.localizedDescription
+        }
+    }
+
+    /// Applies a change wherever the entry is held.
+    ///
+    /// An overdue task appears in `pastDue` and, if its day happens to fall in
+    /// the month on screen, in `entriesByDate` too. Updating only one of them
+    /// would leave a task ticked off in one list and outstanding in the other.
+    private func apply(to entry: PlannerEntry, _ mutation: (inout PlannerEntry) -> Void) {
+        if let index = entriesByDate[entry.date]?.firstIndex(where: { $0.id == entry.id }) {
+            mutation(&entriesByDate[entry.date]![index])
+        }
+        if let index = pastDue.firstIndex(where: { $0.id == entry.id }) {
+            mutation(&pastDue[index])
+        }
+        // Overdue means outstanding; a task that has been done is no longer it.
+        pastDue.removeAll(where: \.isComplete)
     }
 
     // MARK: - Dates
@@ -349,6 +424,30 @@ extension PlannerStore {
             ),
         ]
         store.entriesByDate = Dictionary(grouping: samples, by: \.date)
+        store.pastDue = [
+            PlannerEntry(
+                serverID: 20, kind: .task, title: "Renew gym membership",
+                category: .errand, date: day(-9)
+            ),
+            PlannerEntry(
+                serverID: 21, kind: .task, title: "Book the physio",
+                category: .health, date: day(-2), time: "09:00:00"
+            ),
+        ]
+        store.upcomingEvents = [
+            PlannerEntry(
+                serverID: 30, kind: .event, title: "Dentist",
+                category: .appointment, date: day(2), time: "08:15:00"
+            ),
+            PlannerEntry(
+                serverID: 31, kind: .event, title: "Bank holiday",
+                category: .holiday, date: day(5)
+            ),
+            PlannerEntry(
+                serverID: 32, kind: .event, title: "Flight to Lisbon",
+                category: .travel, date: day(6), time: "06:40:00"
+            ),
+        ]
         return store
     }
 }

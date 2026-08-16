@@ -15,10 +15,19 @@ struct PlannerWeekStrip: View {
     /// with the chips rather than keeping its own idea of what is selected.
     @Binding var categoryFilter: PlannerCategory?
 
+    /// Whether the full month is open above this strip.
+    var isMonthShown: Bool = false
+    /// Opens the month. The day tabs cannot do this themselves: they already
+    /// mean "choose this day".
+    var onToggleMonth: (() -> Void)?
+
     private let calendar = Calendar.current
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            if onToggleMonth != nil {
+                monthButton
+            }
             dayTabs
             if !categories.isEmpty {
                 categoryTabs
@@ -26,6 +35,27 @@ struct PlannerWeekStrip: View {
             progress
         }
         .repbaseCard(contentPadding: 14, cornerRadius: 20)
+    }
+
+    // MARK: - Opening the month
+
+    private var monthButton: some View {
+        Button {
+            onToggleMonth?()
+        } label: {
+            HStack(spacing: 5) {
+                Text(store.selectedDate.formatted(.dateTime.month(.wide).year()))
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(timeOfDay.primaryText)
+                Image(systemName: isMonthShown ? "chevron.up" : "chevron.down")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(timeOfDay.secondaryText)
+                Spacer(minLength: 0)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(isMonthShown ? "Hide the month" : "Show the month")
     }
 
     // MARK: - Days

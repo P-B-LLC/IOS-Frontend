@@ -231,13 +231,20 @@ struct TodaysTasksList: View {
     // MARK: - Data
 
     /// Unfinished first, so the list answers "what is left" before it answers
-    /// "what happened", then in the order they come due.
+    /// "what happened"; then the ones with a time, in the order they come due;
+    /// then the ones with none, which belong at the bottom rather than at the
+    /// top where an empty time would otherwise sort them.
     private var tasks: [PlannerEntry] {
         store.entries(on: Date())
             .filter(\.isCompletable)
             .sorted { lhs, rhs in
                 if lhs.isComplete != rhs.isComplete { return !lhs.isComplete }
-                return (lhs.time ?? "") < (rhs.time ?? "")
+                switch (lhs.time, rhs.time) {
+                case let (left?, right?): return left < right
+                case (nil, _?): return false
+                case (_?, nil): return true
+                default: return lhs.title < rhs.title
+                }
             }
     }
 

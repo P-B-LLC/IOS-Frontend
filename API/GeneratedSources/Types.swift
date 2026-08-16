@@ -6680,6 +6680,19 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/planner/GET/query/end`.
                 public var end: Swift.String?
+                /// Return only finished tasks, or only unfinished ones. Events are never complete, so this excludes them when true.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/planner/GET/query/is_complete`.
+                public var isComplete: Swift.Bool?
+                /// - Remark: Generated from `#/paths/api/v1/planner/GET/query/kind`.
+                @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case event = "event"
+                    case task = "task"
+                }
+                /// Return only tasks, or only events.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/planner/GET/query/kind`.
+                public var kind: Operations.PlannerList.Input.Query.KindPayload?
                 /// A page number within the paginated result set.
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/planner/GET/query/page`.
@@ -6693,16 +6706,22 @@ public enum Operations {
                 /// - Parameters:
                 ///   - category: Return only entries in this category.
                 ///   - end: Return only entries on or before this date.
+                ///   - isComplete: Return only finished tasks, or only unfinished ones. Events are never complete, so this excludes them when true.
+                ///   - kind: Return only tasks, or only events.
                 ///   - page: A page number within the paginated result set.
                 ///   - start: Return only entries on or after this date.
                 public init(
                     category: Operations.PlannerList.Input.Query.CategoryPayload? = nil,
                     end: Swift.String? = nil,
+                    isComplete: Swift.Bool? = nil,
+                    kind: Operations.PlannerList.Input.Query.KindPayload? = nil,
                     page: Swift.Int? = nil,
                     start: Swift.String? = nil
                 ) {
                     self.category = category
                     self.end = end
+                    self.isComplete = isComplete
+                    self.kind = kind
                     self.page = page
                     self.start = start
                 }
