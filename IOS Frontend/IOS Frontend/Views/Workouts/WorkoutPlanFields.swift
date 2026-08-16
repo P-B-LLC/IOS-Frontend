@@ -9,6 +9,7 @@ import SwiftUI
 
 struct WorkoutPlanFields: View {
     @Binding var draft: Workout
+    @Environment(\.workoutVisualPhase) private var phase
     /// Workouts the user already has, offered so a name is reused exactly
     /// rather than retyped slightly differently.
     var suggestions: [WorkoutSummary] = []
@@ -21,7 +22,7 @@ struct WorkoutPlanFields: View {
                 TextField(namePlaceholder, text: $draft.name)
                     .textInputAutocapitalization(.words)
                     .padding(12)
-                    .background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 12))
+                    .background(phase.primaryText.opacity(0.045), in: RoundedRectangle(cornerRadius: 12))
 
                 nameGuidance
             }
@@ -48,12 +49,12 @@ struct WorkoutPlanFields: View {
                 systemImage: "checkmark.circle.fill"
             )
             .font(.caption2)
-            .foregroundStyle(WorkoutVisualPhase.prepare.accent)
+            .foregroundStyle(phase.accent)
         } else if !suggestions.isEmpty {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Previously used")
                     .font(.caption2.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(phase.secondaryText)
 
                 ScrollView(.horizontal) {
                     HStack(spacing: 6) {
@@ -73,8 +74,9 @@ struct WorkoutPlanFields: View {
                                 }
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 6)
+                                .foregroundStyle(phase.primaryText)
                                 .background(
-                                    Color.primary.opacity(0.05),
+                                    phase.primaryText.opacity(0.05),
                                     in: Capsule()
                                 )
                             }
@@ -86,7 +88,7 @@ struct WorkoutPlanFields: View {
 
                 Text("Tap one to keep its progress together. A new name starts its own history.")
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(phase.secondaryText)
             }
         }
     }
@@ -124,20 +126,20 @@ struct WorkoutPlanFields: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
                         .foregroundStyle(
-                            draft.type == type ? WorkoutVisualPhase.prepare.accent : Color.secondary
+                            draft.type == type ? phase.accent : phase.secondaryText
                         )
                         .background(
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
                                 .fill(
                                     draft.type == type
-                                        ? WorkoutVisualPhase.prepare.accent.opacity(0.14)
-                                        : Color.primary.opacity(0.045)
+                                        ? phase.accent.opacity(0.14)
+                                        : phase.primaryText.opacity(0.045)
                                 )
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
                                 .strokeBorder(
-                                    WorkoutVisualPhase.prepare.accent,
+                                    phase.accent,
                                     lineWidth: draft.type == type ? 1.5 : 0
                                 )
                         )
@@ -161,7 +163,7 @@ struct WorkoutPlanFields: View {
                 .font(.subheadline.weight(.semibold))
             Text("Start the session when you set off and end it when you finish. Repbase follows your route by GPS and works out your distance, time, and pace — there is nothing to type in.")
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(phase.secondaryText)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .workoutCard()
@@ -188,7 +190,7 @@ struct WorkoutPlanFields: View {
 
             Text("Optional. Added to the end of this workout — you start it from the summary when you finish lifting.")
                 .font(.caption2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(phase.secondaryText)
 
             ScrollView(.horizontal) {
                 HStack(spacing: 7) {
@@ -210,21 +212,21 @@ struct WorkoutPlanFields: View {
                             .padding(.vertical, 10)
                             .foregroundStyle(
                                 isSelected
-                                    ? WorkoutVisualPhase.prepare.accent
-                                    : Color.secondary
+                                    ? phase.accent
+                                    : phase.secondaryText
                             )
                             .background(
                                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                                     .fill(
                                         isSelected
-                                            ? WorkoutVisualPhase.prepare.accent.opacity(0.14)
-                                            : Color.primary.opacity(0.045)
+                                            ? phase.accent.opacity(0.14)
+                                            : phase.primaryText.opacity(0.045)
                                     )
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                                     .strokeBorder(
-                                        WorkoutVisualPhase.prepare.accent,
+                                        phase.accent,
                                         lineWidth: isSelected ? 1.5 : 0
                                     )
                             )
@@ -281,27 +283,27 @@ struct WorkoutPlanFields: View {
                         .font(.headline)
                     Text("Add as many as you need and set a target for each.")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(phase.secondaryText)
                 }
                 Spacer()
                 Text("\(draft.exercises.count)")
                     .font(.subheadline.weight(.bold))
-                    .foregroundStyle(WorkoutVisualPhase.prepare.accent)
+                    .foregroundStyle(phase.accent)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .background(WorkoutVisualPhase.prepare.accent.opacity(0.12), in: Capsule())
+                    .background(phase.accent.opacity(0.12), in: Capsule())
             }
 
             if draft.exercises.isEmpty {
                 VStack(spacing: 10) {
                     Image(systemName: "list.bullet.clipboard")
                         .font(.title2)
-                        .foregroundStyle(WorkoutVisualPhase.prepare.accent)
+                        .foregroundStyle(phase.accent)
                     Text("Start with your first exercise")
                         .font(.subheadline.weight(.semibold))
                     Text("You can always reorder, edit, or add more later.")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(phase.secondaryText)
                         .multilineTextAlignment(.center)
                 }
                 .frame(maxWidth: .infinity)
@@ -365,6 +367,8 @@ struct WorkoutPlanFields: View {
 }
 
 private struct ExercisePlanEditorCard: View {
+    @Environment(\.workoutVisualPhase) private var phase
+
     let position: Int
     @Binding var exercise: Exercise
     let canMoveUp: Bool
@@ -378,7 +382,7 @@ private struct ExercisePlanEditorCard: View {
             HStack {
                 Text("Exercise \(position)")
                     .font(.caption.weight(.bold))
-                    .foregroundStyle(WorkoutVisualPhase.prepare.accent)
+                    .foregroundStyle(phase.accent)
                 Spacer()
                 Menu {
                     Button("Move Up", systemImage: "arrow.up", action: onMoveUp)
@@ -390,7 +394,7 @@ private struct ExercisePlanEditorCard: View {
                 } label: {
                     Image(systemName: "ellipsis.circle")
                         .font(.title3)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(phase.secondaryText)
                 }
                 .accessibilityLabel("Exercise options")
             }
@@ -399,7 +403,7 @@ private struct ExercisePlanEditorCard: View {
                 .textInputAutocapitalization(.words)
                 .font(.body.weight(.medium))
                 .padding(12)
-                .background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 12))
+                .background(phase.primaryText.opacity(0.045), in: RoundedRectangle(cornerRadius: 12))
 
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
@@ -407,7 +411,7 @@ private struct ExercisePlanEditorCard: View {
                         .font(.subheadline.weight(.semibold))
                     Text("Weight and reps are entered during the session.")
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(phase.secondaryText)
                 }
 
                 Spacer(minLength: 12)
