@@ -185,6 +185,18 @@ struct TodaysTasksList: View {
                 .padding(.horizontal, 7)
                 .padding(.vertical, 3)
                 .background(timeOfDay.accent, in: Capsule())
+        } else if isPastDue(task), let time = task.displayTime {
+            HStack(spacing: 5) {
+                Text(time)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(timeOfDay.canvasPrimaryText)
+                Text("Past Due")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundStyle(Color.white)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(Color(hex: 0xD8557A), in: Capsule())
+            }
         } else if let time = task.displayTime {
             Text(time)
                 .font(.system(size: 13, weight: .semibold))
@@ -198,6 +210,15 @@ struct TodaysTasksList: View {
     /// things are happening at once and none would stand out.
     private func isDue(_ task: PlannerEntry) -> Bool {
         task.id == dueNow?.id
+    }
+
+    /// A timed task becomes past due after its one-hour active window. Keeping
+    /// the time beside the badge explains what was missed rather than replacing
+    /// useful schedule information with a generic warning.
+    private func isPastDue(_ task: PlannerEntry) -> Bool {
+        guard !task.isComplete,
+              let taskMinutes = Self.minutes(from: task.time) else { return false }
+        return Self.currentMinutes() - taskMinutes > 60
     }
 
     private var addRow: some View {
@@ -256,21 +277,28 @@ struct TodaysTasksList: View {
 
     /// The latest task whose time has come and which is still unfinished.
     private var dueNow: PlannerEntry? {
-        let now = Self.currentTimeString()
+        let now = Self.currentMinutes()
         return tasks
             .filter { !$0.isComplete }
-            .compactMap { task -> (PlannerEntry, String)? in
-                guard let time = task.time, time <= now else { return nil }
-                return (task, time)
+            .compactMap { task -> (PlannerEntry, Int)? in
+                guard let taskMinutes = Self.minutes(from: task.time),
+                      taskMinutes <= now,
+                      now - taskMinutes <= 60 else { return nil }
+                return (task, taskMinutes)
             }
             .max { $0.1 < $1.1 }?
             .0
     }
 
-    /// `HH:mm:ss`, to compare against the API's literal times without building
-    /// a Date for each row.
-    private static func currentTimeString() -> String {
+    private static func currentMinutes() -> Int {
         let parts = Calendar.current.dateComponents([.hour, .minute], from: Date())
-        return String(format: "%02d:%02d:59", parts.hour ?? 0, parts.minute ?? 0)
+        return (parts.hour ?? 0) * 60 + (parts.minute ?? 0)
+    }
+
+    private static func minutes(from value: String?) -> Int? {
+        guard let value else { return nil }
+        let parts = value.split(separator: ":").compactMap { Int($0) }
+        guard parts.count >= 2 else { return nil }
+        return parts[0] * 60 + parts[1]
     }
 }
