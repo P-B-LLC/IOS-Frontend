@@ -159,6 +159,7 @@ private struct HomeTimeScreenModifier: ViewModifier {
                 .ignoresSafeArea()
             }
             .environment(\.homeTimeOfDay, timeOfDay)
+            .environment(\.workoutVisualPhase, timeOfDay.usesDarkAppearance ? .focus : .prepare)
             .tint(timeOfDay.accent)
             .preferredColorScheme(timeOfDay.usesDarkAppearance ? .dark : .light)
     }
