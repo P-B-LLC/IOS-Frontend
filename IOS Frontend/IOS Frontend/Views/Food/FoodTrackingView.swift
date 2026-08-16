@@ -99,7 +99,9 @@ struct FoodTrackingView: View {
                         VStack(spacing: 5) {
                             Text(date.formatted(.dateTime.weekday(.narrow)))
                                 .font(.caption2.weight(.semibold))
-                                .foregroundStyle(isSelected(date) ? Color.primary : .secondary)
+                                .foregroundStyle(
+                                    isSelected(date) ? phase.primaryText : phase.secondaryText
+                                )
 
                             ZStack {
                                 Circle()
@@ -109,14 +111,19 @@ struct FoodTrackingView: View {
                                     .strokeBorder(circleBorder(for: date), lineWidth: 1.25)
                                     .frame(width: 24, height: 24)
 
+                                Text(date.formatted(.dateTime.day()))
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundStyle(
+                                        isSelected(date) ? Color.white : phase.primaryText
+                                    )
+
                                 if store.hasLoggedFood(on: date) {
                                     Image(systemName: "checkmark")
-                                        .font(.system(size: 9, weight: .bold))
-                                        .foregroundStyle(Color.white)
-                                } else if isSelected(date) {
-                                    Circle()
-                                        .fill(Color.white)
-                                        .frame(width: 5, height: 5)
+                                        .font(.system(size: 6, weight: .bold))
+                                        .foregroundStyle(phase.accent)
+                                        .frame(width: 10, height: 10)
+                                        .background(phase.surfaceStart, in: Circle())
+                                        .offset(x: 9, y: 9)
                                 }
                             }
                         }
@@ -256,15 +263,13 @@ struct FoodTrackingView: View {
     }
 
     private func circleFill(for date: Date) -> Color {
-        if isSelected(date) { return .accentColor }
-        if store.hasLoggedFood(on: date) { return Color.primary }
+        if isSelected(date) { return phase.accent }
         return Color.clear
     }
 
     private func circleBorder(for date: Date) -> Color {
-        if isSelected(date) { return .accentColor }
-        if store.hasLoggedFood(on: date) { return Color.primary }
-        return Color.secondary.opacity(0.55)
+        if isSelected(date) || store.hasLoggedFood(on: date) { return phase.accent }
+        return phase.secondaryText.opacity(0.55)
     }
 
     private func changeWeek(by amount: Int) {
