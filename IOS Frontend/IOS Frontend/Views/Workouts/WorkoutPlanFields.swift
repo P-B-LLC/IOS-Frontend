@@ -109,20 +109,41 @@ struct WorkoutPlanFields: View {
     }
 
     private var previousExercises: [Exercise] {
-        var names: Set<String> = []
-        return suggestions
+        let exercises = suggestions
             .filter { $0.type == .lifting }
             .flatMap(\.exercises)
-            .filter { exercise in
-                let name = exercise.name
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-                    .lowercased()
-                guard !name.isEmpty, names.insert(name).inserted else { return false }
-                return true
+
+        var exerciseByName: [String: Exercise] = [:]
+        for exercise in exercises {
+            let normalizedName = normalizedExerciseName(exercise.name)
+            guard !normalizedName.isEmpty else { continue }
+
+            if let existing = exerciseByName[normalizedName] {
+                // Prefer the spelling with separators because labels such as
+                // "Pull-ups" and "Bench Press" are easier to scan than their
+                // collapsed equivalents.
+                if readabilityScore(exercise.name) > readabilityScore(existing.name) {
+                    exerciseByName[normalizedName] = exercise
+                }
+            } else {
+                exerciseByName[normalizedName] = exercise
             }
+        }
+
+        return exerciseByName.values
             .sorted {
                 $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
             }
+    }
+
+    /// Exercise reuse follows what a person sees, not exact punctuation.
+    /// "Pull-ups", "Pullups", and "pull ups" therefore share one key.
+    private func normalizedExerciseName(_ name: String) -> String {
+        name.lowercased().filter { $0.isLetter || $0.isNumber }
+    }
+
+    private func readabilityScore(_ name: String) -> Int {
+        name.filter { !$0.isLetter && !$0.isNumber }.count
     }
 
     private func reuse(_ workout: WorkoutSummary) {
