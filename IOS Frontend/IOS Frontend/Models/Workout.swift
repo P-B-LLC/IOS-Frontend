@@ -268,6 +268,20 @@ nonisolated struct WorkoutSummary: Identifiable, Hashable, Sendable {
     let serverID: Int
     let name: String
     let type: WorkoutType
+    /// The saved structure of this workout, used to seed a new lifting day.
+    let exercises: [Exercise]
+
+    init(
+        serverID: Int,
+        name: String,
+        type: WorkoutType,
+        exercises: [Exercise] = []
+    ) {
+        self.serverID = serverID
+        self.name = name
+        self.type = type
+        self.exercises = exercises
+    }
 
     var id: Int { serverID }
 

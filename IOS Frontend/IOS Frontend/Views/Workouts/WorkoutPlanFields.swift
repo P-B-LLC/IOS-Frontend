@@ -32,6 +32,7 @@ struct WorkoutPlanFields: View {
                 if draft.type.tracksDistance {
                     distanceCard
                 } else {
+                    previousWorkoutSection
                     exerciseSection
                     cardioFinisherCard
                 }
@@ -74,10 +75,7 @@ struct WorkoutPlanFields: View {
                     HStack(spacing: 6) {
                         ForEach(suggestions) { workout in
                             Button {
-                                // Take the name exactly, and its type with it,
-                                // so the reused workout stays consistent.
-                                draft.name = workout.name
-                                draft.type = workout.type
+                                reuse(workout, includingIdentity: true)
                             } label: {
                                 HStack(spacing: 5) {
                                     Image(systemName: workout.type.symbolName)
@@ -109,6 +107,72 @@ struct WorkoutPlanFields: View {
 
     private var matchedWorkout: WorkoutSummary? {
         suggestions.first { WorkoutSummary.matches($0.name, draft.name) }
+    }
+
+    private var reusableLiftingWorkouts: [WorkoutSummary] {
+        suggestions.filter { $0.type == .lifting && !$0.exercises.isEmpty }
+    }
+
+    @ViewBuilder
+    private var previousWorkoutSection: some View {
+        if !reusableLiftingWorkouts.isEmpty {
+            VStack(alignment: .leading, spacing: 10) {
+                Label("Previously Used Workouts", systemImage: "clock.arrow.circlepath")
+                    .font(.subheadline.weight(.semibold))
+
+                Text("Reuse the exercises and target sets from an earlier lifting workout.")
+                    .font(.caption)
+                    .foregroundStyle(phase.secondaryText)
+
+                ScrollView(.horizontal) {
+                    HStack(spacing: 8) {
+                        ForEach(reusableLiftingWorkouts) { workout in
+                            Button {
+                                reuse(workout, includingIdentity: false)
+                            } label: {
+                                VStack(alignment: .leading, spacing: 5) {
+                                    Text(workout.name)
+                                        .font(.subheadline.weight(.semibold))
+                                        .lineLimit(1)
+                                    Text("^[\(workout.exercises.count) exercise](inflect: true)")
+                                        .font(.caption2)
+                                        .foregroundStyle(phase.secondaryText)
+                                }
+                                .frame(minWidth: 116, alignment: .leading)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 10)
+                                .foregroundStyle(phase.primaryText)
+                                .background(
+                                    phase.primaryText.opacity(0.05),
+                                    in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityHint("Copies its exercises and target sets")
+                        }
+                    }
+                }
+                .scrollIndicators(.hidden)
+            }
+            .workoutCard()
+        }
+    }
+
+    private func reuse(_ workout: WorkoutSummary, includingIdentity: Bool) {
+        withAnimation(.snappy) {
+            if includingIdentity {
+                draft.name = workout.name
+                draft.type = workout.type
+            }
+            draft.exercises = workout.exercises.map { exercise in
+                Exercise(
+                    serverID: exercise.serverID,
+                    serverName: exercise.serverName ?? exercise.name,
+                    name: exercise.name,
+                    sets: exercise.targetSets
+                )
+            }
+        }
     }
 
     private var namePlaceholder: String {

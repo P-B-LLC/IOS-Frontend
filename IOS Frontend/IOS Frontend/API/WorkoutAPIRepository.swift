@@ -628,7 +628,19 @@ actor WorkoutAPIRepository {
                 WorkoutSummary(
                     serverID: $0.id,
                     name: $0.name,
-                    type: Self.workoutType(from: $0.workoutType)
+                    type: Self.workoutType(from: $0.workoutType),
+                    exercises: $0.exercises
+                        .sorted {
+                            ($0.order ?? 1, $0.id) < ($1.order ?? 1, $1.id)
+                        }
+                        .map { relation in
+                            Exercise(
+                                serverID: relation.exercise,
+                                serverName: relation.exerciseName,
+                                name: relation.exerciseName,
+                                sets: Self.safeSetCount(relation.targetSets)
+                            )
+                        }
                 )
             }
             .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
