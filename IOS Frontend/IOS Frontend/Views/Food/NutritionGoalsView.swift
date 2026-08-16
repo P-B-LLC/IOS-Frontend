@@ -30,52 +30,71 @@ struct NutritionGoalsView: View {
 
     private func goalsScreen(timeOfDay: HomeTimeOfDay) -> some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                goalsHeader(timeOfDay: timeOfDay)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 22) {
+                    EditorialFormHeader(
+                        title: "Nutrition Goals",
+                        leadingAction: .cancel,
+                        saveTitle: "Save",
+                        canSave: isValid,
+                        onDismiss: { dismiss() },
+                        onSave: save
+                    )
 
-                Form {
-                    Section {
-                        NutritionGoalField(title: "Calories", unit: "cal", text: $calories)
-                        NutritionGoalField(title: "Protein", unit: "g", text: $protein)
-                        NutritionGoalField(title: "Carbohydrates", unit: "g", text: $carbohydrates)
-                        NutritionGoalField(title: "Fat", unit: "g", text: $fat)
-                    } header: {
-                        Text("Daily targets")
-                    } footer: {
-                        Text("These targets control the progress rings on Home and Food Tracking.")
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("DAILY TARGETS")
+                            .font(.system(size: 10, weight: .bold))
+                            .tracking(1.25)
+                            .foregroundStyle(timeOfDay.accent)
+                        Text("Set your baseline.")
+                            .font(.system(size: 34, weight: .bold, design: .rounded))
+                            .tracking(-0.8)
+                        Text("These values power progress across Home and Food.")
+                            .font(.subheadline)
+                            .foregroundStyle(timeOfDay.canvasSecondaryText)
                     }
+
+                    EditorialRuleGroup {
+                        goalRow("Calories", unit: "cal", text: $calories)
+                        goalRow("Protein", unit: "g", text: $protein)
+                        goalRow("Carbohydrates", unit: "g", text: $carbohydrates)
+                        goalRow("Fat", unit: "g", text: $fat, showsDivider: false)
+                    }
+
+                    Button("Save goals") { save() }
+                        .buttonStyle(EditorialPrimaryButtonStyle())
+                        .disabled(!isValid)
                 }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 28)
             }
+            .scrollIndicators(.hidden)
             .toolbar(.hidden, for: .navigationBar)
             .homeTimeScreen(timeOfDay)
         }
     }
 
-    private func goalsHeader(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack {
-            Button("Cancel") { dismiss() }
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(timeOfDay.secondaryText)
-                .buttonStyle(.plain)
-
+    private func goalRow(
+        _ title: String,
+        unit: String,
+        text: Binding<String>,
+        showsDivider: Bool = true
+    ) -> some View {
+        EditorialRuleRow(showsDivider: showsDivider) {
+            Text(title).font(.subheadline)
             Spacer()
-
-            Button {
-                save()
-            } label: {
-                Label("Save", systemImage: "checkmark")
+            HStack(spacing: 6) {
+                TextField("0", text: text)
+                    .keyboardType(.decimalPad)
+                    .multilineTextAlignment(.trailing)
+                    .font(.title3.weight(.semibold))
+                    .frame(width: 92)
+                Text(unit)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(width: 24, alignment: .leading)
             }
-            .buttonStyle(RepbaseAccentCapsuleButtonStyle(timeOfDay: timeOfDay))
-            .disabled(!isValid)
         }
-        .overlay {
-            Text("Nutrition Goals")
-                .font(.headline)
-                .foregroundStyle(timeOfDay.canvasPrimaryText)
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 10)
-        .padding(.bottom, 6)
     }
 
     private var isValid: Bool {

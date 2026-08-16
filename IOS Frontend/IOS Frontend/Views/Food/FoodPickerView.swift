@@ -11,7 +11,6 @@ import SwiftUI
 struct FoodPickerView: View {
     @Environment(FoodTrackingStore.self) private var store
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.workoutVisualPhase) private var phase
 
     let date: Date
     let mealID: FoodMeal.ID
@@ -19,20 +18,114 @@ struct FoodPickerView: View {
     @State private var searchText = ""
 
     var body: some View {
-        List {
-            databaseSection
-            recentSection
-            manualSection
+        TimelineView(.periodic(from: .now, by: 60)) { context in
+            let timeOfDay = HomeTimeOfDay(date: context.date)
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 22) {
+                    pickerHeader(timeOfDay: timeOfDay)
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("FOOD DATABASE")
+                            .font(.system(size: 10, weight: .bold))
+                            .tracking(1.25)
+                            .foregroundStyle(timeOfDay.accent)
+                        Text("Find it quickly.")
+                            .font(.system(size: 34, weight: .bold, design: .rounded))
+                            .tracking(-0.8)
+                        Text("Search foods you have logged or enter nutrition manually.")
+                            .font(.subheadline)
+                            .foregroundStyle(timeOfDay.canvasSecondaryText)
+                    }
+
+                    EditorialRuleGroup {
+                        EditorialRuleRow(showsDivider: false) {
+                            Image(systemName: "magnifyingglass")
+                                .foregroundStyle(timeOfDay.canvasSecondaryText)
+                            TextField("Search your foods", text: $searchText)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
+                        }
+                    }
+
+                    databaseEditorialSection(timeOfDay: timeOfDay)
+                    recentEditorialSection(timeOfDay: timeOfDay)
+
+                    NavigationLink {
+                        FoodEntryEditorView(date: date, mealID: mealID) {
+                            dismiss()
+                        }
+                    } label: {
+                        Text("Enter manually")
+                    }
+                    .buttonStyle(EditorialPrimaryButtonStyle())
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 28)
+            }
+            .scrollIndicators(.hidden)
+            .toolbar(.hidden, for: .navigationBar)
+            .homeTimeScreen(timeOfDay)
         }
-        .searchable(text: $searchText, prompt: "Search your foods")
-        .navigationTitle("Add Food")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") { dismiss() }
+    }
+
+    private func pickerHeader(timeOfDay: HomeTimeOfDay) -> some View {
+        HStack {
+            Button("Cancel") { dismiss() }
+                .font(.subheadline.weight(.medium))
+                .buttonStyle(.plain)
+            Spacer()
+            Text("Add Food").font(.subheadline.weight(.bold))
+            Spacer()
+            Color.clear.frame(width: 46, height: 1)
+        }
+        .foregroundStyle(timeOfDay.canvasPrimaryText)
+        .frame(height: 48)
+    }
+
+    private func databaseEditorialSection(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(alignment: .leading, spacing: 13) {
+            EditorialSectionTitle(
+                title: "Online database",
+                detail: "Available after the documented search endpoint is connected."
+            )
+            EditorialRuleGroup {
+                EditorialRuleRow(showsDivider: false) {
+                    Image(systemName: "network.slash")
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                    Text("Search food database")
+                        .font(.subheadline)
+                    Spacer()
+                    Text("Not connected")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                }
             }
         }
-        .repbaseScreen(phase)
+    }
+
+    private func recentEditorialSection(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(alignment: .leading, spacing: 13) {
+            EditorialSectionTitle(title: "Previously used")
+            EditorialRuleGroup {
+                if filteredRecents.isEmpty {
+                    Text(recentEmptyMessage)
+                        .font(.subheadline)
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.vertical, 22)
+                } else {
+                    ForEach(Array(filteredRecents.enumerated()), id: \.element.id) { index, food in
+                        Button { add(food) } label: {
+                            EditorialRuleRow(showsDivider: index < filteredRecents.count - 1) {
+                                RecentFoodRow(food: food)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
     }
 
     // MARK: - Sections

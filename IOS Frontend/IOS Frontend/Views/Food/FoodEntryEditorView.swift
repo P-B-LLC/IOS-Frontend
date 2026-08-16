@@ -10,7 +10,6 @@ import SwiftUI
 struct FoodEntryEditorView: View {
     @Environment(FoodTrackingStore.self) private var store
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.workoutVisualPhase) private var phase
 
     let date: Date
     let mealID: FoodMeal.ID
@@ -47,52 +46,115 @@ struct FoodEntryEditorView: View {
     }
 
     var body: some View {
-        Form {
-            Section("Food") {
-                TextField("Food name", text: $name)
-                    .textContentType(.name)
-                HStack {
-                    Text("Servings")
-                    Spacer()
-                    TextField("1", text: $servings)
-                        .keyboardType(.decimalPad)
-                        .multilineTextAlignment(.trailing)
-                        .frame(maxWidth: 110)
-                }
-            }
+        TimelineView(.periodic(from: .now, by: 60)) { context in
+            let timeOfDay = HomeTimeOfDay(date: context.date)
 
-            Section {
-                FoodNutritionField(title: "Calories", unit: "cal", text: $calories)
-                FoodNutritionField(title: "Protein", unit: "g", text: $protein)
-                FoodNutritionField(title: "Carbohydrates", unit: "g", text: $carbohydrates)
-                FoodNutritionField(title: "Fat", unit: "g", text: $fat)
-            } header: {
-                Text("Nutrition per serving")
-            } footer: {
-                Text("Enter the values shown on the food label for one serving.")
-            }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 22) {
+                    EditorialFormHeader(
+                        title: name.isEmpty ? "Add Food" : name,
+                        leadingAction: .back,
+                        saveTitle: "Save",
+                        canSave: isValid,
+                        onDismiss: { dismiss() },
+                        onSave: save
+                    )
 
-            if isEditing {
-                Section {
-                    Button("Delete Food", systemImage: "trash", role: .destructive) {
-                        store.removeFood(id: existingID, from: mealID, on: date)
-                        dismiss()
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("FOOD / MANUAL ENTRY")
+                            .font(.system(size: 10, weight: .bold))
+                            .tracking(1.25)
+                            .foregroundStyle(timeOfDay.accent)
+                        Text(isEditing ? "Update this food." : "Log what you ate.")
+                            .font(.system(size: 34, weight: .bold, design: .rounded))
+                            .tracking(-0.8)
+                        Text("Enter the values shown on the label for one serving.")
+                            .font(.subheadline)
+                            .foregroundStyle(timeOfDay.canvasSecondaryText)
+                    }
+
+                    VStack(alignment: .leading, spacing: 13) {
+                        EditorialSectionTitle(title: "Food")
+                        EditorialRuleGroup {
+                            EditorialRuleRow {
+                                TextField("Food name", text: $name)
+                                    .font(.title3)
+                                    .textContentType(.name)
+                            }
+                            EditorialRuleRow(showsDivider: false) {
+                                Text("Servings").font(.subheadline)
+                                Spacer()
+                                editorialNumberField($servings, placeholder: "1", unit: nil)
+                            }
+                        }
+                    }
+
+                    VStack(alignment: .leading, spacing: 13) {
+                        EditorialSectionTitle(title: "Nutrition per serving")
+                        EditorialRuleGroup {
+                            editorialNutritionRow("Calories", unit: "cal", text: $calories)
+                            editorialNutritionRow("Protein", unit: "g", text: $protein)
+                            editorialNutritionRow("Carbohydrates", unit: "g", text: $carbohydrates)
+                            editorialNutritionRow("Fat", unit: "g", text: $fat, showsDivider: false)
+                        }
+                    }
+
+                    Button(isEditing ? "Save changes" : "Add food") { save() }
+                        .buttonStyle(EditorialPrimaryButtonStyle())
+                        .disabled(!isValid)
+
+                    if isEditing {
+                        Button(role: .destructive) {
+                            store.removeFood(id: existingID, from: mealID, on: date)
+                            dismiss()
+                        } label: {
+                            Label("Delete Food", systemImage: "trash")
+                                .font(.subheadline.weight(.semibold))
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(Color.red)
+                        .frame(maxWidth: .infinity)
                     }
                 }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 28)
+            }
+            .scrollIndicators(.hidden)
+            .toolbar(.hidden, for: .navigationBar)
+            .homeTimeScreen(timeOfDay)
+        }
+    }
+
+    private func editorialNutritionRow(
+        _ title: String,
+        unit: String,
+        text: Binding<String>,
+        showsDivider: Bool = true
+    ) -> some View {
+        EditorialRuleRow(showsDivider: showsDivider) {
+            Text(title).font(.subheadline)
+            Spacer()
+            editorialNumberField(text, placeholder: "0", unit: unit)
+        }
+    }
+
+    private func editorialNumberField(
+        _ text: Binding<String>,
+        placeholder: String,
+        unit: String?
+    ) -> some View {
+        HStack(spacing: 5) {
+            TextField(placeholder, text: text)
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(.trailing)
+                .frame(width: 72)
+            if let unit {
+                Text(unit)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(width: 24, alignment: .leading)
             }
         }
-        .navigationTitle(name.isEmpty ? "Add Food" : name)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") { dismiss() }
-            }
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Save") { save() }
-                    .disabled(!isValid)
-            }
-        }
-        .repbaseScreen(phase)
     }
 
     private var isValid: Bool {

@@ -73,26 +73,191 @@ struct PlannerEntryEditorView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            Form {
-                nameSection
-                categorySection
-                whenSection
-                if !draft.notes.isEmpty || isEditing {
-                    notesSection
-                }
-                deleteSection
-            }
-            .navigationTitle(title)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { save() }
+        TimelineView(.periodic(from: .now, by: 60)) { context in
+            let timeOfDay = HomeTimeOfDay(date: context.date)
+
+            NavigationStack {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 22) {
+                        EditorialFormHeader(
+                            title: title,
+                            leadingAction: .cancel,
+                            saveTitle: "Save",
+                            canSave: canSave,
+                            onDismiss: { dismiss() },
+                            onSave: save
+                        )
+
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("PLANNER / \(draft.kind.title.uppercased())")
+                                .font(.system(size: 10, weight: .bold))
+                                .tracking(1.25)
+                                .foregroundStyle(timeOfDay.accent)
+                            Text(draft.kind == .task ? "What needs doing?" : "What is happening?")
+                                .font(.system(size: 34, weight: .bold, design: .rounded))
+                                .tracking(-0.8)
+                            Text(
+                                draft.kind == .task
+                                    ? "Tasks stay visible until they are complete."
+                                    : "Events live on your schedule and are not checked off."
+                            )
+                            .font(.subheadline)
+                            .foregroundStyle(timeOfDay.canvasSecondaryText)
+                        }
+
+                        editorialNameAndType(timeOfDay: timeOfDay)
+                        editorialDetails(timeOfDay: timeOfDay)
+
+                        if !draft.notes.isEmpty || isEditing {
+                            editorialNotes
+                        }
+
+                        Button(isEditing ? "Save changes" : "Add \(draft.kind.title.lowercased())") {
+                            save()
+                        }
+                        .buttonStyle(EditorialPrimaryButtonStyle())
                         .disabled(!canSave)
+
+                        if case .edit(let entry) = mode {
+                            Button(role: .destructive) {
+                                onDeleted?(entry)
+                                dismiss()
+                            } label: {
+                                Label("Delete \(draft.kind.title)", systemImage: "trash")
+                                    .font(.subheadline.weight(.semibold))
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(Color.red)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                        }
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 28)
                 }
+                .scrollIndicators(.hidden)
+                .toolbar(.hidden, for: .navigationBar)
+                .homeTimeScreen(timeOfDay)
+            }
+        }
+    }
+
+    private func editorialNameAndType(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(alignment: .leading, spacing: 13) {
+            EditorialSectionTitle(title: "Entry")
+            EditorialRuleGroup {
+                EditorialRuleRow {
+                    TextField(
+                        draft.kind == .task ? "Task title" : "Event title",
+                        text: $draft.title
+                    )
+                    .font(.title3)
+                    .textInputAutocapitalization(.sentences)
+                }
+
+                EditorialRuleRow(showsDivider: false) {
+                    Text("Type").font(.subheadline)
+                    Spacer()
+                    HStack(spacing: 18) {
+                        ForEach(PlannerKind.allCases) { kind in
+                            Button {
+                                draft.kind = kind
+                                guard !draft.category.suits(kind) else { return }
+                                draft.category = .other
+                            } label: {
+                                VStack(spacing: 7) {
+                                    Text(kind.title)
+                                        .font(.subheadline.weight(draft.kind == kind ? .bold : .regular))
+                                    Rectangle()
+                                        .fill(draft.kind == kind ? timeOfDay.accent : Color.clear)
+                                        .frame(height: 2)
+                                }
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(draft.kind == kind ? timeOfDay.canvasPrimaryText : timeOfDay.canvasSecondaryText)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func editorialDetails(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(alignment: .leading, spacing: 13) {
+            EditorialSectionTitle(title: "Details")
+            EditorialRuleGroup {
+                EditorialRuleRow {
+                    Text("Category").font(.subheadline)
+                    Spacer()
+                    Menu {
+                        ForEach(PlannerCategory.available(for: draft.kind)) { category in
+                            Button {
+                                draft.category = category
+                            } label: {
+                                Label(category.title, systemImage: category.symbolName)
+                            }
+                        }
+                    } label: {
+                        Label(draft.category.title, systemImage: draft.category.symbolName)
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(timeOfDay.accent)
+                    }
+                }
+
+                if draft.category == .workout {
+                    EditorialRuleRow {
+                        Text("Workout").font(.subheadline)
+                        Spacer()
+                        Picker("Workout", selection: $draft.workoutID) {
+                            Text("None").tag(Int?.none)
+                            ForEach(workouts) { workout in
+                                Text(workout.name).tag(Int?.some(workout.id))
+                            }
+                        }
+                        .labelsHidden()
+                        .onChange(of: draft.workoutID) { _, newValue in
+                            guard draft.title.trimmingCharacters(in: .whitespaces).isEmpty,
+                                  let id = newValue,
+                                  let match = workouts.first(where: { $0.id == id }) else { return }
+                            draft.title = match.name
+                        }
+                    }
+                }
+
+                EditorialRuleRow {
+                    Text("Date").font(.subheadline)
+                    Spacer()
+                    DatePicker("Date", selection: $date, displayedComponents: .date)
+                        .labelsHidden()
+                        .datePickerStyle(.compact)
+                }
+
+                EditorialRuleRow(showsDivider: hasTime) {
+                    Text("Set a time").font(.subheadline)
+                    Spacer()
+                    Toggle("Set a time", isOn: $hasTime)
+                        .labelsHidden()
+                        .tint(timeOfDay.accent)
+                }
+
+                if hasTime {
+                    EditorialRuleRow(showsDivider: false) {
+                        Text(draft.kind == .task ? "Do it by" : "Starts").font(.subheadline)
+                        Spacer()
+                        DatePicker("Time", selection: $time, displayedComponents: .hourAndMinute)
+                            .labelsHidden()
+                    }
+                }
+            }
+        }
+    }
+
+    private var editorialNotes: some View {
+        VStack(alignment: .leading, spacing: 13) {
+            EditorialSectionTitle(title: "Notes", detail: "Optional")
+            EditorialRuleGroup {
+                TextField("Anything worth remembering", text: $draft.notes, axis: .vertical)
+                    .lineLimit(2...5)
+                    .padding(.vertical, 15)
             }
         }
     }
