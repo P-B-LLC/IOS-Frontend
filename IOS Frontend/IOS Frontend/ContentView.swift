@@ -171,10 +171,10 @@ private struct WeeklyPlanCard: View {
             } label: {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("THIS WEEK")
+                        Text("PLAN WORKOUTS")
                             .font(.system(size: 9, weight: .semibold))
                             .tracking(0.7)
-                        Text("Weekly\nPlan")
+                        Text("Workouts")
                             .font(.system(size: 24, weight: .bold, design: .rounded))
                             .lineSpacing(-2)
                     }
