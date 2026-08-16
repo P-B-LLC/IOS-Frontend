@@ -74,6 +74,7 @@ private struct AppRootView: View {
     @Environment(WorkoutStore.self) private var workoutStore
     @Environment(PlannerStore.self) private var plannerStore
     @Environment(FoodTrackingStore.self) private var foodTrackingStore
+    @Environment(SocialProfileStore.self) private var socialProfileStore
 
     var body: some View {
         Group {
@@ -92,7 +93,7 @@ private struct AppRootView: View {
                     FoodTrackingView()
                 }
             } else if let profilePreview = ProcessInfo.processInfo.environment["REPBASE_PROFILE_PREVIEW"],
-                      profilePreview != "profile" {
+                      profilePreview != "profile" && profilePreview != "public" {
                 NavigationStack {
                     ProfileOnboardingView(
                         seed: SocialProfile(
@@ -114,6 +115,11 @@ private struct AppRootView: View {
                         ),
                         initialStep: ["connect": 0, "name": 1, "goals": 2, "identity": 3][profilePreview] ?? 0
                     )
+                }
+            } else if ProcessInfo.processInfo.environment["REPBASE_PROFILE_PREVIEW"] == "public",
+                      let profile = socialProfileStore.profile {
+                NavigationStack {
+                    SocialProfileView(profile: profile, isCurrentUser: false)
                 }
             } else if ProcessInfo.processInfo.environment["REPBASE_PROFILE_PREVIEW"] != nil {
                 NavigationStack {

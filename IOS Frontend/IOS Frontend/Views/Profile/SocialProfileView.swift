@@ -58,6 +58,7 @@ struct SocialProfileView: View {
     var isCurrentUser = true
     @State private var selectedSection: ProfileSection = .posts
     @State private var editingProfile = false
+    @State private var isFollowing = false
 
     private enum ProfileSection: String, CaseIterable, Identifiable {
         case posts = "Posts"
@@ -139,61 +140,57 @@ struct SocialProfileView: View {
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
-                .frame(height: 142)
+                .frame(height: 126)
 
-                HStack(alignment: .bottom, spacing: 14) {
-                    ProfileAvatarView(profile: profile, size: 92, timeOfDay: timeOfDay)
+                ProfileAvatarView(profile: profile, size: 78, timeOfDay: timeOfDay)
+                    .padding(.leading, 18)
+                    .offset(y: 32)
 
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(profile.displayName)
-                            .font(.title2.weight(.bold))
-                            .foregroundStyle(Color.white)
-                        Text("@\(profile.username)")
-                            .font(.subheadline.weight(.medium))
-                            .foregroundStyle(Color.white.opacity(0.76))
+                VStack {
+                    HStack {
+                        Spacer()
+                        profileAction(timeOfDay: timeOfDay)
                     }
-                    .padding(.bottom, 8)
-
                     Spacer()
                 }
-                .padding(.horizontal, 18)
+                .padding(14)
             }
+            .zIndex(1)
 
-            VStack(alignment: .leading, spacing: 15) {
-                HStack(spacing: 8) {
-                    ForEach(Array(profile.disciplines).sorted { $0.rawValue < $1.rawValue }.prefix(2)) { discipline in
-                        Label(discipline.rawValue, systemImage: discipline.symbol)
-                            .font(.caption.weight(.semibold))
-                            .lineLimit(1)
-                            .padding(.horizontal, 10)
-                            .frame(height: 30)
-                            .background(timeOfDay.accent.opacity(0.12), in: Capsule())
-                    }
+            VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(profile.displayName)
+                        .font(.title3.weight(.bold))
+                    Text("@\(profile.username)")
+                        .font(.caption)
+                        .foregroundStyle(timeOfDay.secondaryText)
                 }
 
                 if !profile.bio.isEmpty {
                     Text(profile.bio)
                         .font(.subheadline)
                         .foregroundStyle(timeOfDay.secondaryText)
+                        .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
-                if let gym = profile.gym {
-                    HStack(spacing: 10) {
-                        Image(systemName: "building.2.fill")
-                            .foregroundStyle(timeOfDay.accent)
-                            .frame(width: 34, height: 34)
-                            .background(timeOfDay.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 11))
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(gym.name).font(.subheadline.weight(.semibold))
-                            Text(gym.location).font(.caption).foregroundStyle(timeOfDay.secondaryText)
+                VStack(alignment: .leading, spacing: 5) {
+                    if !profile.disciplines.isEmpty {
+                        Label(disciplineSummary, systemImage: "figure.strengthtraining.traditional")
+                    }
+                    if let gym = profile.gym {
+                        HStack(spacing: 6) {
+                            Label("\(gym.name) · \(gym.city)", systemImage: "building.2")
+                            if !isCurrentUser {
+                                Text("Same gym")
+                                    .font(.caption2.weight(.bold))
+                                    .foregroundStyle(timeOfDay.accent)
+                            }
                         }
-                        Spacer()
-                        Label(isCurrentUser ? "\(gym.memberCount) members" : "Same gym", systemImage: "person.2.fill")
-                            .font(.caption2.weight(.bold))
-                            .foregroundStyle(timeOfDay.accent)
                     }
                 }
+                .font(.caption.weight(.medium))
+                .foregroundStyle(timeOfDay.secondaryText)
 
                 Divider().overlay(timeOfDay.border)
 
@@ -202,21 +199,44 @@ struct SocialProfileView: View {
                     profileStat("0", label: "Followers")
                     profileStat("0", label: "Following")
                 }
-
-                Button { editingProfile = true } label: {
-                    Label("Edit profile", systemImage: "pencil")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(RepbaseAccentCapsuleButtonStyle(timeOfDay: timeOfDay))
             }
             .padding(.horizontal, 18)
-            .padding(.top, 18)
-            .padding(.bottom, 18)
+            .padding(.top, 44)
+            .padding(.bottom, 15)
             .background(timeOfDay.surfaceRaised)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 28))
-        .overlay { RoundedRectangle(cornerRadius: 28).strokeBorder(timeOfDay.border, lineWidth: 1) }
-        .shadow(color: timeOfDay.shadow, radius: 14, x: 5, y: 9)
+        .clipShape(RoundedRectangle(cornerRadius: 25))
+        .overlay { RoundedRectangle(cornerRadius: 25).strokeBorder(timeOfDay.border, lineWidth: 1) }
+        .shadow(color: timeOfDay.shadow.opacity(0.72), radius: 10, x: 4, y: 7)
+    }
+
+    private var disciplineSummary: String {
+        Array(profile.disciplines)
+            .sorted { $0.rawValue < $1.rawValue }
+            .prefix(2)
+            .map(\.rawValue)
+            .joined(separator: " · ")
+    }
+
+    @ViewBuilder
+    private func profileAction(timeOfDay: HomeTimeOfDay) -> some View {
+        if isCurrentUser {
+            Button { editingProfile = true } label: {
+                Label("Edit", systemImage: "pencil")
+            }
+            .buttonStyle(.borderedProminent)
+            .buttonBorderShape(.capsule)
+            .tint(timeOfDay.surfaceRaised)
+            .foregroundStyle(timeOfDay.ink)
+        } else {
+            Button { isFollowing.toggle() } label: {
+                Label(isFollowing ? "Following" : "Follow", systemImage: isFollowing ? "checkmark" : "plus")
+            }
+            .buttonStyle(.borderedProminent)
+            .buttonBorderShape(.capsule)
+            .tint(timeOfDay.surfaceRaised)
+            .foregroundStyle(timeOfDay.ink)
+        }
     }
 
     private func profileStat(_ value: String, label: String) -> some View {
@@ -228,23 +248,27 @@ struct SocialProfileView: View {
     }
 
     private func sectionPicker(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack(spacing: 5) {
+        HStack(spacing: 24) {
             ForEach(ProfileSection.allCases) { section in
                 Button {
                     withAnimation(.easeOut(duration: 0.18)) { selectedSection = section }
                 } label: {
-                    Label(section.rawValue, systemImage: section == .posts ? "square.grid.2x2" : "person.text.rectangle")
-                        .font(.subheadline.weight(.semibold))
-                        .frame(maxWidth: .infinity, minHeight: 42)
-                        .foregroundStyle(selectedSection == section ? Color.white : timeOfDay.secondaryText)
-                        .background(selectedSection == section ? timeOfDay.accent : Color.clear, in: RoundedRectangle(cornerRadius: 14))
+                    VStack(spacing: 7) {
+                        Label(section.rawValue, systemImage: section == .posts ? "square.grid.2x2" : "person.text.rectangle")
+                            .font(.subheadline.weight(.semibold))
+                        Capsule()
+                            .fill(selectedSection == section ? timeOfDay.accent : Color.clear)
+                            .frame(height: 3)
+                    }
+                    .foregroundStyle(selectedSection == section ? timeOfDay.primaryText : timeOfDay.secondaryText)
+                    .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.plain)
             }
         }
-        .padding(5)
-        .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 18))
-        .overlay { RoundedRectangle(cornerRadius: 18).strokeBorder(timeOfDay.border, lineWidth: 1) }
+        .padding(.horizontal, 18)
+        .padding(.top, 12)
+        .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 20))
     }
 
     @ViewBuilder
@@ -265,7 +289,7 @@ struct SocialProfileView: View {
             .padding(.horizontal, 24)
             .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 24))
         } else {
-            LazyVStack(spacing: 12) {
+            LazyVStack(spacing: 0) {
                 ForEach(store.posts) { post in
                     HStack(spacing: 14) {
                         Image(systemName: post.symbol)
@@ -288,11 +312,16 @@ struct SocialProfileView: View {
                             .foregroundStyle(timeOfDay.secondaryText)
                         }
                     }
-                    .padding(15)
-                    .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 22))
-                    .overlay { RoundedRectangle(cornerRadius: 22).strokeBorder(timeOfDay.border, lineWidth: 1) }
+                    .padding(.horizontal, 15)
+                    .padding(.vertical, 14)
+
+                    if post.id != store.posts.last?.id {
+                        Divider().padding(.leading, 76)
+                    }
                 }
             }
+            .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 22))
+            .overlay { RoundedRectangle(cornerRadius: 22).strokeBorder(timeOfDay.border, lineWidth: 1) }
         }
     }
 
@@ -334,10 +363,14 @@ struct SocialProfileView: View {
 struct ProfileOnboardingView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SocialProfileStore.self) private var store
+    @Environment(AuthenticationStore.self) private var authentication
 
     let isEditing: Bool
     @State private var draft: SocialProfile
     @State private var step: Int
+    /// Only used when creating: an account already exists when editing.
+    @State private var email = ""
+    @State private var password = ""
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var gymSearch = ""
     @State private var isCreatingGym = false
@@ -454,15 +487,49 @@ struct ProfileOnboardingView: View {
         }
     }
 
+    /// Where the account itself is created.
+    ///
+    /// Apple and Google are what this page is meant to be, but neither can
+    /// work until the app has an Apple Developer membership and a Google
+    /// client id, and these builds carry no entitlements at all. An email and
+    /// a password make an account that works today; a provider can be linked
+    /// to the same account once those exist.
     private func providerStep(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(spacing: 12) {
-            providerButton(.apple, symbol: "apple.logo", timeOfDay: timeOfDay)
-            providerButton(.google, symbol: "g.circle.fill", timeOfDay: timeOfDay)
+            TextField("Email", text: $email)
+                .textContentType(.emailAddress)
+                .keyboardType(.emailAddress)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .padding(13)
+                .repbaseControlSurface(cornerRadius: 12)
 
-            Label("Your provider is used for sign-in only. Your public profile never shows it.", systemImage: "lock.fill")
+            SecureField("Password", text: $password)
+                .textContentType(.newPassword)
+                .padding(13)
+                .repbaseControlSurface(cornerRadius: 12)
+
+            Text("Use at least 8 characters.")
                 .font(.caption)
                 .foregroundStyle(timeOfDay.secondaryText)
-                .padding(.top, 8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            if let error = authentication.errorMessage {
+                Label(error, systemImage: "exclamationmark.triangle.fill")
+                    .font(.footnote)
+                    .foregroundStyle(Color.red)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(12)
+                    .background(Color.red.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+            }
+
+            Label(
+                "Signing in with Apple or Google is coming. Your account will link to one when it does.",
+                systemImage: "lock.fill"
+            )
+            .font(.caption)
+            .foregroundStyle(timeOfDay.secondaryText)
+            .padding(.top, 8)
         }
     }
 
@@ -741,11 +808,13 @@ struct ProfileOnboardingView: View {
             if step < 3 {
                 withAnimation(.easeOut(duration: 0.2)) { step += 1 }
             } else {
-                store.save(draft)
-                dismiss()
+                finish()
             }
         } label: {
             HStack {
+                if authentication.isWorking {
+                    ProgressView().tint(Color.white)
+                }
                 Text(step == 3 ? (isEditing ? "Save Profile" : "Create Profile") : "Continue")
                 Spacer()
                 Image(systemName: step == 3 ? "checkmark" : "arrow.right")
