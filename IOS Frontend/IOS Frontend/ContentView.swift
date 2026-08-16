@@ -98,11 +98,8 @@ private struct HomeHeader: View {
                     .font(.system(size: 11, weight: .semibold))
                     .tracking(0.9)
                     .foregroundStyle(timeOfDay.secondaryText)
-                Text("Ready to train?")
+                Text(headline)
                     .font(.system(size: 28, weight: .bold, design: .rounded))
-                Text(greeting)
-                    .font(.system(size: 13))
-                    .foregroundStyle(timeOfDay.secondaryText)
             }
 
             Spacer(minLength: 12)
@@ -148,9 +145,10 @@ private struct HomeHeader: View {
         return String(user.displayName.prefix(1)).uppercased()
     }
 
-    private var greeting: String {
+    private var headline: String {
         guard case .signedIn(let user) = authentication.phase else { return "Hello" }
-        return "Hello, \(user.displayName)"
+        let firstName = user.displayName.split(separator: " ").first.map(String.init) ?? user.displayName
+        return "Hello \(firstName)"
     }
 }
 
@@ -201,23 +199,9 @@ private struct WeeklyPlanCard: View {
                         emptyPlanRow
                     }
                 }
-                .padding(.trailing, items.count > 2 ? 8 : 0)
             }
-            .scrollIndicators(.hidden)
+            .scrollIndicators(items.count > 2 ? .visible : .hidden)
             .frame(height: 103)
-            .overlay(alignment: .trailing) {
-                if items.count > 2 {
-                    Capsule()
-                        .fill(Color(hex: 0x1B1415).opacity(0.16))
-                        .frame(width: 3)
-                        .overlay(alignment: .top) {
-                            Capsule()
-                                .fill(Color(hex: 0x1B1415).opacity(0.58))
-                                .frame(width: 3, height: 32)
-                        }
-                        .padding(.vertical, 4)
-                }
-            }
         }
         .padding(16)
         .frame(maxWidth: .infinity, minHeight: 214, maxHeight: 214, alignment: .topLeading)
