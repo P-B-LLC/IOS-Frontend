@@ -23,8 +23,42 @@ enum KeychainTokenStoreError: LocalizedError {
 }
 
 struct KeychainTokenStore: Sendable {
-    private let service = "P-B-LLC.IOS-Frontend.repbase-api"
-    private let account = "authentication-token"
+    private let service: String
+    private let account: String
+
+    init(
+        service: String = "P-B-LLC.IOS-Frontend.repbase-api",
+        account: String = "authentication-token"
+    ) {
+        self.service = service
+        self.account = account
+    }
+
+#if DEBUG
+    /// Writes, reads back and removes a throwaway value, and reports what
+    /// happened.
+    ///
+    /// Whether a session survives relaunching comes down to whether this build
+    /// can use the Keychain at all, which depends on how it was signed rather
+    /// than on anything in the app. Reading that off the entitlements is
+    /// unreliable, so this asks the Keychain directly.
+    static func diagnose() -> String {
+        let probe = KeychainTokenStore(
+            service: "P-B-LLC.IOS-Frontend.keychain-check",
+            account: "probe"
+        )
+        do {
+            try probe.save("probe-value")
+            let read = try probe.read()
+            try probe.delete()
+            return read == "probe-value"
+                ? "KEYCHAIN-CHECK works: a session will survive relaunching."
+                : "KEYCHAIN-CHECK unavailable: nothing was stored, so every launch needs a sign-in."
+        } catch {
+            return "KEYCHAIN-CHECK failed: \(error.localizedDescription)"
+        }
+    }
+#endif
 
     func read() throws -> String? {
         var query = baseQuery

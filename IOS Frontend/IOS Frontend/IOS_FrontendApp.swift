@@ -68,6 +68,7 @@ private struct AppRootView: View {
             || environment["REPBASE_PLANNER_PREVIEW"] != nil
             || environment["REPBASE_PROFILE_PREVIEW"] != nil
             || environment["REPBASE_AUTH_PREVIEW"] != nil
+            || environment["REPBASE_KEYCHAIN_CHECK"] != nil
     }
 #endif
 
@@ -80,7 +81,15 @@ private struct AppRootView: View {
     var body: some View {
         Group {
 #if DEBUG
-            if ProcessInfo.processInfo.environment["REPBASE_AUTH_PREVIEW"] != nil {
+            if ProcessInfo.processInfo.environment["REPBASE_KEYCHAIN_CHECK"] != nil {
+                // Whether a signed-in session survives relaunching depends on
+                // whether this build can reach the Keychain, which no amount
+                // of reading the code settles.
+                Text(KeychainTokenStore.diagnose())
+                    .font(.footnote.monospaced())
+                    .multilineTextAlignment(.center)
+                    .padding(24)
+            } else if ProcessInfo.processInfo.environment["REPBASE_AUTH_PREVIEW"] != nil {
                 AuthenticationView()
             } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "home" {
                 NavigationStack {
@@ -90,6 +99,20 @@ private struct AppRootView: View {
                     }
                     .repbaseScreen(.prepare)
                     .navigationTitle("Home")
+                }
+            } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "entry",
+                      let meal = foodTrackingStore.meals(on: Date()).first {
+                NavigationStack {
+                    FoodEntryEditorView(date: Date(), mealID: meal.id)
+                }
+            } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "picker",
+                      let meal = foodTrackingStore.meals(on: Date()).first {
+                NavigationStack {
+                    FoodPickerView(date: Date(), mealID: meal.id)
+                }
+            } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "goals" {
+                NavigationStack {
+                    NutritionGoalsView()
                 }
             } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] != nil {
                 NavigationStack {
