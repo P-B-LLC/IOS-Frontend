@@ -11,7 +11,6 @@ struct DayWorkoutView: View {
     let day: Weekday
 
     @Environment(WorkoutStore.self) private var store
-    @State private var setupDraft = Workout(name: "", exercises: [])
     @State private var editor: WorkoutEditorView.Mode?
     /// The workout awaiting a delete confirmation, if any.
     /// Which workout page is on screen when a day holds several.
@@ -155,30 +154,24 @@ struct DayWorkoutView: View {
     }
 
     private var emptyDaySetup: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 14) {
             VStack(alignment: .leading, spacing: 5) {
                 Text("Build \(day.fullName)'s Workout")
                     .font(.title2.weight(.bold))
-                Text("Name your workout, add exercises, and choose the target number of sets.")
+                Text("Create it on a focused page, reuse a previous workout, and add the exercises you need.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
 
-            WorkoutPlanFields(
-                draft: $setupDraft,
-                suggestions: store.knownWorkouts
-            )
-
             Button {
-                saveSetupDraft()
+                editor = .create
             } label: {
-                Label("Save to \(day.fullName)", systemImage: "checkmark.circle.fill")
+                Label("Build Workout", systemImage: "plus.circle.fill")
                     .font(.headline)
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .disabled(!canSaveSetup || !store.isEditingEnabled)
+            .buttonStyle(WorkoutPrimaryButtonStyle(phase: .prepare))
+            .disabled(!store.isEditingEnabled)
 
             // A greyed-out button with no explanation reads as a broken app.
             if let reason = store.editingBlockedReason {
@@ -195,18 +188,7 @@ struct DayWorkoutView: View {
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-            } else if !canSaveSetup {
-                Text("Give this workout a name to save it.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .center)
             }
-
-            Text("This creates a reusable workout template and assigns it to this date in Repbase.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .center)
-                .multilineTextAlignment(.center)
         }
     }
 
@@ -466,7 +448,6 @@ struct DayWorkoutView: View {
             }
 
             Button {
-                setupDraft = Workout(name: "", exercises: [])
                 editor = .create
             } label: {
                 Label("Add Another Workout to \(day.fullName)", systemImage: "plus")
@@ -1038,10 +1019,6 @@ struct DayWorkoutView: View {
         .workoutCard()
     }
 
-    private var canSaveSetup: Bool {
-        !setupDraft.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-    }
-
     private var headerIcon: String {
         if activeSession != nil { return "bolt.fill" }
         return workout == nil ? "plus" : "figure.strengthtraining.traditional"
@@ -1071,18 +1048,6 @@ struct DayWorkoutView: View {
             return "\(workout.exercises.count) exercises | \(workout.totalSets) target sets"
         }
         return "Build it exactly the way you want."
-    }
-
-    private func saveSetupDraft() {
-        var workout = setupDraft
-        workout.name = workout.name.trimmingCharacters(in: .whitespacesAndNewlines)
-        workout.exercises = workout.exercises.compactMap { exercise in
-            var exercise = exercise
-            exercise.name = exercise.name.trimmingCharacters(in: .whitespacesAndNewlines)
-            return exercise.name.isEmpty ? nil : exercise
-        }
-        guard !workout.name.isEmpty else { return }
-        store.saveWorkout(workout, on: day)
     }
 
     private func weightBinding(exerciseID: Exercise.ID, setID: WorkoutSetDraft.ID) -> Binding<String> {
