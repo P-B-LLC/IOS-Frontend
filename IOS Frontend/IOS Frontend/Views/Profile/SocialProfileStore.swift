@@ -94,6 +94,29 @@ struct SocialProfile: Codable, Equatable {
         let components = [firstName, lastName].filter { !$0.isEmpty }
         return components.compactMap(\.first).map(String.init).joined().uppercased()
     }
+
+    /// What a brand-new account starts from.
+    ///
+    /// Measurements start at zero rather than at a plausible-looking default:
+    /// a height nobody typed is not a height, and the flow will not move past
+    /// the goals page until they are actually filled in.
+    static let empty = SocialProfile(
+        provider: .apple,
+        firstName: "",
+        lastName: "",
+        username: "",
+        bio: "",
+        heightFeet: 0,
+        heightInches: 0,
+        weightPounds: 0,
+        targetWeightPounds: 0,
+        showsHeight: false,
+        showsWeight: false,
+        showsTargetWeight: false,
+        disciplines: [],
+        gym: nil,
+        profileImageData: nil
+    )
 }
 
 struct SocialPost: Identifiable, Equatable {

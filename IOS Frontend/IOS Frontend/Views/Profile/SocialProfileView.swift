@@ -460,7 +460,7 @@ struct ProfileOnboardingView: View {
     private var stepHeading: some View {
         switch step {
         case 0:
-            heading("Connect your account", detail: "Choose how you’ll securely access your Repbase profile.")
+            heading("Create your login", detail: "This is how you’ll get back into Repbase.")
         case 1:
             heading("What should we call you?", detail: "Your name and username identify you across Repbase.")
         case 2:
@@ -833,8 +833,47 @@ struct ProfileOnboardingView: View {
         .background(.ultraThinMaterial)
     }
 
+    /// Creates the account, then keeps the rest of the answers.
+    ///
+    /// The account has to exist before anything else can be saved against it,
+    /// so the flow stays open until the server accepts it. A taken username or
+    /// a rejected password lands back on this page with the reason, rather
+    /// than closing on a profile that was never created.
+    private func finish() {
+        guard !isEditing else {
+            store.save(draft)
+            dismiss()
+            return
+        }
+
+        Task {
+            await authentication.register(
+                username: draft.username.trimmingCharacters(in: .whitespacesAndNewlines),
+                email: email.trimmingCharacters(in: .whitespacesAndNewlines),
+                password: password,
+                firstName: draft.firstName.trimmingCharacters(in: .whitespacesAndNewlines),
+                lastName: draft.lastName.trimmingCharacters(in: .whitespacesAndNewlines)
+            )
+            guard authentication.errorMessage == nil else {
+                // Back to the page that owns the failure, with the message
+                // already on screen.
+                withAnimation(.easeOut(duration: 0.2)) { step = 0 }
+                return
+            }
+            store.save(draft)
+            dismiss()
+        }
+    }
+
     private var canContinue: Bool {
         switch step {
+        case 0:
+            // Editing already has an account; creating needs one that the
+            // server will accept.
+            guard !isEditing else { return true }
+            return email.contains("@")
+                && password.count >= 8
+                && !authentication.isWorking
         case 1:
             return !draft.firstName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 && !draft.lastName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty

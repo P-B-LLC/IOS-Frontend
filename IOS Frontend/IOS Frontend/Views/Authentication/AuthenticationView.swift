@@ -16,12 +16,9 @@ struct AuthenticationView: View {
     }
 
     @Environment(AuthenticationStore.self) private var authentication
-    @State private var mode: Mode = .login
     @State private var username = ""
     @State private var password = ""
-    @State private var email = ""
-    @State private var firstName = ""
-    @State private var lastName = ""
+    @State private var isCreatingAccount = false
 
     var body: some View {
         NavigationStack {
@@ -44,35 +41,11 @@ struct AuthenticationView: View {
                             .multilineTextAlignment(.center)
                     }
 
-                    Picker("Authentication mode", selection: $mode) {
-                        ForEach(Mode.allCases) { mode in
-                            Text(mode.rawValue).tag(mode)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .onChange(of: mode) {
-                        authentication.clearError()
-                    }
-
+                    // Signing in is a form; creating an account is a walk
+                    // through several pages. Putting both behind one segmented
+                    // control meant the whole of account creation had to fit on
+                    // this screen at once.
                     VStack(spacing: 12) {
-                        if mode == .register {
-                            HStack(spacing: 10) {
-                                TextField("First name", text: $firstName)
-                                    .textContentType(.givenName)
-                                    .authenticationField()
-                                TextField("Last name", text: $lastName)
-                                    .textContentType(.familyName)
-                                    .authenticationField()
-                            }
-
-                            TextField("Email", text: $email)
-                                .textContentType(.emailAddress)
-                                .keyboardType(.emailAddress)
-                                .textInputAutocapitalization(.never)
-                                .autocorrectionDisabled()
-                                .authenticationField()
-                        }
-
                         TextField("Username", text: $username)
                             .textContentType(.username)
                             .textInputAutocapitalization(.never)
@@ -80,15 +53,8 @@ struct AuthenticationView: View {
                             .authenticationField()
 
                         SecureField("Password", text: $password)
-                            .textContentType(mode == .login ? .password : .newPassword)
+                            .textContentType(.password)
                             .authenticationField()
-
-                        if mode == .register {
-                            Text("Use at least 8 characters.")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
                     }
 
                     if let error = authentication.errorMessage {
@@ -108,13 +74,25 @@ struct AuthenticationView: View {
                                 ProgressView()
                                     .tint(Color.white)
                             }
-                            Text(mode.rawValue)
+                            Text("Sign In")
                                 .font(.headline)
                         }
                         .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(WorkoutPrimaryButtonStyle(phase: .prepare))
                     .disabled(!canSubmit || authentication.isWorking)
+
+                    Button {
+                        authentication.clearError()
+                        isCreatingAccount = true
+                    } label: {
+                        Text("Create Account")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.large)
+                    .disabled(authentication.isWorking)
 
 #if DEBUG
                     Label(
@@ -131,34 +109,23 @@ struct AuthenticationView: View {
             }
             .repbaseScreen(.prepare)
         }
+        .fullScreenCover(isPresented: $isCreatingAccount) {
+            NavigationStack {
+                ProfileOnboardingView(seed: .empty)
+            }
+        }
     }
 
     private var canSubmit: Bool {
-        let hasCredentials = !username.trimmed.isEmpty && !password.isEmpty
-        guard mode == .register else { return hasCredentials }
-        return hasCredentials
-            && password.count >= 8
-            && !email.trimmed.isEmpty
-            && !firstName.trimmed.isEmpty
-            && !lastName.trimmed.isEmpty
+        !username.trimmed.isEmpty && !password.isEmpty
     }
 
     private func submit() {
         Task {
-            if mode == .login {
-                await authentication.login(
-                    username: username.trimmed,
-                    password: password
-                )
-            } else {
-                await authentication.register(
-                    username: username.trimmed,
-                    email: email.trimmed,
-                    password: password,
-                    firstName: firstName.trimmed,
-                    lastName: lastName.trimmed
-                )
-            }
+            await authentication.login(
+                username: username.trimmed,
+                password: password
+            )
         }
     }
 }
