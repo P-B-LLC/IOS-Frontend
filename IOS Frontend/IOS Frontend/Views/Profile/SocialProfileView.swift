@@ -1,0 +1,812 @@
+//
+//  SocialProfileView.swift
+//  IOS Frontend
+//
+//  Profile onboarding and the public-facing athlete profile.
+//
+
+import PhotosUI
+import SwiftUI
+
+struct ProfileDestinationView: View {
+    @Environment(SocialProfileStore.self) private var store
+    @Environment(AuthenticationStore.self) private var authentication
+
+    var body: some View {
+        if let profile = store.profile {
+            SocialProfileView(profile: profile)
+        } else {
+            ProfileOnboardingView(seed: profileSeed)
+        }
+    }
+
+    private var profileSeed: SocialProfile {
+        let user: AuthenticatedUser?
+        if case .signedIn(let signedInUser) = authentication.phase {
+            user = signedInUser
+        } else {
+            user = nil
+        }
+
+        return SocialProfile(
+            provider: .apple,
+            firstName: user?.firstName ?? "",
+            lastName: user?.lastName ?? "",
+            username: user?.username ?? "",
+            bio: "",
+            heightFeet: 5,
+            heightInches: 8,
+            weightPounds: 160,
+            targetWeightPounds: 155,
+            showsHeight: false,
+            showsWeight: false,
+            showsTargetWeight: false,
+            disciplines: [],
+            gym: nil,
+            profileImageData: nil
+        )
+    }
+}
+
+struct SocialProfileView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(AuthenticationStore.self) private var authentication
+    @Environment(WorkoutStore.self) private var workoutStore
+    @Environment(SocialProfileStore.self) private var store
+
+    let profile: SocialProfile
+    var isCurrentUser = true
+    @State private var selectedSection: ProfileSection = .posts
+    @State private var editingProfile = false
+
+    private enum ProfileSection: String, CaseIterable, Identifiable {
+        case posts = "Posts"
+        case about = "About"
+        var id: String { rawValue }
+    }
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 60)) { context in
+            let timeOfDay = HomeTimeOfDay(date: context.date)
+
+            ScrollView {
+                VStack(spacing: 16) {
+                    profileHeader(timeOfDay: timeOfDay)
+                    identityCard(timeOfDay: timeOfDay)
+                    sectionPicker(timeOfDay: timeOfDay)
+
+                    if selectedSection == .posts {
+                        postsSection(timeOfDay: timeOfDay)
+                    } else {
+                        aboutSection(timeOfDay: timeOfDay)
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 10)
+                .padding(.bottom, 28)
+            }
+            .scrollIndicators(.hidden)
+            .toolbar(.hidden, for: .navigationBar)
+            .homeTimeScreen(timeOfDay)
+            .sheet(isPresented: $editingProfile) {
+                NavigationStack {
+                    ProfileOnboardingView(seed: profile, isEditing: true)
+                        .environment(store)
+                }
+            }
+        }
+    }
+
+    private func profileHeader(timeOfDay: HomeTimeOfDay) -> some View {
+        HStack {
+            Button { dismiss() } label: {
+                Image(systemName: "chevron.left")
+            }
+            .buttonStyle(RepbaseSculptedIconButtonStyle(timeOfDay: timeOfDay))
+            .accessibilityLabel("Back")
+
+            Spacer()
+
+            Text("Profile")
+                .font(.headline.weight(.bold))
+
+            Spacer()
+
+            Menu {
+                Button("Edit Profile", systemImage: "pencil") {
+                    editingProfile = true
+                }
+                Button("Refresh Workouts", systemImage: "arrow.clockwise") {
+                    workoutStore.retryPersistence()
+                }
+                Divider()
+                Button("Sign Out", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) {
+                    Task { await authentication.signOut() }
+                }
+            } label: {
+                Image(systemName: "ellipsis")
+            }
+            .buttonStyle(RepbaseSculptedIconButtonStyle(timeOfDay: timeOfDay))
+            .accessibilityLabel("Profile options")
+        }
+    }
+
+    private func identityCard(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(spacing: 0) {
+            ZStack(alignment: .bottomLeading) {
+                LinearGradient(
+                    colors: [timeOfDay.heroEnd, timeOfDay.ink, timeOfDay.accent.opacity(0.78)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .frame(height: 142)
+
+                HStack(alignment: .bottom, spacing: 14) {
+                    ProfileAvatarView(profile: profile, size: 92, timeOfDay: timeOfDay)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(profile.displayName)
+                            .font(.title2.weight(.bold))
+                            .foregroundStyle(Color.white)
+                        Text("@\(profile.username)")
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(Color.white.opacity(0.76))
+                    }
+                    .padding(.bottom, 8)
+
+                    Spacer()
+                }
+                .padding(.horizontal, 18)
+            }
+
+            VStack(alignment: .leading, spacing: 15) {
+                HStack(spacing: 8) {
+                    ForEach(Array(profile.disciplines).sorted { $0.rawValue < $1.rawValue }.prefix(2)) { discipline in
+                        Label(discipline.rawValue, systemImage: discipline.symbol)
+                            .font(.caption.weight(.semibold))
+                            .lineLimit(1)
+                            .padding(.horizontal, 10)
+                            .frame(height: 30)
+                            .background(timeOfDay.accent.opacity(0.12), in: Capsule())
+                    }
+                }
+
+                if !profile.bio.isEmpty {
+                    Text(profile.bio)
+                        .font(.subheadline)
+                        .foregroundStyle(timeOfDay.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                if let gym = profile.gym {
+                    HStack(spacing: 10) {
+                        Image(systemName: "building.2.fill")
+                            .foregroundStyle(timeOfDay.accent)
+                            .frame(width: 34, height: 34)
+                            .background(timeOfDay.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 11))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(gym.name).font(.subheadline.weight(.semibold))
+                            Text(gym.location).font(.caption).foregroundStyle(timeOfDay.secondaryText)
+                        }
+                        Spacer()
+                        Label(isCurrentUser ? "\(gym.memberCount) members" : "Same gym", systemImage: "person.2.fill")
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(timeOfDay.accent)
+                    }
+                }
+
+                Divider().overlay(timeOfDay.border)
+
+                HStack {
+                    profileStat("\(store.posts.count)", label: "Posts")
+                    profileStat("0", label: "Followers")
+                    profileStat("0", label: "Following")
+                }
+
+                Button { editingProfile = true } label: {
+                    Label("Edit profile", systemImage: "pencil")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(RepbaseAccentCapsuleButtonStyle(timeOfDay: timeOfDay))
+            }
+            .padding(.horizontal, 18)
+            .padding(.top, 18)
+            .padding(.bottom, 18)
+            .background(timeOfDay.surfaceRaised)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 28))
+        .overlay { RoundedRectangle(cornerRadius: 28).strokeBorder(timeOfDay.border, lineWidth: 1) }
+        .shadow(color: timeOfDay.shadow, radius: 14, x: 5, y: 9)
+    }
+
+    private func profileStat(_ value: String, label: String) -> some View {
+        VStack(spacing: 2) {
+            Text(value).font(.headline.weight(.bold))
+            Text(label).font(.caption2).foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func sectionPicker(timeOfDay: HomeTimeOfDay) -> some View {
+        HStack(spacing: 5) {
+            ForEach(ProfileSection.allCases) { section in
+                Button {
+                    withAnimation(.easeOut(duration: 0.18)) { selectedSection = section }
+                } label: {
+                    Label(section.rawValue, systemImage: section == .posts ? "square.grid.2x2" : "person.text.rectangle")
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity, minHeight: 42)
+                        .foregroundStyle(selectedSection == section ? Color.white : timeOfDay.secondaryText)
+                        .background(selectedSection == section ? timeOfDay.accent : Color.clear, in: RoundedRectangle(cornerRadius: 14))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(5)
+        .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 18))
+        .overlay { RoundedRectangle(cornerRadius: 18).strokeBorder(timeOfDay.border, lineWidth: 1) }
+    }
+
+    @ViewBuilder
+    private func postsSection(timeOfDay: HomeTimeOfDay) -> some View {
+        if store.posts.isEmpty {
+            VStack(spacing: 12) {
+                Image(systemName: "square.and.pencil")
+                    .font(.system(size: 30, weight: .medium))
+                    .foregroundStyle(timeOfDay.accent)
+                Text("No posts yet").font(.headline)
+                Text("Completed workouts and shared milestones will appear here.")
+                    .font(.subheadline)
+                    .foregroundStyle(timeOfDay.secondaryText)
+                    .multilineTextAlignment(.center)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 42)
+            .padding(.horizontal, 24)
+            .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 24))
+        } else {
+            LazyVStack(spacing: 12) {
+                ForEach(store.posts) { post in
+                    HStack(spacing: 14) {
+                        Image(systemName: post.symbol)
+                            .font(.title3.weight(.semibold))
+                            .foregroundStyle(timeOfDay.accent)
+                            .frame(width: 48, height: 48)
+                            .background(timeOfDay.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 15))
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text(post.title).font(.headline)
+                                Spacer()
+                                Text(post.timestamp).font(.caption).foregroundStyle(timeOfDay.secondaryText)
+                            }
+                            Text(post.detail).font(.subheadline).foregroundStyle(timeOfDay.secondaryText)
+                            HStack(spacing: 14) {
+                                Label("\(post.likes)", systemImage: "heart")
+                                Label("\(post.comments)", systemImage: "bubble.left")
+                            }
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(timeOfDay.secondaryText)
+                        }
+                    }
+                    .padding(15)
+                    .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 22))
+                    .overlay { RoundedRectangle(cornerRadius: 22).strokeBorder(timeOfDay.border, lineWidth: 1) }
+                }
+            }
+        }
+    }
+
+    private func aboutSection(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(spacing: 0) {
+            if profile.showsHeight {
+                aboutRow("Height", value: "\(profile.heightFeet)′ \(profile.heightInches)″", symbol: "ruler")
+            }
+            if profile.showsWeight {
+                aboutRow("Weight", value: "\(profile.weightPounds) lb", symbol: "scalemass")
+            }
+            if profile.showsTargetWeight {
+                aboutRow("Target weight", value: "\(profile.targetWeightPounds) lb", symbol: "scope")
+            }
+            if !profile.showsHeight && !profile.showsWeight && !profile.showsTargetWeight {
+                Text("This athlete keeps their body measurements private.")
+                    .font(.subheadline)
+                    .foregroundStyle(timeOfDay.secondaryText)
+                    .frame(maxWidth: .infinity)
+                    .padding(28)
+            }
+        }
+        .padding(.horizontal, 16)
+        .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 24))
+        .overlay { RoundedRectangle(cornerRadius: 24).strokeBorder(timeOfDay.border, lineWidth: 1) }
+    }
+
+    private func aboutRow(_ title: String, value: String, symbol: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: symbol).foregroundStyle(Color(hex: 0xF86722)).frame(width: 28)
+            Text(title).font(.subheadline)
+            Spacer()
+            Text(value).font(.subheadline.weight(.bold))
+        }
+        .padding(.vertical, 15)
+    }
+}
+
+struct ProfileOnboardingView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(SocialProfileStore.self) private var store
+
+    let isEditing: Bool
+    @State private var draft: SocialProfile
+    @State private var step: Int
+    @State private var selectedPhoto: PhotosPickerItem?
+    @State private var gymSearch = ""
+    @State private var isCreatingGym = false
+    @State private var newGymName = ""
+    @State private var newGymCity = ""
+    @State private var newGymCountry = ""
+
+    init(seed: SocialProfile, isEditing: Bool = false, initialStep: Int? = nil) {
+        self.isEditing = isEditing
+        _draft = State(initialValue: seed)
+        _step = State(initialValue: initialStep ?? (isEditing ? 1 : 0))
+    }
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 60)) { context in
+            let timeOfDay = HomeTimeOfDay(date: context.date)
+
+            VStack(spacing: 0) {
+                onboardingHeader(timeOfDay: timeOfDay)
+                stepProgress(timeOfDay: timeOfDay)
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 18) {
+                        stepHeading
+                        stepContent(timeOfDay: timeOfDay)
+                    }
+                    .padding(.horizontal, 22)
+                    .padding(.top, 24)
+                    .padding(.bottom, 28)
+                }
+                .scrollIndicators(.hidden)
+
+                bottomAction(timeOfDay: timeOfDay)
+            }
+            .toolbar(.hidden, for: .navigationBar)
+            .homeTimeScreen(timeOfDay)
+            .onChange(of: selectedPhoto) { _, newItem in
+                guard let newItem else { return }
+                Task {
+                    if let data = try? await newItem.loadTransferable(type: Data.self) {
+                        await MainActor.run { draft.profileImageData = data }
+                    }
+                }
+            }
+        }
+    }
+
+    private func onboardingHeader(timeOfDay: HomeTimeOfDay) -> some View {
+        HStack {
+            Button {
+                if step > (isEditing ? 1 : 0) {
+                    withAnimation(.easeOut(duration: 0.2)) { step -= 1 }
+                } else {
+                    dismiss()
+                }
+            } label: {
+                Image(systemName: step > (isEditing ? 1 : 0) ? "chevron.left" : "xmark")
+            }
+            .buttonStyle(RepbaseSculptedIconButtonStyle(timeOfDay: timeOfDay))
+
+            Spacer()
+            Text(isEditing ? "Edit Profile" : "Create Profile")
+                .font(.headline.weight(.bold))
+            Spacer()
+            Text("\(step + 1)/4")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(timeOfDay.secondaryText)
+                .frame(width: 44, height: 44)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 8)
+    }
+
+    private func stepProgress(timeOfDay: HomeTimeOfDay) -> some View {
+        HStack(spacing: 6) {
+            ForEach(0..<4, id: \.self) { index in
+                Capsule()
+                    .fill(index <= step ? timeOfDay.accent : timeOfDay.surfaceRaised)
+                    .frame(height: 5)
+            }
+        }
+        .padding(.horizontal, 22)
+        .padding(.top, 15)
+    }
+
+    @ViewBuilder
+    private var stepHeading: some View {
+        switch step {
+        case 0:
+            heading("Connect your account", detail: "Choose how you’ll securely access your Repbase profile.")
+        case 1:
+            heading("What should we call you?", detail: "Your name and username identify you across Repbase.")
+        case 2:
+            heading("Set your goals", detail: "Keep these private or choose exactly what appears publicly.")
+        default:
+            heading("Build your identity", detail: "Show people how you train and where you belong.")
+        }
+    }
+
+    private func heading(_ title: String, detail: String) -> some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Text(title).font(.system(size: 29, weight: .bold, design: .rounded))
+            Text(detail).font(.subheadline).foregroundStyle(.secondary)
+        }
+    }
+
+    @ViewBuilder
+    private func stepContent(timeOfDay: HomeTimeOfDay) -> some View {
+        switch step {
+        case 0: providerStep(timeOfDay: timeOfDay)
+        case 1: nameStep(timeOfDay: timeOfDay)
+        case 2: goalsStep(timeOfDay: timeOfDay)
+        default: identityStep(timeOfDay: timeOfDay)
+        }
+    }
+
+    private func providerStep(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(spacing: 12) {
+            providerButton(.apple, symbol: "apple.logo", timeOfDay: timeOfDay)
+            providerButton(.google, symbol: "g.circle.fill", timeOfDay: timeOfDay)
+
+            Label("Your provider is used for sign-in only. Your public profile never shows it.", systemImage: "lock.fill")
+                .font(.caption)
+                .foregroundStyle(timeOfDay.secondaryText)
+                .padding(.top, 8)
+        }
+    }
+
+    private func providerButton(
+        _ provider: ConnectedAccountProvider,
+        symbol: String,
+        timeOfDay: HomeTimeOfDay
+    ) -> some View {
+        Button {
+            draft.provider = provider
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: symbol).font(.title3)
+                Text("Continue with \(provider.title)").font(.headline)
+                Spacer()
+                Image(systemName: draft.provider == provider ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(draft.provider == provider ? timeOfDay.accent : timeOfDay.secondaryText)
+            }
+            .padding(.horizontal, 18)
+            .frame(height: 62)
+            .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 20))
+            .overlay {
+                RoundedRectangle(cornerRadius: 20)
+                    .strokeBorder(draft.provider == provider ? timeOfDay.accent : timeOfDay.border, lineWidth: draft.provider == provider ? 2 : 1)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func nameStep(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(spacing: 13) {
+            profileField("First name", text: $draft.firstName, contentType: .givenName, timeOfDay: timeOfDay)
+            profileField("Last name", text: $draft.lastName, contentType: .familyName, timeOfDay: timeOfDay)
+
+            VStack(alignment: .leading, spacing: 7) {
+                Text("Username").font(.caption.weight(.semibold)).foregroundStyle(timeOfDay.secondaryText)
+                HStack(spacing: 4) {
+                    Text("@").foregroundStyle(timeOfDay.accent).font(.headline)
+                    TextField("username", text: $draft.username)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .textContentType(.username)
+                }
+                .padding(.horizontal, 15)
+                .frame(height: 54)
+                .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 17))
+            }
+
+            VStack(alignment: .leading, spacing: 7) {
+                Text("Bio (optional)").font(.caption.weight(.semibold)).foregroundStyle(timeOfDay.secondaryText)
+                TextField("What are you training for?", text: $draft.bio, axis: .vertical)
+                    .lineLimit(3...4)
+                    .padding(15)
+                    .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 17))
+            }
+        }
+    }
+
+    private func profileField(
+        _ title: String,
+        text: Binding<String>,
+        contentType: UITextContentType,
+        timeOfDay: HomeTimeOfDay
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Text(title).font(.caption.weight(.semibold)).foregroundStyle(timeOfDay.secondaryText)
+            TextField(title, text: text)
+                .textContentType(contentType)
+                .padding(.horizontal, 15)
+                .frame(height: 54)
+                .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 17))
+        }
+    }
+
+    private func goalsStep(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(spacing: 13) {
+            measurementCard("Height", symbol: "ruler", timeOfDay: timeOfDay) {
+                HStack(spacing: 8) {
+                    measurementInput(value: $draft.heightFeet, unit: "ft", timeOfDay: timeOfDay)
+                    measurementInput(value: $draft.heightInches, unit: "in", timeOfDay: timeOfDay)
+                }
+            } privacy: {
+                Toggle("Show on profile", isOn: $draft.showsHeight).tint(timeOfDay.accent)
+            }
+
+            measurementCard("Current weight", symbol: "scalemass", timeOfDay: timeOfDay) {
+                measurementInput(value: $draft.weightPounds, unit: "lb", timeOfDay: timeOfDay)
+            } privacy: {
+                Toggle("Show on profile", isOn: $draft.showsWeight).tint(timeOfDay.accent)
+            }
+
+            measurementCard("Target weight", symbol: "scope", timeOfDay: timeOfDay) {
+                measurementInput(value: $draft.targetWeightPounds, unit: "lb", timeOfDay: timeOfDay)
+            } privacy: {
+                Toggle("Show on profile", isOn: $draft.showsTargetWeight).tint(timeOfDay.accent)
+            }
+
+            Label("Private measurements still support your personal goals and progress.", systemImage: "eye.slash.fill")
+                .font(.caption)
+                .foregroundStyle(timeOfDay.secondaryText)
+        }
+    }
+
+    private func measurementCard<Content: View, Privacy: View>(
+        _ title: String,
+        symbol: String,
+        timeOfDay: HomeTimeOfDay,
+        @ViewBuilder content: () -> Content,
+        @ViewBuilder privacy: () -> Privacy
+    ) -> some View {
+        VStack(spacing: 14) {
+            HStack {
+                Label(title, systemImage: symbol).font(.headline)
+                Spacer()
+                content()
+            }
+            Divider()
+            privacy()
+                .font(.subheadline.weight(.medium))
+        }
+        .padding(17)
+        .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 22))
+        .overlay { RoundedRectangle(cornerRadius: 22).strokeBorder(timeOfDay.border, lineWidth: 1) }
+    }
+
+    private func measurementInput(value: Binding<Int>, unit: String, timeOfDay: HomeTimeOfDay) -> some View {
+        HStack(spacing: 4) {
+            TextField("0", value: value, format: .number)
+                .keyboardType(.numberPad)
+                .multilineTextAlignment(.trailing)
+                .frame(width: 42)
+            Text(unit).font(.caption).foregroundStyle(timeOfDay.secondaryText)
+                .fixedSize(horizontal: true, vertical: false)
+        }
+        .padding(.horizontal, 10)
+        .frame(height: 38)
+        .background(timeOfDay.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func identityStep(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(alignment: .leading, spacing: 20) {
+            HStack(spacing: 14) {
+                ProfileAvatarView(profile: draft, size: 78, timeOfDay: timeOfDay)
+                VStack(alignment: .leading, spacing: 8) {
+                    PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                        Label("Choose photo", systemImage: "photo")
+                            .font(.subheadline.weight(.bold))
+                    }
+                    Button("Set it later") { draft.profileImageData = nil }
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(timeOfDay.secondaryText)
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                Text("How do you train?").font(.headline)
+                Text("Choose all that fit.").font(.caption).foregroundStyle(timeOfDay.secondaryText)
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 135), spacing: 9)], spacing: 9) {
+                    ForEach(AthleteDiscipline.allCases) { discipline in
+                        disciplineButton(discipline, timeOfDay: timeOfDay)
+                    }
+                }
+            }
+
+            gymDirectory(timeOfDay: timeOfDay)
+        }
+    }
+
+    private func disciplineButton(_ discipline: AthleteDiscipline, timeOfDay: HomeTimeOfDay) -> some View {
+        let selected = draft.disciplines.contains(discipline)
+        return Button {
+            if selected { draft.disciplines.remove(discipline) }
+            else { draft.disciplines.insert(discipline) }
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: discipline.symbol)
+                Text(discipline.rawValue).lineLimit(1)
+                Spacer(minLength: 0)
+                if selected { Image(systemName: "checkmark") }
+            }
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(selected ? Color.white : timeOfDay.primaryText)
+            .padding(.horizontal, 11)
+            .frame(height: 44)
+            .background(selected ? timeOfDay.accent : timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 14))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func gymDirectory(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(alignment: .leading, spacing: 11) {
+            HStack {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Your gym").font(.headline)
+                    Text("Join a gym to find members who train there.")
+                        .font(.caption).foregroundStyle(timeOfDay.secondaryText)
+                }
+                Spacer()
+                Image(systemName: "building.2.fill").foregroundStyle(timeOfDay.accent)
+            }
+
+            HStack {
+                Image(systemName: "magnifyingglass").foregroundStyle(timeOfDay.secondaryText)
+                TextField("Search gym, city, or country", text: $gymSearch)
+                    .textInputAutocapitalization(.words)
+            }
+            .padding(.horizontal, 13)
+            .frame(height: 48)
+            .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 15))
+
+            ForEach(filteredGyms.prefix(3)) { gym in
+                Button { draft.gym = gym } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "dumbbell.fill")
+                            .foregroundStyle(timeOfDay.accent)
+                            .frame(width: 34, height: 34)
+                            .background(timeOfDay.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(gym.name).font(.subheadline.weight(.semibold))
+                            Text("\(gym.location) · \(gym.memberCount) members")
+                                .font(.caption2).foregroundStyle(timeOfDay.secondaryText)
+                        }
+                        Spacer()
+                        Image(systemName: draft.gym?.id == gym.id ? "checkmark.circle.fill" : "plus.circle")
+                            .foregroundStyle(timeOfDay.accent)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+
+            Button {
+                withAnimation(.easeOut(duration: 0.18)) { isCreatingGym.toggle() }
+            } label: {
+                Label("Can’t find it? Create a gym", systemImage: "plus")
+                    .font(.subheadline.weight(.semibold))
+            }
+
+            if isCreatingGym {
+                VStack(spacing: 9) {
+                    TextField("Gym name", text: $newGymName)
+                    TextField("City", text: $newGymCity)
+                    TextField("Country", text: $newGymCountry)
+                    Button("Create and join") { createGym() }
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(timeOfDay.accent)
+                        .disabled(newGymName.isEmpty || newGymCity.isEmpty || newGymCountry.isEmpty)
+                }
+                .textFieldStyle(.roundedBorder)
+            }
+        }
+        .padding(17)
+        .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 22))
+        .overlay { RoundedRectangle(cornerRadius: 22).strokeBorder(timeOfDay.border, lineWidth: 1) }
+    }
+
+    private var filteredGyms: [GymIdentity] {
+        guard !gymSearch.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return Array(GymIdentity.directorySamples.prefix(3))
+        }
+        let term = gymSearch.lowercased()
+        return GymIdentity.directorySamples.filter {
+            $0.name.lowercased().contains(term)
+                || $0.city.lowercased().contains(term)
+                || $0.country.lowercased().contains(term)
+        }
+    }
+
+    private func createGym() {
+        draft.gym = GymIdentity(name: newGymName, city: newGymCity, country: newGymCountry)
+        isCreatingGym = false
+    }
+
+    private func bottomAction(timeOfDay: HomeTimeOfDay) -> some View {
+        Button {
+            if step < 3 {
+                withAnimation(.easeOut(duration: 0.2)) { step += 1 }
+            } else {
+                store.save(draft)
+                dismiss()
+            }
+        } label: {
+            HStack {
+                Text(step == 3 ? (isEditing ? "Save Profile" : "Create Profile") : "Continue")
+                Spacer()
+                Image(systemName: step == 3 ? "checkmark" : "arrow.right")
+            }
+            .font(.headline.weight(.bold))
+            .foregroundStyle(Color.white)
+            .padding(.horizontal, 20)
+            .frame(height: 56)
+            .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 19))
+        }
+        .buttonStyle(.plain)
+        .disabled(!canContinue)
+        .opacity(canContinue ? 1 : 0.42)
+        .padding(.horizontal, 22)
+        .padding(.vertical, 12)
+        .background(.ultraThinMaterial)
+    }
+
+    private var canContinue: Bool {
+        switch step {
+        case 1:
+            return !draft.firstName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                && !draft.lastName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                && !draft.username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        case 2:
+            return draft.heightFeet > 0 && draft.weightPounds > 0 && draft.targetWeightPounds > 0
+        case 3:
+            return !draft.disciplines.isEmpty
+        default:
+            return true
+        }
+    }
+}
+
+private struct ProfileAvatarView: View {
+    let profile: SocialProfile
+    let size: CGFloat
+    let timeOfDay: HomeTimeOfDay
+
+    var body: some View {
+        Group {
+            if let data = profile.profileImageData, let image = UIImage(data: data) {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                ZStack {
+                    LinearGradient(
+                        colors: [timeOfDay.accent, timeOfDay.heroEnd],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    Text(profile.initials.isEmpty ? "R" : profile.initials)
+                        .font(.system(size: size * 0.30, weight: .bold, design: .rounded))
+                        .foregroundStyle(Color.white)
+                }
+            }
+        }
+        .frame(width: size, height: size)
+        .clipShape(Circle())
+        .overlay { Circle().strokeBorder(Color.white, lineWidth: 4) }
+        .shadow(color: timeOfDay.shadow, radius: 9, x: 4, y: 6)
+    }
+}

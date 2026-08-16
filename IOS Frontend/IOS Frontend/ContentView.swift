@@ -407,22 +407,12 @@ private struct HomeBottomNavigation: View {
             navLink("Planner", systemImage: "checklist") { PlannerView() }
             navLink("Food", systemImage: "fork.knife") { FoodTrackingView() }
 
-            Menu {
-                if case .signedIn(let user) = authentication.phase {
-                    Text(user.displayName)
-                    Text("@\(user.username)")
-                }
-                Divider()
-                Button("Refresh Workouts", systemImage: "arrow.clockwise") {
-                    workoutStore.retryPersistence()
-                }
-                Button("Sign Out", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) {
-                    Task { await authentication.signOut() }
-                }
+            NavigationLink {
+                ProfileDestinationView()
             } label: {
                 compactItem("Account", systemImage: "person")
             }
-            .disabled(authentication.isWorking)
+            .buttonStyle(.plain)
         }
         .padding(6)
         .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 20))
@@ -459,6 +449,7 @@ private struct HomeBottomNavigation: View {
         .environment(WorkoutStore.preview)
         .environment(PlannerStore())
         .environment(FoodTrackingStore.preview)
+        .environment(SocialProfileStore.preview)
         .environment(
             AuthenticationStore(configuration: .current)
         )

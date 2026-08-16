@@ -14,6 +14,7 @@ struct IOS_FrontendApp: App {
     @State private var workoutStore: WorkoutStore
     @State private var plannerStore: PlannerStore
     @State private var foodTrackingStore: FoodTrackingStore
+    @State private var socialProfileStore: SocialProfileStore
 
     init() {
         let configuration = APIConfiguration.current
@@ -22,6 +23,10 @@ struct IOS_FrontendApp: App {
         )
 #if DEBUG
         let isPreviewingFood = ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] != nil
+        let isPreviewingProfile = ProcessInfo.processInfo.environment["REPBASE_PROFILE_PREVIEW"] != nil
+        _socialProfileStore = State(
+            initialValue: isPreviewingProfile ? .preview : SocialProfileStore()
+        )
         _foodTrackingStore = State(
             initialValue: isPreviewingFood ? .preview : FoodTrackingStore()
         )
@@ -34,6 +39,7 @@ struct IOS_FrontendApp: App {
             initialValue: plannerPreview == "home" ? .preview : WorkoutStore()
         )
 #else
+        _socialProfileStore = State(initialValue: SocialProfileStore())
         _foodTrackingStore = State(initialValue: FoodTrackingStore())
         _plannerStore = State(initialValue: PlannerStore())
         _workoutStore = State(initialValue: WorkoutStore())
@@ -47,6 +53,7 @@ struct IOS_FrontendApp: App {
                 .environment(workoutStore)
                 .environment(plannerStore)
                 .environment(foodTrackingStore)
+                .environment(socialProfileStore)
         }
     }
 }
@@ -59,6 +66,7 @@ private struct AppRootView: View {
         let environment = ProcessInfo.processInfo.environment
         return environment["REPBASE_FOOD_PREVIEW"] != nil
             || environment["REPBASE_PLANNER_PREVIEW"] != nil
+            || environment["REPBASE_PROFILE_PREVIEW"] != nil
     }
 #endif
 
@@ -82,6 +90,34 @@ private struct AppRootView: View {
             } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] != nil {
                 NavigationStack {
                     FoodTrackingView()
+                }
+            } else if let profilePreview = ProcessInfo.processInfo.environment["REPBASE_PROFILE_PREVIEW"],
+                      profilePreview != "profile" {
+                NavigationStack {
+                    ProfileOnboardingView(
+                        seed: SocialProfile(
+                            provider: .apple,
+                            firstName: "",
+                            lastName: "",
+                            username: "",
+                            bio: "",
+                            heightFeet: 5,
+                            heightInches: 8,
+                            weightPounds: 160,
+                            targetWeightPounds: 155,
+                            showsHeight: false,
+                            showsWeight: false,
+                            showsTargetWeight: false,
+                            disciplines: [],
+                            gym: nil,
+                            profileImageData: nil
+                        ),
+                        initialStep: ["connect": 0, "name": 1, "goals": 2, "identity": 3][profilePreview] ?? 0
+                    )
+                }
+            } else if ProcessInfo.processInfo.environment["REPBASE_PROFILE_PREVIEW"] != nil {
+                NavigationStack {
+                    ProfileDestinationView()
                 }
             } else if ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"] == "home" {
                 ContentView()
