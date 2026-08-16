@@ -74,15 +74,28 @@ struct WorkoutEditorView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        TimelineView(.periodic(from: .now, by: 60)) { context in
+            editorScreen(timeOfDay: HomeTimeOfDay(date: context.date))
+        }
+    }
+
+    private func editorScreen(timeOfDay: HomeTimeOfDay) -> some View {
+        let visualPhase: WorkoutVisualPhase = timeOfDay.usesDarkAppearance ? .focus : .prepare
+
+        return NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(draft.type == .lifting ? "LIFTING · \(draft.name.isEmpty ? "NEW WORKOUT" : draft.name.uppercased())" : draft.type.title.uppercased())
+                            .font(.caption2.weight(.bold))
+                            .tracking(0.8)
+                            .foregroundStyle(timeOfDay.accent)
+                            .lineLimit(1)
                         Text(isCreate ? "Build your workout" : "Customize your plan")
                             .font(.title2.weight(.bold))
                         Text("Set the structure now. Log weight and reps when you train.")
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(timeOfDay.secondaryText)
                     }
 
                     WorkoutPlanFields(
@@ -95,15 +108,15 @@ struct WorkoutEditorView: View {
                         save()
                     } label: {
                         Label(isCreate ? "Create Workout" : "Save Changes", systemImage: "checkmark.circle.fill")
-                            .font(.headline)
                             .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(WorkoutPrimaryButtonStyle(phase: .prepare))
+                    .buttonStyle(WorkoutPrimaryButtonStyle(phase: visualPhase))
                     .disabled(!canSave)
                 }
-                .padding()
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
             }
-            .repbaseScreen(.prepare)
+            .scrollIndicators(.hidden)
             .navigationTitle(navigationTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -115,6 +128,7 @@ struct WorkoutEditorView: View {
                         .disabled(!canSave)
                 }
             }
+            .homeTimeScreen(timeOfDay)
         }
     }
 

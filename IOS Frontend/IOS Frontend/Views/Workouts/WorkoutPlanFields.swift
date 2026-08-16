@@ -358,6 +358,38 @@ struct WorkoutPlanFields: View {
                     .background(phase.accent.opacity(0.12), in: Capsule())
             }
 
+            if !previousExercises.isEmpty {
+                VStack(alignment: .leading, spacing: 7) {
+                    Text("Previously used exercises")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(phase.secondaryText)
+
+                    ScrollView(.horizontal) {
+                        HStack(spacing: 7) {
+                            ForEach(previousExercises) { suggestion in
+                                Button {
+                                    addPreviousExercise(suggestion)
+                                } label: {
+                                    Text(suggestion.name)
+                                        .font(.caption.weight(.medium))
+                                        .lineLimit(1)
+                                        .padding(.horizontal, 11)
+                                        .padding(.vertical, 8)
+                                        .foregroundStyle(phase.primaryText)
+                                        .background(
+                                            phase.primaryText.opacity(0.055),
+                                            in: RoundedRectangle(cornerRadius: 11, style: .continuous)
+                                        )
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityLabel("Add \(suggestion.name)")
+                            }
+                        }
+                    }
+                    .scrollIndicators(.hidden)
+                }
+            }
+
             if draft.exercises.isEmpty {
                 VStack(spacing: 10) {
                     Image(systemName: "list.bullet.clipboard")
@@ -379,7 +411,6 @@ struct WorkoutPlanFields: View {
                 ExercisePlanEditorCard(
                     position: index + 1,
                     exercise: binding(for: exercise.id),
-                    suggestions: previousExercises,
                     canMoveUp: index > 0,
                     canMoveDown: index < draft.exercises.count - 1,
                     onMoveUp: { moveExercise(id: exercise.id, offset: -1) },
@@ -398,8 +429,20 @@ struct WorkoutPlanFields: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 3)
             }
-            .buttonStyle(.bordered)
-            .controlSize(.large)
+            .buttonStyle(WorkoutPrimaryButtonStyle(phase: phase))
+        }
+    }
+
+    private func addPreviousExercise(_ suggestion: Exercise) {
+        withAnimation(.snappy) {
+            draft.exercises.append(
+                Exercise(
+                    serverID: suggestion.serverID,
+                    serverName: suggestion.serverName ?? suggestion.name,
+                    name: suggestion.name,
+                    sets: suggestion.targetSets
+                )
+            )
         }
     }
 
@@ -436,7 +479,6 @@ private struct ExercisePlanEditorCard: View {
 
     let position: Int
     @Binding var exercise: Exercise
-    let suggestions: [Exercise]
     let canMoveUp: Bool
     let canMoveDown: Bool
     let onMoveUp: () -> Void
@@ -470,41 +512,6 @@ private struct ExercisePlanEditorCard: View {
                 .font(.body.weight(.medium))
                 .padding(12)
                 .background(phase.primaryText.opacity(0.045), in: RoundedRectangle(cornerRadius: 12))
-
-            if !suggestions.isEmpty {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Previously used exercises")
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(phase.secondaryText)
-
-                    ScrollView(.horizontal) {
-                        HStack(spacing: 6) {
-                            ForEach(suggestions) { suggestion in
-                                Button {
-                                    exercise.serverID = suggestion.serverID
-                                    exercise.workoutExerciseID = nil
-                                    exercise.serverName = suggestion.serverName ?? suggestion.name
-                                    exercise.name = suggestion.name
-                                } label: {
-                                    Text(suggestion.name)
-                                        .font(.caption.weight(.medium))
-                                        .lineLimit(1)
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 6)
-                                        .foregroundStyle(phase.primaryText)
-                                        .background(
-                                            phase.primaryText.opacity(0.05),
-                                            in: Capsule()
-                                        )
-                                }
-                                .buttonStyle(.plain)
-                                .accessibilityLabel("Use \(suggestion.name)")
-                            }
-                        }
-                    }
-                    .scrollIndicators(.hidden)
-                }
-            }
 
             HStack {
                 VStack(alignment: .leading, spacing: 2) {

@@ -2,42 +2,20 @@
 //  FoodTrackingView.swift
 //  IOS Frontend
 //
-//  Daily food dashboard inspired by the user's top-level paper workflow.
+//  Time-aware daily nutrition dashboard.
 //
 
 import SwiftUI
 
 struct FoodTrackingView: View {
     @Environment(FoodTrackingStore.self) private var store
-    @Environment(\.workoutVisualPhase) private var phase
     @State private var selectedDate = Date()
     @State private var isEditingGoals = false
     @State private var isShowingSavedMeals = false
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                weekSelector
-                dailySummary
-
-                if store.isLocalDraftOnly {
-                    localDraftNotice
-                }
-
-                mealsSection
-                NutritionBreakdownView(meals: store.meals(on: selectedDate))
-            }
-            .padding(.horizontal)
-            .padding(.vertical, 8)
-        }
-        .repbaseScreen(phase)
-        .navigationTitle("Food Tracking")
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("Goals", systemImage: "slider.horizontal.3") {
-                    isEditingGoals = true
-                }
-            }
+        TimelineView(.periodic(from: .now, by: 60)) { context in
+            screen(timeOfDay: HomeTimeOfDay(date: context.date))
         }
         .sheet(isPresented: $isEditingGoals) {
             NutritionGoalsView()
@@ -52,8 +30,38 @@ struct FoodTrackingView: View {
         }
     }
 
-    private var weekSelector: some View {
-        VStack(spacing: 10) {
+    private func screen(timeOfDay: HomeTimeOfDay) -> some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                weekSelector(timeOfDay: timeOfDay)
+                dailySummary
+
+                if store.isLocalDraftOnly {
+                    localDraftNotice(timeOfDay: timeOfDay)
+                }
+
+                mealsSection(timeOfDay: timeOfDay)
+                nutritionBreakdownLink(timeOfDay: timeOfDay)
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 10)
+            .padding(.bottom, 26)
+        }
+        .scrollIndicators(.hidden)
+        .navigationTitle("Food Logging")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Goals", systemImage: "slider.horizontal.3") {
+                    isEditingGoals = true
+                }
+            }
+        }
+        .homeTimeScreen(timeOfDay)
+    }
+
+    private func weekSelector(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(spacing: 12) {
             HStack(spacing: 8) {
                 Button {
                     selectedDate = Date()
@@ -61,8 +69,10 @@ struct FoodTrackingView: View {
                     HStack(spacing: 4) {
                         Text(selectedDateTitle)
                             .font(.subheadline.weight(.bold))
-                        Image(systemName: "location.fill")
-                            .font(.caption2)
+                        if Calendar.current.isDateInToday(selectedDate) {
+                            Image(systemName: "location.fill")
+                                .font(.caption2)
+                        }
                     }
                 }
                 .buttonStyle(.plain)
@@ -73,20 +83,20 @@ struct FoodTrackingView: View {
                     changeWeek(by: -1)
                 } label: {
                     Image(systemName: "chevron.left")
-                        .frame(width: 25, height: 25)
+                        .frame(width: 28, height: 28)
                 }
                 .accessibilityLabel("Previous week")
 
                 Text(weekRangeTitle)
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(.secondary)
-                    .frame(minWidth: 86)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(timeOfDay.secondaryText)
+                    .frame(minWidth: 90)
 
                 Button {
                     changeWeek(by: 1)
                 } label: {
                     Image(systemName: "chevron.right")
-                        .frame(width: 25, height: 25)
+                        .frame(width: 28, height: 28)
                 }
                 .accessibilityLabel("Next week")
             }
@@ -96,36 +106,27 @@ struct FoodTrackingView: View {
                     Button {
                         selectedDate = date
                     } label: {
-                        VStack(spacing: 5) {
+                        VStack(spacing: 6) {
                             Text(date.formatted(.dateTime.weekday(.narrow)))
                                 .font(.caption2.weight(.semibold))
-                                .foregroundStyle(
-                                    isSelected(date) ? phase.primaryText : phase.secondaryText
+                                .foregroundStyle(timeOfDay.secondaryText)
+
+                            Text(date.formatted(.dateTime.day()))
+                                .font(.caption.weight(.bold).monospacedDigit())
+                                .foregroundStyle(isSelected(date) ? Color.white : timeOfDay.primaryText)
+                                .frame(width: 30, height: 28)
+                                .background(
+                                    isSelected(date) ? timeOfDay.accent : Color.clear,
+                                    in: Capsule()
                                 )
-
-                            ZStack {
-                                Circle()
-                                    .fill(circleFill(for: date))
-                                    .frame(width: 24, height: 24)
-                                Circle()
-                                    .strokeBorder(circleBorder(for: date), lineWidth: 1.25)
-                                    .frame(width: 24, height: 24)
-
-                                Text(date.formatted(.dateTime.day()))
-                                    .font(.system(size: 10, weight: .bold))
-                                    .foregroundStyle(
-                                        isSelected(date) ? Color.white : phase.primaryText
-                                    )
-
-                                if store.hasLoggedFood(on: date) {
-                                    Image(systemName: "checkmark")
-                                        .font(.system(size: 6, weight: .bold))
-                                        .foregroundStyle(phase.accent)
-                                        .frame(width: 10, height: 10)
-                                        .background(phase.surfaceStart, in: Circle())
-                                        .offset(x: 9, y: 9)
+                                .overlay(alignment: .bottomTrailing) {
+                                    if store.hasLoggedFood(on: date), !isSelected(date) {
+                                        Circle()
+                                            .fill(timeOfDay.accent)
+                                            .frame(width: 5, height: 5)
+                                            .offset(x: 1, y: 1)
+                                    }
                                 }
-                            }
                         }
                         .frame(maxWidth: .infinity)
                         .contentShape(Rectangle())
@@ -136,100 +137,133 @@ struct FoodTrackingView: View {
                 }
             }
         }
-        .padding(11)
-        .repbaseCard(contentPadding: 0, cornerRadius: 16)
+        .repbaseCard(contentPadding: 13, cornerRadius: 20)
     }
 
     private var dailySummary: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            FilledNutritionMetric(
-                title: "Calories",
+        VStack(alignment: .leading, spacing: 10) {
+            CalorieGoalCard(
                 value: total.calories,
                 goal: store.goals.calories,
-                unit: "cal",
-                color: .blue,
-                isPrimary: true,
-                detail: "\(loggedFoodCount) foods logged"
+                loggedFoodCount: loggedFoodCount
             )
 
-            HStack(spacing: 6) {
-                FilledNutritionMetric(
-                    title: "Protein",
-                    value: total.proteinGrams,
-                    goal: store.goals.proteinGrams,
-                    unit: "g",
-                    color: .orange
-                )
-                FilledNutritionMetric(
-                    title: "Carbs",
-                    value: total.carbohydrateGrams,
-                    goal: store.goals.carbohydrateGrams,
-                    unit: "g",
-                    color: .teal
-                )
-                FilledNutritionMetric(
-                    title: "Fat",
-                    value: total.fatGrams,
-                    goal: store.goals.fatGrams,
-                    unit: "g",
-                    color: .purple
-                )
+            HStack(spacing: 8) {
+                MacroGoalCard(title: "Protein", value: total.proteinGrams, goal: store.goals.proteinGrams)
+                MacroGoalCard(title: "Carbs", value: total.carbohydrateGrams, goal: store.goals.carbohydrateGrams)
+                MacroGoalCard(title: "Fat", value: total.fatGrams, goal: store.goals.fatGrams)
             }
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Daily nutrition totals")
     }
 
-    private var localDraftNotice: some View {
+    private func localDraftNotice(timeOfDay: HomeTimeOfDay) -> some View {
         HStack(spacing: 8) {
             Image(systemName: "icloud.slash")
-                .foregroundStyle(Color.orange)
+                .foregroundStyle(timeOfDay.accent)
             Text("Food entries are temporary until API sync is available.")
-                .foregroundStyle(.secondary)
             Spacer(minLength: 0)
         }
         .font(.caption)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 11)
+        .foregroundStyle(timeOfDay.canvasSecondaryText)
+        .padding(.horizontal, 12)
         .padding(.vertical, 9)
-        .background(Color.orange.opacity(0.055), in: RoundedRectangle(cornerRadius: 12))
+        .background(timeOfDay.accent.opacity(0.09), in: RoundedRectangle(cornerRadius: 12))
     }
 
-    private var mealsSection: some View {
-        VStack(alignment: .leading, spacing: 9) {
+    private func mealsSection(timeOfDay: HomeTimeOfDay) -> some View {
+        let meals = store.meals(on: selectedDate)
+        let visualPhase: WorkoutVisualPhase = timeOfDay.usesDarkAppearance ? .focus : .prepare
+
+        return VStack(alignment: .leading, spacing: 10) {
             HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Meals")
-                        .font(.headline)
-                    Text("Tap a meal to log or update food.")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
+                Text("Today’s meals")
+                    .font(.title3.weight(.bold))
+                    .foregroundStyle(timeOfDay.canvasPrimaryText)
                 Spacer()
-                Button("Saved", systemImage: "bookmark") {
-                    isShowingSavedMeals = true
-                }
-                .font(.footnote.weight(.semibold))
-                Button("Add Meal", systemImage: "plus") {
-                    store.addMeal(on: selectedDate)
-                }
-                .font(.footnote.weight(.semibold))
+                Text("\(total.calories.nutritionText) kcal")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
             }
 
-            ForEach(store.meals(on: selectedDate)) { meal in
-                NavigationLink {
-                    MealDetailView(date: selectedDate, mealID: meal.id)
-                } label: {
-                    MealRow(meal: meal)
+            VStack(spacing: 0) {
+                ForEach(Array(meals.enumerated()), id: \.element.id) { index, meal in
+                    NavigationLink {
+                        MealDetailView(date: selectedDate, mealID: meal.id)
+                    } label: {
+                        MealRow(meal: meal)
+                    }
+                    .buttonStyle(.plain)
+
+                    if index < meals.count - 1 {
+                        Divider().opacity(0.55)
+                    }
                 }
-                .buttonStyle(.plain)
+            }
+            .repbaseCard(contentPadding: 10, cornerRadius: 20)
+
+            HStack(spacing: 9) {
+                Button {
+                    isShowingSavedMeals = true
+                } label: {
+                    Label("Saved foods", systemImage: "bookmark")
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 11)
+                }
+                .repbaseControlSurface(cornerRadius: 15)
+
+                Button {
+                    store.addMeal(on: selectedDate)
+                } label: {
+                    Label("Add meal", systemImage: "plus.circle")
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 11)
+                }
+                .repbaseControlSurface(cornerRadius: 15)
+            }
+
+            if let firstMeal = meals.first {
+                NavigationLink {
+                    MealDetailView(date: selectedDate, mealID: firstMeal.id)
+                } label: {
+                    Label("Log Food", systemImage: "fork.knife")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(WorkoutPrimaryButtonStyle(phase: visualPhase))
             }
         }
     }
 
-    private var total: NutritionAmount {
-        store.total(on: selectedDate)
+    private func nutritionBreakdownLink(timeOfDay: HomeTimeOfDay) -> some View {
+        NavigationLink {
+            ScrollView {
+                NutritionBreakdownView(meals: store.meals(on: selectedDate))
+                    .padding()
+            }
+            .navigationTitle("Nutrition Breakdown")
+            .navigationBarTitleDisplayMode(.inline)
+            .homeTimeScreen(timeOfDay)
+        } label: {
+            HStack(spacing: 11) {
+                Image(systemName: "chart.pie")
+                    .font(.title3)
+                    .foregroundStyle(timeOfDay.accent)
+                Text("Nutrition breakdown")
+                    .font(.headline)
+                Spacer()
+                Image(systemName: "chevron.forward")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.secondary)
+            }
+            .repbaseCard(contentPadding: 14, cornerRadius: 17)
+        }
+        .buttonStyle(.plain)
     }
+
+    private var total: NutritionAmount { store.total(on: selectedDate) }
 
     private var loggedFoodCount: Int {
         store.meals(on: selectedDate).reduce(0) { $0 + $1.entries.count }
@@ -240,9 +274,7 @@ struct FoodTrackingView: View {
         let day = calendar.startOfDay(for: selectedDate)
         let weekday = calendar.component(.weekday, from: day)
         let sunday = calendar.date(byAdding: .day, value: -(weekday - 1), to: day) ?? day
-        return (0..<7).compactMap {
-            calendar.date(byAdding: .day, value: $0, to: sunday)
-        }
+        return (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: sunday) }
     }
 
     private var selectedDateTitle: String {
@@ -262,85 +294,89 @@ struct FoodTrackingView: View {
         Calendar.current.isDate(date, inSameDayAs: selectedDate)
     }
 
-    private func circleFill(for date: Date) -> Color {
-        if isSelected(date) { return phase.accent }
-        return Color.clear
-    }
-
-    private func circleBorder(for date: Date) -> Color {
-        if isSelected(date) || store.hasLoggedFood(on: date) { return phase.accent }
-        return phase.secondaryText.opacity(0.55)
-    }
-
     private func changeWeek(by amount: Int) {
-        selectedDate = Calendar.current.date(
-            byAdding: .weekOfYear,
-            value: amount,
-            to: selectedDate
-        ) ?? selectedDate
+        selectedDate = Calendar.current.date(byAdding: .weekOfYear, value: amount, to: selectedDate) ?? selectedDate
     }
 }
 
-private struct FilledNutritionMetric: View {
+private struct CalorieGoalCard: View {
+    @Environment(\.workoutVisualPhase) private var phase
+    let value: Decimal
+    let goal: Decimal
+    let loggedFoodCount: Int
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .bottom) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Calorie Goal")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(phase.secondaryText)
+                    Text("\(value.nutritionText) / \(goal.nutritionText) kcal")
+                        .font(.title2.weight(.bold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                }
+                Spacer()
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("\(remaining.nutritionText) left")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(phase.accent)
+                    Text("^[\(loggedFoodCount) food](inflect: true) logged")
+                        .font(.caption2)
+                        .foregroundStyle(phase.secondaryText)
+                }
+            }
+
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(phase.accent.opacity(0.12))
+                    Capsule().fill(phase.accent).frame(width: proxy.size.width * progress)
+                }
+            }
+            .frame(height: 7)
+        }
+        .repbaseCard(contentPadding: 16, cornerRadius: 20)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Calories, \(value.nutritionText) of \(goal.nutritionText), \(remaining.nutritionText) remaining")
+    }
+
+    private var remaining: Decimal { max(goal - value, 0) }
+
+    private var progress: CGFloat {
+        guard goal > 0 else { return 0 }
+        return min(max(value.nutritionDouble / goal.nutritionDouble, 0), 1)
+    }
+}
+
+private struct MacroGoalCard: View {
+    @Environment(\.workoutVisualPhase) private var phase
     let title: String
     let value: Decimal
     let goal: Decimal
-    let unit: String
-    let color: Color
-    var isPrimary = false
-    var detail: String? = nil
 
     var body: some View {
-        VStack(alignment: .leading, spacing: isPrimary ? 3 : 2) {
-            if isPrimary {
-                Text("\(value.nutritionText) / \(goal.nutritionText)")
-                    .font(.title3.weight(.bold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.72)
-                Text(title.lowercased())
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-            } else {
-                Text(title)
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                Text("\(value.nutritionText) / \(goal.nutritionText) \(unit)")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.67)
-            }
-        }
-        .frame(maxWidth: .infinity, minHeight: isPrimary ? 62 : 42, alignment: .leading)
-        .padding(isPrimary ? 11 : 8)
-        .overlay(alignment: .bottomTrailing) {
-            if isPrimary, let detail {
-                Text(detail)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .padding(11)
-            }
-        }
-        .background {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.caption.weight(.medium))
+                .foregroundStyle(phase.secondaryText)
+            Text("\(value.nutritionText) / \(goal.nutritionText)g")
+                .font(.subheadline.weight(.bold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.65)
+
             GeometryReader { proxy in
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(color.opacity(0.06))
-                    Rectangle()
-                        .fill(color.opacity(0.16))
-                        .frame(width: proxy.size.width * progress)
+                    Capsule().fill(phase.accent.opacity(0.12))
+                    Capsule().fill(phase.accent).frame(width: proxy.size.width * progress)
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
+            .frame(height: 5)
         }
-        .overlay {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(color.opacity(0.1), lineWidth: 0.75)
-        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .repbaseCard(contentPadding: 12, cornerRadius: 17)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(title), \(value.nutritionText) of \(goal.nutritionText) \(unit)")
+        .accessibilityLabel("\(title), \(value.nutritionText) of \(goal.nutritionText) grams")
     }
 
     private var progress: CGFloat {
@@ -350,48 +386,53 @@ private struct FilledNutritionMetric: View {
 }
 
 private struct MealRow: View {
+    @Environment(\.workoutVisualPhase) private var phase
     let meal: FoodMeal
 
     var body: some View {
         HStack(spacing: 11) {
-            // A meal counts as logged as soon as it holds food.
-            Image(systemName: isLogged ? "checkmark" : "fork.knife")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(isLogged ? Color.green : Color.orange)
-                .frame(width: 30, height: 30)
-                .background(
-                    (isLogged ? Color.green : Color.orange).opacity(0.08),
-                    in: Circle()
-                )
+            Image(systemName: mealSymbol)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(phase.accent)
+                .frame(width: 38, height: 38)
+                .background(phase.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 12))
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(meal.name)
                     .font(.subheadline.weight(.semibold))
                 Text(subtitle)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .font(.caption)
+                    .foregroundStyle(phase.secondaryText)
                     .lineLimit(1)
             }
 
-            Spacer()
-            HStack(spacing: 6) {
-                Text("\(meal.totalNutrition.calories.nutritionText) cal")
-                    .font(.caption.weight(.semibold))
-                Image(systemName: "chevron.forward")
-                    .font(.caption2.weight(.bold))
-                    .foregroundStyle(.tertiary)
-            }
+            Spacer(minLength: 8)
+
+            Image(systemName: isLogged ? "checkmark" : "plus")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(isLogged ? Color.white : phase.accent)
+                .frame(width: 29, height: 29)
+                .background(isLogged ? Color(hex: 0x5DAA86) : phase.accent.opacity(0.10), in: Circle())
         }
-        .foodCard()
+        .padding(.horizontal, 3)
+        .padding(.vertical, 10)
+        .contentShape(Rectangle())
     }
 
-    private var isLogged: Bool {
-        !meal.entries.isEmpty
-    }
+    private var isLogged: Bool { !meal.entries.isEmpty }
 
     private var subtitle: String {
         guard !meal.entries.isEmpty else { return "Nothing logged yet" }
-        return meal.entries.map(\.name).joined(separator: ", ")
+        return "\(meal.entries.map(\.name).joined(separator: ", ")) · \(meal.totalNutrition.calories.nutritionText) kcal"
+    }
+
+    private var mealSymbol: String {
+        let name = meal.name.lowercased()
+        if name.contains("breakfast") || name.contains("1") { return "sun.max" }
+        if name.contains("lunch") || name.contains("2") { return "sun.haze" }
+        if name.contains("dinner") || name.contains("3") { return "takeoutbag.and.cup.and.straw" }
+        if name.contains("snack") || name.contains("4") { return "moon" }
+        return "fork.knife"
     }
 }
 
@@ -402,8 +443,6 @@ extension View {
 }
 
 #Preview {
-    NavigationStack {
-        FoodTrackingView()
-    }
-    .environment(FoodTrackingStore.preview)
+    NavigationStack { FoodTrackingView() }
+        .environment(FoodTrackingStore.preview)
 }
