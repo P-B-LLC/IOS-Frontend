@@ -129,7 +129,13 @@ private struct AppRootView: View {
                     ProfileDestinationView()
                 }
             } else if ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"] == "home" {
-                ContentView()
+                // The shell, not the page: the bottom bar lives on the shell,
+                // so previewing the page alone would show it without one.
+                RepbaseRootView()
+            } else if ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"] == "shell-planner" {
+                RepbaseRootView(initialTab: .planner)
+            } else if ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"] == "shell-workouts" {
+                RepbaseRootView(initialTab: .workouts)
             } else if ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"] == "task-editor" {
                 PlannerEntryEditorView(mode: .create(.task, Date()))
             } else if ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"] == "event-editor" {
@@ -220,7 +226,7 @@ private struct AppRootView: View {
             case .signedOut:
                 AuthenticationView()
             case .signedIn:
-                ContentView()
+                RepbaseRootView()
             }
         }
     }

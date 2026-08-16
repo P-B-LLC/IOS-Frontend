@@ -18,7 +18,10 @@ struct ContentView: View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
             let timeOfDay = HomeTimeOfDay(date: context.date)
 
-            NavigationStack {
+            // The navigation stack and the bottom bar belong to
+            // `RepbaseRootView`, so the bar stays put wherever this page
+            // navigates to rather than existing only here.
+            Group {
                 ScrollView {
                     VStack(spacing: 14) {
                         HomeHeader(date: context.date)
@@ -43,10 +46,6 @@ struct ContentView: View {
                 }
                 .scrollIndicators(.hidden)
                 .toolbar(.hidden, for: .navigationBar)
-                .safeAreaInset(edge: .bottom, spacing: 8) {
-                    HomeBottomNavigation()
-                        .padding(.horizontal, 24)
-                }
                 .overlay {
                     if workoutStore.isLoading {
                         loadingOverlay(timeOfDay: timeOfDay)
@@ -387,60 +386,6 @@ private struct TodayWorkoutCard: View {
         let exercises = exerciseCount == 1 ? "exercise" : "exercises"
         let sets = workout.totalSets == 1 ? "set" : "sets"
         return "\(exerciseCount) \(exercises) · \(workout.totalSets) \(sets)"
-    }
-}
-
-private struct HomeBottomNavigation: View {
-    @Environment(AuthenticationStore.self) private var authentication
-    @Environment(WorkoutStore.self) private var workoutStore
-    @Environment(\.homeTimeOfDay) private var timeOfDay
-
-    var body: some View {
-        HStack(spacing: 3) {
-            Label("Home", systemImage: "house.fill")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Color(hex: 0x1B1415))
-                .frame(maxWidth: .infinity, minHeight: 48)
-                .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 16))
-
-            navLink("Workouts", systemImage: "dumbbell.fill") { WorkoutsView() }
-            navLink("Planner", systemImage: "checklist") { PlannerView() }
-            navLink("Food", systemImage: "fork.knife") { FoodTrackingView() }
-
-            NavigationLink {
-                ProfileDestinationView()
-            } label: {
-                compactItem("Account", systemImage: "person")
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(6)
-        .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 20))
-        .overlay { RoundedRectangle(cornerRadius: 20).strokeBorder(timeOfDay.border, lineWidth: 1) }
-        .shadow(color: timeOfDay.shadow, radius: 10, x: 5, y: 7)
-    }
-
-    private func navLink<Destination: View>(
-        _ title: String,
-        systemImage: String,
-        @ViewBuilder destination: () -> Destination
-    ) -> some View {
-        NavigationLink {
-            destination()
-        } label: {
-            compactItem(title, systemImage: systemImage)
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func compactItem(_ title: String, systemImage: String) -> some View {
-        VStack(spacing: 3) {
-            Image(systemName: systemImage).font(.system(size: 14, weight: .semibold))
-            Text(title).font(.system(size: 8, weight: .semibold))
-        }
-        .foregroundStyle(timeOfDay.secondaryText)
-        .frame(maxWidth: .infinity, minHeight: 48)
-        .contentShape(Rectangle())
     }
 }
 
