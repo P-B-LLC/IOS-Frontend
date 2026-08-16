@@ -161,6 +161,10 @@ private struct PlannedWorkoutItem: Identifiable {
 private struct WeeklyPlanCard: View {
     @Environment(WorkoutStore.self) private var store
     @Environment(\.homeTimeOfDay) private var timeOfDay
+    @State private var scrollOffset: CGFloat = 0
+
+    private let listHeight: CGFloat = 103
+    private let scrollTrackHeight: CGFloat = 95
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -199,9 +203,28 @@ private struct WeeklyPlanCard: View {
                         emptyPlanRow
                     }
                 }
+                .padding(.trailing, showsScrollBar ? 8 : 0)
             }
-            .scrollIndicators(items.count > 2 ? .visible : .hidden)
-            .frame(height: 103)
+            .scrollIndicators(.hidden)
+            .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                geometry.contentOffset.y + geometry.contentInsets.top
+            } action: { _, newOffset in
+                scrollOffset = newOffset
+            }
+            .frame(height: listHeight)
+            .overlay(alignment: .trailing) {
+                if showsScrollBar {
+                    ZStack(alignment: .top) {
+                        Capsule()
+                            .fill(Color(hex: 0x1B1415).opacity(0.16))
+                        Capsule()
+                            .fill(Color(hex: 0x1B1415).opacity(0.58))
+                            .frame(height: scrollThumbHeight)
+                            .offset(y: scrollThumbOffset)
+                    }
+                    .frame(width: 3, height: scrollTrackHeight)
+                }
+            }
         }
         .padding(16)
         .frame(maxWidth: .infinity, minHeight: 214, maxHeight: 214, alignment: .topLeading)
@@ -218,6 +241,25 @@ private struct WeeklyPlanCard: View {
         Weekday.allCases.flatMap { day in
             store.workouts(on: day).map { PlannedWorkoutItem(day: day, workout: $0) }
         }
+    }
+
+    private var listContentHeight: CGFloat {
+        let rowCount = max(items.count, 1)
+        return CGFloat(rowCount * 48 + max(rowCount - 1, 0) * 7)
+    }
+
+    private var showsScrollBar: Bool {
+        listContentHeight > listHeight
+    }
+
+    private var scrollThumbHeight: CGFloat {
+        max(26, scrollTrackHeight * listHeight / listContentHeight)
+    }
+
+    private var scrollThumbOffset: CGFloat {
+        let contentTravel = max(listContentHeight - listHeight, 1)
+        let progress = min(max(scrollOffset / contentTravel, 0), 1)
+        return (scrollTrackHeight - scrollThumbHeight) * progress
     }
 
     private func planRow(_ item: PlannedWorkoutItem) -> some View {
