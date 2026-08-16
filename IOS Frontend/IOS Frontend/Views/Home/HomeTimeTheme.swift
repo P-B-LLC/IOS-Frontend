@@ -105,6 +105,28 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
     var shadow: Color {
         usesDarkAppearance ? Color.black.opacity(0.42) : Color(hex: 0x67534D).opacity(0.22)
     }
+
+    // MARK: - Drawn straight on the canvas
+    //
+    // Almost everything on the home page sits on a raised surface, which stays
+    // light at every hour, so `primaryText` follows the appearance. Content
+    // drawn directly on the canvas cannot: from dusk the canvas itself is dark,
+    // and near-black text disappears into it. These follow the canvas instead.
+
+    /// Whether the canvas behind unraised content is dark at this hour.
+    var hasDarkCanvas: Bool { self == .dusk || self == .night }
+
+    var canvasPrimaryText: Color {
+        hasDarkCanvas ? Color(hex: 0xFFFFFF) : Color(hex: 0x1B1415)
+    }
+
+    var canvasSecondaryText: Color {
+        hasDarkCanvas ? Color.white.opacity(0.72) : Color(hex: 0x67534D)
+    }
+
+    var canvasBorder: Color {
+        hasDarkCanvas ? Color.white.opacity(0.24) : Color.white.opacity(0.72)
+    }
 }
 
 private struct HomeTimeOfDayKey: EnvironmentKey {
