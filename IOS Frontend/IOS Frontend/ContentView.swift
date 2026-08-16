@@ -169,20 +169,21 @@ private struct WeeklyPlanCard: View {
             NavigationLink {
                 WorkoutsView()
             } label: {
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(alignment: .center) {
                         Text("PLAN WORKOUTS")
                             .font(.system(size: 9, weight: .semibold))
                             .tracking(0.7)
-                        Text("Workouts")
-                            .font(.system(size: 24, weight: .bold, design: .rounded))
-                            .lineSpacing(-2)
+                        Spacer(minLength: 4)
+                        Text("\(items.count)")
+                            .font(.system(size: 15, weight: .bold, design: .rounded))
+                            .frame(width: 34, height: 34)
+                            .background(Color.white.opacity(0.18), in: Circle())
                     }
-                    Spacer(minLength: 4)
-                    Text("\(items.count)")
-                        .font(.system(size: 15, weight: .bold, design: .rounded))
-                        .frame(width: 34, height: 34)
-                        .background(Color.white.opacity(0.18), in: Circle())
+                    Text("Workouts")
+                        .font(.system(size: 23, weight: .bold, design: .rounded))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.9)
                 }
                 .contentShape(Rectangle())
             }
@@ -200,9 +201,23 @@ private struct WeeklyPlanCard: View {
                         emptyPlanRow
                     }
                 }
+                .padding(.trailing, items.count > 2 ? 8 : 0)
             }
-            .scrollIndicators(items.count > 2 ? .visible : .hidden)
+            .scrollIndicators(.hidden)
             .frame(height: 103)
+            .overlay(alignment: .trailing) {
+                if items.count > 2 {
+                    Capsule()
+                        .fill(Color(hex: 0x1B1415).opacity(0.16))
+                        .frame(width: 3)
+                        .overlay(alignment: .top) {
+                            Capsule()
+                                .fill(Color(hex: 0x1B1415).opacity(0.58))
+                                .frame(width: 3, height: 32)
+                        }
+                        .padding(.vertical, 4)
+                }
+            }
         }
         .padding(16)
         .frame(maxWidth: .infinity, minHeight: 214, maxHeight: 214, alignment: .topLeading)
