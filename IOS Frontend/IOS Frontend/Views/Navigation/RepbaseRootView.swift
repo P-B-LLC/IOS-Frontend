@@ -53,19 +53,25 @@ struct RepbaseRootView: View {
 
     var body: some View {
         TabView(selection: $tab) {
+            // Each tab hides the system bar for itself. Asking the TabView to
+            // hide it does nothing, which left iOS 26's own floating bar
+            // sitting under this one and reading as a duplicate.
             NavigationStack { ContentView() }
+                .toolbar(.hidden, for: .tabBar)
                 .tag(RepbaseTab.home)
             NavigationStack { WorkoutsView() }
+                .toolbar(.hidden, for: .tabBar)
                 .tag(RepbaseTab.workouts)
             NavigationStack { PlannerView() }
+                .toolbar(.hidden, for: .tabBar)
                 .tag(RepbaseTab.planner)
             NavigationStack { FoodTrackingView() }
+                .toolbar(.hidden, for: .tabBar)
                 .tag(RepbaseTab.food)
             NavigationStack { ProfileDestinationView() }
+                .toolbar(.hidden, for: .tabBar)
                 .tag(RepbaseTab.account)
         }
-        // The system bar is replaced, not decorated: the app has its own.
-        .toolbar(.hidden, for: .tabBar)
         .safeAreaInset(edge: .bottom, spacing: 8) {
             // The clock wraps only the bar. Wrapping the whole TabView in a
             // TimelineView collapsed it to an empty screen, and would have
