@@ -87,7 +87,7 @@ struct SocialProfileView: View {
                         .environment(store)
                 }
             }
-            .sheet(isPresented: $showingSettings) {
+            .fullScreenCover(isPresented: $showingSettings) {
                 ProfileSettingsView(profile: profile)
             }
         }
@@ -106,20 +106,8 @@ struct SocialProfileView: View {
 
             Spacer()
 
-            Menu {
-                Button("Settings", systemImage: "gearshape") {
-                    showingSettings = true
-                }
-                Button("Edit Profile", systemImage: "pencil") {
-                    editingProfile = true
-                }
-                Button("Refresh Workouts", systemImage: "arrow.clockwise") {
-                    workoutStore.retryPersistence()
-                }
-                Divider()
-                Button("Sign Out", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) {
-                    Task { await authentication.signOut() }
-                }
+            Button {
+                showingSettings = true
             } label: {
                 Image(systemName: "line.3.horizontal")
                     .font(.system(size: 23, weight: .semibold))
@@ -350,9 +338,12 @@ private struct ProfileSettingsView: View {
     @Environment(AuthenticationStore.self) private var authentication
     @Environment(WorkoutStore.self) private var workoutStore
     @Environment(SocialProfileStore.self) private var store
+    @Environment(\.openURL) private var openURL
 
     let profile: SocialProfile
     @State private var editorDestination: ProfileEditorDestination?
+    @State private var showingDeleteConfirmation = false
+    @State private var deleteError: String?
 
     private enum ProfileEditorDestination: Int, Identifiable {
         case basics = 1
@@ -418,6 +409,35 @@ private struct ProfileSettingsView: View {
                             }
                         }
 
+                        settingsSection("PRIVACY & PERMISSIONS", timeOfDay: timeOfDay) {
+                            VStack(spacing: 0) {
+                                NavigationLink {
+                                    PrivacyAndPermissionsView()
+                                } label: {
+                                    settingsRow(
+                                        "Privacy & permissions",
+                                        detail: "Location, photos, and how Repbase uses data",
+                                        symbol: "hand.raised"
+                                    )
+                                }
+                                .buttonStyle(.plain)
+
+                                Rectangle().fill(timeOfDay.border).frame(height: 1)
+
+                                Button {
+                                    guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+                                    openURL(url)
+                                } label: {
+                                    settingsRow(
+                                        "Open iOS settings",
+                                        detail: "Change Repbase system permissions",
+                                        symbol: "gearshape"
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+
                         settingsSection("FOOD", timeOfDay: timeOfDay) {
                             NavigationLink {
                                 NutritionGoalsView()
@@ -443,18 +463,42 @@ private struct ProfileSettingsView: View {
                         }
 
                         settingsSection("ACCOUNT", timeOfDay: timeOfDay) {
-                            Button(role: .destructive) {
-                                Task { await authentication.signOut() }
-                            } label: {
-                                settingsRow(
-                                    "Sign out",
-                                    detail: "End this Repbase session",
-                                    symbol: "rectangle.portrait.and.arrow.right",
-                                    color: .red
-                                )
+                            VStack(spacing: 0) {
+                                Button(role: .destructive) {
+                                    Task { await authentication.signOut() }
+                                } label: {
+                                    settingsRow(
+                                        "Sign out",
+                                        detail: "End this Repbase session",
+                                        symbol: "rectangle.portrait.and.arrow.right",
+                                        color: .red
+                                    )
+                                }
+                                .buttonStyle(.plain)
+
+                                Rectangle().fill(timeOfDay.border).frame(height: 1)
+
+                                Button(role: .destructive) {
+                                    showingDeleteConfirmation = true
+                                } label: {
+                                    settingsRow(
+                                        "Delete account",
+                                        detail: "Permanently delete your account and its data",
+                                        symbol: "trash",
+                                        color: .red
+                                    )
+                                }
+                                .buttonStyle(.plain)
                             }
-                            .buttonStyle(.plain)
                             .disabled(authentication.isWorking)
+                        }
+
+                        settingsSection("ABOUT", timeOfDay: timeOfDay) {
+                            settingsValueRow(
+                                "Repbase version",
+                                value: versionLabel,
+                                symbol: "info.circle"
+                            )
                         }
                     }
                     .padding(.horizontal, 22)
@@ -475,6 +519,32 @@ private struct ProfileSettingsView: View {
                 )
                     .environment(store)
             }
+        }
+        .confirmationDialog(
+            "Delete your Repbase account?",
+            isPresented: $showingDeleteConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Delete Account and Data", role: .destructive) {
+                Task {
+                    do {
+                        try await authentication.deleteAccount()
+                    } catch {
+                        deleteError = error.localizedDescription
+                    }
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This permanently removes your profile and all associated Repbase data. This cannot be undone.")
+        }
+        .alert("Account Could Not Be Deleted", isPresented: Binding(
+            get: { deleteError != nil },
+            set: { if !$0 { deleteError = nil } }
+        )) {
+            Button("OK", role: .cancel) { deleteError = nil }
+        } message: {
+            Text(deleteError ?? "Please try again.")
         }
     }
 
@@ -541,6 +611,103 @@ private struct ProfileSettingsView: View {
         }
         .padding(.vertical, 16)
         .contentShape(Rectangle())
+    }
+
+    private func settingsValueRow(
+        _ title: String,
+        value: String,
+        symbol: String
+    ) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: symbol)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(Color(hex: 0xF86722))
+                .frame(width: 28)
+            Text(title)
+                .font(.headline)
+            Spacer()
+            Text(value)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 16)
+    }
+
+    private var versionLabel: String {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "—"
+        return "\(version) (\(build))"
+    }
+}
+
+private struct PrivacyAndPermissionsView: View {
+    @Environment(\.openURL) private var openURL
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 60)) { context in
+            let timeOfDay = HomeTimeOfDay(date: context.date)
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 28) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("PRIVACY & PERMISSIONS")
+                            .font(.system(size: 10, weight: .bold))
+                            .tracking(1.25)
+                            .foregroundStyle(timeOfDay.accent)
+                        Text("You stay in control.")
+                            .font(.system(size: 32, weight: .bold))
+                        Text("Repbase asks for access only when a feature needs it. You can change access at any time in iOS Settings.")
+                            .font(.subheadline)
+                            .foregroundStyle(timeOfDay.secondaryText)
+                    }
+
+                    permissionExplanation(
+                        "Location",
+                        detail: "Used only during a route workout you start, to map distance and pace.",
+                        symbol: "location"
+                    )
+                    permissionExplanation(
+                        "Photos",
+                        detail: "Used when you choose a profile photo. Repbase does not browse your library in the background.",
+                        symbol: "photo"
+                    )
+                    permissionExplanation(
+                        "Your data",
+                        detail: "Profile, workout, planner, and nutrition data are stored with your Repbase account so they sync across sessions.",
+                        symbol: "lock.shield"
+                    )
+
+                    Button {
+                        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+                        openURL(url)
+                    } label: {
+                        Label("Open iOS Settings", systemImage: "arrow.up.right")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 15)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(timeOfDay.accent)
+                }
+                .padding(22)
+            }
+            .navigationTitle("Privacy")
+            .navigationBarTitleDisplayMode(.inline)
+            .homeTimeScreen(timeOfDay)
+        }
+    }
+
+    private func permissionExplanation(_ title: String, detail: String, symbol: String) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            Image(systemName: symbol)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(Color(hex: 0xF86722))
+                .frame(width: 30)
+            VStack(alignment: .leading, spacing: 5) {
+                Text(title).font(.headline)
+                Text(detail).font(.subheadline).foregroundStyle(.secondary)
+            }
+        }
     }
 }
 

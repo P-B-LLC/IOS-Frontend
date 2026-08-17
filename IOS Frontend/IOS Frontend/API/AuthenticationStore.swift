@@ -185,6 +185,33 @@ final class AuthenticationStore {
         phase = .signedOut
     }
 
+    func deleteAccount() async throws {
+        guard !isWorking else { return }
+        guard let token else { return }
+        isWorking = true
+        errorMessage = nil
+        defer { isWorking = false }
+
+        do {
+            let client = try authenticatedClient(token: token)
+            let output = try await client.meDestroy(.init())
+            switch output {
+            case .noContent:
+                try tokenStore.delete()
+                self.token = nil
+                phase = .signedOut
+            case .undocumented(let statusCode, let payload):
+                throw await RepbaseAPIHTTPError.decode(
+                    statusCode: statusCode,
+                    payload: payload
+                )
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+            throw error
+        }
+    }
+
     func clearError() {
         errorMessage = nil
     }

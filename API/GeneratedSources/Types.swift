@@ -127,6 +127,11 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /api/v1/me/`.
     /// - Remark: Generated from `#/paths//api/v1/me//put(me_update)`.
     func meUpdate(_ input: Operations.MeUpdate.Input) async throws -> Operations.MeUpdate.Output
+    /// Permanently delete the signed-in account and all associated data.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/me/`.
+    /// - Remark: Generated from `#/paths//api/v1/me//delete(me_destroy)`.
+    func meDestroy(_ input: Operations.MeDestroy.Input) async throws -> Operations.MeDestroy.Output
     /// Replace the profile photo. Any previous file is deleted.
     ///
     /// - Remark: HTTP `PUT /api/v1/me/photo/`.
@@ -702,6 +707,13 @@ extension APIProtocol {
             headers: headers,
             body: body
         ))
+    }
+    /// Permanently delete the signed-in account and all associated data.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/me/`.
+    /// - Remark: Generated from `#/paths//api/v1/me//delete(me_destroy)`.
+    public func meDestroy() async throws -> Operations.MeDestroy.Output {
+        try await meDestroy(Operations.MeDestroy.Input())
     }
     /// Replace the profile photo. Any previous file is deleted.
     ///
@@ -7779,6 +7791,58 @@ public enum Operations {
                     .json
                 ]
             }
+        }
+    }
+    /// Permanently delete the signed-in account and all associated data.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/me/`.
+    /// - Remark: Generated from `#/paths//api/v1/me//delete(me_destroy)`.
+    public enum MeDestroy {
+        public static let id: Swift.String = "me_destroy"
+        public struct Input: Sendable, Hashable {
+            /// Creates a new `Input`.
+            public init() {}
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct NoContent: Sendable, Hashable {
+                /// Creates a new `NoContent`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/me//delete(me_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            case noContent(Operations.MeDestroy.Output.NoContent)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/me//delete(me_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            public static var noContent: Self {
+                .noContent(.init())
+            }
+            /// The associated value of the enum case if `self` is `.noContent`.
+            ///
+            /// - Throws: An error if `self` is not `.noContent`.
+            /// - SeeAlso: `.noContent`.
+            public var noContent: Operations.MeDestroy.Output.NoContent {
+                get throws {
+                    switch self {
+                    case let .noContent(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "noContent",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
         }
     }
     /// Replace the profile photo. Any previous file is deleted.

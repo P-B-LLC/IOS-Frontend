@@ -671,6 +671,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/RepbaseUser'
           description: ''
+    delete:
+      operationId: me_destroy
+      description: Permanently delete the signed-in account and all associated data.
+      tags:
+      - me
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/me/photo/:
     put:
       operationId: me_photo_update

@@ -1667,6 +1667,42 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// Permanently delete the signed-in account and all associated data.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/me/`.
+    /// - Remark: Generated from `#/paths//api/v1/me//delete(me_destroy)`.
+    public func meDestroy(_ input: Operations.MeDestroy.Input) async throws -> Operations.MeDestroy.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.MeDestroy.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/me/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .delete
+                )
+                suppressMutabilityWarning(&request)
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 204:
+                    return .noContent(.init())
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
     /// Replace the profile photo. Any previous file is deleted.
     ///
     /// - Remark: HTTP `PUT /api/v1/me/photo/`.
