@@ -28,6 +28,21 @@ struct ContentView: View {
 
                         HomeCategorySection(
                             number: "01",
+                            eyebrow: "ORGANIZE",
+                            title: "Calendar",
+                            detail: "Give workouts a time and manage the rest of your day.",
+                            symbol: "calendar",
+                            destination: PlannerView()
+                        ) {
+                            VStack(spacing: 14) {
+                                HomeCalendarCard()
+                                TodaysTasksList()
+                            }
+                        }
+                        .padding(.top, 30)
+
+                        HomeCategorySection(
+                            number: "02",
                             eyebrow: "TRAIN",
                             title: "Workout",
                             detail: "Plan the week, build sessions, and start training.",
@@ -39,10 +54,10 @@ struct ContentView: View {
                                 TodayWorkoutCard()
                             }
                         }
-                        .padding(.top, 30)
+                        .padding(.top, 34)
 
                         HomeCategorySection(
-                            number: "02",
+                            number: "03",
                             eyebrow: "NOURISH",
                             title: "Food",
                             detail: "Log meals and keep daily nutrition in view.",
@@ -50,21 +65,6 @@ struct ContentView: View {
                             destination: FoodTrackingView()
                         ) {
                             FoodSummaryWidget()
-                        }
-                        .padding(.top, 34)
-
-                        HomeCategorySection(
-                            number: "03",
-                            eyebrow: "ORGANIZE",
-                            title: "Calendar",
-                            detail: "Give workouts a time and manage the rest of your day.",
-                            symbol: "calendar",
-                            destination: PlannerView()
-                        ) {
-                            VStack(spacing: 14) {
-                                HomeCalendarCard()
-                                TodaysTasksList()
-                            }
                         }
                         .padding(.top, 34)
 
