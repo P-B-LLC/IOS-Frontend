@@ -2,8 +2,7 @@
 //  SocialProfileStore.swift
 //  IOS Frontend
 //
-//  Local profile state for the social profile experience. The model is kept
-//  separate from authentication so it can move to the API without changing UI.
+//  Backend-backed profile state for the social profile experience.
 //
 
 import Foundation
@@ -120,6 +119,7 @@ struct SocialProfile: Codable, Equatable {
     var disciplines: Set<AthleteDiscipline>
     var gym: GymIdentity?
     var profileImageData: Data?
+    var profilePhotoURL: String? = nil
 
     var displayName: String {
         "\(firstName) \(lastName)".trimmingCharacters(in: .whitespacesAndNewlines)
@@ -185,56 +185,47 @@ struct SocialPost: Identifiable, Equatable {
 @MainActor
 @Observable
 final class SocialProfileStore {
-    private let defaults: UserDefaults
-    private let storageKey = "repbase.social-profile.v1"
     private var repository: ProfileAPIRepository?
     private var connectionGeneration = UUID()
-    /// Set when a save happened with no connection to send it over, which is
-    /// what onboarding does: the profile is complete before the token exists.
-    private var hasUnsentChanges = false
 
     private(set) var profile: SocialProfile?
     private(set) var posts: [SocialPost] = []
+    private(set) var isLoading = false
+    private(set) var hasLoadedProfile = false
     private(set) var isSaving = false
     private(set) var errorMessage: String?
 
-    init(defaults: UserDefaults = .standard) {
-        self.defaults = defaults
-        if let data = defaults.data(forKey: storageKey) {
-            profile = try? JSONDecoder().decode(SocialProfile.self, from: data)
-        }
-    }
+    init() {}
 
-    func save(_ profile: SocialProfile) {
-        self.profile = profile
-        cache(profile)
+    /// Saves to the backend first. The UI only adopts the server response, so
+    /// the phone never becomes a second source of truth for profile data.
+    func save(_ profile: SocialProfile) async -> Bool {
         guard repository != nil else {
-            // Onboarding finishes before the token exists, so there is nothing
-            // to send to yet. Remember that this copy is newer than the
-            // server's and send it as soon as there is.
-            hasUnsentChanges = true
-            return
+            errorMessage = "Connect to Repbase before saving profile changes."
+            return false
         }
-        Task { await push(profile) }
+        return await push(profile)
     }
 
     func clear() {
         profile = nil
-        defaults.removeObject(forKey: storageKey)
+        hasLoadedProfile = false
     }
 
     // MARK: - The server
 
-    /// The device copy, which is what the screens read while a request is in
-    /// flight and what they fall back to when the app opens without a network.
-    private func cache(_ profile: SocialProfile) {
-        guard let data = try? JSONEncoder().encode(profile) else { return }
-        defaults.set(data, forKey: storageKey)
-    }
-
     func connect(configuration: APIConfiguration, token: String) async {
         let generation = UUID()
         connectionGeneration = generation
+        isLoading = true
+        hasLoadedProfile = false
+        errorMessage = nil
+        defer {
+            if connectionGeneration == generation {
+                isLoading = false
+                hasLoadedProfile = true
+            }
+        }
         do {
             let repository = try ProfileAPIRepository(
                 configuration: configuration,
@@ -242,26 +233,11 @@ final class SocialProfileStore {
             )
             self.repository = repository
 
-            // A profile filled in during onboarding was written before this
-            // connection existed. It is newer than anything on the server, so
-            // it goes up rather than being overwritten by the empty profile
-            // registration just created.
-            if hasUnsentChanges, let pending = profile {
-                hasUnsentChanges = false
-                await push(pending)
-                guard connectionGeneration == generation else { return }
-            }
-
             let remote = try await repository.profile()
             guard connectionGeneration == generation else { return }
-            // The server is the record. A device copy that disagrees with it
-            // is stale, not authoritative.
-            let merged = Self.merge(remote, into: profile)
-            self.profile = merged
-            cache(merged)
+            profile = Self.profile(from: remote)
         } catch {
-            // The cached copy stays on screen: being offline is not a reason
-            // to show someone an empty profile.
+            profile = nil
             errorMessage = error.localizedDescription
         }
     }
@@ -269,12 +245,14 @@ final class SocialProfileStore {
     func disconnect() {
         connectionGeneration = UUID()
         repository = nil
+        profile = nil
+        isLoading = false
+        hasLoadedProfile = false
         errorMessage = nil
-        // The profile itself is left alone; `clear()` is what signing out uses.
     }
 
-    private func push(_ profile: SocialProfile) async {
-        guard let repository else { return }
+    private func push(_ profile: SocialProfile) async -> Bool {
+        guard let repository else { return false }
         let generation = connectionGeneration
         isSaving = true
         errorMessage = nil
@@ -309,23 +287,22 @@ final class SocialProfileStore {
             if let image = profile.profileImageData {
                 try await repository.uploadPhoto(image, contentType: "image/jpeg")
             }
+
+            let saved = try await repository.profile()
+            guard connectionGeneration == generation else { return false }
+            self.profile = Self.profile(from: saved)
+            return true
         } catch {
-            guard connectionGeneration == generation else { return }
+            guard connectionGeneration == generation else { return false }
             errorMessage = error.localizedDescription
+            return false
         }
     }
 
-    /// Server values win, except for what the server does not hold.
-    ///
-    /// The photo is kept as bytes on the device because the API returns a URL,
-    /// and the sign-in provider has no home on the server at all yet.
-    private static func merge(
-        _ remote: RemoteProfile,
-        into local: SocialProfile?
-    ) -> SocialProfile {
+    private static func profile(from remote: RemoteProfile) -> SocialProfile {
         let height = ProfileUnits.feetAndInches(centimetres: remote.heightCentimetres)
         return SocialProfile(
-            provider: local?.provider ?? .apple,
+            provider: .apple,
             firstName: remote.firstName,
             lastName: remote.lastName,
             username: remote.username,
@@ -348,7 +325,8 @@ final class SocialProfileStore {
                     country: ""
                 )
             },
-            profileImageData: local?.profileImageData
+            profileImageData: nil,
+            profilePhotoURL: remote.photoURL
         )
     }
 
@@ -393,10 +371,8 @@ final class SocialProfileStore {
     }
 
     static var preview: SocialProfileStore {
-        let suite = UserDefaults(suiteName: "repbase.profile.preview.\(UUID().uuidString)")!
-        let store = SocialProfileStore(defaults: suite)
-        store.save(
-            SocialProfile(
+        let store = SocialProfileStore()
+        store.profile = SocialProfile(
                 provider: .apple,
                 firstName: "Kajshdklf",
                 lastName: "Awlehsadf",
@@ -418,7 +394,7 @@ final class SocialProfileStore {
                 ),
                 profileImageData: nil
             )
-        )
+        store.hasLoadedProfile = true
         store.posts = [
             SocialPost(
                 title: "Upper Day",
@@ -447,15 +423,4 @@ final class SocialProfileStore {
         ]
         return store
     }
-}
-
-extension GymIdentity {
-    static let directorySamples: [GymIdentity] = [
-        GymIdentity(name: "Iron District", city: "New York", country: "United States", memberCount: 284),
-        GymIdentity(name: "Barbell Culture", city: "Austin", country: "United States", memberCount: 176),
-        GymIdentity(name: "North Shore Strength", city: "Toronto", country: "Canada", memberCount: 92),
-        GymIdentity(name: "The Foundry", city: "London", country: "United Kingdom", memberCount: 318),
-        GymIdentity(name: "Kraftwerk Athletics", city: "Berlin", country: "Germany", memberCount: 141),
-        GymIdentity(name: "Harbour Performance", city: "Sydney", country: "Australia", memberCount: 205)
-    ]
 }

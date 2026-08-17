@@ -15,36 +15,27 @@ struct ProfileDestinationView: View {
     var body: some View {
         if let profile = store.profile {
             SocialProfileView(profile: profile)
+        } else if store.isLoading || !store.hasLoadedProfile {
+            ProgressView("Loading profile from Repbase…")
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
-            ProfileOnboardingView(seed: profileSeed)
+            ContentUnavailableView {
+                Label("Profile unavailable", systemImage: "person.crop.circle.badge.exclamationmark")
+            } description: {
+                Text(store.errorMessage ?? "Repbase could not load this profile.")
+            } actions: {
+                if let token = authentication.token {
+                    Button("Retry") {
+                        Task {
+                            await store.connect(
+                                configuration: authentication.configuration,
+                                token: token
+                            )
+                        }
+                    }
+                }
+            }
         }
-    }
-
-    private var profileSeed: SocialProfile {
-        let user: AuthenticatedUser?
-        if case .signedIn(let signedInUser) = authentication.phase {
-            user = signedInUser
-        } else {
-            user = nil
-        }
-
-        return SocialProfile(
-            provider: .apple,
-            firstName: user?.firstName ?? "",
-            lastName: user?.lastName ?? "",
-            username: user?.username ?? "",
-            bio: "",
-            heightFeet: 5,
-            heightInches: 8,
-            weightPounds: 160,
-            targetWeightPounds: 155,
-            showsHeight: false,
-            showsWeight: false,
-            showsTargetWeight: false,
-            disciplines: [],
-            gym: nil,
-            profileImageData: nil
-        )
     }
 }
 
@@ -361,7 +352,14 @@ private struct ProfileSettingsView: View {
     @Environment(SocialProfileStore.self) private var store
 
     let profile: SocialProfile
-    @State private var editingProfile = false
+    @State private var editorDestination: ProfileEditorDestination?
+
+    private enum ProfileEditorDestination: Int, Identifiable {
+        case basics = 1
+        case goals = 2
+        case identity = 3
+        var id: Int { rawValue }
+    }
 
     var body: some View {
         NavigationStack {
@@ -386,14 +384,38 @@ private struct ProfileSettingsView: View {
                         }
 
                         settingsSection("PROFILE", timeOfDay: timeOfDay) {
-                            Button { editingProfile = true } label: {
-                                settingsRow(
-                                    "Edit public profile",
-                                    detail: "Name, photo, goals, disciplines, and gym",
-                                    symbol: "person.crop.circle"
-                                )
+                            VStack(spacing: 0) {
+                                Button { editorDestination = .basics } label: {
+                                    settingsRow(
+                                        "Profile details",
+                                        detail: "Name, username, and bio",
+                                        symbol: "person.crop.circle"
+                                    )
+                                }
+                                .buttonStyle(.plain)
+
+                                Rectangle().fill(timeOfDay.border).frame(height: 1)
+
+                                Button { editorDestination = .goals } label: {
+                                    settingsRow(
+                                        "Body goals & privacy",
+                                        detail: "Height, weight, target weight, and visibility",
+                                        symbol: "scope"
+                                    )
+                                }
+                                .buttonStyle(.plain)
+
+                                Rectangle().fill(timeOfDay.border).frame(height: 1)
+
+                                Button { editorDestination = .identity } label: {
+                                    settingsRow(
+                                        "Training identity",
+                                        detail: "Photo, disciplines, and gym",
+                                        symbol: "figure.strengthtraining.traditional"
+                                    )
+                                }
+                                .buttonStyle(.plain)
                             }
-                            .buttonStyle(.plain)
                         }
 
                         settingsSection("FOOD", timeOfDay: timeOfDay) {
@@ -444,9 +466,13 @@ private struct ProfileSettingsView: View {
                 .homeTimeScreen(timeOfDay)
             }
         }
-        .sheet(isPresented: $editingProfile) {
+        .sheet(item: $editorDestination) { destination in
             NavigationStack {
-                ProfileOnboardingView(seed: profile, isEditing: true)
+                ProfileOnboardingView(
+                    seed: profile,
+                    isEditing: true,
+                    initialStep: destination.rawValue
+                )
                     .environment(store)
             }
         }
@@ -531,6 +557,7 @@ struct ProfileOnboardingView: View {
     @State private var password = ""
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var gymSearch = ""
+    @State private var gymResults: [GymIdentity] = []
     @State private var isCreatingGym = false
     @State private var newGymName = ""
     @State private var newGymCity = ""
@@ -554,6 +581,12 @@ struct ProfileOnboardingView: View {
                     VStack(alignment: .leading, spacing: 18) {
                         stepHeading
                         stepContent(timeOfDay: timeOfDay)
+
+                        if let error = store.errorMessage {
+                            Label(error, systemImage: "exclamationmark.triangle.fill")
+                                .font(.footnote)
+                                .foregroundStyle(.red)
+                        }
                     }
                     .padding(.horizontal, 22)
                     .padding(.top, 24)
@@ -572,6 +605,16 @@ struct ProfileOnboardingView: View {
                         await MainActor.run { draft.profileImageData = data }
                     }
                 }
+            }
+            .task(id: gymSearch) {
+                let query = gymSearch.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !query.isEmpty else {
+                    gymResults = []
+                    return
+                }
+                try? await Task.sleep(for: .milliseconds(300))
+                guard !Task.isCancelled else { return }
+                gymResults = await store.searchGyms(query)
             }
         }
     }
@@ -593,7 +636,7 @@ struct ProfileOnboardingView: View {
             Text(isEditing ? "Edit Profile" : "Create Profile")
                 .font(.headline.weight(.bold))
             Spacer()
-            Text("\(step + 1)/4")
+            Text("\(step - firstStep + 1)/\(stepCount)")
                 .font(.caption.weight(.bold))
                 .foregroundStyle(timeOfDay.secondaryText)
                 .frame(width: 44, height: 44)
@@ -604,7 +647,7 @@ struct ProfileOnboardingView: View {
 
     private func stepProgress(timeOfDay: HomeTimeOfDay) -> some View {
         HStack(spacing: 6) {
-            ForEach(0..<4, id: \.self) { index in
+            ForEach(firstStep..<4, id: \.self) { index in
                 Capsule()
                     .fill(index <= step ? timeOfDay.accent : timeOfDay.surfaceRaised)
                     .frame(height: 5)
@@ -613,6 +656,9 @@ struct ProfileOnboardingView: View {
         .padding(.horizontal, 22)
         .padding(.top, 15)
     }
+
+    private var firstStep: Int { isEditing ? 1 : 0 }
+    private var stepCount: Int { 4 - firstStep }
 
     @ViewBuilder
     private var stepHeading: some View {
@@ -891,14 +937,14 @@ struct ProfileOnboardingView: View {
 
             HStack {
                 Image(systemName: "magnifyingglass").foregroundStyle(timeOfDay.secondaryText)
-                TextField("Search gym, city, or country", text: $gymSearch)
+                TextField("Search gym or city", text: $gymSearch)
                     .textInputAutocapitalization(.words)
             }
             .padding(.horizontal, 13)
             .frame(height: 48)
             .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 15))
 
-            ForEach(filteredGyms.prefix(3)) { gym in
+            ForEach(gymResults.prefix(3)) { gym in
                 Button { draft.gym = gym } label: {
                     HStack(spacing: 10) {
                         Image(systemName: "dumbbell.fill")
@@ -931,7 +977,18 @@ struct ProfileOnboardingView: View {
                     TextField("Gym name", text: $newGymName)
                     TextField("City", text: $newGymCity)
                     TextField("Country", text: $newGymCountry)
-                    Button("Create and join") { createGym() }
+                    Button("Create and join") {
+                        Task {
+                            if let gym = await store.createGym(
+                                name: newGymName,
+                                city: newGymCity,
+                                country: newGymCountry
+                            ) {
+                                draft.gym = gym
+                                isCreatingGym = false
+                            }
+                        }
+                    }
                         .font(.subheadline.weight(.bold))
                         .foregroundStyle(timeOfDay.accent)
                         .disabled(newGymName.isEmpty || newGymCity.isEmpty || newGymCountry.isEmpty)
@@ -944,23 +1001,6 @@ struct ProfileOnboardingView: View {
         .overlay { RoundedRectangle(cornerRadius: 22).strokeBorder(timeOfDay.border, lineWidth: 1) }
     }
 
-    private var filteredGyms: [GymIdentity] {
-        guard !gymSearch.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            return Array(GymIdentity.directorySamples.prefix(3))
-        }
-        let term = gymSearch.lowercased()
-        return GymIdentity.directorySamples.filter {
-            $0.name.lowercased().contains(term)
-                || $0.city.lowercased().contains(term)
-                || $0.country.lowercased().contains(term)
-        }
-    }
-
-    private func createGym() {
-        draft.gym = GymIdentity(name: newGymName, city: newGymCity, country: newGymCountry)
-        isCreatingGym = false
-    }
-
     private func bottomAction(timeOfDay: HomeTimeOfDay) -> some View {
         Button {
             if step < 3 {
@@ -970,7 +1010,7 @@ struct ProfileOnboardingView: View {
             }
         } label: {
             HStack {
-                if authentication.isWorking {
+                if authentication.isWorking || store.isSaving {
                     ProgressView().tint(Color.white)
                 }
                 Text(step == 3 ? (isEditing ? "Save Profile" : "Create Profile") : "Continue")
@@ -998,13 +1038,12 @@ struct ProfileOnboardingView: View {
     /// a rejected password lands back on this page with the reason, rather
     /// than closing on a profile that was never created.
     private func finish() {
-        guard !isEditing else {
-            store.save(draft)
-            dismiss()
-            return
-        }
-
         Task {
+            if isEditing {
+                if await store.save(draft) { dismiss() }
+                return
+            }
+
             await authentication.register(
                 username: draft.username.trimmingCharacters(in: .whitespacesAndNewlines),
                 email: email.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -1022,9 +1061,8 @@ struct ProfileOnboardingView: View {
                 return
             }
 
-            // Saved before the store has a connection, so it is kept and sent
-            // the moment one arrives.
-            store.save(draft)
+            // Optional profile details are configured later from Settings,
+            // after the authenticated profile repository is connected.
             dismiss()
         }
     }
@@ -1043,9 +1081,10 @@ struct ProfileOnboardingView: View {
                 && !draft.lastName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 && !draft.username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         case 2:
-            return draft.heightFeet > 0 && draft.weightPounds > 0 && draft.targetWeightPounds > 0
+            return isEditing
+                || (draft.heightFeet > 0 && draft.weightPounds > 0 && draft.targetWeightPounds > 0)
         case 3:
-            return !draft.disciplines.isEmpty
+            return isEditing || !draft.disciplines.isEmpty
         default:
             return true
         }
@@ -1063,22 +1102,35 @@ private struct ProfileAvatarView: View {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
-            } else {
-                ZStack {
-                    LinearGradient(
-                        colors: [timeOfDay.accent, timeOfDay.heroEnd],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                    Text(profile.initials.isEmpty ? "R" : profile.initials)
-                        .font(.system(size: size * 0.30, weight: .bold, design: .rounded))
-                        .foregroundStyle(Color.white)
+            } else if let photo = profile.profilePhotoURL,
+                      let url = URL(string: photo) {
+                AsyncImage(url: url) { phase in
+                    if let image = phase.image {
+                        image.resizable().scaledToFill()
+                    } else {
+                        avatarFallback
+                    }
                 }
+            } else {
+                avatarFallback
             }
         }
         .frame(width: size, height: size)
         .clipShape(Circle())
         .overlay { Circle().strokeBorder(Color.white, lineWidth: 4) }
         .shadow(color: timeOfDay.shadow, radius: 9, x: 4, y: 6)
+    }
+
+    private var avatarFallback: some View {
+        ZStack {
+            LinearGradient(
+                colors: [timeOfDay.accent, timeOfDay.heroEnd],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            Text(profile.initials.isEmpty ? "R" : profile.initials)
+                .font(.system(size: size * 0.30, weight: .bold, design: .rounded))
+                .foregroundStyle(Color.white)
+        }
     }
 }
