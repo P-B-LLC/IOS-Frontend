@@ -75,7 +75,12 @@ struct ContentView: View {
                     }
                     .padding(.horizontal, 24)
                     .padding(.top, 16)
-                    .padding(.bottom, 18)
+                    // The custom navigation bar is inset outside this tab's
+                    // navigation stack, so its height is not included in the
+                    // ScrollView's natural content boundary. Keep enough real
+                    // scrollable space for the final section to move fully
+                    // above both the bar and the home indicator.
+                    .padding(.bottom, 118)
                 }
                 .scrollIndicators(.hidden)
                 .toolbar(.hidden, for: .navigationBar)
