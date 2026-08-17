@@ -31,7 +31,7 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
         case .dawn: Color(hex: 0xF7F7F8)
         case .day: Color(hex: 0xF7F7F8)
         case .dusk: Color(hex: 0xC9A89A)
-        case .night: Color(hex: 0x0E0A0B)
+        case .night: Color(hex: 0x2C252A)
         }
     }
 
@@ -40,7 +40,7 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
         case .dawn: Color(hex: 0xF4ECE8)
         case .day: Color(hex: 0xEFEFEF)
         case .dusk: Color(hex: 0x9A7468)
-        case .night: Color(hex: 0x151012)
+        case .night: Color(hex: 0x1F1A1E)
         }
     }
 
@@ -49,7 +49,7 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
         case .dawn: Color(hex: 0xEEDBD1)
         case .day: Color(hex: 0xCFCFD0)
         case .dusk: Color(hex: 0x67534D)
-        case .night: Color(hex: 0x1B1415)
+        case .night: Color(hex: 0x151216)
         }
     }
 
@@ -58,12 +58,12 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
     }
 
     var secondaryText: Color {
-        usesDarkAppearance ? Color(hex: 0xACA6A5) : Color(hex: 0x67534D)
+        usesDarkAppearance ? Color(hex: 0xCBBDBA) : Color(hex: 0x67534D)
     }
 
     var surface: Color {
         switch self {
-        case .night: Color(hex: 0x1B1415)
+        case .night: Color(hex: 0x272126)
         case .dusk: Color(hex: 0xE6D9D3)
         case .dawn, .day: Color(hex: 0xF9F9FA)
         }
@@ -71,18 +71,18 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
 
     var surfaceRaised: Color {
         switch self {
-        case .night: Color(hex: 0x2C2426)
+        case .night: Color(hex: 0x332C30)
         case .dusk: Color(hex: 0xF0E6E1)
         case .dawn, .day: .white
         }
     }
 
     var selectorSurface: Color {
-        usesDarkAppearance ? Color(hex: 0x2C2426) : surface.opacity(0.94)
+        usesDarkAppearance ? Color(hex: 0x40363C) : surface.opacity(0.94)
     }
 
     var emptyDaySurface: Color {
-        usesDarkAppearance ? Color(hex: 0x1B1415) : Color(hex: 0xE8E5E5)
+        usesDarkAppearance ? Color(hex: 0x2A2428) : Color(hex: 0xE8E5E5)
     }
 
     var plannedDaySurface: Color { Color(hex: 0x67534D) }
@@ -94,16 +94,17 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
         switch self {
         case .dawn: Color(hex: 0x67534D)
         case .day: Color(hex: 0x2C2426)
-        case .dusk, .night: Color(hex: 0x5B2414)
+        case .dusk: Color(hex: 0x5B2414)
+        case .night: Color(hex: 0x673326)
         }
     }
 
     var border: Color {
-        usesDarkAppearance ? Color.white.opacity(0.13) : Color.white.opacity(0.72)
+        usesDarkAppearance ? Color.white.opacity(0.17) : Color.white.opacity(0.72)
     }
 
     var shadow: Color {
-        usesDarkAppearance ? Color.black.opacity(0.42) : Color(hex: 0x67534D).opacity(0.22)
+        usesDarkAppearance ? Color.black.opacity(0.30) : Color(hex: 0x67534D).opacity(0.22)
     }
 
     // MARK: - Drawn straight on the canvas
@@ -121,11 +122,11 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
     }
 
     var canvasSecondaryText: Color {
-        hasDarkCanvas ? Color.white.opacity(0.72) : Color(hex: 0x67534D)
+        hasDarkCanvas ? Color.white.opacity(0.82) : Color(hex: 0x67534D)
     }
 
     var canvasBorder: Color {
-        hasDarkCanvas ? Color.white.opacity(0.24) : Color.white.opacity(0.72)
+        hasDarkCanvas ? Color.white.opacity(0.30) : Color.white.opacity(0.72)
     }
 }
 

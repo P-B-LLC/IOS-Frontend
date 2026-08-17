@@ -15,7 +15,7 @@ enum WorkoutVisualPhase: Sendable, Equatable {
     var canvasStart: Color {
         switch self {
         case .prepare: Color(hex: 0xF7F7F8)
-        case .focus: Color(hex: 0x1B1415)
+        case .focus: Color(hex: 0x2C252A)
         case .recover: Color(hex: 0xF3F7F5)
         }
     }
@@ -23,7 +23,7 @@ enum WorkoutVisualPhase: Sendable, Equatable {
     var canvasEnd: Color {
         switch self {
         case .prepare: Color(hex: 0xE8D4CA)
-        case .focus: Color(hex: 0x080607)
+        case .focus: Color(hex: 0x151216)
         case .recover: Color(hex: 0xD9E7E0)
         }
     }
@@ -31,7 +31,7 @@ enum WorkoutVisualPhase: Sendable, Equatable {
     var canvasMiddle: Color {
         switch self {
         case .prepare: Color(hex: 0xF4F0EF)
-        case .focus: Color(hex: 0x161012)
+        case .focus: Color(hex: 0x211B20)
         case .recover: Color(hex: 0xE8F0EC)
         }
     }
@@ -39,7 +39,7 @@ enum WorkoutVisualPhase: Sendable, Equatable {
     var accent: Color {
         switch self {
         case .prepare: Color(hex: 0xF86722)
-        case .focus: Color(hex: 0xFF5A1F)
+        case .focus: Color(hex: 0xFF7640)
         case .recover: Color(hex: 0x5DAA86)
         }
     }
@@ -55,7 +55,7 @@ enum WorkoutVisualPhase: Sendable, Equatable {
     var secondaryText: Color {
         switch self {
         case .prepare: Color(hex: 0x67534D)
-        case .focus: Color(hex: 0xACA6A5)
+        case .focus: Color(hex: 0xCBBDBA)
         case .recover: Color(hex: 0x5F756A)
         }
     }
@@ -63,7 +63,7 @@ enum WorkoutVisualPhase: Sendable, Equatable {
     var surfaceStart: Color {
         switch self {
         case .prepare: Color(hex: 0xF9F9FA)
-        case .focus: Color(hex: 0x2C2426)
+        case .focus: Color(hex: 0x3B3237)
         case .recover: Color(hex: 0xF9FCFA)
         }
     }
@@ -71,7 +71,7 @@ enum WorkoutVisualPhase: Sendable, Equatable {
     var surfaceEnd: Color {
         switch self {
         case .prepare: Color(hex: 0xE6D9D3)
-        case .focus: Color(hex: 0x171214)
+        case .focus: Color(hex: 0x292226)
         case .recover: Color(hex: 0xDFEBE5)
         }
     }
@@ -79,7 +79,7 @@ enum WorkoutVisualPhase: Sendable, Equatable {
     var heroStart: Color {
         switch self {
         case .prepare: Color(hex: 0x1B1415)
-        case .focus: Color(hex: 0x0E0A0B)
+        case .focus: Color(hex: 0x352728)
         case .recover: Color(hex: 0x17211D)
         }
     }
@@ -87,7 +87,7 @@ enum WorkoutVisualPhase: Sendable, Equatable {
     var heroEnd: Color {
         switch self {
         case .prepare: Color(hex: 0x67534D)
-        case .focus: Color(hex: 0x5B2414)
+        case .focus: Color(hex: 0x673326)
         case .recover: Color(hex: 0x5A8A73)
         }
     }
@@ -102,7 +102,7 @@ enum WorkoutVisualPhase: Sendable, Equatable {
     var shadow: Color {
         switch self {
         case .prepare: Color(hex: 0x67534D).opacity(0.20)
-        case .focus: Color.black.opacity(0.42)
+        case .focus: Color.black.opacity(0.30)
         case .recover: Color(hex: 0x385246).opacity(0.22)
         }
     }
