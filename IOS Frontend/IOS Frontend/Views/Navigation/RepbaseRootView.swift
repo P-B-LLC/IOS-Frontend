@@ -21,7 +21,7 @@ nonisolated enum RepbaseTab: String, CaseIterable, Identifiable {
         switch self {
         case .home: "Home"
         case .workouts: "Workouts"
-        case .planner: "Planner"
+        case .planner: "Calendar"
         case .food: "Food"
         case .account: "Account"
         }
@@ -31,7 +31,7 @@ nonisolated enum RepbaseTab: String, CaseIterable, Identifiable {
         switch self {
         case .home: "house.fill"
         case .workouts: "dumbbell.fill"
-        case .planner: "checklist"
+        case .planner: "calendar"
         case .food: "fork.knife"
         case .account: "person"
         }

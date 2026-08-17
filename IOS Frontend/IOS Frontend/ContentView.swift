@@ -23,21 +23,54 @@ struct ContentView: View {
             // navigates to rather than existing only here.
             Group {
                 ScrollView {
-                    VStack(spacing: 14) {
+                    VStack(spacing: 0) {
                         HomeHeader(date: context.date)
 
-                        HStack(alignment: .top, spacing: 16) {
-                            WeeklyPlanCard()
-                            TodayWorkoutCard()
+                        HomeCategorySection(
+                            number: "01",
+                            eyebrow: "TRAIN",
+                            title: "Workout",
+                            detail: "Plan the week, build sessions, and start training.",
+                            symbol: "dumbbell.fill",
+                            destination: WorkoutsView()
+                        ) {
+                            HStack(alignment: .top, spacing: 16) {
+                                WeeklyPlanCard()
+                                TodayWorkoutCard()
+                            }
                         }
+                        .padding(.top, 30)
 
-                        FoodSummaryWidget()
+                        HomeCategorySection(
+                            number: "02",
+                            eyebrow: "NOURISH",
+                            title: "Food",
+                            detail: "Log meals and keep daily nutrition in view.",
+                            symbol: "fork.knife",
+                            destination: FoodTrackingView()
+                        ) {
+                            FoodSummaryWidget()
+                        }
+                        .padding(.top, 34)
 
-                        HomeCalendarCard()
-                        TodaysTasksList()
+                        HomeCategorySection(
+                            number: "03",
+                            eyebrow: "ORGANIZE",
+                            title: "Calendar",
+                            detail: "Give workouts a time and manage the rest of your day.",
+                            symbol: "calendar",
+                            destination: PlannerView()
+                        ) {
+                            VStack(spacing: 14) {
+                                HomeCalendarCard()
+                                TodaysTasksList()
+                            }
+                        }
+                        .padding(.top, 34)
 
                         if let error = workoutStore.persistenceError {
                             persistenceErrorCard(error)
+                                .padding(.top, 18)
                         }
                     }
                     .padding(.horizontal, 24)
@@ -79,6 +112,79 @@ struct ContentView: View {
                 .padding(18)
                 .foregroundStyle(timeOfDay.primaryText)
                 .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 16))
+        }
+    }
+}
+
+/// A clearly labelled doorway into one of the app's three jobs. The preview
+/// below the rule keeps Home useful, while the heading makes it immediately
+/// obvious where the full workflow lives.
+private struct HomeCategorySection<Destination: View, Content: View>: View {
+    @Environment(\.homeTimeOfDay) private var timeOfDay
+
+    let number: String
+    let eyebrow: String
+    let title: String
+    let detail: String
+    let symbol: String
+    let destination: Destination
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            NavigationLink {
+                destination
+            } label: {
+                VStack(spacing: 12) {
+                    HStack(alignment: .firstTextBaseline, spacing: 10) {
+                        Text(number)
+                            .font(.system(size: 11, weight: .bold, design: .monospaced))
+                            .foregroundStyle(timeOfDay.accent)
+
+                        Text(eyebrow)
+                            .font(.system(size: 11, weight: .bold))
+                            .tracking(1.4)
+                            .foregroundStyle(timeOfDay.secondaryText)
+
+                        Spacer()
+
+                        Label("OPEN", systemImage: "arrow.up.right")
+                            .labelStyle(.titleAndIcon)
+                            .font(.system(size: 10, weight: .bold))
+                            .tracking(0.8)
+                            .foregroundStyle(timeOfDay.accent)
+                    }
+
+                    Rectangle()
+                        .fill(timeOfDay.accent)
+                        .frame(height: 2)
+
+                    HStack(alignment: .top, spacing: 14) {
+                        Image(systemName: symbol)
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundStyle(timeOfDay.accent)
+                            .frame(width: 42, height: 42)
+                            .background(timeOfDay.accent.opacity(0.11), in: Circle())
+
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text(title)
+                                .font(.system(size: 31, weight: .bold))
+                                .foregroundStyle(timeOfDay.primaryText)
+                            Text(detail)
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundStyle(timeOfDay.secondaryText)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+
+                        Spacer(minLength: 0)
+                    }
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("Opens the full \(title.lowercased()) section")
+
+            content
         }
     }
 }
