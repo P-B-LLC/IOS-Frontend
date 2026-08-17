@@ -143,78 +143,60 @@ struct SocialProfileView: View {
     }
 
     private func identityCard(timeOfDay: HomeTimeOfDay) -> some View {
-        VStack(spacing: 0) {
-            ZStack(alignment: .bottomLeading) {
-                LinearGradient(
-                    colors: [timeOfDay.heroEnd, timeOfDay.ink, timeOfDay.accent.opacity(0.78)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .frame(height: 112)
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .center, spacing: 22) {
+                ProfileAvatarView(profile: profile, size: 88, timeOfDay: timeOfDay)
 
-                ProfileAvatarView(profile: profile, size: 84, timeOfDay: timeOfDay)
-                    .padding(.leading, 4)
-                    .offset(y: 38)
-
-                VStack {
-                    HStack {
-                        Spacer()
-                        profileAction(timeOfDay: timeOfDay)
-                    }
-                    Spacer()
-                }
-                .padding(.horizontal, 4)
-                .padding(.top, 10)
-            }
-            .zIndex(1)
-
-            VStack(alignment: .leading, spacing: 14) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(profile.displayName)
-                        .font(.system(size: 27, weight: .bold))
-                    Text("@\(profile.username)")
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(timeOfDay.secondaryText)
-                }
-
-                if !profile.bio.isEmpty {
-                    Text(profile.bio)
-                        .font(.subheadline)
-                        .foregroundStyle(timeOfDay.secondaryText)
-                        .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-
-                VStack(alignment: .leading, spacing: 5) {
-                    if !profile.disciplines.isEmpty {
-                        Label(disciplineSummary, systemImage: "figure.strengthtraining.traditional")
-                    }
-                    if let gym = profile.gym {
-                        HStack(spacing: 6) {
-                            Label("\(gym.name) · \(gym.city)", systemImage: "building.2")
-                            if !isCurrentUser {
-                                Text("Same gym")
-                                    .font(.caption2.weight(.bold))
-                                    .foregroundStyle(timeOfDay.accent)
-                            }
-                        }
-                    }
-                }
-                .font(.caption.weight(.medium))
-                .foregroundStyle(timeOfDay.secondaryText)
-
-                Rectangle()
-                    .fill(timeOfDay.border)
-                    .frame(height: 1)
-
-                HStack {
+                HStack(spacing: 18) {
                     profileStat("\(store.posts.count)", label: "Posts")
                     profileStat("0", label: "Followers")
                     profileStat("0", label: "Following")
                 }
+                .frame(maxWidth: .infinity)
             }
-            .padding(.top, 52)
-            .padding(.bottom, 8)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(profile.displayName)
+                    .font(.system(size: 22, weight: .bold))
+                Text("@\(profile.username)")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(timeOfDay.secondaryText)
+            }
+
+            if !profile.bio.isEmpty {
+                Text(profile.bio)
+                    .font(.subheadline)
+                    .foregroundStyle(timeOfDay.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                if !profile.disciplines.isEmpty {
+                    Label(disciplineSummary, systemImage: "figure.strengthtraining.traditional")
+                }
+                if let gym = profile.gym {
+                    HStack(spacing: 6) {
+                        Label("\(gym.name) · \(gym.city)", systemImage: "building.2")
+                        if !isCurrentUser {
+                            Text("Same gym")
+                                .font(.caption2.weight(.bold))
+                                .foregroundStyle(timeOfDay.accent)
+                        }
+                    }
+                }
+            }
+            .font(.caption.weight(.medium))
+            .foregroundStyle(timeOfDay.secondaryText)
+
+            profileAction(timeOfDay: timeOfDay)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .overlay(alignment: .top) {
+                    Rectangle().fill(timeOfDay.border).frame(height: 1)
+                }
+                .overlay(alignment: .bottom) {
+                    Rectangle().fill(timeOfDay.border).frame(height: 1)
+                }
         }
     }
 
@@ -235,14 +217,15 @@ struct SocialProfileView: View {
                     .textCase(.uppercase)
             }
             .buttonStyle(.plain)
-            .foregroundStyle(Color.white)
+            .foregroundStyle(timeOfDay.accent)
         } else {
             Button { isFollowing.toggle() } label: {
                 Label(isFollowing ? "Following" : "Follow", systemImage: isFollowing ? "checkmark" : "plus")
             }
             .font(.caption.weight(.bold))
+            .textCase(.uppercase)
             .buttonStyle(.plain)
-            .foregroundStyle(Color.white)
+            .foregroundStyle(timeOfDay.accent)
         }
     }
 
