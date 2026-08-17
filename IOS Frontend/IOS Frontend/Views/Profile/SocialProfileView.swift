@@ -58,6 +58,7 @@ struct SocialProfileView: View {
     var isCurrentUser = true
     @State private var selectedSection: ProfileSection = .posts
     @State private var editingProfile = false
+    @State private var showingSettings = false
     @State private var isFollowing = false
 
     private enum ProfileSection: String, CaseIterable, Identifiable {
@@ -95,25 +96,29 @@ struct SocialProfileView: View {
                         .environment(store)
                 }
             }
+            .sheet(isPresented: $showingSettings) {
+                ProfileSettingsView(profile: profile)
+            }
         }
     }
 
     private func profileHeader(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack {
-            Button { dismiss() } label: {
-                Image(systemName: "chevron.left")
+        HStack(alignment: .bottom) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("ACCOUNT / PUBLIC PROFILE")
+                    .font(.system(size: 10, weight: .bold))
+                    .tracking(1.25)
+                    .foregroundStyle(timeOfDay.accent)
+                Text("Profile")
+                    .font(.system(size: 34, weight: .bold))
             }
-            .buttonStyle(RepbaseSculptedIconButtonStyle(timeOfDay: timeOfDay))
-            .accessibilityLabel("Back")
-
-            Spacer()
-
-            Text("Profile")
-                .font(.headline.weight(.bold))
 
             Spacer()
 
             Menu {
+                Button("Settings", systemImage: "gearshape") {
+                    showingSettings = true
+                }
                 Button("Edit Profile", systemImage: "pencil") {
                     editingProfile = true
                 }
@@ -125,11 +130,16 @@ struct SocialProfileView: View {
                     Task { await authentication.signOut() }
                 }
             } label: {
-                Image(systemName: "ellipsis")
+                Image(systemName: "line.3.horizontal")
+                    .font(.system(size: 23, weight: .semibold))
+                    .foregroundStyle(timeOfDay.primaryText)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
-            .buttonStyle(RepbaseSculptedIconButtonStyle(timeOfDay: timeOfDay))
-            .accessibilityLabel("Profile options")
+            .buttonStyle(.plain)
+            .accessibilityLabel("Profile and app settings")
         }
+        .padding(.bottom, 8)
     }
 
     private func identityCard(timeOfDay: HomeTimeOfDay) -> some View {
@@ -140,11 +150,11 @@ struct SocialProfileView: View {
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
-                .frame(height: 126)
+                .frame(height: 112)
 
-                ProfileAvatarView(profile: profile, size: 78, timeOfDay: timeOfDay)
-                    .padding(.leading, 18)
-                    .offset(y: 32)
+                ProfileAvatarView(profile: profile, size: 84, timeOfDay: timeOfDay)
+                    .padding(.leading, 4)
+                    .offset(y: 38)
 
                 VStack {
                     HStack {
@@ -153,16 +163,17 @@ struct SocialProfileView: View {
                     }
                     Spacer()
                 }
-                .padding(14)
+                .padding(.horizontal, 4)
+                .padding(.top, 10)
             }
             .zIndex(1)
 
-            VStack(alignment: .leading, spacing: 10) {
-                VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 14) {
+                VStack(alignment: .leading, spacing: 3) {
                     Text(profile.displayName)
-                        .font(.title3.weight(.bold))
+                        .font(.system(size: 27, weight: .bold))
                     Text("@\(profile.username)")
-                        .font(.caption)
+                        .font(.subheadline.weight(.medium))
                         .foregroundStyle(timeOfDay.secondaryText)
                 }
 
@@ -192,7 +203,9 @@ struct SocialProfileView: View {
                 .font(.caption.weight(.medium))
                 .foregroundStyle(timeOfDay.secondaryText)
 
-                Divider().overlay(timeOfDay.border)
+                Rectangle()
+                    .fill(timeOfDay.border)
+                    .frame(height: 1)
 
                 HStack {
                     profileStat("\(store.posts.count)", label: "Posts")
@@ -200,14 +213,9 @@ struct SocialProfileView: View {
                     profileStat("0", label: "Following")
                 }
             }
-            .padding(.horizontal, 18)
-            .padding(.top, 44)
-            .padding(.bottom, 15)
-            .background(timeOfDay.surfaceRaised)
+            .padding(.top, 52)
+            .padding(.bottom, 8)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 25))
-        .overlay { RoundedRectangle(cornerRadius: 25).strokeBorder(timeOfDay.border, lineWidth: 1) }
-        .shadow(color: timeOfDay.shadow.opacity(0.72), radius: 10, x: 4, y: 7)
     }
 
     private var disciplineSummary: String {
@@ -222,20 +230,19 @@ struct SocialProfileView: View {
     private func profileAction(timeOfDay: HomeTimeOfDay) -> some View {
         if isCurrentUser {
             Button { editingProfile = true } label: {
-                Label("Edit", systemImage: "pencil")
+                Label("Edit profile", systemImage: "arrow.up.right")
+                    .font(.caption.weight(.bold))
+                    .textCase(.uppercase)
             }
-            .buttonStyle(.borderedProminent)
-            .buttonBorderShape(.capsule)
-            .tint(timeOfDay.surfaceRaised)
-            .foregroundStyle(timeOfDay.ink)
+            .buttonStyle(.plain)
+            .foregroundStyle(Color.white)
         } else {
             Button { isFollowing.toggle() } label: {
                 Label(isFollowing ? "Following" : "Follow", systemImage: isFollowing ? "checkmark" : "plus")
             }
-            .buttonStyle(.borderedProminent)
-            .buttonBorderShape(.capsule)
-            .tint(timeOfDay.surfaceRaised)
-            .foregroundStyle(timeOfDay.ink)
+            .font(.caption.weight(.bold))
+            .buttonStyle(.plain)
+            .foregroundStyle(Color.white)
         }
     }
 
@@ -248,7 +255,7 @@ struct SocialProfileView: View {
     }
 
     private func sectionPicker(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack(spacing: 24) {
+        HStack(spacing: 32) {
             ForEach(ProfileSection.allCases) { section in
                 Button {
                     withAnimation(.easeOut(duration: 0.18)) { selectedSection = section }
@@ -261,14 +268,16 @@ struct SocialProfileView: View {
                             .frame(height: 3)
                     }
                     .foregroundStyle(selectedSection == section ? timeOfDay.primaryText : timeOfDay.secondaryText)
-                    .frame(maxWidth: .infinity)
+                    .fixedSize(horizontal: true, vertical: false)
                 }
                 .buttonStyle(.plain)
             }
+            Spacer()
         }
-        .padding(.horizontal, 18)
-        .padding(.top, 12)
-        .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 20))
+        .padding(.top, 14)
+        .overlay(alignment: .top) {
+            Rectangle().fill(timeOfDay.border).frame(height: 1)
+        }
     }
 
     @ViewBuilder
@@ -285,9 +294,10 @@ struct SocialProfileView: View {
                     .multilineTextAlignment(.center)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 42)
-            .padding(.horizontal, 24)
-            .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 24))
+            .padding(.vertical, 48)
+            .overlay(alignment: .bottom) {
+                Rectangle().fill(timeOfDay.border).frame(height: 1)
+            }
         } else {
             LazyVStack(spacing: 0) {
                 ForEach(store.posts) { post in
@@ -320,8 +330,8 @@ struct SocialProfileView: View {
                     }
                 }
             }
-            .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 22))
-            .overlay { RoundedRectangle(cornerRadius: 22).strokeBorder(timeOfDay.border, lineWidth: 1) }
+            .overlay(alignment: .top) { Rectangle().fill(timeOfDay.border).frame(height: 1) }
+            .overlay(alignment: .bottom) { Rectangle().fill(timeOfDay.border).frame(height: 1) }
         }
     }
 
@@ -344,9 +354,8 @@ struct SocialProfileView: View {
                     .padding(28)
             }
         }
-        .padding(.horizontal, 16)
-        .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 24))
-        .overlay { RoundedRectangle(cornerRadius: 24).strokeBorder(timeOfDay.border, lineWidth: 1) }
+        .overlay(alignment: .top) { Rectangle().fill(timeOfDay.border).frame(height: 1) }
+        .overlay(alignment: .bottom) { Rectangle().fill(timeOfDay.border).frame(height: 1) }
     }
 
     private func aboutRow(_ title: String, value: String, symbol: String) -> some View {
@@ -357,6 +366,172 @@ struct SocialProfileView: View {
             Text(value).font(.subheadline.weight(.bold))
         }
         .padding(.vertical, 15)
+    }
+}
+
+/// The hamburger menu leads here instead of scattering account-wide controls
+/// across the profile. Every row uses an existing app action or destination.
+private struct ProfileSettingsView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(AuthenticationStore.self) private var authentication
+    @Environment(WorkoutStore.self) private var workoutStore
+    @Environment(SocialProfileStore.self) private var store
+
+    let profile: SocialProfile
+    @State private var editingProfile = false
+
+    var body: some View {
+        NavigationStack {
+            TimelineView(.periodic(from: .now, by: 60)) { context in
+                let timeOfDay = HomeTimeOfDay(date: context.date)
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 30) {
+                        settingsHeader(timeOfDay: timeOfDay)
+
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text("APP SETTINGS")
+                                .font(.system(size: 10, weight: .bold))
+                                .tracking(1.3)
+                                .foregroundStyle(timeOfDay.accent)
+                            Text("Everything in one place.")
+                                .font(.system(size: 34, weight: .bold))
+                            Text("Manage your public identity, nutrition targets, workout data, and account.")
+                                .font(.subheadline)
+                                .foregroundStyle(timeOfDay.secondaryText)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+
+                        settingsSection("PROFILE", timeOfDay: timeOfDay) {
+                            Button { editingProfile = true } label: {
+                                settingsRow(
+                                    "Edit public profile",
+                                    detail: "Name, photo, goals, disciplines, and gym",
+                                    symbol: "person.crop.circle"
+                                )
+                            }
+                            .buttonStyle(.plain)
+                        }
+
+                        settingsSection("FOOD", timeOfDay: timeOfDay) {
+                            NavigationLink {
+                                NutritionGoalsView()
+                            } label: {
+                                settingsRow(
+                                    "Nutrition goals",
+                                    detail: "Calories, protein, carbohydrates, and fat",
+                                    symbol: "fork.knife"
+                                )
+                            }
+                            .buttonStyle(.plain)
+                        }
+
+                        settingsSection("WORKOUTS", timeOfDay: timeOfDay) {
+                            Button { workoutStore.retryPersistence() } label: {
+                                settingsRow(
+                                    "Refresh workout data",
+                                    detail: "Sync the latest plans and sessions",
+                                    symbol: "arrow.clockwise"
+                                )
+                            }
+                            .buttonStyle(.plain)
+                        }
+
+                        settingsSection("ACCOUNT", timeOfDay: timeOfDay) {
+                            Button(role: .destructive) {
+                                Task { await authentication.signOut() }
+                            } label: {
+                                settingsRow(
+                                    "Sign out",
+                                    detail: "End this Repbase session",
+                                    symbol: "rectangle.portrait.and.arrow.right",
+                                    color: .red
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(authentication.isWorking)
+                        }
+                    }
+                    .padding(.horizontal, 22)
+                    .padding(.top, 12)
+                    .padding(.bottom, 36)
+                }
+                .scrollIndicators(.hidden)
+                .toolbar(.hidden, for: .navigationBar)
+                .homeTimeScreen(timeOfDay)
+            }
+        }
+        .sheet(isPresented: $editingProfile) {
+            NavigationStack {
+                ProfileOnboardingView(seed: profile, isEditing: true)
+                    .environment(store)
+            }
+        }
+    }
+
+    private func settingsHeader(timeOfDay: HomeTimeOfDay) -> some View {
+        HStack {
+            Text("Settings")
+                .font(.headline.weight(.bold))
+            Spacer()
+            Button { dismiss() } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(timeOfDay.primaryText)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Close settings")
+        }
+    }
+
+    private func settingsSection<Content: View>(
+        _ title: String,
+        timeOfDay: HomeTimeOfDay,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(title)
+                .font(.system(size: 10, weight: .bold))
+                .tracking(1.25)
+                .foregroundStyle(timeOfDay.accent)
+                .padding(.bottom, 10)
+
+            Rectangle().fill(timeOfDay.border).frame(height: 1)
+            content()
+            Rectangle().fill(timeOfDay.border).frame(height: 1)
+        }
+    }
+
+    private func settingsRow(
+        _ title: String,
+        detail: String,
+        symbol: String,
+        color: Color? = nil
+    ) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: symbol)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(color ?? Color(hex: 0xF86722))
+                .frame(width: 28)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.headline)
+                    .foregroundStyle(color ?? .primary)
+                Text(detail)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer(minLength: 8)
+            Image(systemName: "arrow.up.right")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(color ?? .secondary)
+        }
+        .padding(.vertical, 16)
+        .contentShape(Rectangle())
     }
 }
 
