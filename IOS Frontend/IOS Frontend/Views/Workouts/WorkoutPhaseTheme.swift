@@ -125,15 +125,31 @@ struct WorkoutPhaseBackground: View {
     let phase: WorkoutVisualPhase
 
     var body: some View {
-        LinearGradient(
-            gradient: Gradient(stops: [
-                .init(color: phase.canvasStart, location: 0),
-                .init(color: phase.canvasMiddle, location: 0.56),
-                .init(color: phase.canvasEnd, location: 1)
-            ]),
-            startPoint: .top,
-            endPoint: .bottom
-        )
+        GeometryReader { proxy in
+            ZStack {
+                LinearGradient(
+                    gradient: Gradient(stops: [
+                        .init(color: phase.canvasStart, location: 0),
+                        .init(color: phase.canvasMiddle, location: 0.56),
+                        .init(color: phase.canvasEnd, location: 1)
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+
+                Circle()
+                    .fill(phase.accent.opacity(phase.usesDarkAppearance ? 0.14 : 0.09))
+                    .frame(width: proxy.size.width * 0.9)
+                    .blur(radius: 62)
+                    .offset(x: proxy.size.width * 0.46, y: -proxy.size.height * 0.28)
+
+                RoundedRectangle(cornerRadius: 36)
+                    .fill(Color.white.opacity(phase.usesDarkAppearance ? 0.025 : 0.24))
+                    .frame(width: proxy.size.width * 0.78, height: proxy.size.height * 0.17)
+                    .rotationEffect(.degrees(-17))
+                    .offset(x: -proxy.size.width * 0.38, y: proxy.size.height * 0.31)
+            }
+        }
         .ignoresSafeArea()
     }
 }
@@ -183,8 +199,22 @@ private struct RepbaseCardModifier: ViewModifier {
             .foregroundStyle(phase.primaryText)
             .background {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(phase.surfaceStart)
-                    .shadow(color: phase.shadow, radius: 8, x: 0, y: 3)
+                    .fill(
+                        LinearGradient(
+                            colors: [phase.surfaceStart, phase.surfaceEnd],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .shadow(color: phase.shadow.opacity(0.78), radius: 8, x: 4, y: 5)
+                    .shadow(
+                        color: phase.usesDarkAppearance
+                            ? Color.white.opacity(0.035)
+                            : Color.white.opacity(0.90),
+                        radius: 5,
+                        x: -3,
+                        y: -3
+                    )
             }
             .overlay {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
@@ -205,6 +235,7 @@ private struct RepbaseControlSurfaceModifier: ViewModifier {
             .background {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .fill(phase.surfaceStart)
+                    .shadow(color: Color.black.opacity(0.10), radius: 4, x: 3, y: 3)
             }
             .overlay {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
@@ -228,8 +259,17 @@ struct WorkoutPrimaryButtonStyle: ButtonStyle {
             .padding(.horizontal, 18)
             .padding(.vertical, 14)
             .background {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(phase.accent)
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [phase.accent.opacity(0.82), phase.accent],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .shadow(color: phase.accent.opacity(0.22), radius: 8, x: 0, y: 4)
+                }
             }
             .overlay {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -237,6 +277,7 @@ struct WorkoutPrimaryButtonStyle: ButtonStyle {
             }
             .opacity(isEnabled ? (configuration.isPressed ? 0.78 : 1) : 0.45)
             .scaleEffect(configuration.isPressed ? 0.985 : 1)
+            .offset(y: configuration.isPressed ? 1 : 0)
             .animation(.easeOut(duration: 0.14), value: configuration.isPressed)
     }
 }

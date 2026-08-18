@@ -315,11 +315,7 @@ private extension View {
     func authenticationField(timeOfDay: HomeTimeOfDay) -> some View {
         padding(.horizontal, 15)
             .frame(height: 55)
-            .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: RepbaseDesign.controlRadius))
-            .overlay {
-                RoundedRectangle(cornerRadius: RepbaseDesign.controlRadius)
-                    .strokeBorder(timeOfDay.border, lineWidth: 1)
-            }
+            .repbaseInsetSurface(cornerRadius: 14)
     }
 }
 

@@ -168,12 +168,7 @@ struct PostCard: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius))
-        .overlay {
-            RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius)
-                .strokeBorder(timeOfDay.border, lineWidth: 1)
-        }
-        .shadow(color: timeOfDay.shadow, radius: 7, x: 0, y: 3)
+        .repbaseDepthSurface(cornerRadius: RepbaseDesign.featureRadius)
     }
 
     private var author: some View {

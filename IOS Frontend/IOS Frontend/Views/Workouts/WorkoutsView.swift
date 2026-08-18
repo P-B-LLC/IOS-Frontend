@@ -100,7 +100,30 @@ struct WorkoutsView: View {
                         .font(.title3)
                         .foregroundStyle(WorkoutVisualPhase.focus.onAccent)
                         .frame(width: 48, height: 48)
-                        .background(WorkoutVisualPhase.focus.accent, in: RoundedRectangle(cornerRadius: 10))
+                        .background {
+                            ZStack {
+                                Circle()
+                                    .fill(WorkoutVisualPhase.focus.accent.opacity(0.35))
+                                    .offset(y: 2)
+                                Circle()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [
+                                                WorkoutVisualPhase.focus.accent.opacity(0.78),
+                                                WorkoutVisualPhase.focus.accent
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .shadow(
+                                        color: WorkoutVisualPhase.focus.accent.opacity(0.35),
+                                        radius: 6,
+                                        x: 0,
+                                        y: 3
+                                    )
+                            }
+                        }
 
                     VStack(alignment: .leading, spacing: 3) {
                         Text("SESSION IN PROGRESS")

@@ -31,13 +31,7 @@ struct HomeCalendarCard: View {
                 calendarPane
             }
             .frame(minHeight: 162)
-            .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius))
-            .overlay {
-                RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius)
-                    .strokeBorder(timeOfDay.border, lineWidth: 1)
-            }
-            .clipShape(RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius))
-            .shadow(color: timeOfDay.shadow, radius: 8, x: 0, y: 3)
+            .repbaseDepthSurface(cornerRadius: RepbaseDesign.featureRadius)
         }
         .buttonStyle(.plain)
         .accessibilityHint("Opens the planner")

@@ -54,7 +54,7 @@ struct FoodSummaryWidget: View {
             .padding(16)
             .frame(maxWidth: .infinity, minHeight: 126, alignment: .leading)
             .foregroundStyle(timeOfDay.primaryText)
-            .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 22))
+            .repbaseDepthSurface(cornerRadius: RepbaseDesign.featureRadius)
             .overlay {
                 ZStack {
                     FoodWidgetProgressBorder(cornerRadius: 22)
@@ -71,7 +71,6 @@ struct FoodSummaryWidget: View {
                 .padding(1.75)
                 .allowsHitTesting(false)
             }
-            .shadow(color: timeOfDay.shadow, radius: 10, x: 5, y: 8)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

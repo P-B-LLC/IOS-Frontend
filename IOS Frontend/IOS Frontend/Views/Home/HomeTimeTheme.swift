@@ -146,21 +146,60 @@ private struct HomeTimeScreenModifier: ViewModifier {
         content
             .foregroundStyle(timeOfDay.primaryText)
             .background {
+                RepbaseAmbientBackdrop(timeOfDay: timeOfDay)
+            }
+            .environment(\.homeTimeOfDay, timeOfDay)
+            .environment(\.workoutVisualPhase, timeOfDay.usesDarkAppearance ? .focus : .prepare)
+            .tint(timeOfDay.accent)
+            .preferredColorScheme(timeOfDay.usesDarkAppearance ? .dark : .light)
+    }
+}
+
+/// The background carries the personality while content surfaces stay calm.
+/// Soft color volumes are crossed by a few precise planes, balancing the
+/// organic and rigid qualities of the product.
+private struct RepbaseAmbientBackdrop: View {
+    let timeOfDay: HomeTimeOfDay
+
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack {
                 LinearGradient(
                     gradient: Gradient(stops: [
                         .init(color: timeOfDay.canvasStart, location: 0),
                         .init(color: timeOfDay.canvasMiddle, location: 0.56),
                         .init(color: timeOfDay.canvasEnd, location: 1)
                     ]),
-                    startPoint: .top,
-                    endPoint: .bottom
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
                 )
-                .ignoresSafeArea()
+
+                Circle()
+                    .fill(timeOfDay.accent.opacity(timeOfDay.usesDarkAppearance ? 0.15 : 0.10))
+                    .frame(width: proxy.size.width * 0.92)
+                    .blur(radius: 58)
+                    .offset(x: proxy.size.width * 0.42, y: -proxy.size.height * 0.30)
+
+                Circle()
+                    .fill(timeOfDay.heroEnd.opacity(timeOfDay.usesDarkAppearance ? 0.16 : 0.08))
+                    .frame(width: proxy.size.width * 0.78)
+                    .blur(radius: 72)
+                    .offset(x: -proxy.size.width * 0.48, y: proxy.size.height * 0.36)
+
+                RoundedRectangle(cornerRadius: 34)
+                    .fill(Color.white.opacity(timeOfDay.usesDarkAppearance ? 0.025 : 0.22))
+                    .frame(width: proxy.size.width * 0.78, height: proxy.size.height * 0.18)
+                    .rotationEffect(.degrees(-18))
+                    .offset(x: proxy.size.width * 0.34, y: proxy.size.height * 0.16)
+
+                RoundedRectangle(cornerRadius: 28)
+                    .strokeBorder(timeOfDay.accent.opacity(timeOfDay.usesDarkAppearance ? 0.10 : 0.07), lineWidth: 1)
+                    .frame(width: proxy.size.width * 0.66, height: proxy.size.height * 0.14)
+                    .rotationEffect(.degrees(16))
+                    .offset(x: -proxy.size.width * 0.40, y: -proxy.size.height * 0.13)
             }
-            .environment(\.homeTimeOfDay, timeOfDay)
-            .environment(\.workoutVisualPhase, timeOfDay.usesDarkAppearance ? .focus : .prepare)
-            .tint(timeOfDay.accent)
-            .preferredColorScheme(timeOfDay.usesDarkAppearance ? .dark : .light)
+        }
+        .ignoresSafeArea()
     }
 }
 
@@ -179,11 +218,9 @@ struct RepbaseSculptedIconButtonStyle: ButtonStyle {
             .font(.body.weight(.semibold))
             .foregroundStyle(timeOfDay.primaryText)
             .frame(width: 44, height: 44)
-            .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 12))
-            .overlay {
-                RoundedRectangle(cornerRadius: 12).strokeBorder(timeOfDay.border, lineWidth: 1)
-            }
+            .repbaseDepthSurface(cornerRadius: 12)
             .scaleEffect(configuration.isPressed ? 0.94 : 1)
+            .offset(y: configuration.isPressed ? 2 : 0)
             .opacity(configuration.isPressed ? 0.78 : 1)
             .animation(.easeOut(duration: 0.14), value: configuration.isPressed)
     }
@@ -201,13 +238,23 @@ struct RepbaseAccentCapsuleButtonStyle: ButtonStyle {
             .padding(.horizontal, 15)
             .frame(height: 42)
             .background {
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(timeOfDay.accent)
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(
+                            LinearGradient(
+                                colors: [timeOfDay.accent.opacity(0.84), timeOfDay.accent],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .shadow(color: timeOfDay.accent.opacity(0.20), radius: 8, x: 0, y: 4)
+                }
             }
             .overlay {
                 RoundedRectangle(cornerRadius: 10).strokeBorder(Color.white.opacity(0.16), lineWidth: 1)
             }
             .scaleEffect(configuration.isPressed ? 0.96 : 1)
+            .offset(y: configuration.isPressed ? 1 : 0)
             .opacity(isEnabled ? (configuration.isPressed ? 0.80 : 1) : 0.42)
             .animation(.easeOut(duration: 0.14), value: configuration.isPressed)
     }

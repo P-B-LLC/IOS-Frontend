@@ -237,11 +237,7 @@ private struct HomeHeader: View {
                 .font(.system(size: 16, weight: .bold))
                 .foregroundStyle(timeOfDay.accent)
                 .frame(width: 44, height: 44)
-                .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 12))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(timeOfDay.border, lineWidth: 1)
-                }
+                .repbaseDepthSurface(cornerRadius: 12)
         }
         .disabled(authentication.isWorking)
         .accessibilityLabel("Account")
@@ -336,12 +332,21 @@ private struct WeeklyPlanCard: View {
         .padding(16)
         .frame(maxWidth: .infinity, minHeight: 214, maxHeight: 214, alignment: .topLeading)
         .foregroundStyle(Color.white)
-        .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius))
+        .background {
+            RoundedRectangle(cornerRadius: RepbaseDesign.featureRadius)
+                .fill(
+                    LinearGradient(
+                        colors: [timeOfDay.accent.opacity(0.82), timeOfDay.accent],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+        }
         .overlay(alignment: .top) {
-            RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius)
+            RoundedRectangle(cornerRadius: RepbaseDesign.featureRadius)
                 .strokeBorder(Color.white.opacity(0.24), lineWidth: 1)
         }
-        .shadow(color: timeOfDay.shadow, radius: 8, x: 0, y: 3)
+        .shadow(color: timeOfDay.accent.opacity(0.18), radius: 10, x: 2, y: 6)
     }
 
     private var items: [PlannedWorkoutItem] {
@@ -466,13 +471,13 @@ private struct TodayWorkoutCard: View {
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
-                .clipShape(RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius))
+                .clipShape(RoundedRectangle(cornerRadius: RepbaseDesign.featureRadius))
             }
             .overlay {
-                RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius)
+                RoundedRectangle(cornerRadius: RepbaseDesign.featureRadius)
                     .strokeBorder(Color.white.opacity(0.13), lineWidth: 1)
             }
-            .shadow(color: timeOfDay.shadow, radius: 8, x: 0, y: 3)
+            .shadow(color: timeOfDay.shadow, radius: 10, x: 2, y: 6)
         }
         .buttonStyle(.plain)
         .accessibilityHint("Opens today's workout")

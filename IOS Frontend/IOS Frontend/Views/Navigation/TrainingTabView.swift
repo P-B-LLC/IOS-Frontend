@@ -70,11 +70,15 @@ struct TrainingTabView: View {
                         .background {
                             if item == half {
                                 RoundedRectangle(cornerRadius: 9)
-                                    .fill(timeOfDay.surfaceRaised)
-                                    .overlay {
-                                        RoundedRectangle(cornerRadius: 9)
-                                            .strokeBorder(timeOfDay.border, lineWidth: 1)
-                                    }
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [timeOfDay.surfaceRaised, timeOfDay.surface],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .shadow(color: timeOfDay.shadow, radius: 4, x: 2, y: 2)
+                                    .shadow(color: Color.white.opacity(0.62), radius: 3, x: -2, y: -2)
                             }
                         }
                         .contentShape(Rectangle())
@@ -84,11 +88,7 @@ struct TrainingTabView: View {
             }
         }
         .padding(4)
-        .background(timeOfDay.selectorSurface, in: RoundedRectangle(cornerRadius: 12))
-        .overlay {
-            RoundedRectangle(cornerRadius: 12)
-                .strokeBorder(timeOfDay.canvasBorder, lineWidth: 1)
-        }
+        .repbaseInsetSurface(cornerRadius: 13)
         .padding(.horizontal, RepbaseDesign.pageInset)
         .padding(.top, 10)
         .padding(.bottom, 8)

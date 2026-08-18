@@ -346,37 +346,71 @@ private struct CalorieGoalCard: View {
     let loggedFoodCount: Int
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .bottom) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Calorie Goal")
-                        .font(.subheadline.weight(.medium))
+        HStack(spacing: 18) {
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [phase.surfaceStart, phase.surfaceEnd],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .shadow(color: phase.shadow, radius: 7, x: 3, y: 4)
+                    .shadow(
+                        color: Color.white.opacity(phase.usesDarkAppearance ? 0.04 : 0.9),
+                        radius: 5,
+                        x: -3,
+                        y: -3
+                    )
+
+                Circle()
+                    .stroke(phase.accent.opacity(0.12), lineWidth: 9)
+
+                Circle()
+                    .trim(from: 0, to: progress)
+                    .stroke(
+                        phase.accent,
+                        style: StrokeStyle(lineWidth: 9, lineCap: .round)
+                    )
+                    .rotationEffect(.degrees(-90))
+                    .shadow(color: phase.accent.opacity(0.28), radius: 4)
+
+                VStack(spacing: 1) {
+                    Text(value.nutritionText)
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .minimumScaleFactor(0.65)
+                    Text("KCAL")
+                        .font(.system(size: 8, weight: .bold))
+                        .tracking(0.8)
                         .foregroundStyle(phase.secondaryText)
-                    Text("\(value.nutritionText) / \(goal.nutritionText) kcal")
-                        .font(.title2.weight(.bold))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
                 }
-                Spacer()
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("\(remaining.nutritionText) left")
-                        .font(.subheadline.weight(.bold))
-                        .foregroundStyle(phase.accent)
-                    Text("^[\(loggedFoodCount) food](inflect: true) logged")
-                        .font(.caption2)
-                        .foregroundStyle(phase.secondaryText)
-                }
+                .padding(15)
+            }
+            .frame(width: 102, height: 102)
+
+            VStack(alignment: .leading, spacing: 7) {
+                Text("DAILY ENERGY")
+                    .font(.system(size: 9, weight: .bold))
+                    .tracking(1.2)
+                    .foregroundStyle(phase.accent)
+                Text("\(remaining.nutritionText) left")
+                    .font(.title2.weight(.bold))
+                Text("of \(goal.nutritionText) kcal")
+                    .font(.caption)
+                    .foregroundStyle(phase.secondaryText)
+                Label(
+                    "^[\(loggedFoodCount) food](inflect: true) logged",
+                    systemImage: "fork.knife"
+                )
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(phase.secondaryText)
+                .padding(.top, 4)
             }
 
-            GeometryReader { proxy in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(phase.accent.opacity(0.12))
-                    Capsule().fill(phase.accent).frame(width: proxy.size.width * progress)
-                }
-            }
-            .frame(height: 7)
+            Spacer(minLength: 0)
         }
-        .repbaseCard(contentPadding: 16, cornerRadius: 20)
+        .repbaseCard(contentPadding: 18, cornerRadius: RepbaseDesign.featureRadius)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Calories, \(value.nutritionText) of \(goal.nutritionText), \(remaining.nutritionText) remaining")
     }

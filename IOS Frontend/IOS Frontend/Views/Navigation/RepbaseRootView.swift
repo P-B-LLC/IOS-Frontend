@@ -109,11 +109,7 @@ struct RepbaseBottomNavigation: View {
             }
         }
         .padding(5)
-        .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 16))
-        .overlay {
-            RoundedRectangle(cornerRadius: 16).strokeBorder(timeOfDay.border, lineWidth: 1)
-        }
-        .shadow(color: timeOfDay.shadow, radius: 10, x: 0, y: 4)
+        .repbaseDepthSurface(cornerRadius: 20)
         .animation(.easeOut(duration: 0.18), value: tab)
     }
 
@@ -121,17 +117,29 @@ struct RepbaseBottomNavigation: View {
         VStack(spacing: 4) {
             Image(systemName: item.symbol)
                 .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(isSelected ? Color.white : timeOfDay.secondaryText)
+                .frame(width: 34, height: 30)
+                .background {
+                    if isSelected {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(
+                                LinearGradient(
+                                    colors: [timeOfDay.accent.opacity(0.78), timeOfDay.accent],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .shadow(color: timeOfDay.accent.opacity(0.24), radius: 5, x: 0, y: 3)
+                    }
+                }
+                .offset(y: isSelected ? -1 : 0)
             Text(item.title)
                 .font(.system(size: 9, weight: .semibold))
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
         }
         .foregroundStyle(isSelected ? timeOfDay.accent : timeOfDay.secondaryText)
-        .frame(maxWidth: .infinity, minHeight: 50)
-        .background(
-            isSelected ? timeOfDay.accent.opacity(0.11) : Color.clear,
-            in: RoundedRectangle(cornerRadius: 11)
-        )
+        .frame(maxWidth: .infinity, minHeight: 54)
         .contentShape(Rectangle())
     }
 }

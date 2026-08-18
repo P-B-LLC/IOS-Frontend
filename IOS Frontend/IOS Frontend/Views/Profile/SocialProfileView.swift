@@ -183,6 +183,8 @@ struct SocialProfileView: View {
                     Rectangle().fill(timeOfDay.border).frame(height: 1)
                 }
         }
+        .padding(18)
+        .repbaseDepthSurface(cornerRadius: RepbaseDesign.featureRadius)
     }
 
     private var disciplineSummary: String {

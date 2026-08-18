@@ -17,6 +17,95 @@ enum RepbaseDesign {
     static let sectionSpacing: CGFloat = 24
     static let cardRadius: CGFloat = 14
     static let controlRadius: CGFloat = 10
+    static let featureRadius: CGFloat = 22
+    static let deepShadow = Color.black.opacity(0.09)
+    static let softHighlight = Color.white.opacity(0.72)
+}
+
+/// A raised architectural surface. The paired shadows establish one shared
+/// light source, so depth feels intentional instead of decorative.
+private struct RepbaseDepthSurfaceModifier: ViewModifier {
+    @Environment(\.homeTimeOfDay) private var timeOfDay
+
+    let cornerRadius: CGFloat
+
+    func body(content: Content) -> some View {
+        content
+            .background {
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [timeOfDay.surfaceRaised, timeOfDay.surface],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .shadow(
+                        color: timeOfDay.usesDarkAppearance
+                            ? Color.black.opacity(0.34)
+                            : RepbaseDesign.deepShadow,
+                        radius: 8,
+                        x: 4,
+                        y: 5
+                    )
+                    .shadow(
+                        color: timeOfDay.usesDarkAppearance
+                            ? Color.white.opacity(0.035)
+                            : RepbaseDesign.softHighlight,
+                        radius: 5,
+                        x: -3,
+                        y: -3
+                    )
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(timeOfDay.usesDarkAppearance ? 0.08 : 0.72),
+                                timeOfDay.border.opacity(0.55)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            }
+    }
+}
+
+/// A recessed area for selectors, input groups, and progress tracks.
+private struct RepbaseInsetSurfaceModifier: ViewModifier {
+    @Environment(\.homeTimeOfDay) private var timeOfDay
+
+    let cornerRadius: CGFloat
+
+    func body(content: Content) -> some View {
+        content
+            .background(timeOfDay.selectorSurface, in: RoundedRectangle(cornerRadius: cornerRadius))
+            .overlay {
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .strokeBorder(Color.black.opacity(timeOfDay.usesDarkAppearance ? 0.28 : 0.08), lineWidth: 1)
+                    .shadow(color: Color.black.opacity(0.11), radius: 3, x: 2, y: 2)
+                    .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .strokeBorder(Color.white.opacity(timeOfDay.usesDarkAppearance ? 0.05 : 0.72), lineWidth: 1)
+                    .shadow(color: Color.white.opacity(0.45), radius: 2, x: -1, y: -1)
+                    .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+            }
+    }
+}
+
+extension View {
+    func repbaseDepthSurface(cornerRadius: CGFloat = RepbaseDesign.cardRadius) -> some View {
+        modifier(RepbaseDepthSurfaceModifier(cornerRadius: cornerRadius))
+    }
+
+    func repbaseInsetSurface(cornerRadius: CGFloat = RepbaseDesign.controlRadius) -> some View {
+        modifier(RepbaseInsetSurfaceModifier(cornerRadius: cornerRadius))
+    }
 }
 
 /// A consistent title block for the app's top-level destinations.
@@ -82,13 +171,10 @@ struct RepbaseQuietButtonStyle: ButtonStyle {
             .foregroundStyle(timeOfDay.primaryText)
             .padding(.horizontal, 14)
             .frame(minHeight: 42)
-            .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: RepbaseDesign.controlRadius))
-            .overlay {
-                RoundedRectangle(cornerRadius: RepbaseDesign.controlRadius)
-                    .strokeBorder(timeOfDay.border, lineWidth: 1)
-            }
+            .repbaseDepthSurface(cornerRadius: RepbaseDesign.controlRadius)
             .opacity(isEnabled ? (configuration.isPressed ? 0.72 : 1) : 0.42)
-            .scaleEffect(configuration.isPressed ? 0.985 : 1)
+            .scaleEffect(configuration.isPressed ? 0.965 : 1)
+            .offset(y: configuration.isPressed ? 2 : 0)
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
 }
