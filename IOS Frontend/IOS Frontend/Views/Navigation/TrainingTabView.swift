@@ -49,6 +49,12 @@ struct TrainingTabView: View {
                 case .food: FoodTrackingView()
                 }
             }
+            // The switch is the heading for both halves. Left alone, the
+            // workouts side drew a large "Workouts" title directly above a
+            // segment already reading Workouts, and the food side hid its
+            // navigation bar, so the header appeared and vanished depending on
+            // which half was showing.
+            .toolbar(.hidden, for: .navigationBar)
             .homeTimeScreen(timeOfDay)
         }
     }
