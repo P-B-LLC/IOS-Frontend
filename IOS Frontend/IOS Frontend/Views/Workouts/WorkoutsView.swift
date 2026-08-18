@@ -9,6 +9,9 @@ import SwiftUI
 
 struct WorkoutsView: View {
     @Environment(WorkoutStore.self) private var store
+    /// Opens the composer on this page's own kind, so it asks which workout
+    /// rather than which feature.
+    @State private var isSharingWorkout = false
 
     private var phase: WorkoutVisualPhase {
         store.activeSession == nil ? .prepare : .focus
@@ -32,6 +35,7 @@ struct WorkoutsView: View {
                     weekCard
                     focusCard
                     weeklySummary
+                    shareWorkoutButton
                 }
             }
             .padding(.horizontal, RepbaseDesign.pageInset)
@@ -40,6 +44,29 @@ struct WorkoutsView: View {
         }
         .repbaseScreen(phase)
         .toolbar(.hidden, for: .navigationBar)
+        .sheet(isPresented: $isSharingWorkout) {
+            PostComposerView(source: .workout)
+        }
+    }
+
+    /// Shares a session from the page that lists the week, the way a meal is
+    /// shared from the page that lists the meals.
+    ///
+    /// Always offered, unlike the food page's button. What can be posted here
+    /// is a *finished session*, which lives on the server rather than in this
+    /// screen's data, so knowing whether any exist would mean a request on
+    /// every visit to this page. The composer says what to do when the list
+    /// comes back empty instead.
+    private var shareWorkoutButton: some View {
+        Button {
+            isSharingWorkout = true
+        } label: {
+            Label("Share a workout", systemImage: "square.and.arrow.up")
+                .font(.subheadline.weight(.semibold))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 11)
+        }
+        .repbaseControlSurface(cornerRadius: 15)
     }
 
     private var intro: some View {
@@ -64,41 +91,29 @@ struct WorkoutsView: View {
                 Label("Workout Plan", systemImage: "calendar")
                     .font(.headline)
                 Spacer()
-                Text("\(plannedWorkoutCount) scheduled")
-                    .font(.caption.weight(.semibold))
+                Text("Tap a day")
+                    .font(.caption)
                     .foregroundStyle(phase.secondaryText)
             }
 
-            ScrollView(.horizontal) {
-                LazyHStack(spacing: 10) {
-                    ForEach(Weekday.allCases) { day in
-                        NavigationLink {
-                            DayWorkoutView(day: day)
-                        } label: {
-                            WorkoutPlannerDayCard(
-                                day: day,
-                                dateLabel: store.dateLabel(for: day),
-                                workout: store.workout(on: day),
-                                isToday: store.today == day,
-                                isSessionActive: store.activeSession?.day == day,
-                                workoutCount: store.workoutCount(on: day)
-                            )
-                        }
-                        .buttonStyle(.plain)
+            HStack(alignment: .top, spacing: 6) {
+                ForEach(Weekday.allCases) { day in
+                    NavigationLink {
+                        DayWorkoutView(day: day)
+                    } label: {
+                        WorkoutDayTile(
+                            day: day,
+                            workout: store.workout(on: day),
+                            isToday: store.today == day,
+                            isSessionActive: store.activeSession?.day == day,
+                            workoutCount: store.workoutCount(on: day)
+                        )
                     }
+                    .buttonStyle(.plain)
                 }
             }
-            .scrollIndicators(.hidden)
-
-            Label("Select a day to view its workout or add a new one", systemImage: "hand.tap")
-                .font(.caption2.weight(.medium))
-                .foregroundStyle(phase.secondaryText)
         }
         .workoutCard()
-    }
-
-    private var plannedWorkoutCount: Int {
-        Weekday.allCases.reduce(0) { $0 + store.workoutCount(on: $1) }
     }
 
     @ViewBuilder
