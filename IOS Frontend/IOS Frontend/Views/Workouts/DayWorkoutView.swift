@@ -655,7 +655,7 @@ struct DayWorkoutView: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Label("SESSION IN PROGRESS", systemImage: "bolt.fill")
                             .font(.caption.weight(.bold))
-                            .foregroundStyle(Color(hex: 0xFDC094))
+                            .foregroundStyle(RepbasePalette.sand)
                         Text(session.workoutName)
                             .font(.largeTitle.weight(.bold))
                             .foregroundStyle(phase.primaryText)
@@ -682,7 +682,7 @@ struct DayWorkoutView: View {
                         : "\(session.loggedSetCount) of \(session.totalSetCount) sets logged"
                 )
                 .font(.caption)
-                .foregroundStyle(Color(hex: 0xFDC094))
+                .foregroundStyle(RepbasePalette.sand)
             }
             .padding(18)
             .background {
@@ -762,7 +762,7 @@ struct DayWorkoutView: View {
 
                 HStack(spacing: 7) {
                     Circle()
-                        .fill(Color(hex: 0xF86722))
+                        .fill(RepbasePalette.caramel)
                         .frame(width: 7, height: 7)
                     Text("COMPLETE")
                         .font(.caption2.weight(.bold))

@@ -31,7 +31,7 @@ struct TodaysTasksList: View {
             dayColumn
 
             Rectangle()
-                .fill(timeOfDay.canvasBorder)
+                .fill(timeOfDay.border)
                 .frame(width: 1)
                 .frame(maxHeight: .infinity)
 
@@ -48,7 +48,7 @@ struct TodaysTasksList: View {
                         rowDivider
                         Text("+\(tasks.count - visibleLimit) more in the planner")
                             .font(.system(size: 11, weight: .medium))
-                            .foregroundStyle(timeOfDay.canvasSecondaryText)
+                            .foregroundStyle(timeOfDay.secondaryText)
                             .padding(.vertical, 11)
                     }
                 }
@@ -72,10 +72,10 @@ struct TodaysTasksList: View {
             Text("\(Calendar.current.component(.day, from: Date()))")
                 .font(.system(size: 34, weight: .light, design: .serif))
                 .italic()
-                .foregroundStyle(timeOfDay.canvasPrimaryText)
+                .foregroundStyle(timeOfDay.primaryText)
             Text(Date().formatted(.dateTime.weekday(.abbreviated)).uppercased())
                 .font(.system(size: 9, weight: .semibold))
-                .foregroundStyle(timeOfDay.canvasSecondaryText)
+                .foregroundStyle(timeOfDay.secondaryText)
         }
         .frame(width: 38, alignment: .trailing)
         .padding(.top, 2)
@@ -90,16 +90,16 @@ struct TodaysTasksList: View {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text("To-do")
                     .font(.system(size: 19, weight: .bold, design: .rounded))
-                    .foregroundStyle(timeOfDay.canvasPrimaryText)
+                    .foregroundStyle(timeOfDay.primaryText)
                 Spacer(minLength: 0)
                 if !tasks.isEmpty {
                     Text("\(done) of \(tasks.count)")
                         .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                        .foregroundStyle(timeOfDay.secondaryText)
                 }
                 Image(systemName: "chevron.right")
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+                    .foregroundStyle(timeOfDay.secondaryText)
             }
             .padding(.bottom, 10)
             .contentShape(Rectangle())
@@ -110,7 +110,7 @@ struct TodaysTasksList: View {
 
     private var rowDivider: some View {
         Rectangle()
-            .fill(timeOfDay.canvasBorder)
+            .fill(timeOfDay.border)
             .frame(height: 1)
     }
 
@@ -123,9 +123,9 @@ struct TodaysTasksList: View {
                 Text(task.title)
                     .font(.system(size: 13, weight: isDue(task) ? .semibold : .medium))
                     .foregroundStyle(
-                        task.isComplete ? timeOfDay.canvasSecondaryText : timeOfDay.canvasPrimaryText
+                        task.isComplete ? timeOfDay.secondaryText : timeOfDay.primaryText
                     )
-                    .strikethrough(task.isComplete, color: timeOfDay.canvasSecondaryText)
+                    .strikethrough(task.isComplete, color: timeOfDay.secondaryText)
                     .lineLimit(1)
             }
 
@@ -147,7 +147,7 @@ struct TodaysTasksList: View {
             ZStack {
                 RoundedRectangle(cornerRadius: 4)
                     .strokeBorder(
-                        task.isComplete ? Color.clear : timeOfDay.canvasSecondaryText.opacity(0.55),
+                        task.isComplete ? Color.clear : timeOfDay.secondaryText.opacity(0.55),
                         lineWidth: 1.5
                     )
                     .frame(width: 17, height: 17)
@@ -189,7 +189,7 @@ struct TodaysTasksList: View {
             HStack(spacing: 5) {
                 Text(time)
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(timeOfDay.canvasPrimaryText)
+                    .foregroundStyle(timeOfDay.primaryText)
                 Text("Past Due")
                     .font(.system(size: 8, weight: .bold))
                     .foregroundStyle(Color.white)
@@ -201,7 +201,7 @@ struct TodaysTasksList: View {
             Text(time)
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(
-                    task.isComplete ? timeOfDay.canvasSecondaryText : timeOfDay.canvasPrimaryText
+                    task.isComplete ? timeOfDay.secondaryText : timeOfDay.primaryText
                 )
         }
     }
@@ -232,9 +232,9 @@ struct TodaysTasksList: View {
                 // the warmer palettes.
                 Image(systemName: "plus")
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(timeOfDay.canvasPrimaryText)
+                    .foregroundStyle(timeOfDay.primaryText)
                     .frame(width: 30, height: 30)
-                    .background(Circle().strokeBorder(timeOfDay.canvasBorder, lineWidth: 1))
+                    .background(Circle().strokeBorder(timeOfDay.border, lineWidth: 1))
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -247,7 +247,7 @@ struct TodaysTasksList: View {
     private var emptyState: some View {
         Text("Nothing to do today.")
             .font(.system(size: 13))
-            .foregroundStyle(timeOfDay.canvasSecondaryText)
+            .foregroundStyle(timeOfDay.secondaryText)
             .padding(.vertical, 11)
     }
 

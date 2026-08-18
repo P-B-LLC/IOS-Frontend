@@ -112,10 +112,10 @@ struct PlannerView: View {
         } label: {
             Label(title, systemImage: systemImage)
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(isProminent ? Color(hex: 0xFFFFFF) : timeOfDay.primaryText)
+                .foregroundStyle(isProminent ? RepbasePalette.cream : timeOfDay.primaryText)
                 .frame(maxWidth: .infinity, minHeight: 44)
                 .background(
-                    isProminent ? timeOfDay.accent : timeOfDay.surfaceRaised,
+                    isProminent ? timeOfDay.ink : timeOfDay.surfaceRaised,
                     in: RoundedRectangle(cornerRadius: 15)
                 )
                 .overlay {

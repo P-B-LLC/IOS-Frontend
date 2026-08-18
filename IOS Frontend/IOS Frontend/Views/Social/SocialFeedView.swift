@@ -145,6 +145,7 @@ struct PostCard: View {
             RoundedRectangle(cornerRadius: 18)
                 .strokeBorder(timeOfDay.border, lineWidth: 1)
         }
+        .shadow(color: timeOfDay.shadow.opacity(0.55), radius: 10, x: 0, y: 6)
     }
 
     private var author: some View {

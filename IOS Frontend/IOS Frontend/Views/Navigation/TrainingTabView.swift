@@ -69,14 +69,14 @@ struct TrainingTabView: View {
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(
                             item == half
-                                ? Color(hex: 0x1B1415)
+                                ? RepbasePalette.cream
                                 : timeOfDay.canvasSecondaryText
                         )
                         .frame(maxWidth: .infinity, minHeight: 38)
                         .background {
                             if item == half {
                                 RoundedRectangle(cornerRadius: 13)
-                                    .fill(timeOfDay.accent)
+                                    .fill(timeOfDay.ink)
                             }
                         }
                         .contentShape(Rectangle())

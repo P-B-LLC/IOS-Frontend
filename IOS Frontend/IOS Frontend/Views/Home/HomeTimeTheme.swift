@@ -7,6 +7,24 @@
 
 import SwiftUI
 
+/// The shared soft-luxury palette. These constants intentionally live beside
+/// the time theme so every feature can speak the same visual language without
+/// changing any of its data or navigation behavior.
+enum RepbasePalette {
+    static let cream = Color(hex: 0xF7F2EC)
+    static let paper = Color(hex: 0xFFF9F4)
+    static let oatmeal = Color(hex: 0xE9DDD3)
+    static let sand = Color(hex: 0xD7C1B1)
+    static let caramel = Color(hex: 0xA8795E)
+    static let cocoa = Color(hex: 0x6F5548)
+    static let espresso = Color(hex: 0x493B35)
+    static let charcoal = Color(hex: 0x242120)
+    static let night = Color(hex: 0x171616)
+    static let ink = Color(hex: 0x292421)
+    static let muted = Color(hex: 0x8B786D)
+    static let sage = Color(hex: 0x789182)
+}
+
 enum HomeTimeOfDay: String, Sendable, Equatable {
     case dawn
     case day
@@ -28,83 +46,83 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
 
     var canvasStart: Color {
         switch self {
-        case .dawn: Color(hex: 0xF7F7F8)
-        case .day: Color(hex: 0xF7F7F8)
-        case .dusk: Color(hex: 0xC9A89A)
-        case .night: Color(hex: 0x2C252A)
+        case .dawn: Color(hex: 0xFCF7F1)
+        case .day: RepbasePalette.cream
+        case .dusk: Color(hex: 0x896C5E)
+        case .night: Color(hex: 0x252220)
         }
     }
 
     var canvasMiddle: Color {
         switch self {
-        case .dawn: Color(hex: 0xF4ECE8)
-        case .day: Color(hex: 0xEFEFEF)
-        case .dusk: Color(hex: 0x9A7468)
-        case .night: Color(hex: 0x1F1A1E)
+        case .dawn: Color(hex: 0xF4E9DF)
+        case .day: Color(hex: 0xF0E6DE)
+        case .dusk: Color(hex: 0x6A5147)
+        case .night: Color(hex: 0x1D1B1A)
         }
     }
 
     var canvasEnd: Color {
         switch self {
-        case .dawn: Color(hex: 0xEEDBD1)
-        case .day: Color(hex: 0xCFCFD0)
-        case .dusk: Color(hex: 0x67534D)
-        case .night: Color(hex: 0x151216)
+        case .dawn: Color(hex: 0xE8D5C7)
+        case .day: Color(hex: 0xE2D2C6)
+        case .dusk: Color(hex: 0x3F3430)
+        case .night: RepbasePalette.night
         }
     }
 
     var primaryText: Color {
-        usesDarkAppearance ? Color(hex: 0xF7F7F8) : Color(hex: 0x1B1415)
+        usesDarkAppearance ? RepbasePalette.cream : RepbasePalette.ink
     }
 
     var secondaryText: Color {
-        usesDarkAppearance ? Color(hex: 0xCBBDBA) : Color(hex: 0x67534D)
+        usesDarkAppearance ? Color(hex: 0xCDBFB5) : RepbasePalette.muted
     }
 
     var surface: Color {
         switch self {
-        case .night: Color(hex: 0x272126)
-        case .dusk: Color(hex: 0xE6D9D3)
-        case .dawn, .day: Color(hex: 0xF9F9FA)
+        case .night: Color(hex: 0x292624)
+        case .dusk: Color(hex: 0xF0E5DC)
+        case .dawn, .day: Color(hex: 0xF2E8E0)
         }
     }
 
     var surfaceRaised: Color {
         switch self {
-        case .night: Color(hex: 0x332C30)
-        case .dusk: Color(hex: 0xF0E6E1)
-        case .dawn, .day: .white
+        case .night: Color(hex: 0x332F2C)
+        case .dusk: Color(hex: 0xFFF7F0)
+        case .dawn, .day: RepbasePalette.paper
         }
     }
 
     var selectorSurface: Color {
-        usesDarkAppearance ? Color(hex: 0x40363C) : surface.opacity(0.94)
+        usesDarkAppearance ? Color(hex: 0x3B3633) : RepbasePalette.oatmeal.opacity(0.72)
     }
 
     var emptyDaySurface: Color {
-        usesDarkAppearance ? Color(hex: 0x2A2428) : Color(hex: 0xE8E5E5)
+        usesDarkAppearance ? Color(hex: 0x292624) : RepbasePalette.oatmeal
     }
 
-    var plannedDaySurface: Color { Color(hex: 0x67534D) }
-    var completedDaySurface: Color { Color(hex: 0xF9F9FA) }
-    var accent: Color { Color(hex: 0xF86722) }
-    var ink: Color { Color(hex: 0x1B1415) }
+    var plannedDaySurface: Color { RepbasePalette.espresso }
+    var completedDaySurface: Color { RepbasePalette.paper }
+    var accent: Color { self == .night ? Color(hex: 0xC69B7F) : RepbasePalette.caramel }
+    var ink: Color { RepbasePalette.charcoal }
 
     var heroEnd: Color {
         switch self {
-        case .dawn: Color(hex: 0x67534D)
-        case .day: Color(hex: 0x2C2426)
-        case .dusk: Color(hex: 0x5B2414)
-        case .night: Color(hex: 0x673326)
+        case .dawn: Color(hex: 0x5D4A40)
+        case .day: RepbasePalette.espresso
+        case .dusk: Color(hex: 0x3A302D)
+        case .night: Color(hex: 0x4A3A33)
         }
     }
 
     var border: Color {
-        usesDarkAppearance ? Color.white.opacity(0.17) : Color.white.opacity(0.72)
+        usesDarkAppearance ? Color.white.opacity(0.12) : RepbasePalette.espresso.opacity(0.10)
     }
 
     var shadow: Color {
-        usesDarkAppearance ? Color.black.opacity(0.30) : Color(hex: 0x67534D).opacity(0.22)
+        usesDarkAppearance ? Color.black.opacity(0.26) : RepbasePalette.espresso.opacity(0.14)
     }
 
     // MARK: - Drawn straight on the canvas
@@ -118,15 +136,15 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
     var hasDarkCanvas: Bool { self == .dusk || self == .night }
 
     var canvasPrimaryText: Color {
-        hasDarkCanvas ? Color(hex: 0xFFFFFF) : Color(hex: 0x1B1415)
+        hasDarkCanvas ? RepbasePalette.cream : RepbasePalette.ink
     }
 
     var canvasSecondaryText: Color {
-        hasDarkCanvas ? Color.white.opacity(0.82) : Color(hex: 0x67534D)
+        hasDarkCanvas ? Color.white.opacity(0.72) : RepbasePalette.muted
     }
 
     var canvasBorder: Color {
-        hasDarkCanvas ? Color.white.opacity(0.30) : Color.white.opacity(0.72)
+        hasDarkCanvas ? Color.white.opacity(0.16) : RepbasePalette.espresso.opacity(0.12)
     }
 }
 
@@ -158,6 +176,14 @@ private struct HomeTimeScreenModifier: ViewModifier {
                     endPoint: .bottomTrailing
                 )
                 .ignoresSafeArea()
+                .overlay {
+                    LinearGradient(
+                        colors: [Color.white.opacity(timeOfDay.hasDarkCanvas ? 0.01 : 0.24), .clear],
+                        startPoint: .top,
+                        endPoint: .center
+                    )
+                    .ignoresSafeArea()
+                }
             }
             .environment(\.homeTimeOfDay, timeOfDay)
             .environment(\.workoutVisualPhase, timeOfDay.usesDarkAppearance ? .focus : .prepare)
@@ -172,7 +198,7 @@ extension View {
     }
 }
 
-/// The tactile circular navigation control used for Back and Settings.
+/// A quiet, compact navigation control used for Back and Settings.
 struct RepbaseSculptedIconButtonStyle: ButtonStyle {
     let timeOfDay: HomeTimeOfDay
 
@@ -180,14 +206,15 @@ struct RepbaseSculptedIconButtonStyle: ButtonStyle {
         configuration.label
             .font(.body.weight(.semibold))
             .foregroundStyle(timeOfDay.primaryText)
-            .frame(width: 44, height: 44)
+            .frame(width: 42, height: 42)
             .background {
-                Circle()
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(timeOfDay.surfaceRaised)
-                    .shadow(color: timeOfDay.shadow.opacity(0.72), radius: 9, x: 3, y: 6)
+                    .shadow(color: timeOfDay.shadow.opacity(0.62), radius: 7, x: 0, y: 4)
             }
             .overlay {
-                Circle().strokeBorder(timeOfDay.border, lineWidth: 1)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(timeOfDay.border, lineWidth: 1)
             }
             .scaleEffect(configuration.isPressed ? 0.94 : 1)
             .opacity(configuration.isPressed ? 0.78 : 1)
@@ -195,7 +222,8 @@ struct RepbaseSculptedIconButtonStyle: ButtonStyle {
     }
 }
 
-/// A compact, unmistakable primary navigation action such as Save or Goals.
+/// A compact, unmistakable action with the charcoal/caramel contrast used by
+/// the reference design.
 struct RepbaseAccentCapsuleButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
     let timeOfDay: HomeTimeOfDay
@@ -203,22 +231,17 @@ struct RepbaseAccentCapsuleButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.subheadline.weight(.bold))
-            .foregroundStyle(Color.white)
-            .padding(.horizontal, 15)
+            .foregroundStyle(RepbasePalette.cream)
+            .padding(.horizontal, 16)
             .frame(height: 42)
             .background {
-                Capsule()
-                    .fill(
-                        LinearGradient(
-                            colors: [timeOfDay.accent, timeOfDay.accent.opacity(0.82)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .shadow(color: timeOfDay.accent.opacity(0.30), radius: 10, x: 3, y: 6)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(timeOfDay.ink)
+                    .shadow(color: timeOfDay.shadow.opacity(0.75), radius: 8, x: 0, y: 5)
             }
             .overlay {
-                Capsule().strokeBorder(Color.white.opacity(0.28), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.10), lineWidth: 1)
             }
             .scaleEffect(configuration.isPressed ? 0.96 : 1)
             .opacity(isEnabled ? (configuration.isPressed ? 0.80 : 1) : 0.42)

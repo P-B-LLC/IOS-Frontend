@@ -26,47 +26,36 @@ struct ContentView: View {
                     VStack(spacing: 0) {
                         HomeHeader(date: context.date)
 
-                        HomeCategorySection(
-                            number: "01",
-                            eyebrow: "ORGANIZE",
-                            title: "Calendar",
-                            detail: "Give workouts a time and manage the rest of your day.",
-                            symbol: "calendar",
-                            destination: PlannerView()
-                        ) {
-                            VStack(spacing: 14) {
-                                HomeCalendarCard()
-                                TodaysTasksList()
-                            }
-                        }
-                        .padding(.top, 30)
+                        TodayOverviewHero(date: context.date)
+                            .padding(.top, 22)
 
-                        HomeCategorySection(
-                            number: "02",
-                            eyebrow: "TRAIN",
-                            title: "Workout",
-                            detail: "Plan the week, build sessions, and start training.",
-                            symbol: "dumbbell.fill",
-                            destination: WorkoutsView()
-                        ) {
-                            HStack(alignment: .top, spacing: 16) {
-                                WeeklyPlanCard()
-                                TodayWorkoutCard()
-                            }
-                        }
-                        .padding(.top, 34)
-
-                        HomeCategorySection(
-                            number: "03",
-                            eyebrow: "NOURISH",
-                            title: "Food",
-                            detail: "Log meals and keep daily nutrition in view.",
-                            symbol: "fork.knife",
+                        HomeSoftSection(
+                            title: "Food Today",
+                            destinationTitle: "Open",
                             destination: FoodTrackingView()
                         ) {
                             FoodSummaryWidget()
                         }
-                        .padding(.top, 34)
+                        .padding(.top, 24)
+
+                        HomeSoftSection(
+                            title: "To-do",
+                            destinationTitle: "Calendar",
+                            destination: PlannerView()
+                        ) {
+                            TodaysTasksList()
+                                .padding(16)
+                                .background(
+                                    timeOfDay.surfaceRaised,
+                                    in: RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                )
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                        .strokeBorder(timeOfDay.border, lineWidth: 1)
+                                }
+                                .shadow(color: timeOfDay.shadow.opacity(0.62), radius: 10, x: 0, y: 6)
+                        }
+                        .padding(.top, 24)
 
                         if let error = workoutStore.persistenceError {
                             persistenceErrorCard(error)
@@ -118,6 +107,164 @@ struct ContentView: View {
                 .foregroundStyle(timeOfDay.primaryText)
                 .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 16))
         }
+    }
+}
+
+private struct HomeSoftSection<Destination: View, Content: View>: View {
+    @Environment(\.homeTimeOfDay) private var timeOfDay
+
+    let title: String
+    let destinationTitle: String
+    let destination: Destination
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(title)
+                    .font(.system(size: 20, weight: .semibold, design: .rounded))
+                    .foregroundStyle(timeOfDay.canvasPrimaryText)
+                Spacer()
+                NavigationLink {
+                    destination
+                } label: {
+                    HStack(spacing: 5) {
+                        Text(destinationTitle)
+                        Image(systemName: "arrow.up.right")
+                    }
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+                }
+                .buttonStyle(.plain)
+            }
+            content
+        }
+    }
+}
+
+/// The day's workout and nearest calendar item share one dark focus panel,
+/// matching the reference layout while keeping both existing destinations.
+private struct TodayOverviewHero: View {
+    @Environment(WorkoutStore.self) private var workoutStore
+    @Environment(PlannerStore.self) private var plannerStore
+    @Environment(\.homeTimeOfDay) private var timeOfDay
+
+    let date: Date
+
+    var body: some View {
+        NavigationLink {
+            if let today = workoutStore.today {
+                DayWorkoutView(day: today)
+            } else {
+                WorkoutsView()
+            }
+        } label: {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("TODAY · \(date.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()).uppercased())")
+                    .font(.system(size: 10, weight: .bold))
+                    .tracking(1.15)
+                    .foregroundStyle(Color(hex: 0xCBB19F))
+
+                HStack(alignment: .firstTextBaseline) {
+                    Text(workoutName)
+                        .font(.system(size: 27, weight: .semibold, design: .rounded))
+                    Spacer(minLength: 10)
+                    Text(workoutMeta)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(Color(hex: 0xC7B5AA))
+                        .lineLimit(1)
+                }
+
+                HStack(spacing: 10) {
+                    HeroAgendaItem(
+                        title: workoutTime,
+                        detail: "Workout",
+                        symbol: "dumbbell.fill"
+                    )
+                    HeroAgendaItem(
+                        title: nextEvent?.displayTime ?? "Open",
+                        detail: nextEvent?.title ?? "Calendar",
+                        symbol: nextEvent?.category.symbolName ?? "calendar"
+                    )
+                }
+
+                HStack {
+                    Text(workoutStore.activeSession == nil ? "Start workout" : "Continue workout")
+                    Spacer()
+                    Image(systemName: "arrow.right")
+                }
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(RepbasePalette.charcoal)
+                .padding(.horizontal, 14)
+                .frame(height: 46)
+                .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 13))
+            }
+            .padding(18)
+            .foregroundStyle(RepbasePalette.cream)
+            .background {
+                WorkoutHeroBackground(phase: .prepare)
+                    .clipShape(RoundedRectangle(cornerRadius: 21, style: .continuous))
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: 21, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.10), lineWidth: 1)
+            }
+            .shadow(color: Color.black.opacity(0.20), radius: 15, x: 0, y: 9)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var workout: Workout? {
+        guard let today = workoutStore.today else { return nil }
+        return workoutStore.workout(on: today)
+    }
+
+    private var workoutName: String {
+        workoutStore.activeSession?.workoutName ?? workout?.name ?? "Plan today's workout"
+    }
+
+    private var workoutMeta: String {
+        guard let workout else { return "No session yet" }
+        return "\(workout.exercises.count) exercises · \(workout.totalSets) sets"
+    }
+
+    private var workoutTime: String {
+        plannerStore.entries(on: date)
+            .first(where: { $0.category == .workout })?
+            .displayTime ?? "Anytime"
+    }
+
+    private var nextEvent: PlannerEntry? {
+        plannerStore.entries(on: date)
+            .filter { $0.kind == .event }
+            .sorted { ($0.time ?? "99:99") < ($1.time ?? "99:99") }
+            .first
+    }
+}
+
+private struct HeroAgendaItem: View {
+    let title: String
+    let detail: String
+    let symbol: String
+
+    var body: some View {
+        HStack(spacing: 9) {
+            Image(systemName: symbol)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(Color(hex: 0xCBB19F))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 13, weight: .semibold))
+                Text(detail)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(Color(hex: 0xC7B5AA))
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(11)
+        .frame(maxWidth: .infinity)
+        .background(Color.white.opacity(0.075), in: RoundedRectangle(cornerRadius: 13))
     }
 }
 
@@ -204,12 +351,12 @@ private struct HomeHeader: View {
     var body: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 3) {
-                Text("\(timeOfDay.label) · \(date.formatted(.dateTime.weekday(.wide)).uppercased())")
-                    .font(.system(size: 11, weight: .semibold))
-                    .tracking(0.9)
-                    .foregroundStyle(timeOfDay.secondaryText)
+                Text(salutation)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
                 Text(headline)
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .font(.system(size: 28, weight: .semibold, design: .rounded))
+                    .foregroundStyle(timeOfDay.canvasPrimaryText)
             }
 
             Spacer(minLength: 12)
@@ -239,12 +386,12 @@ private struct HomeHeader: View {
                 .font(.system(size: 17, weight: .bold, design: .rounded))
                 .foregroundStyle(timeOfDay.primaryText)
                 .frame(width: 44, height: 44)
-                .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 15))
+                .background(timeOfDay.surfaceRaised, in: Circle())
                 .overlay {
-                    RoundedRectangle(cornerRadius: 15)
+                    Circle()
                         .strokeBorder(timeOfDay.border, lineWidth: 1)
                 }
-                .shadow(color: timeOfDay.shadow.opacity(0.7), radius: 7, x: 3, y: 5)
+                .shadow(color: timeOfDay.shadow.opacity(0.7), radius: 7, x: 0, y: 5)
         }
         .disabled(authentication.isWorking)
         .accessibilityLabel("Account")
@@ -256,9 +403,18 @@ private struct HomeHeader: View {
     }
 
     private var headline: String {
-        guard case .signedIn(let user) = authentication.phase else { return "Hello" }
+        guard case .signedIn(let user) = authentication.phase else { return "Welcome back" }
         let firstName = user.displayName.split(separator: " ").first.map(String.init) ?? user.displayName
-        return "Hello \(firstName)"
+        return firstName
+    }
+
+    private var salutation: String {
+        switch timeOfDay {
+        case .dawn: "Good morning,"
+        case .day: "Good afternoon,"
+        case .dusk: "Good evening,"
+        case .night: "Good evening,"
+        }
     }
 }
 
@@ -326,9 +482,9 @@ private struct WeeklyPlanCard: View {
                 if showsScrollBar {
                     ZStack(alignment: .top) {
                         Capsule()
-                            .fill(Color(hex: 0x1B1415).opacity(0.16))
+                            .fill(RepbasePalette.charcoal.opacity(0.16))
                         Capsule()
-                            .fill(Color(hex: 0x1B1415).opacity(0.58))
+                            .fill(RepbasePalette.charcoal.opacity(0.58))
                             .frame(height: scrollThumbHeight)
                             .offset(y: scrollThumbOffset)
                     }
@@ -338,7 +494,7 @@ private struct WeeklyPlanCard: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, minHeight: 214, maxHeight: 214, alignment: .topLeading)
-        .foregroundStyle(Color(hex: 0x1B1415))
+        .foregroundStyle(RepbasePalette.charcoal)
         .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 24))
         .overlay(alignment: .top) {
             RoundedRectangle(cornerRadius: 24)
@@ -425,10 +581,10 @@ private struct TodayWorkoutCard: View {
                 Text(Date().formatted(.dateTime.month(.abbreviated).day()))
                     .font(.system(size: 9, weight: .semibold))
                     .tracking(0.6)
-                    .foregroundStyle(Color(hex: 0xACA6A5))
+                    .foregroundStyle(RepbasePalette.muted)
                 Text(prompt)
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(Color(hex: 0xF7F7F8).opacity(0.72))
+                    .foregroundStyle(RepbasePalette.cream.opacity(0.72))
                     .padding(.top, 9)
                 Text(title)
                     .font(.system(size: 21, weight: .bold, design: .rounded))
@@ -440,7 +596,7 @@ private struct TodayWorkoutCard: View {
 
                 Text(meta)
                     .font(.system(size: 9, weight: .medium))
-                    .foregroundStyle(Color(hex: 0xACA6A5))
+                    .foregroundStyle(RepbasePalette.muted)
                     .lineLimit(2)
 
                 HStack {
@@ -449,11 +605,11 @@ private struct TodayWorkoutCard: View {
                     Spacer()
                     Image(systemName: store.activeSession == nil ? "arrow.right" : "play.fill")
                         .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(Color(hex: 0xF7F7F8))
+                        .foregroundStyle(RepbasePalette.cream)
                         .frame(width: 38, height: 38)
                         .background(timeOfDay.ink, in: Circle())
                 }
-                .foregroundStyle(Color(hex: 0x1B1415))
+                .foregroundStyle(RepbasePalette.charcoal)
                 .padding(.leading, 18)
                 .padding(.trailing, 5)
                 .frame(height: 48)
@@ -462,7 +618,7 @@ private struct TodayWorkoutCard: View {
             }
             .padding(16)
             .frame(maxWidth: .infinity, minHeight: 214, alignment: .topLeading)
-            .foregroundStyle(Color(hex: 0xF7F7F8))
+            .foregroundStyle(RepbasePalette.cream)
             .background {
                 LinearGradient(
                     colors: [timeOfDay.ink, timeOfDay.heroEnd],

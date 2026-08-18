@@ -131,25 +131,25 @@ struct WorkoutsView: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text("TODAY")
                             .font(.caption2.weight(.bold))
-                            .foregroundStyle(Color(hex: 0xFDC094))
+                            .foregroundStyle(RepbasePalette.sand)
                         Text(store.workout(on: focusDay)?.name ?? "Plan today's workout")
                             .font(.headline)
-                            .foregroundStyle(Color(hex: 0xF7F7F8))
+                            .foregroundStyle(RepbasePalette.cream)
                         Text(focusDescription(for: focusDay))
                             .font(.caption)
-                            .foregroundStyle(Color(hex: 0xCFCFD0))
+                            .foregroundStyle(Color(hex: 0xCDBFB5))
                     }
 
                     Spacer()
                     Image(systemName: "chevron.forward")
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(Color(hex: 0xFDC094))
+                        .foregroundStyle(RepbasePalette.sand)
                 }
                 .padding(16)
                 .background {
                     WorkoutHeroBackground(phase: phase)
                         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                        .shadow(color: phase.shadow, radius: 14, x: 5, y: 8)
+                        .shadow(color: phase.shadow, radius: 14, x: 0, y: 8)
                 }
                 .overlay {
                     RoundedRectangle(cornerRadius: 20, style: .continuous)

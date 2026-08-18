@@ -112,12 +112,13 @@ struct RepbaseBottomNavigation: View {
                 .accessibilityAddTraits(item == tab ? [.isSelected] : [])
             }
         }
-        .padding(6)
-        .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 20))
+        .padding(5)
+        .background(RepbasePalette.paper, in: RoundedRectangle(cornerRadius: 19))
         .overlay {
-            RoundedRectangle(cornerRadius: 20).strokeBorder(timeOfDay.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: 19)
+                .strokeBorder(RepbasePalette.espresso.opacity(0.10), lineWidth: 1)
         }
-        .shadow(color: timeOfDay.shadow, radius: 10, x: 5, y: 7)
+        .shadow(color: Color.black.opacity(0.13), radius: 13, x: 0, y: 7)
         .animation(.easeOut(duration: 0.18), value: tab)
     }
 
@@ -129,12 +130,12 @@ struct RepbaseBottomNavigation: View {
     private func selected(_ item: RepbaseTab) -> some View {
         Label(item.title, systemImage: item.symbol)
             .font(.system(size: 13, weight: .semibold))
-            .foregroundStyle(Color(hex: 0x1B1415))
+            .foregroundStyle(RepbasePalette.cream)
             .lineLimit(1)
             .fixedSize(horizontal: true, vertical: false)
             .padding(.horizontal, 14)
-            .frame(minHeight: 48)
-            .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 16))
+            .frame(minHeight: 46)
+            .background(RepbasePalette.charcoal, in: RoundedRectangle(cornerRadius: 15))
     }
 
     private func unselected(_ item: RepbaseTab) -> some View {
@@ -142,8 +143,8 @@ struct RepbaseBottomNavigation: View {
             Image(systemName: item.symbol).font(.system(size: 14, weight: .semibold))
             Text(item.title).font(.system(size: 8, weight: .semibold))
         }
-        .foregroundStyle(timeOfDay.secondaryText)
-        .frame(maxWidth: .infinity, minHeight: 48)
+        .foregroundStyle(RepbasePalette.muted)
+        .frame(maxWidth: .infinity, minHeight: 46)
         .contentShape(Rectangle())
     }
 }

@@ -187,6 +187,17 @@ struct FoodTrackingView: View {
                 MacroGoalCard(title: "Fat", value: total.fatGrams, goal: store.goals.fatGrams)
             }
         }
+        .padding(16)
+        .background {
+            WorkoutHeroBackground(phase: .prepare)
+                .clipShape(RoundedRectangle(cornerRadius: 21, style: .continuous))
+        }
+        .overlay {
+            RoundedRectangle(cornerRadius: 21, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.10), lineWidth: 1)
+        }
+        .shadow(color: Color.black.opacity(0.18), radius: 14, x: 0, y: 8)
+        .workoutVisualPhase(.focus)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Daily nutrition totals")
     }
@@ -370,7 +381,6 @@ private struct CalorieGoalCard: View {
             }
             .frame(height: 7)
         }
-        .repbaseCard(contentPadding: 16, cornerRadius: 20)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Calories, \(value.nutritionText) of \(goal.nutritionText), \(remaining.nutritionText) remaining")
     }
@@ -408,7 +418,6 @@ private struct MacroGoalCard: View {
             .frame(height: 5)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .repbaseCard(contentPadding: 12, cornerRadius: 17)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(title), \(value.nutritionText) of \(goal.nutritionText) grams")
     }

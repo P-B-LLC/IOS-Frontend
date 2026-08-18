@@ -93,10 +93,10 @@ struct AuthenticationView: View {
         VStack(spacing: 12) {
             Image(systemName: "figure.strengthtraining.traditional")
                 .font(.system(size: 25, weight: .semibold))
-                .foregroundStyle(Color.white)
+                .foregroundStyle(RepbasePalette.cream)
                 .frame(width: 54, height: 54)
-                .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 17))
-                .shadow(color: timeOfDay.accent.opacity(0.22), radius: 9, x: 3, y: 6)
+                .background(RepbasePalette.charcoal, in: RoundedRectangle(cornerRadius: 17))
+                .shadow(color: timeOfDay.shadow.opacity(0.72), radius: 9, x: 0, y: 6)
 
             VStack(spacing: 4) {
                 Text("Repbase")
@@ -142,9 +142,10 @@ struct AuthenticationView: View {
                 Image(systemName: "arrow.right")
             }
             .font(.headline.weight(.bold))
-            .foregroundStyle(Color.white)
+            .foregroundStyle(RepbasePalette.cream)
             .frame(maxWidth: .infinity, minHeight: 54)
-            .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 17))
+            .background(RepbasePalette.charcoal, in: RoundedRectangle(cornerRadius: 17))
+            .shadow(color: timeOfDay.shadow.opacity(0.72), radius: 9, x: 0, y: 6)
         }
         .buttonStyle(.plain)
         .disabled(!canSubmit || authentication.isWorking)
@@ -244,10 +245,10 @@ private struct AccountRegistrationView: View {
                             Image(systemName: "arrow.right")
                         }
                         .font(.headline.weight(.bold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(RepbasePalette.cream)
                         .padding(.horizontal, 20)
                         .frame(height: 56)
-                        .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 18))
+                        .background(RepbasePalette.charcoal, in: RoundedRectangle(cornerRadius: 18))
                     }
                     .buttonStyle(.plain)
                     .disabled(!canRegister || authentication.isWorking)

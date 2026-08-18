@@ -15,7 +15,7 @@ struct FoodSummaryWidget: View {
         NavigationLink {
             FoodTrackingView()
         } label: {
-            HStack(alignment: .bottom, spacing: 12) {
+            HStack(alignment: .center, spacing: 16) {
                 VStack(alignment: .leading, spacing: 0) {
                     HStack(spacing: 8) {
                         Image(systemName: "fork.knife")
@@ -29,17 +29,15 @@ struct FoodSummaryWidget: View {
 
                     Spacer(minLength: 10)
 
-                    Text(total.calories.nutritionText)
-                        .font(.system(size: 25, weight: .bold, design: .rounded))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                    Text("of \(store.goals.calories.nutritionText) calories")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(timeOfDay.secondaryText)
+                    HomeCalorieArc(
+                        value: total.calories,
+                        goal: store.goals.calories,
+                        progress: calorieProgress
+                    )
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(width: 116, alignment: .leading)
 
-                HStack(spacing: 12) {
+                VStack(spacing: 11) {
                     HomeMacroMetric(title: "Protein", value: total.proteinGrams, goal: store.goals.proteinGrams)
                     HomeMacroMetric(title: "Carbs", value: total.carbohydrateGrams, goal: store.goals.carbohydrateGrams)
                     HomeMacroMetric(title: "Fat", value: total.fatGrams, goal: store.goals.fatGrams)
@@ -52,23 +50,12 @@ struct FoodSummaryWidget: View {
                     .padding(.top, 4)
             }
             .padding(16)
-            .frame(maxWidth: .infinity, minHeight: 126, alignment: .leading)
+            .frame(maxWidth: .infinity, minHeight: 150, alignment: .leading)
             .foregroundStyle(timeOfDay.primaryText)
             .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 22))
             .overlay {
-                ZStack {
-                    FoodWidgetProgressBorder(cornerRadius: 22)
-                        .stroke(timeOfDay.accent.opacity(0.16), lineWidth: 3.5)
-                    FoodWidgetProgressBorder(cornerRadius: 22)
-                        .trim(from: 0, to: calorieProgress)
-                        .stroke(
-                            timeOfDay.accent,
-                            style: StrokeStyle(lineWidth: 3.5, lineCap: .round, lineJoin: .round)
-                        )
-                        .shadow(color: timeOfDay.accent.opacity(0.28), radius: 3)
-                        .animation(.easeInOut(duration: 0.55), value: calorieProgress)
-                }
-                .padding(1.75)
+                RoundedRectangle(cornerRadius: 22)
+                    .strokeBorder(timeOfDay.border, lineWidth: 1)
                 .allowsHitTesting(false)
             }
             .shadow(color: timeOfDay.shadow, radius: 10, x: 5, y: 8)
@@ -87,6 +74,37 @@ struct FoodSummaryWidget: View {
         let goal = store.goals.calories.nutritionDouble
         guard goal > 0 else { return 0 }
         return CGFloat(min(max(total.calories.nutritionDouble / goal, 0), 1))
+    }
+}
+
+private struct HomeCalorieArc: View {
+    @Environment(\.homeTimeOfDay) private var timeOfDay
+
+    let value: Decimal
+    let goal: Decimal
+    let progress: CGFloat
+
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            Circle()
+                .trim(from: 0.5, to: 1)
+                .stroke(timeOfDay.accent.opacity(0.16), style: StrokeStyle(lineWidth: 8, lineCap: .round))
+            Circle()
+                .trim(from: 0.5, to: 0.5 + progress * 0.5)
+                .stroke(timeOfDay.accent, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                .animation(.easeInOut(duration: 0.55), value: progress)
+
+            VStack(spacing: 1) {
+                Text(value.nutritionText)
+                    .font(.system(size: 22, weight: .semibold, design: .rounded))
+                Text("of \(goal.nutritionText) cal")
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundStyle(timeOfDay.secondaryText)
+            }
+            .padding(.bottom, 5)
+        }
+        .frame(width: 108, height: 62)
+        .clipped()
     }
 }
 
@@ -120,23 +138,23 @@ private struct HomeMacroMetric: View {
     let goal: Decimal
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Text(value.nutritionText)
-                .font(.system(size: 14, weight: .bold, design: .rounded))
-                .lineLimit(1)
-                .minimumScaleFactor(0.65)
+        HStack(spacing: 8) {
             Text(title)
-                .font(.system(size: 9, weight: .semibold))
+                .font(.system(size: 10, weight: .medium))
                 .foregroundStyle(timeOfDay.secondaryText)
+                .frame(width: 44, alignment: .leading)
             GeometryReader { proxy in
                 ZStack(alignment: .leading) {
                     Capsule().fill(timeOfDay.accent.opacity(0.14))
                     Capsule().fill(timeOfDay.accent).frame(width: proxy.size.width * progress)
                 }
             }
-            .frame(height: 5)
+            .frame(height: 4)
+            Text("\(value.nutritionText)g")
+                .font(.system(size: 11, weight: .semibold))
+                .frame(width: 36, alignment: .trailing)
         }
-        .frame(width: 47, alignment: .leading)
+        .frame(maxWidth: .infinity)
     }
 
     private var progress: CGFloat {
