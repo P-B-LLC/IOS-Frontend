@@ -141,11 +141,25 @@ nonisolated struct PostPlannerSnapshot: Equatable, Hashable, Sendable {
 /// The three snapshots sit side by side with exactly one filled in, matching
 /// the contract. A build that meets a fourth kind draws nothing for that post
 /// and everything for the rest of the page.
+/// A picture chosen for a post, ready to send.
+///
+/// Base64 in JSON rather than multipart, matching the profile photo and the
+/// contract: the generated client needs no separate upload path, and the photo
+/// travels with the create so a post is never published without it.
+nonisolated struct PostPhoto: Equatable, Hashable, Sendable {
+    /// One of the types the contract accepts, e.g. "image/jpeg".
+    let contentType: String
+    /// The image bytes, base64 encoded, with no `data:` prefix.
+    let base64: String
+}
+
 nonisolated struct FeedPost: Identifiable, Equatable, Hashable, Sendable {
     let id: Int
     var author: PostAuthor
     var kind: PostKind
     var caption: String
+    /// The attached photo, if the author chose one.
+    var imageURL: URL?
     var visibility: PostVisibility
     var createdAt: Date
     var viewerFollowsAuthor: Bool

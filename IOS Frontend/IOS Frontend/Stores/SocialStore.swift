@@ -133,7 +133,8 @@ final class SocialStore {
         kind: PostKind,
         sourceID: Int,
         caption: String,
-        visibility: PostVisibility
+        visibility: PostVisibility,
+        photo: PostPhoto? = nil
     ) async -> Bool {
         guard let repository else {
             errorMessage = "Connect to Repbase before posting."
@@ -150,7 +151,8 @@ final class SocialStore {
                 kind: kind,
                 sourceID: sourceID,
                 caption: caption,
-                visibility: visibility
+                visibility: visibility,
+                photo: photo
             )
             guard connectionGeneration == generation else { return false }
             // A private post is deliberately kept out of the stream, exactly as

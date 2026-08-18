@@ -11,6 +11,7 @@
 //
 
 import Foundation
+import PhotosUI
 import SwiftUI
 
 struct PostComposerView: View {
@@ -24,6 +25,12 @@ struct PostComposerView: View {
     @State private var selection: PostCandidate?
     @State private var caption = ""
     @State private var visibility: PostVisibility = .publicToAll
+    @State private var pickedPhoto: PhotosPickerItem?
+    /// The chosen picture, already encoded. Held as bytes as well so the sheet
+    /// can show what is about to be posted.
+    @State private var photoData: Data?
+    @State private var photoContentType: String?
+    @State private var photoError: String?
 
     /// Set when the sheet was opened from a particular thing's page, which is
     /// then the only thing it can post. Nil when opened from the feed, where
@@ -107,6 +114,7 @@ struct PostComposerView: View {
                         }
                         candidateSection(timeOfDay: timeOfDay)
                     }
+                    photoSection(timeOfDay: timeOfDay)
                     captionSection(timeOfDay: timeOfDay)
                     visibilitySection(timeOfDay: timeOfDay)
                 }
@@ -291,6 +299,131 @@ struct PostComposerView: View {
             .padding(.vertical, 22)
     }
 
+    // MARK: - Photo
+
+    /// The contract's ceiling, checked here so an oversized picture is refused
+    /// with something readable rather than by a 400 after the upload.
+    private static let photoByteLimit = 5 * 1024 * 1024
+
+    private func photoSection(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(alignment: .leading, spacing: 11) {
+            EditorialSectionTitle(
+                title: "Photo",
+                detail: "Optional. Shown above the card."
+            )
+
+            if let photoData, let image = UIImage(data: photoData) {
+                VStack(alignment: .leading, spacing: 9) {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 190)
+                        .clipShape(
+                            RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius)
+                        )
+
+                    Button("Remove photo") {
+                        clearPhoto()
+                    }
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.red)
+                }
+            } else {
+                PhotosPicker(
+                    selection: $pickedPhoto,
+                    matching: .images,
+                    photoLibrary: .shared()
+                ) {
+                    Label("Add a photo", systemImage: "photo.badge.plus")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(timeOfDay.accent)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 13)
+                        .background(
+                            timeOfDay.accent.opacity(0.09),
+                            in: RoundedRectangle(
+                                cornerRadius: RepbaseDesign.controlRadius
+                            )
+                        )
+                }
+            }
+
+            if let photoError {
+                Text(photoError)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .onChange(of: pickedPhoto) { _, item in
+            Task { await load(item) }
+        }
+    }
+
+    /// Reads the chosen picture and works out what to call it.
+    ///
+    /// The picker hands over whatever the library holds, which on an iPhone is
+    /// often HEIC. The contract accepts that, so the bytes are sent as they
+    /// are rather than re-encoded; only a type the contract does not list is
+    /// converted, and anything that cannot be identified at all is refused
+    /// here rather than by the server.
+    private func load(_ item: PhotosPickerItem?) async {
+        guard let item else { return }
+        photoError = nil
+        do {
+            guard let data = try await item.loadTransferable(type: Data.self) else {
+                photoError = "That photo could not be read."
+                return
+            }
+            guard let contentType = Self.contentType(of: data) else {
+                photoError = "That is not an image Repbase can post."
+                return
+            }
+            guard data.count <= Self.photoByteLimit else {
+                photoError = "That photo is larger than 5 MB."
+                return
+            }
+            photoData = data
+            photoContentType = contentType
+        } catch {
+            photoError = error.localizedDescription
+        }
+    }
+
+    private func clearPhoto() {
+        pickedPhoto = nil
+        photoData = nil
+        photoContentType = nil
+        photoError = nil
+    }
+
+    /// The image type, read from the bytes themselves.
+    ///
+    /// `PhotosPickerItem.supportedContentTypes` is often empty for a library
+    /// asset, and the file extension is not available at all, so the magic
+    /// number is the only thing that actually says what this is.
+    private static func contentType(of data: Data) -> String? {
+        let bytes = [UInt8](data.prefix(12))
+        guard bytes.count >= 12 else { return nil }
+        if bytes[0] == 0xFF, bytes[1] == 0xD8, bytes[2] == 0xFF {
+            return "image/jpeg"
+        }
+        if bytes[0] == 0x89, bytes[1] == 0x50, bytes[2] == 0x4E, bytes[3] == 0x47 {
+            return "image/png"
+        }
+        // RIFF....WEBP
+        if bytes[0] == 0x52, bytes[1] == 0x49, bytes[2] == 0x46, bytes[3] == 0x46,
+           bytes[8] == 0x57, bytes[9] == 0x45, bytes[10] == 0x42, bytes[11] == 0x50 {
+            return "image/webp"
+        }
+        // ....ftypheic / heix / hevc / mif1, the HEIF family the API accepts.
+        if bytes[4] == 0x66, bytes[5] == 0x74, bytes[6] == 0x79, bytes[7] == 0x70 {
+            return "image/heic"
+        }
+        return nil
+    }
+
     // MARK: - Caption
 
     private func captionSection(timeOfDay: HomeTimeOfDay) -> some View {
@@ -429,6 +562,19 @@ struct PostComposerView: View {
         return "Share a \(lockedSource.itemNoun.capitalized)"
     }
 
+    /// The chosen picture as the API wants it, or nil when there is none.
+    ///
+    /// Encoded at the moment of posting rather than at the moment of picking:
+    /// base64 is a third larger than the bytes, and a photo that is chosen and
+    /// then removed should never have been expanded at all.
+    private var attachedPhoto: PostPhoto? {
+        guard let photoData, let photoContentType else { return nil }
+        return PostPhoto(
+            contentType: photoContentType,
+            base64: photoData.base64EncodedString()
+        )
+    }
+
     private var canPost: Bool {
         selection != nil && social.isConnected && !social.isPosting
     }
@@ -440,7 +586,8 @@ struct PostComposerView: View {
                 kind: selection.kind,
                 sourceID: selection.sourceID,
                 caption: caption.trimmingCharacters(in: .whitespacesAndNewlines),
-                visibility: visibility
+                visibility: visibility,
+                photo: attachedPhoto
             )
             // Left open when it failed, so the error is read beside the post it
             // belongs to and the caption is not lost.

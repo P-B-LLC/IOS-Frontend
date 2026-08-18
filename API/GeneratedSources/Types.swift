@@ -2577,6 +2577,12 @@ public enum Components {
             }
             /// - Remark: Generated from `#/components/schemas/CreatePostRequest/visibility`.
             public var visibility: Components.Schemas.CreatePostRequest.VisibilityPayload?
+            /// - Remark: Generated from `#/components/schemas/CreatePostRequest/content_type`.
+            public var contentType: Components.Schemas.ContentTypeEnum?
+            /// The image bytes, base64 encoded, without a data: prefix.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreatePostRequest/image_base64`.
+            public var imageBase64: Swift.String?
             /// Creates a new `CreatePostRequest`.
             ///
             /// - Parameters:
@@ -2584,22 +2590,30 @@ public enum Components {
             ///   - sourceId:
             ///   - caption:
             ///   - visibility:
+            ///   - contentType:
+            ///   - imageBase64: The image bytes, base64 encoded, without a data: prefix.
             public init(
                 kind: Components.Schemas.CreatePostKindEnum,
                 sourceId: Swift.Int,
                 caption: Swift.String? = nil,
-                visibility: Components.Schemas.CreatePostRequest.VisibilityPayload? = nil
+                visibility: Components.Schemas.CreatePostRequest.VisibilityPayload? = nil,
+                contentType: Components.Schemas.ContentTypeEnum? = nil,
+                imageBase64: Swift.String? = nil
             ) {
                 self.kind = kind
                 self.sourceId = sourceId
                 self.caption = caption
                 self.visibility = visibility
+                self.contentType = contentType
+                self.imageBase64 = imageBase64
             }
             public enum CodingKeys: String, CodingKey {
                 case kind
                 case sourceId = "source_id"
                 case caption
                 case visibility
+                case contentType = "content_type"
+                case imageBase64 = "image_base64"
             }
         }
         /// * `powerlifting` - Powerlifting
@@ -4835,6 +4849,8 @@ public enum Components {
             public var author: Components.Schemas.Post.AuthorPayload
             /// - Remark: Generated from `#/components/schemas/Post/kind`.
             public var kind: Swift.String
+            /// - Remark: Generated from `#/components/schemas/Post/image_url`.
+            public var imageUrl: Swift.String?
             /// - Remark: Generated from `#/components/schemas/Post/caption`.
             public var caption: Swift.String
             /// - Remark: Generated from `#/components/schemas/Post/visibility`.
@@ -4913,6 +4929,7 @@ public enum Components {
             ///   - id:
             ///   - author:
             ///   - kind:
+            ///   - imageUrl:
             ///   - caption:
             ///   - visibility:
             ///   - workout:
@@ -4926,6 +4943,7 @@ public enum Components {
                 id: Swift.Int,
                 author: Components.Schemas.Post.AuthorPayload,
                 kind: Swift.String,
+                imageUrl: Swift.String? = nil,
                 caption: Swift.String,
                 visibility: Swift.String,
                 workout: Components.Schemas.Post.WorkoutPayload? = nil,
@@ -4939,6 +4957,7 @@ public enum Components {
                 self.id = id
                 self.author = author
                 self.kind = kind
+                self.imageUrl = imageUrl
                 self.caption = caption
                 self.visibility = visibility
                 self.workout = workout
@@ -4953,6 +4972,7 @@ public enum Components {
                 case id
                 case author
                 case kind
+                case imageUrl = "image_url"
                 case caption
                 case visibility
                 case workout

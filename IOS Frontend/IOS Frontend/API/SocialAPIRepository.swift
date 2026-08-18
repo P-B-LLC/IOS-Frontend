@@ -73,7 +73,8 @@ actor SocialAPIRepository {
         kind: PostKind,
         sourceID: Int,
         caption: String,
-        visibility: PostVisibility
+        visibility: PostVisibility,
+        photo: PostPhoto? = nil
     ) async throws -> FeedPost {
         guard let kindPayload = Components.Schemas.CreatePostKindEnum(
             rawValue: kind.apiValue
@@ -83,13 +84,28 @@ actor SocialAPIRepository {
             throw APIServiceError.malformedResponse
         }
 
+        // A type the contract does not list is refused here rather than sent
+        // and refused there, since the 400 would name a field the user never
+        // saw. Nil for both halves means no photo, which is the normal case.
+        var contentType: Components.Schemas.ContentTypeEnum?
+        if let photo {
+            guard let accepted = Components.Schemas.ContentTypeEnum(
+                rawValue: photo.contentType
+            ) else {
+                throw APIServiceError.malformedResponse
+            }
+            contentType = accepted
+        }
+
         let output = try await client.socialPostsCreate(
             body: .json(
                 Components.Schemas.CreatePostRequest(
                     kind: kindPayload,
                     sourceId: sourceID,
                     caption: caption,
-                    visibility: .init(value1: visibilityPayload)
+                    visibility: .init(value1: visibilityPayload),
+                    contentType: contentType,
+                    imageBase64: photo?.base64
                 )
             )
         )
@@ -178,6 +194,9 @@ actor SocialAPIRepository {
             author: author(from: payload.author.value1),
             kind: PostKind(payload.kind),
             caption: payload.caption,
+            // A URL the server built. Dropped rather than guessed at if it is
+            // not one, so a card draws without its photo instead of failing.
+            imageURL: payload.imageUrl.flatMap { URL(string: $0) },
             // An unknown visibility reads as the most private thing it could
             // be, so a build that has not learned a new level never draws
             // something as more widely shared than it is.

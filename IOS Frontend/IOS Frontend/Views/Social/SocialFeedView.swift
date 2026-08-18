@@ -149,6 +149,10 @@ struct PostCard: View {
         VStack(alignment: .leading, spacing: 11) {
             author
 
+            if let imageURL = post.imageURL {
+                photo(imageURL)
+            }
+
             if !post.caption.isEmpty {
                 Text(post.caption)
                     .font(.subheadline)
@@ -169,6 +173,32 @@ struct PostCard: View {
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .repbaseDepthSurface(cornerRadius: RepbaseDesign.featureRadius)
+    }
+
+    /// The author's photo, above the numbers it was posted with.
+    ///
+    /// A failure draws nothing rather than a broken-image placeholder: the
+    /// card's real content is the snapshot underneath, and it should still
+    /// read cleanly when the picture cannot be fetched.
+    private func photo(_ url: URL) -> some View {
+        AsyncImage(url: url) { phase in
+            switch phase {
+            case .success(let image):
+                image
+                    .resizable()
+                    .scaledToFill()
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 200)
+                    .clipped()
+            case .empty:
+                ProgressView()
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 200)
+            default:
+                EmptyView()
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius))
     }
 
     private var author: some View {

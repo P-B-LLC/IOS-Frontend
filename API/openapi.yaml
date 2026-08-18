@@ -3604,6 +3604,11 @@ components:
           allOf:
           - $ref: '#/components/schemas/VisibilityEnum'
           default: public
+        content_type:
+          $ref: '#/components/schemas/ContentTypeEnum'
+        image_base64:
+          type: string
+          description: 'The image bytes, base64 encoded, without a data: prefix.'
       required:
       - kind
       - source_id
@@ -4967,6 +4972,10 @@ components:
         kind:
           type: string
           readOnly: true
+        image_url:
+          type: string
+          nullable: true
+          readOnly: true
         caption:
           type: string
           readOnly: true
@@ -5008,6 +5017,7 @@ components:
       - caption
       - created_at
       - id
+      - image_url
       - kind
       - meal
       - planner
