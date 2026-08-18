@@ -31,6 +31,7 @@ struct MealDetailView: View {
                         mealSummary(meal)
                         foodList(meal)
                         addFoodButton
+                        shareButton(meal)
 
                         // An empty meal already states that in the food list,
                         // so the breakdown only appears once there is food.
@@ -155,6 +156,29 @@ struct MealDetailView: View {
         .buttonStyle(.borderedProminent)
         .controlSize(.large)
         .tint(phase.accent)
+    }
+
+    /// Share, on the page rather than only in the navigation menu.
+    ///
+    /// The menu is still there, but this app hides the navigation bar on most of
+    /// its screens, so a toolbar item is the one place a button can be added and
+    /// never seen. Only a meal the server knows about and that has food in it:
+    /// the API refuses an empty one, since a card with nothing on it has nothing
+    /// to show.
+    @ViewBuilder
+    private func shareButton(_ meal: FoodMeal) -> some View {
+        if let serverID = meal.serverID, !meal.entries.isEmpty {
+            Button {
+                sharedMeal = SharedMeal(id: serverID)
+            } label: {
+                Label("Share to Feed", systemImage: "square.and.arrow.up")
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.large)
+            .tint(phase.accent)
+        }
     }
 
     @ToolbarContentBuilder

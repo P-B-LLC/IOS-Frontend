@@ -36,7 +36,7 @@ struct WorkoutsView: View {
             }
             .padding(.horizontal, RepbaseDesign.pageInset)
             .padding(.top, 16)
-            .padding(.bottom, 28)
+            .padding(.bottom, RepbaseDesign.bottomBarClearance)
         }
         .repbaseScreen(phase)
         .toolbar(.hidden, for: .navigationBar)
@@ -64,29 +64,41 @@ struct WorkoutsView: View {
                 Label("Workout Plan", systemImage: "calendar")
                     .font(.headline)
                 Spacer()
-                Text("Tap a day")
-                    .font(.caption)
+                Text("\(plannedWorkoutCount) scheduled")
+                    .font(.caption.weight(.semibold))
                     .foregroundStyle(phase.secondaryText)
             }
 
-            HStack(alignment: .top, spacing: 6) {
-                ForEach(Weekday.allCases) { day in
-                    NavigationLink {
-                        DayWorkoutView(day: day)
-                    } label: {
-                        WorkoutDayTile(
-                            day: day,
-                            workout: store.workout(on: day),
-                            isToday: store.today == day,
-                            isSessionActive: store.activeSession?.day == day,
-                            workoutCount: store.workoutCount(on: day)
-                        )
+            ScrollView(.horizontal) {
+                LazyHStack(spacing: 10) {
+                    ForEach(Weekday.allCases) { day in
+                        NavigationLink {
+                            DayWorkoutView(day: day)
+                        } label: {
+                            WorkoutPlannerDayCard(
+                                day: day,
+                                dateLabel: store.dateLabel(for: day),
+                                workout: store.workout(on: day),
+                                isToday: store.today == day,
+                                isSessionActive: store.activeSession?.day == day,
+                                workoutCount: store.workoutCount(on: day)
+                            )
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
             }
+            .scrollIndicators(.hidden)
+
+            Label("Select a day to view its workout or add a new one", systemImage: "hand.tap")
+                .font(.caption2.weight(.medium))
+                .foregroundStyle(phase.secondaryText)
         }
         .workoutCard()
+    }
+
+    private var plannedWorkoutCount: Int {
+        Weekday.allCases.reduce(0) { $0 + store.workoutCount(on: $1) }
     }
 
     @ViewBuilder

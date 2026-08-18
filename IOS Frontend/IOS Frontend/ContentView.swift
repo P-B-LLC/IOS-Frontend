@@ -63,7 +63,7 @@ struct ContentView: View {
                     // ScrollView's natural content boundary. Keep enough real
                     // scrollable space for the final section to move fully
                     // above both the bar and the home indicator.
-                    .padding(.bottom, 118)
+                    .padding(.bottom, RepbaseDesign.bottomBarClearance)
                 }
                 .scrollIndicators(.hidden)
                 .toolbar(.hidden, for: .navigationBar)

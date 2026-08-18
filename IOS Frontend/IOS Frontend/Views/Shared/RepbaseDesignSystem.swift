@@ -21,6 +21,16 @@ enum RepbaseDesign {
     static let cardRadius: CGFloat = 14
     static let controlRadius: CGFloat = 10
     static let featureRadius: CGFloat = 22
+
+    /// Room a scrolling page must leave below its content for the floating
+    /// bottom bar.
+    ///
+    /// The bar is inset on the `TabView`, which sits outside each tab's
+    /// navigation stack, so its height never reaches these scroll views and
+    /// every one of them has to leave the room itself. Kept here as one number
+    /// because four of the five tabs left 28 points, and the last row of each
+    /// of those pages could not be scrolled clear of the bar.
+    static let bottomBarClearance: CGFloat = 118
     static let deepShadow = RepbasePalette.espresso.opacity(0.12)
     static let softHighlight = RepbasePalette.paper.opacity(0.82)
 }
