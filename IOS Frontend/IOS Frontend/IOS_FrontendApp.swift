@@ -222,6 +222,10 @@ private struct AppRootView: View {
                 configuration: authentication.configuration,
                 token: token
             )
+            await foodTrackingStore.connect(
+                configuration: authentication.configuration,
+                token: token
+            )
             await plannerStore.syncScheduledWorkouts(workoutStore.currentWeekWorkouts)
         }
         .task(id: workoutStore.currentWeekWorkouts) {

@@ -59,6 +59,142 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/exercises/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/exercises/{id}//delete(exercises_destroy)`.
     func exercisesDestroy(_ input: Operations.ExercisesDestroy.Input) async throws -> Operations.ExercisesDestroy.Output
+    /// Foods inside meals. Ownership is the meal's owner, one step away.
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/entries/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/entries//get(food_entries_list)`.
+    func foodEntriesList(_ input: Operations.FoodEntriesList.Input) async throws -> Operations.FoodEntriesList.Output
+    /// Foods inside meals. Ownership is the meal's owner, one step away.
+    ///
+    /// - Remark: HTTP `POST /api/v1/food/entries/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/entries//post(food_entries_create)`.
+    func foodEntriesCreate(_ input: Operations.FoodEntriesCreate.Input) async throws -> Operations.FoodEntriesCreate.Output
+    /// Foods inside meals. Ownership is the meal's owner, one step away.
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/entries/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/entries/{id}//get(food_entries_retrieve)`.
+    func foodEntriesRetrieve(_ input: Operations.FoodEntriesRetrieve.Input) async throws -> Operations.FoodEntriesRetrieve.Output
+    /// Foods inside meals. Ownership is the meal's owner, one step away.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/food/entries/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/entries/{id}//patch(food_entries_partial_update)`.
+    func foodEntriesPartialUpdate(_ input: Operations.FoodEntriesPartialUpdate.Input) async throws -> Operations.FoodEntriesPartialUpdate.Output
+    /// Foods inside meals. Ownership is the meal's owner, one step away.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/food/entries/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/entries/{id}//put(food_entries_update)`.
+    func foodEntriesUpdate(_ input: Operations.FoodEntriesUpdate.Input) async throws -> Operations.FoodEntriesUpdate.Output
+    /// Foods inside meals. Ownership is the meal's owner, one step away.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/food/entries/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/entries/{id}//delete(food_entries_destroy)`.
+    func foodEntriesDestroy(_ input: Operations.FoodEntriesDestroy.Input) async throws -> Operations.FoodEntriesDestroy.Output
+    /// The signed-in user's daily targets. A singleton, so no list or id.
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/goals/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/goals//get(food_goals_retrieve)`.
+    func foodGoalsRetrieve(_ input: Operations.FoodGoalsRetrieve.Input) async throws -> Operations.FoodGoalsRetrieve.Output
+    /// The signed-in user's daily targets. A singleton, so no list or id.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/food/goals/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/goals//patch(food_goals_partial_update)`.
+    func foodGoalsPartialUpdate(_ input: Operations.FoodGoalsPartialUpdate.Input) async throws -> Operations.FoodGoalsPartialUpdate.Output
+    /// Meals, with their foods nested on read.
+    ///
+    /// A day is drawn from one request rather than one per meal, which is why the
+    /// entries come back inside the meal instead of behind another call.
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/meals/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/meals//get(food_meals_list)`.
+    func foodMealsList(_ input: Operations.FoodMealsList.Input) async throws -> Operations.FoodMealsList.Output
+    /// Meals, with their foods nested on read.
+    ///
+    /// A day is drawn from one request rather than one per meal, which is why the
+    /// entries come back inside the meal instead of behind another call.
+    ///
+    /// - Remark: HTTP `POST /api/v1/food/meals/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/meals//post(food_meals_create)`.
+    func foodMealsCreate(_ input: Operations.FoodMealsCreate.Input) async throws -> Operations.FoodMealsCreate.Output
+    /// Meals, with their foods nested on read.
+    ///
+    /// A day is drawn from one request rather than one per meal, which is why the
+    /// entries come back inside the meal instead of behind another call.
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/meals/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/meals/{id}//get(food_meals_retrieve)`.
+    func foodMealsRetrieve(_ input: Operations.FoodMealsRetrieve.Input) async throws -> Operations.FoodMealsRetrieve.Output
+    /// Meals, with their foods nested on read.
+    ///
+    /// A day is drawn from one request rather than one per meal, which is why the
+    /// entries come back inside the meal instead of behind another call.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/food/meals/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/meals/{id}//patch(food_meals_partial_update)`.
+    func foodMealsPartialUpdate(_ input: Operations.FoodMealsPartialUpdate.Input) async throws -> Operations.FoodMealsPartialUpdate.Output
+    /// Meals, with their foods nested on read.
+    ///
+    /// A day is drawn from one request rather than one per meal, which is why the
+    /// entries come back inside the meal instead of behind another call.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/food/meals/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/meals/{id}//put(food_meals_update)`.
+    func foodMealsUpdate(_ input: Operations.FoodMealsUpdate.Input) async throws -> Operations.FoodMealsUpdate.Output
+    /// Meals, with their foods nested on read.
+    ///
+    /// A day is drawn from one request rather than one per meal, which is why the
+    /// entries come back inside the meal instead of behind another call.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/food/meals/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/meals/{id}//delete(food_meals_destroy)`.
+    func foodMealsDestroy(_ input: Operations.FoodMealsDestroy.Input) async throws -> Operations.FoodMealsDestroy.Output
+    /// Open a day and get its meals, creating the day's empty meal slots the first time. Safe to call every time a day is shown: it only adds slots a day is short of, so opening the same day twice does not double them.
+    ///
+    /// - Remark: HTTP `POST /api/v1/food/meals/ensure-day/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/meals/ensure-day//post(food_meals_ensure_day_create)`.
+    func foodMealsEnsureDayCreate(_ input: Operations.FoodMealsEnsureDayCreate.Input) async throws -> Operations.FoodMealsEnsureDayCreate.Output
+    /// Foods this person has logged before, most recent first.
+    ///
+    /// One row per distinct name: the picker offers a food to reuse, and the
+    /// same yoghurt logged nine times is one choice, not nine.
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/meals/recent-foods/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/meals/recent-foods//get(food_meals_recent_foods_list)`.
+    func foodMealsRecentFoodsList(_ input: Operations.FoodMealsRecentFoodsList.Input) async throws -> Operations.FoodMealsRecentFoodsList.Output
+    /// Meals kept to reuse.
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/saved-meals/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/saved-meals//get(food_saved_meals_list)`.
+    func foodSavedMealsList(_ input: Operations.FoodSavedMealsList.Input) async throws -> Operations.FoodSavedMealsList.Output
+    /// Meals kept to reuse.
+    ///
+    /// - Remark: HTTP `POST /api/v1/food/saved-meals/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/saved-meals//post(food_saved_meals_create)`.
+    func foodSavedMealsCreate(_ input: Operations.FoodSavedMealsCreate.Input) async throws -> Operations.FoodSavedMealsCreate.Output
+    /// Meals kept to reuse.
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/saved-meals/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/saved-meals/{id}//get(food_saved_meals_retrieve)`.
+    func foodSavedMealsRetrieve(_ input: Operations.FoodSavedMealsRetrieve.Input) async throws -> Operations.FoodSavedMealsRetrieve.Output
+    /// Meals kept to reuse.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/food/saved-meals/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/saved-meals/{id}//patch(food_saved_meals_partial_update)`.
+    func foodSavedMealsPartialUpdate(_ input: Operations.FoodSavedMealsPartialUpdate.Input) async throws -> Operations.FoodSavedMealsPartialUpdate.Output
+    /// Meals kept to reuse.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/food/saved-meals/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/saved-meals/{id}//put(food_saved_meals_update)`.
+    func foodSavedMealsUpdate(_ input: Operations.FoodSavedMealsUpdate.Input) async throws -> Operations.FoodSavedMealsUpdate.Output
+    /// Meals kept to reuse.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/food/saved-meals/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/saved-meals/{id}//delete(food_saved_meals_destroy)`.
+    func foodSavedMealsDestroy(_ input: Operations.FoodSavedMealsDestroy.Input) async throws -> Operations.FoodSavedMealsDestroy.Output
+    /// Copy this saved meal's ingredients into the same numbered meal on each of several days, creating any meal that is not there yet. The ingredients are copied, not linked, so editing one afterwards does not change the recipe it came from, and deleting the recipe does not empty the days it was applied to.
+    ///
+    /// - Remark: HTTP `POST /api/v1/food/saved-meals/{id}/apply/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/saved-meals/{id}/apply//post(food_saved_meals_apply_create)`.
+    func foodSavedMealsApplyCreate(_ input: Operations.FoodSavedMealsApplyCreate.Input) async throws -> Operations.FoodSavedMealsApplyCreate.Output
     /// Gyms, shared by everyone who trains at them.
     ///
     /// Not owned by anyone: a gym one user adds is exactly the gym the next user
@@ -127,8 +263,6 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /api/v1/me/`.
     /// - Remark: Generated from `#/paths//api/v1/me//put(me_update)`.
     func meUpdate(_ input: Operations.MeUpdate.Input) async throws -> Operations.MeUpdate.Output
-    /// Permanently delete the signed-in account and all associated data.
-    ///
     /// - Remark: HTTP `DELETE /api/v1/me/`.
     /// - Remark: Generated from `#/paths//api/v1/me//delete(me_destroy)`.
     func meDestroy(_ input: Operations.MeDestroy.Input) async throws -> Operations.MeDestroy.Output
@@ -362,12 +496,140 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/set-entries/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/set-entries/{id}//delete(set_entries_destroy)`.
     func setEntriesDestroy(_ input: Operations.SetEntriesDestroy.Input) async throws -> Operations.SetEntriesDestroy.Output
+    /// People this user has blocked.
+    ///
+    /// No update endpoint, for the reason a recurrence has none: there is nothing
+    /// inside a block to change. Lifting one is a delete, and blocking the same
+    /// person again is a new row with a new date, which is what actually happened.
+    ///
+    /// Only blocks the requester made are listed. Who has blocked you is not
+    /// something this API answers, and a list would answer it.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/blocks/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/blocks//get(social_blocks_list)`.
+    func socialBlocksList(_ input: Operations.SocialBlocksList.Input) async throws -> Operations.SocialBlocksList.Output
+    /// People this user has blocked.
+    ///
+    /// No update endpoint, for the reason a recurrence has none: there is nothing
+    /// inside a block to change. Lifting one is a delete, and blocking the same
+    /// person again is a new row with a new date, which is what actually happened.
+    ///
+    /// Only blocks the requester made are listed. Who has blocked you is not
+    /// something this API answers, and a list would answer it.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/blocks/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/blocks//post(social_blocks_create)`.
+    func socialBlocksCreate(_ input: Operations.SocialBlocksCreate.Input) async throws -> Operations.SocialBlocksCreate.Output
+    /// People this user has blocked.
+    ///
+    /// No update endpoint, for the reason a recurrence has none: there is nothing
+    /// inside a block to change. Lifting one is a delete, and blocking the same
+    /// person again is a new row with a new date, which is what actually happened.
+    ///
+    /// Only blocks the requester made are listed. Who has blocked you is not
+    /// something this API answers, and a list would answer it.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/blocks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/blocks/{id}//delete(social_blocks_destroy)`.
+    func socialBlocksDestroy(_ input: Operations.SocialBlocksDestroy.Input) async throws -> Operations.SocialBlocksDestroy.Output
+    /// What the people you follow have posted, newest first.
+    ///
+    /// Fanned out on read: a page is one indexed walk over the posts of everyone
+    /// the reader follows. Fanning out on write would mean a row per follower per
+    /// post, nearly all of them never looked at, and a second copy of the
+    /// visibility rules to keep in step with this one.
+    ///
+    /// The reader's own posts are in it, minus the private ones. Posting and being
+    /// returned to a feed that does not contain what you just posted reads as a
+    /// failure, and this is the cheapest confirmation the app can give; a private
+    /// post is one deliberately held back, so it stays on the profile list where it
+    /// was put and out of the stream that exists to be shared.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/feed/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/feed//get(social_feed_list)`.
+    func socialFeedList(_ input: Operations.SocialFeedList.Input) async throws -> Operations.SocialFeedList.Output
+    /// Posts: what someone has chosen to show other people.
+    ///
+    /// Reading and writing use different querysets on purpose. A reader gets
+    /// everything the visibility rules allow; an author gets their own rows and
+    /// nothing else, so somebody else's post is a 404 to a PATCH for the same
+    /// reason it is a 404 to a GET of a session that is not theirs — it was never
+    /// in the set.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/posts/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts//get(social_posts_list)`.
+    func socialPostsList(_ input: Operations.SocialPostsList.Input) async throws -> Operations.SocialPostsList.Output
+    /// Post a workout, meal or planner entry the requester owns. The server reads the source and builds the snapshot; the request names the object and never carries its contents.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts//post(social_posts_create)`.
+    func socialPostsCreate(_ input: Operations.SocialPostsCreate.Input) async throws -> Operations.SocialPostsCreate.Output
+    /// Posts: what someone has chosen to show other people.
+    ///
+    /// Reading and writing use different querysets on purpose. A reader gets
+    /// everything the visibility rules allow; an author gets their own rows and
+    /// nothing else, so somebody else's post is a 404 to a PATCH for the same
+    /// reason it is a 404 to a GET of a session that is not theirs — it was never
+    /// in the set.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/posts/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}//get(social_posts_retrieve)`.
+    func socialPostsRetrieve(_ input: Operations.SocialPostsRetrieve.Input) async throws -> Operations.SocialPostsRetrieve.Output
+    /// Change the caption or who can see this post. The snapshot records what happened and is not editable.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/social/posts/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}//patch(social_posts_partial_update)`.
+    func socialPostsPartialUpdate(_ input: Operations.SocialPostsPartialUpdate.Input) async throws -> Operations.SocialPostsPartialUpdate.Output
+    /// Posts: what someone has chosen to show other people.
+    ///
+    /// Reading and writing use different querysets on purpose. A reader gets
+    /// everything the visibility rules allow; an author gets their own rows and
+    /// nothing else, so somebody else's post is a 404 to a PATCH for the same
+    /// reason it is a 404 to a GET of a session that is not theirs — it was never
+    /// in the set.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}//delete(social_posts_destroy)`.
+    func socialPostsDestroy(_ input: Operations.SocialPostsDestroy.Input) async throws -> Operations.SocialPostsDestroy.Output
     /// - Remark: HTTP `GET /api/v1/users/`.
     /// - Remark: Generated from `#/paths//api/v1/users//get(users_list)`.
     func usersList(_ input: Operations.UsersList.Input) async throws -> Operations.UsersList.Output
     /// - Remark: HTTP `GET /api/v1/users/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/users/{id}//get(users_retrieve)`.
     func usersRetrieve(_ input: Operations.UsersRetrieve.Input) async throws -> Operations.UsersRetrieve.Output
+    /// Follow this user. Following again changes nothing and answers 200, so a double tap is not an error.
+    ///
+    /// - Remark: HTTP `POST /api/v1/users/{id}/follow/`.
+    /// - Remark: Generated from `#/paths//api/v1/users/{id}/follow//post(users_follow_create)`.
+    func usersFollowCreate(_ input: Operations.UsersFollowCreate.Input) async throws -> Operations.UsersFollowCreate.Output
+    /// Stop following this user.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/users/{id}/follow/`.
+    /// - Remark: Generated from `#/paths//api/v1/users/{id}/follow//delete(users_follow_destroy)`.
+    func usersFollowDestroy(_ input: Operations.UsersFollowDestroy.Input) async throws -> Operations.UsersFollowDestroy.Output
+    /// Who follows this user, most recent first.
+    ///
+    /// Paged, unlike the gym member list this otherwise resembles: a gym holds
+    /// the people who train there and a well-followed account holds orders of
+    /// magnitude more.
+    ///
+    /// Paged over the follow rows rather than over the profiles, because
+    /// RepbaseUser has no Meta.ordering — paginating it would slice an
+    /// unordered result and hand the same person to two different pages. The
+    /// follows are ordered by when they were made, which is also the order this
+    /// list wants.
+    ///
+    /// A block cannot leave a stale row here: making one deletes the follows
+    /// both ways, and the follow action refuses to remake them.
+    ///
+    /// - Remark: HTTP `GET /api/v1/users/{id}/followers/`.
+    /// - Remark: Generated from `#/paths//api/v1/users/{id}/followers//get(users_followers_list)`.
+    func usersFollowersList(_ input: Operations.UsersFollowersList.Input) async throws -> Operations.UsersFollowersList.Output
+    /// Who this user follows, most recently followed first.
+    ///
+    /// - Remark: HTTP `GET /api/v1/users/{id}/following/`.
+    /// - Remark: Generated from `#/paths//api/v1/users/{id}/following//get(users_following_list)`.
+    func usersFollowingList(_ input: Operations.UsersFollowingList.Input) async throws -> Operations.UsersFollowingList.Output
     /// - Remark: HTTP `GET /api/v1/workout-exercises/`.
     /// - Remark: Generated from `#/paths//api/v1/workout-exercises//get(workout_exercises_list)`.
     func workoutExercisesList(_ input: Operations.WorkoutExercisesList.Input) async throws -> Operations.WorkoutExercisesList.Output
@@ -568,6 +830,310 @@ extension APIProtocol {
     public func exercisesDestroy(path: Operations.ExercisesDestroy.Input.Path) async throws -> Operations.ExercisesDestroy.Output {
         try await exercisesDestroy(Operations.ExercisesDestroy.Input(path: path))
     }
+    /// Foods inside meals. Ownership is the meal's owner, one step away.
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/entries/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/entries//get(food_entries_list)`.
+    public func foodEntriesList(
+        query: Operations.FoodEntriesList.Input.Query = .init(),
+        headers: Operations.FoodEntriesList.Input.Headers = .init()
+    ) async throws -> Operations.FoodEntriesList.Output {
+        try await foodEntriesList(Operations.FoodEntriesList.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Foods inside meals. Ownership is the meal's owner, one step away.
+    ///
+    /// - Remark: HTTP `POST /api/v1/food/entries/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/entries//post(food_entries_create)`.
+    public func foodEntriesCreate(
+        headers: Operations.FoodEntriesCreate.Input.Headers = .init(),
+        body: Operations.FoodEntriesCreate.Input.Body
+    ) async throws -> Operations.FoodEntriesCreate.Output {
+        try await foodEntriesCreate(Operations.FoodEntriesCreate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Foods inside meals. Ownership is the meal's owner, one step away.
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/entries/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/entries/{id}//get(food_entries_retrieve)`.
+    public func foodEntriesRetrieve(
+        path: Operations.FoodEntriesRetrieve.Input.Path,
+        headers: Operations.FoodEntriesRetrieve.Input.Headers = .init()
+    ) async throws -> Operations.FoodEntriesRetrieve.Output {
+        try await foodEntriesRetrieve(Operations.FoodEntriesRetrieve.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Foods inside meals. Ownership is the meal's owner, one step away.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/food/entries/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/entries/{id}//patch(food_entries_partial_update)`.
+    public func foodEntriesPartialUpdate(
+        path: Operations.FoodEntriesPartialUpdate.Input.Path,
+        headers: Operations.FoodEntriesPartialUpdate.Input.Headers = .init(),
+        body: Operations.FoodEntriesPartialUpdate.Input.Body? = nil
+    ) async throws -> Operations.FoodEntriesPartialUpdate.Output {
+        try await foodEntriesPartialUpdate(Operations.FoodEntriesPartialUpdate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Foods inside meals. Ownership is the meal's owner, one step away.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/food/entries/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/entries/{id}//put(food_entries_update)`.
+    public func foodEntriesUpdate(
+        path: Operations.FoodEntriesUpdate.Input.Path,
+        headers: Operations.FoodEntriesUpdate.Input.Headers = .init(),
+        body: Operations.FoodEntriesUpdate.Input.Body
+    ) async throws -> Operations.FoodEntriesUpdate.Output {
+        try await foodEntriesUpdate(Operations.FoodEntriesUpdate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Foods inside meals. Ownership is the meal's owner, one step away.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/food/entries/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/entries/{id}//delete(food_entries_destroy)`.
+    public func foodEntriesDestroy(path: Operations.FoodEntriesDestroy.Input.Path) async throws -> Operations.FoodEntriesDestroy.Output {
+        try await foodEntriesDestroy(Operations.FoodEntriesDestroy.Input(path: path))
+    }
+    /// The signed-in user's daily targets. A singleton, so no list or id.
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/goals/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/goals//get(food_goals_retrieve)`.
+    public func foodGoalsRetrieve(headers: Operations.FoodGoalsRetrieve.Input.Headers = .init()) async throws -> Operations.FoodGoalsRetrieve.Output {
+        try await foodGoalsRetrieve(Operations.FoodGoalsRetrieve.Input(headers: headers))
+    }
+    /// The signed-in user's daily targets. A singleton, so no list or id.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/food/goals/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/goals//patch(food_goals_partial_update)`.
+    public func foodGoalsPartialUpdate(
+        headers: Operations.FoodGoalsPartialUpdate.Input.Headers = .init(),
+        body: Operations.FoodGoalsPartialUpdate.Input.Body? = nil
+    ) async throws -> Operations.FoodGoalsPartialUpdate.Output {
+        try await foodGoalsPartialUpdate(Operations.FoodGoalsPartialUpdate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Meals, with their foods nested on read.
+    ///
+    /// A day is drawn from one request rather than one per meal, which is why the
+    /// entries come back inside the meal instead of behind another call.
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/meals/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/meals//get(food_meals_list)`.
+    public func foodMealsList(
+        query: Operations.FoodMealsList.Input.Query = .init(),
+        headers: Operations.FoodMealsList.Input.Headers = .init()
+    ) async throws -> Operations.FoodMealsList.Output {
+        try await foodMealsList(Operations.FoodMealsList.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Meals, with their foods nested on read.
+    ///
+    /// A day is drawn from one request rather than one per meal, which is why the
+    /// entries come back inside the meal instead of behind another call.
+    ///
+    /// - Remark: HTTP `POST /api/v1/food/meals/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/meals//post(food_meals_create)`.
+    public func foodMealsCreate(
+        headers: Operations.FoodMealsCreate.Input.Headers = .init(),
+        body: Operations.FoodMealsCreate.Input.Body
+    ) async throws -> Operations.FoodMealsCreate.Output {
+        try await foodMealsCreate(Operations.FoodMealsCreate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Meals, with their foods nested on read.
+    ///
+    /// A day is drawn from one request rather than one per meal, which is why the
+    /// entries come back inside the meal instead of behind another call.
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/meals/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/meals/{id}//get(food_meals_retrieve)`.
+    public func foodMealsRetrieve(
+        path: Operations.FoodMealsRetrieve.Input.Path,
+        headers: Operations.FoodMealsRetrieve.Input.Headers = .init()
+    ) async throws -> Operations.FoodMealsRetrieve.Output {
+        try await foodMealsRetrieve(Operations.FoodMealsRetrieve.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Meals, with their foods nested on read.
+    ///
+    /// A day is drawn from one request rather than one per meal, which is why the
+    /// entries come back inside the meal instead of behind another call.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/food/meals/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/meals/{id}//patch(food_meals_partial_update)`.
+    public func foodMealsPartialUpdate(
+        path: Operations.FoodMealsPartialUpdate.Input.Path,
+        headers: Operations.FoodMealsPartialUpdate.Input.Headers = .init(),
+        body: Operations.FoodMealsPartialUpdate.Input.Body? = nil
+    ) async throws -> Operations.FoodMealsPartialUpdate.Output {
+        try await foodMealsPartialUpdate(Operations.FoodMealsPartialUpdate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Meals, with their foods nested on read.
+    ///
+    /// A day is drawn from one request rather than one per meal, which is why the
+    /// entries come back inside the meal instead of behind another call.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/food/meals/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/meals/{id}//put(food_meals_update)`.
+    public func foodMealsUpdate(
+        path: Operations.FoodMealsUpdate.Input.Path,
+        headers: Operations.FoodMealsUpdate.Input.Headers = .init(),
+        body: Operations.FoodMealsUpdate.Input.Body
+    ) async throws -> Operations.FoodMealsUpdate.Output {
+        try await foodMealsUpdate(Operations.FoodMealsUpdate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Meals, with their foods nested on read.
+    ///
+    /// A day is drawn from one request rather than one per meal, which is why the
+    /// entries come back inside the meal instead of behind another call.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/food/meals/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/meals/{id}//delete(food_meals_destroy)`.
+    public func foodMealsDestroy(path: Operations.FoodMealsDestroy.Input.Path) async throws -> Operations.FoodMealsDestroy.Output {
+        try await foodMealsDestroy(Operations.FoodMealsDestroy.Input(path: path))
+    }
+    /// Open a day and get its meals, creating the day's empty meal slots the first time. Safe to call every time a day is shown: it only adds slots a day is short of, so opening the same day twice does not double them.
+    ///
+    /// - Remark: HTTP `POST /api/v1/food/meals/ensure-day/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/meals/ensure-day//post(food_meals_ensure_day_create)`.
+    public func foodMealsEnsureDayCreate(
+        headers: Operations.FoodMealsEnsureDayCreate.Input.Headers = .init(),
+        body: Operations.FoodMealsEnsureDayCreate.Input.Body
+    ) async throws -> Operations.FoodMealsEnsureDayCreate.Output {
+        try await foodMealsEnsureDayCreate(Operations.FoodMealsEnsureDayCreate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Foods this person has logged before, most recent first.
+    ///
+    /// One row per distinct name: the picker offers a food to reuse, and the
+    /// same yoghurt logged nine times is one choice, not nine.
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/meals/recent-foods/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/meals/recent-foods//get(food_meals_recent_foods_list)`.
+    public func foodMealsRecentFoodsList(headers: Operations.FoodMealsRecentFoodsList.Input.Headers = .init()) async throws -> Operations.FoodMealsRecentFoodsList.Output {
+        try await foodMealsRecentFoodsList(Operations.FoodMealsRecentFoodsList.Input(headers: headers))
+    }
+    /// Meals kept to reuse.
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/saved-meals/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/saved-meals//get(food_saved_meals_list)`.
+    public func foodSavedMealsList(
+        query: Operations.FoodSavedMealsList.Input.Query = .init(),
+        headers: Operations.FoodSavedMealsList.Input.Headers = .init()
+    ) async throws -> Operations.FoodSavedMealsList.Output {
+        try await foodSavedMealsList(Operations.FoodSavedMealsList.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Meals kept to reuse.
+    ///
+    /// - Remark: HTTP `POST /api/v1/food/saved-meals/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/saved-meals//post(food_saved_meals_create)`.
+    public func foodSavedMealsCreate(
+        headers: Operations.FoodSavedMealsCreate.Input.Headers = .init(),
+        body: Operations.FoodSavedMealsCreate.Input.Body
+    ) async throws -> Operations.FoodSavedMealsCreate.Output {
+        try await foodSavedMealsCreate(Operations.FoodSavedMealsCreate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Meals kept to reuse.
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/saved-meals/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/saved-meals/{id}//get(food_saved_meals_retrieve)`.
+    public func foodSavedMealsRetrieve(
+        path: Operations.FoodSavedMealsRetrieve.Input.Path,
+        headers: Operations.FoodSavedMealsRetrieve.Input.Headers = .init()
+    ) async throws -> Operations.FoodSavedMealsRetrieve.Output {
+        try await foodSavedMealsRetrieve(Operations.FoodSavedMealsRetrieve.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Meals kept to reuse.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/food/saved-meals/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/saved-meals/{id}//patch(food_saved_meals_partial_update)`.
+    public func foodSavedMealsPartialUpdate(
+        path: Operations.FoodSavedMealsPartialUpdate.Input.Path,
+        headers: Operations.FoodSavedMealsPartialUpdate.Input.Headers = .init(),
+        body: Operations.FoodSavedMealsPartialUpdate.Input.Body? = nil
+    ) async throws -> Operations.FoodSavedMealsPartialUpdate.Output {
+        try await foodSavedMealsPartialUpdate(Operations.FoodSavedMealsPartialUpdate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Meals kept to reuse.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/food/saved-meals/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/saved-meals/{id}//put(food_saved_meals_update)`.
+    public func foodSavedMealsUpdate(
+        path: Operations.FoodSavedMealsUpdate.Input.Path,
+        headers: Operations.FoodSavedMealsUpdate.Input.Headers = .init(),
+        body: Operations.FoodSavedMealsUpdate.Input.Body
+    ) async throws -> Operations.FoodSavedMealsUpdate.Output {
+        try await foodSavedMealsUpdate(Operations.FoodSavedMealsUpdate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Meals kept to reuse.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/food/saved-meals/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/saved-meals/{id}//delete(food_saved_meals_destroy)`.
+    public func foodSavedMealsDestroy(path: Operations.FoodSavedMealsDestroy.Input.Path) async throws -> Operations.FoodSavedMealsDestroy.Output {
+        try await foodSavedMealsDestroy(Operations.FoodSavedMealsDestroy.Input(path: path))
+    }
+    /// Copy this saved meal's ingredients into the same numbered meal on each of several days, creating any meal that is not there yet. The ingredients are copied, not linked, so editing one afterwards does not change the recipe it came from, and deleting the recipe does not empty the days it was applied to.
+    ///
+    /// - Remark: HTTP `POST /api/v1/food/saved-meals/{id}/apply/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/saved-meals/{id}/apply//post(food_saved_meals_apply_create)`.
+    public func foodSavedMealsApplyCreate(
+        path: Operations.FoodSavedMealsApplyCreate.Input.Path,
+        headers: Operations.FoodSavedMealsApplyCreate.Input.Headers = .init(),
+        body: Operations.FoodSavedMealsApplyCreate.Input.Body
+    ) async throws -> Operations.FoodSavedMealsApplyCreate.Output {
+        try await foodSavedMealsApplyCreate(Operations.FoodSavedMealsApplyCreate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
     /// Gyms, shared by everyone who trains at them.
     ///
     /// Not owned by anyone: a gym one user adds is exactly the gym the next user
@@ -708,8 +1274,6 @@ extension APIProtocol {
             body: body
         ))
     }
-    /// Permanently delete the signed-in account and all associated data.
-    ///
     /// - Remark: HTTP `DELETE /api/v1/me/`.
     /// - Remark: Generated from `#/paths//api/v1/me//delete(me_destroy)`.
     public func meDestroy() async throws -> Operations.MeDestroy.Output {
@@ -1283,6 +1847,163 @@ extension APIProtocol {
     public func setEntriesDestroy(path: Operations.SetEntriesDestroy.Input.Path) async throws -> Operations.SetEntriesDestroy.Output {
         try await setEntriesDestroy(Operations.SetEntriesDestroy.Input(path: path))
     }
+    /// People this user has blocked.
+    ///
+    /// No update endpoint, for the reason a recurrence has none: there is nothing
+    /// inside a block to change. Lifting one is a delete, and blocking the same
+    /// person again is a new row with a new date, which is what actually happened.
+    ///
+    /// Only blocks the requester made are listed. Who has blocked you is not
+    /// something this API answers, and a list would answer it.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/blocks/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/blocks//get(social_blocks_list)`.
+    public func socialBlocksList(
+        query: Operations.SocialBlocksList.Input.Query = .init(),
+        headers: Operations.SocialBlocksList.Input.Headers = .init()
+    ) async throws -> Operations.SocialBlocksList.Output {
+        try await socialBlocksList(Operations.SocialBlocksList.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// People this user has blocked.
+    ///
+    /// No update endpoint, for the reason a recurrence has none: there is nothing
+    /// inside a block to change. Lifting one is a delete, and blocking the same
+    /// person again is a new row with a new date, which is what actually happened.
+    ///
+    /// Only blocks the requester made are listed. Who has blocked you is not
+    /// something this API answers, and a list would answer it.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/blocks/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/blocks//post(social_blocks_create)`.
+    public func socialBlocksCreate(
+        headers: Operations.SocialBlocksCreate.Input.Headers = .init(),
+        body: Operations.SocialBlocksCreate.Input.Body
+    ) async throws -> Operations.SocialBlocksCreate.Output {
+        try await socialBlocksCreate(Operations.SocialBlocksCreate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// People this user has blocked.
+    ///
+    /// No update endpoint, for the reason a recurrence has none: there is nothing
+    /// inside a block to change. Lifting one is a delete, and blocking the same
+    /// person again is a new row with a new date, which is what actually happened.
+    ///
+    /// Only blocks the requester made are listed. Who has blocked you is not
+    /// something this API answers, and a list would answer it.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/blocks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/blocks/{id}//delete(social_blocks_destroy)`.
+    public func socialBlocksDestroy(path: Operations.SocialBlocksDestroy.Input.Path) async throws -> Operations.SocialBlocksDestroy.Output {
+        try await socialBlocksDestroy(Operations.SocialBlocksDestroy.Input(path: path))
+    }
+    /// What the people you follow have posted, newest first.
+    ///
+    /// Fanned out on read: a page is one indexed walk over the posts of everyone
+    /// the reader follows. Fanning out on write would mean a row per follower per
+    /// post, nearly all of them never looked at, and a second copy of the
+    /// visibility rules to keep in step with this one.
+    ///
+    /// The reader's own posts are in it, minus the private ones. Posting and being
+    /// returned to a feed that does not contain what you just posted reads as a
+    /// failure, and this is the cheapest confirmation the app can give; a private
+    /// post is one deliberately held back, so it stays on the profile list where it
+    /// was put and out of the stream that exists to be shared.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/feed/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/feed//get(social_feed_list)`.
+    public func socialFeedList(
+        query: Operations.SocialFeedList.Input.Query = .init(),
+        headers: Operations.SocialFeedList.Input.Headers = .init()
+    ) async throws -> Operations.SocialFeedList.Output {
+        try await socialFeedList(Operations.SocialFeedList.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Posts: what someone has chosen to show other people.
+    ///
+    /// Reading and writing use different querysets on purpose. A reader gets
+    /// everything the visibility rules allow; an author gets their own rows and
+    /// nothing else, so somebody else's post is a 404 to a PATCH for the same
+    /// reason it is a 404 to a GET of a session that is not theirs — it was never
+    /// in the set.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/posts/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts//get(social_posts_list)`.
+    public func socialPostsList(
+        query: Operations.SocialPostsList.Input.Query = .init(),
+        headers: Operations.SocialPostsList.Input.Headers = .init()
+    ) async throws -> Operations.SocialPostsList.Output {
+        try await socialPostsList(Operations.SocialPostsList.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Post a workout, meal or planner entry the requester owns. The server reads the source and builds the snapshot; the request names the object and never carries its contents.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts//post(social_posts_create)`.
+    public func socialPostsCreate(
+        headers: Operations.SocialPostsCreate.Input.Headers = .init(),
+        body: Operations.SocialPostsCreate.Input.Body
+    ) async throws -> Operations.SocialPostsCreate.Output {
+        try await socialPostsCreate(Operations.SocialPostsCreate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Posts: what someone has chosen to show other people.
+    ///
+    /// Reading and writing use different querysets on purpose. A reader gets
+    /// everything the visibility rules allow; an author gets their own rows and
+    /// nothing else, so somebody else's post is a 404 to a PATCH for the same
+    /// reason it is a 404 to a GET of a session that is not theirs — it was never
+    /// in the set.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/posts/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}//get(social_posts_retrieve)`.
+    public func socialPostsRetrieve(
+        path: Operations.SocialPostsRetrieve.Input.Path,
+        headers: Operations.SocialPostsRetrieve.Input.Headers = .init()
+    ) async throws -> Operations.SocialPostsRetrieve.Output {
+        try await socialPostsRetrieve(Operations.SocialPostsRetrieve.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Change the caption or who can see this post. The snapshot records what happened and is not editable.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/social/posts/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}//patch(social_posts_partial_update)`.
+    public func socialPostsPartialUpdate(
+        path: Operations.SocialPostsPartialUpdate.Input.Path,
+        headers: Operations.SocialPostsPartialUpdate.Input.Headers = .init(),
+        body: Operations.SocialPostsPartialUpdate.Input.Body? = nil
+    ) async throws -> Operations.SocialPostsPartialUpdate.Output {
+        try await socialPostsPartialUpdate(Operations.SocialPostsPartialUpdate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Posts: what someone has chosen to show other people.
+    ///
+    /// Reading and writing use different querysets on purpose. A reader gets
+    /// everything the visibility rules allow; an author gets their own rows and
+    /// nothing else, so somebody else's post is a 404 to a PATCH for the same
+    /// reason it is a 404 to a GET of a session that is not theirs — it was never
+    /// in the set.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}//delete(social_posts_destroy)`.
+    public func socialPostsDestroy(path: Operations.SocialPostsDestroy.Input.Path) async throws -> Operations.SocialPostsDestroy.Output {
+        try await socialPostsDestroy(Operations.SocialPostsDestroy.Input(path: path))
+    }
     /// - Remark: HTTP `GET /api/v1/users/`.
     /// - Remark: Generated from `#/paths//api/v1/users//get(users_list)`.
     public func usersList(
@@ -1302,6 +2023,63 @@ extension APIProtocol {
     ) async throws -> Operations.UsersRetrieve.Output {
         try await usersRetrieve(Operations.UsersRetrieve.Input(
             path: path,
+            headers: headers
+        ))
+    }
+    /// Follow this user. Following again changes nothing and answers 200, so a double tap is not an error.
+    ///
+    /// - Remark: HTTP `POST /api/v1/users/{id}/follow/`.
+    /// - Remark: Generated from `#/paths//api/v1/users/{id}/follow//post(users_follow_create)`.
+    public func usersFollowCreate(path: Operations.UsersFollowCreate.Input.Path) async throws -> Operations.UsersFollowCreate.Output {
+        try await usersFollowCreate(Operations.UsersFollowCreate.Input(path: path))
+    }
+    /// Stop following this user.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/users/{id}/follow/`.
+    /// - Remark: Generated from `#/paths//api/v1/users/{id}/follow//delete(users_follow_destroy)`.
+    public func usersFollowDestroy(path: Operations.UsersFollowDestroy.Input.Path) async throws -> Operations.UsersFollowDestroy.Output {
+        try await usersFollowDestroy(Operations.UsersFollowDestroy.Input(path: path))
+    }
+    /// Who follows this user, most recent first.
+    ///
+    /// Paged, unlike the gym member list this otherwise resembles: a gym holds
+    /// the people who train there and a well-followed account holds orders of
+    /// magnitude more.
+    ///
+    /// Paged over the follow rows rather than over the profiles, because
+    /// RepbaseUser has no Meta.ordering — paginating it would slice an
+    /// unordered result and hand the same person to two different pages. The
+    /// follows are ordered by when they were made, which is also the order this
+    /// list wants.
+    ///
+    /// A block cannot leave a stale row here: making one deletes the follows
+    /// both ways, and the follow action refuses to remake them.
+    ///
+    /// - Remark: HTTP `GET /api/v1/users/{id}/followers/`.
+    /// - Remark: Generated from `#/paths//api/v1/users/{id}/followers//get(users_followers_list)`.
+    public func usersFollowersList(
+        path: Operations.UsersFollowersList.Input.Path,
+        query: Operations.UsersFollowersList.Input.Query = .init(),
+        headers: Operations.UsersFollowersList.Input.Headers = .init()
+    ) async throws -> Operations.UsersFollowersList.Output {
+        try await usersFollowersList(Operations.UsersFollowersList.Input(
+            path: path,
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Who this user follows, most recently followed first.
+    ///
+    /// - Remark: HTTP `GET /api/v1/users/{id}/following/`.
+    /// - Remark: Generated from `#/paths//api/v1/users/{id}/following//get(users_following_list)`.
+    public func usersFollowingList(
+        path: Operations.UsersFollowingList.Input.Path,
+        query: Operations.UsersFollowingList.Input.Query = .init(),
+        headers: Operations.UsersFollowingList.Input.Headers = .init()
+    ) async throws -> Operations.UsersFollowingList.Output {
+        try await usersFollowingList(Operations.UsersFollowingList.Input(
+            path: path,
+            query: query,
             headers: headers
         ))
     }
@@ -1442,6 +2220,41 @@ public enum Servers {}
 public enum Components {
     /// Types generated from the `#/components/schemas` section of the OpenAPI document.
     public enum Schemas {
+        /// Which days to copy a saved meal into, and which meal on each of them.
+        ///
+        /// Days rather than a meal id: the screen that applies a saved meal asks for a
+        /// set of dates and a meal number, and a day the user picked may not have that
+        /// many meals on it yet. Naming an existing meal could not express "meal two on
+        /// each of these three days" without the client first creating whichever meals
+        /// it guessed were missing.
+        ///
+        /// `position` is the meal's place in the day counting from one, not its
+        /// `position` column: a day whose second meal was deleted still has a second
+        /// meal, and it is the one now sitting where that one was.
+        ///
+        /// - Remark: Generated from `#/components/schemas/ApplySavedMealRequest`.
+        public struct ApplySavedMealRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ApplySavedMealRequest/dates`.
+            public var dates: [Swift.String]
+            /// - Remark: Generated from `#/components/schemas/ApplySavedMealRequest/position`.
+            public var position: Swift.Int
+            /// Creates a new `ApplySavedMealRequest`.
+            ///
+            /// - Parameters:
+            ///   - dates:
+            ///   - position:
+            public init(
+                dates: [Swift.String],
+                position: Swift.Int
+            ) {
+                self.dates = dates
+                self.position = position
+            }
+            public enum CodingKeys: String, CodingKey {
+                case dates
+                case position
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/AuthResponse`.
         public struct AuthResponse: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/AuthResponse/token`.
@@ -1481,6 +2294,94 @@ public enum Components {
             public enum CodingKeys: String, CodingKey {
                 case token
                 case user
+            }
+        }
+        /// One person the requester has blocked.
+        ///
+        /// `blocked_user` is nested beside the plain id because the only screen that
+        /// reads this list is a list of people, and a page of bare ids would be a
+        /// profile fetch each. The id stays because that is what a client sends back to
+        /// lift the block.
+        ///
+        /// - Remark: Generated from `#/components/schemas/Block`.
+        public struct Block: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/Block/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/Block/blocker`.
+            public var blocker: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/Block/blocked`.
+            public var blocked: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/Block/blocked_user`.
+            public struct BlockedUserPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/Block/blocked_user/value1`.
+                public var value1: Components.Schemas.PublicRepbaseUser
+                /// Creates a new `BlockedUserPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PublicRepbaseUser) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/Block/blocked_user`.
+            public var blockedUser: Components.Schemas.Block.BlockedUserPayload
+            /// - Remark: Generated from `#/components/schemas/Block/created_at`.
+            public var createdAt: Foundation.Date
+            /// Creates a new `Block`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - blocker:
+            ///   - blocked:
+            ///   - blockedUser:
+            ///   - createdAt:
+            public init(
+                id: Swift.Int,
+                blocker: Swift.Int,
+                blocked: Swift.Int,
+                blockedUser: Components.Schemas.Block.BlockedUserPayload,
+                createdAt: Foundation.Date
+            ) {
+                self.id = id
+                self.blocker = blocker
+                self.blocked = blocked
+                self.blockedUser = blockedUser
+                self.createdAt = createdAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case blocker
+                case blocked
+                case blockedUser = "blocked_user"
+                case createdAt = "created_at"
+            }
+        }
+        /// One person the requester has blocked.
+        ///
+        /// `blocked_user` is nested beside the plain id because the only screen that
+        /// reads this list is a list of people, and a page of bare ids would be a
+        /// profile fetch each. The id stays because that is what a client sends back to
+        /// lift the block.
+        ///
+        /// - Remark: Generated from `#/components/schemas/BlockRequest`.
+        public struct BlockRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/BlockRequest/blocked`.
+            public var blocked: Swift.Int
+            /// Creates a new `BlockRequest`.
+            ///
+            /// - Parameters:
+            ///   - blocked:
+            public init(blocked: Swift.Int) {
+                self.blocked = blocked
+            }
+            public enum CodingKeys: String, CodingKey {
+                case blocked
             }
         }
         /// - Remark: Generated from `#/components/schemas/BodyWeightEntry`.
@@ -1631,6 +2532,76 @@ public enum Components {
             case imagePng = "image/png"
             case imageWebp = "image/webp"
         }
+        /// * `workout` - Workout
+        /// * `meal` - Meal
+        /// * `planner` - Planner
+        ///
+        /// - Remark: Generated from `#/components/schemas/CreatePostKindEnum`.
+        @frozen public enum CreatePostKindEnum: String, Codable, Hashable, Sendable, CaseIterable {
+            case workout = "workout"
+            case meal = "meal"
+            case planner = "planner"
+        }
+        /// What to post, and who may see it.
+        ///
+        /// A reference and nothing else. The server reads the source itself and builds
+        /// the snapshot from it, so no client can decide what a post says it did —
+        /// accepting the content here would be accepting a five-hundred-kilogram squat
+        /// from anyone who could type one.
+        ///
+        /// - Remark: Generated from `#/components/schemas/CreatePostRequest`.
+        public struct CreatePostRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CreatePostRequest/kind`.
+            public var kind: Components.Schemas.CreatePostKindEnum
+            /// - Remark: Generated from `#/components/schemas/CreatePostRequest/source_id`.
+            public var sourceId: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/CreatePostRequest/caption`.
+            public var caption: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/CreatePostRequest/visibility`.
+            public struct VisibilityPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/CreatePostRequest/visibility/value1`.
+                public var value1: Components.Schemas.VisibilityEnum
+                /// Creates a new `VisibilityPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.VisibilityEnum) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try decoder.decodeFromSingleValueContainer()
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeToSingleValueContainer(self.value1)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/CreatePostRequest/visibility`.
+            public var visibility: Components.Schemas.CreatePostRequest.VisibilityPayload?
+            /// Creates a new `CreatePostRequest`.
+            ///
+            /// - Parameters:
+            ///   - kind:
+            ///   - sourceId:
+            ///   - caption:
+            ///   - visibility:
+            public init(
+                kind: Components.Schemas.CreatePostKindEnum,
+                sourceId: Swift.Int,
+                caption: Swift.String? = nil,
+                visibility: Components.Schemas.CreatePostRequest.VisibilityPayload? = nil
+            ) {
+                self.kind = kind
+                self.sourceId = sourceId
+                self.caption = caption
+                self.visibility = visibility
+            }
+            public enum CodingKeys: String, CodingKey {
+                case kind
+                case sourceId = "source_id"
+                case caption
+                case visibility
+            }
+        }
         /// * `powerlifting` - Powerlifting
         /// * `bodybuilding` - Bodybuilding
         /// * `crossfit` - CrossFit
@@ -1658,6 +2629,23 @@ public enum Components {
             case calisthenics = "calisthenics"
             case generalFitness = "general_fitness"
             case other = "other"
+        }
+        /// The day to open.
+        ///
+        /// - Remark: Generated from `#/components/schemas/EnsureFoodDayRequest`.
+        public struct EnsureFoodDayRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/EnsureFoodDayRequest/date`.
+            public var date: Swift.String
+            /// Creates a new `EnsureFoodDayRequest`.
+            ///
+            /// - Parameters:
+            ///   - date:
+            public init(date: Swift.String) {
+                self.date = date
+            }
+            public enum CodingKeys: String, CodingKey {
+                case date
+            }
         }
         /// - Remark: Generated from `#/components/schemas/Exercise`.
         public struct Exercise: Codable, Hashable, Sendable {
@@ -1768,6 +2756,284 @@ public enum Components {
             public enum CodingKeys: String, CodingKey {
                 case name
                 case muscleGroup = "muscle_group"
+            }
+        }
+        /// One food. Nutrition is per serving; totals are derived, never stored,
+        /// so a serving count and its totals cannot drift apart.
+        ///
+        /// - Remark: Generated from `#/components/schemas/FoodEntry`.
+        public struct FoodEntry: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/FoodEntry/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/FoodEntry/meal`.
+            public var meal: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/FoodEntry/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FoodEntry/servings`.
+            public var servings: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/FoodEntry/calories`.
+            public var calories: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/FoodEntry/protein_grams`.
+            public var proteinGrams: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/FoodEntry/carbohydrate_grams`.
+            public var carbohydrateGrams: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/FoodEntry/fat_grams`.
+            public var fatGrams: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/FoodEntry/total_calories`.
+            public var totalCalories: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FoodEntry/total_protein_grams`.
+            public var totalProteinGrams: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FoodEntry/total_carbohydrate_grams`.
+            public var totalCarbohydrateGrams: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FoodEntry/total_fat_grams`.
+            public var totalFatGrams: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FoodEntry/position`.
+            public var position: Swift.Int64?
+            /// - Remark: Generated from `#/components/schemas/FoodEntry/created_at`.
+            public var createdAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/FoodEntry/updated_at`.
+            public var updatedAt: Foundation.Date
+            /// Creates a new `FoodEntry`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - meal:
+            ///   - name:
+            ///   - servings:
+            ///   - calories:
+            ///   - proteinGrams:
+            ///   - carbohydrateGrams:
+            ///   - fatGrams:
+            ///   - totalCalories:
+            ///   - totalProteinGrams:
+            ///   - totalCarbohydrateGrams:
+            ///   - totalFatGrams:
+            ///   - position:
+            ///   - createdAt:
+            ///   - updatedAt:
+            public init(
+                id: Swift.Int,
+                meal: Swift.Int,
+                name: Swift.String,
+                servings: Swift.String? = nil,
+                calories: Swift.String? = nil,
+                proteinGrams: Swift.String? = nil,
+                carbohydrateGrams: Swift.String? = nil,
+                fatGrams: Swift.String? = nil,
+                totalCalories: Swift.String,
+                totalProteinGrams: Swift.String,
+                totalCarbohydrateGrams: Swift.String,
+                totalFatGrams: Swift.String,
+                position: Swift.Int64? = nil,
+                createdAt: Foundation.Date,
+                updatedAt: Foundation.Date
+            ) {
+                self.id = id
+                self.meal = meal
+                self.name = name
+                self.servings = servings
+                self.calories = calories
+                self.proteinGrams = proteinGrams
+                self.carbohydrateGrams = carbohydrateGrams
+                self.fatGrams = fatGrams
+                self.totalCalories = totalCalories
+                self.totalProteinGrams = totalProteinGrams
+                self.totalCarbohydrateGrams = totalCarbohydrateGrams
+                self.totalFatGrams = totalFatGrams
+                self.position = position
+                self.createdAt = createdAt
+                self.updatedAt = updatedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case meal
+                case name
+                case servings
+                case calories
+                case proteinGrams = "protein_grams"
+                case carbohydrateGrams = "carbohydrate_grams"
+                case fatGrams = "fat_grams"
+                case totalCalories = "total_calories"
+                case totalProteinGrams = "total_protein_grams"
+                case totalCarbohydrateGrams = "total_carbohydrate_grams"
+                case totalFatGrams = "total_fat_grams"
+                case position
+                case createdAt = "created_at"
+                case updatedAt = "updated_at"
+            }
+        }
+        /// One food. Nutrition is per serving; totals are derived, never stored,
+        /// so a serving count and its totals cannot drift apart.
+        ///
+        /// - Remark: Generated from `#/components/schemas/FoodEntryRequest`.
+        public struct FoodEntryRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/FoodEntryRequest/meal`.
+            public var meal: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/FoodEntryRequest/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FoodEntryRequest/servings`.
+            public var servings: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/FoodEntryRequest/calories`.
+            public var calories: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/FoodEntryRequest/protein_grams`.
+            public var proteinGrams: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/FoodEntryRequest/carbohydrate_grams`.
+            public var carbohydrateGrams: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/FoodEntryRequest/fat_grams`.
+            public var fatGrams: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/FoodEntryRequest/position`.
+            public var position: Swift.Int64?
+            /// Creates a new `FoodEntryRequest`.
+            ///
+            /// - Parameters:
+            ///   - meal:
+            ///   - name:
+            ///   - servings:
+            ///   - calories:
+            ///   - proteinGrams:
+            ///   - carbohydrateGrams:
+            ///   - fatGrams:
+            ///   - position:
+            public init(
+                meal: Swift.Int,
+                name: Swift.String,
+                servings: Swift.String? = nil,
+                calories: Swift.String? = nil,
+                proteinGrams: Swift.String? = nil,
+                carbohydrateGrams: Swift.String? = nil,
+                fatGrams: Swift.String? = nil,
+                position: Swift.Int64? = nil
+            ) {
+                self.meal = meal
+                self.name = name
+                self.servings = servings
+                self.calories = calories
+                self.proteinGrams = proteinGrams
+                self.carbohydrateGrams = carbohydrateGrams
+                self.fatGrams = fatGrams
+                self.position = position
+            }
+            public enum CodingKeys: String, CodingKey {
+                case meal
+                case name
+                case servings
+                case calories
+                case proteinGrams = "protein_grams"
+                case carbohydrateGrams = "carbohydrate_grams"
+                case fatGrams = "fat_grams"
+                case position
+            }
+        }
+        /// A meal with its foods nested, so drawing a day is one request rather
+        /// than one per meal.
+        ///
+        /// - Remark: Generated from `#/components/schemas/FoodMeal`.
+        public struct FoodMeal: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/FoodMeal/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/FoodMeal/date`.
+            public var date: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FoodMeal/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FoodMeal/position`.
+            public var position: Swift.Int64?
+            /// - Remark: Generated from `#/components/schemas/FoodMeal/entries`.
+            public var entries: [Components.Schemas.FoodEntry]
+            /// - Remark: Generated from `#/components/schemas/FoodMeal/total_calories`.
+            public var totalCalories: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FoodMeal/total_protein_grams`.
+            public var totalProteinGrams: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FoodMeal/total_carbohydrate_grams`.
+            public var totalCarbohydrateGrams: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FoodMeal/total_fat_grams`.
+            public var totalFatGrams: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FoodMeal/created_at`.
+            public var createdAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/FoodMeal/updated_at`.
+            public var updatedAt: Foundation.Date
+            /// Creates a new `FoodMeal`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - date:
+            ///   - name:
+            ///   - position:
+            ///   - entries:
+            ///   - totalCalories:
+            ///   - totalProteinGrams:
+            ///   - totalCarbohydrateGrams:
+            ///   - totalFatGrams:
+            ///   - createdAt:
+            ///   - updatedAt:
+            public init(
+                id: Swift.Int,
+                date: Swift.String,
+                name: Swift.String,
+                position: Swift.Int64? = nil,
+                entries: [Components.Schemas.FoodEntry],
+                totalCalories: Swift.String,
+                totalProteinGrams: Swift.String,
+                totalCarbohydrateGrams: Swift.String,
+                totalFatGrams: Swift.String,
+                createdAt: Foundation.Date,
+                updatedAt: Foundation.Date
+            ) {
+                self.id = id
+                self.date = date
+                self.name = name
+                self.position = position
+                self.entries = entries
+                self.totalCalories = totalCalories
+                self.totalProteinGrams = totalProteinGrams
+                self.totalCarbohydrateGrams = totalCarbohydrateGrams
+                self.totalFatGrams = totalFatGrams
+                self.createdAt = createdAt
+                self.updatedAt = updatedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case date
+                case name
+                case position
+                case entries
+                case totalCalories = "total_calories"
+                case totalProteinGrams = "total_protein_grams"
+                case totalCarbohydrateGrams = "total_carbohydrate_grams"
+                case totalFatGrams = "total_fat_grams"
+                case createdAt = "created_at"
+                case updatedAt = "updated_at"
+            }
+        }
+        /// A meal with its foods nested, so drawing a day is one request rather
+        /// than one per meal.
+        ///
+        /// - Remark: Generated from `#/components/schemas/FoodMealRequest`.
+        public struct FoodMealRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/FoodMealRequest/date`.
+            public var date: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FoodMealRequest/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FoodMealRequest/position`.
+            public var position: Swift.Int64?
+            /// Creates a new `FoodMealRequest`.
+            ///
+            /// - Parameters:
+            ///   - date:
+            ///   - name:
+            ///   - position:
+            public init(
+                date: Swift.String,
+                name: Swift.String,
+                position: Swift.Int64? = nil
+            ) {
+                self.date = date
+                self.name = name
+                self.position = position
+            }
+            public enum CodingKeys: String, CodingKey {
+                case date
+                case name
+                case position
             }
         }
         /// A gym, and how many people say they train there.
@@ -1907,6 +3173,82 @@ public enum Components {
         }
         /// - Remark: Generated from `#/components/schemas/NullEnum`.
         public typealias NullEnum = OpenAPIRuntime.OpenAPIValueContainer
+        /// - Remark: Generated from `#/components/schemas/NutritionGoal`.
+        public struct NutritionGoal: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/NutritionGoal/calories`.
+            public var calories: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/NutritionGoal/protein_grams`.
+            public var proteinGrams: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/NutritionGoal/carbohydrate_grams`.
+            public var carbohydrateGrams: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/NutritionGoal/fat_grams`.
+            public var fatGrams: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/NutritionGoal/updated_at`.
+            public var updatedAt: Foundation.Date
+            /// Creates a new `NutritionGoal`.
+            ///
+            /// - Parameters:
+            ///   - calories:
+            ///   - proteinGrams:
+            ///   - carbohydrateGrams:
+            ///   - fatGrams:
+            ///   - updatedAt:
+            public init(
+                calories: Swift.String? = nil,
+                proteinGrams: Swift.String? = nil,
+                carbohydrateGrams: Swift.String? = nil,
+                fatGrams: Swift.String? = nil,
+                updatedAt: Foundation.Date
+            ) {
+                self.calories = calories
+                self.proteinGrams = proteinGrams
+                self.carbohydrateGrams = carbohydrateGrams
+                self.fatGrams = fatGrams
+                self.updatedAt = updatedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case calories
+                case proteinGrams = "protein_grams"
+                case carbohydrateGrams = "carbohydrate_grams"
+                case fatGrams = "fat_grams"
+                case updatedAt = "updated_at"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PaginatedBlockList`.
+        public struct PaginatedBlockList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PaginatedBlockList/count`.
+            public var count: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PaginatedBlockList/next`.
+            public var next: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedBlockList/previous`.
+            public var previous: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedBlockList/results`.
+            public var results: [Components.Schemas.Block]
+            /// Creates a new `PaginatedBlockList`.
+            ///
+            /// - Parameters:
+            ///   - count:
+            ///   - next:
+            ///   - previous:
+            ///   - results:
+            public init(
+                count: Swift.Int,
+                next: Swift.String? = nil,
+                previous: Swift.String? = nil,
+                results: [Components.Schemas.Block]
+            ) {
+                self.count = count
+                self.next = next
+                self.previous = previous
+                self.results = results
+            }
+            public enum CodingKeys: String, CodingKey {
+                case count
+                case next
+                case previous
+                case results
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/PaginatedBodyWeightEntryList`.
         public struct PaginatedBodyWeightEntryList: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PaginatedBodyWeightEntryList/count`.
@@ -1964,6 +3306,76 @@ public enum Components {
                 next: Swift.String? = nil,
                 previous: Swift.String? = nil,
                 results: [Components.Schemas.Exercise]
+            ) {
+                self.count = count
+                self.next = next
+                self.previous = previous
+                self.results = results
+            }
+            public enum CodingKeys: String, CodingKey {
+                case count
+                case next
+                case previous
+                case results
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PaginatedFoodEntryList`.
+        public struct PaginatedFoodEntryList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PaginatedFoodEntryList/count`.
+            public var count: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PaginatedFoodEntryList/next`.
+            public var next: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedFoodEntryList/previous`.
+            public var previous: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedFoodEntryList/results`.
+            public var results: [Components.Schemas.FoodEntry]
+            /// Creates a new `PaginatedFoodEntryList`.
+            ///
+            /// - Parameters:
+            ///   - count:
+            ///   - next:
+            ///   - previous:
+            ///   - results:
+            public init(
+                count: Swift.Int,
+                next: Swift.String? = nil,
+                previous: Swift.String? = nil,
+                results: [Components.Schemas.FoodEntry]
+            ) {
+                self.count = count
+                self.next = next
+                self.previous = previous
+                self.results = results
+            }
+            public enum CodingKeys: String, CodingKey {
+                case count
+                case next
+                case previous
+                case results
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PaginatedFoodMealList`.
+        public struct PaginatedFoodMealList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PaginatedFoodMealList/count`.
+            public var count: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PaginatedFoodMealList/next`.
+            public var next: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedFoodMealList/previous`.
+            public var previous: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedFoodMealList/results`.
+            public var results: [Components.Schemas.FoodMeal]
+            /// Creates a new `PaginatedFoodMealList`.
+            ///
+            /// - Parameters:
+            ///   - count:
+            ///   - next:
+            ///   - previous:
+            ///   - results:
+            public init(
+                count: Swift.Int,
+                next: Swift.String? = nil,
+                previous: Swift.String? = nil,
+                results: [Components.Schemas.FoodMeal]
             ) {
                 self.count = count
                 self.next = next
@@ -2047,6 +3459,35 @@ public enum Components {
                 case results
             }
         }
+        /// - Remark: Generated from `#/components/schemas/PaginatedPostList`.
+        public struct PaginatedPostList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PaginatedPostList/next`.
+            public var next: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedPostList/previous`.
+            public var previous: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedPostList/results`.
+            public var results: [Components.Schemas.Post]
+            /// Creates a new `PaginatedPostList`.
+            ///
+            /// - Parameters:
+            ///   - next:
+            ///   - previous:
+            ///   - results:
+            public init(
+                next: Swift.String? = nil,
+                previous: Swift.String? = nil,
+                results: [Components.Schemas.Post]
+            ) {
+                self.next = next
+                self.previous = previous
+                self.results = results
+            }
+            public enum CodingKeys: String, CodingKey {
+                case next
+                case previous
+                case results
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/PaginatedPublicRepbaseUserList`.
         public struct PaginatedPublicRepbaseUserList: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PaginatedPublicRepbaseUserList/count`.
@@ -2069,6 +3510,41 @@ public enum Components {
                 next: Swift.String? = nil,
                 previous: Swift.String? = nil,
                 results: [Components.Schemas.PublicRepbaseUser]
+            ) {
+                self.count = count
+                self.next = next
+                self.previous = previous
+                self.results = results
+            }
+            public enum CodingKeys: String, CodingKey {
+                case count
+                case next
+                case previous
+                case results
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PaginatedSavedFoodMealList`.
+        public struct PaginatedSavedFoodMealList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PaginatedSavedFoodMealList/count`.
+            public var count: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PaginatedSavedFoodMealList/next`.
+            public var next: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedSavedFoodMealList/previous`.
+            public var previous: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedSavedFoodMealList/results`.
+            public var results: [Components.Schemas.SavedFoodMeal]
+            /// Creates a new `PaginatedSavedFoodMealList`.
+            ///
+            /// - Parameters:
+            ///   - count:
+            ///   - next:
+            ///   - previous:
+            ///   - results:
+            public init(
+                count: Swift.Int,
+                next: Swift.String? = nil,
+                previous: Swift.String? = nil,
+                results: [Components.Schemas.SavedFoodMeal]
             ) {
                 self.count = count
                 self.next = next
@@ -2414,6 +3890,100 @@ public enum Components {
                 case muscleGroup = "muscle_group"
             }
         }
+        /// One food. Nutrition is per serving; totals are derived, never stored,
+        /// so a serving count and its totals cannot drift apart.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PatchedFoodEntryRequest`.
+        public struct PatchedFoodEntryRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PatchedFoodEntryRequest/meal`.
+            public var meal: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PatchedFoodEntryRequest/name`.
+            public var name: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedFoodEntryRequest/servings`.
+            public var servings: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedFoodEntryRequest/calories`.
+            public var calories: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedFoodEntryRequest/protein_grams`.
+            public var proteinGrams: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedFoodEntryRequest/carbohydrate_grams`.
+            public var carbohydrateGrams: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedFoodEntryRequest/fat_grams`.
+            public var fatGrams: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedFoodEntryRequest/position`.
+            public var position: Swift.Int64?
+            /// Creates a new `PatchedFoodEntryRequest`.
+            ///
+            /// - Parameters:
+            ///   - meal:
+            ///   - name:
+            ///   - servings:
+            ///   - calories:
+            ///   - proteinGrams:
+            ///   - carbohydrateGrams:
+            ///   - fatGrams:
+            ///   - position:
+            public init(
+                meal: Swift.Int? = nil,
+                name: Swift.String? = nil,
+                servings: Swift.String? = nil,
+                calories: Swift.String? = nil,
+                proteinGrams: Swift.String? = nil,
+                carbohydrateGrams: Swift.String? = nil,
+                fatGrams: Swift.String? = nil,
+                position: Swift.Int64? = nil
+            ) {
+                self.meal = meal
+                self.name = name
+                self.servings = servings
+                self.calories = calories
+                self.proteinGrams = proteinGrams
+                self.carbohydrateGrams = carbohydrateGrams
+                self.fatGrams = fatGrams
+                self.position = position
+            }
+            public enum CodingKeys: String, CodingKey {
+                case meal
+                case name
+                case servings
+                case calories
+                case proteinGrams = "protein_grams"
+                case carbohydrateGrams = "carbohydrate_grams"
+                case fatGrams = "fat_grams"
+                case position
+            }
+        }
+        /// A meal with its foods nested, so drawing a day is one request rather
+        /// than one per meal.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PatchedFoodMealRequest`.
+        public struct PatchedFoodMealRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PatchedFoodMealRequest/date`.
+            public var date: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedFoodMealRequest/name`.
+            public var name: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedFoodMealRequest/position`.
+            public var position: Swift.Int64?
+            /// Creates a new `PatchedFoodMealRequest`.
+            ///
+            /// - Parameters:
+            ///   - date:
+            ///   - name:
+            ///   - position:
+            public init(
+                date: Swift.String? = nil,
+                name: Swift.String? = nil,
+                position: Swift.Int64? = nil
+            ) {
+                self.date = date
+                self.name = name
+                self.position = position
+            }
+            public enum CodingKeys: String, CodingKey {
+                case date
+                case name
+                case position
+            }
+        }
         /// A gym, and how many people say they train there.
         ///
         /// - Remark: Generated from `#/components/schemas/PatchedGymRequest`.
@@ -2443,6 +4013,41 @@ public enum Components {
                 case name
                 case city
                 case country
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PatchedNutritionGoalRequest`.
+        public struct PatchedNutritionGoalRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PatchedNutritionGoalRequest/calories`.
+            public var calories: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedNutritionGoalRequest/protein_grams`.
+            public var proteinGrams: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedNutritionGoalRequest/carbohydrate_grams`.
+            public var carbohydrateGrams: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedNutritionGoalRequest/fat_grams`.
+            public var fatGrams: Swift.String?
+            /// Creates a new `PatchedNutritionGoalRequest`.
+            ///
+            /// - Parameters:
+            ///   - calories:
+            ///   - proteinGrams:
+            ///   - carbohydrateGrams:
+            ///   - fatGrams:
+            public init(
+                calories: Swift.String? = nil,
+                proteinGrams: Swift.String? = nil,
+                carbohydrateGrams: Swift.String? = nil,
+                fatGrams: Swift.String? = nil
+            ) {
+                self.calories = calories
+                self.proteinGrams = proteinGrams
+                self.carbohydrateGrams = carbohydrateGrams
+                self.fatGrams = fatGrams
+            }
+            public enum CodingKeys: String, CodingKey {
+                case calories
+                case proteinGrams = "protein_grams"
+                case carbohydrateGrams = "carbohydrate_grams"
+                case fatGrams = "fat_grams"
             }
         }
         /// A task or event on the planner.
@@ -2611,6 +4216,32 @@ public enum Components {
                 case showsTargetWeight = "shows_target_weight"
             }
         }
+        /// A reusable meal. Ingredients are written with it in one request: a
+        /// recipe with no ingredients is not a thing anyone wants to save.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PatchedSavedFoodMealRequest`.
+        public struct PatchedSavedFoodMealRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PatchedSavedFoodMealRequest/name`.
+            public var name: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedSavedFoodMealRequest/ingredients`.
+            public var ingredients: [Components.Schemas.SavedFoodIngredientRequest]?
+            /// Creates a new `PatchedSavedFoodMealRequest`.
+            ///
+            /// - Parameters:
+            ///   - name:
+            ///   - ingredients:
+            public init(
+                name: Swift.String? = nil,
+                ingredients: [Components.Schemas.SavedFoodIngredientRequest]? = nil
+            ) {
+                self.name = name
+                self.ingredients = ingredients
+            }
+            public enum CodingKeys: String, CodingKey {
+                case name
+                case ingredients
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/PatchedSessionExerciseRequest`.
         public struct PatchedSessionExerciseRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PatchedSessionExerciseRequest/session`.
@@ -2691,6 +4322,35 @@ public enum Components {
                 case reps
                 case distanceKm = "distance_km"
                 case completedAt = "completed_at"
+            }
+        }
+        /// The two things about a post that can still change.
+        ///
+        /// The snapshot is not among them. It is the record of what happened, and one
+        /// that could be edited into a different workout after people had read it would
+        /// be worth nothing as a record.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PatchedUpdatePostRequest`.
+        public struct PatchedUpdatePostRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PatchedUpdatePostRequest/caption`.
+            public var caption: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedUpdatePostRequest/visibility`.
+            public var visibility: Components.Schemas.VisibilityEnum?
+            /// Creates a new `PatchedUpdatePostRequest`.
+            ///
+            /// - Parameters:
+            ///   - caption:
+            ///   - visibility:
+            public init(
+                caption: Swift.String? = nil,
+                visibility: Components.Schemas.VisibilityEnum? = nil
+            ) {
+                self.caption = caption
+                self.visibility = visibility
+            }
+            public enum CodingKeys: String, CodingKey {
+                case caption
+                case visibility
             }
         }
         /// - Remark: Generated from `#/components/schemas/PatchedWorkoutExerciseRequest`.
@@ -3134,6 +4794,544 @@ public enum Components {
                 case notes
             }
         }
+        /// A post as anyone allowed to see it reads it.
+        ///
+        /// `workout`, `meal` and `planner` are three keys side by side with exactly one
+        /// of them filled in, rather than one field whose type is chosen by `kind`. A
+        /// client built before a fourth kind existed then fails to draw that one post;
+        /// with a discriminated union it fails to decode the whole page around it.
+        ///
+        /// `kind` and `visibility` go out as plain strings for the same reason: a value
+        /// added later should be a string the client does not recognise, not a decoding
+        /// error. Requests still take a closed set — see `CreatePostSerializer`.
+        ///
+        /// Every field here is read-only. A post is created from a source it does not
+        /// carry and edited through `UpdatePostSerializer`, so there is no shape in
+        /// which this serializer accepts anything.
+        ///
+        /// - Remark: Generated from `#/components/schemas/Post`.
+        public struct Post: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/Post/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/Post/author`.
+            public struct AuthorPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/Post/author/value1`.
+                public var value1: Components.Schemas.PublicRepbaseUser
+                /// Creates a new `AuthorPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PublicRepbaseUser) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/Post/author`.
+            public var author: Components.Schemas.Post.AuthorPayload
+            /// - Remark: Generated from `#/components/schemas/Post/kind`.
+            public var kind: Swift.String
+            /// - Remark: Generated from `#/components/schemas/Post/caption`.
+            public var caption: Swift.String
+            /// - Remark: Generated from `#/components/schemas/Post/visibility`.
+            public var visibility: Swift.String
+            /// - Remark: Generated from `#/components/schemas/Post/workout`.
+            public struct WorkoutPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/Post/workout/value1`.
+                public var value1: Components.Schemas.PostWorkout
+                /// Creates a new `WorkoutPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PostWorkout) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/Post/workout`.
+            public var workout: Components.Schemas.Post.WorkoutPayload?
+            /// - Remark: Generated from `#/components/schemas/Post/meal`.
+            public struct MealPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/Post/meal/value1`.
+                public var value1: Components.Schemas.PostMeal
+                /// Creates a new `MealPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PostMeal) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/Post/meal`.
+            public var meal: Components.Schemas.Post.MealPayload?
+            /// - Remark: Generated from `#/components/schemas/Post/planner`.
+            public struct PlannerPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/Post/planner/value1`.
+                public var value1: Components.Schemas.PostPlannerEntry
+                /// Creates a new `PlannerPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PostPlannerEntry) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/Post/planner`.
+            public var planner: Components.Schemas.Post.PlannerPayload?
+            /// - Remark: Generated from `#/components/schemas/Post/source_id`.
+            public var sourceId: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/Post/viewer_follows_author`.
+            public var viewerFollowsAuthor: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/Post/created_at`.
+            public var createdAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/Post/updated_at`.
+            public var updatedAt: Foundation.Date
+            /// Creates a new `Post`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - author:
+            ///   - kind:
+            ///   - caption:
+            ///   - visibility:
+            ///   - workout:
+            ///   - meal:
+            ///   - planner:
+            ///   - sourceId:
+            ///   - viewerFollowsAuthor:
+            ///   - createdAt:
+            ///   - updatedAt:
+            public init(
+                id: Swift.Int,
+                author: Components.Schemas.Post.AuthorPayload,
+                kind: Swift.String,
+                caption: Swift.String,
+                visibility: Swift.String,
+                workout: Components.Schemas.Post.WorkoutPayload? = nil,
+                meal: Components.Schemas.Post.MealPayload? = nil,
+                planner: Components.Schemas.Post.PlannerPayload? = nil,
+                sourceId: Swift.Int? = nil,
+                viewerFollowsAuthor: Swift.Bool,
+                createdAt: Foundation.Date,
+                updatedAt: Foundation.Date
+            ) {
+                self.id = id
+                self.author = author
+                self.kind = kind
+                self.caption = caption
+                self.visibility = visibility
+                self.workout = workout
+                self.meal = meal
+                self.planner = planner
+                self.sourceId = sourceId
+                self.viewerFollowsAuthor = viewerFollowsAuthor
+                self.createdAt = createdAt
+                self.updatedAt = updatedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case author
+                case kind
+                case caption
+                case visibility
+                case workout
+                case meal
+                case planner
+                case sourceId = "source_id"
+                case viewerFollowsAuthor = "viewer_follows_author"
+                case createdAt = "created_at"
+                case updatedAt = "updated_at"
+            }
+        }
+        /// A posted meal, frozen at the moment it was posted.
+        ///
+        /// Totals are derived from the foods nested underneath, exactly as
+        /// `FoodMealSerializer` derives them from a live meal, and rendered through the
+        /// same `NUTRITION_DECIMAL` so a frozen calorie count has the same shape on the
+        /// wire as a live one.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PostMeal`.
+        public struct PostMeal: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PostMeal/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PostMeal/date`.
+            public var date: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PostMeal/entries`.
+            public var entries: [Components.Schemas.PostMealEntry]
+            /// - Remark: Generated from `#/components/schemas/PostMeal/total_calories`.
+            public var totalCalories: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PostMeal/total_protein_grams`.
+            public var totalProteinGrams: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PostMeal/total_carbohydrate_grams`.
+            public var totalCarbohydrateGrams: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PostMeal/total_fat_grams`.
+            public var totalFatGrams: Swift.String
+            /// Creates a new `PostMeal`.
+            ///
+            /// - Parameters:
+            ///   - name:
+            ///   - date:
+            ///   - entries:
+            ///   - totalCalories:
+            ///   - totalProteinGrams:
+            ///   - totalCarbohydrateGrams:
+            ///   - totalFatGrams:
+            public init(
+                name: Swift.String,
+                date: Swift.String,
+                entries: [Components.Schemas.PostMealEntry],
+                totalCalories: Swift.String,
+                totalProteinGrams: Swift.String,
+                totalCarbohydrateGrams: Swift.String,
+                totalFatGrams: Swift.String
+            ) {
+                self.name = name
+                self.date = date
+                self.entries = entries
+                self.totalCalories = totalCalories
+                self.totalProteinGrams = totalProteinGrams
+                self.totalCarbohydrateGrams = totalCarbohydrateGrams
+                self.totalFatGrams = totalFatGrams
+            }
+            public enum CodingKeys: String, CodingKey {
+                case name
+                case date
+                case entries
+                case totalCalories = "total_calories"
+                case totalProteinGrams = "total_protein_grams"
+                case totalCarbohydrateGrams = "total_carbohydrate_grams"
+                case totalFatGrams = "total_fat_grams"
+            }
+        }
+        /// One food inside a posted meal, per serving with its servings beside it.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PostMealEntry`.
+        public struct PostMealEntry: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PostMealEntry/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PostMealEntry/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PostMealEntry/servings`.
+            public var servings: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PostMealEntry/calories`.
+            public var calories: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PostMealEntry/protein_grams`.
+            public var proteinGrams: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PostMealEntry/carbohydrate_grams`.
+            public var carbohydrateGrams: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PostMealEntry/fat_grams`.
+            public var fatGrams: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PostMealEntry/total_calories`.
+            public var totalCalories: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PostMealEntry/total_protein_grams`.
+            public var totalProteinGrams: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PostMealEntry/total_carbohydrate_grams`.
+            public var totalCarbohydrateGrams: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PostMealEntry/total_fat_grams`.
+            public var totalFatGrams: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PostMealEntry/position`.
+            public var position: Swift.Int
+            /// Creates a new `PostMealEntry`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - name:
+            ///   - servings:
+            ///   - calories:
+            ///   - proteinGrams:
+            ///   - carbohydrateGrams:
+            ///   - fatGrams:
+            ///   - totalCalories:
+            ///   - totalProteinGrams:
+            ///   - totalCarbohydrateGrams:
+            ///   - totalFatGrams:
+            ///   - position:
+            public init(
+                id: Swift.Int,
+                name: Swift.String,
+                servings: Swift.String,
+                calories: Swift.String,
+                proteinGrams: Swift.String,
+                carbohydrateGrams: Swift.String,
+                fatGrams: Swift.String,
+                totalCalories: Swift.String,
+                totalProteinGrams: Swift.String,
+                totalCarbohydrateGrams: Swift.String,
+                totalFatGrams: Swift.String,
+                position: Swift.Int
+            ) {
+                self.id = id
+                self.name = name
+                self.servings = servings
+                self.calories = calories
+                self.proteinGrams = proteinGrams
+                self.carbohydrateGrams = carbohydrateGrams
+                self.fatGrams = fatGrams
+                self.totalCalories = totalCalories
+                self.totalProteinGrams = totalProteinGrams
+                self.totalCarbohydrateGrams = totalCarbohydrateGrams
+                self.totalFatGrams = totalFatGrams
+                self.position = position
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case name
+                case servings
+                case calories
+                case proteinGrams = "protein_grams"
+                case carbohydrateGrams = "carbohydrate_grams"
+                case fatGrams = "fat_grams"
+                case totalCalories = "total_calories"
+                case totalProteinGrams = "total_protein_grams"
+                case totalCarbohydrateGrams = "total_carbohydrate_grams"
+                case totalFatGrams = "total_fat_grams"
+                case position
+            }
+        }
+        /// A posted planner item, frozen at the moment it was posted.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PostPlannerEntry`.
+        public struct PostPlannerEntry: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PostPlannerEntry/kind`.
+            public var kind: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PostPlannerEntry/title`.
+            public var title: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PostPlannerEntry/category`.
+            public var category: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PostPlannerEntry/scheduled_date`.
+            public var scheduledDate: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PostPlannerEntry/scheduled_time`.
+            public var scheduledTime: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PostPlannerEntry/is_complete`.
+            public var isComplete: Swift.Bool
+            /// Creates a new `PostPlannerEntry`.
+            ///
+            /// - Parameters:
+            ///   - kind:
+            ///   - title:
+            ///   - category:
+            ///   - scheduledDate:
+            ///   - scheduledTime:
+            ///   - isComplete:
+            public init(
+                kind: Swift.String,
+                title: Swift.String,
+                category: Swift.String,
+                scheduledDate: Swift.String,
+                scheduledTime: Swift.String? = nil,
+                isComplete: Swift.Bool
+            ) {
+                self.kind = kind
+                self.title = title
+                self.category = category
+                self.scheduledDate = scheduledDate
+                self.scheduledTime = scheduledTime
+                self.isComplete = isComplete
+            }
+            public enum CodingKeys: String, CodingKey {
+                case kind
+                case title
+                case category
+                case scheduledDate = "scheduled_date"
+                case scheduledTime = "scheduled_time"
+                case isComplete = "is_complete"
+            }
+        }
+        /// A posted workout, frozen at the moment it was posted.
+        ///
+        /// The three totals are summed from the exercises nested underneath rather
+        /// than stored, the way `FoodMealSerializer` sums a meal's foods, so a figure
+        /// printed under a card cannot disagree with the rows printed inside it. They
+        /// walk `exercises` and nothing else, so a page of them costs no queries as
+        /// long as the feed prefetches that relation.
+        ///
+        /// There is no `id` here or on the other two snapshots: each is one-to-one with
+        /// its post, the post's id already identifies it, and an id in this position
+        /// invites a client into thinking it can fetch the workout it came from.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PostWorkout`.
+        public struct PostWorkout: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PostWorkout/title`.
+            public var title: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PostWorkout/workout_type`.
+            public var workoutType: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PostWorkout/performed_at`.
+            public var performedAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/PostWorkout/duration_seconds`.
+            public var durationSeconds: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PostWorkout/cardio_machine`.
+            public var cardioMachine: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PostWorkout/cardio_seconds`.
+            public var cardioSeconds: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PostWorkout/cardio_distance_km`.
+            public var cardioDistanceKm: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PostWorkout/route_distance_km`.
+            public var routeDistanceKm: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PostWorkout/pace_seconds_per_km`.
+            public var paceSecondsPerKm: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PostWorkout/elevation_gain_m`.
+            public var elevationGainM: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PostWorkout/exercises`.
+            public var exercises: [Components.Schemas.PostWorkoutExercise]
+            /// - Remark: Generated from `#/components/schemas/PostWorkout/exercise_count`.
+            public var exerciseCount: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PostWorkout/total_set_count`.
+            public var totalSetCount: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PostWorkout/total_volume_kg`.
+            public var totalVolumeKg: Swift.String?
+            /// Creates a new `PostWorkout`.
+            ///
+            /// - Parameters:
+            ///   - title:
+            ///   - workoutType:
+            ///   - performedAt:
+            ///   - durationSeconds:
+            ///   - cardioMachine:
+            ///   - cardioSeconds:
+            ///   - cardioDistanceKm:
+            ///   - routeDistanceKm:
+            ///   - paceSecondsPerKm:
+            ///   - elevationGainM:
+            ///   - exercises:
+            ///   - exerciseCount:
+            ///   - totalSetCount:
+            ///   - totalVolumeKg:
+            public init(
+                title: Swift.String,
+                workoutType: Swift.String? = nil,
+                performedAt: Foundation.Date,
+                durationSeconds: Swift.Int? = nil,
+                cardioMachine: Swift.String? = nil,
+                cardioSeconds: Swift.Int? = nil,
+                cardioDistanceKm: Swift.String? = nil,
+                routeDistanceKm: Swift.String? = nil,
+                paceSecondsPerKm: Swift.Int? = nil,
+                elevationGainM: Swift.String? = nil,
+                exercises: [Components.Schemas.PostWorkoutExercise],
+                exerciseCount: Swift.Int,
+                totalSetCount: Swift.Int,
+                totalVolumeKg: Swift.String? = nil
+            ) {
+                self.title = title
+                self.workoutType = workoutType
+                self.performedAt = performedAt
+                self.durationSeconds = durationSeconds
+                self.cardioMachine = cardioMachine
+                self.cardioSeconds = cardioSeconds
+                self.cardioDistanceKm = cardioDistanceKm
+                self.routeDistanceKm = routeDistanceKm
+                self.paceSecondsPerKm = paceSecondsPerKm
+                self.elevationGainM = elevationGainM
+                self.exercises = exercises
+                self.exerciseCount = exerciseCount
+                self.totalSetCount = totalSetCount
+                self.totalVolumeKg = totalVolumeKg
+            }
+            public enum CodingKeys: String, CodingKey {
+                case title
+                case workoutType = "workout_type"
+                case performedAt = "performed_at"
+                case durationSeconds = "duration_seconds"
+                case cardioMachine = "cardio_machine"
+                case cardioSeconds = "cardio_seconds"
+                case cardioDistanceKm = "cardio_distance_km"
+                case routeDistanceKm = "route_distance_km"
+                case paceSecondsPerKm = "pace_seconds_per_km"
+                case elevationGainM = "elevation_gain_m"
+                case exercises
+                case exerciseCount = "exercise_count"
+                case totalSetCount = "total_set_count"
+                case totalVolumeKg = "total_volume_kg"
+            }
+        }
+        /// One exercise inside a posted workout.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PostWorkoutExercise`.
+        public struct PostWorkoutExercise: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PostWorkoutExercise/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PostWorkoutExercise/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PostWorkoutExercise/order`.
+            public var order: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PostWorkoutExercise/set_count`.
+            public var setCount: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PostWorkoutExercise/top_set_weight_kg`.
+            public var topSetWeightKg: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PostWorkoutExercise/top_set_reps`.
+            public var topSetReps: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PostWorkoutExercise/total_reps`.
+            public var totalReps: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PostWorkoutExercise/volume_kg`.
+            public var volumeKg: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PostWorkoutExercise/distance_km`.
+            public var distanceKm: Swift.String?
+            /// Creates a new `PostWorkoutExercise`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - name:
+            ///   - order:
+            ///   - setCount:
+            ///   - topSetWeightKg:
+            ///   - topSetReps:
+            ///   - totalReps:
+            ///   - volumeKg:
+            ///   - distanceKm:
+            public init(
+                id: Swift.Int,
+                name: Swift.String,
+                order: Swift.Int,
+                setCount: Swift.Int,
+                topSetWeightKg: Swift.String? = nil,
+                topSetReps: Swift.Int? = nil,
+                totalReps: Swift.Int? = nil,
+                volumeKg: Swift.String? = nil,
+                distanceKm: Swift.String? = nil
+            ) {
+                self.id = id
+                self.name = name
+                self.order = order
+                self.setCount = setCount
+                self.topSetWeightKg = topSetWeightKg
+                self.topSetReps = topSetReps
+                self.totalReps = totalReps
+                self.volumeKg = volumeKg
+                self.distanceKm = distanceKm
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case name
+                case order
+                case setCount = "set_count"
+                case topSetWeightKg = "top_set_weight_kg"
+                case topSetReps = "top_set_reps"
+                case totalReps = "total_reps"
+                case volumeKg = "volume_kg"
+                case distanceKm = "distance_km"
+            }
+        }
         /// A profile photo sent as base64.
         ///
         /// Base64 in JSON rather than multipart: every other call this API takes is
@@ -3276,6 +5474,96 @@ public enum Components {
                 case showsWeight = "shows_weight"
                 case showsTargetWeight = "shows_target_weight"
                 case createdAt = "created_at"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PublicRepbaseUserRequest`.
+        public struct PublicRepbaseUserRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PublicRepbaseUserRequest/bio`.
+            public var bio: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PublicRepbaseUserRequest/gym`.
+            public var gym: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PublicRepbaseUserRequest/shows_height`.
+            public var showsHeight: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/PublicRepbaseUserRequest/shows_weight`.
+            public var showsWeight: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/PublicRepbaseUserRequest/shows_target_weight`.
+            public var showsTargetWeight: Swift.Bool?
+            /// Creates a new `PublicRepbaseUserRequest`.
+            ///
+            /// - Parameters:
+            ///   - bio:
+            ///   - gym:
+            ///   - showsHeight:
+            ///   - showsWeight:
+            ///   - showsTargetWeight:
+            public init(
+                bio: Swift.String? = nil,
+                gym: Swift.Int? = nil,
+                showsHeight: Swift.Bool? = nil,
+                showsWeight: Swift.Bool? = nil,
+                showsTargetWeight: Swift.Bool? = nil
+            ) {
+                self.bio = bio
+                self.gym = gym
+                self.showsHeight = showsHeight
+                self.showsWeight = showsWeight
+                self.showsTargetWeight = showsTargetWeight
+            }
+            public enum CodingKeys: String, CodingKey {
+                case bio
+                case gym
+                case showsHeight = "shows_height"
+                case showsWeight = "shows_weight"
+                case showsTargetWeight = "shows_target_weight"
+            }
+        }
+        /// A food the user has logged before, for the picker.
+        ///
+        /// - Remark: Generated from `#/components/schemas/RecentFood`.
+        public struct RecentFood: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/RecentFood/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/RecentFood/servings`.
+            public var servings: Swift.String
+            /// - Remark: Generated from `#/components/schemas/RecentFood/calories`.
+            public var calories: Swift.String
+            /// - Remark: Generated from `#/components/schemas/RecentFood/protein_grams`.
+            public var proteinGrams: Swift.String
+            /// - Remark: Generated from `#/components/schemas/RecentFood/carbohydrate_grams`.
+            public var carbohydrateGrams: Swift.String
+            /// - Remark: Generated from `#/components/schemas/RecentFood/fat_grams`.
+            public var fatGrams: Swift.String
+            /// Creates a new `RecentFood`.
+            ///
+            /// - Parameters:
+            ///   - name:
+            ///   - servings:
+            ///   - calories:
+            ///   - proteinGrams:
+            ///   - carbohydrateGrams:
+            ///   - fatGrams:
+            public init(
+                name: Swift.String,
+                servings: Swift.String,
+                calories: Swift.String,
+                proteinGrams: Swift.String,
+                carbohydrateGrams: Swift.String,
+                fatGrams: Swift.String
+            ) {
+                self.name = name
+                self.servings = servings
+                self.calories = calories
+                self.proteinGrams = proteinGrams
+                self.carbohydrateGrams = carbohydrateGrams
+                self.fatGrams = fatGrams
+            }
+            public enum CodingKeys: String, CodingKey {
+                case name
+                case servings
+                case calories
+                case proteinGrams = "protein_grams"
+                case carbohydrateGrams = "carbohydrate_grams"
+                case fatGrams = "fat_grams"
             }
         }
         /// - Remark: Generated from `#/components/schemas/RegisterRequest`.
@@ -3555,6 +5843,188 @@ public enum Components {
                 case showsHeight = "shows_height"
                 case showsWeight = "shows_weight"
                 case showsTargetWeight = "shows_target_weight"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SavedFoodIngredient`.
+        public struct SavedFoodIngredient: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredient/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredient/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredient/servings`.
+            public var servings: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredient/calories`.
+            public var calories: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredient/protein_grams`.
+            public var proteinGrams: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredient/carbohydrate_grams`.
+            public var carbohydrateGrams: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredient/fat_grams`.
+            public var fatGrams: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredient/position`.
+            public var position: Swift.Int64?
+            /// Creates a new `SavedFoodIngredient`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - name:
+            ///   - servings:
+            ///   - calories:
+            ///   - proteinGrams:
+            ///   - carbohydrateGrams:
+            ///   - fatGrams:
+            ///   - position:
+            public init(
+                id: Swift.Int,
+                name: Swift.String,
+                servings: Swift.String? = nil,
+                calories: Swift.String? = nil,
+                proteinGrams: Swift.String? = nil,
+                carbohydrateGrams: Swift.String? = nil,
+                fatGrams: Swift.String? = nil,
+                position: Swift.Int64? = nil
+            ) {
+                self.id = id
+                self.name = name
+                self.servings = servings
+                self.calories = calories
+                self.proteinGrams = proteinGrams
+                self.carbohydrateGrams = carbohydrateGrams
+                self.fatGrams = fatGrams
+                self.position = position
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case name
+                case servings
+                case calories
+                case proteinGrams = "protein_grams"
+                case carbohydrateGrams = "carbohydrate_grams"
+                case fatGrams = "fat_grams"
+                case position
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SavedFoodIngredientRequest`.
+        public struct SavedFoodIngredientRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredientRequest/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredientRequest/servings`.
+            public var servings: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredientRequest/calories`.
+            public var calories: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredientRequest/protein_grams`.
+            public var proteinGrams: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredientRequest/carbohydrate_grams`.
+            public var carbohydrateGrams: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredientRequest/fat_grams`.
+            public var fatGrams: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredientRequest/position`.
+            public var position: Swift.Int64?
+            /// Creates a new `SavedFoodIngredientRequest`.
+            ///
+            /// - Parameters:
+            ///   - name:
+            ///   - servings:
+            ///   - calories:
+            ///   - proteinGrams:
+            ///   - carbohydrateGrams:
+            ///   - fatGrams:
+            ///   - position:
+            public init(
+                name: Swift.String,
+                servings: Swift.String? = nil,
+                calories: Swift.String? = nil,
+                proteinGrams: Swift.String? = nil,
+                carbohydrateGrams: Swift.String? = nil,
+                fatGrams: Swift.String? = nil,
+                position: Swift.Int64? = nil
+            ) {
+                self.name = name
+                self.servings = servings
+                self.calories = calories
+                self.proteinGrams = proteinGrams
+                self.carbohydrateGrams = carbohydrateGrams
+                self.fatGrams = fatGrams
+                self.position = position
+            }
+            public enum CodingKeys: String, CodingKey {
+                case name
+                case servings
+                case calories
+                case proteinGrams = "protein_grams"
+                case carbohydrateGrams = "carbohydrate_grams"
+                case fatGrams = "fat_grams"
+                case position
+            }
+        }
+        /// A reusable meal. Ingredients are written with it in one request: a
+        /// recipe with no ingredients is not a thing anyone wants to save.
+        ///
+        /// - Remark: Generated from `#/components/schemas/SavedFoodMeal`.
+        public struct SavedFoodMeal: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SavedFoodMeal/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/SavedFoodMeal/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SavedFoodMeal/ingredients`.
+            public var ingredients: [Components.Schemas.SavedFoodIngredient]
+            /// - Remark: Generated from `#/components/schemas/SavedFoodMeal/created_at`.
+            public var createdAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/SavedFoodMeal/updated_at`.
+            public var updatedAt: Foundation.Date
+            /// Creates a new `SavedFoodMeal`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - name:
+            ///   - ingredients:
+            ///   - createdAt:
+            ///   - updatedAt:
+            public init(
+                id: Swift.Int,
+                name: Swift.String,
+                ingredients: [Components.Schemas.SavedFoodIngredient],
+                createdAt: Foundation.Date,
+                updatedAt: Foundation.Date
+            ) {
+                self.id = id
+                self.name = name
+                self.ingredients = ingredients
+                self.createdAt = createdAt
+                self.updatedAt = updatedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case name
+                case ingredients
+                case createdAt = "created_at"
+                case updatedAt = "updated_at"
+            }
+        }
+        /// A reusable meal. Ingredients are written with it in one request: a
+        /// recipe with no ingredients is not a thing anyone wants to save.
+        ///
+        /// - Remark: Generated from `#/components/schemas/SavedFoodMealRequest`.
+        public struct SavedFoodMealRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SavedFoodMealRequest/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SavedFoodMealRequest/ingredients`.
+            public var ingredients: [Components.Schemas.SavedFoodIngredientRequest]
+            /// Creates a new `SavedFoodMealRequest`.
+            ///
+            /// - Parameters:
+            ///   - name:
+            ///   - ingredients:
+            public init(
+                name: Swift.String,
+                ingredients: [Components.Schemas.SavedFoodIngredientRequest]
+            ) {
+                self.name = name
+                self.ingredients = ingredients
+            }
+            public enum CodingKeys: String, CodingKey {
+                case name
+                case ingredients
             }
         }
         /// A cardio finisher performed after a session's exercises.
@@ -3938,6 +6408,16 @@ public enum Components {
         @frozen public enum UnitPreferenceEnum: String, Codable, Hashable, Sendable, CaseIterable {
             case metric = "metric"
             case imperial = "imperial"
+        }
+        /// * `public` - Public
+        /// * `followers` - Followers
+        /// * `private` - Private
+        ///
+        /// - Remark: Generated from `#/components/schemas/VisibilityEnum`.
+        @frozen public enum VisibilityEnum: String, Codable, Hashable, Sendable, CaseIterable {
+            case _public = "public"
+            case followers = "followers"
+            case _private = "private"
         }
         /// * `0` - Monday
         /// * `1` - Tuesday
@@ -6553,6 +9033,2837 @@ public enum Operations {
             case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
         }
     }
+    /// Foods inside meals. Ownership is the meal's owner, one step away.
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/entries/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/entries//get(food_entries_list)`.
+    public enum FoodEntriesList {
+        public static let id: Swift.String = "food_entries_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/entries/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/entries/GET/query/page`.
+                public var page: Swift.Int?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - page: A page number within the paginated result set.
+                public init(page: Swift.Int? = nil) {
+                    self.page = page
+                }
+            }
+            public var query: Operations.FoodEntriesList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/food/entries/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodEntriesList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodEntriesList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodEntriesList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.FoodEntriesList.Input.Query = .init(),
+                headers: Operations.FoodEntriesList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/entries/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/entries/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedFoodEntryList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedFoodEntryList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodEntriesList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodEntriesList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/entries//get(food_entries_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.FoodEntriesList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.FoodEntriesList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Foods inside meals. Ownership is the meal's owner, one step away.
+    ///
+    /// - Remark: HTTP `POST /api/v1/food/entries/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/entries//post(food_entries_create)`.
+    public enum FoodEntriesCreate {
+        public static let id: Swift.String = "food_entries_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/entries/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodEntriesCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodEntriesCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodEntriesCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/food/entries/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/entries/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.FoodEntryRequest)
+            }
+            public var body: Operations.FoodEntriesCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.FoodEntriesCreate.Input.Headers = .init(),
+                body: Operations.FoodEntriesCreate.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Created: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/entries/POST/responses/201/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/entries/POST/responses/201/content/application\/json`.
+                    case json(Components.Schemas.FoodEntry)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.FoodEntry {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodEntriesCreate.Output.Created.Body
+                /// Creates a new `Created`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodEntriesCreate.Output.Created.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/entries//post(food_entries_create)/responses/201`.
+            ///
+            /// HTTP response code: `201 created`.
+            case created(Operations.FoodEntriesCreate.Output.Created)
+            /// The associated value of the enum case if `self` is `.created`.
+            ///
+            /// - Throws: An error if `self` is not `.created`.
+            /// - SeeAlso: `.created`.
+            public var created: Operations.FoodEntriesCreate.Output.Created {
+                get throws {
+                    switch self {
+                    case let .created(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "created",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Foods inside meals. Ownership is the meal's owner, one step away.
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/entries/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/entries/{id}//get(food_entries_retrieve)`.
+    public enum FoodEntriesRetrieve {
+        public static let id: Swift.String = "food_entries_retrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/entries/{id}/GET/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this food entry.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/entries/{id}/GET/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this food entry.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.FoodEntriesRetrieve.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/food/entries/{id}/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodEntriesRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodEntriesRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodEntriesRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.FoodEntriesRetrieve.Input.Path,
+                headers: Operations.FoodEntriesRetrieve.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/entries/{id}/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/entries/{id}/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.FoodEntry)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.FoodEntry {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodEntriesRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodEntriesRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/entries/{id}//get(food_entries_retrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.FoodEntriesRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.FoodEntriesRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Foods inside meals. Ownership is the meal's owner, one step away.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/food/entries/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/entries/{id}//patch(food_entries_partial_update)`.
+    public enum FoodEntriesPartialUpdate {
+        public static let id: Swift.String = "food_entries_partial_update"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/entries/{id}/PATCH/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this food entry.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/entries/{id}/PATCH/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this food entry.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.FoodEntriesPartialUpdate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/food/entries/{id}/PATCH/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodEntriesPartialUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodEntriesPartialUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodEntriesPartialUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/food/entries/{id}/PATCH/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/entries/{id}/PATCH/requestBody/content/application\/json`.
+                case json(Components.Schemas.PatchedFoodEntryRequest)
+            }
+            public var body: Operations.FoodEntriesPartialUpdate.Input.Body?
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.FoodEntriesPartialUpdate.Input.Path,
+                headers: Operations.FoodEntriesPartialUpdate.Input.Headers = .init(),
+                body: Operations.FoodEntriesPartialUpdate.Input.Body? = nil
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/entries/{id}/PATCH/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/entries/{id}/PATCH/responses/200/content/application\/json`.
+                    case json(Components.Schemas.FoodEntry)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.FoodEntry {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodEntriesPartialUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodEntriesPartialUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/entries/{id}//patch(food_entries_partial_update)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.FoodEntriesPartialUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.FoodEntriesPartialUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Foods inside meals. Ownership is the meal's owner, one step away.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/food/entries/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/entries/{id}//put(food_entries_update)`.
+    public enum FoodEntriesUpdate {
+        public static let id: Swift.String = "food_entries_update"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/entries/{id}/PUT/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this food entry.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/entries/{id}/PUT/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this food entry.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.FoodEntriesUpdate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/food/entries/{id}/PUT/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodEntriesUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodEntriesUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodEntriesUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/food/entries/{id}/PUT/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/entries/{id}/PUT/requestBody/content/application\/json`.
+                case json(Components.Schemas.FoodEntryRequest)
+            }
+            public var body: Operations.FoodEntriesUpdate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.FoodEntriesUpdate.Input.Path,
+                headers: Operations.FoodEntriesUpdate.Input.Headers = .init(),
+                body: Operations.FoodEntriesUpdate.Input.Body
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/entries/{id}/PUT/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/entries/{id}/PUT/responses/200/content/application\/json`.
+                    case json(Components.Schemas.FoodEntry)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.FoodEntry {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodEntriesUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodEntriesUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/entries/{id}//put(food_entries_update)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.FoodEntriesUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.FoodEntriesUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Foods inside meals. Ownership is the meal's owner, one step away.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/food/entries/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/entries/{id}//delete(food_entries_destroy)`.
+    public enum FoodEntriesDestroy {
+        public static let id: Swift.String = "food_entries_destroy"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/entries/{id}/DELETE/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this food entry.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/entries/{id}/DELETE/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this food entry.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.FoodEntriesDestroy.Input.Path
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            public init(path: Operations.FoodEntriesDestroy.Input.Path) {
+                self.path = path
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct NoContent: Sendable, Hashable {
+                /// Creates a new `NoContent`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/entries/{id}//delete(food_entries_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            case noContent(Operations.FoodEntriesDestroy.Output.NoContent)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/entries/{id}//delete(food_entries_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            public static var noContent: Self {
+                .noContent(.init())
+            }
+            /// The associated value of the enum case if `self` is `.noContent`.
+            ///
+            /// - Throws: An error if `self` is not `.noContent`.
+            /// - SeeAlso: `.noContent`.
+            public var noContent: Operations.FoodEntriesDestroy.Output.NoContent {
+                get throws {
+                    switch self {
+                    case let .noContent(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "noContent",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// The signed-in user's daily targets. A singleton, so no list or id.
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/goals/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/goals//get(food_goals_retrieve)`.
+    public enum FoodGoalsRetrieve {
+        public static let id: Swift.String = "food_goals_retrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/goals/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodGoalsRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodGoalsRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodGoalsRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            public init(headers: Operations.FoodGoalsRetrieve.Input.Headers = .init()) {
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/goals/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/goals/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.NutritionGoal)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.NutritionGoal {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodGoalsRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodGoalsRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/goals//get(food_goals_retrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.FoodGoalsRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.FoodGoalsRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// The signed-in user's daily targets. A singleton, so no list or id.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/food/goals/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/goals//patch(food_goals_partial_update)`.
+    public enum FoodGoalsPartialUpdate {
+        public static let id: Swift.String = "food_goals_partial_update"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/goals/PATCH/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodGoalsPartialUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodGoalsPartialUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodGoalsPartialUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/food/goals/PATCH/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/goals/PATCH/requestBody/content/application\/json`.
+                case json(Components.Schemas.PatchedNutritionGoalRequest)
+            }
+            public var body: Operations.FoodGoalsPartialUpdate.Input.Body?
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.FoodGoalsPartialUpdate.Input.Headers = .init(),
+                body: Operations.FoodGoalsPartialUpdate.Input.Body? = nil
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/goals/PATCH/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/goals/PATCH/responses/200/content/application\/json`.
+                    case json(Components.Schemas.NutritionGoal)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.NutritionGoal {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodGoalsPartialUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodGoalsPartialUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/goals//patch(food_goals_partial_update)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.FoodGoalsPartialUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.FoodGoalsPartialUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Meals, with their foods nested on read.
+    ///
+    /// A day is drawn from one request rather than one per meal, which is why the
+    /// entries come back inside the meal instead of behind another call.
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/meals/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/meals//get(food_meals_list)`.
+    public enum FoodMealsList {
+        public static let id: Swift.String = "food_meals_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/meals/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// Return only meals on or before this date.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/meals/GET/query/end`.
+                public var end: Swift.String?
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/meals/GET/query/page`.
+                public var page: Swift.Int?
+                /// Return only meals on or after this date.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/meals/GET/query/start`.
+                public var start: Swift.String?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - end: Return only meals on or before this date.
+                ///   - page: A page number within the paginated result set.
+                ///   - start: Return only meals on or after this date.
+                public init(
+                    end: Swift.String? = nil,
+                    page: Swift.Int? = nil,
+                    start: Swift.String? = nil
+                ) {
+                    self.end = end
+                    self.page = page
+                    self.start = start
+                }
+            }
+            public var query: Operations.FoodMealsList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/food/meals/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodMealsList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodMealsList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodMealsList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.FoodMealsList.Input.Query = .init(),
+                headers: Operations.FoodMealsList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/meals/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/meals/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedFoodMealList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedFoodMealList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodMealsList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodMealsList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/meals//get(food_meals_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.FoodMealsList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.FoodMealsList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Meals, with their foods nested on read.
+    ///
+    /// A day is drawn from one request rather than one per meal, which is why the
+    /// entries come back inside the meal instead of behind another call.
+    ///
+    /// - Remark: HTTP `POST /api/v1/food/meals/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/meals//post(food_meals_create)`.
+    public enum FoodMealsCreate {
+        public static let id: Swift.String = "food_meals_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/meals/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodMealsCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodMealsCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodMealsCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/food/meals/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/meals/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.FoodMealRequest)
+            }
+            public var body: Operations.FoodMealsCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.FoodMealsCreate.Input.Headers = .init(),
+                body: Operations.FoodMealsCreate.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Created: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/meals/POST/responses/201/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/meals/POST/responses/201/content/application\/json`.
+                    case json(Components.Schemas.FoodMeal)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.FoodMeal {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodMealsCreate.Output.Created.Body
+                /// Creates a new `Created`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodMealsCreate.Output.Created.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/meals//post(food_meals_create)/responses/201`.
+            ///
+            /// HTTP response code: `201 created`.
+            case created(Operations.FoodMealsCreate.Output.Created)
+            /// The associated value of the enum case if `self` is `.created`.
+            ///
+            /// - Throws: An error if `self` is not `.created`.
+            /// - SeeAlso: `.created`.
+            public var created: Operations.FoodMealsCreate.Output.Created {
+                get throws {
+                    switch self {
+                    case let .created(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "created",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Meals, with their foods nested on read.
+    ///
+    /// A day is drawn from one request rather than one per meal, which is why the
+    /// entries come back inside the meal instead of behind another call.
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/meals/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/meals/{id}//get(food_meals_retrieve)`.
+    public enum FoodMealsRetrieve {
+        public static let id: Swift.String = "food_meals_retrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/meals/{id}/GET/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this food meal.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/meals/{id}/GET/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this food meal.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.FoodMealsRetrieve.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/food/meals/{id}/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodMealsRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodMealsRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodMealsRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.FoodMealsRetrieve.Input.Path,
+                headers: Operations.FoodMealsRetrieve.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/meals/{id}/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/meals/{id}/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.FoodMeal)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.FoodMeal {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodMealsRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodMealsRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/meals/{id}//get(food_meals_retrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.FoodMealsRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.FoodMealsRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Meals, with their foods nested on read.
+    ///
+    /// A day is drawn from one request rather than one per meal, which is why the
+    /// entries come back inside the meal instead of behind another call.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/food/meals/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/meals/{id}//patch(food_meals_partial_update)`.
+    public enum FoodMealsPartialUpdate {
+        public static let id: Swift.String = "food_meals_partial_update"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/meals/{id}/PATCH/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this food meal.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/meals/{id}/PATCH/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this food meal.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.FoodMealsPartialUpdate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/food/meals/{id}/PATCH/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodMealsPartialUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodMealsPartialUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodMealsPartialUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/food/meals/{id}/PATCH/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/meals/{id}/PATCH/requestBody/content/application\/json`.
+                case json(Components.Schemas.PatchedFoodMealRequest)
+            }
+            public var body: Operations.FoodMealsPartialUpdate.Input.Body?
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.FoodMealsPartialUpdate.Input.Path,
+                headers: Operations.FoodMealsPartialUpdate.Input.Headers = .init(),
+                body: Operations.FoodMealsPartialUpdate.Input.Body? = nil
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/meals/{id}/PATCH/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/meals/{id}/PATCH/responses/200/content/application\/json`.
+                    case json(Components.Schemas.FoodMeal)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.FoodMeal {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodMealsPartialUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodMealsPartialUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/meals/{id}//patch(food_meals_partial_update)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.FoodMealsPartialUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.FoodMealsPartialUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Meals, with their foods nested on read.
+    ///
+    /// A day is drawn from one request rather than one per meal, which is why the
+    /// entries come back inside the meal instead of behind another call.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/food/meals/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/meals/{id}//put(food_meals_update)`.
+    public enum FoodMealsUpdate {
+        public static let id: Swift.String = "food_meals_update"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/meals/{id}/PUT/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this food meal.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/meals/{id}/PUT/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this food meal.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.FoodMealsUpdate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/food/meals/{id}/PUT/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodMealsUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodMealsUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodMealsUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/food/meals/{id}/PUT/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/meals/{id}/PUT/requestBody/content/application\/json`.
+                case json(Components.Schemas.FoodMealRequest)
+            }
+            public var body: Operations.FoodMealsUpdate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.FoodMealsUpdate.Input.Path,
+                headers: Operations.FoodMealsUpdate.Input.Headers = .init(),
+                body: Operations.FoodMealsUpdate.Input.Body
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/meals/{id}/PUT/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/meals/{id}/PUT/responses/200/content/application\/json`.
+                    case json(Components.Schemas.FoodMeal)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.FoodMeal {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodMealsUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodMealsUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/meals/{id}//put(food_meals_update)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.FoodMealsUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.FoodMealsUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Meals, with their foods nested on read.
+    ///
+    /// A day is drawn from one request rather than one per meal, which is why the
+    /// entries come back inside the meal instead of behind another call.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/food/meals/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/meals/{id}//delete(food_meals_destroy)`.
+    public enum FoodMealsDestroy {
+        public static let id: Swift.String = "food_meals_destroy"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/meals/{id}/DELETE/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this food meal.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/meals/{id}/DELETE/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this food meal.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.FoodMealsDestroy.Input.Path
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            public init(path: Operations.FoodMealsDestroy.Input.Path) {
+                self.path = path
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct NoContent: Sendable, Hashable {
+                /// Creates a new `NoContent`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/meals/{id}//delete(food_meals_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            case noContent(Operations.FoodMealsDestroy.Output.NoContent)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/meals/{id}//delete(food_meals_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            public static var noContent: Self {
+                .noContent(.init())
+            }
+            /// The associated value of the enum case if `self` is `.noContent`.
+            ///
+            /// - Throws: An error if `self` is not `.noContent`.
+            /// - SeeAlso: `.noContent`.
+            public var noContent: Operations.FoodMealsDestroy.Output.NoContent {
+                get throws {
+                    switch self {
+                    case let .noContent(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "noContent",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// Open a day and get its meals, creating the day's empty meal slots the first time. Safe to call every time a day is shown: it only adds slots a day is short of, so opening the same day twice does not double them.
+    ///
+    /// - Remark: HTTP `POST /api/v1/food/meals/ensure-day/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/meals/ensure-day//post(food_meals_ensure_day_create)`.
+    public enum FoodMealsEnsureDayCreate {
+        public static let id: Swift.String = "food_meals_ensure_day_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/meals/ensure-day/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodMealsEnsureDayCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodMealsEnsureDayCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodMealsEnsureDayCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/food/meals/ensure-day/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/meals/ensure-day/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.EnsureFoodDayRequest)
+            }
+            public var body: Operations.FoodMealsEnsureDayCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.FoodMealsEnsureDayCreate.Input.Headers = .init(),
+                body: Operations.FoodMealsEnsureDayCreate.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/meals/ensure-day/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/meals/ensure-day/POST/responses/200/content/application\/json`.
+                    case json([Components.Schemas.FoodMeal])
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: [Components.Schemas.FoodMeal] {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodMealsEnsureDayCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodMealsEnsureDayCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/meals/ensure-day//post(food_meals_ensure_day_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.FoodMealsEnsureDayCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.FoodMealsEnsureDayCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Foods this person has logged before, most recent first.
+    ///
+    /// One row per distinct name: the picker offers a food to reuse, and the
+    /// same yoghurt logged nine times is one choice, not nine.
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/meals/recent-foods/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/meals/recent-foods//get(food_meals_recent_foods_list)`.
+    public enum FoodMealsRecentFoodsList {
+        public static let id: Swift.String = "food_meals_recent_foods_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/meals/recent-foods/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodMealsRecentFoodsList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodMealsRecentFoodsList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodMealsRecentFoodsList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            public init(headers: Operations.FoodMealsRecentFoodsList.Input.Headers = .init()) {
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/meals/recent-foods/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/meals/recent-foods/GET/responses/200/content/application\/json`.
+                    case json([Components.Schemas.RecentFood])
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: [Components.Schemas.RecentFood] {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodMealsRecentFoodsList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodMealsRecentFoodsList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/meals/recent-foods//get(food_meals_recent_foods_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.FoodMealsRecentFoodsList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.FoodMealsRecentFoodsList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Meals kept to reuse.
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/saved-meals/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/saved-meals//get(food_saved_meals_list)`.
+    public enum FoodSavedMealsList {
+        public static let id: Swift.String = "food_saved_meals_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/GET/query/page`.
+                public var page: Swift.Int?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - page: A page number within the paginated result set.
+                public init(page: Swift.Int? = nil) {
+                    self.page = page
+                }
+            }
+            public var query: Operations.FoodSavedMealsList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodSavedMealsList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodSavedMealsList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodSavedMealsList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.FoodSavedMealsList.Input.Query = .init(),
+                headers: Operations.FoodSavedMealsList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedSavedFoodMealList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedSavedFoodMealList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodSavedMealsList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodSavedMealsList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/saved-meals//get(food_saved_meals_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.FoodSavedMealsList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.FoodSavedMealsList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Meals kept to reuse.
+    ///
+    /// - Remark: HTTP `POST /api/v1/food/saved-meals/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/saved-meals//post(food_saved_meals_create)`.
+    public enum FoodSavedMealsCreate {
+        public static let id: Swift.String = "food_saved_meals_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodSavedMealsCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodSavedMealsCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodSavedMealsCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.SavedFoodMealRequest)
+            }
+            public var body: Operations.FoodSavedMealsCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.FoodSavedMealsCreate.Input.Headers = .init(),
+                body: Operations.FoodSavedMealsCreate.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Created: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/POST/responses/201/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/POST/responses/201/content/application\/json`.
+                    case json(Components.Schemas.SavedFoodMeal)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.SavedFoodMeal {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodSavedMealsCreate.Output.Created.Body
+                /// Creates a new `Created`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodSavedMealsCreate.Output.Created.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/saved-meals//post(food_saved_meals_create)/responses/201`.
+            ///
+            /// HTTP response code: `201 created`.
+            case created(Operations.FoodSavedMealsCreate.Output.Created)
+            /// The associated value of the enum case if `self` is `.created`.
+            ///
+            /// - Throws: An error if `self` is not `.created`.
+            /// - SeeAlso: `.created`.
+            public var created: Operations.FoodSavedMealsCreate.Output.Created {
+                get throws {
+                    switch self {
+                    case let .created(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "created",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Meals kept to reuse.
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/saved-meals/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/saved-meals/{id}//get(food_saved_meals_retrieve)`.
+    public enum FoodSavedMealsRetrieve {
+        public static let id: Swift.String = "food_saved_meals_retrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/{id}/GET/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this saved food meal.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/{id}/GET/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this saved food meal.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.FoodSavedMealsRetrieve.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/{id}/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodSavedMealsRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodSavedMealsRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodSavedMealsRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.FoodSavedMealsRetrieve.Input.Path,
+                headers: Operations.FoodSavedMealsRetrieve.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/{id}/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/{id}/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.SavedFoodMeal)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.SavedFoodMeal {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodSavedMealsRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodSavedMealsRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/saved-meals/{id}//get(food_saved_meals_retrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.FoodSavedMealsRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.FoodSavedMealsRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Meals kept to reuse.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/food/saved-meals/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/saved-meals/{id}//patch(food_saved_meals_partial_update)`.
+    public enum FoodSavedMealsPartialUpdate {
+        public static let id: Swift.String = "food_saved_meals_partial_update"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/{id}/PATCH/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this saved food meal.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/{id}/PATCH/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this saved food meal.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.FoodSavedMealsPartialUpdate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/{id}/PATCH/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodSavedMealsPartialUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodSavedMealsPartialUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodSavedMealsPartialUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/{id}/PATCH/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/{id}/PATCH/requestBody/content/application\/json`.
+                case json(Components.Schemas.PatchedSavedFoodMealRequest)
+            }
+            public var body: Operations.FoodSavedMealsPartialUpdate.Input.Body?
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.FoodSavedMealsPartialUpdate.Input.Path,
+                headers: Operations.FoodSavedMealsPartialUpdate.Input.Headers = .init(),
+                body: Operations.FoodSavedMealsPartialUpdate.Input.Body? = nil
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/{id}/PATCH/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/{id}/PATCH/responses/200/content/application\/json`.
+                    case json(Components.Schemas.SavedFoodMeal)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.SavedFoodMeal {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodSavedMealsPartialUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodSavedMealsPartialUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/saved-meals/{id}//patch(food_saved_meals_partial_update)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.FoodSavedMealsPartialUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.FoodSavedMealsPartialUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Meals kept to reuse.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/food/saved-meals/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/saved-meals/{id}//put(food_saved_meals_update)`.
+    public enum FoodSavedMealsUpdate {
+        public static let id: Swift.String = "food_saved_meals_update"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/{id}/PUT/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this saved food meal.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/{id}/PUT/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this saved food meal.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.FoodSavedMealsUpdate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/{id}/PUT/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodSavedMealsUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodSavedMealsUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodSavedMealsUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/{id}/PUT/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/{id}/PUT/requestBody/content/application\/json`.
+                case json(Components.Schemas.SavedFoodMealRequest)
+            }
+            public var body: Operations.FoodSavedMealsUpdate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.FoodSavedMealsUpdate.Input.Path,
+                headers: Operations.FoodSavedMealsUpdate.Input.Headers = .init(),
+                body: Operations.FoodSavedMealsUpdate.Input.Body
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/{id}/PUT/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/{id}/PUT/responses/200/content/application\/json`.
+                    case json(Components.Schemas.SavedFoodMeal)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.SavedFoodMeal {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodSavedMealsUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodSavedMealsUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/saved-meals/{id}//put(food_saved_meals_update)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.FoodSavedMealsUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.FoodSavedMealsUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Meals kept to reuse.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/food/saved-meals/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/saved-meals/{id}//delete(food_saved_meals_destroy)`.
+    public enum FoodSavedMealsDestroy {
+        public static let id: Swift.String = "food_saved_meals_destroy"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/{id}/DELETE/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this saved food meal.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/{id}/DELETE/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this saved food meal.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.FoodSavedMealsDestroy.Input.Path
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            public init(path: Operations.FoodSavedMealsDestroy.Input.Path) {
+                self.path = path
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct NoContent: Sendable, Hashable {
+                /// Creates a new `NoContent`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/saved-meals/{id}//delete(food_saved_meals_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            case noContent(Operations.FoodSavedMealsDestroy.Output.NoContent)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/saved-meals/{id}//delete(food_saved_meals_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            public static var noContent: Self {
+                .noContent(.init())
+            }
+            /// The associated value of the enum case if `self` is `.noContent`.
+            ///
+            /// - Throws: An error if `self` is not `.noContent`.
+            /// - SeeAlso: `.noContent`.
+            public var noContent: Operations.FoodSavedMealsDestroy.Output.NoContent {
+                get throws {
+                    switch self {
+                    case let .noContent(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "noContent",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// Copy this saved meal's ingredients into the same numbered meal on each of several days, creating any meal that is not there yet. The ingredients are copied, not linked, so editing one afterwards does not change the recipe it came from, and deleting the recipe does not empty the days it was applied to.
+    ///
+    /// - Remark: HTTP `POST /api/v1/food/saved-meals/{id}/apply/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/saved-meals/{id}/apply//post(food_saved_meals_apply_create)`.
+    public enum FoodSavedMealsApplyCreate {
+        public static let id: Swift.String = "food_saved_meals_apply_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/{id}/apply/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this saved food meal.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/{id}/apply/POST/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this saved food meal.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.FoodSavedMealsApplyCreate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/{id}/apply/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodSavedMealsApplyCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodSavedMealsApplyCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodSavedMealsApplyCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/{id}/apply/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/{id}/apply/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.ApplySavedMealRequest)
+            }
+            public var body: Operations.FoodSavedMealsApplyCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.FoodSavedMealsApplyCreate.Input.Path,
+                headers: Operations.FoodSavedMealsApplyCreate.Input.Headers = .init(),
+                body: Operations.FoodSavedMealsApplyCreate.Input.Body
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/{id}/apply/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/{id}/apply/POST/responses/200/content/application\/json`.
+                    case json([Components.Schemas.FoodMeal])
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: [Components.Schemas.FoodMeal] {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodSavedMealsApplyCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodSavedMealsApplyCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/saved-meals/{id}/apply//post(food_saved_meals_apply_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.FoodSavedMealsApplyCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.FoodSavedMealsApplyCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
     /// Gyms, shared by everyone who trains at them.
     ///
     /// Not owned by anyone: a gym one user adds is exactly the gym the next user
@@ -7793,8 +13104,6 @@ public enum Operations {
             }
         }
     }
-    /// Permanently delete the signed-in account and all associated data.
-    ///
     /// - Remark: HTTP `DELETE /api/v1/me/`.
     /// - Remark: Generated from `#/paths//api/v1/me//delete(me_destroy)`.
     public enum MeDestroy {
@@ -13366,6 +18675,1119 @@ public enum Operations {
             case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
         }
     }
+    /// People this user has blocked.
+    ///
+    /// No update endpoint, for the reason a recurrence has none: there is nothing
+    /// inside a block to change. Lifting one is a delete, and blocking the same
+    /// person again is a new row with a new date, which is what actually happened.
+    ///
+    /// Only blocks the requester made are listed. Who has blocked you is not
+    /// something this API answers, and a list would answer it.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/blocks/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/blocks//get(social_blocks_list)`.
+    public enum SocialBlocksList {
+        public static let id: Swift.String = "social_blocks_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/blocks/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/blocks/GET/query/page`.
+                public var page: Swift.Int?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - page: A page number within the paginated result set.
+                public init(page: Swift.Int? = nil) {
+                    self.page = page
+                }
+            }
+            public var query: Operations.SocialBlocksList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/social/blocks/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialBlocksList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialBlocksList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialBlocksList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.SocialBlocksList.Input.Query = .init(),
+                headers: Operations.SocialBlocksList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/blocks/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/blocks/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedBlockList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedBlockList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialBlocksList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialBlocksList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/blocks//get(social_blocks_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialBlocksList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialBlocksList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// People this user has blocked.
+    ///
+    /// No update endpoint, for the reason a recurrence has none: there is nothing
+    /// inside a block to change. Lifting one is a delete, and blocking the same
+    /// person again is a new row with a new date, which is what actually happened.
+    ///
+    /// Only blocks the requester made are listed. Who has blocked you is not
+    /// something this API answers, and a list would answer it.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/blocks/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/blocks//post(social_blocks_create)`.
+    public enum SocialBlocksCreate {
+        public static let id: Swift.String = "social_blocks_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/blocks/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialBlocksCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialBlocksCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialBlocksCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/social/blocks/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/blocks/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.BlockRequest)
+            }
+            public var body: Operations.SocialBlocksCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.SocialBlocksCreate.Input.Headers = .init(),
+                body: Operations.SocialBlocksCreate.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Created: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/blocks/POST/responses/201/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/blocks/POST/responses/201/content/application\/json`.
+                    case json(Components.Schemas.Block)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Block {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialBlocksCreate.Output.Created.Body
+                /// Creates a new `Created`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialBlocksCreate.Output.Created.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/blocks//post(social_blocks_create)/responses/201`.
+            ///
+            /// HTTP response code: `201 created`.
+            case created(Operations.SocialBlocksCreate.Output.Created)
+            /// The associated value of the enum case if `self` is `.created`.
+            ///
+            /// - Throws: An error if `self` is not `.created`.
+            /// - SeeAlso: `.created`.
+            public var created: Operations.SocialBlocksCreate.Output.Created {
+                get throws {
+                    switch self {
+                    case let .created(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "created",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// People this user has blocked.
+    ///
+    /// No update endpoint, for the reason a recurrence has none: there is nothing
+    /// inside a block to change. Lifting one is a delete, and blocking the same
+    /// person again is a new row with a new date, which is what actually happened.
+    ///
+    /// Only blocks the requester made are listed. Who has blocked you is not
+    /// something this API answers, and a list would answer it.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/blocks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/blocks/{id}//delete(social_blocks_destroy)`.
+    public enum SocialBlocksDestroy {
+        public static let id: Swift.String = "social_blocks_destroy"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/blocks/{id}/DELETE/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this block.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/blocks/{id}/DELETE/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this block.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialBlocksDestroy.Input.Path
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            public init(path: Operations.SocialBlocksDestroy.Input.Path) {
+                self.path = path
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct NoContent: Sendable, Hashable {
+                /// Creates a new `NoContent`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/blocks/{id}//delete(social_blocks_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            case noContent(Operations.SocialBlocksDestroy.Output.NoContent)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/blocks/{id}//delete(social_blocks_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            public static var noContent: Self {
+                .noContent(.init())
+            }
+            /// The associated value of the enum case if `self` is `.noContent`.
+            ///
+            /// - Throws: An error if `self` is not `.noContent`.
+            /// - SeeAlso: `.noContent`.
+            public var noContent: Operations.SocialBlocksDestroy.Output.NoContent {
+                get throws {
+                    switch self {
+                    case let .noContent(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "noContent",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// What the people you follow have posted, newest first.
+    ///
+    /// Fanned out on read: a page is one indexed walk over the posts of everyone
+    /// the reader follows. Fanning out on write would mean a row per follower per
+    /// post, nearly all of them never looked at, and a second copy of the
+    /// visibility rules to keep in step with this one.
+    ///
+    /// The reader's own posts are in it, minus the private ones. Posting and being
+    /// returned to a feed that does not contain what you just posted reads as a
+    /// failure, and this is the cheapest confirmation the app can give; a private
+    /// post is one deliberately held back, so it stays on the profile list where it
+    /// was put and out of the stream that exists to be shared.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/feed/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/feed//get(social_feed_list)`.
+    public enum SocialFeedList {
+        public static let id: Swift.String = "social_feed_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/feed/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// The position carried by the previous page's `next` link. Absent means start at the newest post.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/feed/GET/query/cursor`.
+                public var cursor: Swift.String?
+                /// How many posts to return, at most 50. Asking for more is refused rather than reduced, so a page is always the size it was asked for.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/feed/GET/query/page_size`.
+                public var pageSize: Swift.Int?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - cursor: The position carried by the previous page's `next` link. Absent means start at the newest post.
+                ///   - pageSize: How many posts to return, at most 50. Asking for more is refused rather than reduced, so a page is always the size it was asked for.
+                public init(
+                    cursor: Swift.String? = nil,
+                    pageSize: Swift.Int? = nil
+                ) {
+                    self.cursor = cursor
+                    self.pageSize = pageSize
+                }
+            }
+            public var query: Operations.SocialFeedList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/social/feed/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialFeedList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialFeedList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialFeedList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.SocialFeedList.Input.Query = .init(),
+                headers: Operations.SocialFeedList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/feed/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/feed/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedPostList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedPostList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialFeedList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialFeedList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/feed//get(social_feed_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialFeedList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialFeedList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Posts: what someone has chosen to show other people.
+    ///
+    /// Reading and writing use different querysets on purpose. A reader gets
+    /// everything the visibility rules allow; an author gets their own rows and
+    /// nothing else, so somebody else's post is a 404 to a PATCH for the same
+    /// reason it is a 404 to a GET of a session that is not theirs — it was never
+    /// in the set.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/posts/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts//get(social_posts_list)`.
+    public enum SocialPostsList {
+        public static let id: Swift.String = "social_posts_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// Return only posts by this user, still filtered by what the reader is allowed to see.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/GET/query/author`.
+                public var author: Swift.Int?
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/GET/query/page`.
+                public var page: Swift.Int?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - author: Return only posts by this user, still filtered by what the reader is allowed to see.
+                ///   - page: A page number within the paginated result set.
+                public init(
+                    author: Swift.Int? = nil,
+                    page: Swift.Int? = nil
+                ) {
+                    self.author = author
+                    self.page = page
+                }
+            }
+            public var query: Operations.SocialPostsList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialPostsList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.SocialPostsList.Input.Query = .init(),
+                headers: Operations.SocialPostsList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/posts/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedPostList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedPostList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialPostsList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialPostsList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts//get(social_posts_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialPostsList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialPostsList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Post a workout, meal or planner entry the requester owns. The server reads the source and builds the snapshot; the request names the object and never carries its contents.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts//post(social_posts_create)`.
+    public enum SocialPostsCreate {
+        public static let id: Swift.String = "social_posts_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialPostsCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.CreatePostRequest)
+            }
+            public var body: Operations.SocialPostsCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.SocialPostsCreate.Input.Headers = .init(),
+                body: Operations.SocialPostsCreate.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Created: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/POST/responses/201/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/posts/POST/responses/201/content/application\/json`.
+                    case json(Components.Schemas.Post)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Post {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialPostsCreate.Output.Created.Body
+                /// Creates a new `Created`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialPostsCreate.Output.Created.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts//post(social_posts_create)/responses/201`.
+            ///
+            /// HTTP response code: `201 created`.
+            case created(Operations.SocialPostsCreate.Output.Created)
+            /// The associated value of the enum case if `self` is `.created`.
+            ///
+            /// - Throws: An error if `self` is not `.created`.
+            /// - SeeAlso: `.created`.
+            public var created: Operations.SocialPostsCreate.Output.Created {
+                get throws {
+                    switch self {
+                    case let .created(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "created",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Posts: what someone has chosen to show other people.
+    ///
+    /// Reading and writing use different querysets on purpose. A reader gets
+    /// everything the visibility rules allow; an author gets their own rows and
+    /// nothing else, so somebody else's post is a 404 to a PATCH for the same
+    /// reason it is a 404 to a GET of a session that is not theirs — it was never
+    /// in the set.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/posts/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}//get(social_posts_retrieve)`.
+    public enum SocialPostsRetrieve {
+        public static let id: Swift.String = "social_posts_retrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/GET/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this post.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/GET/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this post.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialPostsRetrieve.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialPostsRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.SocialPostsRetrieve.Input.Path,
+                headers: Operations.SocialPostsRetrieve.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Post)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Post {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialPostsRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialPostsRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}//get(social_posts_retrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialPostsRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialPostsRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Change the caption or who can see this post. The snapshot records what happened and is not editable.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/social/posts/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}//patch(social_posts_partial_update)`.
+    public enum SocialPostsPartialUpdate {
+        public static let id: Swift.String = "social_posts_partial_update"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/PATCH/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this post.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/PATCH/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this post.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialPostsPartialUpdate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/PATCH/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsPartialUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsPartialUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialPostsPartialUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/PATCH/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/PATCH/requestBody/content/application\/json`.
+                case json(Components.Schemas.PatchedUpdatePostRequest)
+            }
+            public var body: Operations.SocialPostsPartialUpdate.Input.Body?
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.SocialPostsPartialUpdate.Input.Path,
+                headers: Operations.SocialPostsPartialUpdate.Input.Headers = .init(),
+                body: Operations.SocialPostsPartialUpdate.Input.Body? = nil
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/PATCH/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/PATCH/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Post)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Post {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialPostsPartialUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialPostsPartialUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}//patch(social_posts_partial_update)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialPostsPartialUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialPostsPartialUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Posts: what someone has chosen to show other people.
+    ///
+    /// Reading and writing use different querysets on purpose. A reader gets
+    /// everything the visibility rules allow; an author gets their own rows and
+    /// nothing else, so somebody else's post is a 404 to a PATCH for the same
+    /// reason it is a 404 to a GET of a session that is not theirs — it was never
+    /// in the set.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}//delete(social_posts_destroy)`.
+    public enum SocialPostsDestroy {
+        public static let id: Swift.String = "social_posts_destroy"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/DELETE/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this post.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/DELETE/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this post.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialPostsDestroy.Input.Path
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            public init(path: Operations.SocialPostsDestroy.Input.Path) {
+                self.path = path
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct NoContent: Sendable, Hashable {
+                /// Creates a new `NoContent`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}//delete(social_posts_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            case noContent(Operations.SocialPostsDestroy.Output.NoContent)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}//delete(social_posts_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            public static var noContent: Self {
+                .noContent(.init())
+            }
+            /// The associated value of the enum case if `self` is `.noContent`.
+            ///
+            /// - Throws: An error if `self` is not `.noContent`.
+            /// - SeeAlso: `.noContent`.
+            public var noContent: Operations.SocialPostsDestroy.Output.NoContent {
+                get throws {
+                    switch self {
+                    case let .noContent(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "noContent",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
     /// - Remark: HTTP `GET /api/v1/users/`.
     /// - Remark: Generated from `#/paths//api/v1/users//get(users_list)`.
     public enum UsersList {
@@ -13579,6 +20001,529 @@ public enum Operations {
             /// - Throws: An error if `self` is not `.ok`.
             /// - SeeAlso: `.ok`.
             public var ok: Operations.UsersRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Follow this user. Following again changes nothing and answers 200, so a double tap is not an error.
+    ///
+    /// - Remark: HTTP `POST /api/v1/users/{id}/follow/`.
+    /// - Remark: Generated from `#/paths//api/v1/users/{id}/follow//post(users_follow_create)`.
+    public enum UsersFollowCreate {
+        public static let id: Swift.String = "users_follow_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/users/{id}/follow/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this repbase user.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/users/{id}/follow/POST/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this repbase user.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.UsersFollowCreate.Input.Path
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            public init(path: Operations.UsersFollowCreate.Input.Path) {
+                self.path = path
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Created: Sendable, Hashable {
+                /// Creates a new `Created`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/users/{id}/follow//post(users_follow_create)/responses/201`.
+            ///
+            /// HTTP response code: `201 created`.
+            case created(Operations.UsersFollowCreate.Output.Created)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/users/{id}/follow//post(users_follow_create)/responses/201`.
+            ///
+            /// HTTP response code: `201 created`.
+            public static var created: Self {
+                .created(.init())
+            }
+            /// The associated value of the enum case if `self` is `.created`.
+            ///
+            /// - Throws: An error if `self` is not `.created`.
+            /// - SeeAlso: `.created`.
+            public var created: Operations.UsersFollowCreate.Output.Created {
+                get throws {
+                    switch self {
+                    case let .created(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "created",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct Ok: Sendable, Hashable {
+                /// Creates a new `Ok`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/users/{id}/follow//post(users_follow_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.UsersFollowCreate.Output.Ok)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/users/{id}/follow//post(users_follow_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            public static var ok: Self {
+                .ok(.init())
+            }
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.UsersFollowCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct Conflict: Sendable, Hashable {
+                /// Creates a new `Conflict`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/users/{id}/follow//post(users_follow_create)/responses/409`.
+            ///
+            /// HTTP response code: `409 conflict`.
+            case conflict(Operations.UsersFollowCreate.Output.Conflict)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/users/{id}/follow//post(users_follow_create)/responses/409`.
+            ///
+            /// HTTP response code: `409 conflict`.
+            public static var conflict: Self {
+                .conflict(.init())
+            }
+            /// The associated value of the enum case if `self` is `.conflict`.
+            ///
+            /// - Throws: An error if `self` is not `.conflict`.
+            /// - SeeAlso: `.conflict`.
+            public var conflict: Operations.UsersFollowCreate.Output.Conflict {
+                get throws {
+                    switch self {
+                    case let .conflict(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "conflict",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// Stop following this user.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/users/{id}/follow/`.
+    /// - Remark: Generated from `#/paths//api/v1/users/{id}/follow//delete(users_follow_destroy)`.
+    public enum UsersFollowDestroy {
+        public static let id: Swift.String = "users_follow_destroy"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/users/{id}/follow/DELETE/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this repbase user.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/users/{id}/follow/DELETE/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this repbase user.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.UsersFollowDestroy.Input.Path
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            public init(path: Operations.UsersFollowDestroy.Input.Path) {
+                self.path = path
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct NoContent: Sendable, Hashable {
+                /// Creates a new `NoContent`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/users/{id}/follow//delete(users_follow_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            case noContent(Operations.UsersFollowDestroy.Output.NoContent)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/users/{id}/follow//delete(users_follow_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            public static var noContent: Self {
+                .noContent(.init())
+            }
+            /// The associated value of the enum case if `self` is `.noContent`.
+            ///
+            /// - Throws: An error if `self` is not `.noContent`.
+            /// - SeeAlso: `.noContent`.
+            public var noContent: Operations.UsersFollowDestroy.Output.NoContent {
+                get throws {
+                    switch self {
+                    case let .noContent(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "noContent",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// Who follows this user, most recent first.
+    ///
+    /// Paged, unlike the gym member list this otherwise resembles: a gym holds
+    /// the people who train there and a well-followed account holds orders of
+    /// magnitude more.
+    ///
+    /// Paged over the follow rows rather than over the profiles, because
+    /// RepbaseUser has no Meta.ordering — paginating it would slice an
+    /// unordered result and hand the same person to two different pages. The
+    /// follows are ordered by when they were made, which is also the order this
+    /// list wants.
+    ///
+    /// A block cannot leave a stale row here: making one deletes the follows
+    /// both ways, and the follow action refuses to remake them.
+    ///
+    /// - Remark: HTTP `GET /api/v1/users/{id}/followers/`.
+    /// - Remark: Generated from `#/paths//api/v1/users/{id}/followers//get(users_followers_list)`.
+    public enum UsersFollowersList {
+        public static let id: Swift.String = "users_followers_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/users/{id}/followers/GET/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this repbase user.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/users/{id}/followers/GET/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this repbase user.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.UsersFollowersList.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/users/{id}/followers/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/users/{id}/followers/GET/query/page`.
+                public var page: Swift.Int?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - page: A page number within the paginated result set.
+                public init(page: Swift.Int? = nil) {
+                    self.page = page
+                }
+            }
+            public var query: Operations.UsersFollowersList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/users/{id}/followers/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.UsersFollowersList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.UsersFollowersList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.UsersFollowersList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - query:
+            ///   - headers:
+            public init(
+                path: Operations.UsersFollowersList.Input.Path,
+                query: Operations.UsersFollowersList.Input.Query = .init(),
+                headers: Operations.UsersFollowersList.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/users/{id}/followers/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/users/{id}/followers/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedPublicRepbaseUserList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedPublicRepbaseUserList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.UsersFollowersList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.UsersFollowersList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/users/{id}/followers//get(users_followers_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.UsersFollowersList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.UsersFollowersList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Who this user follows, most recently followed first.
+    ///
+    /// - Remark: HTTP `GET /api/v1/users/{id}/following/`.
+    /// - Remark: Generated from `#/paths//api/v1/users/{id}/following//get(users_following_list)`.
+    public enum UsersFollowingList {
+        public static let id: Swift.String = "users_following_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/users/{id}/following/GET/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this repbase user.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/users/{id}/following/GET/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this repbase user.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.UsersFollowingList.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/users/{id}/following/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/users/{id}/following/GET/query/page`.
+                public var page: Swift.Int?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - page: A page number within the paginated result set.
+                public init(page: Swift.Int? = nil) {
+                    self.page = page
+                }
+            }
+            public var query: Operations.UsersFollowingList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/users/{id}/following/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.UsersFollowingList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.UsersFollowingList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.UsersFollowingList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - query:
+            ///   - headers:
+            public init(
+                path: Operations.UsersFollowingList.Input.Path,
+                query: Operations.UsersFollowingList.Input.Query = .init(),
+                headers: Operations.UsersFollowingList.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/users/{id}/following/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/users/{id}/following/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedPublicRepbaseUserList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedPublicRepbaseUserList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.UsersFollowingList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.UsersFollowingList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/users/{id}/following//get(users_following_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.UsersFollowingList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.UsersFollowingList.Output.Ok {
                 get throws {
                     switch self {
                     case let .ok(response):

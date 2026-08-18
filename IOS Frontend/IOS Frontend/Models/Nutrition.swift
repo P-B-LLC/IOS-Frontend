@@ -2,8 +2,9 @@
 //  Nutrition.swift
 //  IOS Frontend
 //
-//  App-facing food tracking models. These remain separate from API DTOs so
-//  they can be mapped cleanly when nutrition operations enter the OAS.
+//  App-facing food tracking models. Kept separate from the generated API DTOs
+//  so the screens are not written against a shape the contract chooses; every
+//  value in them is mapped from the server by FoodAPIRepository.
 //
 
 import Foundation
@@ -56,17 +57,22 @@ nonisolated struct NutritionGoals: Equatable, Hashable, Codable, Sendable {
 
 nonisolated struct FoodEntry: Identifiable, Equatable, Hashable, Codable, Sendable {
     let id: UUID
+    /// The backend identifier. Nil only for a food being typed that has not
+    /// been saved yet.
+    var serverID: Int?
     var name: String
     var servings: Decimal
     var nutritionPerServing: NutritionAmount
 
     init(
         id: UUID = UUID(),
+        serverID: Int? = nil,
         name: String,
         servings: Decimal = 1,
         nutritionPerServing: NutritionAmount
     ) {
         self.id = id
+        self.serverID = serverID
         self.name = name
         self.servings = servings
         self.nutritionPerServing = nutritionPerServing
@@ -79,20 +85,22 @@ nonisolated struct FoodEntry: Identifiable, Equatable, Hashable, Codable, Sendab
 
 nonisolated struct FoodMeal: Identifiable, Equatable, Hashable, Codable, Sendable {
     let id: UUID
+    /// The backend identifier. A meal only ever comes into being on the
+    /// server, so this is nil only for the sample data behind a preview.
+    var serverID: Int?
     var name: String
     var entries: [FoodEntry]
-    var isComplete: Bool
 
     init(
         id: UUID = UUID(),
+        serverID: Int? = nil,
         name: String,
-        entries: [FoodEntry] = [],
-        isComplete: Bool = false
+        entries: [FoodEntry] = []
     ) {
         self.id = id
+        self.serverID = serverID
         self.name = name
         self.entries = entries
-        self.isComplete = isComplete
     }
 
     var totalNutrition: NutritionAmount {
@@ -100,28 +108,23 @@ nonisolated struct FoodMeal: Identifiable, Equatable, Hashable, Codable, Sendabl
     }
 }
 
-nonisolated struct FoodTrackingDay: Equatable, Hashable, Codable, Sendable {
-    let dateKey: String
-    var meals: [FoodMeal]
-
-    var totalNutrition: NutritionAmount {
-        meals.reduce(.zero) { $0 + $1.totalNutrition }
-    }
-}
-
 /// A reusable recipe or meal assembled from manual food entries.
-/// This remains an app-facing model until the OAS defines nutrition resources.
 nonisolated struct SavedFoodMeal: Identifiable, Equatable, Hashable, Codable, Sendable {
     let id: UUID
+    /// The backend identifier. Nil only for a recipe being written that has
+    /// not been saved yet.
+    var serverID: Int?
     var name: String
     var ingredients: [FoodEntry]
 
     init(
         id: UUID = UUID(),
+        serverID: Int? = nil,
         name: String,
         ingredients: [FoodEntry] = []
     ) {
         self.id = id
+        self.serverID = serverID
         self.name = name
         self.ingredients = ingredients
     }

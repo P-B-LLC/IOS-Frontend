@@ -2,177 +2,293 @@
 //  FoodTrackingStore.swift
 //  IOS Frontend
 //
-//  Interactive local food drafts. The supplied OAS currently has no food or
-//  meal operations, so this store intentionally makes no undocumented calls.
+//  Backend-backed food logging. Every meal, food, recipe and goal on these
+//  screens is a row on the server; nothing is kept only on the phone.
 //
 
 import Foundation
 import Observation
 
+@MainActor
 @Observable
 final class FoodTrackingStore {
-    private(set) var days: [String: FoodTrackingDay] = [:]
+    private var repository: FoodAPIRepository?
+    private var connectionGeneration = UUID()
+
+    /// Meals by `YYYY-MM-DD`, exactly as the server groups them.
+    private(set) var days: [String: [FoodMeal]] = [:]
     private(set) var savedMeals: [SavedFoodMeal] = []
-    private(set) var goals: NutritionGoals
+    private(set) var recentFoods: [FoodEntry] = []
+    private(set) var goals: NutritionGoals = .default
+    private(set) var isLoading = false
+    private(set) var isSaving = false
+    private(set) var errorMessage: String?
 
-    /// Remains true until food/meal operations are added to API/openapi.yaml.
-    let isLocalDraftOnly = true
+    var isConnected: Bool { repository != nil }
 
-    init(goals: NutritionGoals = .default) {
-        self.goals = goals
-        ensureDay(Date())
-    }
+    init() {}
+
+    // MARK: - Reading
 
     func meals(on date: Date) -> [FoodMeal] {
-        days[dateKey(for: date)]?.meals ?? []
+        days[dateKey(for: date)] ?? []
     }
 
     func total(on date: Date) -> NutritionAmount {
-        days[dateKey(for: date)]?.totalNutrition ?? .zero
+        meals(on: date).reduce(.zero) { $0 + $1.totalNutrition }
     }
 
     func hasLoggedFood(on date: Date) -> Bool {
         meals(on: date).contains { !$0.entries.isEmpty }
     }
 
-    /// Distinct foods the user has logged before, most recent day first.
-    ///
-    /// Backs the "previously used" list when adding food. Names are matched
-    /// case-insensitively so the same food logged repeatedly appears once,
-    /// carrying the servings and nutrition of its most recent use.
-    var recentFoods: [FoodEntry] {
-        var seenNames: Set<String> = []
-        var result: [FoodEntry] = []
+    // MARK: - The server
 
-        for key in days.keys.sorted(by: >) {
-            guard let day = days[key] else { continue }
-            // Within a day, later entries were added more recently.
-            for entry in day.meals.flatMap(\.entries).reversed() {
-                let name = entry.name
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-                    .lowercased()
-                guard !name.isEmpty, seenNames.insert(name).inserted else {
-                    continue
-                }
-                result.append(entry)
+    func connect(configuration: APIConfiguration, token: String) async {
+        let generation = UUID()
+        connectionGeneration = generation
+        isLoading = true
+        errorMessage = nil
+        defer { if connectionGeneration == generation { isLoading = false } }
+
+        do {
+            let repository = try FoodAPIRepository(
+                configuration: configuration,
+                token: token
+            )
+            self.repository = repository
+
+            let today = Date()
+            let loaded = try await repository.days(
+                from: dateKey(for: today.addingTimeInterval(-31 * 86_400)),
+                to: dateKey(for: today.addingTimeInterval(31 * 86_400))
+            )
+            let recipes = try await repository.savedMeals()
+            let targets = try await repository.goals()
+            let recent = try await repository.recentFoods()
+
+            guard connectionGeneration == generation else { return }
+            days = loaded
+            savedMeals = recipes
+            goals = targets
+            recentFoods = recent
+        } catch {
+            guard connectionGeneration == generation else { return }
+            repository = nil
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func disconnect() {
+        connectionGeneration = UUID()
+        repository = nil
+        days = [:]
+        savedMeals = []
+        recentFoods = []
+        goals = .default
+        isLoading = false
+        isSaving = false
+        errorMessage = nil
+    }
+
+    /// Signing out. Named `reset` because that is what the app calls it.
+    func reset() {
+        disconnect()
+    }
+
+    // MARK: - Days
+
+    /// Opens a day, laying down its empty meal slots the first time.
+    ///
+    /// The slots are the server's, not four the app draws while it waits: a
+    /// meal the app invented has no id, and the first food logged into it would
+    /// have nowhere to go.
+    func ensureDay(_ date: Date) {
+        guard let repository else { return }
+        let key = dateKey(for: date)
+        let generation = connectionGeneration
+        Task {
+            do {
+                let meals = try await repository.openDay(key)
+                guard connectionGeneration == generation else { return }
+                days[key] = meals
+            } catch {
+                report(error, generation: generation)
             }
         }
-
-        return result
     }
 
-    func ensureDay(_ date: Date) {
-        let key = dateKey(for: date)
-        guard days[key] == nil else { return }
-        days[key] = FoodTrackingDay(
-            dateKey: key,
-            meals: [
-                FoodMeal(name: "Meal 1"),
-                FoodMeal(name: "Meal 2"),
-                FoodMeal(name: "Meal 3"),
-                FoodMeal(name: "Meal 4")
-            ]
-        )
-    }
+    // MARK: - Meals
 
     func addMeal(on date: Date) {
-        mutateDay(on: date) { day in
-            let nextNumber = day.meals.compactMap { meal -> Int? in
-                guard meal.name.hasPrefix("Meal ") else { return nil }
-                return Int(meal.name.dropFirst("Meal ".count))
-            }.max().map { $0 + 1 } ?? (day.meals.count + 1)
-            day.meals.append(FoodMeal(name: "Meal \(nextNumber)"))
+        let key = dateKey(for: date)
+        let next = (days[key]?.count ?? 0) + 1
+        perform(on: date) { repository in
+            try await repository.addMeal(named: "Meal \(next)", on: key)
+        } merge: { meals, added in
+            meals.append(added)
         }
     }
 
     func renameMeal(id: FoodMeal.ID, to name: String, on date: Date) {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !name.isEmpty else { return }
-        mutateMeal(id: id, on: date) { $0.name = name }
+        guard !name.isEmpty, let serverID = mealServerID(id, on: date) else { return }
+        perform(on: date) { repository in
+            try await repository.renameMeal(serverID, to: name)
+        } merge: { meals, renamed in
+            Self.replace(renamed, in: &meals)
+        }
     }
 
     func removeMeal(id: FoodMeal.ID, on date: Date) {
-        mutateDay(on: date) { day in
-            day.meals.removeAll { $0.id == id }
+        guard let serverID = mealServerID(id, on: date) else { return }
+        perform(on: date) { repository in
+            try await repository.deleteMeal(serverID)
+        } merge: { meals, _ in
+            meals.removeAll { $0.serverID == serverID }
         }
     }
 
+    // MARK: - Foods
+
     func saveFood(_ food: FoodEntry, in mealID: FoodMeal.ID, on date: Date) {
-        mutateMeal(id: mealID, on: date) { meal in
-            if let index = meal.entries.firstIndex(where: { $0.id == food.id }) {
-                meal.entries[index] = food
+        guard let serverID = mealServerID(mealID, on: date) else { return }
+        perform(on: date) { repository in
+            let saved = try await repository.saveFood(food, inMeal: serverID)
+            return (saved, serverID)
+        } merge: { meals, result in
+            guard let index = meals.firstIndex(where: { $0.serverID == result.1 })
+            else { return }
+            if let existing = meals[index].entries
+                .firstIndex(where: { $0.serverID == result.0.serverID }) {
+                meals[index].entries[existing] = result.0
             } else {
-                meal.entries.append(food)
+                meals[index].entries.append(result.0)
             }
-            meal.isComplete = false
         }
+        refreshRecentFoods()
     }
 
     func removeFood(id: FoodEntry.ID, from mealID: FoodMeal.ID, on date: Date) {
-        mutateMeal(id: mealID, on: date) { meal in
-            meal.entries.removeAll { $0.id == id }
-            if meal.entries.isEmpty { meal.isComplete = false }
+        guard let mealServerID = mealServerID(mealID, on: date),
+              let entryServerID = days[dateKey(for: date)]?
+                .first(where: { $0.serverID == mealServerID })?
+                .entries.first(where: { $0.id == id })?.serverID
+        else { return }
+
+        perform(on: date) { repository in
+            try await repository.deleteFood(entryServerID)
+        } merge: { meals, _ in
+            guard let index = meals.firstIndex(where: { $0.serverID == mealServerID })
+            else { return }
+            meals[index].entries.removeAll { $0.serverID == entryServerID }
         }
     }
 
-    func toggleMealComplete(id: FoodMeal.ID, on date: Date) {
-        mutateMeal(id: id, on: date) { meal in
-            guard !meal.entries.isEmpty else { return }
-            meal.isComplete.toggle()
-        }
-    }
+    // MARK: - Recipes
 
     func saveReusableMeal(_ savedMeal: SavedFoodMeal) {
-        if let index = savedMeals.firstIndex(where: { $0.id == savedMeal.id }) {
-            savedMeals[index] = savedMeal
-        } else {
-            savedMeals.append(savedMeal)
-        }
-        savedMeals.sort {
-            $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+        guard let repository else { return }
+        let generation = connectionGeneration
+        isSaving = true
+        Task {
+            defer { if connectionGeneration == generation { isSaving = false } }
+            do {
+                let saved = try await repository.saveRecipe(savedMeal)
+                guard connectionGeneration == generation else { return }
+                if let index = savedMeals.firstIndex(where: {
+                    $0.serverID == saved.serverID
+                }) {
+                    savedMeals[index] = saved
+                } else {
+                    savedMeals.append(saved)
+                }
+                savedMeals.sort {
+                    $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+                }
+            } catch {
+                report(error, generation: generation)
+            }
         }
     }
 
     func removeReusableMeal(id: SavedFoodMeal.ID) {
-        savedMeals.removeAll { $0.id == id }
+        guard let repository,
+              let serverID = savedMeals.first(where: { $0.id == id })?.serverID
+        else { return }
+        let generation = connectionGeneration
+        Task {
+            do {
+                try await repository.deleteRecipe(serverID)
+                guard connectionGeneration == generation else { return }
+                savedMeals.removeAll { $0.serverID == serverID }
+            } catch {
+                report(error, generation: generation)
+            }
+        }
     }
 
-    /// Adds one combined entry for the saved recipe to the chosen meal number
-    /// on every selected date. A fresh identifier prevents cross-day edits.
+    /// Copies a recipe into the same numbered meal on every date chosen.
+    ///
+    /// One request for the whole set: the server applies them in a transaction,
+    /// so a week of meal prep either lands or does not, rather than leaving the
+    /// app to work out which days went through.
     func applyReusableMeal(
         _ savedMeal: SavedFoodMeal,
         to dates: [Date],
         mealNumber: Int
     ) {
-        guard mealNumber > 0, !savedMeal.ingredients.isEmpty else { return }
+        guard let repository,
+              let serverID = savedMeal.serverID,
+              mealNumber > 0,
+              !dates.isEmpty
+        else { return }
 
-        for date in dates {
-            mutateDay(on: date) { day in
-                while day.meals.count < mealNumber {
-                    day.meals.append(FoodMeal(name: "Meal \(day.meals.count + 1)"))
-                }
-
-                day.meals[mealNumber - 1].entries.append(
-                    FoodEntry(
-                        name: savedMeal.name,
-                        nutritionPerServing: savedMeal.totalNutrition
-                    )
+        let keys = dates.map(dateKey(for:))
+        let generation = connectionGeneration
+        isSaving = true
+        Task {
+            defer { if connectionGeneration == generation { isSaving = false } }
+            do {
+                _ = try await repository.applyRecipe(
+                    serverID,
+                    toDates: keys,
+                    mealNumber: mealNumber
                 )
-                day.meals[mealNumber - 1].isComplete = false
+                // The reply names only the meals written into, and applying to
+                // a day that had none also builds the ones before it. Each day
+                // is re-read whole so the screens learn about those too.
+                for key in keys {
+                    let meals = try await repository.openDay(key)
+                    guard connectionGeneration == generation else { return }
+                    days[key] = meals
+                }
+                refreshRecentFoods()
+            } catch {
+                report(error, generation: generation)
             }
         }
     }
 
+    // MARK: - Goals
+
     func updateGoals(_ goals: NutritionGoals) {
-        self.goals = goals
+        guard let repository else { return }
+        let generation = connectionGeneration
+        isSaving = true
+        Task {
+            defer { if connectionGeneration == generation { isSaving = false } }
+            do {
+                let saved = try await repository.saveGoals(goals)
+                guard connectionGeneration == generation else { return }
+                self.goals = saved
+            } catch {
+                report(error, generation: generation)
+            }
+        }
     }
 
-    func reset() {
-        days = [:]
-        savedMeals = []
-        goals = .default
-        ensureDay(Date())
-    }
+    // MARK: - Keys
 
     func dateKey(for date: Date) -> String {
         let components = Calendar.current.dateComponents(
@@ -187,115 +303,131 @@ final class FoodTrackingStore {
         )
     }
 
-    private func mutateDay(
+    // MARK: - Plumbing
+
+    /// Sends one change, then folds the server's answer into the day it belongs
+    /// to. The screens never show a number the server has not confirmed, which
+    /// is what keeps a failed write from leaving a total nobody can explain.
+    private func perform<Result>(
         on date: Date,
-        _ mutation: (inout FoodTrackingDay) -> Void
+        _ send: @escaping (FoodAPIRepository) async throws -> Result,
+        merge: @escaping (inout [FoodMeal], Result) -> Void
     ) {
-        ensureDay(date)
+        guard let repository else { return }
         let key = dateKey(for: date)
-        guard var day = days[key] else { return }
-        mutation(&day)
-        days[key] = day
+        let generation = connectionGeneration
+        isSaving = true
+        Task {
+            defer { if connectionGeneration == generation { isSaving = false } }
+            do {
+                let result = try await send(repository)
+                guard connectionGeneration == generation else { return }
+                var meals = days[key] ?? []
+                merge(&meals, result)
+                days[key] = meals
+            } catch {
+                report(error, generation: generation)
+            }
+        }
     }
 
-    private func mutateMeal(
-        id: FoodMeal.ID,
-        on date: Date,
-        _ mutation: (inout FoodMeal) -> Void
-    ) {
-        mutateDay(on: date) { day in
-            guard let index = day.meals.firstIndex(where: { $0.id == id }) else {
-                return
-            }
-            mutation(&day.meals[index])
+    private func mealServerID(_ id: FoodMeal.ID, on date: Date) -> Int? {
+        days[dateKey(for: date)]?.first(where: { $0.id == id })?.serverID
+    }
+
+    private static func replace(_ meal: FoodMeal, in meals: inout [FoodMeal]) {
+        guard let index = meals.firstIndex(where: { $0.serverID == meal.serverID })
+        else { return }
+        meals[index] = meal
+    }
+
+    private func refreshRecentFoods() {
+        guard let repository else { return }
+        let generation = connectionGeneration
+        Task {
+            let recent = try? await repository.recentFoods()
+            guard connectionGeneration == generation, let recent else { return }
+            recentFoods = recent
         }
+    }
+
+    private func report(_ error: Error, generation: UUID) {
+        guard connectionGeneration == generation else { return }
+        errorMessage = error.localizedDescription
     }
 }
 
 extension FoodTrackingStore {
+    /// Sample data for previews. Nothing here has a server id, because none of
+    /// it came from one.
     static var preview: FoodTrackingStore {
         let store = FoodTrackingStore()
         let today = Date()
-        let meals = store.meals(on: today)
 
         // Individual ingredients rather than combined dishes, so the breakdown
         // demonstrates foods being categorized by what they actually are.
-        let sampleFoods: [(mealIndex: Int, entry: FoodEntry)] = [
-            (0, FoodEntry(
+        let breakfast = FoodMeal(name: "Meal 1", entries: [
+            FoodEntry(
                 name: "Greek yogurt",
                 nutritionPerServing: NutritionAmount(
-                    calories: 120,
-                    proteinGrams: 20,
-                    carbohydrateGrams: 9,
-                    fatGrams: 0
+                    calories: 120, proteinGrams: 20, carbohydrateGrams: 9, fatGrams: 0
                 )
-            )),
-            (0, FoodEntry(
+            ),
+            FoodEntry(
                 name: "Blueberries",
                 nutritionPerServing: NutritionAmount(
-                    calories: 85,
-                    proteinGrams: 1,
-                    carbohydrateGrams: 21,
-                    fatGrams: 0
+                    calories: 85, proteinGrams: 1, carbohydrateGrams: 21, fatGrams: 0
                 )
-            )),
-            (1, FoodEntry(
+            )
+        ])
+        let lunch = FoodMeal(name: "Meal 2", entries: [
+            FoodEntry(
                 name: "Grilled chicken breast",
                 nutritionPerServing: NutritionAmount(
-                    calories: 280,
-                    proteinGrams: 52,
-                    carbohydrateGrams: 0,
-                    fatGrams: 6
+                    calories: 280, proteinGrams: 52, carbohydrateGrams: 0, fatGrams: 6
                 )
-            )),
-            (1, FoodEntry(
+            ),
+            FoodEntry(
                 name: "White rice",
                 nutritionPerServing: NutritionAmount(
-                    calories: 330,
-                    proteinGrams: 6,
-                    carbohydrateGrams: 72,
-                    fatGrams: 4
+                    calories: 330, proteinGrams: 6, carbohydrateGrams: 72, fatGrams: 4
                 )
-            )),
-            (2, FoodEntry(
+            )
+        ])
+        let snack = FoodMeal(name: "Meal 3", entries: [
+            FoodEntry(
                 name: "Almonds",
                 nutritionPerServing: NutritionAmount(
-                    calories: 160,
-                    proteinGrams: 6,
-                    carbohydrateGrams: 6,
-                    fatGrams: 14
+                    calories: 160, proteinGrams: 6, carbohydrateGrams: 6, fatGrams: 14
                 )
-            ))
-        ]
+            )
+        ])
 
-        for sample in sampleFoods where meals.count > sample.mealIndex {
-            store.saveFood(sample.entry, in: meals[sample.mealIndex].id, on: today)
-        }
-        store.saveReusableMeal(
+        store.days[store.dateKey(for: today)] = [
+            breakfast, lunch, snack, FoodMeal(name: "Meal 4")
+        ]
+        store.savedMeals = [
             SavedFoodMeal(
                 name: "Chicken rice bowl",
                 ingredients: [
                     FoodEntry(
                         name: "Chicken breast",
                         nutritionPerServing: NutritionAmount(
-                            calories: 280,
-                            proteinGrams: 52,
-                            carbohydrateGrams: 0,
-                            fatGrams: 6
+                            calories: 280, proteinGrams: 52,
+                            carbohydrateGrams: 0, fatGrams: 6
                         )
                     ),
                     FoodEntry(
                         name: "Rice and vegetables",
                         nutritionPerServing: NutritionAmount(
-                            calories: 330,
-                            proteinGrams: 6,
-                            carbohydrateGrams: 72,
-                            fatGrams: 4
+                            calories: 330, proteinGrams: 6,
+                            carbohydrateGrams: 72, fatGrams: 4
                         )
                     )
                 ]
             )
-        )
+        ]
+        store.recentFoods = breakfast.entries + lunch.entries + snack.entries
         return store
     }
 }

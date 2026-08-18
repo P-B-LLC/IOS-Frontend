@@ -38,8 +38,13 @@ struct FoodTrackingView: View {
                 weekSelector(timeOfDay: timeOfDay)
                 dailySummary
 
-                if store.isLocalDraftOnly {
-                    localDraftNotice(timeOfDay: timeOfDay)
+                if let message = store.errorMessage {
+                    syncNotice(message, timeOfDay: timeOfDay)
+                } else if !store.isConnected {
+                    syncNotice(
+                        "Sign in to log food. Meals are kept on your account, not on this phone.",
+                        timeOfDay: timeOfDay
+                    )
                 }
 
                 mealsSection(timeOfDay: timeOfDay)
@@ -180,11 +185,12 @@ struct FoodTrackingView: View {
         .accessibilityLabel("Daily nutrition totals")
     }
 
-    private func localDraftNotice(timeOfDay: HomeTimeOfDay) -> some View {
+    /// Shown only when what is on screen is not what the server holds.
+    private func syncNotice(_ message: String, timeOfDay: HomeTimeOfDay) -> some View {
         HStack(spacing: 8) {
             Image(systemName: "icloud.slash")
                 .foregroundStyle(timeOfDay.accent)
-            Text("Food entries are temporary until API sync is available.")
+            Text(message)
             Spacer(minLength: 0)
         }
         .font(.caption)
