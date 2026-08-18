@@ -19,9 +19,6 @@ struct MealDetailView: View {
     @State private var editingFood: FoodEntry?
     @State private var isRenamingMeal = false
     @State private var renamedMeal = ""
-    /// The meal being shared, which is also what presents the composer:
-    /// there is nothing to post without a server id.
-    @State private var sharedMeal: SharedMeal?
 
     var body: some View {
         Group {
@@ -31,7 +28,6 @@ struct MealDetailView: View {
                         mealSummary(meal)
                         foodList(meal)
                         addFoodButton
-                        shareButton(meal)
 
                         // An empty meal already states that in the food list,
                         // so the breakdown only appears once there is food.
@@ -61,15 +57,6 @@ struct MealDetailView: View {
         .sheet(item: $editingFood) { food in
             NavigationStack {
                 FoodEntryEditorView(date: date, mealID: mealID, existing: food)
-            }
-        }
-        .sheet(item: $sharedMeal) { shared in
-            NavigationStack {
-                PostComposerView(
-                    kind: .meal,
-                    sourceID: shared.id,
-                    subject: meal?.name ?? "Meal"
-                )
             }
         }
         .alert("Rename Meal", isPresented: $isRenamingMeal) {
@@ -158,41 +145,12 @@ struct MealDetailView: View {
         .tint(phase.accent)
     }
 
-    /// Share, on the page rather than only in the navigation menu.
-    ///
-    /// The menu is still there, but this app hides the navigation bar on most of
-    /// its screens, so a toolbar item is the one place a button can be added and
-    /// never seen. Only a meal the server knows about and that has food in it:
-    /// the API refuses an empty one, since a card with nothing on it has nothing
-    /// to show.
-    @ViewBuilder
-    private func shareButton(_ meal: FoodMeal) -> some View {
-        if let serverID = meal.serverID, !meal.entries.isEmpty {
-            Button {
-                sharedMeal = SharedMeal(id: serverID)
-            } label: {
-                Label("Share to Feed", systemImage: "square.and.arrow.up")
-                    .font(.subheadline.weight(.semibold))
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.large)
-            .tint(phase.accent)
-        }
-    }
-
     @ToolbarContentBuilder
     private func mealToolbar(_ meal: FoodMeal) -> some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             Menu {
-                // Only a meal that exists on the server and has food in it: the
-                // API refuses an empty one, since a card with nothing on it has
-                // nothing to show.
-                if let serverID = meal.serverID, !meal.entries.isEmpty {
-                    Button("Share to Feed", systemImage: "square.and.arrow.up") {
-                        sharedMeal = SharedMeal(id: serverID)
-                    }
-                }
+                // Sharing is not here. It lives on the food page, which lists
+                // every meal and can therefore ask which one to post.
                 Button("Rename Meal", systemImage: "pencil") {
                     renamedMeal = meal.name
                     isRenamingMeal = true
@@ -210,12 +168,6 @@ struct MealDetailView: View {
     private var meal: FoodMeal? {
         store.meals(on: date).first { $0.id == mealID }
     }
-}
-
-/// A meal's server id, wrapped so it can present a sheet. Conforming `Int`
-/// itself would make every integer in the app Identifiable.
-private struct SharedMeal: Identifiable {
-    let id: Int
 }
 
 private struct MealMacro: View {

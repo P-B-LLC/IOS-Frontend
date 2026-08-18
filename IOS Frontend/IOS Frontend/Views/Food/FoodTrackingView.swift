@@ -13,6 +13,9 @@ struct FoodTrackingView: View {
     @State private var selectedDate = Date()
     @State private var isEditingGoals = false
     @State private var isShowingSavedMeals = false
+    /// Opens the composer on this page's own kind, so it asks which meal
+    /// rather than which feature.
+    @State private var isSharingMeal = false
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
@@ -25,6 +28,9 @@ struct FoodTrackingView: View {
             NavigationStack {
                 SavedMealsView(referenceDate: selectedDate)
             }
+        }
+        .sheet(isPresented: $isSharingMeal) {
+            PostComposerView(source: .meal)
         }
         .task {
             // The day being looked at has to exist on the server before
@@ -273,6 +279,24 @@ struct FoodTrackingView: View {
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(WorkoutPrimaryButtonStyle(phase: visualPhase))
+            }
+
+            // Sharing belongs to the page that lists the meals, not to each
+            // meal's own screen: from here the composer can ask which one, and
+            // there is one place to look for it rather than four.
+            //
+            // Shown only once something has been eaten. A day with four empty
+            // slots has nothing the API would accept.
+            if meals.contains(where: { $0.serverID != nil && !$0.entries.isEmpty }) {
+                Button {
+                    isSharingMeal = true
+                } label: {
+                    Label("Share a meal", systemImage: "square.and.arrow.up")
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 11)
+                }
+                .repbaseControlSurface(cornerRadius: 15)
             }
         }
     }

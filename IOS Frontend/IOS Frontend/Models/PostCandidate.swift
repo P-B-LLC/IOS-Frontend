@@ -54,6 +54,16 @@ nonisolated enum PostSource: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
+    /// What one of these is called, for a sheet opened already knowing the
+    /// kind: "Choose a meal" rather than "Choose something".
+    var itemNoun: String {
+        switch self {
+        case .workout: "workout"
+        case .meal: "meal"
+        case .planner: "calendar entry"
+        }
+    }
+
     /// Says what would put something here, rather than only that nothing is.
     var emptyMessage: String {
         switch self {

@@ -29,14 +29,26 @@ struct PostComposerView: View {
     /// then the only thing it can post. Nil when opened from the feed, where
     /// choosing what to post is the first thing the sheet asks.
     private let fixedSubject: String?
+    /// Set when the sheet was opened from one feature's own page, so it offers
+    /// that feature's things and does not ask which feature first.
+    private let lockedSource: PostSource?
 
     /// The contract's cap. Enforced here so a long caption is stopped as it is
     /// typed rather than by a 400 with nothing on screen to explain it.
     private static let captionLimit = 300
 
-    /// Opened from the feed: nothing chosen yet.
+    /// Opened from the feed: nothing chosen yet, and anything may be posted.
     init() {
         fixedSubject = nil
+        lockedSource = nil
+    }
+
+    /// Opened from one feature's page. The page already says what kind of thing
+    /// is being posted, so the sheet goes straight to choosing which one.
+    init(source: PostSource) {
+        fixedSubject = nil
+        lockedSource = source
+        _source = State(initialValue: source)
     }
 
     /// Opened from the page of the thing being shared, which already knows
@@ -44,6 +56,7 @@ struct PostComposerView: View {
     /// drifting apart over the same request.
     init(kind: PostKind, sourceID: Int, subject: String) {
         fixedSubject = subject
+        lockedSource = nil
         _selection = State(
             initialValue: PostCandidate(
                 kind: kind,
@@ -63,7 +76,7 @@ struct PostComposerView: View {
     private func screen(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(spacing: 0) {
             EditorialFormHeader(
-                title: "New Post",
+                title: composerTitle,
                 leadingAction: .cancel,
                 saveTitle: "Post",
                 canSave: canPost,
@@ -87,7 +100,11 @@ struct PostComposerView: View {
                     if let fixedSubject {
                         subjectSection(fixedSubject, timeOfDay: timeOfDay)
                     } else {
-                        sourcePicker(timeOfDay: timeOfDay)
+                        // Asking which feature would be asking a question the
+                        // page it was opened from has already answered.
+                        if lockedSource == nil {
+                            sourcePicker(timeOfDay: timeOfDay)
+                        }
                         candidateSection(timeOfDay: timeOfDay)
                     }
                     captionSection(timeOfDay: timeOfDay)
@@ -110,7 +127,7 @@ struct PostComposerView: View {
             social.clearError()
             // Nothing to choose from when the caller already chose, so the
             // pages of sessions are not worth reading.
-            guard fixedSubject == nil else { return }
+            guard fixedSubject == nil, lockedSource == nil || lockedSource == .workout else { return }
             // Meals and calendar entries are already held by their stores;
             // only finished sessions have to be asked for.
             await workoutStore.loadPostableSessions()
@@ -204,7 +221,8 @@ struct PostComposerView: View {
     private func candidateSection(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(alignment: .leading, spacing: 13) {
             EditorialSectionTitle(
-                title: "Choose something",
+                title: lockedSource.map { "Choose a \($0.itemNoun)" }
+                    ?? "Choose something",
                 detail: "A post is built from what you have already recorded."
             )
 
@@ -402,6 +420,14 @@ struct PostComposerView: View {
     }
 
     // MARK: - Sending
+
+    /// Names what the sheet is for. A page that already knows the kind should
+    /// say so at the top rather than leave the user to infer it from the list.
+    private var composerTitle: String {
+        if fixedSubject != nil { return "Share" }
+        guard let lockedSource else { return "New Post" }
+        return "Share a \(lockedSource.itemNoun.capitalized)"
+    }
 
     private var canPost: Bool {
         selection != nil && social.isConnected && !social.isPosting
