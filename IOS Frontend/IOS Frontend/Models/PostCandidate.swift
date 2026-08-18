@@ -84,3 +84,11 @@ nonisolated struct PostCandidate: Identifiable, Hashable, Sendable {
     /// each is numbered by its own table.
     var id: String { "\(kind.apiValue)-\(sourceID)" }
 }
+
+/// A backend id, wrapped so a screen can drive a share sheet from it.
+///
+/// Conforming `Int` to `Identifiable` would make every integer in the app
+/// identifiable, which is why each share button carries one of these instead.
+nonisolated struct SharedPostSource: Identifiable, Hashable, Sendable {
+    let id: Int
+}

@@ -17,6 +17,8 @@ struct DayWorkoutView: View {
     /// Which workout page is on screen when a day holds several.
     @State private var visibleWorkoutID: Workout.ID?
     @State private var completedSession: CompletedWorkoutSession?
+    /// The finished session being shared, if the summary's Share was tapped.
+    @State private var sharedWorkout: SharedPostSource?
 
     private var workout: Workout? {
         store.workout(on: day)
@@ -55,6 +57,15 @@ struct DayWorkoutView: View {
                 suggestions: store.knownWorkouts
             ) { savedWorkout in
                 store.saveWorkout(savedWorkout, on: day)
+            }
+        }
+        .sheet(item: $sharedWorkout) { shared in
+            NavigationStack {
+                PostComposerView(
+                    kind: .workout,
+                    sourceID: shared.id,
+                    subject: completedSession?.session.workoutName ?? "Workout"
+                )
             }
         }
         .overlay {
@@ -775,13 +786,29 @@ struct DayWorkoutView: View {
 
                 Spacer()
 
-                Button("Done") {
-                    completedSession = nil
+                HStack(spacing: 8) {
+                    // The moment a workout is most worth posting is the one it
+                    // has just been finished in, so Share sits on the summary
+                    // rather than only back on the feed.
+                    Button {
+                        sharedWorkout = SharedPostSource(id: session.serverID)
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                            .font(.caption.weight(.bold))
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Color(hex: 0xF3F7F5))
+                    .foregroundStyle(phase.primaryText)
+                    .accessibilityLabel("Share to Feed")
+
+                    Button("Done") {
+                        completedSession = nil
+                    }
+                    .font(.caption.weight(.bold))
+                    .buttonStyle(.borderedProminent)
+                    .tint(Color(hex: 0xF3F7F5))
+                    .foregroundStyle(phase.primaryText)
                 }
-                .font(.caption.weight(.bold))
-                .buttonStyle(.borderedProminent)
-                .tint(Color(hex: 0xF3F7F5))
-                .foregroundStyle(phase.primaryText)
             }
 
             VStack(alignment: .leading, spacing: 11) {

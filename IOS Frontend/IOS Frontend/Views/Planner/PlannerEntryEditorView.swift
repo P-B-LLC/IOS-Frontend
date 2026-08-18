@@ -35,6 +35,8 @@ struct PlannerEntryEditorView: View {
     @State private var date: Date
     @State private var time: Date
     @State private var hasTime: Bool
+    /// The saved entry being shared, if Share was tapped.
+    @State private var sharedEntry: SharedPostSource?
 
     init(
         mode: Mode,
@@ -119,6 +121,24 @@ struct PlannerEntryEditorView: View {
                         .disabled(!canSave)
 
                         if case .edit(let entry) = mode {
+                            // Only an entry the server already knows about. A
+                            // draft has no id for a post to point at, and the
+                            // edits on screen are not saved until Save.
+                            if let serverID = entry.serverID {
+                                Button {
+                                    sharedEntry = SharedPostSource(id: serverID)
+                                } label: {
+                                    Label(
+                                        "Share to Feed",
+                                        systemImage: "square.and.arrow.up"
+                                    )
+                                    .font(.subheadline.weight(.semibold))
+                                }
+                                .buttonStyle(.plain)
+                                .foregroundStyle(timeOfDay.accent)
+                                .frame(maxWidth: .infinity, alignment: .center)
+                            }
+
                             Button(role: .destructive) {
                                 onDeleted?(entry)
                                 dismiss()
@@ -137,6 +157,17 @@ struct PlannerEntryEditorView: View {
                 .scrollIndicators(.hidden)
                 .toolbar(.hidden, for: .navigationBar)
                 .homeTimeScreen(timeOfDay)
+                .sheet(item: $sharedEntry) { shared in
+                    NavigationStack {
+                        PostComposerView(
+                            kind: .planner,
+                            sourceID: shared.id,
+                            subject: draft.title.isEmpty
+                                ? draft.kind.title
+                                : draft.title
+                        )
+                    }
+                }
             }
         }
     }
