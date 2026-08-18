@@ -128,7 +128,7 @@ private struct HomeModeStrip: View {
     private func modeIcon(_ title: String, symbol: String, selected: Bool) -> some View {
         Image(systemName: symbol)
             .font(.system(size: 13, weight: .semibold))
-            .foregroundStyle(selected ? Color.white : timeOfDay.secondaryText)
+            .foregroundStyle(selected ? RepbasePalette.cream : timeOfDay.secondaryText)
             .frame(maxWidth: .infinity, minHeight: 38)
             .background(selected ? RepbaseDesign.ink : Color.clear, in: RoundedRectangle(cornerRadius: 9))
             .accessibilityLabel(title)

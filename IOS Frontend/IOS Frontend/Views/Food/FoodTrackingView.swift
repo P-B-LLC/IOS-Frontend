@@ -152,7 +152,7 @@ struct FoodTrackingView: View {
 
                             Text(date.formatted(.dateTime.day()))
                                 .font(.caption.weight(.bold).monospacedDigit())
-                                .foregroundStyle(isSelected(date) ? Color.white : timeOfDay.primaryText)
+                                .foregroundStyle(isSelected(date) ? RepbasePalette.cream : timeOfDay.primaryText)
                                 .frame(width: 30, height: 28)
                                 .background(
                                     isSelected(date) ? timeOfDay.accent : Color.clear,
@@ -359,7 +359,7 @@ private struct CalorieGoalCard: View {
                 Spacer()
                 Image(systemName: "ellipsis")
                     .font(.caption.weight(.bold))
-                    .foregroundStyle(phase.usesDarkAppearance ? Color.white : RepbaseDesign.ink)
+                    .foregroundStyle(phase.usesDarkAppearance ? RepbasePalette.cream : RepbaseDesign.ink)
                     .frame(width: 32, height: 32)
                     .background(Color.primary.opacity(0.045), in: Circle())
             }
@@ -396,7 +396,7 @@ private struct CalorieGoalCard: View {
                 Circle()
                     .trim(from: 0, to: progress)
                     .stroke(
-                        phase.usesDarkAppearance ? Color.white : RepbaseDesign.ink,
+                        phase.usesDarkAppearance ? RepbasePalette.cream : RepbaseDesign.ink,
                         style: StrokeStyle(lineWidth: 16, lineCap: .round)
                     )
                     .rotationEffect(.degrees(-90))
@@ -512,7 +512,7 @@ private struct MealRow: View {
 
             Image(systemName: isLogged ? "checkmark" : "plus")
                 .font(.caption.weight(.bold))
-                .foregroundStyle(isLogged ? Color.white : phase.accent)
+                .foregroundStyle(isLogged ? RepbasePalette.cream : phase.accent)
                 .frame(width: 29, height: 29)
                 .background(isLogged ? Color(hex: 0x5DAA86) : phase.accent.opacity(0.10), in: Circle())
         }

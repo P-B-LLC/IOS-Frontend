@@ -8,11 +8,11 @@
 import SwiftUI
 
 enum RepbaseDesign {
-    static let accent = Color(hex: 0x2563EB)
-    static let ink = Color(hex: 0x111214)
-    static let canvas = Color(hex: 0xF1F2F4)
-    static let inset = Color(hex: 0xE8EAED)
-    static let success = Color(hex: 0x16835A)
+    static let accent = RepbasePalette.caramel
+    static let ink = RepbasePalette.charcoal
+    static let canvas = RepbasePalette.cream
+    static let inset = RepbasePalette.oatmeal
+    static let success = RepbasePalette.sage
     static let warning = Color(hex: 0xC46A16)
     static let danger = Color(hex: 0xC33A4A)
 
@@ -21,8 +21,8 @@ enum RepbaseDesign {
     static let cardRadius: CGFloat = 14
     static let controlRadius: CGFloat = 10
     static let featureRadius: CGFloat = 22
-    static let deepShadow = Color.black.opacity(0.08)
-    static let softHighlight = Color.white.opacity(0.82)
+    static let deepShadow = RepbasePalette.espresso.opacity(0.12)
+    static let softHighlight = RepbasePalette.paper.opacity(0.82)
 }
 
 /// A raised architectural surface. The paired shadows establish one shared
@@ -190,7 +190,7 @@ struct RepbasePrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.subheadline.weight(.bold))
-            .foregroundStyle(.white)
+            .foregroundStyle(RepbasePalette.cream)
             .padding(.horizontal, 16)
             .frame(minHeight: 44)
             .background(RepbaseDesign.ink, in: RoundedRectangle(cornerRadius: 12, style: .continuous))

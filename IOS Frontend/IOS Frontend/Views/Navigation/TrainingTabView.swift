@@ -61,7 +61,7 @@ struct TrainingTabView: View {
                 } label: {
                     Label(item.title, systemImage: item.symbol)
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(item == half ? Color.white : timeOfDay.canvasSecondaryText)
+                        .foregroundStyle(item == half ? RepbasePalette.cream : timeOfDay.canvasSecondaryText)
                         .frame(maxWidth: .infinity, minHeight: 40)
                         .background {
                             if item == half {

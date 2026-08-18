@@ -49,81 +49,83 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
 
     var canvasStart: Color {
         switch self {
-        case .dawn: Color(hex: 0xF4F5F6)
-        case .day: Color(hex: 0xF2F3F5)
-        case .dusk: Color(hex: 0xEEEFF2)
-        case .night: Color(hex: 0x111827)
+        case .dawn: Color(hex: 0xFCF7F1)
+        case .day: RepbasePalette.cream
+        case .dusk: Color(hex: 0x896C5E)
+        case .night: Color(hex: 0x252220)
         }
     }
 
     var canvasMiddle: Color {
         switch self {
-        case .dawn: Color(hex: 0xF1F2F4)
-        case .day: Color(hex: 0xEFF0F2)
-        case .dusk: Color(hex: 0xEAEBEE)
-        case .night: Color(hex: 0x0F172A)
+        case .dawn: Color(hex: 0xF4E9DF)
+        case .day: Color(hex: 0xF0E6DE)
+        case .dusk: Color(hex: 0x6A5147)
+        case .night: Color(hex: 0x1D1B1A)
         }
     }
 
     var canvasEnd: Color {
         switch self {
-        case .dawn: Color(hex: 0xECEEF0)
-        case .day: Color(hex: 0xECEDEF)
-        case .dusk: Color(hex: 0xE7E8EB)
-        case .night: Color(hex: 0x0B1120)
+        case .dawn: Color(hex: 0xE8D5C7)
+        case .day: Color(hex: 0xE2D2C6)
+        case .dusk: Color(hex: 0x3F3430)
+        case .night: RepbasePalette.night
         }
     }
 
     var primaryText: Color {
-        usesDarkAppearance ? Color(hex: 0xF8FAFC) : Color(hex: 0x111827)
+        usesDarkAppearance ? RepbasePalette.cream : RepbasePalette.ink
     }
 
     var secondaryText: Color {
-        usesDarkAppearance ? Color(hex: 0xA8B3C4) : Color(hex: 0x667085)
+        usesDarkAppearance ? Color(hex: 0xCDBFB5) : RepbasePalette.muted
     }
 
     var surface: Color {
         switch self {
-        case .night: Color(hex: 0x172033)
-        case .dawn, .day, .dusk: Color(hex: 0xFCFCFD)
+        case .night: Color(hex: 0x292624)
+        case .dusk: Color(hex: 0xF0E5DC)
+        case .dawn, .day: Color(hex: 0xF2E8E0)
         }
     }
 
     var surfaceRaised: Color {
         switch self {
-        case .night: Color(hex: 0x1B263B)
-        case .dawn, .day, .dusk: .white
+        case .night: Color(hex: 0x332F2C)
+        case .dusk: Color(hex: 0xFFF7F0)
+        case .dawn, .day: RepbasePalette.paper
         }
     }
 
     var selectorSurface: Color {
-        usesDarkAppearance ? Color(hex: 0x202C42) : RepbaseDesign.inset
+        usesDarkAppearance ? Color(hex: 0x3B3633) : RepbasePalette.oatmeal.opacity(0.72)
     }
 
     var emptyDaySurface: Color {
-        usesDarkAppearance ? Color(hex: 0x182235) : Color(hex: 0xEEF1F5)
+        usesDarkAppearance ? Color(hex: 0x292624) : RepbasePalette.oatmeal
     }
 
-    var plannedDaySurface: Color { Color(hex: 0x344054) }
-    var completedDaySurface: Color { Color(hex: 0xF8FAFC) }
-    var accent: Color { RepbaseDesign.accent }
-    var ink: Color { Color(hex: 0x111827) }
+    var plannedDaySurface: Color { RepbasePalette.espresso }
+    var completedDaySurface: Color { RepbasePalette.paper }
+    var accent: Color { self == .night ? Color(hex: 0xC69B7F) : RepbasePalette.caramel }
+    var ink: Color { RepbasePalette.charcoal }
 
     var heroEnd: Color {
         switch self {
-        case .dawn: Color(hex: 0x334155)
-        case .day: Color(hex: 0x1E293B)
-        case .dusk: Color(hex: 0x24324A)
-        case .night: Color(hex: 0x1D4ED8)
+        case .dawn: Color(hex: 0x5D4A40)
+        case .day: RepbasePalette.espresso
+        case .dusk: Color(hex: 0x3A302D)
+        case .night: Color(hex: 0x4A3A33)
         }
     }
 
     var border: Color {
-        usesDarkAppearance ? Color.white.opacity(0.12) : Color(hex: 0xD7DCE4)
+        usesDarkAppearance ? Color.white.opacity(0.12) : RepbasePalette.espresso.opacity(0.10)
     }
 
     var shadow: Color {
-        usesDarkAppearance ? Color.black.opacity(0.28) : Color.black.opacity(0.08)
+        usesDarkAppearance ? Color.black.opacity(0.26) : RepbasePalette.espresso.opacity(0.14)
     }
 
     // MARK: - Drawn straight on the canvas
@@ -134,18 +136,18 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
     // and near-black text disappears into it. These follow the canvas instead.
 
     /// Whether the canvas behind unraised content is dark at this hour.
-    var hasDarkCanvas: Bool { self == .night }
+    var hasDarkCanvas: Bool { self == .dusk || self == .night }
 
     var canvasPrimaryText: Color {
-        hasDarkCanvas ? Color(hex: 0xF8FAFC) : Color(hex: 0x111827)
+        hasDarkCanvas ? RepbasePalette.cream : RepbasePalette.ink
     }
 
     var canvasSecondaryText: Color {
-        hasDarkCanvas ? Color(hex: 0xA8B3C4) : Color(hex: 0x667085)
+        hasDarkCanvas ? Color.white.opacity(0.72) : RepbasePalette.muted
     }
 
     var canvasBorder: Color {
-        hasDarkCanvas ? Color.white.opacity(0.14) : Color(hex: 0xD7DCE4)
+        hasDarkCanvas ? Color.white.opacity(0.16) : RepbasePalette.espresso.opacity(0.12)
     }
 }
 
@@ -226,14 +228,14 @@ struct RepbaseAccentCapsuleButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.subheadline.weight(.bold))
-            .foregroundStyle(Color.white)
+            .foregroundStyle(RepbasePalette.cream)
             .padding(.horizontal, 15)
             .frame(height: 42)
             .background {
                 ZStack {
                     RoundedRectangle(cornerRadius: 10)
                         .fill(RepbaseDesign.ink)
-                        .shadow(color: Color.black.opacity(0.16), radius: 8, x: 0, y: 4)
+                        .shadow(color: timeOfDay.shadow.opacity(0.75), radius: 8, x: 0, y: 4)
                 }
             }
             .overlay {

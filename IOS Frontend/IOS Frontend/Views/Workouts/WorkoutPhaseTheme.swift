@@ -14,96 +14,96 @@ enum WorkoutVisualPhase: Sendable, Equatable {
 
     var canvasStart: Color {
         switch self {
-        case .prepare: Color(hex: 0xF4F6F8)
-        case .focus: Color(hex: 0x111827)
-        case .recover: Color(hex: 0xF2F7F5)
+        case .prepare: RepbasePalette.cream
+        case .focus: Color(hex: 0x252220)
+        case .recover: Color(hex: 0xF3F1EA)
         }
     }
 
     var canvasEnd: Color {
         switch self {
-        case .prepare: Color(hex: 0xE9EDF2)
-        case .focus: Color(hex: 0x0B1120)
-        case .recover: Color(hex: 0xE4EFEA)
+        case .prepare: Color(hex: 0xE2D2C6)
+        case .focus: RepbasePalette.night
+        case .recover: Color(hex: 0xDDE5DD)
         }
     }
 
     var canvasMiddle: Color {
         switch self {
-        case .prepare: Color(hex: 0xF1F3F6)
-        case .focus: Color(hex: 0x0F172A)
-        case .recover: Color(hex: 0xECF3F0)
+        case .prepare: Color(hex: 0xF0E6DE)
+        case .focus: Color(hex: 0x1E1C1B)
+        case .recover: Color(hex: 0xE8ECE5)
         }
     }
 
     var accent: Color {
         switch self {
-        case .prepare: RepbaseDesign.accent
-        case .focus: Color(hex: 0x4F8BFF)
-        case .recover: RepbaseDesign.success
+        case .prepare: RepbasePalette.caramel
+        case .focus: Color(hex: 0xC69B7F)
+        case .recover: RepbasePalette.sage
         }
     }
 
     var primaryText: Color {
         switch self {
-        case .prepare: Color(hex: 0x111827)
-        case .focus: Color(hex: 0xF8FAFC)
-        case .recover: Color(hex: 0x14251E)
+        case .prepare: RepbasePalette.ink
+        case .focus: RepbasePalette.cream
+        case .recover: Color(hex: 0x26312B)
         }
     }
 
     var secondaryText: Color {
         switch self {
-        case .prepare: Color(hex: 0x667085)
-        case .focus: Color(hex: 0xA8B3C4)
-        case .recover: Color(hex: 0x60756B)
+        case .prepare: RepbasePalette.muted
+        case .focus: Color(hex: 0xCDBFB5)
+        case .recover: Color(hex: 0x64746B)
         }
     }
 
     var surfaceStart: Color {
         switch self {
-        case .prepare: Color.white
-        case .focus: Color(hex: 0x1B263B)
-        case .recover: Color(hex: 0xF9FCFA)
+        case .prepare: RepbasePalette.paper
+        case .focus: Color(hex: 0x312D2A)
+        case .recover: Color(hex: 0xFAF9F4)
         }
     }
 
     var surfaceEnd: Color {
         switch self {
-        case .prepare: Color(hex: 0xF8FAFC)
-        case .focus: Color(hex: 0x182235)
-        case .recover: Color(hex: 0xF1F7F4)
+        case .prepare: Color(hex: 0xF1E7DF)
+        case .focus: Color(hex: 0x282522)
+        case .recover: Color(hex: 0xE5EAE4)
         }
     }
 
     var heroStart: Color {
         switch self {
-        case .prepare: Color(hex: 0x182235)
-        case .focus: Color(hex: 0x182235)
-        case .recover: Color(hex: 0x173127)
+        case .prepare: RepbasePalette.charcoal
+        case .focus: Color(hex: 0x302A27)
+        case .recover: Color(hex: 0x26312B)
         }
     }
 
     var heroEnd: Color {
         switch self {
-        case .prepare: Color(hex: 0x263B5E)
-        case .focus: Color(hex: 0x1D4ED8)
-        case .recover: Color(hex: 0x246044)
+        case .prepare: RepbasePalette.espresso
+        case .focus: Color(hex: 0x59453B)
+        case .recover: Color(hex: 0x60796B)
         }
     }
 
     var onAccent: Color {
         switch self {
-        case .focus: Color.white
-        case .prepare, .recover: Color.white
+        case .focus: RepbasePalette.charcoal
+        case .prepare, .recover: RepbasePalette.cream
         }
     }
 
     var shadow: Color {
         switch self {
-        case .prepare: Color.black.opacity(0.08)
-        case .focus: Color.black.opacity(0.30)
-        case .recover: Color(hex: 0x385246).opacity(0.10)
+        case .prepare: RepbasePalette.espresso.opacity(0.14)
+        case .focus: Color.black.opacity(0.26)
+        case .recover: Color(hex: 0x385246).opacity(0.14)
         }
     }
 
@@ -190,7 +190,7 @@ private struct RepbaseCardModifier: ViewModifier {
                             endPoint: .bottomTrailing
                         )
                     )
-                    .shadow(color: phase.shadow.opacity(0.78), radius: 14, x: 0, y: 7)
+                    .shadow(color: phase.shadow, radius: phase == .focus ? 14 : 10, x: 0, y: 6)
                     .shadow(
                         color: phase.usesDarkAppearance
                             ? Color.white.opacity(0.035)
@@ -203,7 +203,7 @@ private struct RepbaseCardModifier: ViewModifier {
             .overlay {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .strokeBorder(
-                        phase == .focus ? Color.white.opacity(0.12) : Color(hex: 0xD7DCE4),
+                        phase == .focus ? Color.white.opacity(0.10) : RepbasePalette.espresso.opacity(0.09),
                         lineWidth: 1
                     )
             }
@@ -218,13 +218,19 @@ private struct RepbaseControlSurfaceModifier: ViewModifier {
         content
             .background {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(phase.surfaceStart)
-                    .shadow(color: Color.black.opacity(0.10), radius: 4, x: 3, y: 3)
+                    .fill(
+                        LinearGradient(
+                            colors: [phase.surfaceStart, phase.surfaceEnd.opacity(0.82)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .shadow(color: phase.shadow.opacity(0.50), radius: 5, x: 0, y: 3)
             }
             .overlay {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .strokeBorder(
-                        phase == .focus ? Color.white.opacity(0.12) : Color(hex: 0xD7DCE4),
+                        phase == .focus ? Color.white.opacity(0.09) : RepbasePalette.espresso.opacity(0.08),
                         lineWidth: 0.75
                     )
             }
@@ -239,25 +245,17 @@ struct WorkoutPrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.headline)
-            .foregroundStyle(phase.onAccent)
+            .foregroundStyle(RepbasePalette.cream)
             .padding(.horizontal, 18)
             .padding(.vertical, 14)
             .background {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [RepbaseDesign.ink, Color.black],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        .shadow(color: Color.black.opacity(0.18), radius: 8, x: 0, y: 4)
-                }
+                RoundedRectangle(cornerRadius: 15, style: .continuous)
+                    .fill(phase == .focus ? phase.accent : RepbasePalette.charcoal)
+                    .shadow(color: phase.shadow, radius: 9, x: 0, y: 5)
             }
             .overlay {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.16), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 15, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.10), lineWidth: 1)
             }
             .opacity(isEnabled ? (configuration.isPressed ? 0.78 : 1) : 0.45)
             .scaleEffect(configuration.isPressed ? 0.985 : 1)

@@ -186,7 +186,7 @@ private struct WorkoutReferenceHero: View {
                 Spacer(minLength: 12)
                 Image(systemName: "arrow.up.right")
                     .font(.caption.weight(.bold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(RepbasePalette.cream)
                     .frame(width: 34, height: 34)
                     .background(RepbaseDesign.ink, in: Circle())
             }
@@ -203,16 +203,16 @@ private struct WorkoutReferenceHero: View {
                     railButton("chart.line.uptrend.xyaxis", selected: false)
                 }
                 .padding(5)
-                .background(.white.opacity(0.94), in: Capsule())
+                .background(RepbasePalette.paper.opacity(0.96), in: Capsule())
                 .shadow(color: Color.black.opacity(0.12), radius: 12, x: 0, y: 6)
             }
             .frame(height: 158)
         }
         .padding(18)
-        .background(Color.white, in: RoundedRectangle(cornerRadius: RepbaseDesign.featureRadius, style: .continuous))
+        .background(RepbasePalette.paper, in: RoundedRectangle(cornerRadius: RepbaseDesign.featureRadius, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: RepbaseDesign.featureRadius, style: .continuous)
-                .strokeBorder(Color.white, lineWidth: 1)
+                .strokeBorder(Color.white.opacity(0.72), lineWidth: 1)
         }
         .shadow(color: Color.black.opacity(0.09), radius: 18, x: 0, y: 9)
     }
@@ -220,7 +220,7 @@ private struct WorkoutReferenceHero: View {
     private func railButton(_ symbol: String, selected: Bool) -> some View {
         Image(systemName: symbol)
             .font(.system(size: 11, weight: .bold))
-            .foregroundStyle(selected ? Color.white : RepbaseDesign.ink)
+            .foregroundStyle(selected ? RepbasePalette.cream : RepbaseDesign.ink)
             .frame(width: 30, height: 30)
             .background(selected ? RepbaseDesign.ink : Color.clear, in: Circle())
     }
