@@ -24,6 +24,12 @@ struct PlannerView: View {
 
             ScrollView {
                 VStack(spacing: 14) {
+                    RepbaseScreenHeader(
+                        eyebrow: "Schedule",
+                        title: "Calendar",
+                        detail: "Plan the work, training, and events that shape your week."
+                    )
+
                     if isMonthShown {
                         PlannerMonthCalendar {
                             withAnimation(.easeOut(duration: 0.2)) { isMonthShown = false }
@@ -48,13 +54,12 @@ struct PlannerView: View {
                         errorCard(error, timeOfDay: timeOfDay)
                     }
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 12)
-                .padding(.bottom, 24)
+                .padding(.horizontal, RepbaseDesign.pageInset)
+                .padding(.top, 16)
+                .padding(.bottom, 28)
             }
             .scrollIndicators(.hidden)
-            .navigationTitle("Planner")
-            .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .navigationBar)
             .homeTimeScreen(timeOfDay)
             .overlay {
                 if store.isLoading {
@@ -116,11 +121,11 @@ struct PlannerView: View {
                 .frame(maxWidth: .infinity, minHeight: 44)
                 .background(
                     isProminent ? timeOfDay.accent : timeOfDay.surfaceRaised,
-                    in: RoundedRectangle(cornerRadius: 15)
+                    in: RoundedRectangle(cornerRadius: RepbaseDesign.controlRadius)
                 )
                 .overlay {
                     if !isProminent {
-                        RoundedRectangle(cornerRadius: 15)
+                        RoundedRectangle(cornerRadius: RepbaseDesign.controlRadius)
                             .strokeBorder(timeOfDay.border, lineWidth: 1)
                     }
                 }

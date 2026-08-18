@@ -16,7 +16,7 @@ struct WorkoutsView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: RepbaseDesign.sectionSpacing) {
                 intro
 
                 if let persistenceError = store.persistenceError {
@@ -34,20 +34,26 @@ struct WorkoutsView: View {
                     weeklySummary
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 12)
+            .padding(.horizontal, RepbaseDesign.pageInset)
+            .padding(.top, 16)
+            .padding(.bottom, 28)
         }
         .repbaseScreen(phase)
-        .navigationTitle("Workouts")
+        .toolbar(.hidden, for: .navigationBar)
     }
 
     private var intro: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Your Week")
-                .font(.title2.weight(.bold))
+        VStack(alignment: .leading, spacing: 7) {
+            Text("TRAINING")
+                .font(.system(size: 10, weight: .bold))
+                .tracking(1.5)
+                .foregroundStyle(phase.accent)
+            Text("Your week")
+                .font(.system(size: 30, weight: .bold))
+                .tracking(-0.65)
                 .foregroundStyle(phase.primaryText)
             Text("Choose any day to plan, customize, or log a workout.")
-                .font(.subheadline)
+                .font(.system(size: 14, weight: .medium))
                 .foregroundStyle(phase.secondaryText)
         }
     }
@@ -94,7 +100,7 @@ struct WorkoutsView: View {
                         .font(.title3)
                         .foregroundStyle(WorkoutVisualPhase.focus.onAccent)
                         .frame(width: 48, height: 48)
-                        .background(WorkoutVisualPhase.focus.accent, in: RoundedRectangle(cornerRadius: 14))
+                        .background(WorkoutVisualPhase.focus.accent, in: RoundedRectangle(cornerRadius: 10))
 
                     VStack(alignment: .leading, spacing: 3) {
                         Text("SESSION IN PROGRESS")
@@ -126,7 +132,7 @@ struct WorkoutsView: View {
                         .font(.title3.weight(.semibold))
                         .foregroundStyle(phase.accent)
                         .frame(width: 48, height: 48)
-                        .background(phase.accent.opacity(0.14), in: RoundedRectangle(cornerRadius: 14))
+                        .background(phase.accent.opacity(0.14), in: RoundedRectangle(cornerRadius: 10))
 
                     VStack(alignment: .leading, spacing: 3) {
                         Text("TODAY")
@@ -148,11 +154,11 @@ struct WorkoutsView: View {
                 .padding(16)
                 .background {
                     WorkoutHeroBackground(phase: phase)
-                        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        .clipShape(RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius, style: .continuous))
                         .shadow(color: phase.shadow, radius: 14, x: 5, y: 8)
                 }
                 .overlay {
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius, style: .continuous)
                         .strokeBorder(Color.white.opacity(0.16), lineWidth: 1)
                 }
             }

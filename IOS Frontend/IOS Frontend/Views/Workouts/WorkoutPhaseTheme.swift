@@ -14,96 +14,96 @@ enum WorkoutVisualPhase: Sendable, Equatable {
 
     var canvasStart: Color {
         switch self {
-        case .prepare: Color(hex: 0xF7F7F8)
-        case .focus: Color(hex: 0x2C252A)
-        case .recover: Color(hex: 0xF3F7F5)
+        case .prepare: Color(hex: 0xF4F6F8)
+        case .focus: Color(hex: 0x111827)
+        case .recover: Color(hex: 0xF2F7F5)
         }
     }
 
     var canvasEnd: Color {
         switch self {
-        case .prepare: Color(hex: 0xE8D4CA)
-        case .focus: Color(hex: 0x151216)
-        case .recover: Color(hex: 0xD9E7E0)
+        case .prepare: Color(hex: 0xE9EDF2)
+        case .focus: Color(hex: 0x0B1120)
+        case .recover: Color(hex: 0xE4EFEA)
         }
     }
 
     var canvasMiddle: Color {
         switch self {
-        case .prepare: Color(hex: 0xF4F0EF)
-        case .focus: Color(hex: 0x211B20)
-        case .recover: Color(hex: 0xE8F0EC)
+        case .prepare: Color(hex: 0xF1F3F6)
+        case .focus: Color(hex: 0x0F172A)
+        case .recover: Color(hex: 0xECF3F0)
         }
     }
 
     var accent: Color {
         switch self {
-        case .prepare: Color(hex: 0xF86722)
-        case .focus: Color(hex: 0xFF7640)
-        case .recover: Color(hex: 0x5DAA86)
+        case .prepare: RepbaseDesign.accent
+        case .focus: Color(hex: 0x4F8BFF)
+        case .recover: RepbaseDesign.success
         }
     }
 
     var primaryText: Color {
         switch self {
-        case .prepare: Color(hex: 0x1B1415)
-        case .focus: Color(hex: 0xF7F7F8)
-        case .recover: Color(hex: 0x17211D)
+        case .prepare: Color(hex: 0x111827)
+        case .focus: Color(hex: 0xF8FAFC)
+        case .recover: Color(hex: 0x14251E)
         }
     }
 
     var secondaryText: Color {
         switch self {
-        case .prepare: Color(hex: 0x67534D)
-        case .focus: Color(hex: 0xCBBDBA)
-        case .recover: Color(hex: 0x5F756A)
+        case .prepare: Color(hex: 0x667085)
+        case .focus: Color(hex: 0xA8B3C4)
+        case .recover: Color(hex: 0x60756B)
         }
     }
 
     var surfaceStart: Color {
         switch self {
-        case .prepare: Color(hex: 0xF9F9FA)
-        case .focus: Color(hex: 0x3B3237)
+        case .prepare: Color.white
+        case .focus: Color(hex: 0x1B263B)
         case .recover: Color(hex: 0xF9FCFA)
         }
     }
 
     var surfaceEnd: Color {
         switch self {
-        case .prepare: Color(hex: 0xE6D9D3)
-        case .focus: Color(hex: 0x292226)
-        case .recover: Color(hex: 0xDFEBE5)
+        case .prepare: Color(hex: 0xF8FAFC)
+        case .focus: Color(hex: 0x182235)
+        case .recover: Color(hex: 0xF1F7F4)
         }
     }
 
     var heroStart: Color {
         switch self {
-        case .prepare: Color(hex: 0x1B1415)
-        case .focus: Color(hex: 0x352728)
-        case .recover: Color(hex: 0x17211D)
+        case .prepare: Color(hex: 0x182235)
+        case .focus: Color(hex: 0x182235)
+        case .recover: Color(hex: 0x173127)
         }
     }
 
     var heroEnd: Color {
         switch self {
-        case .prepare: Color(hex: 0x67534D)
-        case .focus: Color(hex: 0x673326)
-        case .recover: Color(hex: 0x5A8A73)
+        case .prepare: Color(hex: 0x263B5E)
+        case .focus: Color(hex: 0x1D4ED8)
+        case .recover: Color(hex: 0x246044)
         }
     }
 
     var onAccent: Color {
         switch self {
-        case .focus: Color(hex: 0x1B1415)
-        case .prepare, .recover: Color(hex: 0xF7F7F8)
+        case .focus: Color.white
+        case .prepare, .recover: Color.white
         }
     }
 
     var shadow: Color {
         switch self {
-        case .prepare: Color(hex: 0x67534D).opacity(0.20)
+        case .prepare: Color.black.opacity(0.08)
         case .focus: Color.black.opacity(0.30)
-        case .recover: Color(hex: 0x385246).opacity(0.22)
+        case .recover: Color(hex: 0x385246).opacity(0.10)
         }
     }
 
@@ -131,8 +131,8 @@ struct WorkoutPhaseBackground: View {
                 .init(color: phase.canvasMiddle, location: 0.56),
                 .init(color: phase.canvasEnd, location: 1)
             ]),
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
+            startPoint: .top,
+            endPoint: .bottom
         )
         .ignoresSafeArea()
     }
@@ -183,19 +183,13 @@ private struct RepbaseCardModifier: ViewModifier {
             .foregroundStyle(phase.primaryText)
             .background {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [phase.surfaceStart, phase.surfaceEnd],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .shadow(color: phase.shadow, radius: phase == .focus ? 16 : 12, x: 5, y: 8)
+                    .fill(phase.surfaceStart)
+                    .shadow(color: phase.shadow, radius: 8, x: 0, y: 3)
             }
             .overlay {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .strokeBorder(
-                        phase == .focus ? Color.white.opacity(0.16) : Color.white.opacity(0.72),
+                        phase == .focus ? Color.white.opacity(0.12) : Color(hex: 0xD7DCE4),
                         lineWidth: 1
                     )
             }
@@ -210,19 +204,12 @@ private struct RepbaseControlSurfaceModifier: ViewModifier {
         content
             .background {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [phase.surfaceStart, phase.surfaceEnd.opacity(0.82)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .shadow(color: phase.shadow.opacity(0.55), radius: 5, x: 2, y: 3)
+                    .fill(phase.surfaceStart)
             }
             .overlay {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .strokeBorder(
-                        phase == .focus ? Color.white.opacity(0.12) : Color.white.opacity(0.64),
+                        phase == .focus ? Color.white.opacity(0.12) : Color(hex: 0xD7DCE4),
                         lineWidth: 0.75
                     )
             }
@@ -241,19 +228,12 @@ struct WorkoutPrimaryButtonStyle: ButtonStyle {
             .padding(.horizontal, 18)
             .padding(.vertical, 14)
             .background {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [phase.accent, phase.accent.opacity(0.82)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .shadow(color: phase.accent.opacity(0.30), radius: 13, x: 4, y: 8)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(phase.accent)
             }
             .overlay {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.28), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.16), lineWidth: 1)
             }
             .opacity(isEnabled ? (configuration.isPressed ? 0.78 : 1) : 0.45)
             .scaleEffect(configuration.isPressed ? 0.985 : 1)
@@ -263,10 +243,10 @@ struct WorkoutPrimaryButtonStyle: ButtonStyle {
 
 extension View {
     func workoutCard() -> some View {
-        repbaseCard(contentPadding: 16, cornerRadius: 17)
+        repbaseCard(contentPadding: 16, cornerRadius: RepbaseDesign.cardRadius)
     }
 
-    func repbaseCard(contentPadding: CGFloat = 12, cornerRadius: CGFloat = 16) -> some View {
+    func repbaseCard(contentPadding: CGFloat = 12, cornerRadius: CGFloat = RepbaseDesign.cardRadius) -> some View {
         modifier(
             RepbaseCardModifier(
                 contentPadding: contentPadding,
@@ -279,7 +259,7 @@ extension View {
         modifier(RepbaseScreenModifier(phase: phase))
     }
 
-    func repbaseControlSurface(cornerRadius: CGFloat = 12) -> some View {
+    func repbaseControlSurface(cornerRadius: CGFloat = RepbaseDesign.controlRadius) -> some View {
         modifier(RepbaseControlSurfaceModifier(cornerRadius: cornerRadius))
     }
 

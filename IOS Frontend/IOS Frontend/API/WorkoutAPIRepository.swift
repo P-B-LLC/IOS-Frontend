@@ -812,6 +812,51 @@ actor WorkoutAPIRepository {
             .map { $0 }
     }
 
+    /// Every completed session, newest first, for choosing one to post.
+    ///
+    /// All pages are followed rather than the first taken. The list declares no
+    /// ordering, so a first page could as easily hold the oldest sessions as the
+    /// newest, and a picker built on that assumption would quietly offer the
+    /// wrong ones. Unlike `sessionHistory` this keeps sessions with no route:
+    /// a lifting session has nothing to plot but is very much worth posting.
+    func completedSessions() async throws -> [PostableSession] {
+        var page: Int?
+        var visited: Set<Int> = []
+        var values: [Components.Schemas.WorkoutSession] = []
+        repeat {
+            let output = try await client.sessionsList(
+                query: .init(page: page, status: .completed)
+            )
+            let response: Components.Schemas.PaginatedWorkoutSessionList
+            switch output {
+            case .ok(let success):
+                response = try success.body.json
+            case .undocumented(let statusCode, _):
+                throw APIServiceError.undocumentedStatus(statusCode)
+            }
+            values.append(contentsOf: response.results)
+            page = try nextPage(response.next, visited: &visited)
+        } while page != nil
+
+        return values
+            .compactMap { session -> PostableSession? in
+                // Both timestamps are nullable. One with neither cannot be
+                // placed in the list, and the date is what each row is sorted
+                // and labelled by.
+                guard let performedAt = session.endedAt ?? session.startedAt else {
+                    return nil
+                }
+                return PostableSession(
+                    sessionID: session.id,
+                    workoutName: session.workoutName,
+                    performedAt: performedAt,
+                    durationSeconds: session.durationSeconds,
+                    routeDistanceKilometers: session.routeDistanceKm
+                )
+            }
+            .sorted { $0.performedAt > $1.performedAt }
+    }
+
     func deleteSetEntry(id: Int) async throws {
         let output = try await client.setEntriesDestroy(path: .init(id: id))
         switch output {

@@ -39,7 +39,7 @@ struct ContentView: View {
                                 TodaysTasksList()
                             }
                         }
-                        .padding(.top, 30)
+                        .padding(.top, 28)
 
                         HomeCategorySection(
                             number: "02",
@@ -54,7 +54,7 @@ struct ContentView: View {
                                 TodayWorkoutCard()
                             }
                         }
-                        .padding(.top, 34)
+                        .padding(.top, 28)
 
                         HomeCategorySection(
                             number: "03",
@@ -66,15 +66,15 @@ struct ContentView: View {
                         ) {
                             FoodSummaryWidget()
                         }
-                        .padding(.top, 34)
+                        .padding(.top, 28)
 
                         if let error = workoutStore.persistenceError {
                             persistenceErrorCard(error)
                                 .padding(.top, 18)
                         }
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.top, 16)
+                    .padding(.horizontal, RepbaseDesign.pageInset)
+                    .padding(.top, 18)
                     // The custom navigation bar is inset outside this tab's
                     // navigation stack, so its height is not included in the
                     // ScrollView's natural content boundary. Keep enough real
@@ -107,7 +107,7 @@ struct ContentView: View {
             Spacer()
         }
         .padding(14)
-        .background(HomeTimeOfDay.day.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 16))
+        .background(HomeTimeOfDay.day.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius))
     }
 
     private func loadingOverlay(timeOfDay: HomeTimeOfDay) -> some View {
@@ -116,7 +116,7 @@ struct ContentView: View {
             ProgressView("Loading workouts…")
                 .padding(18)
                 .foregroundStyle(timeOfDay.primaryText)
-                .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 16))
+                .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius))
         }
     }
 }
@@ -136,47 +136,43 @@ private struct HomeCategorySection<Destination: View, Content: View>: View {
     @ViewBuilder let content: Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 14) {
             NavigationLink {
                 destination
             } label: {
-                VStack(spacing: 12) {
+                VStack(spacing: 10) {
                     HStack(alignment: .firstTextBaseline, spacing: 10) {
-                        Text(number)
-                            .font(.system(size: 11, weight: .bold, design: .monospaced))
-                            .foregroundStyle(timeOfDay.accent)
-
                         Text(eyebrow)
-                            .font(.system(size: 11, weight: .bold))
-                            .tracking(1.4)
-                            .foregroundStyle(timeOfDay.secondaryText)
+                            .font(.system(size: 10, weight: .bold))
+                            .tracking(1.35)
+                            .foregroundStyle(timeOfDay.accent)
 
                         Spacer()
 
-                        Label("OPEN", systemImage: "arrow.up.right")
+                        Label("View", systemImage: "arrow.right")
                             .labelStyle(.titleAndIcon)
-                            .font(.system(size: 10, weight: .bold))
-                            .tracking(0.8)
-                            .foregroundStyle(timeOfDay.accent)
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(timeOfDay.secondaryText)
                     }
 
                     Rectangle()
-                        .fill(timeOfDay.accent)
-                        .frame(height: 2)
+                        .fill(timeOfDay.canvasBorder)
+                        .frame(height: 1)
 
                     HStack(alignment: .top, spacing: 14) {
                         Image(systemName: symbol)
-                            .font(.system(size: 18, weight: .semibold))
+                            .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(timeOfDay.accent)
-                            .frame(width: 42, height: 42)
-                            .background(timeOfDay.accent.opacity(0.11), in: Circle())
+                            .frame(width: 38, height: 38)
+                            .background(timeOfDay.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 10))
 
                         VStack(alignment: .leading, spacing: 5) {
                             Text(title)
-                                .font(.system(size: 31, weight: .bold))
+                                .font(.system(size: 22, weight: .bold))
+                                .tracking(-0.35)
                                 .foregroundStyle(timeOfDay.primaryText)
                             Text(detail)
-                                .font(.system(size: 14, weight: .medium))
+                                .font(.system(size: 13, weight: .medium))
                                 .foregroundStyle(timeOfDay.secondaryText)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -202,14 +198,16 @@ private struct HomeHeader: View {
     let date: Date
 
     var body: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text("\(timeOfDay.label) · \(date.formatted(.dateTime.weekday(.wide)).uppercased())")
-                    .font(.system(size: 11, weight: .semibold))
-                    .tracking(0.9)
-                    .foregroundStyle(timeOfDay.secondaryText)
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("REPBASE  /  \(date.formatted(.dateTime.weekday(.wide)).uppercased())")
+                    .font(.system(size: 10, weight: .bold))
+                    .tracking(1.35)
+                    .foregroundStyle(timeOfDay.accent)
                 Text(headline)
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .font(.system(size: 30, weight: .bold))
+                    .tracking(-0.65)
+                    .foregroundStyle(timeOfDay.canvasPrimaryText)
             }
 
             Spacer(minLength: 12)
@@ -236,15 +234,14 @@ private struct HomeHeader: View {
             }
         } label: {
             Text(accountInitial)
-                .font(.system(size: 17, weight: .bold, design: .rounded))
-                .foregroundStyle(timeOfDay.primaryText)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundStyle(timeOfDay.accent)
                 .frame(width: 44, height: 44)
-                .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 15))
+                .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 12))
                 .overlay {
-                    RoundedRectangle(cornerRadius: 15)
+                    RoundedRectangle(cornerRadius: 12)
                         .strokeBorder(timeOfDay.border, lineWidth: 1)
                 }
-                .shadow(color: timeOfDay.shadow.opacity(0.7), radius: 7, x: 3, y: 5)
         }
         .disabled(authentication.isWorking)
         .accessibilityLabel("Account")
@@ -326,9 +323,9 @@ private struct WeeklyPlanCard: View {
                 if showsScrollBar {
                     ZStack(alignment: .top) {
                         Capsule()
-                            .fill(Color(hex: 0x1B1415).opacity(0.16))
+                            .fill(Color.white.opacity(0.18))
                         Capsule()
-                            .fill(Color(hex: 0x1B1415).opacity(0.58))
+                            .fill(Color.white.opacity(0.72))
                             .frame(height: scrollThumbHeight)
                             .offset(y: scrollThumbOffset)
                     }
@@ -338,13 +335,13 @@ private struct WeeklyPlanCard: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, minHeight: 214, maxHeight: 214, alignment: .topLeading)
-        .foregroundStyle(Color(hex: 0x1B1415))
-        .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 24))
+        .foregroundStyle(Color.white)
+        .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius))
         .overlay(alignment: .top) {
-            RoundedRectangle(cornerRadius: 24)
+            RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius)
                 .strokeBorder(Color.white.opacity(0.24), lineWidth: 1)
         }
-        .shadow(color: timeOfDay.shadow, radius: 12, x: 5, y: 8)
+        .shadow(color: timeOfDay.shadow, radius: 8, x: 0, y: 3)
     }
 
     private var items: [PlannedWorkoutItem] {
@@ -390,7 +387,7 @@ private struct WeeklyPlanCard: View {
         }
         .padding(.horizontal, 10)
         .frame(height: 48)
-        .background(Color.white.opacity(0.18), in: RoundedRectangle(cornerRadius: 15))
+        .background(Color.white.opacity(0.14), in: RoundedRectangle(cornerRadius: RepbaseDesign.controlRadius))
     }
 
     private var emptyPlanRow: some View {
@@ -401,7 +398,7 @@ private struct WeeklyPlanCard: View {
         }
         .padding(.horizontal, 10)
         .frame(height: 48)
-        .background(Color.white.opacity(0.18), in: RoundedRectangle(cornerRadius: 15))
+        .background(Color.white.opacity(0.14), in: RoundedRectangle(cornerRadius: RepbaseDesign.controlRadius))
     }
 
     private func completed(_ day: Weekday) -> Bool {
@@ -451,13 +448,13 @@ private struct TodayWorkoutCard: View {
                         .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(Color(hex: 0xF7F7F8))
                         .frame(width: 38, height: 38)
-                        .background(timeOfDay.ink, in: Circle())
+                        .background(Color.white.opacity(0.16), in: RoundedRectangle(cornerRadius: 9))
                 }
-                .foregroundStyle(Color(hex: 0x1B1415))
+                .foregroundStyle(Color.white)
                 .padding(.leading, 18)
                 .padding(.trailing, 5)
                 .frame(height: 48)
-                .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 16))
+                .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: RepbaseDesign.controlRadius))
                 .padding(.top, 10)
             }
             .padding(16)
@@ -469,13 +466,13 @@ private struct TodayWorkoutCard: View {
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
-                .clipShape(RoundedRectangle(cornerRadius: 24))
+                .clipShape(RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius))
             }
             .overlay {
-                RoundedRectangle(cornerRadius: 24)
+                RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius)
                     .strokeBorder(Color.white.opacity(0.13), lineWidth: 1)
             }
-            .shadow(color: timeOfDay.shadow, radius: 12, x: 5, y: 8)
+            .shadow(color: timeOfDay.shadow, radius: 8, x: 0, y: 3)
         }
         .buttonStyle(.plain)
         .accessibilityHint("Opens today's workout")

@@ -28,83 +28,81 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
 
     var canvasStart: Color {
         switch self {
-        case .dawn: Color(hex: 0xF7F7F8)
-        case .day: Color(hex: 0xF7F7F8)
-        case .dusk: Color(hex: 0xC9A89A)
-        case .night: Color(hex: 0x2C252A)
+        case .dawn: Color(hex: 0xF5F7FA)
+        case .day: Color(hex: 0xF4F6F8)
+        case .dusk: Color(hex: 0xF0F2F6)
+        case .night: Color(hex: 0x111827)
         }
     }
 
     var canvasMiddle: Color {
         switch self {
-        case .dawn: Color(hex: 0xF4ECE8)
-        case .day: Color(hex: 0xEFEFEF)
-        case .dusk: Color(hex: 0x9A7468)
-        case .night: Color(hex: 0x1F1A1E)
+        case .dawn: Color(hex: 0xF1F4F8)
+        case .day: Color(hex: 0xF1F3F6)
+        case .dusk: Color(hex: 0xE9EDF3)
+        case .night: Color(hex: 0x0F172A)
         }
     }
 
     var canvasEnd: Color {
         switch self {
-        case .dawn: Color(hex: 0xEEDBD1)
-        case .day: Color(hex: 0xCFCFD0)
-        case .dusk: Color(hex: 0x67534D)
-        case .night: Color(hex: 0x151216)
+        case .dawn: Color(hex: 0xE8EDF3)
+        case .day: Color(hex: 0xE9EDF2)
+        case .dusk: Color(hex: 0xE2E7EF)
+        case .night: Color(hex: 0x0B1120)
         }
     }
 
     var primaryText: Color {
-        usesDarkAppearance ? Color(hex: 0xF7F7F8) : Color(hex: 0x1B1415)
+        usesDarkAppearance ? Color(hex: 0xF8FAFC) : Color(hex: 0x111827)
     }
 
     var secondaryText: Color {
-        usesDarkAppearance ? Color(hex: 0xCBBDBA) : Color(hex: 0x67534D)
+        usesDarkAppearance ? Color(hex: 0xA8B3C4) : Color(hex: 0x667085)
     }
 
     var surface: Color {
         switch self {
-        case .night: Color(hex: 0x272126)
-        case .dusk: Color(hex: 0xE6D9D3)
-        case .dawn, .day: Color(hex: 0xF9F9FA)
+        case .night: Color(hex: 0x172033)
+        case .dawn, .day, .dusk: Color(hex: 0xF8FAFC)
         }
     }
 
     var surfaceRaised: Color {
         switch self {
-        case .night: Color(hex: 0x332C30)
-        case .dusk: Color(hex: 0xF0E6E1)
-        case .dawn, .day: .white
+        case .night: Color(hex: 0x1B263B)
+        case .dawn, .day, .dusk: .white
         }
     }
 
     var selectorSurface: Color {
-        usesDarkAppearance ? Color(hex: 0x40363C) : surface.opacity(0.94)
+        usesDarkAppearance ? Color(hex: 0x202C42) : Color(hex: 0xE8ECF2)
     }
 
     var emptyDaySurface: Color {
-        usesDarkAppearance ? Color(hex: 0x2A2428) : Color(hex: 0xE8E5E5)
+        usesDarkAppearance ? Color(hex: 0x182235) : Color(hex: 0xEEF1F5)
     }
 
-    var plannedDaySurface: Color { Color(hex: 0x67534D) }
-    var completedDaySurface: Color { Color(hex: 0xF9F9FA) }
-    var accent: Color { Color(hex: 0xF86722) }
-    var ink: Color { Color(hex: 0x1B1415) }
+    var plannedDaySurface: Color { Color(hex: 0x344054) }
+    var completedDaySurface: Color { Color(hex: 0xF8FAFC) }
+    var accent: Color { RepbaseDesign.accent }
+    var ink: Color { Color(hex: 0x111827) }
 
     var heroEnd: Color {
         switch self {
-        case .dawn: Color(hex: 0x67534D)
-        case .day: Color(hex: 0x2C2426)
-        case .dusk: Color(hex: 0x5B2414)
-        case .night: Color(hex: 0x673326)
+        case .dawn: Color(hex: 0x334155)
+        case .day: Color(hex: 0x1E293B)
+        case .dusk: Color(hex: 0x24324A)
+        case .night: Color(hex: 0x1D4ED8)
         }
     }
 
     var border: Color {
-        usesDarkAppearance ? Color.white.opacity(0.17) : Color.white.opacity(0.72)
+        usesDarkAppearance ? Color.white.opacity(0.12) : Color(hex: 0xD7DCE4)
     }
 
     var shadow: Color {
-        usesDarkAppearance ? Color.black.opacity(0.30) : Color(hex: 0x67534D).opacity(0.22)
+        usesDarkAppearance ? Color.black.opacity(0.28) : Color.black.opacity(0.08)
     }
 
     // MARK: - Drawn straight on the canvas
@@ -115,18 +113,18 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
     // and near-black text disappears into it. These follow the canvas instead.
 
     /// Whether the canvas behind unraised content is dark at this hour.
-    var hasDarkCanvas: Bool { self == .dusk || self == .night }
+    var hasDarkCanvas: Bool { self == .night }
 
     var canvasPrimaryText: Color {
-        hasDarkCanvas ? Color(hex: 0xFFFFFF) : Color(hex: 0x1B1415)
+        hasDarkCanvas ? Color(hex: 0xF8FAFC) : Color(hex: 0x111827)
     }
 
     var canvasSecondaryText: Color {
-        hasDarkCanvas ? Color.white.opacity(0.82) : Color(hex: 0x67534D)
+        hasDarkCanvas ? Color(hex: 0xA8B3C4) : Color(hex: 0x667085)
     }
 
     var canvasBorder: Color {
-        hasDarkCanvas ? Color.white.opacity(0.30) : Color.white.opacity(0.72)
+        hasDarkCanvas ? Color.white.opacity(0.14) : Color(hex: 0xD7DCE4)
     }
 }
 
@@ -154,8 +152,8 @@ private struct HomeTimeScreenModifier: ViewModifier {
                         .init(color: timeOfDay.canvasMiddle, location: 0.56),
                         .init(color: timeOfDay.canvasEnd, location: 1)
                     ]),
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
+                    startPoint: .top,
+                    endPoint: .bottom
                 )
                 .ignoresSafeArea()
             }
@@ -181,13 +179,9 @@ struct RepbaseSculptedIconButtonStyle: ButtonStyle {
             .font(.body.weight(.semibold))
             .foregroundStyle(timeOfDay.primaryText)
             .frame(width: 44, height: 44)
-            .background {
-                Circle()
-                    .fill(timeOfDay.surfaceRaised)
-                    .shadow(color: timeOfDay.shadow.opacity(0.72), radius: 9, x: 3, y: 6)
-            }
+            .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 12))
             .overlay {
-                Circle().strokeBorder(timeOfDay.border, lineWidth: 1)
+                RoundedRectangle(cornerRadius: 12).strokeBorder(timeOfDay.border, lineWidth: 1)
             }
             .scaleEffect(configuration.isPressed ? 0.94 : 1)
             .opacity(configuration.isPressed ? 0.78 : 1)
@@ -207,18 +201,11 @@ struct RepbaseAccentCapsuleButtonStyle: ButtonStyle {
             .padding(.horizontal, 15)
             .frame(height: 42)
             .background {
-                Capsule()
-                    .fill(
-                        LinearGradient(
-                            colors: [timeOfDay.accent, timeOfDay.accent.opacity(0.82)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .shadow(color: timeOfDay.accent.opacity(0.30), radius: 10, x: 3, y: 6)
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(timeOfDay.accent)
             }
             .overlay {
-                Capsule().strokeBorder(Color.white.opacity(0.28), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 10).strokeBorder(Color.white.opacity(0.16), lineWidth: 1)
             }
             .scaleEffect(configuration.isPressed ? 0.96 : 1)
             .opacity(isEnabled ? (configuration.isPressed ? 0.80 : 1) : 0.42)

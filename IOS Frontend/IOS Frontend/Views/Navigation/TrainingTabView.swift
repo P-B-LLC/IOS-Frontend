@@ -54,7 +54,7 @@ struct TrainingTabView: View {
     }
 
     private func switcher(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 3) {
             ForEach(Half.allCases) { item in
                 Button {
                     half = item
@@ -63,14 +63,18 @@ struct TrainingTabView: View {
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(
                             item == half
-                                ? Color(hex: 0x1B1415)
+                                ? timeOfDay.accent
                                 : timeOfDay.canvasSecondaryText
                         )
-                        .frame(maxWidth: .infinity, minHeight: 38)
+                        .frame(maxWidth: .infinity, minHeight: 40)
                         .background {
                             if item == half {
-                                RoundedRectangle(cornerRadius: 13)
-                                    .fill(timeOfDay.accent)
+                                RoundedRectangle(cornerRadius: 9)
+                                    .fill(timeOfDay.surfaceRaised)
+                                    .overlay {
+                                        RoundedRectangle(cornerRadius: 9)
+                                            .strokeBorder(timeOfDay.border, lineWidth: 1)
+                                    }
                             }
                         }
                         .contentShape(Rectangle())
@@ -80,14 +84,14 @@ struct TrainingTabView: View {
             }
         }
         .padding(4)
-        .background(timeOfDay.selectorSurface, in: RoundedRectangle(cornerRadius: 17))
+        .background(timeOfDay.selectorSurface, in: RoundedRectangle(cornerRadius: 12))
         .overlay {
-            RoundedRectangle(cornerRadius: 17)
+            RoundedRectangle(cornerRadius: 12)
                 .strokeBorder(timeOfDay.canvasBorder, lineWidth: 1)
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 8)
-        .padding(.bottom, 6)
+        .padding(.horizontal, RepbaseDesign.pageInset)
+        .padding(.top, 10)
+        .padding(.bottom, 8)
         .animation(.easeOut(duration: 0.18), value: half)
     }
 }

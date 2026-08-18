@@ -27,7 +27,7 @@ struct AuthenticationView: View {
             GeometryReader { geometry in
                 ScrollView {
                     VStack(spacing: 0) {
-                        Spacer(minLength: 44)
+                        Spacer(minLength: 56)
                         brand(timeOfDay: timeOfDay)
 
                         VStack(spacing: 14) {
@@ -45,7 +45,7 @@ struct AuthenticationView: View {
 
                             signInButton(timeOfDay: timeOfDay)
                         }
-                        .padding(.top, 42)
+                        .padding(.top, 38)
 
                         HStack(spacing: 5) {
                             Text("New to Repbase?")
@@ -72,7 +72,7 @@ struct AuthenticationView: View {
                         .foregroundStyle(timeOfDay.secondaryText.opacity(0.72))
 #endif
                     }
-                    .padding(.horizontal, 26)
+                    .padding(.horizontal, RepbaseDesign.pageInset)
                     .padding(.bottom, 20)
                     .frame(maxWidth: 480)
                     .frame(maxWidth: .infinity)
@@ -90,21 +90,26 @@ struct AuthenticationView: View {
     }
 
     private func brand(timeOfDay: HomeTimeOfDay) -> some View {
-        VStack(spacing: 12) {
+        HStack(spacing: 14) {
             Image(systemName: "figure.strengthtraining.traditional")
-                .font(.system(size: 25, weight: .semibold))
+                .font(.system(size: 22, weight: .semibold))
                 .foregroundStyle(Color.white)
-                .frame(width: 54, height: 54)
-                .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 17))
-                .shadow(color: timeOfDay.accent.opacity(0.22), radius: 9, x: 3, y: 6)
+                .frame(width: 50, height: 50)
+                .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 12))
 
-            VStack(spacing: 4) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("TRAINING, ORGANIZED")
+                    .font(.system(size: 9, weight: .bold))
+                    .tracking(1.35)
+                    .foregroundStyle(timeOfDay.accent)
                 Text("Repbase")
-                    .font(.system(size: 30, weight: .bold, design: .rounded))
+                    .font(.system(size: 30, weight: .bold))
+                    .tracking(-0.65)
                 Text("Welcome back")
                     .font(.subheadline)
                     .foregroundStyle(timeOfDay.secondaryText)
             }
+            Spacer(minLength: 0)
         }
     }
 
@@ -144,7 +149,7 @@ struct AuthenticationView: View {
             .font(.headline.weight(.bold))
             .foregroundStyle(Color.white)
             .frame(maxWidth: .infinity, minHeight: 54)
-            .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 17))
+            .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 12))
         }
         .buttonStyle(.plain)
         .disabled(!canSubmit || authentication.isWorking)
@@ -204,7 +209,8 @@ private struct AccountRegistrationView: View {
                             .tracking(1.3)
                             .foregroundStyle(timeOfDay.accent)
                         Text("Create your account.")
-                            .font(.system(size: 34, weight: .bold))
+                            .font(.system(size: 30, weight: .bold))
+                            .tracking(-0.65)
                         Text("Goals, measurements, your photo, disciplines, and gym can be added later from Profile Settings.")
                             .font(.subheadline)
                             .foregroundStyle(timeOfDay.secondaryText)
@@ -247,13 +253,13 @@ private struct AccountRegistrationView: View {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 20)
                         .frame(height: 56)
-                        .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 18))
+                        .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 12))
                     }
                     .buttonStyle(.plain)
                     .disabled(!canRegister || authentication.isWorking)
                     .opacity(canRegister ? 1 : 0.42)
                 }
-                .padding(.horizontal, 24)
+                .padding(.horizontal, RepbaseDesign.pageInset)
                 .padding(.top, 12)
                 .padding(.bottom, 34)
             }
@@ -309,9 +315,9 @@ private extension View {
     func authenticationField(timeOfDay: HomeTimeOfDay) -> some View {
         padding(.horizontal, 15)
             .frame(height: 55)
-            .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 17))
+            .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: RepbaseDesign.controlRadius))
             .overlay {
-                RoundedRectangle(cornerRadius: 17)
+                RoundedRectangle(cornerRadius: RepbaseDesign.controlRadius)
                     .strokeBorder(timeOfDay.border, lineWidth: 1)
             }
     }

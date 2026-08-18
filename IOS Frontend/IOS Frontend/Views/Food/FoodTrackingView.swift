@@ -56,9 +56,9 @@ struct FoodTrackingView: View {
                 mealsSection(timeOfDay: timeOfDay)
                 nutritionBreakdownLink(timeOfDay: timeOfDay)
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 10)
-            .padding(.bottom, 26)
+            .padding(.horizontal, RepbaseDesign.pageInset)
+            .padding(.top, 16)
+            .padding(.bottom, 28)
         }
         .scrollIndicators(.hidden)
         .toolbar(.hidden, for: .navigationBar)
@@ -66,7 +66,7 @@ struct FoodTrackingView: View {
     }
 
     private func foodHeader(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack {
+        HStack(alignment: .center, spacing: 14) {
             Button {
                 dismiss()
             } label: {
@@ -75,7 +75,18 @@ struct FoodTrackingView: View {
             }
             .buttonStyle(RepbaseSculptedIconButtonStyle(timeOfDay: timeOfDay))
 
-            Spacer()
+            VStack(alignment: .leading, spacing: 3) {
+                Text("NUTRITION")
+                    .font(.system(size: 9, weight: .bold))
+                    .tracking(1.35)
+                    .foregroundStyle(timeOfDay.accent)
+                Text("Food logging")
+                    .font(.system(size: 22, weight: .bold))
+                    .tracking(-0.35)
+                    .foregroundStyle(timeOfDay.canvasPrimaryText)
+            }
+
+            Spacer(minLength: 0)
 
             Button {
                 isEditingGoals = true
@@ -85,12 +96,7 @@ struct FoodTrackingView: View {
             .buttonStyle(RepbaseAccentCapsuleButtonStyle(timeOfDay: timeOfDay))
             .accessibilityHint("Change calorie and macronutrient targets")
         }
-        .overlay {
-            Text("Food Logging")
-                .font(.headline)
-                .foregroundStyle(timeOfDay.canvasPrimaryText)
-        }
-        .padding(.bottom, 2)
+        .padding(.bottom, 4)
     }
 
     private func weekSelector(timeOfDay: HomeTimeOfDay) -> some View {
@@ -170,7 +176,7 @@ struct FoodTrackingView: View {
                 }
             }
         }
-        .repbaseCard(contentPadding: 13, cornerRadius: 20)
+        .repbaseCard(contentPadding: 13, cornerRadius: RepbaseDesign.cardRadius)
     }
 
     private var dailySummary: some View {
@@ -235,7 +241,7 @@ struct FoodTrackingView: View {
                     }
                 }
             }
-            .repbaseCard(contentPadding: 10, cornerRadius: 20)
+            .repbaseCard(contentPadding: 10, cornerRadius: RepbaseDesign.cardRadius)
 
             HStack(spacing: 9) {
                 Button {

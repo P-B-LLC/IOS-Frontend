@@ -9,6 +9,7 @@ import SwiftUI
 
 struct SocialFeedView: View {
     @Environment(SocialStore.self) private var store
+    @State private var isComposing = false
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
@@ -47,30 +48,50 @@ struct SocialFeedView: View {
                     }
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 10)
-            .padding(.bottom, 26)
+            .padding(.horizontal, RepbaseDesign.pageInset)
+            .padding(.top, 16)
+            .padding(.bottom, 28)
         }
         .scrollIndicators(.hidden)
         .refreshable { await store.refresh() }
         .toolbar(.hidden, for: .navigationBar)
         .homeTimeScreen(timeOfDay)
+        .sheet(isPresented: $isComposing) {
+            PostComposerView()
+        }
     }
 
     private func header(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 3) {
-                Text("FEED")
-                    .font(.system(size: 10, weight: .bold))
-                    .tracking(1.3)
-                    .foregroundStyle(timeOfDay.accent)
-                Text("Social")
-                    .font(.system(size: 30, weight: .bold, design: .rounded))
-                    .foregroundStyle(timeOfDay.canvasPrimaryText)
-            }
-            Spacer()
+        HStack(alignment: .top, spacing: 12) {
+            RepbaseScreenHeader(
+                eyebrow: "Community",
+                title: "Social",
+                detail: "Training updates and progress from the people you follow."
+            )
+
+            composeButton(timeOfDay: timeOfDay)
         }
         .padding(.bottom, 2)
+    }
+
+    /// Opens the composer. Kept beside the title rather than floating over the
+    /// feed: the bottom bar already sits there, and a second round button above
+    /// it read as part of the same control.
+    private func composeButton(timeOfDay: HomeTimeOfDay) -> some View {
+        Button {
+            isComposing = true
+        } label: {
+            Image(systemName: "square.and.pencil")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(timeOfDay.accent)
+                .frame(width: 44, height: 44)
+                .background(timeOfDay.accent.opacity(0.11), in: Circle())
+                .overlay {
+                    Circle().strokeBorder(timeOfDay.canvasBorder, lineWidth: 1)
+                }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("New post")
     }
 
     private func emptyState(timeOfDay: HomeTimeOfDay) -> some View {
@@ -81,11 +102,18 @@ struct SocialFeedView: View {
             Text("Nothing here yet")
                 .font(.headline)
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
-            Text("Posts from people you follow show up here. Share a workout or a meal from its page to start your own.")
+            Text("Posts from people you follow show up here. Share a workout, a meal, or something off your calendar to start your own.")
                 .font(.subheadline)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(timeOfDay.canvasSecondaryText)
                 .fixedSize(horizontal: false, vertical: true)
+
+            // Repeats the header's button where the eye already is. An empty
+            // feed is exactly when the one in the corner goes unnoticed.
+            Button("Write a post") { isComposing = true }
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(timeOfDay.accent)
+                .padding(.top, 2)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 44)
@@ -140,11 +168,12 @@ struct PostCard: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 18))
+        .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius))
         .overlay {
-            RoundedRectangle(cornerRadius: 18)
+            RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius)
                 .strokeBorder(timeOfDay.border, lineWidth: 1)
         }
+        .shadow(color: timeOfDay.shadow, radius: 7, x: 0, y: 3)
     }
 
     private var author: some View {

@@ -36,6 +36,11 @@ final class WorkoutStore {
     /// Workouts the user has already created, offered when naming a new one so
     /// a workout's history is not split across two spellings.
     private(set) var knownWorkouts: [WorkoutSummary] = []
+    /// Finished sessions the composer can offer. Read on demand rather than at
+    /// connection: only that one screen needs them, and every other screen
+    /// would pay for the pages on sign-in.
+    private(set) var postableSessions: [PostableSession] = []
+    private(set) var isLoadingPostableSessions = false
 
     // MARK: - Cardio finisher
     //
@@ -97,6 +102,8 @@ final class WorkoutStore {
         isSaving = false
         // One user's workout names must never be offered to the next.
         knownWorkouts = []
+        postableSessions = []
+        isLoadingPostableSessions = false
         cardioStartedAt = nil
         cardioMachine = nil
         cardioSessionID = nil
@@ -105,6 +112,35 @@ final class WorkoutStore {
         personalRecords = []
         liftProgress = []
         routeSummary = nil
+    }
+
+    // MARK: - Posting
+
+    /// Reads the finished sessions the composer offers.
+    ///
+    /// Read again each time the composer opens rather than cached: a session
+    /// finished since it was last opened is exactly the one most likely to be
+    /// posted. A failure is reported through `persistenceError` like every
+    /// other read, so the composer can say so instead of showing an empty list
+    /// that looks like "you have never trained".
+    func loadPostableSessions() async {
+        guard let repository else { return }
+        let generation = connectionGeneration
+        isLoadingPostableSessions = true
+        defer {
+            if connectionGeneration == generation {
+                isLoadingPostableSessions = false
+            }
+        }
+
+        do {
+            let sessions = try await repository.completedSessions()
+            guard connectionGeneration == generation else { return }
+            postableSessions = sessions
+        } catch {
+            guard connectionGeneration == generation else { return }
+            persistenceError = error.localizedDescription
+        }
     }
 
     // MARK: - Lookups

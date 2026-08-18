@@ -74,8 +74,8 @@ struct SocialProfileView: View {
                         aboutSection(timeOfDay: timeOfDay)
                     }
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 10)
+                .padding(.horizontal, RepbaseDesign.pageInset)
+                .padding(.top, 16)
                 .padding(.bottom, 28)
             }
             .scrollIndicators(.hidden)
@@ -94,14 +94,16 @@ struct SocialProfileView: View {
     }
 
     private func profileHeader(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack(alignment: .bottom) {
+        HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("ACCOUNT / PUBLIC PROFILE")
+                Text("ACCOUNT")
                     .font(.system(size: 10, weight: .bold))
-                    .tracking(1.25)
+                    .tracking(1.5)
                     .foregroundStyle(timeOfDay.accent)
                 Text("Profile")
-                    .font(.system(size: 34, weight: .bold))
+                    .font(.system(size: 30, weight: .bold))
+                    .tracking(-0.65)
+                    .foregroundStyle(timeOfDay.canvasPrimaryText)
             }
 
             Spacer()
@@ -110,10 +112,14 @@ struct SocialProfileView: View {
                 showingSettings = true
             } label: {
                 Image(systemName: "line.3.horizontal")
-                    .font(.system(size: 23, weight: .semibold))
-                    .foregroundStyle(timeOfDay.primaryText)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(timeOfDay.accent)
                     .frame(width: 44, height: 44)
-                    .contentShape(Rectangle())
+                    .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 12))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 12)
+                            .strokeBorder(timeOfDay.border, lineWidth: 1)
+                    }
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Profile and app settings")
