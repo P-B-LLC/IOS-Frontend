@@ -10,9 +10,11 @@ import SwiftUI
 
 nonisolated enum RepbaseTab: String, CaseIterable, Identifiable {
     case home
-    case workouts
+    /// Workouts and food together. They were a slot each, which is two of five
+    /// spent on the two halves of the same day, and left none for the feed.
+    case training
     case planner
-    case food
+    case social
     case account
 
     var id: String { rawValue }
@@ -20,9 +22,9 @@ nonisolated enum RepbaseTab: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .home: "Home"
-        case .workouts: "Workouts"
+        case .training: "Training"
         case .planner: "Calendar"
-        case .food: "Food"
+        case .social: "Social"
         case .account: "Account"
         }
     }
@@ -30,9 +32,9 @@ nonisolated enum RepbaseTab: String, CaseIterable, Identifiable {
     var symbol: String {
         switch self {
         case .home: "house.fill"
-        case .workouts: "dumbbell.fill"
+        case .training: "dumbbell.fill"
         case .planner: "calendar"
-        case .food: "fork.knife"
+        case .social: "person.2.fill"
         case .account: "person"
         }
     }
@@ -59,15 +61,15 @@ struct RepbaseRootView: View {
             NavigationStack { ContentView() }
                 .toolbar(.hidden, for: .tabBar)
                 .tag(RepbaseTab.home)
-            NavigationStack { WorkoutsView() }
+            NavigationStack { TrainingTabView() }
                 .toolbar(.hidden, for: .tabBar)
-                .tag(RepbaseTab.workouts)
+                .tag(RepbaseTab.training)
             NavigationStack { PlannerView() }
                 .toolbar(.hidden, for: .tabBar)
                 .tag(RepbaseTab.planner)
-            NavigationStack { FoodTrackingView() }
+            NavigationStack { SocialFeedView() }
                 .toolbar(.hidden, for: .tabBar)
-                .tag(RepbaseTab.food)
+                .tag(RepbaseTab.social)
             NavigationStack { ProfileDestinationView() }
                 .toolbar(.hidden, for: .tabBar)
                 .tag(RepbaseTab.account)

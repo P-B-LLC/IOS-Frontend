@@ -1,0 +1,294 @@
+//
+//  SocialAPIRepository.swift
+//  IOS Frontend
+//
+//  OAS-generated feed, posting and following operations.
+//
+
+import Foundation
+import RepbaseAPI
+
+/// One page of the feed, and where the next one starts.
+nonisolated struct FeedPage: Equatable, Sendable {
+    var posts: [FeedPost]
+    /// The opaque cursor for the following page. Nil at the end of the feed.
+    var nextCursor: String?
+}
+
+actor SocialAPIRepository {
+    private let configuration: APIConfiguration
+    private let client: Client
+
+    init(configuration: APIConfiguration, token: String) throws {
+        self.configuration = configuration
+        client = try RepbaseAPIClientFactory.makeAuthenticated(
+            serverURL: configuration.serverURL,
+            token: token,
+            allowInsecureLocalhost: configuration.allowsInsecureLocalhost
+        )
+    }
+
+    // MARK: - Reading
+
+    /// A page of what the people you follow have posted, newest first.
+    ///
+    /// Paged by cursor rather than by number because the feed is written to
+    /// while it is read: someone posts, everything slides down one, and a
+    /// numbered page two would repeat a post page one already showed.
+    func feed(after cursor: String? = nil) async throws -> FeedPage {
+        let output = try await client.socialFeedList(query: .init(cursor: cursor))
+        switch output {
+        case .ok(let response):
+            let body = try response.body.json
+            return FeedPage(
+                posts: body.results.map(Self.post(from:)),
+                nextCursor: try nextCursor(body.next)
+            )
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// One person's posts, already narrowed by the server to what the reader
+    /// is allowed to see.
+    func posts(byAuthor authorID: Int) async throws -> [FeedPost] {
+        let output = try await client.socialPostsList(query: .init(author: authorID))
+        switch output {
+        case .ok(let response):
+            return try response.body.json.results.map(Self.post(from:))
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    // MARK: - Posting
+
+    /// Posts something the signed-in user owns.
+    ///
+    /// Only which object, never its contents: the server reads the workout,
+    /// meal or entry itself and builds the snapshot from it, so nothing the
+    /// phone sends can decide what a post claims was done.
+    @discardableResult
+    func post(
+        kind: PostKind,
+        sourceID: Int,
+        caption: String,
+        visibility: PostVisibility
+    ) async throws -> FeedPost {
+        guard let kindPayload = Components.Schemas.CreatePostKindEnum(
+            rawValue: kind.apiValue
+        ), let visibilityPayload = Components.Schemas.VisibilityEnum(
+            rawValue: visibility.rawValue
+        ) else {
+            throw APIServiceError.malformedResponse
+        }
+
+        let output = try await client.socialPostsCreate(
+            body: .json(
+                Components.Schemas.CreatePostRequest(
+                    kind: kindPayload,
+                    sourceId: sourceID,
+                    caption: caption,
+                    visibility: .init(value1: visibilityPayload)
+                )
+            )
+        )
+        switch output {
+        case .created(let response):
+            return Self.post(from: try response.body.json)
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// The caption and who can see it. The snapshot is a record of what
+    /// happened and the API will not take an edit to it.
+    @discardableResult
+    func update(
+        _ postID: Int,
+        caption: String,
+        visibility: PostVisibility
+    ) async throws -> FeedPost {
+        guard let visibilityPayload = Components.Schemas.VisibilityEnum(
+            rawValue: visibility.rawValue
+        ) else {
+            throw APIServiceError.malformedResponse
+        }
+
+        let output = try await client.socialPostsPartialUpdate(
+            path: .init(id: postID),
+            body: .json(
+                // Unwrapped, unlike the create request: an optional field is
+                // generated as the enum itself rather than behind a payload.
+                Components.Schemas.PatchedUpdatePostRequest(
+                    caption: caption,
+                    visibility: visibilityPayload
+                )
+            )
+        )
+        switch output {
+        case .ok(let response):
+            return Self.post(from: try response.body.json)
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    func delete(_ postID: Int) async throws {
+        let output = try await client.socialPostsDestroy(path: .init(id: postID))
+        switch output {
+        case .noContent:
+            return
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    // MARK: - Following
+
+    func follow(_ userID: Int) async throws {
+        let output = try await client.usersFollowCreate(path: .init(id: userID))
+        switch output {
+        case .created, .ok:
+            return
+        case .conflict:
+            // A block stands between the two people. Reported rather than
+            // retried: nothing the app does will make this succeed.
+            throw APIServiceError.undocumentedStatus(409)
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    func unfollow(_ userID: Int) async throws {
+        let output = try await client.usersFollowDestroy(path: .init(id: userID))
+        switch output {
+        case .noContent:
+            return
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    // MARK: - Mapping
+
+    private static func post(from payload: Components.Schemas.Post) -> FeedPost {
+        FeedPost(
+            id: payload.id,
+            author: author(from: payload.author.value1),
+            kind: PostKind(payload.kind),
+            caption: payload.caption,
+            // An unknown visibility reads as the most private thing it could
+            // be, so a build that has not learned a new level never draws
+            // something as more widely shared than it is.
+            visibility: PostVisibility(rawValue: payload.visibility) ?? .privateToMe,
+            createdAt: payload.createdAt,
+            viewerFollowsAuthor: payload.viewerFollowsAuthor,
+            sourceID: payload.sourceId,
+            workout: payload.workout.map { workout(from: $0.value1) },
+            meal: payload.meal.map { meal(from: $0.value1) },
+            planner: payload.planner.map { planner(from: $0.value1) }
+        )
+    }
+
+    private static func author(
+        from payload: Components.Schemas.PublicRepbaseUser
+    ) -> PostAuthor {
+        PostAuthor(
+            id: payload.id,
+            username: payload.username,
+            firstName: payload.firstName,
+            lastName: payload.lastName,
+            photoURL: payload.profilePhotoUrl
+        )
+    }
+
+    private static func workout(
+        from payload: Components.Schemas.PostWorkout
+    ) -> PostWorkoutSnapshot {
+        PostWorkoutSnapshot(
+            title: payload.title,
+            workoutType: payload.workoutType,
+            performedAt: payload.performedAt,
+            durationSeconds: payload.durationSeconds,
+            exerciseCount: payload.exerciseCount,
+            totalSetCount: payload.totalSetCount,
+            totalVolumeKg: payload.totalVolumeKg.flatMap { Decimal(string: $0) },
+            routeDistanceKm: payload.routeDistanceKm.flatMap { Decimal(string: $0) },
+            exercises: payload.exercises.map { exercise in
+                PostExerciseLine(
+                    id: exercise.id,
+                    name: exercise.name,
+                    setCount: exercise.setCount,
+                    topSetWeightKg: exercise.topSetWeightKg.flatMap { Decimal(string: $0) },
+                    topSetReps: exercise.topSetReps
+                )
+            }
+        )
+    }
+
+    private static func meal(
+        from payload: Components.Schemas.PostMeal
+    ) -> PostMealSnapshot {
+        PostMealSnapshot(
+            name: payload.name,
+            date: payload.date,
+            totalCalories: FoodDecimal.value(payload.totalCalories),
+            totalProteinGrams: FoodDecimal.value(payload.totalProteinGrams),
+            totalCarbohydrateGrams: FoodDecimal.value(payload.totalCarbohydrateGrams),
+            totalFatGrams: FoodDecimal.value(payload.totalFatGrams),
+            entries: payload.entries.map { entry in
+                PostFoodLine(
+                    id: entry.id,
+                    name: entry.name,
+                    servings: FoodDecimal.value(entry.servings),
+                    totalCalories: FoodDecimal.value(entry.totalCalories)
+                )
+            }
+        )
+    }
+
+    private static func planner(
+        from payload: Components.Schemas.PostPlannerEntry
+    ) -> PostPlannerSnapshot {
+        PostPlannerSnapshot(
+            kind: payload.kind,
+            title: payload.title,
+            category: payload.category,
+            scheduledDate: payload.scheduledDate,
+            scheduledTime: payload.scheduledTime,
+            isComplete: payload.isComplete
+        )
+    }
+
+    // MARK: - Paging
+
+    /// The cursor out of the server's own `next` link.
+    ///
+    /// Checked against the configured host before it is used, the way the
+    /// numbered pages elsewhere are: a `next` pointing somewhere else would
+    /// send the token with it.
+    private func nextCursor(_ next: String?) throws -> String? {
+        guard let next else { return nil }
+        guard let url = URL(string: next, relativeTo: configuration.serverURL)?.absoluteURL,
+              Self.sameOrigin(url, configuration.serverURL),
+              let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              let cursor = components.queryItems?
+                .first(where: { $0.name == "cursor" })?.value,
+              !cursor.isEmpty else {
+            throw APIServiceError.untrustedPaginationURL
+        }
+        return cursor
+    }
+
+    private static func sameOrigin(_ lhs: URL, _ rhs: URL) -> Bool {
+        lhs.scheme?.lowercased() == rhs.scheme?.lowercased()
+            && lhs.host?.lowercased() == rhs.host?.lowercased()
+            && effectivePort(lhs) == effectivePort(rhs)
+    }
+
+    private static func effectivePort(_ url: URL) -> Int? {
+        if let port = url.port { return port }
+        return url.scheme?.lowercased() == "https" ? 443 : 80
+    }
+}

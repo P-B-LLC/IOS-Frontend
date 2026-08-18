@@ -15,6 +15,7 @@ struct IOS_FrontendApp: App {
     @State private var plannerStore: PlannerStore
     @State private var foodTrackingStore: FoodTrackingStore
     @State private var socialProfileStore: SocialProfileStore
+    @State private var socialStore: SocialStore
 
     init() {
         let configuration = APIConfiguration.current
@@ -27,6 +28,7 @@ struct IOS_FrontendApp: App {
         _socialProfileStore = State(
             initialValue: isPreviewingProfile ? .preview : SocialProfileStore()
         )
+        _socialStore = State(initialValue: SocialStore())
         _foodTrackingStore = State(
             initialValue: isPreviewingFood ? .preview : FoodTrackingStore()
         )
@@ -40,6 +42,7 @@ struct IOS_FrontendApp: App {
         )
 #else
         _socialProfileStore = State(initialValue: SocialProfileStore())
+        _socialStore = State(initialValue: SocialStore())
         _foodTrackingStore = State(initialValue: FoodTrackingStore())
         _plannerStore = State(initialValue: PlannerStore())
         _workoutStore = State(initialValue: WorkoutStore())
@@ -54,6 +57,7 @@ struct IOS_FrontendApp: App {
                 .environment(plannerStore)
                 .environment(foodTrackingStore)
                 .environment(socialProfileStore)
+                .environment(socialStore)
         }
     }
 }
@@ -77,6 +81,7 @@ private struct AppRootView: View {
     @Environment(PlannerStore.self) private var plannerStore
     @Environment(FoodTrackingStore.self) private var foodTrackingStore
     @Environment(SocialProfileStore.self) private var socialProfileStore
+    @Environment(SocialStore.self) private var socialStore
 
     var body: some View {
         Group {
@@ -158,7 +163,7 @@ private struct AppRootView: View {
             } else if ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"] == "shell-planner" {
                 RepbaseRootView(initialTab: .planner)
             } else if ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"] == "shell-workouts" {
-                RepbaseRootView(initialTab: .workouts)
+                RepbaseRootView(initialTab: .training)
             } else if ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"] == "task-editor" {
                 PlannerEntryEditorView(mode: .create(.task, Date()))
             } else if ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"] == "event-editor" {
@@ -207,6 +212,7 @@ private struct AppRootView: View {
                 workoutStore.disconnect()
                 plannerStore.disconnect()
                 socialProfileStore.disconnect()
+                socialStore.disconnect()
                 foodTrackingStore.reset()
                 return
             }
@@ -223,6 +229,10 @@ private struct AppRootView: View {
                 token: token
             )
             await foodTrackingStore.connect(
+                configuration: authentication.configuration,
+                token: token
+            )
+            await socialStore.connect(
                 configuration: authentication.configuration,
                 token: token
             )

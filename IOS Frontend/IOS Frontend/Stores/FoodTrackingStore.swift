@@ -14,6 +14,8 @@ import Observation
 final class FoodTrackingStore {
     private var repository: FoodAPIRepository?
     private var connectionGeneration = UUID()
+    /// Days a screen asked for before there was a server to ask.
+    private var pendingDays: Set<String> = []
 
     /// Meals by `YYYY-MM-DD`, exactly as the server groups them.
     private(set) var days: [String: [FoodMeal]] = [:]
@@ -72,6 +74,16 @@ final class FoodTrackingStore {
             savedMeals = recipes
             goals = targets
             recentFoods = recent
+
+            // Whatever was on screen while this was still connecting. Only
+            // days something actually asked for: laying slots down on every
+            // day a widget merely summarised would write four rows a day for
+            // people who never open Food.
+            let waiting = pendingDays
+            pendingDays = []
+            for key in waiting {
+                openDay(key, using: repository)
+            }
         } catch {
             guard connectionGeneration == generation else { return }
             repository = nil
@@ -82,6 +94,7 @@ final class FoodTrackingStore {
     func disconnect() {
         connectionGeneration = UUID()
         repository = nil
+        pendingDays = []
         days = [:]
         savedMeals = []
         recentFoods = []
@@ -104,8 +117,19 @@ final class FoodTrackingStore {
     /// meal the app invented has no id, and the first food logged into it would
     /// have nowhere to go.
     func ensureDay(_ date: Date) {
-        guard let repository else { return }
         let key = dateKey(for: date)
+        guard let repository else {
+            // Asked for before signing in finished. Remembered rather than
+            // dropped: a screen asks for its day once, when it appears, and a
+            // silent return would leave that day with no slots to log into
+            // until something else happened to move the date.
+            pendingDays.insert(key)
+            return
+        }
+        openDay(key, using: repository)
+    }
+
+    private func openDay(_ key: String, using repository: FoodAPIRepository) {
         let generation = connectionGeneration
         Task {
             do {

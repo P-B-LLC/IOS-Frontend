@@ -26,6 +26,12 @@ struct FoodTrackingView: View {
                 SavedMealsView(referenceDate: selectedDate)
             }
         }
+        .task {
+            // The day being looked at has to exist on the server before
+            // anything can be logged into it. onChange alone never fires for
+            // the day the screen opens on.
+            store.ensureDay(selectedDate)
+        }
         .onChange(of: selectedDate) {
             store.ensureDay(selectedDate)
         }
