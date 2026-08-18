@@ -108,8 +108,9 @@ struct RepbaseBottomNavigation: View {
                 .accessibilityAddTraits(item == tab ? [.isSelected] : [])
             }
         }
-        .padding(5)
-        .repbaseDepthSurface(cornerRadius: 20)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 5)
+        .repbaseDepthSurface(cornerRadius: 18)
         .animation(.easeOut(duration: 0.18), value: tab)
     }
 
@@ -117,29 +118,19 @@ struct RepbaseBottomNavigation: View {
         VStack(spacing: 4) {
             Image(systemName: item.symbol)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(isSelected ? Color.white : timeOfDay.secondaryText)
-                .frame(width: 34, height: 30)
-                .background {
-                    if isSelected {
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(
-                                LinearGradient(
-                                    colors: [timeOfDay.accent.opacity(0.78), timeOfDay.accent],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .shadow(color: timeOfDay.accent.opacity(0.24), radius: 5, x: 0, y: 3)
-                    }
-                }
-                .offset(y: isSelected ? -1 : 0)
+                .foregroundStyle(isSelected ? activeColor : timeOfDay.secondaryText)
+                .frame(width: 34, height: 26)
             Text(item.title)
                 .font(.system(size: 9, weight: .semibold))
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
         }
-        .foregroundStyle(isSelected ? timeOfDay.accent : timeOfDay.secondaryText)
-        .frame(maxWidth: .infinity, minHeight: 54)
+        .foregroundStyle(isSelected ? activeColor : timeOfDay.secondaryText)
+        .frame(maxWidth: .infinity, minHeight: 50)
         .contentShape(Rectangle())
+    }
+
+    private var activeColor: Color {
+        timeOfDay.usesDarkAppearance ? .white : RepbaseDesign.ink
     }
 }

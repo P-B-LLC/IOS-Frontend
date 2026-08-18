@@ -61,24 +61,13 @@ struct TrainingTabView: View {
                 } label: {
                     Label(item.title, systemImage: item.symbol)
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(
-                            item == half
-                                ? timeOfDay.accent
-                                : timeOfDay.canvasSecondaryText
-                        )
+                        .foregroundStyle(item == half ? Color.white : timeOfDay.canvasSecondaryText)
                         .frame(maxWidth: .infinity, minHeight: 40)
                         .background {
                             if item == half {
                                 RoundedRectangle(cornerRadius: 9)
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [timeOfDay.surfaceRaised, timeOfDay.surface],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
-                                    .shadow(color: timeOfDay.shadow, radius: 4, x: 2, y: 2)
-                                    .shadow(color: Color.white.opacity(0.62), radius: 3, x: -2, y: -2)
+                                    .fill(RepbaseDesign.ink)
+                                    .shadow(color: Color.black.opacity(0.16), radius: 6, x: 0, y: 3)
                             }
                         }
                         .contentShape(Rectangle())

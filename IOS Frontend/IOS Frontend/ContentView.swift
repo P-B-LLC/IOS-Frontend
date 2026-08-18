@@ -25,48 +25,31 @@ struct ContentView: View {
                 ScrollView {
                     VStack(spacing: 0) {
                         HomeHeader(date: context.date)
+                        HomeModeStrip()
+                            .padding(.top, 18)
+                        WeeklyTargetCard()
+                            .padding(.top, 14)
 
-                        HomeCategorySection(
-                            number: "01",
-                            eyebrow: "ORGANIZE",
-                            title: "Calendar",
-                            detail: "Give workouts a time and manage the rest of your day.",
-                            symbol: "calendar",
-                            destination: PlannerView()
-                        ) {
-                            VStack(spacing: 14) {
-                                HomeCalendarCard()
-                                TodaysTasksList()
-                            }
-                        }
-                        .padding(.top, 28)
-
-                        HomeCategorySection(
-                            number: "02",
-                            eyebrow: "TRAIN",
-                            title: "Workout",
-                            detail: "Plan the week, build sessions, and start training.",
-                            symbol: "dumbbell.fill",
-                            destination: WorkoutsView()
-                        ) {
+                        HomeDashboardSection(title: "Training", detail: "View plan", destination: WorkoutsView()) {
                             HStack(alignment: .top, spacing: 16) {
                                 WeeklyPlanCard()
                                 TodayWorkoutCard()
                             }
                         }
-                        .padding(.top, 28)
+                        .padding(.top, 22)
 
-                        HomeCategorySection(
-                            number: "03",
-                            eyebrow: "NOURISH",
-                            title: "Food",
-                            detail: "Log meals and keep daily nutrition in view.",
-                            symbol: "fork.knife",
-                            destination: FoodTrackingView()
-                        ) {
+                        HomeDashboardSection(title: "Schedule", detail: "Open calendar", destination: PlannerView()) {
+                            VStack(spacing: 14) {
+                                HomeCalendarCard()
+                                TodaysTasksList()
+                            }
+                        }
+                        .padding(.top, 22)
+
+                        HomeDashboardSection(title: "Nutrition", detail: "Log food", destination: FoodTrackingView()) {
                             FoodSummaryWidget()
                         }
-                        .padding(.top, 28)
+                        .padding(.top, 22)
 
                         if let error = workoutStore.persistenceError {
                             persistenceErrorCard(error)
@@ -117,6 +100,109 @@ struct ContentView: View {
                 .padding(18)
                 .foregroundStyle(timeOfDay.primaryText)
                 .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius))
+        }
+    }
+}
+
+private struct HomeModeStrip: View {
+    @Environment(\.homeTimeOfDay) private var timeOfDay
+
+    var body: some View {
+        HStack(spacing: 3) {
+            modeIcon("Overview", symbol: "square.grid.2x2.fill", selected: true)
+            NavigationLink { WorkoutsView() } label: {
+                modeIcon("Train", symbol: "dumbbell.fill", selected: false)
+            }
+            NavigationLink { FoodTrackingView() } label: {
+                modeIcon("Food", symbol: "fork.knife", selected: false)
+            }
+            NavigationLink { PlannerView() } label: {
+                modeIcon("Plan", symbol: "calendar", selected: false)
+            }
+        }
+        .padding(4)
+        .repbaseInsetSurface(cornerRadius: 13)
+        .buttonStyle(.plain)
+    }
+
+    private func modeIcon(_ title: String, symbol: String, selected: Bool) -> some View {
+        Image(systemName: symbol)
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(selected ? Color.white : timeOfDay.secondaryText)
+            .frame(maxWidth: .infinity, minHeight: 38)
+            .background(selected ? RepbaseDesign.ink : Color.clear, in: RoundedRectangle(cornerRadius: 9))
+            .accessibilityLabel(title)
+            .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+}
+
+private struct WeeklyTargetCard: View {
+    @Environment(WorkoutStore.self) private var store
+    @Environment(\.homeTimeOfDay) private var timeOfDay
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 13) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("WEEKLY TRAINING TARGET")
+                        .font(.system(size: 9, weight: .bold))
+                        .tracking(1.1)
+                        .foregroundStyle(timeOfDay.secondaryText)
+                    Text(planned == 0 ? "Build your first week" : "Keep the rhythm going")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundStyle(timeOfDay.primaryText)
+                }
+                Spacer()
+                Text("\(completed) / \(max(planned, 1))")
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                    .foregroundStyle(timeOfDay.primaryText)
+            }
+
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Color.primary.opacity(0.08))
+                    Capsule().fill(RepbaseDesign.ink).frame(width: proxy.size.width * progress)
+                }
+            }
+            .frame(height: 18)
+        }
+        .padding(16)
+        .repbaseDepthSurface(cornerRadius: RepbaseDesign.featureRadius)
+    }
+
+    private var planned: Int { Weekday.allCases.reduce(0) { $0 + store.workouts(on: $1).count } }
+    private var completed: Int {
+        guard let week = Calendar.current.dateInterval(of: .weekOfYear, for: Date()) else { return 0 }
+        return store.completedSessions.filter { week.contains($0.endedAt) }.count
+    }
+    private var progress: CGFloat { min(CGFloat(completed) / CGFloat(max(planned, 1)), 1) }
+}
+
+private struct HomeDashboardSection<Destination: View, Content: View>: View {
+    @Environment(\.homeTimeOfDay) private var timeOfDay
+    let title: String
+    let detail: String
+    let destination: Destination
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            NavigationLink { destination } label: {
+                HStack {
+                    Text(title)
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundStyle(timeOfDay.canvasPrimaryText)
+                    Spacer()
+                    Text(detail)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                    Image(systemName: "arrow.up.right")
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                }
+            }
+            .buttonStyle(.plain)
+            content
         }
     }
 }
@@ -200,7 +286,7 @@ private struct HomeHeader: View {
     var body: some View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("REPBASE  /  \(date.formatted(.dateTime.weekday(.wide)).uppercased())")
+                Text("WELCOME HOME  /  \(date.formatted(.dateTime.weekday(.wide)).uppercased())")
                     .font(.system(size: 10, weight: .bold))
                     .tracking(1.35)
                     .foregroundStyle(timeOfDay.accent)
@@ -251,7 +337,7 @@ private struct HomeHeader: View {
     private var headline: String {
         guard case .signedIn(let user) = authentication.phase else { return "Hello" }
         let firstName = user.displayName.split(separator: " ").first.map(String.init) ?? user.displayName
-        return "Hello \(firstName)"
+        return firstName
     }
 }
 
@@ -283,7 +369,7 @@ private struct WeeklyPlanCard: View {
                         Text("\(items.count)")
                             .font(.system(size: 15, weight: .bold, design: .rounded))
                             .frame(width: 34, height: 34)
-                            .background(Color.white.opacity(0.18), in: Circle())
+                            .background(Color.primary.opacity(0.06), in: Circle())
                     }
                     Text("Workouts")
                         .font(.system(size: 23, weight: .bold, design: .rounded))
@@ -319,9 +405,9 @@ private struct WeeklyPlanCard: View {
                 if showsScrollBar {
                     ZStack(alignment: .top) {
                         Capsule()
-                            .fill(Color.white.opacity(0.18))
+                            .fill(Color.primary.opacity(0.08))
                         Capsule()
-                            .fill(Color.white.opacity(0.72))
+                            .fill(RepbaseDesign.ink.opacity(0.72))
                             .frame(height: scrollThumbHeight)
                             .offset(y: scrollThumbOffset)
                     }
@@ -331,22 +417,16 @@ private struct WeeklyPlanCard: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, minHeight: 214, maxHeight: 214, alignment: .topLeading)
-        .foregroundStyle(Color.white)
+        .foregroundStyle(timeOfDay.primaryText)
         .background {
             RoundedRectangle(cornerRadius: RepbaseDesign.featureRadius)
-                .fill(
-                    LinearGradient(
-                        colors: [timeOfDay.accent.opacity(0.82), timeOfDay.accent],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .fill(timeOfDay.surfaceRaised)
         }
         .overlay(alignment: .top) {
             RoundedRectangle(cornerRadius: RepbaseDesign.featureRadius)
-                .strokeBorder(Color.white.opacity(0.24), lineWidth: 1)
+                .strokeBorder(Color.white.opacity(0.9), lineWidth: 1)
         }
-        .shadow(color: timeOfDay.accent.opacity(0.18), radius: 10, x: 2, y: 6)
+        .shadow(color: timeOfDay.shadow, radius: 14, x: 0, y: 7)
     }
 
     private var items: [PlannedWorkoutItem] {
@@ -379,7 +459,7 @@ private struct WeeklyPlanCard: View {
             Image(systemName: completed(item.day) ? "checkmark" : item.workout.type.symbolName)
                 .font(.system(size: 9, weight: .bold))
                 .frame(width: 18, height: 18)
-                .background(Color.white.opacity(0.32), in: Circle())
+                .background(Color.primary.opacity(0.08), in: Circle())
             VStack(alignment: .leading, spacing: 1) {
                 Text(item.workout.name)
                     .font(.system(size: 11, weight: .semibold))
@@ -392,7 +472,7 @@ private struct WeeklyPlanCard: View {
         }
         .padding(.horizontal, 10)
         .frame(height: 48)
-        .background(Color.white.opacity(0.14), in: RoundedRectangle(cornerRadius: RepbaseDesign.controlRadius))
+        .background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: RepbaseDesign.controlRadius))
     }
 
     private var emptyPlanRow: some View {
@@ -403,7 +483,7 @@ private struct WeeklyPlanCard: View {
         }
         .padding(.horizontal, 10)
         .frame(height: 48)
-        .background(Color.white.opacity(0.14), in: RoundedRectangle(cornerRadius: RepbaseDesign.controlRadius))
+        .background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: RepbaseDesign.controlRadius))
     }
 
     private func completed(_ day: Weekday) -> Bool {

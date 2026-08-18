@@ -49,27 +49,27 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
 
     var canvasStart: Color {
         switch self {
-        case .dawn: Color(hex: 0xF5F7FA)
-        case .day: Color(hex: 0xF4F6F8)
-        case .dusk: Color(hex: 0xF0F2F6)
+        case .dawn: Color(hex: 0xF4F5F6)
+        case .day: Color(hex: 0xF2F3F5)
+        case .dusk: Color(hex: 0xEEEFF2)
         case .night: Color(hex: 0x111827)
         }
     }
 
     var canvasMiddle: Color {
         switch self {
-        case .dawn: Color(hex: 0xF1F4F8)
-        case .day: Color(hex: 0xF1F3F6)
-        case .dusk: Color(hex: 0xE9EDF3)
+        case .dawn: Color(hex: 0xF1F2F4)
+        case .day: Color(hex: 0xEFF0F2)
+        case .dusk: Color(hex: 0xEAEBEE)
         case .night: Color(hex: 0x0F172A)
         }
     }
 
     var canvasEnd: Color {
         switch self {
-        case .dawn: Color(hex: 0xE8EDF3)
-        case .day: Color(hex: 0xE9EDF2)
-        case .dusk: Color(hex: 0xE2E7EF)
+        case .dawn: Color(hex: 0xECEEF0)
+        case .day: Color(hex: 0xECEDEF)
+        case .dusk: Color(hex: 0xE7E8EB)
         case .night: Color(hex: 0x0B1120)
         }
     }
@@ -85,7 +85,7 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
     var surface: Color {
         switch self {
         case .night: Color(hex: 0x172033)
-        case .dawn, .day, .dusk: Color(hex: 0xF8FAFC)
+        case .dawn, .day, .dusk: Color(hex: 0xFCFCFD)
         }
     }
 
@@ -97,7 +97,7 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
     }
 
     var selectorSurface: Color {
-        usesDarkAppearance ? Color(hex: 0x202C42) : Color(hex: 0xE8ECF2)
+        usesDarkAppearance ? Color(hex: 0x202C42) : RepbaseDesign.inset
     }
 
     var emptyDaySurface: Color {
@@ -176,50 +176,21 @@ private struct HomeTimeScreenModifier: ViewModifier {
     }
 }
 
-/// The background carries the personality while content surfaces stay calm.
-/// Soft color volumes are crossed by a few precise planes, balancing the
-/// organic and rigid qualities of the product.
+/// A quiet matte canvas. Depth comes from the product modules, matching the
+/// supplied hardware and automotive references rather than decorative art.
 private struct RepbaseAmbientBackdrop: View {
     let timeOfDay: HomeTimeOfDay
 
     var body: some View {
-        GeometryReader { proxy in
-            ZStack {
-                LinearGradient(
-                    gradient: Gradient(stops: [
-                        .init(color: timeOfDay.canvasStart, location: 0),
-                        .init(color: timeOfDay.canvasMiddle, location: 0.56),
-                        .init(color: timeOfDay.canvasEnd, location: 1)
-                    ]),
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-
-                Circle()
-                    .fill(timeOfDay.accent.opacity(timeOfDay.usesDarkAppearance ? 0.15 : 0.10))
-                    .frame(width: proxy.size.width * 0.92)
-                    .blur(radius: 58)
-                    .offset(x: proxy.size.width * 0.42, y: -proxy.size.height * 0.30)
-
-                Circle()
-                    .fill(timeOfDay.heroEnd.opacity(timeOfDay.usesDarkAppearance ? 0.16 : 0.08))
-                    .frame(width: proxy.size.width * 0.78)
-                    .blur(radius: 72)
-                    .offset(x: -proxy.size.width * 0.48, y: proxy.size.height * 0.36)
-
-                RoundedRectangle(cornerRadius: 34)
-                    .fill(Color.white.opacity(timeOfDay.usesDarkAppearance ? 0.025 : 0.22))
-                    .frame(width: proxy.size.width * 0.78, height: proxy.size.height * 0.18)
-                    .rotationEffect(.degrees(-18))
-                    .offset(x: proxy.size.width * 0.34, y: proxy.size.height * 0.16)
-
-                RoundedRectangle(cornerRadius: 28)
-                    .strokeBorder(timeOfDay.accent.opacity(timeOfDay.usesDarkAppearance ? 0.10 : 0.07), lineWidth: 1)
-                    .frame(width: proxy.size.width * 0.66, height: proxy.size.height * 0.14)
-                    .rotationEffect(.degrees(16))
-                    .offset(x: -proxy.size.width * 0.40, y: -proxy.size.height * 0.13)
-            }
-        }
+        LinearGradient(
+            gradient: Gradient(stops: [
+                .init(color: timeOfDay.canvasStart, location: 0),
+                .init(color: timeOfDay.canvasMiddle, location: 0.56),
+                .init(color: timeOfDay.canvasEnd, location: 1)
+            ]),
+            startPoint: .top,
+            endPoint: .bottom
+        )
         .ignoresSafeArea()
     }
 }
@@ -261,14 +232,8 @@ struct RepbaseAccentCapsuleButtonStyle: ButtonStyle {
             .background {
                 ZStack {
                     RoundedRectangle(cornerRadius: 10)
-                        .fill(
-                            LinearGradient(
-                                colors: [timeOfDay.accent.opacity(0.84), timeOfDay.accent],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .shadow(color: timeOfDay.accent.opacity(0.20), radius: 8, x: 0, y: 4)
+                        .fill(RepbaseDesign.ink)
+                        .shadow(color: Color.black.opacity(0.16), radius: 8, x: 0, y: 4)
                 }
             }
             .overlay {

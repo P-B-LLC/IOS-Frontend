@@ -9,6 +9,9 @@ import SwiftUI
 
 enum RepbaseDesign {
     static let accent = Color(hex: 0x2563EB)
+    static let ink = Color(hex: 0x111214)
+    static let canvas = Color(hex: 0xF1F2F4)
+    static let inset = Color(hex: 0xE8EAED)
     static let success = Color(hex: 0x16835A)
     static let warning = Color(hex: 0xC46A16)
     static let danger = Color(hex: 0xC33A4A)
@@ -18,8 +21,8 @@ enum RepbaseDesign {
     static let cardRadius: CGFloat = 14
     static let controlRadius: CGFloat = 10
     static let featureRadius: CGFloat = 22
-    static let deepShadow = Color.black.opacity(0.09)
-    static let softHighlight = Color.white.opacity(0.72)
+    static let deepShadow = Color.black.opacity(0.08)
+    static let softHighlight = Color.white.opacity(0.82)
 }
 
 /// A raised architectural surface. The paired shadows establish one shared
@@ -44,17 +47,17 @@ private struct RepbaseDepthSurfaceModifier: ViewModifier {
                         color: timeOfDay.usesDarkAppearance
                             ? Color.black.opacity(0.34)
                             : RepbaseDesign.deepShadow,
-                        radius: 8,
-                        x: 4,
-                        y: 5
+                        radius: 14,
+                        x: 0,
+                        y: 7
                     )
                     .shadow(
                         color: timeOfDay.usesDarkAppearance
                             ? Color.white.opacity(0.035)
                             : RepbaseDesign.softHighlight,
-                        radius: 5,
-                        x: -3,
-                        y: -3
+                        radius: 2,
+                        x: 0,
+                        y: -1
                     )
             }
             .overlay {
@@ -62,8 +65,8 @@ private struct RepbaseDepthSurfaceModifier: ViewModifier {
                     .strokeBorder(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(timeOfDay.usesDarkAppearance ? 0.08 : 0.72),
-                                timeOfDay.border.opacity(0.55)
+                                Color.white.opacity(timeOfDay.usesDarkAppearance ? 0.08 : 0.94),
+                                timeOfDay.border.opacity(0.42)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -85,14 +88,14 @@ private struct RepbaseInsetSurfaceModifier: ViewModifier {
             .background(timeOfDay.selectorSurface, in: RoundedRectangle(cornerRadius: cornerRadius))
             .overlay {
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .strokeBorder(Color.black.opacity(timeOfDay.usesDarkAppearance ? 0.28 : 0.08), lineWidth: 1)
-                    .shadow(color: Color.black.opacity(0.11), radius: 3, x: 2, y: 2)
+                    .strokeBorder(Color.black.opacity(timeOfDay.usesDarkAppearance ? 0.28 : 0.06), lineWidth: 1)
+                    .shadow(color: Color.black.opacity(0.08), radius: 2, x: 0, y: 1)
                     .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
             }
             .overlay {
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .strokeBorder(Color.white.opacity(timeOfDay.usesDarkAppearance ? 0.05 : 0.72), lineWidth: 1)
-                    .shadow(color: Color.white.opacity(0.45), radius: 2, x: -1, y: -1)
+                    .strokeBorder(Color.white.opacity(timeOfDay.usesDarkAppearance ? 0.05 : 0.86), lineWidth: 1)
+                    .shadow(color: Color.white.opacity(0.45), radius: 1, x: 0, y: -1)
                     .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
             }
     }
@@ -175,6 +178,25 @@ struct RepbaseQuietButtonStyle: ButtonStyle {
             .opacity(isEnabled ? (configuration.isPressed ? 0.72 : 1) : 0.42)
             .scaleEffect(configuration.isPressed ? 0.965 : 1)
             .offset(y: configuration.isPressed ? 2 : 0)
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+    }
+}
+
+/// The references use one decisive black control instead of tinting every
+/// interaction. Blue remains available for progress and status information.
+struct RepbasePrimaryButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.subheadline.weight(.bold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 16)
+            .frame(minHeight: 44)
+            .background(RepbaseDesign.ink, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .shadow(color: Color.black.opacity(0.16), radius: 8, x: 0, y: 5)
+            .opacity(isEnabled ? (configuration.isPressed ? 0.76 : 1) : 0.42)
+            .scaleEffect(configuration.isPressed ? 0.975 : 1)
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
 }

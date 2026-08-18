@@ -346,7 +346,24 @@ private struct CalorieGoalCard: View {
     let loggedFoodCount: Int
 
     var body: some View {
-        HStack(spacing: 18) {
+        VStack(spacing: 14) {
+            HStack {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("DAILY ENERGY")
+                        .font(.system(size: 9, weight: .bold))
+                        .tracking(1.2)
+                        .foregroundStyle(phase.secondaryText)
+                    Text("Calorie balance")
+                        .font(.headline)
+                }
+                Spacer()
+                Image(systemName: "ellipsis")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(phase.usesDarkAppearance ? Color.white : RepbaseDesign.ink)
+                    .frame(width: 32, height: 32)
+                    .background(Color.primary.opacity(0.045), in: Circle())
+            }
+
             ZStack {
                 Circle()
                     .fill(
@@ -356,29 +373,38 @@ private struct CalorieGoalCard: View {
                             endPoint: .bottomTrailing
                         )
                     )
-                    .shadow(color: phase.shadow, radius: 7, x: 3, y: 4)
+                    .shadow(color: phase.shadow, radius: 16, x: 0, y: 10)
                     .shadow(
                         color: Color.white.opacity(phase.usesDarkAppearance ? 0.04 : 0.9),
-                        radius: 5,
-                        x: -3,
-                        y: -3
+                        radius: 3,
+                        x: 0,
+                        y: -2
                     )
 
+                ForEach(0..<48, id: \.self) { index in
+                    Capsule()
+                        .fill(index == progressTick ? RepbaseDesign.accent : phase.primaryText.opacity(index.isMultiple(of: 4) ? 0.62 : 0.22))
+                        .frame(width: index.isMultiple(of: 4) ? 2 : 1, height: index.isMultiple(of: 4) ? 9 : 5)
+                        .offset(y: -87)
+                        .rotationEffect(.degrees(Double(index) * 7.5))
+                }
+
                 Circle()
-                    .stroke(phase.accent.opacity(0.12), lineWidth: 9)
+                    .stroke(phase.primaryText.opacity(0.06), lineWidth: 16)
+                    .frame(width: 142, height: 142)
 
                 Circle()
                     .trim(from: 0, to: progress)
                     .stroke(
-                        phase.accent,
-                        style: StrokeStyle(lineWidth: 9, lineCap: .round)
+                        phase.usesDarkAppearance ? Color.white : RepbaseDesign.ink,
+                        style: StrokeStyle(lineWidth: 16, lineCap: .round)
                     )
                     .rotationEffect(.degrees(-90))
-                    .shadow(color: phase.accent.opacity(0.28), radius: 4)
+                    .frame(width: 142, height: 142)
 
-                VStack(spacing: 1) {
+                VStack(spacing: 3) {
                     Text(value.nutritionText)
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .font(.system(size: 35, weight: .medium, design: .rounded))
                         .minimumScaleFactor(0.65)
                     Text("KCAL")
                         .font(.system(size: 8, weight: .bold))
@@ -387,28 +413,15 @@ private struct CalorieGoalCard: View {
                 }
                 .padding(15)
             }
-            .frame(width: 102, height: 102)
+            .frame(width: 196, height: 196)
 
-            VStack(alignment: .leading, spacing: 7) {
-                Text("DAILY ENERGY")
-                    .font(.system(size: 9, weight: .bold))
-                    .tracking(1.2)
-                    .foregroundStyle(phase.accent)
-                Text("\(remaining.nutritionText) left")
-                    .font(.title2.weight(.bold))
-                Text("of \(goal.nutritionText) kcal")
-                    .font(.caption)
-                    .foregroundStyle(phase.secondaryText)
-                Label(
-                    "^[\(loggedFoodCount) food](inflect: true) logged",
-                    systemImage: "fork.knife"
-                )
-                .font(.caption2.weight(.semibold))
-                .foregroundStyle(phase.secondaryText)
-                .padding(.top, 4)
+            HStack(spacing: 0) {
+                dialStat(title: "Remaining", value: remaining.nutritionText)
+                Divider().frame(height: 35)
+                dialStat(title: "Daily goal", value: goal.nutritionText)
+                Divider().frame(height: 35)
+                dialStat(title: "Foods", value: "\(loggedFoodCount)")
             }
-
-            Spacer(minLength: 0)
         }
         .repbaseCard(contentPadding: 18, cornerRadius: RepbaseDesign.featureRadius)
         .accessibilityElement(children: .ignore)
@@ -420,6 +433,21 @@ private struct CalorieGoalCard: View {
     private var progress: CGFloat {
         guard goal > 0 else { return 0 }
         return min(max(value.nutritionDouble / goal.nutritionDouble, 0), 1)
+    }
+
+    private var progressTick: Int {
+        min(Int((progress * 47).rounded()), 47)
+    }
+
+    private func dialStat(title: String, value: String) -> some View {
+        VStack(spacing: 4) {
+            Text(title)
+                .font(.caption2)
+                .foregroundStyle(phase.secondaryText)
+            Text(value)
+                .font(.subheadline.weight(.bold).monospacedDigit())
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 

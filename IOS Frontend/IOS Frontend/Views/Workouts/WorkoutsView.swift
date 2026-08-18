@@ -95,95 +95,24 @@ struct WorkoutsView: View {
             NavigationLink {
                 DayWorkoutView(day: session.day)
             } label: {
-                HStack(spacing: 14) {
-                    Image(systemName: "bolt.fill")
-                        .font(.title3)
-                        .foregroundStyle(WorkoutVisualPhase.focus.onAccent)
-                        .frame(width: 48, height: 48)
-                        .background {
-                            ZStack {
-                                Circle()
-                                    .fill(WorkoutVisualPhase.focus.accent.opacity(0.35))
-                                    .offset(y: 2)
-                                Circle()
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [
-                                                WorkoutVisualPhase.focus.accent.opacity(0.78),
-                                                WorkoutVisualPhase.focus.accent
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
-                                    .shadow(
-                                        color: WorkoutVisualPhase.focus.accent.opacity(0.35),
-                                        radius: 6,
-                                        x: 0,
-                                        y: 3
-                                    )
-                            }
-                        }
-
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("SESSION IN PROGRESS")
-                            .font(.caption2.weight(.bold))
-                            .foregroundStyle(WorkoutVisualPhase.focus.accent)
-                        Text(session.workoutName)
-                            .font(.headline)
-                            .foregroundStyle(WorkoutVisualPhase.focus.primaryText)
-                        Text("\(session.loggedSetCount) of \(session.totalSetCount) sets logged")
-                            .font(.caption)
-                            .foregroundStyle(WorkoutVisualPhase.focus.secondaryText)
-                    }
-
-                    Spacer()
-                    Image(systemName: "chevron.forward")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(WorkoutVisualPhase.focus.secondaryText)
-                }
-                .workoutCard()
-                .workoutVisualPhase(.focus)
+                WorkoutReferenceHero(
+                    eyebrow: "SESSION IN PROGRESS",
+                    title: session.workoutName,
+                    detail: "\(session.loggedSetCount) of \(session.totalSetCount) sets logged",
+                    isActive: true
+                )
             }
             .buttonStyle(.plain)
         } else if let focusDay = store.today ?? Weekday.allCases.first {
             NavigationLink {
                 DayWorkoutView(day: focusDay)
             } label: {
-                HStack(spacing: 14) {
-                    Image(systemName: store.workout(on: focusDay) == nil ? "plus" : "figure.strengthtraining.traditional")
-                        .font(.title3.weight(.semibold))
-                        .foregroundStyle(phase.accent)
-                        .frame(width: 48, height: 48)
-                        .background(phase.accent.opacity(0.14), in: RoundedRectangle(cornerRadius: 10))
-
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("TODAY")
-                            .font(.caption2.weight(.bold))
-                            .foregroundStyle(Color(hex: 0xFDC094))
-                        Text(store.workout(on: focusDay)?.name ?? "Plan today's workout")
-                            .font(.headline)
-                            .foregroundStyle(Color(hex: 0xF7F7F8))
-                        Text(focusDescription(for: focusDay))
-                            .font(.caption)
-                            .foregroundStyle(Color(hex: 0xCFCFD0))
-                    }
-
-                    Spacer()
-                    Image(systemName: "chevron.forward")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(Color(hex: 0xFDC094))
-                }
-                .padding(16)
-                .background {
-                    WorkoutHeroBackground(phase: phase)
-                        .clipShape(RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius, style: .continuous))
-                        .shadow(color: phase.shadow, radius: 14, x: 5, y: 8)
-                }
-                .overlay {
-                    RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.16), lineWidth: 1)
-                }
+                WorkoutReferenceHero(
+                    eyebrow: "TODAY",
+                    title: store.workout(on: focusDay)?.name ?? "Plan today's workout",
+                    detail: focusDescription(for: focusDay),
+                    isActive: false
+                )
             }
             .buttonStyle(.plain)
         }
@@ -227,6 +156,120 @@ struct WorkoutsView: View {
             return "Add a name, exercises, and target sets."
         }
         return "\(workout.exercises.count) exercises | \(workout.totalSets) target sets"
+    }
+}
+
+/// A data-backed version of the product centerpiece in the supplied vehicle
+/// reference: the workout is the object, while the rail exposes its states.
+private struct WorkoutReferenceHero: View {
+    let eyebrow: String
+    let title: String
+    let detail: String
+    let isActive: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(eyebrow)
+                        .font(.system(size: 9, weight: .bold))
+                        .tracking(1.25)
+                        .foregroundStyle(isActive ? RepbaseDesign.accent : Color.secondary)
+                    Text(title)
+                        .font(.system(size: 23, weight: .bold))
+                        .tracking(-0.4)
+                        .foregroundStyle(RepbaseDesign.ink)
+                    Text(detail)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 12)
+                Image(systemName: "arrow.up.right")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 34, height: 34)
+                    .background(RepbaseDesign.ink, in: Circle())
+            }
+
+            ZStack(alignment: .trailing) {
+                DumbbellObject()
+                    .frame(maxWidth: .infinity)
+                    .padding(.trailing, 28)
+
+                VStack(spacing: 5) {
+                    railButton("figure.strengthtraining.traditional", selected: true)
+                    railButton("list.bullet", selected: false)
+                    railButton(isActive ? "bolt.fill" : "plus", selected: false)
+                    railButton("chart.line.uptrend.xyaxis", selected: false)
+                }
+                .padding(5)
+                .background(.white.opacity(0.94), in: Capsule())
+                .shadow(color: Color.black.opacity(0.12), radius: 12, x: 0, y: 6)
+            }
+            .frame(height: 158)
+        }
+        .padding(18)
+        .background(Color.white, in: RoundedRectangle(cornerRadius: RepbaseDesign.featureRadius, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: RepbaseDesign.featureRadius, style: .continuous)
+                .strokeBorder(Color.white, lineWidth: 1)
+        }
+        .shadow(color: Color.black.opacity(0.09), radius: 18, x: 0, y: 9)
+    }
+
+    private func railButton(_ symbol: String, selected: Bool) -> some View {
+        Image(systemName: symbol)
+            .font(.system(size: 11, weight: .bold))
+            .foregroundStyle(selected ? Color.white : RepbaseDesign.ink)
+            .frame(width: 30, height: 30)
+            .background(selected ? RepbaseDesign.ink : Color.clear, in: Circle())
+    }
+}
+
+private struct DumbbellObject: View {
+    var body: some View {
+        ZStack {
+            Capsule()
+                .fill(
+                    LinearGradient(
+                        colors: [Color(hex: 0x4A4D52), Color(hex: 0x111214), Color(hex: 0x62666C)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .frame(width: 206, height: 28)
+
+            HStack(spacing: 104) {
+                weightStack
+                weightStack
+            }
+        }
+        .rotationEffect(.degrees(-7))
+        .shadow(color: Color.black.opacity(0.25), radius: 14, x: 0, y: 12)
+        .overlay(alignment: .bottom) {
+            Ellipse()
+                .fill(Color.black.opacity(0.12))
+                .frame(width: 230, height: 18)
+                .blur(radius: 8)
+                .offset(y: 30)
+        }
+    }
+
+    private var weightStack: some View {
+        ZStack {
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [Color(hex: 0x747980), Color(hex: 0x161719), Color(hex: 0x3D4044)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: 76, height: 76)
+            Circle().stroke(Color.white.opacity(0.30), lineWidth: 2).frame(width: 62, height: 62)
+            Circle().fill(Color(hex: 0x0C0D0E)).frame(width: 29, height: 29)
+            Circle().fill(Color(hex: 0xA6AAB0)).frame(width: 12, height: 12)
+        }
     }
 }
 
