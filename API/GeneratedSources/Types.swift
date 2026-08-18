@@ -8321,6 +8321,10 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/api/v1/exercises/GET/query`.
             public struct Query: Sendable, Hashable {
+                /// Return only exercises with this exact name, matched without regard to case or surrounding space. Lets a client resolve one exercise instead of reading every page of the catalogue to find it.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/exercises/GET/query/name`.
+                public var name: Swift.String?
                 /// A page number within the paginated result set.
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/exercises/GET/query/page`.
@@ -8328,8 +8332,13 @@ public enum Operations {
                 /// Creates a new `Query`.
                 ///
                 /// - Parameters:
+                ///   - name: Return only exercises with this exact name, matched without regard to case or surrounding space. Lets a client resolve one exercise instead of reading every page of the catalogue to find it.
                 ///   - page: A page number within the paginated result set.
-                public init(page: Swift.Int? = nil) {
+                public init(
+                    name: Swift.String? = nil,
+                    page: Swift.Int? = nil
+                ) {
+                    self.name = name
                     self.page = page
                 }
             }
@@ -15674,12 +15683,21 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/session-exercises/GET/query/page`.
                 public var page: Swift.Int?
+                /// Return only the exercises belonging to this session. The filter already worked; undeclared, a client had to read every session-exercise row it owns in order to open one session.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/session-exercises/GET/query/session`.
+                public var session: Swift.Int?
                 /// Creates a new `Query`.
                 ///
                 /// - Parameters:
                 ///   - page: A page number within the paginated result set.
-                public init(page: Swift.Int? = nil) {
+                ///   - session: Return only the exercises belonging to this session. The filter already worked; undeclared, a client had to read every session-exercise row it owns in order to open one session.
+                public init(
+                    page: Swift.Int? = nil,
+                    session: Swift.Int? = nil
+                ) {
                     self.page = page
+                    self.session = session
                 }
             }
             public var query: Operations.SessionExercisesList.Input.Query

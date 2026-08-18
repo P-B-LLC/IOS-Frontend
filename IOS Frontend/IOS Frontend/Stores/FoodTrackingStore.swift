@@ -61,13 +61,27 @@ final class FoodTrackingStore {
             self.repository = repository
 
             let today = Date()
+            // A fortnight back and a week forward, not a month either way.
+            // Sixty-two days of meals were read on every sign-in to draw one,
+            // and any day outside this window is fetched by `ensureDay` the
+            // moment a screen asks for it. Backwards is wider than forwards
+            // because meals are logged after eating; the forward days are for
+            // meal prep, which is planned a week out rather than a month.
             let loaded = try await repository.days(
-                from: dateKey(for: today.addingTimeInterval(-31 * 86_400)),
-                to: dateKey(for: today.addingTimeInterval(31 * 86_400))
+                from: dateKey(for: today.addingTimeInterval(-14 * 86_400)),
+                to: dateKey(for: today.addingTimeInterval(7 * 86_400))
             )
-            let recipes = try await repository.savedMeals()
-            let targets = try await repository.goals()
-            let recent = try await repository.recentFoods()
+            // Started together rather than awaited one after another. These
+            // four reads do not depend on each other, and run sequentially they
+            // cost four round-trips of latency to show one screen.
+            async let recipesRequest = repository.savedMeals()
+            async let targetsRequest = repository.goals()
+            async let recentRequest = repository.recentFoods()
+            let (recipes, targets, recent) = try await (
+                recipesRequest,
+                targetsRequest,
+                recentRequest
+            )
 
             guard connectionGeneration == generation else { return }
             days = loaded

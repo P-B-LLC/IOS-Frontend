@@ -652,6 +652,13 @@ public struct Client: APIProtocol {
                     in: &request,
                     style: .form,
                     explode: true,
+                    name: "name",
+                    value: input.query.name
+                )
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
                     name: "page",
                     value: input.query.page
                 )
@@ -4563,6 +4570,13 @@ public struct Client: APIProtocol {
                     explode: true,
                     name: "page",
                     value: input.query.page
+                )
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "session",
+                    value: input.query.session
                 )
                 converter.setAcceptHeader(
                     in: &request.headerFields,

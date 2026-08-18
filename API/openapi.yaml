@@ -238,6 +238,13 @@ paths:
     get:
       operationId: exercises_list
       parameters:
+      - in: query
+        name: name
+        schema:
+          type: string
+        description: Return only exercises with this exact name, matched without regard
+          to case or surrounding space. Lets a client resolve one exercise instead
+          of reading every page of the catalogue to find it.
       - name: page
         required: false
         in: query
@@ -1954,6 +1961,13 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - in: query
+        name: session
+        schema:
+          type: integer
+        description: Return only the exercises belonging to this session. The filter
+          already worked; undeclared, a client had to read every session-exercise
+          row it owns in order to open one session.
       tags:
       - session-exercises
       security:

@@ -563,3 +563,13 @@ nonisolated enum Weekday: Int, CaseIterable, Identifiable, Hashable, Codable, Se
         }
     }
 }
+
+/// A week's schedule and the workout library, from one read.
+///
+/// The two used to be fetched separately and sequentially, which paged the
+/// whole workout table twice per load for the same rows. They travel together
+/// because they are built from the same templates.
+nonisolated struct LoadedWeek: Sendable {
+    var schedule: [Weekday: [Workout]]
+    var library: [WorkoutSummary]
+}

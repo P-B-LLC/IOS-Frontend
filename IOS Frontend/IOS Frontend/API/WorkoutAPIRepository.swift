@@ -29,7 +29,7 @@ actor WorkoutAPIRepository {
     /// Every workout scheduled in the week, grouped by day. A date can carry
     /// more than one schedule, so each day maps to a list in schedule order
     /// rather than a single workout.
-    func loadWeek(dateByDay: [Weekday: String]) async throws -> [Weekday: [Workout]] {
+    func loadWeek(dateByDay: [Weekday: String]) async throws -> LoadedWeek {
         // Fill the week in from the user's weekly repeats before reading it, so
         // a new week arrives already planned rather than empty. The server
         // leaves finished weeks alone, and adding a day it already planned is a
@@ -102,7 +102,38 @@ actor WorkoutAPIRepository {
                 )
             )
         }
-        return result
+
+        // Built from the templates already in hand. This used to be a second
+        // call to workoutLibrary(), which paged the whole workout table a
+        // second time, sequentially, for data this function had already read.
+        let library = templates
+            .map(Self.summary(from:))
+            .sorted {
+                $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+            }
+
+        return LoadedWeek(schedule: result, library: library)
+    }
+
+    /// One workout as the name-suggestion list wants it.
+    private static func summary(
+        from template: Components.Schemas.WorkoutTemplate
+    ) -> WorkoutSummary {
+        WorkoutSummary(
+            serverID: template.id,
+            name: template.name,
+            type: workoutType(from: template.workoutType),
+            exercises: template.exercises
+                .sorted { ($0.order ?? 1, $0.id) < ($1.order ?? 1, $1.id) }
+                .map { relation in
+                    Exercise(
+                        serverID: relation.exercise,
+                        serverName: relation.exerciseName,
+                        name: relation.exerciseName,
+                        sets: safeSetCount(relation.targetSets)
+                    )
+                }
+        )
     }
 
     /// Identifies a repeat by the workout it schedules and the day it lands on,
@@ -247,11 +278,11 @@ actor WorkoutAPIRepository {
         }
 
         do {
-            var catalog = try await fetchAllExercises()
+            var resolved: [String: Int] = [:]
             for (index, exercise) in draft.exercises.enumerated() {
                 let exerciseID = try await resolveExercise(
                     exercise,
-                    catalog: &catalog
+                    resolved: &resolved
                 )
                 let relationOutput = try await client.workoutExercisesCreate(
                     body: .json(
@@ -354,11 +385,11 @@ actor WorkoutAPIRepository {
                 }
             }
 
-            var catalog = try await fetchAllExercises()
+            var resolved: [String: Int] = [:]
             for (index, exercise) in draft.exercises.enumerated() {
                 let exerciseID = try await resolveExercise(
                     exercise,
-                    catalog: &catalog
+                    resolved: &resolved
                 )
 
                 if let relationID = exercise.workoutExerciseID {
@@ -404,18 +435,27 @@ actor WorkoutAPIRepository {
         }
     }
 
+    /// The id of the exercise this draft names, creating it if the account has
+    /// never used it.
+    ///
+    /// `resolved` carries the names settled earlier in the same save, so a
+    /// workout listing an exercise twice asks the server once. Everything else
+    /// is a single name lookup; the whole catalogue used to be paged down first
+    /// to do this comparison on the phone.
     private func resolveExercise(
         _ draft: Exercise,
-        catalog: inout [Components.Schemas.Exercise]
+        resolved: inout [String: Int]
     ) async throws -> Int {
         let normalizedName = Self.normalized(draft.name)
         if let serverID = draft.serverID,
            Self.normalized(draft.serverName ?? draft.name) == normalizedName {
             return serverID
         }
-        if let match = catalog.first(
-            where: { Self.normalized($0.name) == normalizedName }
-        ) {
+        if let known = resolved[normalizedName] {
+            return known
+        }
+        if let match = try await findExercise(named: draft.name) {
+            resolved[normalizedName] = match.id
             return match.id
         }
 
@@ -427,8 +467,25 @@ actor WorkoutAPIRepository {
         switch output {
         case .created(let response):
             let exercise = try response.body.json
-            catalog.append(exercise)
+            resolved[Self.normalized(exercise.name)] = exercise.id
             return exercise.id
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// One exercise by name, or nil when the account has never used it.
+    ///
+    /// The server matches without regard to case or surrounding space, the same
+    /// way `normalized` does, so the comparison no longer has to happen here
+    /// over every row in the catalogue.
+    private func findExercise(
+        named name: String
+    ) async throws -> Components.Schemas.Exercise? {
+        let output = try await client.exercisesList(query: .init(name: name))
+        switch output {
+        case .ok(let response):
+            return try response.body.json.results.first
         case .undocumented(let statusCode, _):
             throw APIServiceError.undocumentedStatus(statusCode)
         }
@@ -470,8 +527,10 @@ actor WorkoutAPIRepository {
             throw APIServiceError.undocumentedStatus(statusCode)
         }
 
-        var sessionRelations = try await fetchAllSessionExercises()
-            .filter { $0.session == created.id }
+        // Asked for by session. This used to read every session-exercise row
+        // the account owns and filter here, so opening one session got slower
+        // with every session ever logged.
+        var sessionRelations = try await fetchSessionExercises(session: created.id)
             .sorted { ($0.order ?? 1, $0.id) < ($1.order ?? 1, $1.id) }
 
         var exercises: [SessionExerciseDraft] = []
@@ -619,31 +678,6 @@ actor WorkoutAPIRepository {
     /// contract's `^-?\d{0,3}(?:\.\d{0,6})?$` style decimal strings.
     private static func coordinateString(_ value: Double) -> String {
         String(format: "%.6f", value)
-    }
-
-    /// Every workout the user has created, for offering as a name to reuse.
-    func workoutLibrary() async throws -> [WorkoutSummary] {
-        try await fetchAllWorkouts()
-            .map {
-                WorkoutSummary(
-                    serverID: $0.id,
-                    name: $0.name,
-                    type: Self.workoutType(from: $0.workoutType),
-                    exercises: $0.exercises
-                        .sorted {
-                            ($0.order ?? 1, $0.id) < ($1.order ?? 1, $1.id)
-                        }
-                        .map { relation in
-                            Exercise(
-                                serverID: relation.exercise,
-                                serverName: relation.exerciseName,
-                                name: relation.exerciseName,
-                                sets: Self.safeSetCount(relation.targetSets)
-                            )
-                        }
-                )
-            }
-            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
     /// How an exercise has progressed over every set ever logged for it.
@@ -812,14 +846,21 @@ actor WorkoutAPIRepository {
             .map { $0 }
     }
 
-    /// Every completed session, newest first, for choosing one to post.
+    /// Completed sessions, newest first, for choosing one to post.
     ///
     /// All pages are followed rather than the first taken. The list declares no
     /// ordering, so a first page could as easily hold the oldest sessions as the
     /// newest, and a picker built on that assumption would quietly offer the
     /// wrong ones. Unlike `sessionHistory` this keeps sessions with no route:
     /// a lifting session has nothing to plot but is very much worth posting.
-    func completedSessions() async throws -> [PostableSession] {
+    ///
+    /// `pageLimit` stops a picker from reading a training history of any length
+    /// to fill a list nobody scrolls to the end of. It bounds the work without
+    /// assuming an order: whatever those pages hold is still sorted by date
+    /// before the newest are returned. Raising it costs a round-trip a page.
+    /// The proper fix is an ordering parameter on the endpoint, which the
+    /// contract does not have.
+    func completedSessions(pageLimit: Int = 5) async throws -> [PostableSession] {
         var page: Int?
         var visited: Set<Int> = []
         var values: [Components.Schemas.WorkoutSession] = []
@@ -836,7 +877,7 @@ actor WorkoutAPIRepository {
             }
             values.append(contentsOf: response.results)
             page = try nextPage(response.next, visited: &visited)
-        } while page != nil
+        } while page != nil && visited.count < pageLimit
 
         return values
             .compactMap { session -> PostableSession? in
@@ -946,32 +987,21 @@ actor WorkoutAPIRepository {
         return values
     }
 
-    private func fetchAllExercises() async throws -> [Components.Schemas.Exercise] {
-        var page: Int?
-        var visited: Set<Int> = []
-        var values: [Components.Schemas.Exercise] = []
-        repeat {
-            let output = try await client.exercisesList(query: .init(page: page))
-            let response: Components.Schemas.PaginatedExerciseList
-            switch output {
-            case .ok(let success):
-                response = try success.body.json
-            case .undocumented(let statusCode, _):
-                throw APIServiceError.undocumentedStatus(statusCode)
-            }
-            values.append(contentsOf: response.results)
-            page = try nextPage(response.next, visited: &visited)
-        } while page != nil
-        return values
-    }
 
-    private func fetchAllSessionExercises() async throws -> [Components.Schemas.SessionExercise] {
+    /// The exercises belonging to one session.
+    ///
+    /// Narrowed by the server. The whole table used to come down so the caller
+    /// could pick out one session's rows, which is work the database does in an
+    /// indexed lookup and which grew with the account's entire history.
+    private func fetchSessionExercises(
+        session: Int
+    ) async throws -> [Components.Schemas.SessionExercise] {
         var page: Int?
         var visited: Set<Int> = []
         var values: [Components.Schemas.SessionExercise] = []
         repeat {
             let output = try await client.sessionExercisesList(
-                query: .init(page: page)
+                query: .init(page: page, session: session)
             )
             let response: Components.Schemas.PaginatedSessionExerciseList
             switch output {

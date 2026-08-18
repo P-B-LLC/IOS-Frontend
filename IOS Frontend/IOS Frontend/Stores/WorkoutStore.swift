@@ -615,14 +615,11 @@ final class WorkoutStore {
                 dateByDay: dateStringsForCurrentWeek()
             )
             guard connectionGeneration == generation else { return }
-            schedule = loaded
-
-            // Names to offer when creating a workout. A failure here costs
-            // only the suggestions, so it does not fail the week's load.
-            if let library = try? await repository.workoutLibrary(),
-               connectionGeneration == generation {
-                knownWorkouts = library
-            }
+            schedule = loaded.schedule
+            // Names to offer when creating a workout, built from the templates
+            // the schedule was built from. This was a second sequential request
+            // for rows the first one had already read.
+            knownWorkouts = loaded.library
         } catch {
             guard connectionGeneration == generation else { return }
             persistenceError = error.localizedDescription
