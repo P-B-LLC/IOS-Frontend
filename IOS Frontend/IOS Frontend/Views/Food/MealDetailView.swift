@@ -19,6 +19,9 @@ struct MealDetailView: View {
     @State private var editingFood: FoodEntry?
     @State private var isRenamingMeal = false
     @State private var renamedMeal = ""
+    /// The meal being shared, which is also what presents the composer:
+    /// there is nothing to post without a server id.
+    @State private var sharedMeal: SharedMeal?
 
     var body: some View {
         Group {
@@ -57,6 +60,15 @@ struct MealDetailView: View {
         .sheet(item: $editingFood) { food in
             NavigationStack {
                 FoodEntryEditorView(date: date, mealID: mealID, existing: food)
+            }
+        }
+        .sheet(item: $sharedMeal) { shared in
+            NavigationStack {
+                PostComposerView(
+                    kind: .meal,
+                    sourceID: shared.id,
+                    subject: meal?.name ?? "Meal"
+                )
             }
         }
         .alert("Rename Meal", isPresented: $isRenamingMeal) {
@@ -149,6 +161,14 @@ struct MealDetailView: View {
     private func mealToolbar(_ meal: FoodMeal) -> some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             Menu {
+                // Only a meal that exists on the server and has food in it: the
+                // API refuses an empty one, since a card with nothing on it has
+                // nothing to show.
+                if let serverID = meal.serverID, !meal.entries.isEmpty {
+                    Button("Share to Feed", systemImage: "square.and.arrow.up") {
+                        sharedMeal = SharedMeal(id: serverID)
+                    }
+                }
                 Button("Rename Meal", systemImage: "pencil") {
                     renamedMeal = meal.name
                     isRenamingMeal = true
@@ -166,6 +186,12 @@ struct MealDetailView: View {
     private var meal: FoodMeal? {
         store.meals(on: date).first { $0.id == mealID }
     }
+}
+
+/// A meal's server id, wrapped so it can present a sheet. Conforming `Int`
+/// itself would make every integer in the app Identifiable.
+private struct SharedMeal: Identifiable {
+    let id: Int
 }
 
 private struct MealMacro: View {

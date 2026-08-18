@@ -25,9 +25,34 @@ struct PostComposerView: View {
     @State private var caption = ""
     @State private var visibility: PostVisibility = .publicToAll
 
+    /// Set when the sheet was opened from a particular thing's page, which is
+    /// then the only thing it can post. Nil when opened from the feed, where
+    /// choosing what to post is the first thing the sheet asks.
+    private let fixedSubject: String?
+
     /// The contract's cap. Enforced here so a long caption is stopped as it is
     /// typed rather than by a 400 with nothing on screen to explain it.
     private static let captionLimit = 300
+
+    /// Opened from the feed: nothing chosen yet.
+    init() {
+        fixedSubject = nil
+    }
+
+    /// Opened from the page of the thing being shared, which already knows
+    /// what it is. One composer serves both doors rather than two screens
+    /// drifting apart over the same request.
+    init(kind: PostKind, sourceID: Int, subject: String) {
+        fixedSubject = subject
+        _selection = State(
+            initialValue: PostCandidate(
+                kind: kind,
+                sourceID: sourceID,
+                title: subject,
+                subtitle: ""
+            )
+        )
+    }
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
@@ -59,8 +84,12 @@ struct PostComposerView: View {
                         notice(message, timeOfDay: timeOfDay)
                     }
 
-                    sourcePicker(timeOfDay: timeOfDay)
-                    candidateSection(timeOfDay: timeOfDay)
+                    if let fixedSubject {
+                        subjectSection(fixedSubject, timeOfDay: timeOfDay)
+                    } else {
+                        sourcePicker(timeOfDay: timeOfDay)
+                        candidateSection(timeOfDay: timeOfDay)
+                    }
                     captionSection(timeOfDay: timeOfDay)
                     visibilitySection(timeOfDay: timeOfDay)
                 }
@@ -79,9 +108,40 @@ struct PostComposerView: View {
         .task {
             // An error left over from the feed is not about this sheet.
             social.clearError()
+            // Nothing to choose from when the caller already chose, so the
+            // pages of sessions are not worth reading.
+            guard fixedSubject == nil else { return }
             // Meals and calendar entries are already held by their stores;
             // only finished sessions have to be asked for.
             await workoutStore.loadPostableSessions()
+        }
+    }
+
+    // MARK: - Already chosen
+
+    /// What is being shared, when the caller named it. Drawn instead of the
+    /// picker rather than as a preselected row inside it: the thing may sit
+    /// outside the days the stores hold, and a list that cannot show the chosen
+    /// item with a tick beside it reads as nothing being chosen at all.
+    private func subjectSection(
+        _ subject: String,
+        timeOfDay: HomeTimeOfDay
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 13) {
+            EditorialSectionTitle(title: "Sharing")
+
+            EditorialRuleGroup {
+                EditorialRuleRow(showsDivider: false) {
+                    Text(subject)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(timeOfDay.canvasPrimaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 8)
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundStyle(timeOfDay.accent)
+                }
+            }
         }
     }
 

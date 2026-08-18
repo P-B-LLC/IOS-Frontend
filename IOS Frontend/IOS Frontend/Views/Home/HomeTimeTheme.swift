@@ -7,6 +7,27 @@
 
 import SwiftUI
 
+/// The warm end of the palette, kept from the soft luxury branch.
+///
+/// The screens merged from that branch name these colours directly rather than
+/// going through `HomeTimeOfDay`, because they are fixed accents: a caramel
+/// icon is caramel at every hour. The time-aware tokens below are what change
+/// with the clock, and everything structural should still use those.
+enum RepbasePalette {
+    static let cream = Color(hex: 0xF7F2EC)
+    static let paper = Color(hex: 0xFFF9F4)
+    static let oatmeal = Color(hex: 0xE9DDD3)
+    static let sand = Color(hex: 0xD7C1B1)
+    static let caramel = Color(hex: 0xA8795E)
+    static let cocoa = Color(hex: 0x6F5548)
+    static let espresso = Color(hex: 0x493B35)
+    static let charcoal = Color(hex: 0x242120)
+    static let night = Color(hex: 0x171616)
+    static let ink = Color(hex: 0x292421)
+    static let muted = Color(hex: 0x8B786D)
+    static let sage = Color(hex: 0x789182)
+}
+
 enum HomeTimeOfDay: String, Sendable, Equatable {
     case dawn
     case day

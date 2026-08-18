@@ -330,7 +330,7 @@ struct SocialProfileView: View {
 
     private func aboutRow(_ title: String, value: String, symbol: String) -> some View {
         HStack(spacing: 12) {
-            Image(systemName: symbol).foregroundStyle(Color(hex: 0xF86722)).frame(width: 28)
+            Image(systemName: symbol).foregroundStyle(RepbasePalette.caramel).frame(width: 28)
             Text(title).font(.subheadline)
             Spacer()
             Text(value).font(.subheadline.weight(.bold))
@@ -600,7 +600,7 @@ private struct ProfileSettingsView: View {
         HStack(spacing: 14) {
             Image(systemName: symbol)
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(color ?? Color(hex: 0xF86722))
+                .foregroundStyle(color ?? RepbasePalette.caramel)
                 .frame(width: 28)
 
             VStack(alignment: .leading, spacing: 3) {
@@ -629,7 +629,7 @@ private struct ProfileSettingsView: View {
         HStack(spacing: 14) {
             Image(systemName: symbol)
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(Color(hex: 0xF86722))
+                .foregroundStyle(RepbasePalette.caramel)
                 .frame(width: 28)
             Text(title)
                 .font(.headline)
@@ -709,7 +709,7 @@ private struct PrivacyAndPermissionsView: View {
         HStack(alignment: .top, spacing: 14) {
             Image(systemName: symbol)
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(Color(hex: 0xF86722))
+                .foregroundStyle(RepbasePalette.caramel)
                 .frame(width: 30)
             VStack(alignment: .leading, spacing: 5) {
                 Text(title).font(.headline)

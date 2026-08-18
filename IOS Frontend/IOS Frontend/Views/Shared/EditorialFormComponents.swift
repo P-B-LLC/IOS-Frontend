@@ -2,7 +2,7 @@
 //  EditorialFormComponents.swift
 //  IOS Frontend
 //
-//  Quiet, line-based form components used by focused creation screens.
+//  Shared soft-luxury form components used by focused creation screens.
 //
 
 import SwiftUI
@@ -29,11 +29,17 @@ struct EditorialFormHeader: View {
                     Image(systemName: "chevron.left")
                         .font(.body.weight(.semibold))
                         .frame(width: 42, height: 42)
-                        .overlay { Circle().strokeBorder(timeOfDay.canvasBorder, lineWidth: 1) }
+                        .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 14))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 14)
+                                .strokeBorder(timeOfDay.border, lineWidth: 1)
+                        }
                 } else {
                     Text("Cancel")
-                        .font(.subheadline.weight(.medium))
-                        .frame(minWidth: 58, alignment: .leading)
+                        .font(.subheadline.weight(.semibold))
+                        .padding(.horizontal, 13)
+                        .frame(height: 40)
+                        .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 13))
                 }
             }
             .buttonStyle(.plain)
@@ -45,12 +51,21 @@ struct EditorialFormHeader: View {
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
             Spacer()
 
-            Button(saveTitle, action: onSave)
+            Button(action: onSave) {
+                HStack(spacing: 6) {
+                    Text(saveTitle)
+                    Image(systemName: "arrow.up.right")
+                        .font(.caption.weight(.bold))
+                }
                 .font(.subheadline.weight(.bold))
-                .foregroundStyle(canSave ? timeOfDay.accent : timeOfDay.canvasSecondaryText.opacity(0.45))
-                .frame(minWidth: 58, alignment: .trailing)
+                .foregroundStyle(RepbasePalette.cream)
+                .padding(.horizontal, 13)
+                .frame(height: 40)
+                .background(timeOfDay.ink, in: RoundedRectangle(cornerRadius: 13))
+            }
                 .buttonStyle(.plain)
                 .disabled(!canSave)
+                .opacity(canSave ? 1 : 0.35)
         }
         .frame(height: 48)
     }
@@ -64,10 +79,9 @@ struct EditorialSectionTitle: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
-            Text(title.uppercased())
-                .font(.system(size: 10, weight: .bold))
-                .tracking(1.25)
-                .foregroundStyle(timeOfDay.accent)
+            Text(title)
+                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .foregroundStyle(timeOfDay.canvasPrimaryText)
             if let detail {
                 Text(detail)
                     .font(.caption)
@@ -88,12 +102,13 @@ struct EditorialRuleGroup<Content: View>: View {
 
     var body: some View {
         VStack(spacing: 0) { content }
-            .overlay(alignment: .top) {
-                Rectangle().fill(timeOfDay.canvasBorder).frame(height: 1)
+            .padding(.horizontal, 16)
+            .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 20))
+            .overlay {
+                RoundedRectangle(cornerRadius: 20)
+                    .strokeBorder(timeOfDay.border, lineWidth: 1)
             }
-            .overlay(alignment: .bottom) {
-                Rectangle().fill(timeOfDay.canvasBorder).frame(height: 1)
-            }
+            .shadow(color: timeOfDay.shadow.opacity(0.55), radius: 9, x: 0, y: 5)
     }
 }
 
@@ -112,7 +127,7 @@ struct EditorialRuleRow<Content: View>: View {
             .frame(minHeight: 54)
             .overlay(alignment: .bottom) {
                 if showsDivider {
-                    Rectangle().fill(timeOfDay.canvasBorder.opacity(0.72)).frame(height: 1)
+                    Rectangle().fill(timeOfDay.border.opacity(0.72)).frame(height: 1)
                 }
             }
     }
@@ -129,11 +144,13 @@ struct EditorialPrimaryButtonStyle: ButtonStyle {
             Image(systemName: "arrow.right")
         }
         .font(.headline.weight(.bold))
-        .foregroundStyle(timeOfDay.accent)
-        .padding(.horizontal, 2)
+        .foregroundStyle(RepbasePalette.cream)
+        .padding(.horizontal, 18)
         .frame(height: 56)
-        .overlay(alignment: .top) {
-            Rectangle().fill(timeOfDay.accent).frame(height: 2)
+        .background {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(timeOfDay.ink)
+                .shadow(color: timeOfDay.shadow.opacity(0.72), radius: 9, x: 0, y: 5)
         }
         .opacity(isEnabled ? (configuration.isPressed ? 0.62 : 1) : 0.35)
     }
