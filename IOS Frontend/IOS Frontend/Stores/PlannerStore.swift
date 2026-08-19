@@ -302,9 +302,12 @@ final class PlannerStore {
             do {
                 try await repository.delete(entry)
                 guard connectionGeneration == generation else { return }
-                entriesByDate[entry.date]?.removeAll { $0.id == entry.id }
-                pastDue.removeAll { $0.id == entry.id }
-                upcomingEvents.removeAll { $0.id == entry.id }
+                // Same reasoning as `apply`: the row is held under a different
+                // local id in each list, so deleting by that id left a copy
+                // behind in whichever list the delete was not made from.
+                entriesByDate[entry.date]?.removeAll { $0.isSameEntry(as: entry) }
+                pastDue.removeAll { $0.isSameEntry(as: entry) }
+                upcomingEvents.removeAll { $0.isSameEntry(as: entry) }
             } catch {
                 guard connectionGeneration == generation else { return }
                 persistenceError = error.localizedDescription
@@ -393,11 +396,18 @@ final class PlannerStore {
     /// the month on screen, in `entriesByDate` too. Updating only one of them
     /// would leave a task ticked off in one list and outstanding in the other.
     private func apply(to entry: PlannerEntry, _ mutation: (inout PlannerEntry) -> Void) {
-        if let index = entriesByDate[entry.date]?.firstIndex(where: { $0.id == entry.id }) {
+        // By server id, not local id: the two lists come from separate reads,
+        // so one task is held here as two values with different local ids.
+        if let index = entriesByDate[entry.date]?.firstIndex(where: {
+            $0.isSameEntry(as: entry)
+        }) {
             mutation(&entriesByDate[entry.date]![index])
         }
-        if let index = pastDue.firstIndex(where: { $0.id == entry.id }) {
+        if let index = pastDue.firstIndex(where: { $0.isSameEntry(as: entry) }) {
             mutation(&pastDue[index])
+        }
+        if let index = upcomingEvents.firstIndex(where: { $0.isSameEntry(as: entry) }) {
+            mutation(&upcomingEvents[index])
         }
     }
 

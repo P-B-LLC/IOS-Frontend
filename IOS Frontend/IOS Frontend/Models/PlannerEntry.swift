@@ -208,6 +208,25 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
         )
     }
 
+    /// Whether two copies are the same entry.
+    ///
+    /// By server id, because the local one is not stable across reads. The
+    /// overdue list and the month on screen are separate requests, and the
+    /// mapper mints a fresh id for every row it builds, so one task arrives
+    /// as two values with two different ids. Matching on those updated
+    /// whichever list the change was made in and left the other showing the
+    /// state before it — ticking a task off in Past due, then finding it
+    /// unticked on its own day.
+    ///
+    /// Falls back to the local id for a draft that has never been saved,
+    /// which is the only case where there is no server id to compare.
+    func isSameEntry(as other: PlannerEntry) -> Bool {
+        if let mine = serverID, let theirs = other.serverID {
+            return mine == theirs
+        }
+        return id == other.id
+    }
+
     /// Only a task is ticked off. An event happens whether or not you attend.
     var isCompletable: Bool { kind == .task }
 
