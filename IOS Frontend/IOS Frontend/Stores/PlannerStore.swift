@@ -308,7 +308,11 @@ final class PlannerStore {
             do {
                 let saved = try await repository.setComplete(entry, isComplete)
                 guard connectionGeneration == generation else { return }
-                apply(to: entry) { $0 = saved }
+                // Under the id it already had. Taking the saved copy's fresh
+                // one renamed the row mid-operation, and retirePastDue then
+                // looked for an id no longer in the list and gave up — which
+                // is why a ticked-off overdue task stayed on screen.
+                apply(to: entry) { $0 = saved.identified(as: entry.id) }
                 if saved.isComplete {
                     retirePastDue(entry.id, generation: generation)
                 }

@@ -183,6 +183,31 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
         self.notes = notes
     }
 
+    /// The server's copy of this entry, under the identity the app already
+    /// knows it by.
+    ///
+    /// A saved entry comes back with a fresh local id, because the mapper
+    /// builds one from the response and the response carries no local id.
+    /// Dropping the old one in place therefore changed what the row was called
+    /// halfway through an operation, and anything still holding the previous
+    /// id — a list diffing its rows, a caller about to retire it — quietly
+    /// stopped finding it.
+    func identified(as id: UUID) -> PlannerEntry {
+        PlannerEntry(
+            id: id,
+            serverID: serverID,
+            kind: kind,
+            title: title,
+            category: category,
+            date: date,
+            time: time,
+            isComplete: isComplete,
+            workoutID: workoutID,
+            workoutName: workoutName,
+            notes: notes
+        )
+    }
+
     /// Only a task is ticked off. An event happens whether or not you attend.
     var isCompletable: Bool { kind == .task }
 
