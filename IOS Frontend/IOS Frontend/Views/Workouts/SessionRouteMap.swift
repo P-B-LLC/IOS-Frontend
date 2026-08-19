@@ -95,9 +95,14 @@ struct SessionRouteMap: View {
                 latitude: (minLatitude + maxLatitude) / 2,
                 longitude: (minLongitude + maxLongitude) / 2
             ),
+            // 1.5 rather than something tighter because the card is wide and
+            // most runs are not: MapKit stretches the longitude span to the
+            // view's shape and leaves latitude as asked, so on a tall route
+            // this multiplier alone decides whether the top of it has any air
+            // above it. At 1.35 it grazed the edge.
             span: MKCoordinateSpan(
-                latitudeDelta: max((maxLatitude - minLatitude) * 1.35, 0.003),
-                longitudeDelta: max((maxLongitude - minLongitude) * 1.35, 0.003)
+                latitudeDelta: max((maxLatitude - minLatitude) * 1.5, 0.003),
+                longitudeDelta: max((maxLongitude - minLongitude) * 1.5, 0.003)
             )
         )
     }
