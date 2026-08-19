@@ -97,6 +97,20 @@ git push origin main
 Always verify the fast-forward before pushing, and tell the user, since this
 briefly places backend source on their laptop.
 
+**Never guess the base revision of a bundle.** Read it off the Mac:
+
+```bash
+MACHEAD=$(ssh … "git -C /tmp/rb-hk rev-parse HEAD")
+git bundle create /tmp/x.bundle "$MACHEAD..main"
+```
+
+A bundle whose base the Mac does not have fails the fetch with a bare
+`error: <sha>` and then `Already up to date.` — after which the build runs
+happily on the **old** tree and prints `** BUILD SUCCEEDED **`. That happened
+twice in one afternoon. Have the build script echo `git log --oneline -1` and
+grep the tree for the change before compiling, and read those lines rather
+than the exit code.
+
 To update the Mac's iOS copy, bundle from Windows and `git merge --ff-only`. The
 Mac's `origin/main` tracking ref is stale and may report "ahead N"; this is
 expected. Never `reset --hard` to silence it.
