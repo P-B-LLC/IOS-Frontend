@@ -26,6 +26,11 @@ final class WorkoutStore {
     let routeTracker = RouteTracker()
     /// Distance and pace for the last finished route, as computed by the server.
     private(set) var routeSummary: SessionRouteSummary?
+    /// The track of the finished session on screen, read back from the server.
+    ///
+    /// Fetched rather than kept from the recording, so a session opened from
+    /// the history draws the same map as one that has only just been stopped.
+    private(set) var completedRoute: [RoutePoint] = []
     /// Past finished runs of the same workout, oldest first, for the progress
     /// chart shown once a session ends.
     private(set) var sessionHistory: [SessionHistoryPoint] = []
@@ -126,6 +131,7 @@ final class WorkoutStore {
         personalRecords = []
         liftProgress = []
         routeSummary = nil
+        completedRoute = []
     }
 
     // MARK: - Whether a day has been trained
@@ -383,6 +389,19 @@ final class WorkoutStore {
         !pendingSetIDs.isEmpty
     }
 
+    /// Reads the GPS track of a finished session so its summary can draw it.
+    ///
+    /// A missing track is not an error worth reporting: a run recorded indoors,
+    /// or with location refused, simply has none, and the summary leaves the
+    /// map out rather than saying so.
+    func loadCompletedRoute(sessionID: Int) async {
+        guard let repository else { return }
+        let generation = connectionGeneration
+        let points = (try? await repository.route(sessionID: sessionID)) ?? []
+        guard connectionGeneration == generation else { return }
+        completedRoute = points
+    }
+
     func isSetPending(_ id: WorkoutSetDraft.ID) -> Bool {
         pendingSetIDs.contains(id)
     }
@@ -533,6 +552,7 @@ final class WorkoutStore {
                 guard connectionGeneration == generation else { return }
                 activeSession = session
                 routeSummary = nil
+        completedRoute = []
                 previousSets = [:]
                 // Only a run, ride, or swim records a track, and only for as
                 // long as its session is active.
@@ -766,6 +786,7 @@ final class WorkoutStore {
             // A discarded session keeps no track.
             routeTracker.reset()
             routeSummary = nil
+        completedRoute = []
         } catch {
             persistenceError = error.localizedDescription
         }

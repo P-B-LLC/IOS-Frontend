@@ -617,6 +617,51 @@ actor WorkoutAPIRepository {
         }
     }
 
+    /// The GPS track a session recorded, in the order it was walked.
+    ///
+    /// Read back from the server rather than kept from the recording, so the
+    /// map on a finished session draws the same track whether it was just
+    /// stopped or opened from the history a month later.
+    func route(sessionID: Int) async throws -> [RoutePoint] {
+        var page: Int?
+        var visited: Set<Int> = []
+        var values: [RoutePoint] = []
+        repeat {
+            let output = try await client.sessionsRouteList(
+                path: .init(id: sessionID),
+                query: .init(page: page)
+            )
+            let response: Components.Schemas.PaginatedSessionRoutePointList
+            switch output {
+            case .ok(let success):
+                response = try success.body.json
+            case .undocumented(let statusCode, _):
+                throw APIServiceError.undocumentedStatus(statusCode)
+            }
+            values.append(contentsOf: response.results.compactMap(Self.routePoint(from:)))
+            page = try nextPage(response.next, visited: &visited)
+        } while page != nil
+        return values
+    }
+
+    /// Coordinates cross as decimal strings, so a point the app cannot parse is
+    /// dropped rather than drawn at the equator.
+    private nonisolated static func routePoint(
+        from payload: Components.Schemas.SessionRoutePoint
+    ) -> RoutePoint? {
+        guard let latitude = Double(payload.latitude),
+              let longitude = Double(payload.longitude)
+        else { return nil }
+
+        return RoutePoint(
+            latitude: latitude,
+            longitude: longitude,
+            recordedAt: payload.recordedAt ?? Date(),
+            speedMetersPerSecond: payload.speedMps.flatMap(Double.init),
+            altitudeMeters: payload.altitudeM.flatMap(Double.init)
+        )
+    }
+
     /// Uploads a recorded GPS track. The response carries the session with the
     /// server's own distance and pace, which is what the app displays; the
     /// device never computes either.

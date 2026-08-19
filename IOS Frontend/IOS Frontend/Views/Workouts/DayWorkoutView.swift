@@ -986,6 +986,17 @@ struct DayWorkoutView: View {
                     .strokeBorder(Color.white.opacity(0.20), lineWidth: 1)
             }
 
+            // Above the figures, because the shape of where you went is the
+            // thing worth seeing first, and the numbers describe it. Absent
+            // when there is no track: a run recorded indoors, or with location
+            // refused, has none, and an empty map says less than no map.
+            if session.tracksDistance, store.completedRoute.count >= 2 {
+                SessionRouteMap(
+                    points: store.completedRoute,
+                    accent: phase.accent
+                )
+            }
+
             HStack {
                 Text("SESSION HIGHLIGHTS")
                     .font(.caption2.weight(.bold))
@@ -1082,6 +1093,13 @@ struct DayWorkoutView: View {
             }
         }
         .foregroundStyle(phase.primaryText)
+        .task(id: session.serverID) {
+            // Only a run, ride or swim has one to read, and asking for a
+            // lifting session's track is a round trip that can only come back
+            // empty.
+            guard session.tracksDistance else { return }
+            await store.loadCompletedRoute(sessionID: session.serverID)
+        }
     }
 
     /// The date this day falls on, for asking whether it has been trained.
