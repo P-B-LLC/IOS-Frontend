@@ -472,18 +472,49 @@ private struct TrainingDashboardMetrics {
     let plannedWorkoutCount: Int
     private let calendar = Calendar.current
 
-    var totalWorkouts: Int { sessions.count }
+    /// One workout trained on one day, however many sessions that took.
+    ///
+    /// Everything below counts these rather than sessions. A session is
+    /// created by tapping Start, so counting sessions meant starting Tuesday's
+    /// workout six times read as six workouts and a met weekly goal — which is
+    /// what it did. Starting a day again, to redo a set or after discarding by
+    /// accident, is a normal thing to do and must not inflate the record of
+    /// what was trained.
+    private struct TrainingDay: Hashable {
+        let workoutName: String
+        let day: Date
+    }
+
+    /// The distinct days trained, newest first.
+    private var trainingDays: [TrainingDay] {
+        var seen: Set<TrainingDay> = []
+        var result: [TrainingDay] = []
+        for session in sessions.sorted(by: { $0.performedAt > $1.performedAt }) {
+            let entry = TrainingDay(
+                workoutName: session.workoutName,
+                day: calendar.startOfDay(for: session.performedAt)
+            )
+            if seen.insert(entry).inserted {
+                result.append(entry)
+            }
+        }
+        return result
+    }
+
+    var totalWorkouts: Int { trainingDays.count }
     var weeklyGoal: Int { max(plannedWorkoutCount, 1) }
     var completedThisWeek: Int { count(in: .weekOfYear) }
     var completedThisMonth: Int { count(in: .month) }
     var monthDetail: String { completedThisMonth == 0 ? "None this month" : "+\(completedThisMonth) this month" }
 
     private func count(in component: Calendar.Component) -> Int {
-        sessions.filter { calendar.isDate($0.performedAt, equalTo: Date(), toGranularity: component) }.count
+        trainingDays.filter {
+            calendar.isDate($0.day, equalTo: Date(), toGranularity: component)
+        }.count
     }
 
     private var activeWeeks: Set<Date> {
-        Set(sessions.compactMap { calendar.dateInterval(of: .weekOfYear, for: $0.performedAt)?.start })
+        Set(trainingDays.compactMap { calendar.dateInterval(of: .weekOfYear, for: $0.day)?.start })
     }
 
     var currentStreak: Int {
@@ -525,8 +556,8 @@ private struct TrainingDashboardMetrics {
         }
         return (0..<6).reversed().map { offset in
             guard let week = calendar.date(byAdding: .weekOfYear, value: -offset, to: current) else { return 0 }
-            return sessions.filter {
-                calendar.dateInterval(of: .weekOfYear, for: $0.performedAt)?.start == week
+            return trainingDays.filter {
+                calendar.dateInterval(of: .weekOfYear, for: $0.day)?.start == week
             }.count
         }
     }

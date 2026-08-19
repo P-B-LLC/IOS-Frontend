@@ -40,6 +40,15 @@ struct DayWorkoutView: View {
 
     var body: some View {
         styledContent
+        .task {
+            // Only when nothing has been read yet. The dashboard loads the
+            // same history, so arriving from the workouts page already has it,
+            // and refetching every finished session on every visit to a day
+            // would be a heavy read for a badge.
+            if store.dashboardSessions.isEmpty {
+                await store.loadDashboardSessions()
+            }
+        }
         .onChange(of: store.routeTracker.permission) {
             // Granting access part way through a session starts tracking for
             // the remainder of it.
@@ -472,6 +481,10 @@ struct DayWorkoutView: View {
     /// them rather than scrolling past one to reach the next.
     private var plannedDay: some View {
         VStack(alignment: .leading, spacing: 18) {
+            ForEach(plannedWorkouts.filter { store.isCompleted(workoutName: $0.name, on: dayDate) }) { done in
+                completedBanner(done)
+            }
+
             if plannedWorkouts.count > 1 {
                 multiWorkoutBanner
                 workoutPager
@@ -956,6 +969,60 @@ struct DayWorkoutView: View {
             }
         }
         .foregroundStyle(phase.primaryText)
+    }
+
+    /// The date this day falls on, for asking whether it has been trained.
+    private var dayDate: Date {
+        store.workoutDate(for: day)
+    }
+
+    /// Says the day is done, and offers to take it back.
+    ///
+    /// The day counts once however many times it was started, so this is what
+    /// tells the user which state they are in. Undo deletes the day's finished
+    /// sessions, which is what removes it from the totals — nothing else marks
+    /// a day complete, so there is no second place for the two to disagree.
+    private func completedBanner(_ workout: Workout) -> some View {
+        let sessions = store.finishedSessions(workoutName: workout.name, on: dayDate)
+
+        return HStack(alignment: .top, spacing: 11) {
+            Image(systemName: "checkmark.seal.fill")
+                .font(.title3)
+                .foregroundStyle(WorkoutVisualPhase.recover.accent)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text("\(workout.name) completed")
+                    .font(.subheadline.weight(.semibold))
+                Text(
+                    sessions.count > 1
+                        // Said plainly, because it is the thing that used to
+                        // inflate the count and now does not.
+                        ? "Started \(sessions.count) times. Counts once."
+                        : "Counted towards this week."
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+
+            Spacer(minLength: 8)
+
+            Button("Undo") {
+                Task {
+                    await store.undoCompletion(
+                        workoutName: workout.name,
+                        on: dayDate
+                    )
+                }
+            }
+            .font(.caption.weight(.bold))
+            .buttonStyle(.bordered)
+            .disabled(store.isSaving)
+        }
+        .padding(13)
+        .background(
+            WorkoutVisualPhase.recover.accent.opacity(0.11),
+            in: RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius)
+        )
     }
 
     private func sessionExerciseCard(_ exercise: SessionExerciseDraft) -> some View {

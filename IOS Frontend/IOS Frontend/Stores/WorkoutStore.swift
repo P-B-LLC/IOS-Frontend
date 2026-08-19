@@ -126,6 +126,60 @@ final class WorkoutStore {
         routeSummary = nil
     }
 
+    // MARK: - Whether a day has been trained
+
+    /// The finished sessions recorded for this workout on this date.
+    ///
+    /// Matched by name and calendar day, the same pair the dashboard counts
+    /// by, so what a day says about itself and what the totals say cannot
+    /// disagree.
+    func finishedSessions(workoutName: String, on date: Date) -> [PostableSession] {
+        let day = Calendar.current.startOfDay(for: date)
+        return dashboardSessions.filter {
+            $0.workoutName.localizedCaseInsensitiveCompare(workoutName) == .orderedSame
+                && Calendar.current.startOfDay(for: $0.performedAt) == day
+        }
+    }
+
+    /// Whether this workout has been trained on this date at all.
+    func isCompleted(workoutName: String, on date: Date) -> Bool {
+        !finishedSessions(workoutName: workoutName, on: date).isEmpty
+    }
+
+    /// Undoes a day's training by deleting every finished session recorded for
+    /// it, which is what removes it from the counts.
+    ///
+    /// Every session for the day goes, not the newest one: a day that was
+    /// started twice would otherwise still read as trained after an undo, and
+    /// the user asked for one undo per day rather than one per attempt.
+    func undoCompletion(workoutName: String, on date: Date) async {
+        guard let repository else { return }
+        let doomed = finishedSessions(workoutName: workoutName, on: date)
+        guard !doomed.isEmpty else { return }
+
+        let generation = connectionGeneration
+        isSaving = true
+        persistenceError = nil
+        defer { if connectionGeneration == generation { isSaving = false } }
+
+        do {
+            for session in doomed {
+                try await repository.discardSession(id: session.sessionID)
+            }
+            guard connectionGeneration == generation else { return }
+            // Drop them locally too, so the count falls now rather than after
+            // the reload comes back.
+            let removed = Set(doomed.map(\.sessionID))
+            dashboardSessions.removeAll { removed.contains($0.sessionID) }
+            postableSessions.removeAll { removed.contains($0.sessionID) }
+            completedSessions.removeAll { removed.contains($0.session.serverID) }
+            await loadDashboardSessions()
+        } catch {
+            guard connectionGeneration == generation else { return }
+            persistenceError = error.localizedDescription
+        }
+    }
+
     // MARK: - Last time
 
     /// The set the hint should show: the same set number from the last time
@@ -788,7 +842,9 @@ final class WorkoutStore {
         )
     }
 
-    private func workoutDate(
+    /// The calendar date this weekday falls on in the week being shown.
+    /// Exposed so a day can ask whether it has already been trained.
+    func workoutDate(
         for day: Weekday,
         referenceDate: Date = Date()
     ) -> Date {
