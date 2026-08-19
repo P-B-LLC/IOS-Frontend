@@ -58,9 +58,12 @@ actor ActivityAPIRepository {
     /// watch that synced after a day offline changes yesterday's total as well
     /// as today's, and day-at-a-time writes would leave those corrections
     /// behind whenever the app was closed between them.
-    @discardableResult
-    func record(_ days: [DailyStepCount]) async throws -> [DailyStepCount] {
-        guard days.isEmpty == false else { return [] }
+    /// Returns nothing. The server answers 204: it stores every day it was
+    /// given in one go, so there is no page of results to hand back, and the
+    /// caller reads the stored days through `steps(since:)` like any other
+    /// reader rather than trusting an echo of what it just sent.
+    func record(_ days: [DailyStepCount]) async throws {
+        guard days.isEmpty == false else { return }
 
         let output = try await client.stepCountsRecordCreate(
             body: .json(
@@ -76,8 +79,8 @@ actor ActivityAPIRepository {
         )
 
         switch output {
-        case .ok(let response):
-            return try response.body.json.compactMap(Self.day(from:))
+        case .noContent:
+            return
         case .undocumented(let statusCode, _):
             throw APIServiceError.undocumentedStatus(statusCode)
         }
