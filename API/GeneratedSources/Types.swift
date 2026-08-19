@@ -2057,16 +2057,8 @@ extension APIProtocol {
     ///
     /// - Remark: HTTP `POST /api/v1/step-counts/record/`.
     /// - Remark: Generated from `#/paths//api/v1/step-counts/record//post(step_counts_record_create)`.
-    public func stepCountsRecordCreate(
-        query: Operations.StepCountsRecordCreate.Input.Query = .init(),
-        headers: Operations.StepCountsRecordCreate.Input.Headers = .init(),
-        body: Operations.StepCountsRecordCreate.Input.Body
-    ) async throws -> Operations.StepCountsRecordCreate.Output {
-        try await stepCountsRecordCreate(Operations.StepCountsRecordCreate.Input(
-            query: query,
-            headers: headers,
-            body: body
-        ))
+    public func stepCountsRecordCreate(body: Operations.StepCountsRecordCreate.Input.Body) async throws -> Operations.StepCountsRecordCreate.Output {
+        try await stepCountsRecordCreate(Operations.StepCountsRecordCreate.Input(body: body))
     }
     /// - Remark: HTTP `GET /api/v1/users/`.
     /// - Remark: Generated from `#/paths//api/v1/users//get(users_list)`.
@@ -20393,33 +20385,6 @@ public enum Operations {
     public enum StepCountsRecordCreate {
         public static let id: Swift.String = "step_counts_record_create"
         public struct Input: Sendable, Hashable {
-            /// - Remark: Generated from `#/paths/api/v1/step-counts/record/POST/query`.
-            public struct Query: Sendable, Hashable {
-                /// A page number within the paginated result set.
-                ///
-                /// - Remark: Generated from `#/paths/api/v1/step-counts/record/POST/query/page`.
-                public var page: Swift.Int?
-                /// Creates a new `Query`.
-                ///
-                /// - Parameters:
-                ///   - page: A page number within the paginated result set.
-                public init(page: Swift.Int? = nil) {
-                    self.page = page
-                }
-            }
-            public var query: Operations.StepCountsRecordCreate.Input.Query
-            /// - Remark: Generated from `#/paths/api/v1/step-counts/record/POST/header`.
-            public struct Headers: Sendable, Hashable {
-                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.StepCountsRecordCreate.AcceptableContentType>]
-                /// Creates a new `Headers`.
-                ///
-                /// - Parameters:
-                ///   - accept:
-                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.StepCountsRecordCreate.AcceptableContentType>] = .defaultValues()) {
-                    self.accept = accept
-                }
-            }
-            public var headers: Operations.StepCountsRecordCreate.Input.Headers
             /// - Remark: Generated from `#/paths/api/v1/step-counts/record/POST/requestBody`.
             @frozen public enum Body: Sendable, Hashable {
                 /// - Remark: Generated from `#/paths/api/v1/step-counts/record/POST/requestBody/content/application\/json`.
@@ -20429,66 +20394,42 @@ public enum Operations {
             /// Creates a new `Input`.
             ///
             /// - Parameters:
-            ///   - query:
-            ///   - headers:
             ///   - body:
-            public init(
-                query: Operations.StepCountsRecordCreate.Input.Query = .init(),
-                headers: Operations.StepCountsRecordCreate.Input.Headers = .init(),
-                body: Operations.StepCountsRecordCreate.Input.Body
-            ) {
-                self.query = query
-                self.headers = headers
+            public init(body: Operations.StepCountsRecordCreate.Input.Body) {
                 self.body = body
             }
         }
         @frozen public enum Output: Sendable, Hashable {
-            public struct Ok: Sendable, Hashable {
-                /// - Remark: Generated from `#/paths/api/v1/step-counts/record/POST/responses/200/content`.
-                @frozen public enum Body: Sendable, Hashable {
-                    /// - Remark: Generated from `#/paths/api/v1/step-counts/record/POST/responses/200/content/application\/json`.
-                    case json(Components.Schemas.PaginatedDailyStepCountList)
-                    /// The associated value of the enum case if `self` is `.json`.
-                    ///
-                    /// - Throws: An error if `self` is not `.json`.
-                    /// - SeeAlso: `.json`.
-                    public var json: Components.Schemas.PaginatedDailyStepCountList {
-                        get throws {
-                            switch self {
-                            case let .json(body):
-                                return body
-                            }
-                        }
-                    }
-                }
-                /// Received HTTP response body
-                public var body: Operations.StepCountsRecordCreate.Output.Ok.Body
-                /// Creates a new `Ok`.
-                ///
-                /// - Parameters:
-                ///   - body: Received HTTP response body
-                public init(body: Operations.StepCountsRecordCreate.Output.Ok.Body) {
-                    self.body = body
-                }
+            public struct NoContent: Sendable, Hashable {
+                /// Creates a new `NoContent`.
+                public init() {}
             }
+            /// No response body
             ///
+            /// - Remark: Generated from `#/paths//api/v1/step-counts/record//post(step_counts_record_create)/responses/204`.
             ///
-            /// - Remark: Generated from `#/paths//api/v1/step-counts/record//post(step_counts_record_create)/responses/200`.
+            /// HTTP response code: `204 noContent`.
+            case noContent(Operations.StepCountsRecordCreate.Output.NoContent)
+            /// No response body
             ///
-            /// HTTP response code: `200 ok`.
-            case ok(Operations.StepCountsRecordCreate.Output.Ok)
-            /// The associated value of the enum case if `self` is `.ok`.
+            /// - Remark: Generated from `#/paths//api/v1/step-counts/record//post(step_counts_record_create)/responses/204`.
             ///
-            /// - Throws: An error if `self` is not `.ok`.
-            /// - SeeAlso: `.ok`.
-            public var ok: Operations.StepCountsRecordCreate.Output.Ok {
+            /// HTTP response code: `204 noContent`.
+            public static var noContent: Self {
+                .noContent(.init())
+            }
+            /// The associated value of the enum case if `self` is `.noContent`.
+            ///
+            /// - Throws: An error if `self` is not `.noContent`.
+            /// - SeeAlso: `.noContent`.
+            public var noContent: Operations.StepCountsRecordCreate.Output.NoContent {
                 get throws {
                     switch self {
-                    case let .ok(response):
+                    case let .noContent(response):
                         return response
                     default:
                         try throwUnexpectedResponseStatus(
-                            expectedStatus: "ok",
+                            expectedStatus: "noContent",
                             response: self
                         )
                     }
@@ -20498,31 +20439,6 @@ public enum Operations {
             ///
             /// A response with a code that is not documented in the OpenAPI document.
             case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
-        }
-        @frozen public enum AcceptableContentType: AcceptableProtocol {
-            case json
-            case other(Swift.String)
-            public init?(rawValue: Swift.String) {
-                switch rawValue.lowercased() {
-                case "application/json":
-                    self = .json
-                default:
-                    self = .other(rawValue)
-                }
-            }
-            public var rawValue: Swift.String {
-                switch self {
-                case let .other(string):
-                    return string
-                case .json:
-                    return "application/json"
-                }
-            }
-            public static var allCases: [Self] {
-                [
-                    .json
-                ]
-            }
         }
     }
     /// - Remark: HTTP `GET /api/v1/users/`.

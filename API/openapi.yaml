@@ -2989,13 +2989,6 @@ paths:
         Health is the source of truth for steps, so a day arriving again
         overwrites rather than adds. Anything else would double a total every
         time the app reopened.
-      parameters:
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
       tags:
       - step-counts
       requestBody:
@@ -3014,12 +3007,8 @@ paths:
       - tokenAuth: []
       - cookieAuth: []
       responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedDailyStepCountList'
-          description: ''
+        '204':
+          description: No response body
   /api/v1/users/:
     get:
       operationId: users_list
