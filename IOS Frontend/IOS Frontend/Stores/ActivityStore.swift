@@ -45,8 +45,11 @@ final class ActivityStore {
     /// nobody is looking at.
     static let historyDays = 7
 
-    init(health: HealthKitService = HealthKitService()) {
-        self.health = health
+    /// Takes nil rather than defaulting to `HealthKitService()`: a default
+    /// argument is evaluated at the call site, which is not on the main actor,
+    /// and the service is.
+    init(health: HealthKitService? = nil) {
+        self.health = health ?? HealthKitService()
     }
 
     var isConnected: Bool { repository != nil }
