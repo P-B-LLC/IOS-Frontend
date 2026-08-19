@@ -32,16 +32,12 @@ actor PlannerAPIRepository {
         try await fetch(start: start, end: end)
     }
 
-    /// Every task still unfinished before `day`, however old.
-    ///
-    /// Deliberately without a lower bound. Fetching a window and filtering on
-    /// the device would mean a task older than the window was never reported,
-    /// which is the one thing an overdue list must not do.
     /// Unfinished tasks between `since` and `day`, inclusive.
     ///
-    /// Bounded at both ends now. Reading with no lower bound returned every
-    /// task ever missed, which grows without limit and buries the ones still
-    /// worth doing.
+    /// Bounded at both ends. It used to have no lower bound, so that a task
+    /// older than any window was still reported; in practice that returned
+    /// every task ever missed, and the ones still worth doing were buried
+    /// under them. Anything older stays on its own day.
     func pastDueTasks(since: String, before day: String) async throws -> [PlannerEntry] {
         try await fetch(start: since, end: day, kind: .task, isComplete: false)
     }
@@ -118,7 +114,7 @@ actor PlannerAPIRepository {
             path: .init(id: serverID),
             body: .json(
                 Components.Schemas.PatchedPlannerEntryRequest(
-                    kind: Self.kindPayload(entry.kind),
+                    kind: Self.patchedKindPayload(entry.kind),
                     title: entry.title,
                     category: Self.categoryPayload(entry.category),
                     scheduledDate: entry.date,
@@ -180,7 +176,7 @@ actor PlannerAPIRepository {
     ) -> PlannerEntry {
         PlannerEntry(
             serverID: payload.id,
-            kind: payload.kind.flatMap { PlannerKind(rawValue: $0.rawValue) } ?? .task,
+            kind: payload.kind.flatMap { PlannerKind(rawValue: $0.value1.rawValue) } ?? .task,
             title: payload.title,
             category: payload.category
                 .flatMap { PlannerCategory(rawValue: $0.rawValue) } ?? .other,
@@ -193,10 +189,29 @@ actor PlannerAPIRepository {
         )
     }
 
-    private static func kindPayload(
+    /// Wrapped, because `kind` now carries a default in the contract and the
+    /// generator emits a field with a default as a payload around the enum
+    /// rather than the enum itself. The default appeared when the planner
+    /// gained its uniqueness constraint: the condition names `kind`, so DRF
+    /// began describing that field's default in the schema.
+    /// Two of them, because the create and patch requests each generate their
+    /// own nested payload type around the same enum.
+    private static func kindEnum(
         _ kind: PlannerKind
     ) -> Components.Schemas.PlannerEntryKindEnum {
         Components.Schemas.PlannerEntryKindEnum(rawValue: kind.rawValue) ?? .task
+    }
+
+    private static func kindPayload(
+        _ kind: PlannerKind
+    ) -> Components.Schemas.PlannerEntryRequest.KindPayload {
+        .init(value1: kindEnum(kind))
+    }
+
+    private static func patchedKindPayload(
+        _ kind: PlannerKind
+    ) -> Components.Schemas.PatchedPlannerEntryRequest.KindPayload {
+        .init(value1: kindEnum(kind))
     }
 
     private static func categoryPayload(

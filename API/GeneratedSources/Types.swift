@@ -4073,7 +4073,25 @@ public enum Components {
         /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest`.
         public struct PatchedPlannerEntryRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/kind`.
-            public var kind: Components.Schemas.PlannerEntryKindEnum?
+            public struct KindPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/kind/value1`.
+                public var value1: Components.Schemas.PlannerEntryKindEnum
+                /// Creates a new `KindPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PlannerEntryKindEnum) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try decoder.decodeFromSingleValueContainer()
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeToSingleValueContainer(self.value1)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/kind`.
+            public var kind: Components.Schemas.PatchedPlannerEntryRequest.KindPayload?
             /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/title`.
             public var title: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/category`.
@@ -4100,7 +4118,7 @@ public enum Components {
             ///   - workout:
             ///   - notes:
             public init(
-                kind: Components.Schemas.PlannerEntryKindEnum? = nil,
+                kind: Components.Schemas.PatchedPlannerEntryRequest.KindPayload? = nil,
                 title: Swift.String? = nil,
                 category: Components.Schemas.CategoryEnum? = nil,
                 scheduledDate: Swift.String? = nil,
@@ -4647,7 +4665,25 @@ public enum Components {
             /// - Remark: Generated from `#/components/schemas/PlannerEntry/owner`.
             public var owner: Swift.Int
             /// - Remark: Generated from `#/components/schemas/PlannerEntry/kind`.
-            public var kind: Components.Schemas.PlannerEntryKindEnum?
+            public struct KindPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PlannerEntry/kind/value1`.
+                public var value1: Components.Schemas.PlannerEntryKindEnum
+                /// Creates a new `KindPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PlannerEntryKindEnum) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try decoder.decodeFromSingleValueContainer()
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeToSingleValueContainer(self.value1)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/kind`.
+            public var kind: Components.Schemas.PlannerEntry.KindPayload?
             /// - Remark: Generated from `#/components/schemas/PlannerEntry/title`.
             public var title: Swift.String
             /// - Remark: Generated from `#/components/schemas/PlannerEntry/category`.
@@ -4690,7 +4726,7 @@ public enum Components {
             public init(
                 id: Swift.Int,
                 owner: Swift.Int,
-                kind: Components.Schemas.PlannerEntryKindEnum? = nil,
+                kind: Components.Schemas.PlannerEntry.KindPayload? = nil,
                 title: Swift.String,
                 category: Components.Schemas.CategoryEnum? = nil,
                 scheduledDate: Swift.String,
@@ -4752,7 +4788,25 @@ public enum Components {
         /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest`.
         public struct PlannerEntryRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/kind`.
-            public var kind: Components.Schemas.PlannerEntryKindEnum?
+            public struct KindPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/kind/value1`.
+                public var value1: Components.Schemas.PlannerEntryKindEnum
+                /// Creates a new `KindPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PlannerEntryKindEnum) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try decoder.decodeFromSingleValueContainer()
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeToSingleValueContainer(self.value1)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/kind`.
+            public var kind: Components.Schemas.PlannerEntryRequest.KindPayload?
             /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/title`.
             public var title: Swift.String
             /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/category`.
@@ -4779,7 +4833,7 @@ public enum Components {
             ///   - workout:
             ///   - notes:
             public init(
-                kind: Components.Schemas.PlannerEntryKindEnum? = nil,
+                kind: Components.Schemas.PlannerEntryRequest.KindPayload? = nil,
                 title: Swift.String,
                 category: Components.Schemas.CategoryEnum? = nil,
                 scheduledDate: Swift.String,
