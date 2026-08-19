@@ -1000,7 +1000,12 @@ the compiler this session and are worth remembering:
    session and its overview. What has not: **Redo Session, Undo, the calendar
    entry's Share, the empty-finish notice, and — as of August 19 — the
    Connect Apple Health button — since removed; Apple's sheet now appears on
-   its own.** The sheet has been seen and photographed appearing automatically
+   its own.** The empty-finish notice came off this list the hard way: it was
+   blocking **every run, ride and swim** from being finished at all. Its guard
+   fired on `loggedSetCount == 0`, which a distance workout always is, and the
+   notice explaining the refusal is only drawn on the lifting layout, so both
+   buttons did nothing and said nothing. A guard and the thing that explains it
+   must be behind the same condition. The sheet has been seen and photographed appearing automatically
    on a fresh install, but nobody has pressed Allow, so no real steps or
    workouts have ever made the round trip; the widget has only been seen with
    sample days behind it. Every UI defect found this
