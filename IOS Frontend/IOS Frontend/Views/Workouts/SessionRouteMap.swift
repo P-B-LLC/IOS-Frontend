@@ -19,12 +19,16 @@ struct SessionRouteMap: View {
     let accent: Color
 
     var body: some View {
-        Map(initialPosition: .region(region), interactionModes: []) {
-            MapPolyline(coordinates: points.map(\.coordinate))
-                .stroke(
-                    accent,
-                    style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round)
-                )
+        Map(initialPosition: initialPosition, interactionModes: []) {
+            // A line needs two points. One fix, or none, still gets a map —
+            // it just has nothing to draw on it.
+            if points.count >= 2 {
+                MapPolyline(coordinates: points.map(\.coordinate))
+                    .stroke(
+                        accent,
+                        style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round)
+                    )
+            }
 
             if let start = points.first {
                 Annotation("Start", coordinate: start.coordinate) {
@@ -34,21 +38,55 @@ struct SessionRouteMap: View {
             }
 
             // Only when the finish is somewhere else. A loop ends where it
-            // began, and two markers stacked on one spot read as a mistake.
-            if let end = points.last, isLoop == false {
+            // began, and two markers stacked on one spot read as a mistake —
+            // as do the two ends of a session that never moved.
+            if let end = points.last, points.count >= 2, isLoop == false {
                 Annotation("Finish", coordinate: end.coordinate) {
                     endpointMarker(fill: accent)
                 }
                 .annotationTitles(.hidden)
             }
+
+            // With no track at all, show where the user is instead of an
+            // empty rectangle of streets.
+            if points.isEmpty {
+                UserAnnotation()
+            }
         }
         .frame(height: 210)
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(alignment: .topLeading) {
+            if points.count < 2 {
+                // Quietly, in the corner. A map with no line on it invites the
+                // question, and the answer is that nothing was recorded rather
+                // than that the run was lost.
+                Text("No route recorded")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 5)
+                    .background(.ultraThinMaterial, in: Capsule())
+                    .padding(10)
+            }
+        }
         .overlay {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
         }
-        .accessibilityLabel("Map of the route taken")
+        .accessibilityLabel(
+            points.count >= 2
+                ? "Map of the route taken"
+                : "Map. No route was recorded for this session."
+        )
+    }
+
+    /// Where the map opens.
+    ///
+    /// Framed to the track when there is one. With nothing recorded there is
+    /// nothing to frame, so it falls back to the user's own location — and
+    /// then to whatever MapKit chooses, for a device that will not say.
+    private var initialPosition: MapCameraPosition {
+        points.isEmpty ? .userLocation(fallback: .automatic) : .region(region)
     }
 
     private func endpointMarker(fill: Color) -> some View {

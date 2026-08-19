@@ -108,7 +108,12 @@ private struct AppRootView: View {
                 // the only way to see that it draws at all.
                 ScrollView {
                     SessionRouteMap(
-                        points: SessionRouteMap.previewPoints,
+                        // "empty" is the state a simulator session actually
+                        // produces, and the one worth checking looks right.
+                        points: ProcessInfo.processInfo
+                            .environment["REPBASE_ROUTE_PREVIEW"] == "empty"
+                            ? []
+                            : SessionRouteMap.previewPoints,
                         accent: RepbasePalette.caramel
                     )
                     .padding(RepbaseDesign.pageInset)

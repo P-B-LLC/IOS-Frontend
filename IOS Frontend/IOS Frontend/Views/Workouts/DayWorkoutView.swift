@@ -987,10 +987,12 @@ struct DayWorkoutView: View {
             }
 
             // Above the figures, because the shape of where you went is the
-            // thing worth seeing first, and the numbers describe it. Absent
-            // when there is no track: a run recorded indoors, or with location
-            // refused, has none, and an empty map says less than no map.
-            if session.tracksDistance, store.completedRoute.count >= 2 {
+            // thing worth seeing first, and the numbers describe it. Shown for
+            // every run, ride and swim, including ones that recorded no track
+            // at all: the map is part of what this page is, not a reward for
+            // having had a GPS fix, and a page that changes shape depending on
+            // the signal is harder to read than one that does not.
+            if session.tracksDistance {
                 SessionRouteMap(
                     points: store.completedRoute,
                     accent: phase.accent
