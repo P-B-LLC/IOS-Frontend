@@ -1,17 +1,23 @@
 # Repbase iOS — Work History and Claude Handoff
 
-Last updated: August 16, 2026 (planner, then the profile and gyms)
+Last updated: August 19, 2026 (social posting, performance, the planner's
+identity bugs)
 
 This supersedes the previous handoff, which described the project at `ad1df5b`.
 Everything in that document still worth keeping has been folded in here.
 
 | Repository | GitHub | Branch | Verified commit |
 | --- | --- | --- | --- |
-| iOS frontend | `https://github.com/P-B-LLC/IOS-Frontend.git` | `main` | `5981b59` |
-| Django backend | `https://github.com/P-B-LLC/repbase.git` | `main` | `0f527c8` |
+| iOS frontend | `https://github.com/P-B-LLC/IOS-Frontend.git` | `main` | `97b893b` |
+| Django backend | `https://github.com/P-B-LLC/repbase.git` | `main` | `1884950` |
 
 Every commit below was built on the Mac from a clean clone of `main` before
 being pushed.
+
+> **Read "The three-day-old bug" and "Expected working style" before writing
+> code.** Most of what went wrong on August 18–19 was caught by running
+> something, and missed by reading it. Two bugs shipped because the code looked
+> right.
 
 > **Check the branch before doing anything.** `ui/repbase-redesign` was
 > fast-forwarded into `main` on August 15 and `main` is now the trunk — new work
@@ -37,10 +43,21 @@ session and both are described below.
 ## Repository locations
 
 ```text
-Windows (iOS, pushes to GitHub)   D:\IOS-Frontend Folder on Laptop\IOS-Frontend
-Mac (iOS build/test copy)         /Volumes/Macintosh_HD/Users/user299988/Documents/IOS-Frontend
-Mac (Django backend)              /Volumes/Macintosh_HD/Users/user299988/Documents/repbase
+Windows laptop  (iOS, pushes)   D:\IOS-Frontend Folder on Laptop\IOS-Frontend
+Windows desktop (iOS, pushes)   C:\IOS Frontend\IOS-Frontend
+Mac (iOS build/test copy)       /Volumes/Macintosh_HD/Users/user299988/Documents/IOS-Frontend
+Mac (Django backend)            /Volumes/Macintosh_HD/Users/user299988/Documents/repbase
 ```
+
+**There are two Windows machines, and they are not interchangeable.** Each has
+its own clone and its own SSH key situation; the desktop's key was generated on
+August 18 and added to the Mac's `authorized_keys` alongside the laptop's. Check
+which one you are on before trusting a path in this document.
+
+**More than one agent session works this repository at once**, sometimes in the
+same working tree. Run `git status` before editing and again before committing,
+and stage your own files by name — `git add -A` swept another session's
+in-progress work into three commits on August 18 before this was written down.
 
 The backend exists **only on the Mac**. It is edited in place over SSH and never
 cloned to Windows, except transiently when pushing (see below).
@@ -157,20 +174,50 @@ iPads sit on an 18.0 runtime and refuse to install the app.
 
 ## Run the development backend
 
+**It is a launchd agent now and starts itself.** `~/Library/LaunchAgents/
+com.repbase.devserver.plist`, installed August 18, runs it at login and
+restarts it if it exits. The Mac rebooted three times that day and the third
+reboot was the first that did not leave the user staring at a connection error.
+
+```bash
+launchctl list | grep repbase                    # is it registered
+lsof -nP -iTCP:5000 -sTCP:LISTEN                 # is it listening
+launchctl kickstart -k gui/$(id -u)/com.repbase.devserver   # restart it
+tail -f ~/Library/Logs/repbase-devserver.log     # its log
+```
+
+> **The agent runs `--noreload`, so it does not pick up code changes.**
+> Kickstart it after **every** backend edit. Not doing so served a serializer
+> from before the change and the app failed with
+> `DecodingError.keyNotFound: 'logged_set_count'` — a contract-first client
+> pointed at a stale server. The autoreloader is off on purpose: it forks a
+> child, and launchd then supervises the wrong process.
+
+> **When a restart looks like a failure, it is usually not.** `kickstart -k`
+> SIGTERMs the process (`launchctl list` shows `-15`) and launchd starts a new
+> one a moment later. Checking the port once, immediately, reports nothing and
+> reads as "the backend is down"; that false alarm was raised twice. Poll for
+> the port for ~45 seconds instead.
+
+The log lives in `~/Library/Logs/`, deliberately **not** `/tmp` — a reboot
+clears `/tmp`, which is how the previous log, every build directory and several
+scratch files disappeared mid-session. Assume nothing in `/tmp` survives.
+
+Started by hand instead, the old way still works:
+
 ```bash
 cd '/Volumes/Macintosh_HD/Users/user299988/Documents/repbase'
 source .venv/bin/activate
 nohup python manage.py runserver 127.0.0.1:5000 > /tmp/django.log 2>&1 < /dev/null &
 ```
 
-Debug builds target `http://localhost:5000/`. The server is frequently **not**
-running; check with `lsof -nP -iTCP:5000 -sTCP:LISTEN` before assuming the API is
-reachable. When it is down, `connect()` fails and every editing control in the
-app disables itself (with an explanation, since this session). The symptom in
-the app is a wall of red text ending in
-`NSURLErrorDomain Code=-1004 "Could not connect to the server"`.
+Debug builds target `http://localhost:5000/`. When the server is down,
+`connect()` fails and every editing control in the app disables itself (with an
+explanation). The symptom in the app is a wall of red text ending in
+`NSURLErrorDomain Code=-1004 "Could not connect to the server"`. That error
+always means the backend is not answering — never a wrong password.
 
-Two things about starting it:
+Two things about starting it by hand:
 
 - **Redirect all three streams and background it, or it dies with the session.**
   A server started from an agent's background SSH task is killed when that task
@@ -467,6 +514,12 @@ and recorded with it.
   what it does and which day or meal it does it to. The one to watch is the bare
   **X** on an active session, which now discards logged sets outright; the user
   was told and chose it. Do not reintroduce a confirmation sheet without asking.
+  **One exception, added August 19 at the user's request:** finishing a session
+  that logged **no sets at all** asks first. That is not a confirmation of
+  intent but a correction of a likely mistake — three sessions on the dev
+  account were finished holding nothing, because typing in the boxes does not
+  save a set and nothing said the circle does. Finishing real training still
+  acts on the first tap.
 - The completion summary reports distance, pace, and climb for a run rather than
   sets and a completion percentage, which described lifting and read as "0%" for
   a finished 5 km.
@@ -509,6 +562,169 @@ and recorded with it.
   missing entitlement; writing threw, and sign-in saves the token before marking
   the session active. Writing and deleting now match reading. Sessions do not
   survive relaunch on a CLI-built simulator app.
+
+## August 18–19: posting, performance, and the planner
+
+### Posting to the feed
+
+The feed could be read and never written to. The API, the store and all three
+post kinds already existed; only the screen was missing, which is why the empty
+state advertised sharing "from its page" when no such button existed anywhere.
+
+`PostComposerView` has three ways in, and the difference matters:
+
+- `init()` — from the feed's ✏️. Asks which feature, then which thing.
+- `init(source:)` — from a feature's own page. Skips the first question, since
+  the page has already answered it. Used by **Share a meal** on the food page
+  and **Share a workout** on the workouts page.
+- `init(kind:sourceID:subject:)` — from one specific thing. Shows what is being
+  shared instead of a picker. Used by the completion summary and the calendar
+  entry editor.
+
+**Sharing lives on the page that lists things, not on each thing's own screen.**
+The meal page had a Share; it was moved to the food page at the user's request,
+because one screen per meal is the last place anyone looks to post. The workout
+equivalent is on the workouts page. The completion summary keeps its own, since
+that is the moment a workout is most worth posting and the only place holding a
+session that has just been created.
+
+**A `ToolbarItem` is invisible in this app.** The meal's first Share was one,
+and this app hides the navigation bar on eleven screens. Put controls in the
+page.
+
+### Photos on posts
+
+`Post.image`, base64 over JSON like the profile photo, carried on the create
+rather than uploaded afterwards: a post is made once, and a second request to
+attach the picture can fail on its own and publish a post without the thing its
+caption is about. Files are named from the post id and a random suffix, never
+from the uploaded filename.
+
+The type is read from the **magic number**, not from the picker.
+`PhotosPickerItem.supportedContentTypes` is often empty for a library asset and
+there is no filename to take an extension from. JPEG, PNG, WEBP and the HEIF
+`ftyp` box are recognised; anything else is refused in the sheet with a
+sentence rather than by a 400 naming a field nobody saw. HEIC is sent as-is,
+since the contract accepts it and re-encoding costs quality for nothing.
+
+Verified end to end on August 19: a 4 MB photo posted from the app and served
+back at `/media/post-photos/…`.
+
+### Performance: stop reading whole tables
+
+Measured, not guessed — fifteen requests on a cold launch, two of them
+duplicates, and two reads that pulled entire tables to pick rows out of them.
+
+- Opening a session read **every session-exercise row the account owns**. The
+  backend already supported `?session=`; it was never declared in the OAS, so
+  no generated client could ask for it. Declaring it was the whole fix.
+- Saving a workout paged the **entire exercise catalogue** to match names.
+  `/exercises/` now takes `?name=`.
+- `loadWeek` read all workout templates, then `workoutLibrary()` paged the same
+  table again, sequentially. One fetch serves both.
+- Food read sixty-two days of meals per sign-in to draw one day, with four
+  sequential awaits. Now a fortnight back and a week forward, three of the
+  reads concurrent.
+
+**The one that mattered got slower the more the app was used**, which is the
+worst kind: invisible on a new account, crippling after a year.
+
+**None of this was why the app felt slow.** The Mac was at load average 583,
+peaking 974, with two *other tenants'* VMs taking 126% CPU and the disk
+swapping. It is a shared box. Measure the host before optimising the app.
+
+### A day is trained once
+
+Starting Tuesday's workout six times read as six workouts and a met weekly goal
+of one. A session is created by tapping Start, and every dashboard metric
+counted sessions.
+
+The dashboard counts **distinct days trained** — one workout name on one
+calendar day — and every figure derives from that same collapse, so no two
+numbers on the page can disagree. A finished day no longer offers Start; it
+offers **Redo Session** (which clears the day first, because a second session
+beside the first is the duplicate) and **Undo**, and shows what was logged.
+
+**Completion is derived, never stored.** There is no `is_complete` flag on a
+day: the badge and the counts are computed from the same sessions, which is why
+Undo cannot leave them disagreeing. The cost is that Undo deletes the session
+records.
+
+**An empty session counts for nothing.** `WorkoutSession.logged_set_count` is
+annotated onto the list query — a hundred sessions would otherwise be a hundred
+extra counts — and only rows carrying a weight or reps are counted, since set
+rows are created when a session starts and counting them all would call an
+untouched session full.
+
+### Previous-set hints
+
+Each weight and reps field shows the last session's value as `Prev: 100`,
+labelled because a bare faded number reads as a value already entered. It is
+never written into the field: one tap on the circle would then log a weight
+nobody lifted.
+
+Sessions are walked back newest-first until one is found that actually logged
+something, five at most. A session can be finished holding nothing, and three
+in a row on the dev account hid every usable session behind them.
+
+The caption says **circle**, not checkmark. The control is a circle until it is
+tapped and becomes one.
+
+### The planner's three identity bugs
+
+All three had one cause, and it is the most useful thing in this section.
+
+**A local id that changes every time a row is read is not an identity.** The
+mapper builds `PlannerEntry` from each response and mints a fresh `UUID`, so the
+same server row is held under different local ids in different lists — and a
+saved copy comes back with a different id from the one just sent.
+
+| Symptom | What actually happened |
+| --- | --- |
+| Ticked overdue task stayed on screen | `apply` replaced the row with the saved copy, renaming it; `retirePastDue` then looked up the id the caller started with, found nothing, and returned. Both its guards failed silently, so it looked like it had never been called. |
+| Day showed a completed task as unticked | Past due and the month are separate reads. The update reached the list the change was made in and missed the other. |
+| Delete would leave a ghost | Same, for removal. |
+
+Compare by **server id** wherever two lists can hold the same row —
+`PlannerEntry.isSameEntry(as:)` — and apply a saved copy under the id the row
+already had, `identified(as:)`. The first two were fixed at the symptom before
+the cause was found; the third was found by looking.
+
+### Duplicate planner tasks, and deleted ones coming back
+
+Seventeen rows for one Tuesday. The sync that puts a scheduled workout on the
+calendar checked `entriesByDate` — the month the planner is showing — and it
+runs at sign-in, before any month is read. `nil` read as "not linked yet", so
+every launch added another copy. Sixteen rows were deleted from the dev
+database, keeping a completed one where the group had been ticked off.
+
+Two guarantees now stand behind it:
+
+- `unique_workout_task_per_day`, a **conditional** constraint on
+  `(owner, workout, scheduled_date)` where `kind='task' AND workout IS NOT
+  NULL`. Two hand-written tasks on one day stay ordinary. The serializer
+  refuses the duplicate first so it is a 400 naming the field rather than an
+  `IntegrityError` escaping as a 500.
+- `POST /schedules/sync-planner/`. Deciding on the phone meant treating
+  "missing" as one thing, when it covers both a day never offered a task and a
+  day whose task the user deleted. The second is an answer, and re-asking it
+  every launch put deleted tasks back. `WorkoutSchedule.planner_synced_at` is
+  set when the task is made and never cleared, so the server can tell them
+  apart — the same reasoning as `source_recurrence` beside it.
+
+**Past due is bounded to thirty days.** It was deliberately unbounded so nothing
+fell off the back; in practice it returned every task ever missed and buried the
+ones still worth doing.
+
+### The three-day-old bug
+
+Adding a conditional constraint changed the contract, which was not obvious:
+**drf-spectacular emits the default of any field a constraint's `condition`
+names.** `kind` gained `default: task`, the generator turned it into a payload
+wrapper, and create and patch each got their own nested `KindPayload`. The app
+would not have compiled against its own backend without regenerating and
+following through. Diff the schema after any model change, not only after a
+serializer change.
 
 ## Contract additions this session
 
@@ -554,6 +770,22 @@ GET      /api/v1/sessions/?status=&workout=&workout_name=
 GET      /api/v1/progress/exercises/{id}/?workout_name=
 ```
 
+Added August 18–19, all additive:
+
+```text
+Post.image                              base64 in, image_url out
+CreatePostRequest.content_type,         carried on the create, not uploaded
+                  image_base64          afterwards
+GET  /api/v1/exercises/?name=           exact, case- and space-insensitive
+GET  /api/v1/session-exercises/?session= existed, was never declared
+GET  /api/v1/set-entries/?session=       one session's sets in one request
+     /api/v1/set-entries/?session_exercise=  existed, was never declared
+WorkoutSession.logged_set_count         annotated on the list query
+WorkoutSchedule.planner_synced_at       internal; not serialized
+POST /api/v1/schedules/sync-planner/    {start, end} -> the tasks it created
+PlannerEntry: unique_workout_task_per_day, conditional on kind=task
+```
+
 Regenerate the client on macOS after any contract change:
 
 ```bash
@@ -582,21 +814,50 @@ the compiler this session and are worth remembering:
    logic is verified against the API (see below), but nobody has yet opened the
    app on a Monday and watched the week fill in. That is the one thing worth
    checking first.
-2. **Nothing has been verified by tapping.** Every UI change this session is
-   compile-verified and, where possible, verified through the API. The simulator
-   cannot be driven programmatically. GPS and the barometer in particular need a
-   real device — simulator location is synthetic and there is no barometer.
-3. **Food data is in memory only.** Entries, goals, and saved recipes are lost on
-   restart or sign-out. Do not build a pretend food backend; add nutrition to the
-   OAS first, regenerate, then replace the local store boundary.
+2. **Most UI is still verified by compiling, not by tapping.** `simctl` has no
+   tap, swipe or scroll command, so an agent can build, install, launch and
+   screenshot, and nothing more. Say which of those you did. GPS and the
+   barometer need a real device besides.
+
+   What *has* been exercised by hand, as of August 19: posting with a photo
+   (a 4 MB image posted and served back), the previous-set hints, a completed
+   session and its overview. What has not: Redo Session, Undo, the calendar
+   entry's Share, and the empty-finish dialog.
+
+   Two tricks that get further than a screenshot of the first screen. The
+   `REPBASE_*_PREVIEW` flags boot straight into a screen that is otherwise
+   only reachable by tapping — **relaunch without the flag afterwards**, or the
+   user is left looking at a one-page app full of sample data. And an **iPad**
+   simulator often fits a whole scrolling page in one screenshot; but a page
+   that does not overflow an iPad is not evidence about scrolling on a phone,
+   which is a claim that was nearly made here.
+3. **Food is on the server** as of `a71e7f4`; this document said otherwise for
+   days after it stopped being true. Nothing in the app is stored on the device
+   except the auth token in the Keychain — no UserDefaults, no SwiftData, no
+   files. Verified by grep on August 18, because the claim in this document had
+   already outlived the code once. Vitamins and micronutrients remain
+   **unavailable** rather than invented: the OAS still has no nutrition
+   analysis, and the breakdown is computed on the phone from the meal in hand.
 4. **No XCTest target and no CI.** The only validation gate is an Xcode simulator
    build on the Mac plus manual review. Given how many real bugs surfaced this
    session through scripted API probes, a test target would be worth real money.
 5. The OAS declares no stable error schemas, so failure messaging stays generic.
 6. Schedule uniqueness and timezone behaviour remain contract gaps.
-7. `ROADMAP.md` and the local `db.sqlite3.backup-before-workout-type` are
-   intentionally untracked. Preserve them.
-8. The dev database contains probe accounts created while verifying
+7. `db.sqlite3.backup-before-workout-type` is intentionally untracked in the
+   backend repo. Preserve it. `ROADMAP.md` **is** tracked in the iOS repo,
+   whatever this document said before.
+8. **The backend repo has 15 `.pyc` files tracked** in
+   `core/migrations/__pycache__/`, committed before `.gitignore` covered them.
+   They are compiled for CPython 3.12 while the Mac runs 3.14, so Python
+   ignores them. Harmless, and `git rm -r --cached` whenever someone wants the
+   noise gone.
+9. **The bottom bar is inset on the `TabView`**, outside each tab's navigation
+   stack, so its height never reaches the scroll views inside. Every scrolling
+   page inside a tab must leave `RepbaseDesign.bottomBarClearance` at the
+   bottom — including pages *pushed* onto a tab, which is the half that was
+   missed the first time. Sheets and full-screen covers must not: they cover
+   the bar rather than sit under it.
+10. The dev database contains probe accounts created while verifying
    (`claude_*`, `pr_*`, `hist_*`, `name_*`, and similar) and some implausible
    test data — Pullups logged at 300 kg × 12, which suppresses genuine PRs on
    that exercise.
@@ -605,11 +866,34 @@ the compiler this session and are worth remembering:
 
 - Read `git status` before editing and preserve unrelated changes. The user has
   edited files in parallel this session; changes were silently reverted twice
-  before their in-progress work was committed.
+  before their in-progress work was committed. **Stage your own files by name.**
+  `git add -A` swept another session's in-progress work into three commits on
+  August 18.
 - Verify claims rather than asserting them. Scripted API probes against the live
   backend caught several real bugs this session that reading code did not:
   a vanishing final split, absurd average speeds, phantom elevation on flat
   ground, and a kilometre of distance from a stationary phone.
+- **Reading code is not verifying it.** `retirePastDue` was read, judged
+  correct, and reported as working; it had never once run, because the bug was
+  in the caller one line above. A screenshot from the user diagnosed it. When a
+  user says a feature does not work, believe the screenshot over the code.
+- **Check the data before blaming the code, and after changing it.** "The hints
+  do not show" was three completed sessions holding zero sets, not a bug. The
+  planner duplicate count in the database is what proved that fix, not the build
+  log.
+- **`manage.py check` does not execute a serializer body.** Two `NameError`s
+  shipped past it this session — `profile_for` not importable in
+  `serializers.py` (it lives in `views.py`; importing it makes the two import
+  each other), and a serializer missing from the import list in `views.py`.
+  Exercise the path with an `APIRequestFactory` probe.
+- **Beware the shape of your own test harness.** A retry loop wrapped around
+  `grep -c` — which exits non-zero on zero matches — relaunched the app eight
+  times and signed the user out, then the missing requests looked like a broken
+  feature. Two other false alarms came from checking the backend port once,
+  immediately after restarting it.
+- Prefer editing by exact anchored text. Deleting by line number cascaded and
+  mangled `MealDetailView` mid-session; a brace-balance check caught it and a
+  backup taken beforehand made it cheap to undo.
 - Build on the Mac before reporting an iOS change complete, and verify the
   **committed** state from a clean clone before pushing — commits have excluded
   files that the working tree still had.
