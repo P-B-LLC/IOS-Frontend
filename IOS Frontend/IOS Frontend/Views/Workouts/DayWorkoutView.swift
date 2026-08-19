@@ -826,16 +826,11 @@ struct DayWorkoutView: View {
         )
 
         return VStack(alignment: .leading, spacing: 18) {
+            // The tick that used to sit here was an Image, not a Button, drawn
+            // as a filled circle with a shadow -- the same shape every control
+            // on this screen uses. It read as tappable, did nothing, and said
+            // what the badge beside it already says.
             HStack {
-                Image(systemName: "checkmark")
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(Color(hex: 0xF3F7F5))
-                    .frame(width: 34, height: 34)
-                    .background(Color(hex: 0x274438), in: Circle())
-                    .shadow(color: phase.shadow, radius: 10, y: 5)
-
-                Spacer()
-
                 HStack(spacing: 7) {
                     Circle()
                         .fill(RepbasePalette.caramel)
