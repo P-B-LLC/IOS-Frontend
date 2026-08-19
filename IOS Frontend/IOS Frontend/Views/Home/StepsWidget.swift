@@ -29,6 +29,7 @@ struct StepsWidget: View {
                     todayCount
                     weekStrip
                 }
+                importNote
             }
 
             if let error = store.persistenceError {
@@ -153,6 +154,33 @@ struct StepsWidget: View {
                 message(error)
             }
         }
+    }
+
+    /// What the last import did, when it did anything.
+    ///
+    /// The skipped line is worth saying out loud. A run tracked in Repbase and
+    /// recorded by the Watch is one run, and silently dropping the duplicate
+    /// would look like the import missing workouts rather than declining to
+    /// count them twice.
+    @ViewBuilder
+    private var importNote: some View {
+        if let summary = store.lastImport {
+            VStack(alignment: .leading, spacing: 3) {
+                if summary.imported > 0 {
+                    Text("\(summary.imported) \(workoutWord(summary.imported)) brought in from Health")
+                }
+                if summary.skippedOverlapping > 0 {
+                    Text("\(summary.skippedOverlapping) \(workoutWord(summary.skippedOverlapping)) skipped, already recorded here")
+                }
+            }
+            .font(.caption)
+            .foregroundStyle(timeOfDay.secondaryText)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func workoutWord(_ count: Int) -> String {
+        count == 1 ? "workout" : "workouts"
     }
 
     private func message(_ text: String) -> some View {

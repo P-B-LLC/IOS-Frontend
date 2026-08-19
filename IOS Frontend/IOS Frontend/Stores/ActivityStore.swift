@@ -37,6 +37,8 @@ final class ActivityStore {
     private(set) var isLoading = false
     private(set) var isSyncing = false
     private(set) var persistenceError: String?
+    /// What the last import brought in, or nil before one has run.
+    private(set) var lastImport: HealthImportSummary?
 
     /// How far back the widget reads and sends.
     ///
@@ -44,6 +46,14 @@ final class ActivityStore {
     /// but importing all of it on every launch would send thousands of days
     /// nobody is looking at.
     static let historyDays = 7
+
+    /// How far back workouts are offered to the server.
+    ///
+    /// Longer than the step window because a missed workout matters for longer
+    /// than a missed day's steps, and because the server recognises anything it
+    /// has already taken: sending a month costs a few rows it will ignore, and
+    /// buys back any week the app was not opened.
+    static let importHorizonDays = 30
 
     /// Takes nil rather than defaulting to `HealthKitService()`: a default
     /// argument is evaluated at the call site, which is not on the main actor,
@@ -112,6 +122,7 @@ final class ActivityStore {
         repository = nil
         // One user's steps must never be shown to the next.
         recentDays = []
+        lastImport = nil
         persistenceError = nil
         isLoading = false
         isSyncing = false
@@ -151,19 +162,31 @@ final class ActivityStore {
             to: Calendar.current.startOfDay(for: Date())
         ) ?? Date()
 
-        let fromHealth = await health.dailySteps(since: start)
+        let steps = await health.dailySteps(since: start)
         guard generation == connectionGeneration else { return }
 
-        // Nothing to send is not an error. It is what a brand-new simulator,
-        // a declined prompt, and a week indoors all look like from here.
-        guard fromHealth.isEmpty == false else {
-            await reload(generation: generation, showsLoadingState: false)
-            return
-        }
+        let importStart = Calendar.current.date(
+            byAdding: .day,
+            value: -(Self.importHorizonDays - 1),
+            to: Calendar.current.startOfDay(for: Date())
+        ) ?? Date()
+        let workouts = await health.workouts(since: importStart)
+        guard generation == connectionGeneration else { return }
 
         do {
-            try await repository.record(fromHealth)
+            // Nothing to send is not an error. It is what a brand-new
+            // simulator, a declined prompt, and a week indoors all look like
+            // from here, and `record` and `importWorkouts` both no-op on an
+            // empty list rather than making a call that says nothing.
+            try await repository.record(steps)
+            let summary = try await repository.importWorkouts(workouts)
             guard generation == connectionGeneration else { return }
+            // Only replace a summary worth showing with another one. A later
+            // refresh that imports nothing must not erase the note saying the
+            // last one brought in three runs.
+            if summary != .nothing || lastImport == nil {
+                lastImport = summary
+            }
             await reload(generation: generation, showsLoadingState: false)
         } catch {
             guard generation == connectionGeneration else { return }
@@ -219,6 +242,11 @@ extension ActivityStore {
             else { return nil }
             return DailyStepCount(day: day, steps: steps)
         }
+        store.lastImport = HealthImportSummary(
+            imported: 2,
+            skippedOverlapping: 1,
+            alreadyImported: 4
+        )
         return store
     }
 }

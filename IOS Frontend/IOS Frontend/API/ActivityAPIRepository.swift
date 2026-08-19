@@ -13,6 +13,23 @@
 import Foundation
 import RepbaseAPI
 
+/// What an import did, counted.
+///
+/// Three numbers rather than one, because "nothing was added" has three very
+/// different causes: nothing new to add, everything already added, or
+/// everything skipped for clashing with a session Repbase recorded itself.
+nonisolated struct HealthImportSummary: Equatable, Sendable {
+    let imported: Int
+    let skippedOverlapping: Int
+    let alreadyImported: Int
+
+    static let nothing = HealthImportSummary(
+        imported: 0,
+        skippedOverlapping: 0,
+        alreadyImported: 0
+    )
+}
+
 actor ActivityAPIRepository {
     private let configuration: APIConfiguration
     private let client: Client
@@ -86,7 +103,64 @@ actor ActivityAPIRepository {
         }
     }
 
+    /// Offers Health's workouts to the server and reports what it did.
+    ///
+    /// Everything in the window is sent, including workouts already taken.
+    /// Deciding here which are new would mean downloading the training history
+    /// first, and the answer would still be the server's to give.
+    func importWorkouts(_ workouts: [HealthWorkout]) async throws -> HealthImportSummary {
+        guard workouts.isEmpty == false else { return .nothing }
+
+        let output = try await client.sessionsImportHealthCreate(
+            body: .json(
+                Components.Schemas.HealthWorkoutImportRequest(
+                    workouts: workouts.map {
+                        Components.Schemas.HealthWorkoutRequest(
+                            externalId: $0.externalID,
+                            activity: Self.activity($0.activity),
+                            startedAt: $0.startedAt,
+                            endedAt: $0.endedAt,
+                            distanceKm: Self.decimalString($0.distanceKilometres)
+                        )
+                    }
+                )
+            )
+        )
+
+        switch output {
+        case .ok(let response):
+            let result = try response.body.json
+            return HealthImportSummary(
+                imported: result.imported,
+                skippedOverlapping: result.skippedOverlapping,
+                alreadyImported: result.alreadyImported
+            )
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
     // MARK: - Mapping
+
+    private nonisolated static func activity(
+        _ type: WorkoutType
+    ) -> Components.Schemas.ActivityEnum {
+        switch type {
+        case .lifting: .lifting
+        case .running: .running
+        case .biking: .biking
+        case .swimming: .swimming
+        }
+    }
+
+    /// A decimal as a string, which is how the server sends and expects them.
+    ///
+    /// Putting a decimal through a JSON number gives away the exactness the
+    /// type exists to keep, so the contract types it as a string at both ends.
+    private nonisolated static func decimalString(_ value: Double?) -> String? {
+        guard let value, value.isFinite, value >= 0 else { return nil }
+        return String(format: "%.3f", value)
+    }
 
     /// `YYYY-MM-DD` in the device's own calendar.
     ///
