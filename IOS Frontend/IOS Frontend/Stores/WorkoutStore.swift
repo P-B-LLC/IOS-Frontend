@@ -41,6 +41,11 @@ final class WorkoutStore {
     /// would pay for the pages on sign-in.
     private(set) var postableSessions: [PostableSession] = []
     private(set) var isLoadingPostableSessions = false
+    /// Completed sessions used by the training dashboard. These are loaded
+    /// from the API and reduced into totals, streaks, and weekly trends by the
+    /// view; the dashboard never fabricates progress values.
+    private(set) var dashboardSessions: [PostableSession] = []
+    private(set) var isLoadingDashboardSessions = false
 
     // MARK: - Cardio finisher
     //
@@ -104,6 +109,8 @@ final class WorkoutStore {
         knownWorkouts = []
         postableSessions = []
         isLoadingPostableSessions = false
+        dashboardSessions = []
+        isLoadingDashboardSessions = false
         cardioStartedAt = nil
         cardioMachine = nil
         cardioSessionID = nil
@@ -137,6 +144,29 @@ final class WorkoutStore {
             let sessions = try await repository.completedSessions()
             guard connectionGeneration == generation else { return }
             postableSessions = sessions
+        } catch {
+            guard connectionGeneration == generation else { return }
+            persistenceError = error.localizedDescription
+        }
+    }
+
+    /// Loads the complete finished-session history for dashboard statistics.
+    /// The existing API does not expose aggregate totals or streaks, so those
+    /// small calculations are performed locally from server-owned timestamps.
+    func loadDashboardSessions() async {
+        guard let repository, !isLoadingDashboardSessions else { return }
+        let generation = connectionGeneration
+        isLoadingDashboardSessions = true
+        defer {
+            if connectionGeneration == generation {
+                isLoadingDashboardSessions = false
+            }
+        }
+
+        do {
+            let sessions = try await repository.completedSessions(pageLimit: .max)
+            guard connectionGeneration == generation else { return }
+            dashboardSessions = sessions
         } catch {
             guard connectionGeneration == generation else { return }
             persistenceError = error.localizedDescription
@@ -526,6 +556,12 @@ final class WorkoutStore {
             )
             activeSession = nil
             routeTracker.reset()
+
+            // Keep dashboard totals and streaks current when the user returns
+            // from the completed session without requiring a new sign-in.
+            if let refreshed = try? await repository.completedSessions(pageLimit: .max) {
+                dashboardSessions = refreshed
+            }
 
             // Load what the summary needs. A failure here costs only the
             // chart or the record list, so the finished workout is still

@@ -18,32 +18,12 @@ struct WorkoutsView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: RepbaseDesign.sectionSpacing) {
-                intro
-
-                if let persistenceError = store.persistenceError {
-                    persistenceErrorCard(persistenceError)
-                }
-
-                if store.isLoading {
-                    ProgressView("Loading this week from Repbase...")
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 30)
-                        .workoutCard()
-                } else {
-                    weekCard
-                    focusCard
-                    weeklySummary
-                    shareWorkoutButton
-                }
-            }
-            .padding(.horizontal, RepbaseDesign.pageInset)
-            .padding(.top, 16)
-            .padding(.bottom, RepbaseDesign.bottomBarClearance)
-        }
+        TrainingDashboardContent(isSharingWorkout: $isSharingWorkout)
         .repbaseScreen(phase)
         .toolbar(.hidden, for: .navigationBar)
+        .task {
+            await store.loadDashboardSessions()
+        }
         .sheet(isPresented: $isSharingWorkout) {
             PostComposerView(source: .workout)
         }
