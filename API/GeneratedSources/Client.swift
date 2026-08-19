@@ -6788,6 +6788,160 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// Steps as Health reported them. Read here, written only by ``record``.
+    ///
+    /// - Remark: HTTP `GET /api/v1/step-counts/`.
+    /// - Remark: Generated from `#/paths//api/v1/step-counts//get(step_counts_list)`.
+    public func stepCountsList(_ input: Operations.StepCountsList.Input) async throws -> Operations.StepCountsList.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.StepCountsList.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/step-counts/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .get
+                )
+                suppressMutabilityWarning(&request)
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "page",
+                    value: input.query.page
+                )
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "since",
+                    value: input.query.since
+                )
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.StepCountsList.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.PaginatedDailyStepCountList.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Store a batch of days, replacing any already held for those days.
+    ///
+    /// Health is the source of truth for steps, so a day arriving again
+    /// overwrites rather than adds. Anything else would double a total every
+    /// time the app reopened.
+    ///
+    /// - Remark: HTTP `POST /api/v1/step-counts/record/`.
+    /// - Remark: Generated from `#/paths//api/v1/step-counts/record//post(step_counts_record_create)`.
+    public func stepCountsRecordCreate(_ input: Operations.StepCountsRecordCreate.Input) async throws -> Operations.StepCountsRecordCreate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.StepCountsRecordCreate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/step-counts/record/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .post
+                )
+                suppressMutabilityWarning(&request)
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "page",
+                    value: input.query.page
+                )
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                let body: OpenAPIRuntime.HTTPBody?
+                switch input.body {
+                case let .json(value):
+                    body = try converter.setRequiredRequestBodyAsJSON(
+                        value,
+                        headerFields: &request.headerFields,
+                        contentType: "application/json; charset=utf-8"
+                    )
+                }
+                return (request, body)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.StepCountsRecordCreate.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.PaginatedDailyStepCountList.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
     /// - Remark: HTTP `GET /api/v1/users/`.
     /// - Remark: Generated from `#/paths//api/v1/users//get(users_list)`.
     public func usersList(_ input: Operations.UsersList.Input) async throws -> Operations.UsersList.Output {

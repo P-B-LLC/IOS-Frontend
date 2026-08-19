@@ -596,6 +596,20 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}//delete(social_posts_destroy)`.
     func socialPostsDestroy(_ input: Operations.SocialPostsDestroy.Input) async throws -> Operations.SocialPostsDestroy.Output
+    /// Steps as Health reported them. Read here, written only by ``record``.
+    ///
+    /// - Remark: HTTP `GET /api/v1/step-counts/`.
+    /// - Remark: Generated from `#/paths//api/v1/step-counts//get(step_counts_list)`.
+    func stepCountsList(_ input: Operations.StepCountsList.Input) async throws -> Operations.StepCountsList.Output
+    /// Store a batch of days, replacing any already held for those days.
+    ///
+    /// Health is the source of truth for steps, so a day arriving again
+    /// overwrites rather than adds. Anything else would double a total every
+    /// time the app reopened.
+    ///
+    /// - Remark: HTTP `POST /api/v1/step-counts/record/`.
+    /// - Remark: Generated from `#/paths//api/v1/step-counts/record//post(step_counts_record_create)`.
+    func stepCountsRecordCreate(_ input: Operations.StepCountsRecordCreate.Input) async throws -> Operations.StepCountsRecordCreate.Output
     /// - Remark: HTTP `GET /api/v1/users/`.
     /// - Remark: Generated from `#/paths//api/v1/users//get(users_list)`.
     func usersList(_ input: Operations.UsersList.Input) async throws -> Operations.UsersList.Output
@@ -2022,6 +2036,38 @@ extension APIProtocol {
     public func socialPostsDestroy(path: Operations.SocialPostsDestroy.Input.Path) async throws -> Operations.SocialPostsDestroy.Output {
         try await socialPostsDestroy(Operations.SocialPostsDestroy.Input(path: path))
     }
+    /// Steps as Health reported them. Read here, written only by ``record``.
+    ///
+    /// - Remark: HTTP `GET /api/v1/step-counts/`.
+    /// - Remark: Generated from `#/paths//api/v1/step-counts//get(step_counts_list)`.
+    public func stepCountsList(
+        query: Operations.StepCountsList.Input.Query = .init(),
+        headers: Operations.StepCountsList.Input.Headers = .init()
+    ) async throws -> Operations.StepCountsList.Output {
+        try await stepCountsList(Operations.StepCountsList.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Store a batch of days, replacing any already held for those days.
+    ///
+    /// Health is the source of truth for steps, so a day arriving again
+    /// overwrites rather than adds. Anything else would double a total every
+    /// time the app reopened.
+    ///
+    /// - Remark: HTTP `POST /api/v1/step-counts/record/`.
+    /// - Remark: Generated from `#/paths//api/v1/step-counts/record//post(step_counts_record_create)`.
+    public func stepCountsRecordCreate(
+        query: Operations.StepCountsRecordCreate.Input.Query = .init(),
+        headers: Operations.StepCountsRecordCreate.Input.Headers = .init(),
+        body: Operations.StepCountsRecordCreate.Input.Body
+    ) async throws -> Operations.StepCountsRecordCreate.Output {
+        try await stepCountsRecordCreate(Operations.StepCountsRecordCreate.Input(
+            query: query,
+            headers: headers,
+            body: body
+        ))
+    }
     /// - Remark: HTTP `GET /api/v1/users/`.
     /// - Remark: Generated from `#/paths//api/v1/users//get(users_list)`.
     public func usersList(
@@ -2632,6 +2678,99 @@ public enum Components {
                 case visibility
                 case contentType = "content_type"
                 case imageBase64 = "image_base64"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/DailyStepCount`.
+        public struct DailyStepCount: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/DailyStepCount/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/DailyStepCount/owner`.
+            public var owner: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/DailyStepCount/day`.
+            public var day: Swift.String
+            /// - Remark: Generated from `#/components/schemas/DailyStepCount/steps`.
+            public var steps: Swift.Int64
+            /// - Remark: Generated from `#/components/schemas/DailyStepCount/created_at`.
+            public var createdAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/DailyStepCount/updated_at`.
+            public var updatedAt: Foundation.Date
+            /// Creates a new `DailyStepCount`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - owner:
+            ///   - day:
+            ///   - steps:
+            ///   - createdAt:
+            ///   - updatedAt:
+            public init(
+                id: Swift.Int,
+                owner: Swift.Int,
+                day: Swift.String,
+                steps: Swift.Int64,
+                createdAt: Foundation.Date,
+                updatedAt: Foundation.Date
+            ) {
+                self.id = id
+                self.owner = owner
+                self.day = day
+                self.steps = steps
+                self.createdAt = createdAt
+                self.updatedAt = updatedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case owner
+                case day
+                case steps
+                case createdAt = "created_at"
+                case updatedAt = "updated_at"
+            }
+        }
+        /// One day of steps on its way in from the device.
+        ///
+        /// - Remark: Generated from `#/components/schemas/DailyStepCountEntryRequest`.
+        public struct DailyStepCountEntryRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/DailyStepCountEntryRequest/day`.
+            public var day: Swift.String
+            /// - Remark: Generated from `#/components/schemas/DailyStepCountEntryRequest/steps`.
+            public var steps: Swift.Int
+            /// Creates a new `DailyStepCountEntryRequest`.
+            ///
+            /// - Parameters:
+            ///   - day:
+            ///   - steps:
+            public init(
+                day: Swift.String,
+                steps: Swift.Int
+            ) {
+                self.day = day
+                self.steps = steps
+            }
+            public enum CodingKeys: String, CodingKey {
+                case day
+                case steps
+            }
+        }
+        /// A batch of days.
+        ///
+        /// The device sends several at once because Health can backfill: a watch
+        /// synced after a day offline changes yesterday's total, not only today's.
+        /// Sending one day at a time would leave those corrections behind.
+        ///
+        /// - Remark: Generated from `#/components/schemas/DailyStepCountRecordRequest`.
+        public struct DailyStepCountRecordRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/DailyStepCountRecordRequest/days`.
+            public var days: [Components.Schemas.DailyStepCountEntryRequest]
+            /// Creates a new `DailyStepCountRecordRequest`.
+            ///
+            /// - Parameters:
+            ///   - days:
+            public init(days: [Components.Schemas.DailyStepCountEntryRequest]) {
+                self.days = days
+            }
+            public enum CodingKeys: String, CodingKey {
+                case days
             }
         }
         /// * `powerlifting` - Powerlifting
@@ -3303,6 +3442,41 @@ public enum Components {
                 next: Swift.String? = nil,
                 previous: Swift.String? = nil,
                 results: [Components.Schemas.BodyWeightEntry]
+            ) {
+                self.count = count
+                self.next = next
+                self.previous = previous
+                self.results = results
+            }
+            public enum CodingKeys: String, CodingKey {
+                case count
+                case next
+                case previous
+                case results
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PaginatedDailyStepCountList`.
+        public struct PaginatedDailyStepCountList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PaginatedDailyStepCountList/count`.
+            public var count: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PaginatedDailyStepCountList/next`.
+            public var next: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedDailyStepCountList/previous`.
+            public var previous: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedDailyStepCountList/results`.
+            public var results: [Components.Schemas.DailyStepCount]
+            /// Creates a new `PaginatedDailyStepCountList`.
+            ///
+            /// - Parameters:
+            ///   - count:
+            ///   - next:
+            ///   - previous:
+            ///   - results:
+            public init(
+                count: Swift.Int,
+                next: Swift.String? = nil,
+                previous: Swift.String? = nil,
+                results: [Components.Schemas.DailyStepCount]
             ) {
                 self.count = count
                 self.next = next
@@ -20067,6 +20241,288 @@ public enum Operations {
             ///
             /// A response with a code that is not documented in the OpenAPI document.
             case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// Steps as Health reported them. Read here, written only by ``record``.
+    ///
+    /// - Remark: HTTP `GET /api/v1/step-counts/`.
+    /// - Remark: Generated from `#/paths//api/v1/step-counts//get(step_counts_list)`.
+    public enum StepCountsList {
+        public static let id: Swift.String = "step_counts_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/step-counts/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/step-counts/GET/query/page`.
+                public var page: Swift.Int?
+                /// Only days on or after this date. Without it every day ever recorded comes back, which grows without bound.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/step-counts/GET/query/since`.
+                public var since: Swift.String?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - page: A page number within the paginated result set.
+                ///   - since: Only days on or after this date. Without it every day ever recorded comes back, which grows without bound.
+                public init(
+                    page: Swift.Int? = nil,
+                    since: Swift.String? = nil
+                ) {
+                    self.page = page
+                    self.since = since
+                }
+            }
+            public var query: Operations.StepCountsList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/step-counts/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.StepCountsList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.StepCountsList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.StepCountsList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.StepCountsList.Input.Query = .init(),
+                headers: Operations.StepCountsList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/step-counts/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/step-counts/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedDailyStepCountList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedDailyStepCountList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.StepCountsList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.StepCountsList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/step-counts//get(step_counts_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.StepCountsList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.StepCountsList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Store a batch of days, replacing any already held for those days.
+    ///
+    /// Health is the source of truth for steps, so a day arriving again
+    /// overwrites rather than adds. Anything else would double a total every
+    /// time the app reopened.
+    ///
+    /// - Remark: HTTP `POST /api/v1/step-counts/record/`.
+    /// - Remark: Generated from `#/paths//api/v1/step-counts/record//post(step_counts_record_create)`.
+    public enum StepCountsRecordCreate {
+        public static let id: Swift.String = "step_counts_record_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/step-counts/record/POST/query`.
+            public struct Query: Sendable, Hashable {
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/step-counts/record/POST/query/page`.
+                public var page: Swift.Int?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - page: A page number within the paginated result set.
+                public init(page: Swift.Int? = nil) {
+                    self.page = page
+                }
+            }
+            public var query: Operations.StepCountsRecordCreate.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/step-counts/record/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.StepCountsRecordCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.StepCountsRecordCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.StepCountsRecordCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/step-counts/record/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/step-counts/record/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.DailyStepCountRecordRequest)
+            }
+            public var body: Operations.StepCountsRecordCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            ///   - body:
+            public init(
+                query: Operations.StepCountsRecordCreate.Input.Query = .init(),
+                headers: Operations.StepCountsRecordCreate.Input.Headers = .init(),
+                body: Operations.StepCountsRecordCreate.Input.Body
+            ) {
+                self.query = query
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/step-counts/record/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/step-counts/record/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedDailyStepCountList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedDailyStepCountList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.StepCountsRecordCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.StepCountsRecordCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/step-counts/record//post(step_counts_record_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.StepCountsRecordCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.StepCountsRecordCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
         }
     }
     /// - Remark: HTTP `GET /api/v1/users/`.
