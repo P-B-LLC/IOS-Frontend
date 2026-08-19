@@ -73,6 +73,7 @@ private struct AppRootView: View {
             || environment["REPBASE_PROFILE_PREVIEW"] != nil
             || environment["REPBASE_AUTH_PREVIEW"] != nil
             || environment["REPBASE_KEYCHAIN_CHECK"] != nil
+            || environment["REPBASE_HEALTH_CHECK"] != nil
     }
 #endif
 
@@ -86,7 +87,11 @@ private struct AppRootView: View {
     var body: some View {
         Group {
 #if DEBUG
-            if ProcessInfo.processInfo.environment["REPBASE_KEYCHAIN_CHECK"] != nil {
+            if ProcessInfo.processInfo.environment["REPBASE_HEALTH_CHECK"] != nil {
+                // Whether the simulator honours a HealthKit entitlement that
+                // device signing strips is a runtime question, not a build one.
+                HealthKitProbeView()
+            } else if ProcessInfo.processInfo.environment["REPBASE_KEYCHAIN_CHECK"] != nil {
                 // Whether a signed-in session survives relaunching depends on
                 // whether this build can reach the Keychain, which no amount
                 // of reading the code settles.
