@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  HealthKit. Reading only: Repbase never writes to Health.
+
+	  On a real device this also needs the HealthKit capability on the App ID,
+	  which needs a paid Apple Developer membership. There is none, so device
+	  builds will refuse to sign until there is. The simulator does not enforce
+	  provisioning, so this file is enough there.
+	-->
+	<key>com.apple.developer.healthkit</key>
+	<true/>
+	<key>com.apple.developer.healthkit.access</key>
+	<array/>
+</dict>
+</plist>

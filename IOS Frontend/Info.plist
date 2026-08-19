@@ -20,5 +20,16 @@
 	-->
 	<key>NSMotionUsageDescription</key>
 	<string>Repbase reads your device's barometer during a run, ride, or swim to measure the elevation you climb. It is only used while a session you started is running.</string>
+	<!--
+	  HealthKit. Reading only, so only the share description is strictly
+	  required, but an app that links HealthKit and omits either key is
+	  terminated at launch rather than warned. Repbase never writes to Health;
+	  the update description says so plainly rather than leaving the user to
+	  wonder what it might put there.
+	-->
+	<key>NSHealthShareUsageDescription</key>
+	<string>Repbase reads your step count and the runs, rides, and swims recorded by your iPhone or Apple Watch, so your training shows up here without entering it twice.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Repbase does not write anything to Health. It only reads the activity you have already recorded.</string>
 </dict>
 </plist>
