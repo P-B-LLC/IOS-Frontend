@@ -25,9 +25,9 @@ final class PlannerStore {
     private(set) var selectedDate: Date = Calendar.current.startOfDay(for: Date())
     /// Any day inside the month on screen.
     private(set) var visibleMonth: Date = Calendar.current.startOfDay(for: Date())
-    /// Tasks still unfinished from before today, oldest first. Fetched without
-    /// a lower bound rather than sliced out of the visible month, so nothing
-    /// falls off the back of it.
+    /// Tasks still unfinished from before today, oldest first, reaching back
+    /// `pastDueHorizonDays`. Fetched rather than sliced out of the visible
+    /// month, so what is overdue does not depend on which month is on screen.
     private(set) var pastDue: [PlannerEntry] = []
     /// Events after today, soonest first, within `upcomingHorizonDays`.
     private(set) var upcomingEvents: [PlannerEntry] = []
@@ -151,21 +151,21 @@ final class PlannerStore {
         return (tasks.filter(\.isComplete).count, tasks.count)
     }
 
-    /// Ensures every concrete workout scheduled for the current week has one
-    /// linked Planner task. The workout template identifier plus date is the
-    /// shared identity, so reconnecting or refreshing cannot create duplicate
-    /// to-do rows. The Planner entry owns the optional time; Home reads that
-    /// same entry, so a time assigned in Planner appears there automatically.
+    /// Gives every scheduled workout in the current week a planner task, by
+    /// asking the server to do it.
+    ///
+    /// The decision moved to the server, and the reason is the whole point of
+    /// this function. Deciding here meant comparing schedules against the
+    /// planner and creating whatever was missing, and "missing" covers both a
+    /// day never offered and a day whose task the user deleted. The second is
+    /// an answer, and re-asking it every launch put deleted tasks back. The
+    /// server records having asked, so it can tell them apart.
     func syncScheduledWorkouts(_ workouts: [Workout]) async {
         guard let repository, !isSyncingScheduledWorkouts else { return }
-        let generation = connectionGeneration
-        let scheduled = workouts.compactMap { workout -> (Workout, Int, String)? in
-            guard let workoutID = workout.serverID,
-                  let date = workout.scheduledDate else { return nil }
-            return (workout, workoutID, date)
-        }
-        guard !scheduled.isEmpty else { return }
+        let dates = workouts.compactMap(\.scheduledDate).sorted()
+        guard let first = dates.first, let last = dates.last else { return }
 
+        let generation = connectionGeneration
         isSyncingScheduledWorkouts = true
         defer {
             if connectionGeneration == generation {
@@ -173,59 +173,25 @@ final class PlannerStore {
             }
         }
 
-        // Asked of the server, not of `entriesByDate`.
-        //
-        // That dictionary holds the month the planner is looking at, and this
-        // runs on sign-in, before any month has been read. The lookup returned
-        // nil, nil read as "not linked yet", and every launch added another
-        // copy of the same workout: nine Push Days on one Tuesday.
-        let dates = scheduled.map(\.2).sorted()
-        var linked: Set<String> = []
-        if let first = dates.first, let last = dates.last {
-            do {
-                let existing = try await repository.entries(from: first, to: last)
-                guard connectionGeneration == generation else { return }
-                for entry in existing where entry.kind == .task {
-                    if let id = entry.workoutID {
-                        linked.insert("\(id)-\(entry.date)")
-                    }
-                }
-            } catch {
-                // Better to add nothing than to add duplicates. The next sync
-                // tries again; a wrong guess here is permanent.
-                guard connectionGeneration == generation else { return }
-                persistenceError = "Scheduled workouts could not be checked against the planner: \(error.localizedDescription)"
-                return
-            }
-        }
-
-        for (workout, workoutID, date) in scheduled {
-            guard connectionGeneration == generation else { return }
-            guard linked.insert("\(workoutID)-\(date)").inserted else { continue }
-
-            let draft = PlannerEntry(
-                kind: .task,
-                title: workout.name,
-                category: .workout,
-                date: date,
-                workoutID: workoutID,
-                workoutName: workout.name
+        do {
+            let created = try await repository.syncScheduledWorkouts(
+                from: first,
+                to: last
             )
-
-            do {
-                let saved = try await repository.create(draft)
-                guard connectionGeneration == generation else { return }
-                // Recheck after the await so overlapping refreshes cannot add
-                // the same returned row twice to local state.
-                if entriesByDate[saved.date]?.contains(where: {
-                    $0.serverID == saved.serverID
-                }) != true {
-                    entriesByDate[saved.date, default: []].append(saved)
+            guard connectionGeneration == generation, !created.isEmpty else { return }
+            for entry in created {
+                // The month on screen may already hold it, if a refresh landed
+                // between the request and its answer.
+                let known = entriesByDate[entry.date]?.contains {
+                    $0.serverID == entry.serverID
+                } ?? false
+                if !known {
+                    entriesByDate[entry.date, default: []].append(entry)
                 }
-            } catch {
-                guard connectionGeneration == generation else { return }
-                persistenceError = "A scheduled workout could not be added to the planner: \(error.localizedDescription)"
             }
+        } catch {
+            guard connectionGeneration == generation else { return }
+            persistenceError = "Scheduled workouts could not be added to the planner: \(error.localizedDescription)"
         }
     }
 

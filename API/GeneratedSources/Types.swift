@@ -402,6 +402,11 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /api/v1/schedules/plan-week/`.
     /// - Remark: Generated from `#/paths//api/v1/schedules/plan-week//post(schedules_plan_week_create)`.
     func schedulesPlanWeekCreate(_ input: Operations.SchedulesPlanWeekCreate.Input) async throws -> Operations.SchedulesPlanWeekCreate.Output
+    /// Put a planner task on every scheduled day in the range that has not had one yet, and return the tasks that were created. Idempotent: a day whose task already exists, or whose task the user deleted, is left alone.
+    ///
+    /// - Remark: HTTP `POST /api/v1/schedules/sync-planner/`.
+    /// - Remark: Generated from `#/paths//api/v1/schedules/sync-planner//post(schedules_sync_planner_create)`.
+    func schedulesSyncPlannerCreate(_ input: Operations.SchedulesSyncPlannerCreate.Input) async throws -> Operations.SchedulesSyncPlannerCreate.Output
     /// - Remark: HTTP `GET /api/v1/session-exercises/`.
     /// - Remark: Generated from `#/paths//api/v1/session-exercises//get(session_exercises_list)`.
     func sessionExercisesList(_ input: Operations.SessionExercisesList.Input) async throws -> Operations.SessionExercisesList.Output
@@ -1557,6 +1562,19 @@ extension APIProtocol {
         body: Operations.SchedulesPlanWeekCreate.Input.Body
     ) async throws -> Operations.SchedulesPlanWeekCreate.Output {
         try await schedulesPlanWeekCreate(Operations.SchedulesPlanWeekCreate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Put a planner task on every scheduled day in the range that has not had one yet, and return the tasks that were created. Idempotent: a day whose task already exists, or whose task the user deleted, is left alone.
+    ///
+    /// - Remark: HTTP `POST /api/v1/schedules/sync-planner/`.
+    /// - Remark: Generated from `#/paths//api/v1/schedules/sync-planner//post(schedules_sync_planner_create)`.
+    public func schedulesSyncPlannerCreate(
+        headers: Operations.SchedulesSyncPlannerCreate.Input.Headers = .init(),
+        body: Operations.SchedulesSyncPlannerCreate.Input.Body
+    ) async throws -> Operations.SchedulesSyncPlannerCreate.Output {
+        try await schedulesSyncPlannerCreate(Operations.SchedulesSyncPlannerCreate.Input(
             headers: headers,
             body: body
         ))
@@ -4860,6 +4878,34 @@ public enum Components {
                 case isComplete = "is_complete"
                 case workout
                 case notes
+            }
+        }
+        /// The range of scheduled days to give planner tasks to.
+        ///
+        /// Named without the Request suffix: a serializer called
+        /// PlannerSyncRequestSerializer generates PlannerSyncRequestRequest.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PlannerSyncRequest`.
+        public struct PlannerSyncRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PlannerSyncRequest/start`.
+            public var start: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PlannerSyncRequest/end`.
+            public var end: Swift.String
+            /// Creates a new `PlannerSyncRequest`.
+            ///
+            /// - Parameters:
+            ///   - start:
+            ///   - end:
+            public init(
+                start: Swift.String,
+                end: Swift.String
+            ) {
+                self.start = start
+                self.end = end
+            }
+            public enum CodingKeys: String, CodingKey {
+                case start
+                case end
             }
         }
         /// A post as anyone allowed to see it reads it.
@@ -15709,6 +15755,127 @@ public enum Operations {
             /// - Throws: An error if `self` is not `.ok`.
             /// - SeeAlso: `.ok`.
             public var ok: Operations.SchedulesPlanWeekCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Put a planner task on every scheduled day in the range that has not had one yet, and return the tasks that were created. Idempotent: a day whose task already exists, or whose task the user deleted, is left alone.
+    ///
+    /// - Remark: HTTP `POST /api/v1/schedules/sync-planner/`.
+    /// - Remark: Generated from `#/paths//api/v1/schedules/sync-planner//post(schedules_sync_planner_create)`.
+    public enum SchedulesSyncPlannerCreate {
+        public static let id: Swift.String = "schedules_sync_planner_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/schedules/sync-planner/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SchedulesSyncPlannerCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SchedulesSyncPlannerCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SchedulesSyncPlannerCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/schedules/sync-planner/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/schedules/sync-planner/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.PlannerSyncRequest)
+            }
+            public var body: Operations.SchedulesSyncPlannerCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.SchedulesSyncPlannerCreate.Input.Headers = .init(),
+                body: Operations.SchedulesSyncPlannerCreate.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/schedules/sync-planner/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/schedules/sync-planner/POST/responses/200/content/application\/json`.
+                    case json([Components.Schemas.PlannerEntry])
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: [Components.Schemas.PlannerEntry] {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SchedulesSyncPlannerCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SchedulesSyncPlannerCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/schedules/sync-planner//post(schedules_sync_planner_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SchedulesSyncPlannerCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SchedulesSyncPlannerCreate.Output.Ok {
                 get throws {
                     switch self {
                     case let .ok(response):

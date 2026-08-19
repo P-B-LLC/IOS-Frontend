@@ -4548,6 +4548,75 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// Put a planner task on every scheduled day in the range that has not had one yet, and return the tasks that were created. Idempotent: a day whose task already exists, or whose task the user deleted, is left alone.
+    ///
+    /// - Remark: HTTP `POST /api/v1/schedules/sync-planner/`.
+    /// - Remark: Generated from `#/paths//api/v1/schedules/sync-planner//post(schedules_sync_planner_create)`.
+    public func schedulesSyncPlannerCreate(_ input: Operations.SchedulesSyncPlannerCreate.Input) async throws -> Operations.SchedulesSyncPlannerCreate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SchedulesSyncPlannerCreate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/schedules/sync-planner/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .post
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                let body: OpenAPIRuntime.HTTPBody?
+                switch input.body {
+                case let .json(value):
+                    body = try converter.setRequiredRequestBodyAsJSON(
+                        value,
+                        headerFields: &request.headerFields,
+                        contentType: "application/json; charset=utf-8"
+                    )
+                }
+                return (request, body)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SchedulesSyncPlannerCreate.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            [Components.Schemas.PlannerEntry].self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
     /// - Remark: HTTP `GET /api/v1/session-exercises/`.
     /// - Remark: Generated from `#/paths//api/v1/session-exercises//get(session_exercises_list)`.
     public func sessionExercisesList(_ input: Operations.SessionExercisesList.Input) async throws -> Operations.SessionExercisesList.Output {

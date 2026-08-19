@@ -80,6 +80,29 @@ actor PlannerAPIRepository {
 
     // MARK: - Writing
 
+    /// Asks the server to give every scheduled day in the range a planner task,
+    /// and returns the ones it made.
+    ///
+    /// The app used to do this itself: read the planner, work out which
+    /// scheduled workouts had no task, and create one for each. It could not
+    /// tell a day the user had cleared from a day never offered, so a deleted
+    /// task came back on the next launch. Only the server can tell those
+    /// apart, because only the server remembers having asked.
+    func syncScheduledWorkouts(
+        from start: String,
+        to end: String
+    ) async throws -> [PlannerEntry] {
+        let output = try await client.schedulesSyncPlannerCreate(
+            body: .json(Components.Schemas.PlannerSyncRequest(start: start, end: end))
+        )
+        switch output {
+        case .ok(let response):
+            return try response.body.json.map(Self.entry(from:))
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
     @discardableResult
     func create(_ draft: PlannerEntry) async throws -> PlannerEntry {
         let output = try await client.plannerCreate(
