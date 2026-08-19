@@ -8,7 +8,7 @@ Everything in that document still worth keeping has been folded in here.
 
 | Repository | GitHub | Branch | Verified commit |
 | --- | --- | --- | --- |
-| iOS frontend | `https://github.com/P-B-LLC/IOS-Frontend.git` | `main` | `97b893b` |
+| iOS frontend | `https://github.com/P-B-LLC/IOS-Frontend.git` | `main` | `db2f795` |
 | Django backend | `https://github.com/P-B-LLC/repbase.git` | `main` | `1884950` |
 
 Every commit below was built on the Mac from a clean clone of `main` before
@@ -716,6 +716,32 @@ Two guarantees now stand behind it:
 fell off the back; in practice it returned every task ever missed and buried the
 ones still worth doing.
 
+### Two things only a tap could find
+
+Both were reported by the user from a screenshot, after building, installing,
+launching and screenshotting had all reported success. They are the argument
+for the paragraph above about tapping.
+
+**A decorative `Image` styled like a control is a button that does nothing.**
+The session summary had a tick in a filled circle with a shadow — the same
+shape every real control on that screen uses — and it was an `Image`, not a
+`Button`. It compiled, rendered and screenshotted correctly. It also duplicated
+the COMPLETE badge beside it, so removing it cost nothing. When a screen's
+buttons all share a shape, anything drawn in that shape is claiming to be one.
+
+**A modal can cover the thing it is describing.** The empty-finish warning was
+a `confirmationDialog` reading "tap the circle at the end of each row" while
+sitting on top of those rows. It is now a card in the page under "Log Your
+Sets", it does not block anything, and it clears itself when a set is logged —
+otherwise the page insists nothing is logged directly above a row that plainly
+is. Prefer an in-page notice to a dialog for anything that is a hint rather
+than a decision.
+
+**Done on that summary is load-bearing.** The summary hides the navigation bar
+(`visualPhase == .recover`), so there is no back button behind it. Removing
+Done would leave the screen with no exit; show the navigation bar first if it
+ever needs to go.
+
 ### The three-day-old bug
 
 Adding a conditional constraint changed the contract, which was not obvious:
@@ -821,8 +847,12 @@ the compiler this session and are worth remembering:
 
    What *has* been exercised by hand, as of August 19: posting with a photo
    (a 4 MB image posted and served back), the previous-set hints, a completed
-   session and its overview. What has not: Redo Session, Undo, the calendar
-   entry's Share, and the empty-finish dialog.
+   session and its overview. What has not: **Redo Session, Undo, the calendar
+   entry's Share, and the empty-finish notice.** Every UI defect found this
+   session was in something on that second list, and each was found by the
+   user rather than by a build — a dead tick, a modal covering its own
+   subject, a task that would not sync. Assume the remaining four have the
+   same shape of problem until somebody taps them.
 
    Two tricks that get further than a screenshot of the first screen. The
    `REPBASE_*_PREVIEW` flags boot straight into a screen that is otherwise
