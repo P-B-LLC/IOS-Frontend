@@ -101,6 +101,13 @@ private struct AppRootView: View {
                 // Whether the simulator honours a HealthKit entitlement that
                 // device signing strips is a runtime question, not a build one.
                 HealthKitProbeView()
+            } else if ProcessInfo.processInfo.environment["REPBASE_HEALTH_PREVIEW"] == "widget" {
+                // The card on its own. On Home it sits below the fold, and a
+                // script cannot scroll the simulator to reach the rest of it.
+                ScrollView {
+                    StepsWidget()
+                        .padding(RepbaseDesign.pageInset)
+                }
             } else if ProcessInfo.processInfo.environment["REPBASE_HEALTH_PREVIEW"] != nil {
                 // The widget with days behind it. The simulator has no Watch,
                 // so this is the only way to see the populated state.
