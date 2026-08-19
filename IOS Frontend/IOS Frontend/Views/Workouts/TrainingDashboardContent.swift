@@ -40,6 +40,7 @@ struct TrainingDashboardContent: View {
                     intro
                     focusCard
                     momentumSection
+                    gearButton
                     shareButton
                 }
             }
@@ -266,6 +267,18 @@ struct TrainingDashboardContent: View {
         }
         .padding(16)
         .background(RepbasePalette.oatmeal, in: RoundedRectangle(cornerRadius: 19, style: .continuous))
+    }
+
+    private var gearButton: some View {
+        NavigationLink {
+            GearView()
+        } label: {
+            Label("Shoes and bikes", systemImage: "shoeprints.fill")
+                .font(.subheadline.weight(.semibold))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 11)
+        }
+        .repbaseControlSurface(cornerRadius: 15)
     }
 
     private var shareButton: some View {

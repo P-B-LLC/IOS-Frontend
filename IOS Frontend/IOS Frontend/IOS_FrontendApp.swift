@@ -17,6 +17,12 @@ struct IOS_FrontendApp: App {
     @State private var socialProfileStore: SocialProfileStore
     @State private var socialStore: SocialStore
     @State private var activityStore: ActivityStore
+#if DEBUG
+    @State private var gearStore = ProcessInfo.processInfo
+        .environment["REPBASE_GEAR_PREVIEW"] != nil ? GearStore.preview : GearStore()
+#else
+    @State private var gearStore = GearStore()
+#endif
 
     init() {
         let configuration = APIConfiguration.current
@@ -66,6 +72,7 @@ struct IOS_FrontendApp: App {
                 .environment(socialProfileStore)
                 .environment(socialStore)
                 .environment(activityStore)
+                .environment(gearStore)
         }
     }
 }
@@ -84,6 +91,7 @@ private struct AppRootView: View {
             || environment["REPBASE_HEALTH_CHECK"] != nil
             || environment["REPBASE_HEALTH_PREVIEW"] != nil
             || environment["REPBASE_ROUTE_PREVIEW"] != nil
+            || environment["REPBASE_GEAR_PREVIEW"] != nil
     }
 #endif
 
@@ -94,6 +102,7 @@ private struct AppRootView: View {
     @Environment(SocialProfileStore.self) private var socialProfileStore
     @Environment(SocialStore.self) private var socialStore
     @Environment(ActivityStore.self) private var activityStore
+    @Environment(GearStore.self) private var gearStore
 
     var body: some View {
         Group {
@@ -102,6 +111,10 @@ private struct AppRootView: View {
                 // Whether the simulator honours a HealthKit entitlement that
                 // device signing strips is a runtime question, not a build one.
                 HealthKitProbeView()
+            } else if ProcessInfo.processInfo.environment["REPBASE_GEAR_PREVIEW"] != nil {
+                // Gear is only reachable by tapping through Training, and a
+                // real account has no shoes in it yet.
+                NavigationStack { GearView() }
             } else if ProcessInfo.processInfo.environment["REPBASE_ROUTE_PREVIEW"] != nil {
                 // The simulator has no GPS movement, so a real session there
                 // records no track and the map is correctly absent. This is
@@ -257,6 +270,7 @@ private struct AppRootView: View {
                 socialProfileStore.disconnect()
                 socialStore.disconnect()
                 activityStore.disconnect()
+                gearStore.disconnect()
                 foodTrackingStore.reset()
                 return
             }
@@ -281,6 +295,10 @@ private struct AppRootView: View {
                 token: token
             )
             await activityStore.connect(
+                configuration: authentication.configuration,
+                token: token
+            )
+            await gearStore.connect(
                 configuration: authentication.configuration,
                 token: token
             )

@@ -836,6 +836,17 @@ struct DayWorkoutView: View {
             }
 
             if session.tracksDistance {
+                // Above the map, because it is a decision to make now: the
+                // miles are being run as this is on screen, and they land on
+                // whichever shoe is named here.
+                GearPickerRow(
+                    workoutType: session.workoutType,
+                    sessionID: session.serverID,
+                    primaryText: phase.primaryText,
+                    secondaryText: phase.secondaryText,
+                    accent: phase.accent
+                )
+
                 RouteTrackingCard(
                     tracker: store.routeTracker,
                     workoutType: session.workoutType
@@ -992,6 +1003,19 @@ struct DayWorkoutView: View {
             // at all: the map is part of what this page is, not a reward for
             // having had a GPS fix, and a page that changes shape depending on
             // the signal is harder to read than one that does not.
+            // Again here, so forgetting to set it beforehand is not permanent.
+            // The distance is already known by now, and attaching gear moves
+            // it onto that shoe's total straight away.
+            if session.tracksDistance {
+                GearPickerRow(
+                    workoutType: session.workoutType,
+                    sessionID: session.serverID,
+                    primaryText: phase.primaryText,
+                    secondaryText: phase.secondaryText,
+                    accent: phase.accent
+                )
+            }
+
             if session.tracksDistance {
                 SessionRouteMap(
                     points: store.completedRoute,
