@@ -195,11 +195,15 @@ struct DayWorkoutView: View {
     }
 
     private var emptyDaySetup: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 22) {
             VStack(alignment: .leading, spacing: 5) {
-                Text("Build \(day.fullName)'s Workout")
+                Text("NO WORKOUT PLANNED")
+                    .font(.caption2.weight(.bold))
+                    .tracking(1.1)
+                    .foregroundStyle(WorkoutVisualPhase.prepare.accent)
+                Text("Choose how you want to train.")
                     .font(.title2.weight(.bold))
-                Text("Name your workout, reuse a previous one, and choose its type.")
+                Text("Reuse a plan to keep its history, or start fresh.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -213,7 +217,7 @@ struct DayWorkoutView: View {
             Button {
                 editor = .build(setupDraft)
             } label: {
-                Label("Build Workout", systemImage: "plus.circle.fill")
+                Label("Build Custom Workout", systemImage: "plus")
                     .font(.headline)
                     .frame(maxWidth: .infinity)
             }
@@ -361,11 +365,11 @@ struct DayWorkoutView: View {
     }
 
     private func plannedWorkout(_ workout: Workout) -> some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 24) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("READY WHEN YOU ARE")
+                        Text("TODAY")
                             .font(.caption.weight(.bold))
                             .foregroundStyle(WorkoutVisualPhase.prepare.accent)
                         Text(workout.name)
@@ -377,14 +381,12 @@ struct DayWorkoutView: View {
                         .foregroundStyle(WorkoutVisualPhase.prepare.accent)
                 }
 
-                HStack(spacing: 10) {
-                    PlanStat(value: workout.exercises.count, label: "Exercises")
-                    PlanStat(value: workout.totalSets, label: "Target Sets")
-                }
+                Text("\(workout.exercises.count) exercises · \(workout.totalSets) target sets")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
 
                 sessionStartControl(for: workout)
             }
-            .workoutCard()
 
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
@@ -417,6 +419,9 @@ struct DayWorkoutView: View {
                 } else {
                     ForEach(Array(workout.exercises.enumerated()), id: \.element.id) { index, exercise in
                         PlannedExerciseRow(position: index + 1, exercise: exercise)
+                        if index < workout.exercises.count - 1 {
+                            Divider()
+                        }
                     }
                 }
             }
@@ -1255,7 +1260,10 @@ struct DayWorkoutView: View {
             }
             .font(.subheadline.weight(.semibold))
         }
-        .workoutCard()
+        .padding(.vertical, 8)
+        .overlay(alignment: .bottom) {
+            Divider()
+        }
     }
 
     private var headerIcon: String {
@@ -1357,31 +1365,10 @@ private struct RecoveryMetricCard: View {
                 .minimumScaleFactor(0.65)
         }
         .foregroundStyle(
-            isEmphasized ? Color(hex: 0xF3F7F5) : phase.primaryText
+            isEmphasized ? phase.accent : phase.primaryText
         )
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background {
-            if isEmphasized {
-                LinearGradient(
-                    colors: [phase.accent, Color(hex: 0x3D7860)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            } else {
-                LinearGradient(
-                    colors: [phase.surfaceStart, phase.surfaceEnd],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.72), lineWidth: 1)
-        }
-        .shadow(color: phase.shadow, radius: 10, x: 4, y: 7)
+        .padding(.vertical, 6)
     }
 }
 
@@ -1540,7 +1527,7 @@ private struct PlannedExerciseRow: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
-        .workoutCard()
+        .padding(.vertical, 8)
     }
 }
 

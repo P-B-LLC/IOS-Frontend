@@ -353,9 +353,7 @@ struct WorkoutPlanFields: View {
                 Text("\(draft.exercises.count)")
                     .font(.subheadline.weight(.bold))
                     .foregroundStyle(phase.accent)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(phase.accent.opacity(0.12), in: Capsule())
+                    .accessibilityLabel("\(draft.exercises.count) exercises")
             }
 
             if !previousExercises.isEmpty {
@@ -373,13 +371,8 @@ struct WorkoutPlanFields: View {
                                     Text(suggestion.name)
                                         .font(.caption.weight(.medium))
                                         .lineLimit(1)
-                                        .padding(.horizontal, 11)
-                                        .padding(.vertical, 8)
                                         .foregroundStyle(phase.primaryText)
-                                        .background(
-                                            phase.primaryText.opacity(0.055),
-                                            in: RoundedRectangle(cornerRadius: 11, style: .continuous)
-                                        )
+                                        .padding(.vertical, 6)
                                 }
                                 .buttonStyle(.plain)
                                 .accessibilityLabel("Add \(suggestion.name)")
@@ -550,6 +543,9 @@ private struct ExercisePlanEditorCard: View {
                 }
             }
         }
-        .workoutCard()
+        .padding(.vertical, 10)
+        .overlay(alignment: .bottom) {
+            Divider()
+        }
     }
 }
