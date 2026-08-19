@@ -37,6 +37,8 @@ struct MealDetailView: View {
                     }
                     .padding(.horizontal)
                     .padding(.vertical, 12)
+                    // Pushed inside the tab, so the bottom bar overlays it.
+                    .padding(.bottom, RepbaseDesign.bottomBarClearance)
                 }
                 .repbaseScreen(phase)
                 .navigationTitle(meal.name)

@@ -93,6 +93,11 @@ struct DayWorkoutView: View {
             content
                 .padding(.horizontal)
                 .padding(.vertical, 12)
+                // Pushed inside the tab, so the bottom bar sits over it exactly
+                // as it does over the tab's own page. Without this the last row
+                // -- Remove, or the repeat toggle -- cannot be scrolled clear
+                // of the bar.
+                .padding(.bottom, RepbaseDesign.bottomBarClearance)
         }
         .repbaseScreen(visualPhase)
         .toolbar(visualPhase == .prepare ? .visible : .hidden, for: .navigationBar)

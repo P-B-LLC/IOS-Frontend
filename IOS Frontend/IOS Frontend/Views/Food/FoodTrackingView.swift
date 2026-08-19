@@ -306,6 +306,8 @@ struct FoodTrackingView: View {
             ScrollView {
                 NutritionBreakdownView(meals: store.meals(on: selectedDate))
                     .padding()
+                    // Pushed inside the tab, so the bottom bar overlays it.
+                    .padding(.bottom, RepbaseDesign.bottomBarClearance)
             }
             .navigationTitle("Nutrition Breakdown")
             .navigationBarTitleDisplayMode(.inline)
