@@ -498,10 +498,17 @@ private struct TrainingDashboardMetrics {
     }
 
     /// The distinct days trained, newest first.
+    ///
+    /// A session that recorded nothing is not one of them. Finishing is a tap,
+    /// not a consequence of logging, so a day can be completed empty — and an
+    /// empty day counted towards the weekly goal is the goal reporting
+    /// training that never happened.
     private var trainingDays: [TrainingDay] {
         var seen: Set<TrainingDay> = []
         var result: [TrainingDay] = []
-        for session in sessions.sorted(by: { $0.performedAt > $1.performedAt }) {
+        for session in sessions
+            .filter(\.recordedSomething)
+            .sorted(by: { $0.performedAt > $1.performedAt }) {
             let entry = TrainingDay(
                 workoutName: session.workoutName,
                 day: calendar.startOfDay(for: session.performedAt)

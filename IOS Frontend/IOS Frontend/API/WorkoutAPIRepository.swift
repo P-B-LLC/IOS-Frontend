@@ -892,7 +892,8 @@ actor WorkoutAPIRepository {
                     workoutName: session.workoutName,
                     performedAt: performedAt,
                     durationSeconds: session.durationSeconds,
-                    routeDistanceKilometers: session.routeDistanceKm
+                    routeDistanceKilometers: session.routeDistanceKm,
+                    loggedSetCount: session.loggedSetCount
                 )
             }
             .sorted { $0.performedAt > $1.performedAt }

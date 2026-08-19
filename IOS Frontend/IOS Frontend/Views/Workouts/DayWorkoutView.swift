@@ -19,6 +19,8 @@ struct DayWorkoutView: View {
     @State private var completedSession: CompletedWorkoutSession?
     /// The finished session being shared, if the summary's Share was tapped.
     @State private var sharedWorkout: SharedPostSource?
+    /// Set when Finish was tapped on a session that logged nothing.
+    @State private var isConfirmingEmptyFinish = false
 
     private var workout: Workout? {
         store.workout(on: day)
@@ -76,6 +78,19 @@ struct DayWorkoutView: View {
                     subject: completedSession?.session.workoutName ?? "Workout"
                 )
             }
+        }
+        .confirmationDialog(
+            "Nothing logged yet",
+            isPresented: $isConfirmingEmptyFinish,
+            titleVisibility: .visible
+        ) {
+            Button("Finish anyway", role: .destructive) { finishSession() }
+            Button("Keep going", role: .cancel) { }
+        } message: {
+            // Names the actual mistake rather than asking "are you sure": the
+            // numbers are typed into the boxes and then not committed, and
+            // nothing on screen says the circle is what saves them.
+            Text("Typing a weight or reps does not save the set — tap the circle on the right of each row. Finishing now records this workout with no sets.")
         }
         .overlay {
             if store.isSaving {
@@ -234,8 +249,22 @@ struct DayWorkoutView: View {
         !setupDraft.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
-    /// Saves the active session after the user confirms they are finished.
+    /// Finishes the session, asking first only when it recorded nothing.
+    ///
+    /// Every other destructive action in this app acts on the first tap, on
+    /// the user's instruction, and finishing normally still does. This one case
+    /// is not a confirmation of intent but a correction of a likely mistake:
+    /// typing into the boxes does not log a set, tapping the circle does, and
+    /// three sessions on this account were finished holding nothing at all.
     private func endSession() {
+        if activeSession?.loggedSetCount == 0 {
+            isConfirmingEmptyFinish = true
+            return
+        }
+        finishSession()
+    }
+
+    private func finishSession() {
         Task {
             if await store.endSession(on: day) != nil {
                 completedSession = store.completedSessions.last

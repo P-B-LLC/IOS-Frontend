@@ -6896,6 +6896,8 @@ public enum Components {
             public var elevationLossM: Swift.Double?
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/splits`.
             public var splits: [Components.Schemas.SessionSplit]
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/logged_set_count`.
+            public var loggedSetCount: Swift.Int
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/created_at`.
             public var createdAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/updated_at`.
@@ -6923,6 +6925,7 @@ public enum Components {
             ///   - elevationGainM:
             ///   - elevationLossM:
             ///   - splits:
+            ///   - loggedSetCount:
             ///   - createdAt:
             ///   - updatedAt:
             public init(
@@ -6946,6 +6949,7 @@ public enum Components {
                 elevationGainM: Swift.Double? = nil,
                 elevationLossM: Swift.Double? = nil,
                 splits: [Components.Schemas.SessionSplit],
+                loggedSetCount: Swift.Int,
                 createdAt: Foundation.Date,
                 updatedAt: Foundation.Date
             ) {
@@ -6969,6 +6973,7 @@ public enum Components {
                 self.elevationGainM = elevationGainM
                 self.elevationLossM = elevationLossM
                 self.splits = splits
+                self.loggedSetCount = loggedSetCount
                 self.createdAt = createdAt
                 self.updatedAt = updatedAt
             }
@@ -6993,6 +6998,7 @@ public enum Components {
                 case elevationGainM = "elevation_gain_m"
                 case elevationLossM = "elevation_loss_m"
                 case splits
+                case loggedSetCount = "logged_set_count"
                 case createdAt = "created_at"
                 case updatedAt = "updated_at"
             }

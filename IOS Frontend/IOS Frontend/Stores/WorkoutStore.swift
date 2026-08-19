@@ -135,10 +135,14 @@ final class WorkoutStore {
     /// Matched by name and calendar day, the same pair the dashboard counts
     /// by, so what a day says about itself and what the totals say cannot
     /// disagree.
+    /// Sessions that recorded nothing are left out, so a day finished without
+    /// a single set does not claim to be trained and does not close the day
+    /// against starting it properly.
     func finishedSessions(workoutName: String, on date: Date) -> [PostableSession] {
         let day = Calendar.current.startOfDay(for: date)
         return dashboardSessions.filter {
-            $0.workoutName.localizedCaseInsensitiveCompare(workoutName) == .orderedSame
+            $0.recordedSomething
+                && $0.workoutName.localizedCaseInsensitiveCompare(workoutName) == .orderedSame
                 && Calendar.current.startOfDay(for: $0.performedAt) == day
         }
     }

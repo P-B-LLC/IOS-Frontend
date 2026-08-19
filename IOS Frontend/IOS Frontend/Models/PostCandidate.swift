@@ -20,8 +20,19 @@ nonisolated struct PostableSession: Identifiable, Hashable, Sendable {
     let performedAt: Date
     let durationSeconds: Double?
     let routeDistanceKilometers: Double?
+    /// How many sets the session recorded, counted by the server.
+    let loggedSetCount: Int
 
     var id: Int { sessionID }
+
+    /// Whether the session recorded any training at all.
+    ///
+    /// A session is finished by tapping Finish, not by logging anything, so a
+    /// completed session can hold nothing. A run counts on its distance
+    /// instead, having no sets to log.
+    var recordedSomething: Bool {
+        loggedSetCount > 0 || (routeDistanceKilometers ?? 0) > 0
+    }
 }
 
 /// The three places a post can come from, in the order the picker offers them.
