@@ -250,7 +250,13 @@ struct PostCard: View {
                     statistic(volume.nutritionText, "kg lifted")
                 }
                 if let distance = workout.routeDistanceKm {
-                    statistic(distance.nutritionText, "km")
+                    statistic(
+                        String(
+                            format: "%.2f",
+                            ImperialUnits.miles(fromKilometers: distance.nutritionDouble)
+                        ),
+                        "mi"
+                    )
                 }
             }
 

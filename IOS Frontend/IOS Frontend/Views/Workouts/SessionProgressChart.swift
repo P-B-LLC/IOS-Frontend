@@ -133,17 +133,21 @@ struct SessionProgressChart: View {
 
     private var points: [ChartPoint] {
         history.compactMap { entry in
+            // Converted here rather than at the axis, so the plotted values and
+            // the caption underneath are the same numbers.
             let value: Double?
             switch metric {
             case .distance:
-                value = entry.distanceKilometers
+                value = ImperialUnits.miles(fromKilometers: entry.distanceKilometers)
             case .pace:
                 guard let pace = entry.paceSecondsPerKilometer, pace > 0 else {
                     return nil
                 }
-                // A ride reads in km/h, where higher is better; a run reads in
-                // seconds per km, where lower is.
-                value = workoutType == .biking ? 3600 / pace : pace
+                // A ride reads in mph, where higher is better; a run reads in
+                // seconds per mile, where lower is.
+                value = workoutType == .biking
+                    ? ImperialUnits.milesPerHour(fromKilometersPerHour: 3600 / pace)
+                    : ImperialUnits.paceSecondsPerMile(fromPerKilometer: pace)
             }
             guard let value else { return nil }
             return ChartPoint(id: entry.sessionID, date: entry.date, value: value)
@@ -172,27 +176,30 @@ struct SessionProgressChart: View {
         guard let first = points.first, let last = points.last, points.count > 1 else {
             return nil
         }
+        // `points` is already imperial, so this difference is in miles, mph, or
+        // seconds per mile. Converting again here would square the conversion
+        // and report a 1 mile gain as 0.62.
         let change = last.value - first.value
 
         switch metric {
         case .distance:
             guard abs(change) >= 0.05 else { return "Distance is holding steady." }
             return change > 0
-                ? String(format: "Up %.2f km since your first session.", change)
-                : String(format: "Down %.2f km since your first session.", -change)
+                ? String(format: "Up %.2f mi since your first session.", change)
+                : String(format: "Down %.2f mi since your first session.", -change)
         case .pace:
             if workoutType == .biking {
                 guard abs(change) >= 0.1 else { return "Speed is holding steady." }
                 return change > 0
-                    ? String(format: "Averaging %.1f km/h faster than your first ride.", change)
-                    : String(format: "Averaging %.1f km/h slower than your first ride.", -change)
+                    ? String(format: "Averaging %.1f mph faster than your first ride.", change)
+                    : String(format: "Averaging %.1f mph slower than your first ride.", -change)
             }
             guard abs(change) >= 1 else { return "Pace is holding steady." }
             let seconds = Int(abs(change).rounded())
             let text = String(format: "%d:%02d", seconds / 60, seconds % 60)
             return change < 0
-                ? "\(text) per km faster than your first session."
-                : "\(text) per km slower than your first session."
+                ? "\(text) per mile faster than your first session."
+                : "\(text) per mile slower than your first session."
         }
     }
 }

@@ -195,6 +195,54 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /api/v1/food/saved-meals/{id}/apply/`.
     /// - Remark: Generated from `#/paths//api/v1/food/saved-meals/{id}/apply//post(food_saved_meals_apply_create)`.
     func foodSavedMealsApplyCreate(_ input: Operations.FoodSavedMealsApplyCreate.Input) async throws -> Operations.FoodSavedMealsApplyCreate.Output
+    /// Shoes and bikes, and how far each has been.
+    ///
+    /// Mileage is summed here rather than counted on the device: it is a property
+    /// of every session the gear was used for, and only the server has them all.
+    ///
+    /// - Remark: HTTP `GET /api/v1/gear/`.
+    /// - Remark: Generated from `#/paths//api/v1/gear//get(gear_list)`.
+    func gearList(_ input: Operations.GearList.Input) async throws -> Operations.GearList.Output
+    /// Shoes and bikes, and how far each has been.
+    ///
+    /// Mileage is summed here rather than counted on the device: it is a property
+    /// of every session the gear was used for, and only the server has them all.
+    ///
+    /// - Remark: HTTP `POST /api/v1/gear/`.
+    /// - Remark: Generated from `#/paths//api/v1/gear//post(gear_create)`.
+    func gearCreate(_ input: Operations.GearCreate.Input) async throws -> Operations.GearCreate.Output
+    /// Shoes and bikes, and how far each has been.
+    ///
+    /// Mileage is summed here rather than counted on the device: it is a property
+    /// of every session the gear was used for, and only the server has them all.
+    ///
+    /// - Remark: HTTP `GET /api/v1/gear/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/gear/{id}//get(gear_retrieve)`.
+    func gearRetrieve(_ input: Operations.GearRetrieve.Input) async throws -> Operations.GearRetrieve.Output
+    /// Shoes and bikes, and how far each has been.
+    ///
+    /// Mileage is summed here rather than counted on the device: it is a property
+    /// of every session the gear was used for, and only the server has them all.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/gear/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/gear/{id}//patch(gear_partial_update)`.
+    func gearPartialUpdate(_ input: Operations.GearPartialUpdate.Input) async throws -> Operations.GearPartialUpdate.Output
+    /// Shoes and bikes, and how far each has been.
+    ///
+    /// Mileage is summed here rather than counted on the device: it is a property
+    /// of every session the gear was used for, and only the server has them all.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/gear/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/gear/{id}//put(gear_update)`.
+    func gearUpdate(_ input: Operations.GearUpdate.Input) async throws -> Operations.GearUpdate.Output
+    /// Shoes and bikes, and how far each has been.
+    ///
+    /// Mileage is summed here rather than counted on the device: it is a property
+    /// of every session the gear was used for, and only the server has them all.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/gear/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/gear/{id}//delete(gear_destroy)`.
+    func gearDestroy(_ input: Operations.GearDestroy.Input) async throws -> Operations.GearDestroy.Output
     /// Gyms, shared by everyone who trains at them.
     ///
     /// Not owned by anyone: a gym one user adds is exactly the gym the next user
@@ -1161,6 +1209,100 @@ extension APIProtocol {
             headers: headers,
             body: body
         ))
+    }
+    /// Shoes and bikes, and how far each has been.
+    ///
+    /// Mileage is summed here rather than counted on the device: it is a property
+    /// of every session the gear was used for, and only the server has them all.
+    ///
+    /// - Remark: HTTP `GET /api/v1/gear/`.
+    /// - Remark: Generated from `#/paths//api/v1/gear//get(gear_list)`.
+    public func gearList(
+        query: Operations.GearList.Input.Query = .init(),
+        headers: Operations.GearList.Input.Headers = .init()
+    ) async throws -> Operations.GearList.Output {
+        try await gearList(Operations.GearList.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Shoes and bikes, and how far each has been.
+    ///
+    /// Mileage is summed here rather than counted on the device: it is a property
+    /// of every session the gear was used for, and only the server has them all.
+    ///
+    /// - Remark: HTTP `POST /api/v1/gear/`.
+    /// - Remark: Generated from `#/paths//api/v1/gear//post(gear_create)`.
+    public func gearCreate(
+        headers: Operations.GearCreate.Input.Headers = .init(),
+        body: Operations.GearCreate.Input.Body
+    ) async throws -> Operations.GearCreate.Output {
+        try await gearCreate(Operations.GearCreate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Shoes and bikes, and how far each has been.
+    ///
+    /// Mileage is summed here rather than counted on the device: it is a property
+    /// of every session the gear was used for, and only the server has them all.
+    ///
+    /// - Remark: HTTP `GET /api/v1/gear/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/gear/{id}//get(gear_retrieve)`.
+    public func gearRetrieve(
+        path: Operations.GearRetrieve.Input.Path,
+        headers: Operations.GearRetrieve.Input.Headers = .init()
+    ) async throws -> Operations.GearRetrieve.Output {
+        try await gearRetrieve(Operations.GearRetrieve.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Shoes and bikes, and how far each has been.
+    ///
+    /// Mileage is summed here rather than counted on the device: it is a property
+    /// of every session the gear was used for, and only the server has them all.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/gear/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/gear/{id}//patch(gear_partial_update)`.
+    public func gearPartialUpdate(
+        path: Operations.GearPartialUpdate.Input.Path,
+        headers: Operations.GearPartialUpdate.Input.Headers = .init(),
+        body: Operations.GearPartialUpdate.Input.Body? = nil
+    ) async throws -> Operations.GearPartialUpdate.Output {
+        try await gearPartialUpdate(Operations.GearPartialUpdate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Shoes and bikes, and how far each has been.
+    ///
+    /// Mileage is summed here rather than counted on the device: it is a property
+    /// of every session the gear was used for, and only the server has them all.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/gear/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/gear/{id}//put(gear_update)`.
+    public func gearUpdate(
+        path: Operations.GearUpdate.Input.Path,
+        headers: Operations.GearUpdate.Input.Headers = .init(),
+        body: Operations.GearUpdate.Input.Body
+    ) async throws -> Operations.GearUpdate.Output {
+        try await gearUpdate(Operations.GearUpdate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Shoes and bikes, and how far each has been.
+    ///
+    /// Mileage is summed here rather than counted on the device: it is a property
+    /// of every session the gear was used for, and only the server has them all.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/gear/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/gear/{id}//delete(gear_destroy)`.
+    public func gearDestroy(path: Operations.GearDestroy.Input.Path) async throws -> Operations.GearDestroy.Output {
+        try await gearDestroy(Operations.GearDestroy.Input(path: path))
     }
     /// Gyms, shared by everyone who trains at them.
     ///
@@ -3237,6 +3379,174 @@ public enum Components {
                 case position
             }
         }
+        /// - Remark: Generated from `#/components/schemas/Gear`.
+        public struct Gear: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/Gear/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/Gear/owner`.
+            public var owner: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/Gear/kind`.
+            public var kind: Components.Schemas.GearKindEnum
+            /// - Remark: Generated from `#/components/schemas/Gear/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/Gear/brand`.
+            public var brand: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Gear/notes`.
+            public var notes: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Gear/initial_distance_km`.
+            public var initialDistanceKm: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Gear/retire_at_km`.
+            public var retireAtKm: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Gear/is_default`.
+            public var isDefault: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/Gear/retired_at`.
+            public var retiredAt: Foundation.Date?
+            /// - Remark: Generated from `#/components/schemas/Gear/is_retired`.
+            public var isRetired: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/Gear/total_distance_km`.
+            public var totalDistanceKm: Swift.Double
+            /// - Remark: Generated from `#/components/schemas/Gear/session_count`.
+            public var sessionCount: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/Gear/created_at`.
+            public var createdAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/Gear/updated_at`.
+            public var updatedAt: Foundation.Date
+            /// Creates a new `Gear`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - owner:
+            ///   - kind:
+            ///   - name:
+            ///   - brand:
+            ///   - notes:
+            ///   - initialDistanceKm:
+            ///   - retireAtKm:
+            ///   - isDefault:
+            ///   - retiredAt:
+            ///   - isRetired:
+            ///   - totalDistanceKm:
+            ///   - sessionCount:
+            ///   - createdAt:
+            ///   - updatedAt:
+            public init(
+                id: Swift.Int,
+                owner: Swift.Int,
+                kind: Components.Schemas.GearKindEnum,
+                name: Swift.String,
+                brand: Swift.String? = nil,
+                notes: Swift.String? = nil,
+                initialDistanceKm: Swift.String? = nil,
+                retireAtKm: Swift.String? = nil,
+                isDefault: Swift.Bool? = nil,
+                retiredAt: Foundation.Date? = nil,
+                isRetired: Swift.Bool,
+                totalDistanceKm: Swift.Double,
+                sessionCount: Swift.Int,
+                createdAt: Foundation.Date,
+                updatedAt: Foundation.Date
+            ) {
+                self.id = id
+                self.owner = owner
+                self.kind = kind
+                self.name = name
+                self.brand = brand
+                self.notes = notes
+                self.initialDistanceKm = initialDistanceKm
+                self.retireAtKm = retireAtKm
+                self.isDefault = isDefault
+                self.retiredAt = retiredAt
+                self.isRetired = isRetired
+                self.totalDistanceKm = totalDistanceKm
+                self.sessionCount = sessionCount
+                self.createdAt = createdAt
+                self.updatedAt = updatedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case owner
+                case kind
+                case name
+                case brand
+                case notes
+                case initialDistanceKm = "initial_distance_km"
+                case retireAtKm = "retire_at_km"
+                case isDefault = "is_default"
+                case retiredAt = "retired_at"
+                case isRetired = "is_retired"
+                case totalDistanceKm = "total_distance_km"
+                case sessionCount = "session_count"
+                case createdAt = "created_at"
+                case updatedAt = "updated_at"
+            }
+        }
+        /// * `shoe` - Shoe
+        /// * `bike` - Bike
+        ///
+        /// - Remark: Generated from `#/components/schemas/GearKindEnum`.
+        @frozen public enum GearKindEnum: String, Codable, Hashable, Sendable, CaseIterable {
+            case shoe = "shoe"
+            case bike = "bike"
+        }
+        /// - Remark: Generated from `#/components/schemas/GearRequest`.
+        public struct GearRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/GearRequest/kind`.
+            public var kind: Components.Schemas.GearKindEnum
+            /// - Remark: Generated from `#/components/schemas/GearRequest/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/GearRequest/brand`.
+            public var brand: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/GearRequest/notes`.
+            public var notes: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/GearRequest/initial_distance_km`.
+            public var initialDistanceKm: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/GearRequest/retire_at_km`.
+            public var retireAtKm: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/GearRequest/is_default`.
+            public var isDefault: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/GearRequest/retired_at`.
+            public var retiredAt: Foundation.Date?
+            /// Creates a new `GearRequest`.
+            ///
+            /// - Parameters:
+            ///   - kind:
+            ///   - name:
+            ///   - brand:
+            ///   - notes:
+            ///   - initialDistanceKm:
+            ///   - retireAtKm:
+            ///   - isDefault:
+            ///   - retiredAt:
+            public init(
+                kind: Components.Schemas.GearKindEnum,
+                name: Swift.String,
+                brand: Swift.String? = nil,
+                notes: Swift.String? = nil,
+                initialDistanceKm: Swift.String? = nil,
+                retireAtKm: Swift.String? = nil,
+                isDefault: Swift.Bool? = nil,
+                retiredAt: Foundation.Date? = nil
+            ) {
+                self.kind = kind
+                self.name = name
+                self.brand = brand
+                self.notes = notes
+                self.initialDistanceKm = initialDistanceKm
+                self.retireAtKm = retireAtKm
+                self.isDefault = isDefault
+                self.retiredAt = retiredAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case kind
+                case name
+                case brand
+                case notes
+                case initialDistanceKm = "initial_distance_km"
+                case retireAtKm = "retire_at_km"
+                case isDefault = "is_default"
+                case retiredAt = "retired_at"
+            }
+        }
         /// A gym, and how many people say they train there.
         ///
         /// - Remark: Generated from `#/components/schemas/Gym`.
@@ -3704,6 +4014,41 @@ public enum Components {
                 next: Swift.String? = nil,
                 previous: Swift.String? = nil,
                 results: [Components.Schemas.FoodMeal]
+            ) {
+                self.count = count
+                self.next = next
+                self.previous = previous
+                self.results = results
+            }
+            public enum CodingKeys: String, CodingKey {
+                case count
+                case next
+                case previous
+                case results
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PaginatedGearList`.
+        public struct PaginatedGearList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PaginatedGearList/count`.
+            public var count: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PaginatedGearList/next`.
+            public var next: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedGearList/previous`.
+            public var previous: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedGearList/results`.
+            public var results: [Components.Schemas.Gear]
+            /// Creates a new `PaginatedGearList`.
+            ///
+            /// - Parameters:
+            ///   - count:
+            ///   - next:
+            ///   - previous:
+            ///   - results:
+            public init(
+                count: Swift.Int,
+                next: Swift.String? = nil,
+                previous: Swift.String? = nil,
+                results: [Components.Schemas.Gear]
             ) {
                 self.count = count
                 self.next = next
@@ -4310,6 +4655,65 @@ public enum Components {
                 case date
                 case name
                 case position
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PatchedGearRequest`.
+        public struct PatchedGearRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PatchedGearRequest/kind`.
+            public var kind: Components.Schemas.GearKindEnum?
+            /// - Remark: Generated from `#/components/schemas/PatchedGearRequest/name`.
+            public var name: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedGearRequest/brand`.
+            public var brand: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedGearRequest/notes`.
+            public var notes: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedGearRequest/initial_distance_km`.
+            public var initialDistanceKm: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedGearRequest/retire_at_km`.
+            public var retireAtKm: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedGearRequest/is_default`.
+            public var isDefault: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/PatchedGearRequest/retired_at`.
+            public var retiredAt: Foundation.Date?
+            /// Creates a new `PatchedGearRequest`.
+            ///
+            /// - Parameters:
+            ///   - kind:
+            ///   - name:
+            ///   - brand:
+            ///   - notes:
+            ///   - initialDistanceKm:
+            ///   - retireAtKm:
+            ///   - isDefault:
+            ///   - retiredAt:
+            public init(
+                kind: Components.Schemas.GearKindEnum? = nil,
+                name: Swift.String? = nil,
+                brand: Swift.String? = nil,
+                notes: Swift.String? = nil,
+                initialDistanceKm: Swift.String? = nil,
+                retireAtKm: Swift.String? = nil,
+                isDefault: Swift.Bool? = nil,
+                retiredAt: Foundation.Date? = nil
+            ) {
+                self.kind = kind
+                self.name = name
+                self.brand = brand
+                self.notes = notes
+                self.initialDistanceKm = initialDistanceKm
+                self.retireAtKm = retireAtKm
+                self.isDefault = isDefault
+                self.retiredAt = retiredAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case kind
+                case name
+                case brand
+                case notes
+                case initialDistanceKm = "initial_distance_km"
+                case retireAtKm = "retire_at_km"
+                case isDefault = "is_default"
+                case retiredAt = "retired_at"
             }
         }
         /// A gym, and how many people say they train there.
@@ -6668,8 +7072,8 @@ public enum Components {
         ///
         /// - Remark: Generated from `#/components/schemas/SessionSplit`.
         public struct SessionSplit: Codable, Hashable, Sendable {
-            /// - Remark: Generated from `#/components/schemas/SessionSplit/kilometer`.
-            public var kilometer: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/SessionSplit/number`.
+            public var number: Swift.Int
             /// - Remark: Generated from `#/components/schemas/SessionSplit/seconds`.
             public var seconds: Swift.Double
             /// - Remark: Generated from `#/components/schemas/SessionSplit/distance_km`.
@@ -6677,20 +7081,20 @@ public enum Components {
             /// Creates a new `SessionSplit`.
             ///
             /// - Parameters:
-            ///   - kilometer:
+            ///   - number:
             ///   - seconds:
             ///   - distanceKm:
             public init(
-                kilometer: Swift.Int,
+                number: Swift.Int,
                 seconds: Swift.Double,
                 distanceKm: Swift.Double
             ) {
-                self.kilometer = kilometer
+                self.number = number
                 self.seconds = seconds
                 self.distanceKm = distanceKm
             }
             public enum CodingKeys: String, CodingKey {
-                case kilometer
+                case number
                 case seconds
                 case distanceKm = "distance_km"
             }
@@ -12299,6 +12703,776 @@ public enum Operations {
                     .json
                 ]
             }
+        }
+    }
+    /// Shoes and bikes, and how far each has been.
+    ///
+    /// Mileage is summed here rather than counted on the device: it is a property
+    /// of every session the gear was used for, and only the server has them all.
+    ///
+    /// - Remark: HTTP `GET /api/v1/gear/`.
+    /// - Remark: Generated from `#/paths//api/v1/gear//get(gear_list)`.
+    public enum GearList {
+        public static let id: Swift.String = "gear_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/gear/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// Retired gear is left out unless this is true, so the picker offers only what is still in use.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/gear/GET/query/include_retired`.
+                public var includeRetired: Swift.Bool?
+                /// - Remark: Generated from `#/paths/api/v1/gear/GET/query/kind`.
+                @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case bike = "bike"
+                    case shoe = "shoe"
+                }
+                /// Only shoes, or only bikes.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/gear/GET/query/kind`.
+                public var kind: Operations.GearList.Input.Query.KindPayload?
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/gear/GET/query/page`.
+                public var page: Swift.Int?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - includeRetired: Retired gear is left out unless this is true, so the picker offers only what is still in use.
+                ///   - kind: Only shoes, or only bikes.
+                ///   - page: A page number within the paginated result set.
+                public init(
+                    includeRetired: Swift.Bool? = nil,
+                    kind: Operations.GearList.Input.Query.KindPayload? = nil,
+                    page: Swift.Int? = nil
+                ) {
+                    self.includeRetired = includeRetired
+                    self.kind = kind
+                    self.page = page
+                }
+            }
+            public var query: Operations.GearList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/gear/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GearList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GearList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.GearList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.GearList.Input.Query = .init(),
+                headers: Operations.GearList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/gear/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/gear/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedGearList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedGearList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.GearList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.GearList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/gear//get(gear_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.GearList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.GearList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Shoes and bikes, and how far each has been.
+    ///
+    /// Mileage is summed here rather than counted on the device: it is a property
+    /// of every session the gear was used for, and only the server has them all.
+    ///
+    /// - Remark: HTTP `POST /api/v1/gear/`.
+    /// - Remark: Generated from `#/paths//api/v1/gear//post(gear_create)`.
+    public enum GearCreate {
+        public static let id: Swift.String = "gear_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/gear/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GearCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GearCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.GearCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/gear/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/gear/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.GearRequest)
+            }
+            public var body: Operations.GearCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.GearCreate.Input.Headers = .init(),
+                body: Operations.GearCreate.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Created: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/gear/POST/responses/201/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/gear/POST/responses/201/content/application\/json`.
+                    case json(Components.Schemas.Gear)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Gear {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.GearCreate.Output.Created.Body
+                /// Creates a new `Created`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.GearCreate.Output.Created.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/gear//post(gear_create)/responses/201`.
+            ///
+            /// HTTP response code: `201 created`.
+            case created(Operations.GearCreate.Output.Created)
+            /// The associated value of the enum case if `self` is `.created`.
+            ///
+            /// - Throws: An error if `self` is not `.created`.
+            /// - SeeAlso: `.created`.
+            public var created: Operations.GearCreate.Output.Created {
+                get throws {
+                    switch self {
+                    case let .created(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "created",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Shoes and bikes, and how far each has been.
+    ///
+    /// Mileage is summed here rather than counted on the device: it is a property
+    /// of every session the gear was used for, and only the server has them all.
+    ///
+    /// - Remark: HTTP `GET /api/v1/gear/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/gear/{id}//get(gear_retrieve)`.
+    public enum GearRetrieve {
+        public static let id: Swift.String = "gear_retrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/gear/{id}/GET/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this gear.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/gear/{id}/GET/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this gear.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.GearRetrieve.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/gear/{id}/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GearRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GearRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.GearRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.GearRetrieve.Input.Path,
+                headers: Operations.GearRetrieve.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/gear/{id}/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/gear/{id}/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Gear)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Gear {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.GearRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.GearRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/gear/{id}//get(gear_retrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.GearRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.GearRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Shoes and bikes, and how far each has been.
+    ///
+    /// Mileage is summed here rather than counted on the device: it is a property
+    /// of every session the gear was used for, and only the server has them all.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/gear/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/gear/{id}//patch(gear_partial_update)`.
+    public enum GearPartialUpdate {
+        public static let id: Swift.String = "gear_partial_update"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/gear/{id}/PATCH/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this gear.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/gear/{id}/PATCH/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this gear.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.GearPartialUpdate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/gear/{id}/PATCH/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GearPartialUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GearPartialUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.GearPartialUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/gear/{id}/PATCH/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/gear/{id}/PATCH/requestBody/content/application\/json`.
+                case json(Components.Schemas.PatchedGearRequest)
+            }
+            public var body: Operations.GearPartialUpdate.Input.Body?
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.GearPartialUpdate.Input.Path,
+                headers: Operations.GearPartialUpdate.Input.Headers = .init(),
+                body: Operations.GearPartialUpdate.Input.Body? = nil
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/gear/{id}/PATCH/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/gear/{id}/PATCH/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Gear)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Gear {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.GearPartialUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.GearPartialUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/gear/{id}//patch(gear_partial_update)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.GearPartialUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.GearPartialUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Shoes and bikes, and how far each has been.
+    ///
+    /// Mileage is summed here rather than counted on the device: it is a property
+    /// of every session the gear was used for, and only the server has them all.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/gear/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/gear/{id}//put(gear_update)`.
+    public enum GearUpdate {
+        public static let id: Swift.String = "gear_update"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/gear/{id}/PUT/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this gear.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/gear/{id}/PUT/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this gear.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.GearUpdate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/gear/{id}/PUT/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GearUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GearUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.GearUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/gear/{id}/PUT/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/gear/{id}/PUT/requestBody/content/application\/json`.
+                case json(Components.Schemas.GearRequest)
+            }
+            public var body: Operations.GearUpdate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.GearUpdate.Input.Path,
+                headers: Operations.GearUpdate.Input.Headers = .init(),
+                body: Operations.GearUpdate.Input.Body
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/gear/{id}/PUT/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/gear/{id}/PUT/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Gear)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Gear {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.GearUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.GearUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/gear/{id}//put(gear_update)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.GearUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.GearUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Shoes and bikes, and how far each has been.
+    ///
+    /// Mileage is summed here rather than counted on the device: it is a property
+    /// of every session the gear was used for, and only the server has them all.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/gear/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/gear/{id}//delete(gear_destroy)`.
+    public enum GearDestroy {
+        public static let id: Swift.String = "gear_destroy"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/gear/{id}/DELETE/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this gear.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/gear/{id}/DELETE/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this gear.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.GearDestroy.Input.Path
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            public init(path: Operations.GearDestroy.Input.Path) {
+                self.path = path
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct NoContent: Sendable, Hashable {
+                /// Creates a new `NoContent`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/gear/{id}//delete(gear_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            case noContent(Operations.GearDestroy.Output.NoContent)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/gear/{id}//delete(gear_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            public static var noContent: Self {
+                .noContent(.init())
+            }
+            /// The associated value of the enum case if `self` is `.noContent`.
+            ///
+            /// - Throws: An error if `self` is not `.noContent`.
+            /// - SeeAlso: `.noContent`.
+            public var noContent: Operations.GearDestroy.Output.NoContent {
+                get throws {
+                    switch self {
+                    case let .noContent(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "noContent",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
         }
     }
     /// Gyms, shared by everyone who trains at them.

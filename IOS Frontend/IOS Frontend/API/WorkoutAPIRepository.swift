@@ -708,7 +708,7 @@ actor WorkoutAPIRepository {
                 elevationLossMeters: session.elevationLossM,
                 splits: (session.splits ?? []).map {
                     SessionSplit(
-                        kilometer: Int($0.kilometer ?? 0),
+                        number: Int(-e.number ?? 0),
                         seconds: $0.seconds ?? 0,
                         distanceKilometers: $0.distanceKm ?? 1
                     )

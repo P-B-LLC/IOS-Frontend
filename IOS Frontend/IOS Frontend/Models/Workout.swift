@@ -385,16 +385,22 @@ nonisolated struct SessionHistoryPoint: Identifiable, Hashable, Sendable {
 /// One kilometer of a session, as timed by the backend. The last split of a
 /// run usually covers less than a kilometer.
 nonisolated struct SessionSplit: Identifiable, Hashable, Sendable {
-    let kilometer: Int
+    /// 1 for the first mile, 2 for the second, and so on.
+    let number: Int
     let seconds: Double
+    /// Still kilometres. Every distance the server sends is, so a full mile
+    /// split reads 1.609; it is converted only where it is shown.
     let distanceKilometers: Double
 
-    var id: Int { kilometer }
+    var id: Int { number }
 
-    var isPartial: Bool { distanceKilometers < 0.995 }
+    /// Short of a full mile, which the last split usually is.
+    var isPartial: Bool {
+        distanceKilometers < (ImperialUnits.metersPerMile / 1000) - 0.005
+    }
 
-    /// Pace for this split, normalized so a partial final kilometer is
-    /// comparable with the full ones rather than looking impossibly fast.
+    /// Pace for this split, normalized so a partial final mile is comparable
+    /// with the full ones rather than looking impossibly fast.
     var paceSecondsPerKilometer: Double? {
         guard distanceKilometers > 0 else { return nil }
         return seconds / distanceKilometers
@@ -436,9 +442,12 @@ nonisolated struct SessionRouteSummary: Hashable, Sendable {
         self.splits = splits
     }
 
+    // Every figure below is stored in kilometres and metres, as the server
+    // computed it, and converted only on the way to being read.
+
     var elevationGainText: String? {
         guard let elevationGainMeters, elevationGainMeters > 0 else { return nil }
-        return String(format: "%.0f m", elevationGainMeters)
+        return ImperialUnits.elevationText(meters: elevationGainMeters)
     }
 
     var paceText: String? { Self.paceText(paceSecondsPerKilometer) }
@@ -446,24 +455,23 @@ nonisolated struct SessionRouteSummary: Hashable, Sendable {
 
     var averageSpeedText: String? {
         guard let averageSpeedKilometersPerHour else { return nil }
-        return String(format: "%.1f km/h", averageSpeedKilometersPerHour)
+        return ImperialUnits.speedText(kilometersPerHour: averageSpeedKilometersPerHour)
     }
 
     var maxSpeedText: String? {
         guard let maxSpeedKilometersPerHour else { return nil }
-        return String(format: "%.1f km/h", maxSpeedKilometersPerHour)
+        return ImperialUnits.speedText(kilometersPerHour: maxSpeedKilometersPerHour)
     }
 
     var distanceText: String? {
         guard let distanceKilometers else { return nil }
-        return String(format: "%.2f km", distanceKilometers)
+        return ImperialUnits.distanceText(kilometers: distanceKilometers)
     }
 
-    /// Formats seconds-per-kilometer as "5:30 /km".
+    /// Formats seconds-per-kilometer as "8:51 /mi".
     static func paceText(_ seconds: Double?) -> String? {
         guard let seconds, seconds > 0, seconds.isFinite else { return nil }
-        let total = Int(seconds.rounded())
-        return String(format: "%d:%02d /km", total / 60, total % 60)
+        return ImperialUnits.paceText(secondsPerKilometer: seconds)
     }
 
     /// Formats a duration as m:ss, used for split times.

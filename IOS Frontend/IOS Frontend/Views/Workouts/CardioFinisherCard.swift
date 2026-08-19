@@ -139,7 +139,7 @@ struct CardioFinisherCard: View {
                         Color.primary.opacity(0.05),
                         in: RoundedRectangle(cornerRadius: 9)
                     )
-                Text("km")
+                Text("mi")
                     .font(.caption)
                     .foregroundStyle(phase.secondaryText)
             }
@@ -151,10 +151,13 @@ struct CardioFinisherCard: View {
             Button {
                 Task {
                     isSaving = true
+                    // Typed in miles, stored in kilometres like every other
+                    // distance. Converting at the edge keeps one unit below
+                    // the screen, which is the only way the sums stay right.
                     await store.finishCardio(
                         distanceKilometers: Double(
                             distanceText.trimmingCharacters(in: .whitespaces)
-                        )
+                        ).map { $0 * ImperialUnits.metersPerMile / 1000 }
                     )
                     isSaving = false
                 }

@@ -127,10 +127,11 @@ struct RouteTrackingCard: View {
     }
 
     /// Distance, pace or speed, and climb as the activity unfolds. A ride reads
-    /// in km/h and a run or swim in pace, since that is how each is judged.
+    /// in mph and a run or swim in pace, since that is how each is judged.
     ///
     /// These are running estimates for the screen. When the session ends, the
     /// track is measured by the backend and those are the figures that count.
+    /// The tracker holds kilometres throughout; miles are made here.
     private var liveReadout: some View {
         let isRide = workoutType == .biking
 
@@ -139,31 +140,42 @@ struct RouteTrackingCard: View {
         let rate: String = isRide
             ? (tracker.liveAverageSpeedKilometersPerHour
                 ?? tracker.currentSpeedKilometersPerHour)
-                .map { String(format: "%.1f", $0) } ?? "--"
+                .map {
+                    String(
+                        format: "%.1f",
+                        ImperialUnits.milesPerHour(fromKilometersPerHour: $0)
+                    )
+                } ?? "--"
             : SessionRouteSummary.paceText(
                 tracker.liveAveragePaceSecondsPerKilometer
                     ?? tracker.currentPaceSecondsPerKilometer
-              )?.replacingOccurrences(of: " /km", with: "") ?? "--"
+              )?.replacingOccurrences(of: " /mi", with: "") ?? "--"
 
         return HStack(alignment: .top, spacing: 0) {
             LiveStat(
                 title: "DISTANCE",
-                value: String(format: "%.2f", tracker.liveDistanceKilometers),
-                unit: "km",
+                value: String(
+                    format: "%.2f",
+                    ImperialUnits.miles(fromKilometers: tracker.liveDistanceKilometers)
+                ),
+                unit: "mi",
                 accent: phase.accent,
                 secondary: phase.secondaryText
             )
             LiveStat(
                 title: isRide ? "SPEED" : "PACE",
                 value: rate,
-                unit: isRide ? "km/h" : "/km",
+                unit: isRide ? "mph" : "/mi",
                 accent: phase.accent,
                 secondary: phase.secondaryText
             )
             LiveStat(
                 title: "CLIMB",
-                value: String(format: "%.0f", tracker.liveElevationGainMeters),
-                unit: "m",
+                value: String(
+                    format: "%.0f",
+                    ImperialUnits.feet(fromMeters: tracker.liveElevationGainMeters)
+                ),
+                unit: "ft",
                 accent: phase.accent,
                 secondary: phase.secondaryText
             )

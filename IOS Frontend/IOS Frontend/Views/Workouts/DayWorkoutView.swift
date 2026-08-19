@@ -427,7 +427,7 @@ struct DayWorkoutView: View {
                         )
                     }
 
-                    Text("Each bar is one kilometer — shorter is faster. Even bars mean an evenly paced effort.")
+                    Text("Each bar is one mile — shorter is faster. Even bars mean an evenly paced effort.")
                         .font(.caption2)
                         .foregroundStyle(phase.secondaryText)
                 }
@@ -1013,26 +1013,26 @@ struct DayWorkoutView: View {
                     RecoveryMetricCard(
                         title: "DISTANCE",
                         value: store.routeSummary?.distanceText
-                            .map { $0.replacingOccurrences(of: " km", with: "") } ?? "--",
-                        detail: "KILOMETERS",
+                            .map { $0.replacingOccurrences(of: " mi", with: "") } ?? "--",
+                        detail: "MILES",
                         isEmphasized: true
                     )
                     RecoveryMetricCard(
                         title: session.workoutType == .biking ? "AVG SPEED" : "AVG PACE",
                         value: session.workoutType == .biking
                             ? (store.routeSummary?.averageSpeedText
-                                .map { $0.replacingOccurrences(of: " km/h", with: "") } ?? "--")
+                                .map { $0.replacingOccurrences(of: " mph", with: "") } ?? "--")
                             : (store.routeSummary?.movingPaceText
                                 ?? store.routeSummary?.paceText)?
-                                .replacingOccurrences(of: " /km", with: "") ?? "--",
-                        detail: session.workoutType == .biking ? "KM/H" : "PER KM",
+                                .replacingOccurrences(of: " /mi", with: "") ?? "--",
+                        detail: session.workoutType == .biking ? "MPH" : "PER MILE",
                         isEmphasized: false
                     )
                     RecoveryMetricCard(
                         title: "CLIMB",
                         value: store.routeSummary?.elevationGainText
                             .map { $0.replacingOccurrences(of: " m", with: "") } ?? "0",
-                        detail: "METERS",
+                        detail: "FEET",
                         isEmphasized: false
                     )
                 }
@@ -1505,7 +1505,7 @@ private struct PersonalRecordRow: View {
 }
 
 /// One backend-computed route figure shown after a cardio session.
-/// One kilometer split as a bar, so an uneven effort is visible at a glance.
+/// One mile split as a bar, so an uneven effort is visible at a glance.
 private struct SplitRow: View {
     let split: SessionSplit
     let slowestPace: Double?
@@ -1539,11 +1539,15 @@ private struct SplitRow: View {
 
     private var label: String {
         split.isPartial
-            ? String(format: "km %d (%.2f)", split.kilometer, split.distanceKilometers)
-            : "km \(split.kilometer)"
+            ? String(
+                format: "mi %d (%.2f)",
+                split.number,
+                ImperialUnits.miles(fromKilometers: split.distanceKilometers)
+              )
+            : "mi \(split.number)"
     }
 
-    /// Bars are scaled by pace, not raw time, so a partial final kilometer is
+    /// Bars are scaled by pace, not raw time, so a partial final mile is
     /// compared fairly against the full ones.
     private var fraction: Double {
         guard let slowestPace, slowestPace > 0,
