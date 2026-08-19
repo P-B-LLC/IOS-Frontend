@@ -1018,7 +1018,10 @@ the compiler this session and are worth remembering:
    `REPBASE_*_PREVIEW` flags boot straight into a screen that is otherwise
    only reachable by tapping — `REPBASE_HEALTH_PREVIEW=widget` goes further and
    draws one card alone, because on Home that card runs below the fold and no
-   script can scroll to the rest of it — **relaunch without the flag afterwards**, or the
+   script can scroll to the rest of it. `REPBASE_ROUTE_PREVIEW=1` draws the
+   finished-run map on a canned track, and `=empty` draws the no-track state,
+   which is the one a simulator session actually produces: it cannot move, so
+   every run recorded there has no route — **relaunch without the flag afterwards**, or the
    user is left looking at a one-page app full of sample data. And an **iPad**
    simulator often fits a whole scrolling page in one screenshot; but a page
    that does not overflow an iPad is not evidence about scrolling on a phone,
