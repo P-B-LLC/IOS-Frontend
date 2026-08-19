@@ -84,21 +84,25 @@ struct PlannerView: View {
 
     // MARK: - Adding
 
+    /// Two peers, not a primary and a secondary.
+    ///
+    /// A filled button beside a plain one says one of them is the main thing to
+    /// do. Adding a task and adding an event are the same size of decision, so
+    /// they carry the same weight and differ by hue instead: the accent for a
+    /// task, sage for an event, both from the app's own palette.
     private func addButtons(timeOfDay: HomeTimeOfDay) -> some View {
         HStack(spacing: 10) {
             addButton(
                 "Add Task",
                 systemImage: "checkmark.circle",
                 kind: .task,
-                timeOfDay: timeOfDay,
-                isProminent: true
+                fill: timeOfDay.accent
             )
             addButton(
                 "Add Event",
                 systemImage: "calendar",
                 kind: .event,
-                timeOfDay: timeOfDay,
-                isProminent: false
+                fill: RepbasePalette.sage
             )
         }
     }
@@ -107,8 +111,7 @@ struct PlannerView: View {
         _ title: String,
         systemImage: String,
         kind: PlannerKind,
-        timeOfDay: HomeTimeOfDay,
-        isProminent: Bool
+        fill: Color
     ) -> some View {
         Button {
             // The day picked on the calendar is carried into the editor, so a
@@ -117,18 +120,12 @@ struct PlannerView: View {
         } label: {
             Label(title, systemImage: systemImage)
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(isProminent ? Color(hex: 0xFFFFFF) : timeOfDay.primaryText)
+                .foregroundStyle(RepbasePalette.paper)
                 .frame(maxWidth: .infinity, minHeight: 44)
                 .background(
-                    isProminent ? timeOfDay.accent : timeOfDay.surfaceRaised,
+                    fill,
                     in: RoundedRectangle(cornerRadius: RepbaseDesign.controlRadius)
                 )
-                .overlay {
-                    if !isProminent {
-                        RoundedRectangle(cornerRadius: RepbaseDesign.controlRadius)
-                            .strokeBorder(timeOfDay.border, lineWidth: 1)
-                    }
-                }
         }
         .buttonStyle(.plain)
         .disabled(!store.isEditingEnabled)
