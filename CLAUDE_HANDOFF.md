@@ -849,6 +849,21 @@ map onto Repbase's four types. Everything else in Health returns nil and stays
 there. A tennis match has no row this app can draw, and inventing a type for
 it would put something in the training history that nothing can explain.
 
+### Asking is Apple's job, not the page's
+
+The card first offered a "Connect Apple Health" button, and an explanation
+when Health had not answered. Both were prompts on the screen, and the user
+wanted neither: **the app requests Health access itself, once, and the only
+thing shown is Apple's own sheet.** The card renders only when there are steps
+to draw — no permission state, no empty state, no error text. A Home page that
+explains why a feature is quiet is louder than one that simply is.
+
+HealthKit shows its sheet once per app install and does nothing on later
+calls, so asking automatically cannot become nagging. Two consequences when
+testing: installing **over** an existing build will not show the sheet again,
+and `simctl uninstall` resets it. Uninstalling does **not** sign the user out —
+the token is in the Keychain, which lives outside the app container.
+
 ### One trap worth knowing
 
 `record` first returned the stored rows. drf-spectacular, seeing a paginated
@@ -856,6 +871,21 @@ viewset, described that as a pagination envelope while the action actually
 returned a bare array — the generated client would have failed to decode every
 sync. The Swift compiler caught it as a type error. It now answers **204**:
 nothing needed the echo, because the store re-reads through `list` anyway.
+
+### The 404 that was not in the app
+
+Steps came back `HTTP 404` in the running app while every route was correctly
+declared. The dev server runs `--noreload` and was still serving code from
+ninety minutes earlier; the restart had been written as
+`launchctl kickstart ... | head -2 || pkill ...`, and a pipeline's exit status
+is the last command's, so `head` succeeding hid `kickstart` failing.
+
+The first diagnosis was wrong too. `/api/v1/sessions/import-health/` answered
+`401`, which looked like proof the route existed — but the router matches it as
+`sessions/{pk}/` with `pk` of `import-health` and rejects on auth before ever
+resolving the pk. **Probe a path the router cannot mistake for a detail route.**
+`restart-devserver.sh` in the backend repo now does the restart and the check
+together, and fails loudly on 404.
 
 ## Contract additions this session
 
@@ -969,8 +999,9 @@ the compiler this session and are worth remembering:
    (a 4 MB image posted and served back), the previous-set hints, a completed
    session and its overview. What has not: **Redo Session, Undo, the calendar
    entry's Share, the empty-finish notice, and — as of August 19 — the
-   Connect Apple Health button.** The Health permission sheet itself has been
-   seen and photographed, but nobody has pressed Allow, so no real steps or
+   Connect Apple Health button — since removed; Apple's sheet now appears on
+   its own.** The sheet has been seen and photographed appearing automatically
+   on a fresh install, but nobody has pressed Allow, so no real steps or
    workouts have ever made the round trip; the widget has only been seen with
    sample days behind it. Every UI defect found this
    session was in something on that second list, and each was found by the
