@@ -18005,12 +18005,28 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/set-entries/GET/query/page`.
                 public var page: Swift.Int?
+                /// Return every set logged in this session, across all of its exercises. Lets a client read one whole session in a single request instead of one request per exercise.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/set-entries/GET/query/session`.
+                public var session: Swift.Int?
+                /// Return only the sets logged against this session exercise.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/set-entries/GET/query/session_exercise`.
+                public var sessionExercise: Swift.Int?
                 /// Creates a new `Query`.
                 ///
                 /// - Parameters:
                 ///   - page: A page number within the paginated result set.
-                public init(page: Swift.Int? = nil) {
+                ///   - session: Return every set logged in this session, across all of its exercises. Lets a client read one whole session in a single request instead of one request per exercise.
+                ///   - sessionExercise: Return only the sets logged against this session exercise.
+                public init(
+                    page: Swift.Int? = nil,
+                    session: Swift.Int? = nil,
+                    sessionExercise: Swift.Int? = nil
+                ) {
                     self.page = page
+                    self.session = session
+                    self.sessionExercise = sessionExercise
                 }
             }
             public var query: Operations.SetEntriesList.Input.Query

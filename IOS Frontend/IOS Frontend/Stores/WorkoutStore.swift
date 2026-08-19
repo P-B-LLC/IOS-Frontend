@@ -41,6 +41,10 @@ final class WorkoutStore {
     /// would pay for the pages on sign-in.
     private(set) var postableSessions: [PostableSession] = []
     private(set) var isLoadingPostableSessions = false
+    /// What was lifted last time, by exercise id, for the session in progress.
+    /// Read once when a session starts; empty when this workout has never been
+    /// finished before, which is what a first session should show.
+    private(set) var previousSets: [Int: [PreviousSet]] = [:]
     /// Completed sessions used by the training dashboard. These are loaded
     /// from the API and reduced into totals, streaks, and weekly trends by the
     /// view; the dashboard never fabricates progress values.
@@ -108,6 +112,7 @@ final class WorkoutStore {
         // One user's workout names must never be offered to the next.
         knownWorkouts = []
         postableSessions = []
+        previousSets = [:]
         isLoadingPostableSessions = false
         dashboardSessions = []
         isLoadingDashboardSessions = false
@@ -119,6 +124,40 @@ final class WorkoutStore {
         personalRecords = []
         liftProgress = []
         routeSummary = nil
+    }
+
+    // MARK: - Last time
+
+    /// The set the hint should show: the same set number from the last time
+    /// this exercise was trained in this workout.
+    ///
+    /// Falls back to that exercise's last set when the previous session was
+    /// shorter than this one, so a fourth set added today still has something
+    /// to aim at rather than nothing.
+    func previousSet(exerciseServerID: Int?, setNumber: Int) -> PreviousSet? {
+        guard let exerciseServerID, let sets = previousSets[exerciseServerID] else {
+            return nil
+        }
+        return sets.first { $0.setNumber == setNumber } ?? sets.last
+    }
+
+    /// Reads what was lifted last time, for the session that just started.
+    ///
+    /// A failure is swallowed rather than surfaced. This is a hint beside a
+    /// field the user is about to type in; a red banner over a working session
+    /// because last week could not be read would cost more than the hint is
+    /// worth.
+    private func loadPreviousSets(
+        for session: ActiveWorkoutSession,
+        using repository: WorkoutAPIRepository,
+        generation: UUID
+    ) async {
+        let loaded = try? await repository.previousSets(
+            workoutName: session.workoutName,
+            excludingSessionID: session.serverID
+        )
+        guard connectionGeneration == generation else { return }
+        previousSets = loaded ?? [:]
     }
 
     // MARK: - Posting
@@ -390,10 +429,20 @@ final class WorkoutStore {
                 guard connectionGeneration == generation else { return }
                 activeSession = session
                 routeSummary = nil
+                previousSets = [:]
                 // Only a run, ride, or swim records a track, and only for as
                 // long as its session is active.
                 if session.tracksDistance {
                     routeTracker.startTracking()
+                }
+                // Read after the session is on screen rather than before, so
+                // the first set can be typed while last week is still loading.
+                if !session.tracksDistance {
+                    await loadPreviousSets(
+                        for: session,
+                        using: repository,
+                        generation: generation
+                    )
                 }
             } catch {
                 guard connectionGeneration == generation else { return }

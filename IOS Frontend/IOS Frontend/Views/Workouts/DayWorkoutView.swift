@@ -726,7 +726,11 @@ struct DayWorkoutView: View {
                     Text("Log Your Sets")
                         .font(.title3.weight(.bold))
                         .foregroundStyle(phase.primaryText)
-                    Text("Enter reps and optional weight, then tap the checkmark.")
+                    Text(
+                        store.previousSets.isEmpty
+                            ? "Enter reps and optional weight, then tap the checkmark."
+                            : "Faded numbers are what you lifted last time. Enter today's, then tap the checkmark."
+                    )
                         .font(.subheadline)
                         .foregroundStyle(phase.secondaryText)
                 }
@@ -982,12 +986,23 @@ struct DayWorkoutView: View {
             .foregroundStyle(.secondary)
 
             ForEach(exercise.sets) { set in
+                // What this set was last time, so an empty field says "60 × 8"
+                // rather than "0". Only a hint: it is never written in, because
+                // what gets logged has to be what was lifted today.
+                let last = store.previousSet(
+                    exerciseServerID: exercise.exerciseServerID,
+                    setNumber: set.setNumber
+                )
+
                 HStack(spacing: 8) {
                     Text("\(set.setNumber)")
                         .font(.subheadline.weight(.semibold).monospacedDigit())
                         .frame(width: 34)
 
-                    TextField("0", text: weightBinding(exerciseID: exercise.id, setID: set.id))
+                    TextField(
+                        last?.weightKilograms?.nutritionText ?? "0",
+                        text: weightBinding(exerciseID: exercise.id, setID: set.id)
+                    )
                         .keyboardType(.decimalPad)
                         .multilineTextAlignment(.center)
                         .padding(.vertical, 10)
@@ -1000,7 +1015,10 @@ struct DayWorkoutView: View {
                         .disabled(set.isLogged)
                         .accessibilityLabel("Set \(set.setNumber) weight in kilograms")
 
-                    TextField("0", text: repsBinding(exerciseID: exercise.id, setID: set.id))
+                    TextField(
+                        last?.reps.map(String.init) ?? "0",
+                        text: repsBinding(exerciseID: exercise.id, setID: set.id)
+                    )
                         .keyboardType(.numberPad)
                         .multilineTextAlignment(.center)
                         .padding(.vertical, 10)

@@ -573,3 +573,24 @@ nonisolated struct LoadedWeek: Sendable {
     var schedule: [Weekday: [Workout]]
     var library: [WorkoutSummary]
 }
+
+/// One set from the last time a workout was trained.
+///
+/// Shown as the hint in an empty field, so a set starts by saying what was
+/// done last time rather than "0". It is never written into the field: what
+/// gets logged has to be what the user actually lifted today.
+nonisolated struct PreviousSet: Hashable, Sendable {
+    let setNumber: Int
+    let weightKilograms: Decimal?
+    let reps: Int?
+
+    /// "60 × 8", or nil when the set carries neither number.
+    var summary: String? {
+        switch (weightKilograms, reps) {
+        case let (weight?, reps?): "\(weight.nutritionText) × \(reps)"
+        case let (weight?, nil): weight.nutritionText
+        case let (nil, reps?): "\(reps) reps"
+        case (nil, nil): nil
+        }
+    }
+}

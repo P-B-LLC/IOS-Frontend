@@ -5746,6 +5746,20 @@ public struct Client: APIProtocol {
                     name: "page",
                     value: input.query.page
                 )
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "session",
+                    value: input.query.session
+                )
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "session_exercise",
+                    value: input.query.sessionExercise
+                )
                 converter.setAcceptHeader(
                     in: &request.headerFields,
                     contentTypes: input.headers.accept

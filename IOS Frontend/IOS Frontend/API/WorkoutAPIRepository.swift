@@ -898,6 +898,123 @@ actor WorkoutAPIRepository {
             .sorted { $0.performedAt > $1.performedAt }
     }
 
+    // MARK: - Last time
+
+    /// What was lifted the last time this workout was trained, by exercise id.
+    ///
+    /// Three requests whatever the workout holds: the session, its exercises,
+    /// and its sets. The progress endpoint would have been one request per
+    /// exercise, and each returns that exercise's entire history — every set
+    /// ever logged — to read the last few rows of it.
+    ///
+    /// Matched by workout *name*, the way the rest of this file matches
+    /// history, so "Push Day" recognises itself across the templates a repeat
+    /// creates rather than only within one record.
+    func previousSets(
+        workoutName: String,
+        excludingSessionID: Int?,
+        pageLimit: Int = 3
+    ) async throws -> [Int: [PreviousSet]] {
+        guard let sessionID = try await lastCompletedSessionID(
+            workoutName: workoutName,
+            excluding: excludingSessionID,
+            pageLimit: pageLimit
+        ) else {
+            return [:]
+        }
+
+        async let relationsRequest = fetchSessionExercises(session: sessionID)
+        async let entriesRequest = fetchSetEntries(session: sessionID)
+        let (relations, entries) = try await (relationsRequest, entriesRequest)
+
+        // The sets name the row that joined an exercise to the session, not the
+        // exercise, so that hop has to be undone before they can be looked up
+        // by the exercise the screen is drawing.
+        let exerciseByRelation = Dictionary(
+            relations.map { ($0.id, $0.exercise) },
+            uniquingKeysWith: { first, _ in first }
+        )
+
+        var result: [Int: [PreviousSet]] = [:]
+        for entry in entries {
+            guard let exerciseID = exerciseByRelation[entry.sessionExercise] else {
+                continue
+            }
+            result[exerciseID, default: []].append(
+                PreviousSet(
+                    setNumber: Int(entry.setNumber),
+                    weightKilograms: entry.weightKg.flatMap { Decimal(string: $0) },
+                    reps: entry.reps.map(Int.init)
+                )
+            )
+        }
+        for key in result.keys {
+            result[key]?.sort { $0.setNumber < $1.setNumber }
+        }
+        return result
+    }
+
+    /// The most recent finished session of this workout, excluding one.
+    ///
+    /// The exclusion is the session being trained right now: it is created
+    /// before its first set is logged, so without this the hint would come
+    /// from today and read as "you have already done this".
+    private func lastCompletedSessionID(
+        workoutName: String,
+        excluding: Int?,
+        pageLimit: Int
+    ) async throws -> Int? {
+        var page: Int?
+        var visited: Set<Int> = []
+        var best: (id: Int, at: Date)?
+
+        repeat {
+            let output = try await client.sessionsList(
+                query: .init(page: page, status: .completed, workoutName: workoutName)
+            )
+            let response: Components.Schemas.PaginatedWorkoutSessionList
+            switch output {
+            case .ok(let success):
+                response = try success.body.json
+            case .undocumented(let statusCode, _):
+                throw APIServiceError.undocumentedStatus(statusCode)
+            }
+            for session in response.results {
+                guard session.id != excluding,
+                      let at = session.endedAt ?? session.startedAt else { continue }
+                if best == nil || at > best!.at {
+                    best = (session.id, at)
+                }
+            }
+            page = try nextPage(response.next, visited: &visited)
+        } while page != nil && visited.count < pageLimit
+
+        return best?.id
+    }
+
+    private func fetchSetEntries(
+        session: Int
+    ) async throws -> [Components.Schemas.SetEntry] {
+        var page: Int?
+        var visited: Set<Int> = []
+        var values: [Components.Schemas.SetEntry] = []
+        repeat {
+            let output = try await client.setEntriesList(
+                query: .init(page: page, session: session)
+            )
+            let response: Components.Schemas.PaginatedSetEntryList
+            switch output {
+            case .ok(let success):
+                response = try success.body.json
+            case .undocumented(let statusCode, _):
+                throw APIServiceError.undocumentedStatus(statusCode)
+            }
+            values.append(contentsOf: response.results)
+            page = try nextPage(response.next, visited: &visited)
+        } while page != nil
+        return values
+    }
+
     func deleteSetEntry(id: Int) async throws {
         let output = try await client.setEntriesDestroy(path: .init(id: id))
         switch output {
