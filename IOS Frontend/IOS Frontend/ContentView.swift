@@ -39,7 +39,6 @@ struct ContentView: View {
                         .padding(.top, 22)
 
                         StepsWidget()
-                            .padding(.top, 22)
 
                         HomeDashboardSection(title: "Schedule", detail: "Open calendar", destination: PlannerView()) {
                             VStack(spacing: 14) {

@@ -16,18 +16,6 @@ import Observation
 @Observable
 @MainActor
 final class ActivityStore {
-    /// What can be shown, and why not when nothing can.
-    enum Availability: Equatable {
-        /// A device with no Health at all.
-        case unsupported
-        /// Health exists and the user has never been asked.
-        case notConnected
-        /// The user has been asked. Whether they agreed is not knowable:
-        /// HealthKit refuses to distinguish a refusal from an empty Health
-        /// app, because saying which would itself be health information.
-        case connected
-    }
-
     private var repository: ActivityAPIRepository?
     private let health: HealthKitService
     private var connectionGeneration = UUID()
@@ -63,13 +51,6 @@ final class ActivityStore {
     }
 
     var isConnected: Bool { repository != nil }
-    var isRequestingHealthAccess: Bool { health.isRequestingAuthorization }
-    var healthErrorMessage: String? { health.errorMessage }
-
-    var availability: Availability {
-        if health.isSupported == false { return .unsupported }
-        return health.hasAsked ? .connected : .notConnected
-    }
 
     /// Today's steps as the server has them, or nil when it has no row for
     /// today. Nil means "not reported", never "zero": a day nobody walked and
@@ -110,11 +91,15 @@ final class ActivityStore {
 
         await reload(generation: generation, showsLoadingState: true)
 
-        // Only if the user has already agreed once. Connecting must not make
-        // Apple's permission sheet appear on a launch nobody asked it to.
-        if health.hasAsked {
-            await syncFromHealth(generation: generation)
+        // Apple's sheet is the whole of the asking. The app requests Health
+        // access itself, once, rather than drawing a card that asks the user
+        // to ask; a prompt on the screen is a prompt on the screen even when
+        // it is polite. HealthKit shows the sheet once per type and silently
+        // does nothing on later calls, so a refusal is not nagged at.
+        if health.hasAsked == false {
+            await health.requestAuthorization()
         }
+        await syncFromHealth(generation: generation)
     }
 
     func disconnect() {
@@ -129,17 +114,6 @@ final class ActivityStore {
     }
 
     // MARK: - Health
-
-    /// Asks Apple for read access, then brings in what it allows.
-    ///
-    /// Called from a button, never automatically: the sheet is Apple's, it
-    /// appears once, and spending it on a launch the user did not ask for
-    /// would leave them no way to say yes later.
-    func connectHealth() async {
-        let generation = connectionGeneration
-        guard await health.requestAuthorization() else { return }
-        await syncFromHealth(generation: generation)
-    }
 
     /// Reads Health, sends what it reported, and shows what came back.
     func refresh() async {

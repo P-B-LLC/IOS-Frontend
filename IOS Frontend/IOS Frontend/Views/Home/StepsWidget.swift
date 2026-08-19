@@ -4,6 +4,11 @@
 //
 //  Steps from Apple Health, as the server holds them.
 //
+//  The card appears only when there are steps to draw. Asking for Health
+//  access is Apple's sheet and nothing else: a card explaining that Health has
+//  not answered, or offering a button to ask, is still a card on the screen,
+//  and the screen is not where that conversation belongs.
+//
 
 import SwiftUI
 
@@ -12,29 +17,18 @@ struct StepsWidget: View {
     @Environment(\.homeTimeOfDay) private var timeOfDay
 
     var body: some View {
+        if store.week.isEmpty == false {
+            card
+                .padding(.top, 22)
+        }
+    }
+
+    private var card: some View {
         VStack(alignment: .leading, spacing: 14) {
             header
-
-            switch store.availability {
-            case .unsupported:
-                message("This device does not have Apple Health.")
-            case .notConnected:
-                connectPrompt
-            case .connected:
-                if store.week.isEmpty {
-                    message(
-                        "Nothing from Health yet. If you expected steps here, check Repbase under Settings, Health, Data Access."
-                    )
-                } else {
-                    todayCount
-                    weekStrip
-                }
-                importNote
-            }
-
-            if let error = store.persistenceError {
-                message(error)
-            }
+            todayCount
+            weekStrip
+            importNote
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -122,40 +116,6 @@ struct StepsWidget: View {
         .accessibilityLabel(weekAccessibilityLabel)
     }
 
-    private var connectPrompt: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Bring in the steps and workouts your iPhone or Apple Watch already records.")
-                .font(.footnote)
-                .foregroundStyle(timeOfDay.secondaryText)
-                .fixedSize(horizontal: false, vertical: true)
-
-            Button {
-                Task { await store.connectHealth() }
-            } label: {
-                HStack(spacing: 6) {
-                    if store.isRequestingHealthAccess {
-                        ProgressView().controlSize(.small)
-                    }
-                    Text("Connect Apple Health")
-                        .font(.footnote.weight(.semibold))
-                }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 9)
-                .background(
-                    timeOfDay.accent.opacity(0.14),
-                    in: Capsule()
-                )
-                .foregroundStyle(timeOfDay.accent)
-            }
-            .buttonStyle(.plain)
-            .disabled(store.isRequestingHealthAccess)
-
-            if let error = store.healthErrorMessage {
-                message(error)
-            }
-        }
-    }
-
     /// What the last import did, when it did anything.
     ///
     /// The skipped line is worth saying out loud. A run tracked in Repbase and
@@ -164,7 +124,8 @@ struct StepsWidget: View {
     /// count them twice.
     @ViewBuilder
     private var importNote: some View {
-        if let summary = store.lastImport {
+        if let summary = store.lastImport,
+           summary.imported > 0 || summary.skippedOverlapping > 0 {
             VStack(alignment: .leading, spacing: 3) {
                 if summary.imported > 0 {
                     Text("\(summary.imported) \(workoutWord(summary.imported)) brought in from Health")
@@ -181,13 +142,6 @@ struct StepsWidget: View {
 
     private func workoutWord(_ count: Int) -> String {
         count == 1 ? "workout" : "workouts"
-    }
-
-    private func message(_ text: String) -> some View {
-        Text(text)
-            .font(.footnote)
-            .foregroundStyle(timeOfDay.secondaryText)
-            .fixedSize(horizontal: false, vertical: true)
     }
 
     // MARK: - Days
