@@ -102,3 +102,50 @@ struct SessionRouteMap: View {
         )
     }
 }
+
+#if DEBUG
+extension SessionRouteMap {
+    /// An out-and-back with a loop at the far end, for looking at the map.
+    ///
+    /// The simulator does not move, so a session recorded there has no track
+    /// and the map is correctly absent — which is useless for checking that
+    /// the line, the framing and the markers are right. Deliberately not a
+    /// closed loop, so both endpoint markers are exercised.
+    static var previewPoints: [RoutePoint] {
+        let start = CLLocationCoordinate2D(latitude: 43.6480, longitude: -79.4103)
+        let legs: [(Double, Double, Int)] = [
+            // (metres north per step, metres east per step, steps)
+            (14, 0, 26),
+            (0, 15, 14),
+            (13, 0, 12),
+            (0, -16, 15),
+            (-12, 0, 11),
+            (0, -14, 10),
+            (11, 0, 9),
+        ]
+
+        var latitude = start.latitude
+        var longitude = start.longitude
+        var points: [RoutePoint] = []
+        var moment = Date().addingTimeInterval(-3_000)
+
+        for (north, east, steps) in legs {
+            for _ in 0..<steps {
+                latitude += north / 111_320
+                longitude += east / (111_320 * cos(latitude * .pi / 180))
+                moment.addTimeInterval(9)
+                points.append(
+                    RoutePoint(
+                        latitude: latitude,
+                        longitude: longitude,
+                        recordedAt: moment,
+                        speedMetersPerSecond: 3.1,
+                        altitudeMeters: 96
+                    )
+                )
+            }
+        }
+        return points
+    }
+}
+#endif

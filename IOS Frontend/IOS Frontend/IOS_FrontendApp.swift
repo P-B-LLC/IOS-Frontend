@@ -83,6 +83,7 @@ private struct AppRootView: View {
             || environment["REPBASE_KEYCHAIN_CHECK"] != nil
             || environment["REPBASE_HEALTH_CHECK"] != nil
             || environment["REPBASE_HEALTH_PREVIEW"] != nil
+            || environment["REPBASE_ROUTE_PREVIEW"] != nil
     }
 #endif
 
@@ -101,6 +102,17 @@ private struct AppRootView: View {
                 // Whether the simulator honours a HealthKit entitlement that
                 // device signing strips is a runtime question, not a build one.
                 HealthKitProbeView()
+            } else if ProcessInfo.processInfo.environment["REPBASE_ROUTE_PREVIEW"] != nil {
+                // The simulator has no GPS movement, so a real session there
+                // records no track and the map is correctly absent. This is
+                // the only way to see that it draws at all.
+                ScrollView {
+                    SessionRouteMap(
+                        points: SessionRouteMap.previewPoints,
+                        accent: RepbasePalette.caramel
+                    )
+                    .padding(RepbaseDesign.pageInset)
+                }
             } else if ProcessInfo.processInfo.environment["REPBASE_HEALTH_PREVIEW"] == "widget" {
                 // The card on its own. On Home it sits below the fold, and a
                 // script cannot scroll the simulator to reach the rest of it.
