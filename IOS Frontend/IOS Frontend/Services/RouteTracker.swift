@@ -62,6 +62,14 @@ final class RouteTracker: NSObject, CLLocationManagerDelegate {
     }
 
     private(set) var permission: Permission = .notDetermined
+    /// Whether iOS is giving real positions rather than a coarse area.
+    ///
+    /// With Precise Location switched off, CoreLocation answers with a fix
+    /// good to a few kilometres. That is not a slightly worse route, it is no
+    /// route: every fix fails the accuracy filter below, the track comes back
+    /// empty, and the session reports having recorded nothing without ever
+    /// saying why. Worth asking about before a run rather than after it.
+    private(set) var hasPreciseLocation = true
     private(set) var isTracking = false
     private(set) var points: [RoutePoint] = []
     /// Set when a fix cannot be obtained, so the session UI can say so.
@@ -150,7 +158,12 @@ final class RouteTracker: NSObject, CLLocationManagerDelegate {
         // Report every fix; the server decides what the track means.
         manager.distanceFilter = kCLDistanceFilterNone
         permission = Self.permission(for: manager.authorizationStatus)
+        hasPreciseLocation = manager.accuracyAuthorization == .fullAccuracy
     }
+
+    /// Matches the key in `NSLocationTemporaryUsageDescriptionDictionary`.
+    /// iOS refuses the request outright if the two disagree.
+    private static let temporaryAccuracyPurposeKey = "RouteTracking"
 
     var hasRoute: Bool { points.count >= 2 }
 
@@ -188,8 +201,39 @@ final class RouteTracker: NSObject, CLLocationManagerDelegate {
             manager.allowsBackgroundLocationUpdates = true
         }
         manager.pausesLocationUpdatesAutomatically = false
+        requestPreciseLocationIfNeeded()
         manager.startUpdatingLocation()
         startReadingBarometer()
+    }
+
+    /// Asks for one session's worth of precise location when the user has the
+    /// setting off.
+    ///
+    /// Temporary rather than permanent: the app wants exact positions while a
+    /// run is being recorded and has no use for them otherwise, and this is
+    /// the request iOS provides for saying exactly that. It is asked at the
+    /// start of a session, where the reason is on screen, and iOS will only
+    /// show it once per session so it cannot become nagging.
+    private func requestPreciseLocationIfNeeded() {
+        guard manager.accuracyAuthorization == .reducedAccuracy else {
+            hasPreciseLocation = true
+            return
+        }
+
+        manager.requestTemporaryFullAccuracyAuthorization(
+            withPurposeKey: Self.temporaryAccuracyPurposeKey
+        ) { [weak self] _ in
+            guard let self else { return }
+            hasPreciseLocation = manager.accuracyAuthorization == .fullAccuracy
+            guard hasPreciseLocation == false else { return }
+            // Said plainly, because the alternative is a session that records
+            // nothing and never explains itself.
+            trackingError = """
+                Precise Location is off, so this route cannot be mapped. \
+                Turn it on in Settings, Privacy & Security, Location Services, \
+                Repbase.
+                """
+        }
     }
 
     /// Stops recording and returns the track captured so far.
@@ -283,6 +327,10 @@ final class RouteTracker: NSObject, CLLocationManagerDelegate {
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         permission = Self.permission(for: manager.authorizationStatus)
+        // This fires for a change of precision as well as of permission, so it
+        // is the one place that learns the user turned Precise Location off
+        // part way through a run.
+        hasPreciseLocation = manager.accuracyAuthorization == .fullAccuracy
         if !permission.allowsTracking, isTracking {
             stopTracking()
         }

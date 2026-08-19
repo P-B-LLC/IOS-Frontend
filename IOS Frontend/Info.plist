@@ -18,6 +18,20 @@
 	  this description. It measures height change far more precisely than
 	  GPS, so climb during a run or ride is worth reporting.
 	-->
+	<!--
+	  Asked only when the user has Precise Location switched off and starts a
+	  session. Without exact positions there is no route to draw at all: every
+	  fix a coarse location produces is kilometres wide and fails the tracker's
+	  accuracy filter, so the session would record an empty track.
+
+	  The key inside the dictionary must match the purpose key passed to
+	  requestTemporaryFullAccuracyAuthorization, or iOS refuses to ask.
+	-->
+	<key>NSLocationTemporaryUsageDescriptionDictionary</key>
+	<dict>
+		<key>RouteTracking</key>
+		<string>Repbase needs your exact location to map the route of this run, ride, or swim and to measure its distance. Without it the session can still be timed, but no route can be recorded.</string>
+	</dict>
 	<key>NSMotionUsageDescription</key>
 	<string>Repbase reads your device's barometer during a run, ride, or swim to measure the elevation you climb. It is only used while a session you started is running.</string>
 	<!--
