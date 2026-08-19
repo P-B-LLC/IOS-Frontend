@@ -552,7 +552,7 @@ final class WorkoutStore {
                 guard connectionGeneration == generation else { return }
                 activeSession = session
                 routeSummary = nil
-        completedRoute = []
+                completedRoute = []
                 previousSets = [:]
                 // Only a run, ride, or swim records a track, and only for as
                 // long as its session is active.
@@ -786,7 +786,7 @@ final class WorkoutStore {
             // A discarded session keeps no track.
             routeTracker.reset()
             routeSummary = nil
-        completedRoute = []
+            completedRoute = []
         } catch {
             persistenceError = error.localizedDescription
         }
