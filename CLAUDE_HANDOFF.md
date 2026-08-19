@@ -752,6 +752,111 @@ would not have compiled against its own backend without regenerating and
 following through. Diff the schema after any model change, not only after a
 serializer change.
 
+## August 19: Apple Health
+
+Steps, and workouts imported from what the iPhone or Watch already recorded.
+Read-only, always: everything Repbase can record it records itself, and
+writing back would give one workout two homes and no way to say which is
+right.
+
+### Two checks that looked like failures and were not
+
+The entitlement was committed on its own, with nothing calling it, so a build
+could test the foundation before a feature rested on it. Two of the four
+checks came back wrong, and both were the check's fault:
+
+- `codesign -d --entitlements` on the `.app` prints an **empty dict**. That is
+  the *device* slot, empty because there is no provisioning profile. The
+  simulator reads `IOS Frontend.app-Simulated.xcent`, where the entitlement is
+  present.
+- `otool -L` on the executable shows **no HealthKit**. Xcode 16 debug builds
+  put the app's code in `IOS Frontend.debug.dylib`; the framework is linked
+  there and the main binary is a stub.
+
+Neither proves anything about runtime. The check that does: launch with
+`REPBASE_HEALTH_CHECK=1` and screenshot. A missing entitlement makes
+`requestAuthorization` fail immediately with an error and no sheet; a working
+one shows Apple's sheet and waits — a difference a script can see even though
+the sheet needs a tap no script can give. **The sheet appeared.**
+
+### What a paid membership would still buy
+
+Device builds. Xcode strips `com.apple.developer.healthkit` from
+`IOS Frontend.app.xcent` because no profile authorises it, so a device build
+will not sign until the App ID carries the HealthKit capability. The simulator
+does not enforce provisioning, which is the only reason this works at all.
+There is also no Apple Watch in the simulator, so real Watch data needs both a
+membership and a device.
+
+`NSHealthUpdateUsageDescription` is **not** required for a read-only app; it
+was removed and the app still launches and reads. Apple's sheet says "access
+and update your Health data" either way — that header is Apple's boilerplate,
+not something the plist controls. The part that reflects the actual request
+reads "Allow to read" and lists only Steps.
+
+### Two ways to count steps, one of them wrong
+
+Health stores the phone's steps and the watch's steps as **separate samples**.
+Summing samples double-counts every day someone wore both.
+`HKStatisticsCollectionQuery` with `.cumulativeSum` de-duplicates by source
+and buckets by day in one pass. That is the only reason the number is right.
+
+A day with no samples is **left out**, never sent as zero: "nobody walked" and
+"Health was never asked" are different, and only one of them is a fact. Days
+are formatted in the device's own calendar, never UTC — at 9pm in California a
+UTC date is already tomorrow, and the evening walk would be filed under a day
+that has not happened.
+
+Steps are displayed from the **server**, not from Health. The device sends
+what Health reported and then draws what came back, so the count on Home is
+the count every client would see.
+
+### Import decides on the server
+
+The device sends every Health workout in a 30-day window; the server says what
+it did with each. Deciding on the device would mean downloading the training
+history first, and the answer would still be the server's to give.
+
+Two guards, and they are not the same guard:
+
+- **Health's own identifier** is stored on the session, so re-sending a
+  workout finds the row it already made.
+- **Overlap with a session Repbase recorded itself** is skipped. The app's own
+  recording wins: it has the route and the barometric climb the imported one
+  lacks. Only self-recorded sessions are compared against, so two imported
+  workouts that abut do not cancel each other out, and the comparison is
+  half-open, so a workout starting exactly when a session ends is imported
+  rather than dropped.
+
+Both were exercised against the real database rather than read: overlapping
+skipped, clear ones imported, an identical second batch recognised as already
+imported, an abutting import not skipped, and the probe user removed in a
+`finally`. Worth repeating that shape of test for anything whose whole value
+is a decision rule.
+
+The skip is **reported**, not silent — three counts come back, because
+"nothing was added" has three causes. Dropping a duplicate quietly would read
+as the import missing workouts rather than declining to double-count.
+
+Imported sessions attach to a workout named for the activity, created on first
+use, so they land in the history the app already draws rather than needing a
+kind of session no screen can render.
+
+### Only four activities
+
+Running, cycling, swimming, and traditional or functional strength training
+map onto Repbase's four types. Everything else in Health returns nil and stays
+there. A tennis match has no row this app can draw, and inventing a type for
+it would put something in the training history that nothing can explain.
+
+### One trap worth knowing
+
+`record` first returned the stored rows. drf-spectacular, seeing a paginated
+viewset, described that as a pagination envelope while the action actually
+returned a bare array — the generated client would have failed to decode every
+sync. The Swift compiler caught it as a type error. It now answers **204**:
+nothing needed the echo, because the store re-reads through `list` anyway.
+
 ## Contract additions this session
 
 All additive; nothing was removed.
@@ -810,6 +915,18 @@ WorkoutSession.logged_set_count         annotated on the list query
 WorkoutSchedule.planner_synced_at       internal; not serialized
 POST /api/v1/schedules/sync-planner/    {start, end} -> the tasks it created
 PlannerEntry: unique_workout_task_per_day, conditional on kind=task
+
+DailyStepCount                          day (date), steps; one row per user
+                                        per day, unique together
+GET  /api/v1/step-counts/?since=        days on or after a date
+POST /api/v1/step-counts/record/        {days:[{day, steps}]} -> 204,
+                                        replacing any day sent again
+WorkoutSession.health_external_id       Health's own id; unique per user
+                                        when set
+WorkoutSession.health_distance_km       distance as Health reported it,
+                                        not derived from a GPS route
+POST /api/v1/sessions/import-health/    {workouts:[...]} -> {imported,
+                                        skipped_overlapping, already_imported}
 ```
 
 Regenerate the client on macOS after any contract change:
@@ -823,7 +940,10 @@ the compiler this session and are worth remembering:
 
 - A custom `@action` returning `Response(serializer.data)` is **not** paginated,
   but `drf-spectacular` documents `many=True` as a paged envelope when the view
-  has a paginator. Set `pagination_class=None` on the action.
+  has a paginator. Set `pagination_class=None` on the action, or return `204`
+  and let the caller re-read through `list`. **This was written down and then
+  walked into again** on the step-count endpoint, so read this list before
+  adding an action, not after the compiler complains.
 - An action returning `201` while the schema said `200` made the generated client
   treat every success as undocumented.
 - A choice field with **both** `blank=True` and `null=True` generates a
@@ -848,24 +968,34 @@ the compiler this session and are worth remembering:
    What *has* been exercised by hand, as of August 19: posting with a photo
    (a 4 MB image posted and served back), the previous-set hints, a completed
    session and its overview. What has not: **Redo Session, Undo, the calendar
-   entry's Share, and the empty-finish notice.** Every UI defect found this
+   entry's Share, the empty-finish notice, and — as of August 19 — the
+   Connect Apple Health button.** The Health permission sheet itself has been
+   seen and photographed, but nobody has pressed Allow, so no real steps or
+   workouts have ever made the round trip; the widget has only been seen with
+   sample days behind it. Every UI defect found this
    session was in something on that second list, and each was found by the
    user rather than by a build — a dead tick, a modal covering its own
-   subject, a task that would not sync. Assume the remaining four have the
+   subject, a task that would not sync. Assume the remaining five have the
    same shape of problem until somebody taps them.
 
    Two tricks that get further than a screenshot of the first screen. The
    `REPBASE_*_PREVIEW` flags boot straight into a screen that is otherwise
-   only reachable by tapping — **relaunch without the flag afterwards**, or the
+   only reachable by tapping — `REPBASE_HEALTH_PREVIEW=widget` goes further and
+   draws one card alone, because on Home that card runs below the fold and no
+   script can scroll to the rest of it — **relaunch without the flag afterwards**, or the
    user is left looking at a one-page app full of sample data. And an **iPad**
    simulator often fits a whole scrolling page in one screenshot; but a page
    that does not overflow an iPad is not evidence about scrolling on a phone,
    which is a claim that was nearly made here.
 3. **Food is on the server** as of `a71e7f4`; this document said otherwise for
-   days after it stopped being true. Nothing in the app is stored on the device
-   except the auth token in the Keychain — no UserDefaults, no SwiftData, no
-   files. Verified by grep on August 18, because the claim in this document had
-   already outlived the code once. Vitamins and micronutrients remain
+   days after it stopped being true. Almost nothing is stored on the device:
+   the auth token in the Keychain, and — as of August 19 — a single
+   UserDefaults flag, `repbase.health.hasAsked`. No SwiftData, no files. That
+   flag exists because HealthKit will not report whether a read was allowed;
+   saying so would leak that someone declined, which is itself health
+   information. It records having asked, not the answer. Verified by grep on
+   August 18 and corrected on August 19, because the claim in this document
+   had already outlived the code once. Vitamins and micronutrients remain
    **unavailable** rather than invented: the OAS still has no nutrition
    analysis, and the breakdown is computed on the phone from the meal in hand.
 4. **No XCTest target and no CI.** The only validation gate is an Xcode simulator

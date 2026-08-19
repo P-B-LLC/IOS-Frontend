@@ -21,11 +21,15 @@
 	<key>NSMotionUsageDescription</key>
 	<string>Repbase reads your device's barometer during a run, ride, or swim to measure the elevation you climb. It is only used while a session you started is running.</string>
 	<!--
-	  HealthKit. Reading only.
-	  NSHealthUpdateUsageDescription was here too, added defensively, and made
-	  the permission sheet say Repbase wanted to "access and update" Health
-	  when it only ever reads. The key a write would need has no business on
-	  an app that never writes.
+	  HealthKit. Reading only, and only this key.
+	  NSHealthUpdateUsageDescription was here too, added on the belief that
+	  an app linking HealthKit needs both or is killed at launch. Only writing
+	  needs it: removing it was tried, and the app launches and reads fine.
+
+	  Apple's sheet still reads "access and update your Health data" either
+	  way. That header is Apple's own boilerplate, not something this file
+	  controls; the part that reflects the request says "Allow to read" and
+	  lists only Steps.
 	-->
 	<key>NSHealthShareUsageDescription</key>
 	<string>Repbase reads your step count and the runs, rides, and swims recorded by your iPhone or Apple Watch, so your training shows up here without entering it twice.</string>
