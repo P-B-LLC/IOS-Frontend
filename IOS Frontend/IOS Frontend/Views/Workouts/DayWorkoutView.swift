@@ -258,7 +258,17 @@ struct DayWorkoutView: View {
     /// typing into the boxes does not log a set, tapping the circle does, and
     /// three sessions on this account were finished holding nothing at all.
     private func endSession() {
-        if activeSession?.loggedSetCount == 0 {
+        // Only a workout with sets can be empty in this sense. A run, ride or
+        // swim logs none at all, so its `loggedSetCount` is always zero, and
+        // this guard used to stop every one of them from ever being finished:
+        // both Finish and End Session raised a notice that is only drawn on
+        // the lifting layout, so nothing appeared and nothing happened. The
+        // condition is deliberately the same one that decides whether the
+        // notice is on screen — refusing to act while saying nothing is worse
+        // than not refusing at all.
+        if let session = activeSession,
+           session.tracksDistance == false,
+           session.loggedSetCount == 0 {
             withAnimation(.easeOut(duration: 0.2)) {
                 isConfirmingEmptyFinish = true
             }
