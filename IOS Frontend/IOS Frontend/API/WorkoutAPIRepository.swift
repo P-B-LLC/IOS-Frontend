@@ -913,16 +913,32 @@ actor WorkoutAPIRepository {
     func previousSets(
         workoutName: String,
         excludingSessionID: Int?,
-        pageLimit: Int = 3
+        pageLimit: Int = 3,
+        sessionsToTry: Int = 5
     ) async throws -> [Int: [PreviousSet]] {
-        guard let sessionID = try await lastCompletedSessionID(
+        // Walked back rather than taking the newest, because a session can be
+        // started and finished without a single set being logged. Three such
+        // Push Days in a row is real data from this account, and stopping at
+        // the first would have shown nothing while a usable session sat just
+        // behind them.
+        let candidates = try await recentCompletedSessionIDs(
             workoutName: workoutName,
             excluding: excludingSessionID,
             pageLimit: pageLimit
-        ) else {
-            return [:]
-        }
+        ).prefix(sessionsToTry)
 
+        for sessionID in candidates {
+            let sets = try await loggedSets(inSession: sessionID)
+            if !sets.isEmpty { return sets }
+        }
+        return [:]
+    }
+
+    /// The sets logged in one session, by exercise. Empty when the session
+    /// recorded nothing, which is what makes it worth skipping.
+    private func loggedSets(
+        inSession sessionID: Int
+    ) async throws -> [Int: [PreviousSet]] {
         async let relationsRequest = fetchSessionExercises(session: sessionID)
         async let entriesRequest = fetchSetEntries(session: sessionID)
         let (relations, entries) = try await (relationsRequest, entriesRequest)
@@ -940,6 +956,10 @@ actor WorkoutAPIRepository {
             guard let exerciseID = exerciseByRelation[entry.sessionExercise] else {
                 continue
             }
+            // A row with neither number is a set that was planned and never
+            // logged. Counting it would make a session look usable and then
+            // hint with blanks.
+            guard entry.weightKg != nil || entry.reps != nil else { continue }
             result[exerciseID, default: []].append(
                 PreviousSet(
                     setNumber: Int(entry.setNumber),
@@ -1001,14 +1021,14 @@ actor WorkoutAPIRepository {
     /// The exclusion is the session being trained right now: it is created
     /// before its first set is logged, so without this the hint would come
     /// from today and read as "you have already done this".
-    private func lastCompletedSessionID(
+    private func recentCompletedSessionIDs(
         workoutName: String,
         excluding: Int?,
         pageLimit: Int
-    ) async throws -> Int? {
+    ) async throws -> [Int] {
         var page: Int?
         var visited: Set<Int> = []
-        var best: (id: Int, at: Date)?
+        var found: [(id: Int, at: Date)] = []
 
         repeat {
             let output = try await client.sessionsList(
@@ -1024,14 +1044,12 @@ actor WorkoutAPIRepository {
             for session in response.results {
                 guard session.id != excluding,
                       let at = session.endedAt ?? session.startedAt else { continue }
-                if best == nil || at > best!.at {
-                    best = (session.id, at)
-                }
+                found.append((session.id, at))
             }
             page = try nextPage(response.next, visited: &visited)
         } while page != nil && visited.count < pageLimit
 
-        return best?.id
+        return found.sorted { $0.at > $1.at }.map(\.id)
     }
 
     private func fetchSetEntries(
