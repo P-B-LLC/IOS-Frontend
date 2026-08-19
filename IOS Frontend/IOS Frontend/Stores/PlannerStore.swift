@@ -40,6 +40,15 @@ final class PlannerStore {
     /// being short means the diary is empty and not that it was truncated.
     static let upcomingHorizonDays = 60
 
+    /// How far back "past due" looks.
+    ///
+    /// Unbounded before, on the reasoning that overdue work is unbounded in
+    /// time. True, but a task nobody did two months ago is not work any more,
+    /// and an unbounded list only grows: it filled the page and buried the
+    /// items still worth doing. Anything older stays in the database and on
+    /// its own day; it just stops being nagged about.
+    static let pastDueHorizonDays = 30
+
     var isConnected: Bool { repository != nil }
 
     /// Why editing is off, or nil when it is available. Shown rather than
@@ -164,12 +173,35 @@ final class PlannerStore {
             }
         }
 
+        // Asked of the server, not of `entriesByDate`.
+        //
+        // That dictionary holds the month the planner is looking at, and this
+        // runs on sign-in, before any month has been read. The lookup returned
+        // nil, nil read as "not linked yet", and every launch added another
+        // copy of the same workout: nine Push Days on one Tuesday.
+        let dates = scheduled.map(\.2).sorted()
+        var linked: Set<String> = []
+        if let first = dates.first, let last = dates.last {
+            do {
+                let existing = try await repository.entries(from: first, to: last)
+                guard connectionGeneration == generation else { return }
+                for entry in existing where entry.kind == .task {
+                    if let id = entry.workoutID {
+                        linked.insert("\(id)-\(entry.date)")
+                    }
+                }
+            } catch {
+                // Better to add nothing than to add duplicates. The next sync
+                // tries again; a wrong guess here is permanent.
+                guard connectionGeneration == generation else { return }
+                persistenceError = "Scheduled workouts could not be checked against the planner: \(error.localizedDescription)"
+                return
+            }
+        }
+
         for (workout, workoutID, date) in scheduled {
             guard connectionGeneration == generation else { return }
-            let alreadyLinked = entriesByDate[date]?.contains {
-                $0.kind == .task && $0.workoutID == workoutID
-            } ?? false
-            guard !alreadyLinked else { continue }
+            guard linked.insert("\(workoutID)-\(date)").inserted else { continue }
 
             let draft = PlannerEntry(
                 kind: .task,
@@ -351,6 +383,11 @@ final class PlannerStore {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
         guard let yesterday = calendar.date(byAdding: .day, value: -1, to: today),
+              let earliest = calendar.date(
+                byAdding: .day,
+                value: -Self.pastDueHorizonDays,
+                to: today
+              ),
               let tomorrow = calendar.date(byAdding: .day, value: 1, to: today),
               let horizon = calendar.date(
                 byAdding: .day,
@@ -361,6 +398,7 @@ final class PlannerStore {
 
         do {
             async let overdue = repository.pastDueTasks(
+                since: Self.dateString(earliest),
                 before: Self.dateString(yesterday)
             )
             async let ahead = repository.upcomingEvents(

@@ -37,8 +37,13 @@ actor PlannerAPIRepository {
     /// Deliberately without a lower bound. Fetching a window and filtering on
     /// the device would mean a task older than the window was never reported,
     /// which is the one thing an overdue list must not do.
-    func pastDueTasks(before day: String) async throws -> [PlannerEntry] {
-        try await fetch(start: nil, end: day, kind: .task, isComplete: false)
+    /// Unfinished tasks between `since` and `day`, inclusive.
+    ///
+    /// Bounded at both ends now. Reading with no lower bound returned every
+    /// task ever missed, which grows without limit and buries the ones still
+    /// worth doing.
+    func pastDueTasks(since: String, before day: String) async throws -> [PlannerEntry] {
+        try await fetch(start: since, end: day, kind: .task, isComplete: false)
     }
 
     func upcomingEvents(from start: String, to end: String) async throws -> [PlannerEntry] {
