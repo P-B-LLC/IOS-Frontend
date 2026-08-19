@@ -774,10 +774,13 @@ struct DayWorkoutView: View {
                     Text("Log Your Sets")
                         .font(.title3.weight(.bold))
                         .foregroundStyle(phase.primaryText)
+                    // Says "circle", not "checkmark". The control is a circle
+                    // until it is tapped, and three sessions on this account
+                    // were finished with nothing logged.
                     Text(
                         store.previousSets.isEmpty
-                            ? "Enter reps and optional weight, then tap the checkmark."
-                            : "Faded numbers are what you lifted last time. Enter today's, then tap the checkmark."
+                            ? "Enter reps and optional weight, then tap the circle to save each set."
+                            : "Prev shows last session. Enter today's, then tap the circle to save each set."
                     )
                         .font(.subheadline)
                         .foregroundStyle(phase.secondaryText)
@@ -1157,6 +1160,11 @@ struct DayWorkoutView: View {
                     exerciseServerID: exercise.exerciseServerID,
                     setNumber: set.setNumber
                 )
+                // Labelled, because a faded "100" in a weight box reads as a
+                // value already entered rather than as last week's.
+                let weightHint = last?.weightKilograms
+                    .map { "Prev: \($0.nutritionText)" } ?? "0"
+                let repsHint = last?.reps.map { "Prev: \($0)" } ?? "0"
 
                 HStack(spacing: 8) {
                     Text("\(set.setNumber)")
@@ -1164,7 +1172,7 @@ struct DayWorkoutView: View {
                         .frame(width: 34)
 
                     TextField(
-                        last?.weightKilograms?.nutritionText ?? "0",
+                        weightHint,
                         text: weightBinding(exerciseID: exercise.id, setID: set.id)
                     )
                         .keyboardType(.decimalPad)
@@ -1180,7 +1188,7 @@ struct DayWorkoutView: View {
                         .accessibilityLabel("Set \(set.setNumber) weight in kilograms")
 
                     TextField(
-                        last?.reps.map(String.init) ?? "0",
+                        repsHint,
                         text: repsBinding(exerciseID: exercise.id, setID: set.id)
                     )
                         .keyboardType(.numberPad)
