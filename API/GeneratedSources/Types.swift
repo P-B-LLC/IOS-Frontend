@@ -5189,15 +5189,23 @@ public enum Components {
         public struct PatchedWorkoutSessionRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PatchedWorkoutSessionRequest/workout`.
             public var workout: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PatchedWorkoutSessionRequest/gear`.
+            public var gear: Swift.Int?
             /// Creates a new `PatchedWorkoutSessionRequest`.
             ///
             /// - Parameters:
             ///   - workout:
-            public init(workout: Swift.Int? = nil) {
+            ///   - gear:
+            public init(
+                workout: Swift.Int? = nil,
+                gear: Swift.Int? = nil
+            ) {
                 self.workout = workout
+                self.gear = gear
             }
             public enum CodingKeys: String, CodingKey {
                 case workout
+                case gear
             }
         }
         /// - Remark: Generated from `#/components/schemas/PatchedWorkoutTemplateRequest`.
@@ -7680,6 +7688,10 @@ public enum Components {
             public var cardioDistanceKm: Swift.String?
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/health_distance_km`.
             public var healthDistanceKm: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/recorded_distance_km`.
+            public var recordedDistanceKm: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/gear`.
+            public var gear: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/route_distance_km`.
             public var routeDistanceKm: Swift.Double?
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/pace_seconds_per_km`.
@@ -7719,6 +7731,8 @@ public enum Components {
             ///   - cardioSeconds:
             ///   - cardioDistanceKm:
             ///   - healthDistanceKm:
+            ///   - recordedDistanceKm:
+            ///   - gear:
             ///   - routeDistanceKm:
             ///   - paceSecondsPerKm:
             ///   - movingPaceSecondsPerKm:
@@ -7744,6 +7758,8 @@ public enum Components {
                 cardioSeconds: Swift.Int? = nil,
                 cardioDistanceKm: Swift.String? = nil,
                 healthDistanceKm: Swift.String? = nil,
+                recordedDistanceKm: Swift.String? = nil,
+                gear: Swift.Int? = nil,
                 routeDistanceKm: Swift.Double? = nil,
                 paceSecondsPerKm: Swift.Double? = nil,
                 movingPaceSecondsPerKm: Swift.Double? = nil,
@@ -7769,6 +7785,8 @@ public enum Components {
                 self.cardioSeconds = cardioSeconds
                 self.cardioDistanceKm = cardioDistanceKm
                 self.healthDistanceKm = healthDistanceKm
+                self.recordedDistanceKm = recordedDistanceKm
+                self.gear = gear
                 self.routeDistanceKm = routeDistanceKm
                 self.paceSecondsPerKm = paceSecondsPerKm
                 self.movingPaceSecondsPerKm = movingPaceSecondsPerKm
@@ -7795,6 +7813,8 @@ public enum Components {
                 case cardioSeconds = "cardio_seconds"
                 case cardioDistanceKm = "cardio_distance_km"
                 case healthDistanceKm = "health_distance_km"
+                case recordedDistanceKm = "recorded_distance_km"
+                case gear
                 case routeDistanceKm = "route_distance_km"
                 case paceSecondsPerKm = "pace_seconds_per_km"
                 case movingPaceSecondsPerKm = "moving_pace_seconds_per_km"
@@ -7813,15 +7833,23 @@ public enum Components {
         public struct WorkoutSessionRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/WorkoutSessionRequest/workout`.
             public var workout: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSessionRequest/gear`.
+            public var gear: Swift.Int?
             /// Creates a new `WorkoutSessionRequest`.
             ///
             /// - Parameters:
             ///   - workout:
-            public init(workout: Swift.Int? = nil) {
+            ///   - gear:
+            public init(
+                workout: Swift.Int? = nil,
+                gear: Swift.Int? = nil
+            ) {
                 self.workout = workout
+                self.gear = gear
             }
             public enum CodingKeys: String, CodingKey {
                 case workout
+                case gear
             }
         }
         /// - Remark: Generated from `#/components/schemas/WorkoutTemplate`.
