@@ -51,6 +51,16 @@ struct DayWorkoutView: View {
                 await store.loadDashboardSessions()
             }
         }
+        .onChange(of: activeSession?.loggedSetCount ?? 0) { _, logged in
+            // Logging a set answers the notice, so it stops being true and
+            // goes. Leaving it up would have the page insisting nothing is
+            // logged directly above a row that plainly is.
+            if logged > 0, isConfirmingEmptyFinish {
+                withAnimation(.easeOut(duration: 0.2)) {
+                    isConfirmingEmptyFinish = false
+                }
+            }
+        }
         .onChange(of: store.routeTracker.permission) {
             // Granting access part way through a session starts tracking for
             // the remainder of it.
@@ -78,19 +88,6 @@ struct DayWorkoutView: View {
                     subject: completedSession?.session.workoutName ?? "Workout"
                 )
             }
-        }
-        .confirmationDialog(
-            "Nothing logged yet",
-            isPresented: $isConfirmingEmptyFinish,
-            titleVisibility: .visible
-        ) {
-            Button("Finish anyway", role: .destructive) { finishSession() }
-            Button("Keep going", role: .cancel) { }
-        } message: {
-            // Names the actual mistake rather than asking "are you sure": the
-            // numbers are typed into the boxes and then not committed, and
-            // nothing on screen says the circle is what saves them.
-            Text("Typing a weight or reps does not save the set — tap the circle on the right of each row. Finishing now records this workout with no sets.")
         }
         .overlay {
             if store.isSaving {
@@ -262,10 +259,74 @@ struct DayWorkoutView: View {
     /// three sessions on this account were finished holding nothing at all.
     private func endSession() {
         if activeSession?.loggedSetCount == 0 {
-            isConfirmingEmptyFinish = true
+            withAnimation(.easeOut(duration: 0.2)) {
+                isConfirmingEmptyFinish = true
+            }
             return
         }
+        // Logging a set after the notice appeared answers it, so it should not
+        // still be sitting there.
+        isConfirmingEmptyFinish = false
         finishSession()
+    }
+
+    /// Shown in the page instead of a system dialog when Finish is tapped with
+    /// nothing logged.
+    ///
+    /// A modal was the wrong shape for this. It covered the very rows it was
+    /// describing, so the instruction pointed at circles the user could no
+    /// longer see, and a system alert looks like it belongs to a different app
+    /// than the one around it. In the page, the sentence and the thing it is
+    /// about are on screen together, and carrying on is the default rather
+    /// than something to dismiss first.
+    private func emptyFinishNotice(phase: WorkoutVisualPhase) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline, spacing: 9) {
+                Image(systemName: "circle.dashed")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(phase.accent)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Nothing logged yet")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(phase.primaryText)
+                    Text("Typing a weight or reps does not save the set. Tap the circle at the end of a row to log it.")
+                        .font(.caption)
+                        .foregroundStyle(phase.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            HStack(spacing: 14) {
+                Button("Finish with no sets") {
+                    isConfirmingEmptyFinish = false
+                    finishSession()
+                }
+                .font(.caption.weight(.bold))
+                .foregroundStyle(Color.red)
+
+                Button("Keep logging") {
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        isConfirmingEmptyFinish = false
+                    }
+                }
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(phase.secondaryText)
+
+                Spacer(minLength: 0)
+            }
+        }
+        .padding(13)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            phase.accent.opacity(0.10),
+            in: RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius)
+                .strokeBorder(phase.accent.opacity(0.35), lineWidth: 1)
+        }
+        .transition(.opacity.combined(with: .move(edge: .top)))
     }
 
     private func finishSession() {
@@ -789,6 +850,10 @@ struct DayWorkoutView: View {
                     )
                         .font(.subheadline)
                         .foregroundStyle(phase.secondaryText)
+                }
+
+                if isConfirmingEmptyFinish {
+                    emptyFinishNotice(phase: phase)
                 }
 
                 ForEach(session.exercises) { exercise in
