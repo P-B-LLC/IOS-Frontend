@@ -590,6 +590,12 @@ struct DayWorkoutView: View {
                 .buttonStyle(.borderedProminent)
                 .tint(WorkoutVisualPhase.focus.accent)
             }
+        } else if store.isCompleted(workoutName: workout.name, on: dayDate) {
+            // Nothing here. A finished day is started again through Redo
+            // Session on its banner, which clears the day first: a second
+            // Start beside the first would leave two records of one day, which
+            // is what made six starts read as six workouts.
+            EmptyView()
         } else {
             Button {
                 completedSession = nil
@@ -983,46 +989,108 @@ struct DayWorkoutView: View {
     /// sessions, which is what removes it from the totals — nothing else marks
     /// a day complete, so there is no second place for the two to disagree.
     private func completedBanner(_ workout: Workout) -> some View {
-        let sessions = store.finishedSessions(workoutName: workout.name, on: dayDate)
+        // The newest session for the day is the one shown. Older ones only
+        // exist where a day was trained more than once before this screen
+        // started refusing to start a finished day again.
+        let session = store.finishedSessions(workoutName: workout.name, on: dayDate)
+            .max { $0.performedAt < $1.performedAt }
+        let overview = session.flatMap { store.sessionOverviews[$0.sessionID] }
 
-        return HStack(alignment: .top, spacing: 11) {
-            Image(systemName: "checkmark.seal.fill")
-                .font(.title3)
-                .foregroundStyle(WorkoutVisualPhase.recover.accent)
+        return VStack(alignment: .leading, spacing: 13) {
+            HStack(alignment: .top, spacing: 11) {
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.title3)
+                    .foregroundStyle(WorkoutVisualPhase.recover.accent)
 
-            VStack(alignment: .leading, spacing: 3) {
-                Text("\(workout.name) completed")
-                    .font(.subheadline.weight(.semibold))
-                Text(
-                    sessions.count > 1
-                        // Said plainly, because it is the thing that used to
-                        // inflate the count and now does not.
-                        ? "Started \(sessions.count) times. Counts once."
-                        : "Counted towards this week."
-                )
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            }
-
-            Spacer(minLength: 8)
-
-            Button("Undo") {
-                Task {
-                    await store.undoCompletion(
-                        workoutName: workout.name,
-                        on: dayDate
-                    )
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("\(workout.name) completed")
+                        .font(.subheadline.weight(.semibold))
+                    if let overview {
+                        Text(Self.overviewSummary(overview))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
+
+                Spacer(minLength: 8)
             }
-            .font(.caption.weight(.bold))
-            .buttonStyle(.bordered)
-            .disabled(store.isSaving)
+
+            if let overview {
+                sessionOverviewLines(overview)
+            } else if let session, store.loadingOverviewIDs.contains(session.sessionID) {
+                ProgressView()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            HStack(spacing: 9) {
+                Button {
+                    Task {
+                        await store.redoSession(
+                            workoutName: workout.name,
+                            on: dayDate,
+                            day: day,
+                            workoutID: workout.id
+                        )
+                    }
+                } label: {
+                    Label("Redo Session", systemImage: "arrow.counterclockwise")
+                        .font(.caption.weight(.bold))
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(WorkoutVisualPhase.recover.accent)
+                .disabled(store.isSaving || !store.isEditingEnabled)
+
+                Button("Undo") {
+                    Task {
+                        await store.undoCompletion(
+                            workoutName: workout.name,
+                            on: dayDate
+                        )
+                    }
+                }
+                .font(.caption.weight(.bold))
+                .buttonStyle(.bordered)
+                .disabled(store.isSaving || !store.isEditingEnabled)
+
+                Spacer(minLength: 0)
+            }
         }
         .padding(13)
         .background(
             WorkoutVisualPhase.recover.accent.opacity(0.11),
             in: RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius)
         )
+        .task(id: session?.sessionID) {
+            guard let session else { return }
+            await store.loadOverview(for: session)
+        }
+    }
+
+    /// What the day amounted to: when, how many sets, and how much was moved.
+    private static func overviewSummary(_ overview: SessionOverview) -> String {
+        var parts = [overview.performedAt.formatted(date: .abbreviated, time: .shortened)]
+        parts.append("^[\(overview.loggedSetCount) set](inflect: true)")
+        if let volume = overview.totalVolumeKilograms {
+            parts.append("\(volume.nutritionText) kg moved")
+        }
+        return parts.joined(separator: "  ·  ")
+    }
+
+    /// Every exercise of the finished session with the sets as logged.
+    private func sessionOverviewLines(_ overview: SessionOverview) -> some View {
+        VStack(alignment: .leading, spacing: 7) {
+            ForEach(overview.lines) { line in
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(line.name)
+                        .font(.caption.weight(.semibold))
+                    Spacer(minLength: 8)
+                    Text(line.setsText)
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.trailing)
+                }
+            }
+        }
     }
 
     private func sessionExerciseCard(_ exercise: SessionExerciseDraft) -> some View {

@@ -113,6 +113,8 @@ final class WorkoutStore {
         knownWorkouts = []
         postableSessions = []
         previousSets = [:]
+        sessionOverviews = [:]
+        loadingOverviewIDs = []
         isLoadingPostableSessions = false
         dashboardSessions = []
         isLoadingDashboardSessions = false
@@ -146,6 +148,49 @@ final class WorkoutStore {
         !finishedSessions(workoutName: workoutName, on: date).isEmpty
     }
 
+    /// What was logged on a completed day, once it has been asked for.
+    /// Keyed by session so opening one day does not clear another's.
+    private(set) var sessionOverviews: [Int: SessionOverview] = [:]
+    private(set) var loadingOverviewIDs: Set<Int> = []
+
+    /// Reads back what a finished session recorded.
+    ///
+    /// Fetched only when a day is opened and asked to show itself, rather than
+    /// with the rest of the history: the dashboard needs to know a session
+    /// happened, not what was in it.
+    func loadOverview(for session: PostableSession) async {
+        guard let repository,
+              sessionOverviews[session.sessionID] == nil,
+              !loadingOverviewIDs.contains(session.sessionID) else {
+            return
+        }
+        let generation = connectionGeneration
+        loadingOverviewIDs.insert(session.sessionID)
+        defer {
+            if connectionGeneration == generation {
+                loadingOverviewIDs.remove(session.sessionID)
+            }
+        }
+
+        let loaded = try? await repository.sessionOverview(
+            sessionID: session.sessionID,
+            performedAt: session.performedAt
+        )
+        guard connectionGeneration == generation, let loaded else { return }
+        sessionOverviews[session.sessionID] = loaded
+    }
+
+    /// Clears a day and starts it again in one step.
+    ///
+    /// The day has to be cleared first. A second session left beside the first
+    /// would be a second record of the same day, which is the thing that
+    /// inflated the count before.
+    func redoSession(workoutName: String, on date: Date, day: Weekday, workoutID: Workout.ID?) async {
+        await undoCompletion(workoutName: workoutName, on: date)
+        guard persistenceError == nil else { return }
+        startSession(on: day, workoutID: workoutID)
+    }
+
     /// Undoes a day's training by deleting every finished session recorded for
     /// it, which is what removes it from the counts.
     ///
@@ -173,6 +218,7 @@ final class WorkoutStore {
             dashboardSessions.removeAll { removed.contains($0.sessionID) }
             postableSessions.removeAll { removed.contains($0.sessionID) }
             completedSessions.removeAll { removed.contains($0.session.serverID) }
+            for id in removed { sessionOverviews[id] = nil }
             await loadDashboardSessions()
         } catch {
             guard connectionGeneration == generation else { return }

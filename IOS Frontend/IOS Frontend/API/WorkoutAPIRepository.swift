@@ -954,6 +954,48 @@ actor WorkoutAPIRepository {
         return result
     }
 
+    /// What was logged in one finished session, exercise by exercise.
+    ///
+    /// The same two reads the previous-set hints use, kept whole here rather
+    /// than reduced to one set per exercise, because this is the record of the
+    /// session itself and every set belongs in it.
+    func sessionOverview(
+        sessionID: Int,
+        performedAt: Date
+    ) async throws -> SessionOverview {
+        async let relationsRequest = fetchSessionExercises(session: sessionID)
+        async let entriesRequest = fetchSetEntries(session: sessionID)
+        let (relations, entries) = try await (relationsRequest, entriesRequest)
+
+        var setsByRelation: [Int: [PreviousSet]] = [:]
+        for entry in entries {
+            setsByRelation[entry.sessionExercise, default: []].append(
+                PreviousSet(
+                    setNumber: Int(entry.setNumber),
+                    weightKilograms: entry.weightKg.flatMap { Decimal(string: $0) },
+                    reps: entry.reps.map(Int.init)
+                )
+            )
+        }
+
+        let lines = relations
+            .sorted { ($0.order ?? 1, $0.id) < ($1.order ?? 1, $1.id) }
+            .map { relation in
+                SessionOverview.Line(
+                    exerciseID: relation.exercise,
+                    name: relation.exerciseName,
+                    sets: (setsByRelation[relation.id] ?? [])
+                        .sorted { $0.setNumber < $1.setNumber }
+                )
+            }
+
+        return SessionOverview(
+            sessionID: sessionID,
+            performedAt: performedAt,
+            lines: lines
+        )
+    }
+
     /// The most recent finished session of this workout, excluding one.
     ///
     /// The exclusion is the session being trained right now: it is created

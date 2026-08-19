@@ -119,7 +119,13 @@ struct TrainingDashboardContent: View {
                     title: store.workout(on: day)?.name ?? "Plan today’s workout",
                     detail: focusDescription(for: day),
                     completed: metrics.completedThisWeek,
-                    goal: metrics.weeklyGoal
+                    goal: metrics.weeklyGoal,
+                    isDayComplete: store.workout(on: day).map {
+                        store.isCompleted(
+                            workoutName: $0.name,
+                            on: store.workoutDate(for: day)
+                        )
+                    } ?? false
                 )
             }
             .buttonStyle(.plain)
@@ -361,6 +367,9 @@ private struct WorkoutDashboardHero: View {
     let detail: String
     let completed: Int
     let goal: Int
+    /// Whether the day this card points at has already been trained, so the
+    /// pill can say what tapping it does rather than always saying Start.
+    var isDayComplete = false
 
     private var remaining: Int { max(goal - completed, 0) }
     private var progress: Double { min(Double(completed) / Double(max(goal, 1)), 1) }
@@ -382,7 +391,10 @@ private struct WorkoutDashboardHero: View {
                         .foregroundStyle(.secondary)
                 }
                 Spacer(minLength: 12)
-                Label("Start", systemImage: "arrow.up.right")
+                Label(
+                    isDayComplete ? "View" : "Start",
+                    systemImage: isDayComplete ? "checkmark" : "arrow.up.right"
+                )
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(RepbasePalette.paper)
                     .padding(.horizontal, 13)

@@ -594,3 +594,44 @@ nonisolated struct PreviousSet: Hashable, Sendable {
         }
     }
 }
+
+/// What was actually logged in one finished session.
+///
+/// Read back from the server rather than remembered from the session that
+/// wrote it, so a day trained last week reads the same as one trained a
+/// minute ago.
+nonisolated struct SessionOverview: Hashable, Sendable {
+    nonisolated struct Line: Identifiable, Hashable, Sendable {
+        let exerciseID: Int
+        let name: String
+        let sets: [PreviousSet]
+
+        var id: Int { exerciseID }
+
+        /// "60 × 8 · 60 × 8", the sets as they were logged.
+        var setsText: String {
+            let parts = sets.compactMap(\.summary)
+            return parts.isEmpty ? "No sets logged" : parts.joined(separator: "  ·  ")
+        }
+    }
+
+    let sessionID: Int
+    let performedAt: Date
+    let lines: [Line]
+
+    var loggedSetCount: Int { lines.reduce(0) { $0 + $1.sets.count } }
+
+    /// Total weight moved, for sessions that recorded any. Nil when nothing
+    /// logged a weight, which is what a bodyweight day should show.
+    var totalVolumeKilograms: Decimal? {
+        let total = lines.reduce(Decimal.zero) { running, line in
+            running + line.sets.reduce(Decimal.zero) { inner, set in
+                guard let weight = set.weightKilograms, let reps = set.reps else {
+                    return inner
+                }
+                return inner + weight * Decimal(reps)
+            }
+        }
+        return total > 0 ? total : nil
+    }
+}
