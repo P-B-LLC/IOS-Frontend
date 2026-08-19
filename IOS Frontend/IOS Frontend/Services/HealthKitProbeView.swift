@@ -17,7 +17,6 @@ import HealthKit
 import SwiftUI
 
 struct HealthKitProbeView: View {
-    @State private var service = HealthKitService()
     @State private var lines: [String] = ["asking…"]
 
     var body: some View {

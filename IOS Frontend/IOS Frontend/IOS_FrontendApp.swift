@@ -16,6 +16,7 @@ struct IOS_FrontendApp: App {
     @State private var foodTrackingStore: FoodTrackingStore
     @State private var socialProfileStore: SocialProfileStore
     @State private var socialStore: SocialStore
+    @State private var activityStore: ActivityStore
 
     init() {
         let configuration = APIConfiguration.current
@@ -23,6 +24,11 @@ struct IOS_FrontendApp: App {
             initialValue: AuthenticationStore(configuration: configuration)
         )
 #if DEBUG
+        _activityStore = State(
+            initialValue: ProcessInfo.processInfo.environment["REPBASE_HEALTH_PREVIEW"] != nil
+                ? .preview
+                : ActivityStore()
+        )
         let isPreviewingFood = ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] != nil
         let isPreviewingProfile = ProcessInfo.processInfo.environment["REPBASE_PROFILE_PREVIEW"] != nil
         _socialProfileStore = State(
@@ -41,6 +47,7 @@ struct IOS_FrontendApp: App {
             initialValue: plannerPreview == "home" ? .preview : WorkoutStore()
         )
 #else
+        _activityStore = State(initialValue: ActivityStore())
         _socialProfileStore = State(initialValue: SocialProfileStore())
         _socialStore = State(initialValue: SocialStore())
         _foodTrackingStore = State(initialValue: FoodTrackingStore())
@@ -58,6 +65,7 @@ struct IOS_FrontendApp: App {
                 .environment(foodTrackingStore)
                 .environment(socialProfileStore)
                 .environment(socialStore)
+                .environment(activityStore)
         }
     }
 }
@@ -74,6 +82,7 @@ private struct AppRootView: View {
             || environment["REPBASE_AUTH_PREVIEW"] != nil
             || environment["REPBASE_KEYCHAIN_CHECK"] != nil
             || environment["REPBASE_HEALTH_CHECK"] != nil
+            || environment["REPBASE_HEALTH_PREVIEW"] != nil
     }
 #endif
 
@@ -83,6 +92,7 @@ private struct AppRootView: View {
     @Environment(FoodTrackingStore.self) private var foodTrackingStore
     @Environment(SocialProfileStore.self) private var socialProfileStore
     @Environment(SocialStore.self) private var socialStore
+    @Environment(ActivityStore.self) private var activityStore
 
     var body: some View {
         Group {
@@ -91,6 +101,10 @@ private struct AppRootView: View {
                 // Whether the simulator honours a HealthKit entitlement that
                 // device signing strips is a runtime question, not a build one.
                 HealthKitProbeView()
+            } else if ProcessInfo.processInfo.environment["REPBASE_HEALTH_PREVIEW"] != nil {
+                // The widget with days behind it. The simulator has no Watch,
+                // so this is the only way to see the populated state.
+                RepbaseRootView()
             } else if ProcessInfo.processInfo.environment["REPBASE_KEYCHAIN_CHECK"] != nil {
                 // Whether a signed-in session survives relaunching depends on
                 // whether this build can reach the Keychain, which no amount
@@ -218,6 +232,7 @@ private struct AppRootView: View {
                 plannerStore.disconnect()
                 socialProfileStore.disconnect()
                 socialStore.disconnect()
+                activityStore.disconnect()
                 foodTrackingStore.reset()
                 return
             }
@@ -238,6 +253,10 @@ private struct AppRootView: View {
                 token: token
             )
             await socialStore.connect(
+                configuration: authentication.configuration,
+                token: token
+            )
+            await activityStore.connect(
                 configuration: authentication.configuration,
                 token: token
             )

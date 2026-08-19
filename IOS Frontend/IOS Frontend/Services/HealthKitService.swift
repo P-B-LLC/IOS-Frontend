@@ -8,6 +8,9 @@
 //  to record it records itself, and writing back would give the same workout
 //  two homes and no way to say which is right.
 //
+//  This type only reads Health. What is kept, and what is shown, is the
+//  server's business: see `ActivityStore`.
+//
 
 import Foundation
 import HealthKit
@@ -46,133 +49,124 @@ nonisolated struct HealthWorkout: Identifiable, Hashable, Sendable {
 }
 
 @Observable
+@MainActor
 final class HealthKitService {
-    /// Why Health is unavailable, or nil when it can be used.
-    enum Unavailable: Equatable {
-        /// iPad without Health, or a platform that has none.
-        case notSupported
-        /// The user has not been asked yet.
-        case notRequested
-        /// The user was asked and said no, or the entitlement is missing.
-        ///
-        /// HealthKit deliberately does not distinguish "denied" from "no such
-        /// data" for reads, so a refusal looks exactly like an empty Health
-        /// app. Both end here, and the wording avoids accusing the user of
-        /// having refused when they may simply have no data.
-        case noData
-
-        var message: String {
-            switch self {
-            case .notSupported:
-                "This device does not have Apple Health."
-            case .notRequested:
-                "Connect Apple Health to bring in your steps and the workouts your Watch records."
-            case .noData:
-                "No Health data came back. Check Repbase under Settings › Health › Data Access if you expected some."
-            }
-        }
-    }
+    /// Whether the user has ever been shown Apple's permission sheet.
+    ///
+    /// HealthKit will not say whether a read was allowed. That would leak the
+    /// fact that someone declined, which is itself health information, so
+    /// there is nothing to query and this has to be remembered. It records
+    /// having asked, not the answer.
+    private static let hasAskedKey = "repbase.health.hasAsked"
 
     private let store = HKHealthStore()
+    private let defaults: UserDefaults
 
     private(set) var isRequestingAuthorization = false
-    private(set) var hasRequestedAuthorization = false
-    private(set) var stepsToday: Int?
     private(set) var errorMessage: String?
 
-    /// Whether the device can do this at all. False on the simulator only if
-    /// the runtime is missing Health, which iOS simulators are not.
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+    }
+
+    /// Whether the device can do this at all.
     var isSupported: Bool { HKHealthStore.isHealthDataAvailable() }
 
-    /// What to tell the user, or nil when there is data to show instead.
-    var unavailable: Unavailable? {
-        if !isSupported { return .notSupported }
-        if !hasRequestedAuthorization { return .notRequested }
-        if stepsToday == nil { return .noData }
-        return nil
-    }
+    /// Whether the sheet has been shown before. False means the user has never
+    /// had the chance to say yes, which is a different thing from having said
+    /// no.
+    var hasAsked: Bool { defaults.bool(forKey: Self.hasAskedKey) }
 
     /// The types Repbase asks to read. Nothing is requested to write.
     private var readTypes: Set<HKObjectType> {
         var types: Set<HKObjectType> = [HKObjectType.workoutType()]
-        if let steps = HKQuantityType.quantityType(forIdentifier: .stepCount) {
-            types.insert(steps)
-        }
-        if let distance = HKQuantityType.quantityType(
-            forIdentifier: .distanceWalkingRunning
-        ) {
-            types.insert(distance)
-        }
-        if let swimming = HKQuantityType.quantityType(
-            forIdentifier: .distanceSwimming
-        ) {
-            types.insert(swimming)
-        }
-        if let cycling = HKQuantityType.quantityType(
-            forIdentifier: .distanceCycling
-        ) {
-            types.insert(cycling)
-        }
-        if let energy = HKQuantityType.quantityType(
-            forIdentifier: .activeEnergyBurned
-        ) {
-            types.insert(energy)
+        for identifier: HKQuantityTypeIdentifier in [
+            .stepCount,
+            .distanceWalkingRunning,
+            .distanceSwimming,
+            .distanceCycling,
+            .activeEnergyBurned,
+        ] {
+            if let type = HKQuantityType.quantityType(forIdentifier: identifier) {
+                types.insert(type)
+            }
         }
         return types
     }
 
-    /// Asks for read access. The sheet is Apple's and appears once per type;
-    /// asking again after a refusal shows nothing at all, which is why the
-    /// button that calls this says "Connect" rather than promising a prompt.
-    func requestAuthorization() async {
-        guard isSupported else { return }
+    /// Asks for read access. The sheet appears once per type; asking again
+    /// after a refusal shows nothing at all, which is why the button that
+    /// calls this says "Connect" rather than promising a prompt.
+    @discardableResult
+    func requestAuthorization() async -> Bool {
+        guard isSupported else { return false }
         isRequestingAuthorization = true
         errorMessage = nil
         defer { isRequestingAuthorization = false }
 
         do {
             try await store.requestAuthorization(toShare: [], read: readTypes)
-            hasRequestedAuthorization = true
-            await refreshStepsToday()
+            defaults.set(true, forKey: Self.hasAskedKey)
+            return true
         } catch {
             errorMessage = error.localizedDescription
+            return false
         }
     }
 
-    /// Today's steps, summed across every source Health holds.
+    /// Steps per day from `start` to now, one entry per day Health knows of.
     ///
-    /// Health records the same steps from a phone and a watch separately, so
-    /// a plain sum over samples double-counts a day spent wearing both.
-    /// `HKStatisticsQuery` with `.cumulativeSum` is the query that already
-    /// knows this and de-duplicates by source.
-    func refreshStepsToday() async {
+    /// Health records the same steps from a phone and a watch separately, so a
+    /// plain sum over samples double-counts every day spent wearing both.
+    /// `HKStatisticsCollectionQuery` with `.cumulativeSum` is the query that
+    /// already knows this and de-duplicates by source, and it buckets by day
+    /// in one pass rather than being asked once per day.
+    func dailySteps(since start: Date) async -> [DailyStepCount] {
         guard isSupported,
               let stepType = HKQuantityType.quantityType(forIdentifier: .stepCount)
-        else { return }
+        else { return [] }
 
         let calendar = Calendar.current
-        let start = calendar.startOfDay(for: Date())
-        let predicate = HKQuery.predicateForSamples(
-            withStart: start,
-            end: Date(),
-            options: .strictStartDate
+        let anchor = calendar.startOfDay(for: start)
+        let now = Date()
+        guard anchor < now else { return [] }
+
+        let query = HKStatisticsCollectionQuery(
+            quantityType: stepType,
+            quantitySamplePredicate: HKQuery.predicateForSamples(
+                withStart: anchor,
+                end: now,
+                options: .strictStartDate
+            ),
+            options: .cumulativeSum,
+            anchorDate: anchor,
+            intervalComponents: DateComponents(day: 1)
         )
 
-        let sum: Double? = await withCheckedContinuation { continuation in
-            let query = HKStatisticsQuery(
-                quantityType: stepType,
-                quantitySamplePredicate: predicate,
-                options: .cumulativeSum
-            ) { _, statistics, _ in
-                continuation.resume(
-                    returning: statistics?.sumQuantity()?.doubleValue(for: .count())
-                )
+        let collection: HKStatisticsCollection? = await withCheckedContinuation { continuation in
+            query.initialResultsHandler = { _, results, _ in
+                continuation.resume(returning: results)
             }
             store.execute(query)
         }
 
-        guard let sum else { return }
-        stepsToday = Int(sum.rounded())
+        guard let collection else { return [] }
+
+        var days: [DailyStepCount] = []
+        collection.enumerateStatistics(from: anchor, to: now) { statistics, _ in
+            // A day with no samples is a day Health was not asked about, not a
+            // day nobody walked. Sending a zero would be a claim.
+            guard let sum = statistics.sumQuantity()?.doubleValue(for: .count()),
+                  sum > 0
+            else { return }
+            days.append(
+                DailyStepCount(
+                    day: calendar.startOfDay(for: statistics.startDate),
+                    steps: Int(sum.rounded())
+                )
+            )
+        }
+        return days
     }
 
     /// Finished workouts Health holds since a date, newest first.
@@ -258,3 +252,17 @@ final class HealthKitService {
             .doubleValue(for: .meterUnit(with: .kilo))
     }
 }
+
+#if DEBUG
+extension HealthKitService {
+    /// A service that reports having already shown the permission sheet.
+    ///
+    /// Lives here rather than in the preview itself so the key stays private:
+    /// nothing outside this type should be writing that flag.
+    static func previewAlreadyAsked() -> HealthKitService {
+        let defaults = UserDefaults(suiteName: "repbase.health.preview") ?? .standard
+        defaults.set(true, forKey: hasAskedKey)
+        return HealthKitService(defaults: defaults)
+    }
+}
+#endif
