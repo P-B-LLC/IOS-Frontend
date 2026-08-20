@@ -13,6 +13,8 @@ struct FoodTrackingView: View {
     @State private var selectedDate = Date()
     @State private var isEditingGoals = false
     @State private var isShowingSavedMeals = false
+    /// The month grid, opened from the week range.
+    @State private var isShowingMonth = false
     /// Opens the composer on this page's own kind, so it asks which meal
     /// rather than which feature.
     @State private var isSharingMeal = false
@@ -31,6 +33,11 @@ struct FoodTrackingView: View {
         }
         .sheet(isPresented: $isSharingMeal) {
             PostComposerView(source: .meal)
+        }
+        .sheet(isPresented: $isShowingMonth) {
+            NavigationStack {
+                FoodMonthView(selectedDate: $selectedDate)
+            }
         }
         .task {
             // The day being looked at has to exist on the server before
@@ -132,10 +139,23 @@ struct FoodTrackingView: View {
                 }
                 .accessibilityLabel("Previous week")
 
-                Text(weekRangeTitle)
-                    .font(.subheadline.weight(.medium))
+                // The range is the natural place to ask for a wider view: it
+                // is already the thing on screen that names a span of days.
+                Button {
+                    isShowingMonth = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(weekRangeTitle)
+                            .font(.subheadline.weight(.medium))
+                        Image(systemName: "calendar")
+                            .font(.caption2.weight(.bold))
+                    }
                     .foregroundStyle(timeOfDay.secondaryText)
                     .frame(minWidth: 90)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Open the month, \(weekRangeTitle)")
 
                 Button {
                     changeWeek(by: 1)

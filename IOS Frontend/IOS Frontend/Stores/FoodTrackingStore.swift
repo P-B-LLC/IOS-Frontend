@@ -110,6 +110,10 @@ final class FoodTrackingStore {
         repository = nil
         pendingDays = []
         days = [:]
+        // One user's month must never be shown to the next, and a month marked
+        // loaded would stop the new account's from being read at all.
+        loadedMonths = []
+        isLoadingMonth = false
         savedMeals = []
         recentFoods = []
         goals = .default
@@ -130,6 +134,46 @@ final class FoodTrackingStore {
     /// The slots are the server's, not four the app draws while it waits: a
     /// meal the app invented has no id, and the first food logged into it would
     /// have nowhere to go.
+    /// Months already asked for, so opening the month view twice does not ask
+    /// twice and flicking back and forth does not re-read what is in hand.
+    private var loadedMonths: Set<String> = []
+    private(set) var isLoadingMonth = false
+
+    /// Reads a whole month in one request.
+    ///
+    /// Not thirty calls to `ensureDay`. The month grid wants every day at
+    /// once, and the range endpoint already exists for exactly this; asking
+    /// per day would be thirty round trips to fill one screen.
+    func ensureMonth(_ date: Date) async {
+        guard let repository else { return }
+        let calendar = Calendar.current
+        guard let month = calendar.dateInterval(of: .month, for: date) else { return }
+
+        let key = dateKey(for: month.start)
+        guard !loadedMonths.contains(key) else { return }
+
+        let generation = connectionGeneration
+        isLoadingMonth = true
+        defer { if connectionGeneration == generation { isLoadingMonth = false } }
+
+        do {
+            let loaded = try await repository.days(
+                from: dateKey(for: month.start),
+                // `end` is inclusive on the server and `month.end` is the
+                // first instant of the next month, so step back a day rather
+                // than reading one that belongs to the month after.
+                to: dateKey(for: month.end.addingTimeInterval(-86_400))
+            )
+            guard connectionGeneration == generation else { return }
+            // Merged, not replaced: days already open elsewhere keep whatever
+            // was just logged into them.
+            days.merge(loaded) { _, fresh in fresh }
+            loadedMonths.insert(key)
+        } catch {
+            report(error, generation: generation)
+        }
+    }
+
     func ensureDay(_ date: Date) {
         let key = dateKey(for: date)
         guard let repository else {
