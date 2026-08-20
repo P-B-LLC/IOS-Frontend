@@ -267,7 +267,9 @@ struct TrainingDashboardContent: View {
         guard let workout = store.workout(on: day) else {
             return "Add a name, exercises, and target sets."
         }
-        return "\(workout.exercises.count) exercises  ·  \(workout.totalSets) target sets"
+        let exerciseLabel = workout.exercises.count == 1 ? "exercise" : "exercises"
+        let setLabel = workout.totalSets == 1 ? "target set" : "target sets"
+        return "\(workout.exercises.count) \(exerciseLabel)  ·  \(workout.totalSets) \(setLabel)"
     }
 }
 
@@ -381,9 +383,9 @@ private struct WorkoutDashboardHero: View {
                     .frame(width: 58, height: 58)
 
                 VStack(alignment: .leading, spacing: 5) {
-                    Text(workoutType == .running ? "Easy morning effort" : workoutTypePrompt)
+                    Text(workoutTypePrompt)
                         .font(.subheadline.weight(.semibold))
-                    Text("Your plan is ready to track.")
+                    Text(detail)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -425,10 +427,10 @@ private struct WorkoutDashboardHero: View {
 
     private var workoutTypePrompt: String {
         switch workoutType {
-        case .lifting: "Strength session ready"
-        case .running: "Easy morning effort"
-        case .biking: "Ride plan ready"
-        case .swimming: "Swim session ready"
+        case .lifting: "Strength session"
+        case .running: "Run session"
+        case .biking: "Ride session"
+        case .swimming: "Swim session"
         }
     }
 }
