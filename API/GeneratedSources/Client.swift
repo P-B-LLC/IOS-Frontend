@@ -5431,6 +5431,13 @@ public struct Client: APIProtocol {
                     in: &request,
                     style: .form,
                     explode: true,
+                    name: "since",
+                    value: input.query.since
+                )
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
                     name: "status",
                     value: input.query.status
                 )
@@ -6256,6 +6263,78 @@ public struct Client: APIProtocol {
                     case "application/json":
                         body = try await converter.getResponseBodyAsJSON(
                             Components.Schemas.HealthImportResult.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Totals, streaks and the six-week trend.
+    ///
+    /// Counted here rather than on the device. The device used to page every
+    /// session it had ever recorded in order to reduce them, which is a growing
+    /// download for a handful of integers, and it meant two clients could
+    /// disagree about the same history.
+    ///
+    /// - Remark: HTTP `GET /api/v1/sessions/training-stats/`.
+    /// - Remark: Generated from `#/paths//api/v1/sessions/training-stats//get(sessions_training_stats_retrieve)`.
+    public func sessionsTrainingStatsRetrieve(_ input: Operations.SessionsTrainingStatsRetrieve.Input) async throws -> Operations.SessionsTrainingStatsRetrieve.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SessionsTrainingStatsRetrieve.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/sessions/training-stats/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .get
+                )
+                suppressMutabilityWarning(&request)
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "today",
+                    value: input.query.today
+                )
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SessionsTrainingStatsRetrieve.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.TrainingStats.self,
                             from: responseBody,
                             transforming: { value in
                                 .json(value)

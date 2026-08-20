@@ -540,6 +540,16 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /api/v1/sessions/import-health/`.
     /// - Remark: Generated from `#/paths//api/v1/sessions/import-health//post(sessions_import_health_create)`.
     func sessionsImportHealthCreate(_ input: Operations.SessionsImportHealthCreate.Input) async throws -> Operations.SessionsImportHealthCreate.Output
+    /// Totals, streaks and the six-week trend.
+    ///
+    /// Counted here rather than on the device. The device used to page every
+    /// session it had ever recorded in order to reduce them, which is a growing
+    /// download for a handful of integers, and it meant two clients could
+    /// disagree about the same history.
+    ///
+    /// - Remark: HTTP `GET /api/v1/sessions/training-stats/`.
+    /// - Remark: Generated from `#/paths//api/v1/sessions/training-stats//get(sessions_training_stats_retrieve)`.
+    func sessionsTrainingStatsRetrieve(_ input: Operations.SessionsTrainingStatsRetrieve.Input) async throws -> Operations.SessionsTrainingStatsRetrieve.Output
     /// - Remark: HTTP `GET /api/v1/set-entries/`.
     /// - Remark: Generated from `#/paths//api/v1/set-entries//get(set_entries_list)`.
     func setEntriesList(_ input: Operations.SetEntriesList.Input) async throws -> Operations.SetEntriesList.Output
@@ -1981,6 +1991,24 @@ extension APIProtocol {
         try await sessionsImportHealthCreate(Operations.SessionsImportHealthCreate.Input(
             headers: headers,
             body: body
+        ))
+    }
+    /// Totals, streaks and the six-week trend.
+    ///
+    /// Counted here rather than on the device. The device used to page every
+    /// session it had ever recorded in order to reduce them, which is a growing
+    /// download for a handful of integers, and it meant two clients could
+    /// disagree about the same history.
+    ///
+    /// - Remark: HTTP `GET /api/v1/sessions/training-stats/`.
+    /// - Remark: Generated from `#/paths//api/v1/sessions/training-stats//get(sessions_training_stats_retrieve)`.
+    public func sessionsTrainingStatsRetrieve(
+        query: Operations.SessionsTrainingStatsRetrieve.Input.Query = .init(),
+        headers: Operations.SessionsTrainingStatsRetrieve.Input.Headers = .init()
+    ) async throws -> Operations.SessionsTrainingStatsRetrieve.Output {
+        try await sessionsTrainingStatsRetrieve(Operations.SessionsTrainingStatsRetrieve.Input(
+            query: query,
+            headers: headers
         ))
     }
     /// - Remark: HTTP `GET /api/v1/set-entries/`.
@@ -7234,6 +7262,66 @@ public enum Components {
             case planned = "planned"
             case active = "active"
             case completed = "completed"
+        }
+        /// The training record, counted once on the server.
+        ///
+        /// Every figure here used to be worked out on the device, which meant paging
+        /// the whole session history to the phone on every visit to the dashboard so
+        /// it could reduce it. The numbers are a property of the history, and the
+        /// history lives here.
+        ///
+        /// - Remark: Generated from `#/components/schemas/TrainingStats`.
+        public struct TrainingStats: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/TrainingStats/total_workouts`.
+            public var totalWorkouts: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/TrainingStats/completed_this_week`.
+            public var completedThisWeek: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/TrainingStats/completed_this_month`.
+            public var completedThisMonth: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/TrainingStats/current_streak_weeks`.
+            public var currentStreakWeeks: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/TrainingStats/best_streak_weeks`.
+            public var bestStreakWeeks: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/TrainingStats/six_week_counts`.
+            public var sixWeekCounts: [Swift.Int]
+            /// - Remark: Generated from `#/components/schemas/TrainingStats/weekly_goal`.
+            public var weeklyGoal: Swift.Int
+            /// Creates a new `TrainingStats`.
+            ///
+            /// - Parameters:
+            ///   - totalWorkouts:
+            ///   - completedThisWeek:
+            ///   - completedThisMonth:
+            ///   - currentStreakWeeks:
+            ///   - bestStreakWeeks:
+            ///   - sixWeekCounts:
+            ///   - weeklyGoal:
+            public init(
+                totalWorkouts: Swift.Int,
+                completedThisWeek: Swift.Int,
+                completedThisMonth: Swift.Int,
+                currentStreakWeeks: Swift.Int,
+                bestStreakWeeks: Swift.Int,
+                sixWeekCounts: [Swift.Int],
+                weeklyGoal: Swift.Int
+            ) {
+                self.totalWorkouts = totalWorkouts
+                self.completedThisWeek = completedThisWeek
+                self.completedThisMonth = completedThisMonth
+                self.currentStreakWeeks = currentStreakWeeks
+                self.bestStreakWeeks = bestStreakWeeks
+                self.sixWeekCounts = sixWeekCounts
+                self.weeklyGoal = weeklyGoal
+            }
+            public enum CodingKeys: String, CodingKey {
+                case totalWorkouts = "total_workouts"
+                case completedThisWeek = "completed_this_week"
+                case completedThisMonth = "completed_this_month"
+                case currentStreakWeeks = "current_streak_weeks"
+                case bestStreakWeeks = "best_streak_weeks"
+                case sixWeekCounts = "six_week_counts"
+                case weeklyGoal = "weekly_goal"
+            }
         }
         /// * `metric` - Metric (kg/cm)
         /// * `imperial` - Imperial (lb/in)
@@ -18174,6 +18262,10 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/sessions/GET/query/page`.
                 public var page: Swift.Int?
+                /// Only sessions on or after this date, so a client can ask for a week without paging its whole history.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/sessions/GET/query/since`.
+                public var since: Swift.String?
                 /// - Remark: Generated from `#/paths/api/v1/sessions/GET/query/status`.
                 @frozen public enum StatusPayload: String, Codable, Hashable, Sendable, CaseIterable {
                     case active = "active"
@@ -18196,16 +18288,19 @@ public enum Operations {
                 ///
                 /// - Parameters:
                 ///   - page: A page number within the paginated result set.
+                ///   - since: Only sessions on or after this date, so a client can ask for a week without paging its whole history.
                 ///   - status: Return only sessions in this state.
                 ///   - workout: Return only sessions for this workout template.
                 ///   - workoutName: Return only sessions whose workout has this name, matched without regard to case. Groups a workout's history by what it is called rather than by record.
                 public init(
                     page: Swift.Int? = nil,
+                    since: Swift.String? = nil,
                     status: Operations.SessionsList.Input.Query.StatusPayload? = nil,
                     workout: Swift.Int? = nil,
                     workoutName: Swift.String? = nil
                 ) {
                     self.page = page
+                    self.since = since
                     self.status = status
                     self.workout = workout
                     self.workoutName = workoutName
@@ -19819,6 +19914,141 @@ public enum Operations {
             /// - Throws: An error if `self` is not `.ok`.
             /// - SeeAlso: `.ok`.
             public var ok: Operations.SessionsImportHealthCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Totals, streaks and the six-week trend.
+    ///
+    /// Counted here rather than on the device. The device used to page every
+    /// session it had ever recorded in order to reduce them, which is a growing
+    /// download for a handful of integers, and it meant two clients could
+    /// disagree about the same history.
+    ///
+    /// - Remark: HTTP `GET /api/v1/sessions/training-stats/`.
+    /// - Remark: Generated from `#/paths//api/v1/sessions/training-stats//get(sessions_training_stats_retrieve)`.
+    public enum SessionsTrainingStatsRetrieve {
+        public static let id: Swift.String = "sessions_training_stats_retrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/sessions/training-stats/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// The device's own date. Week and month boundaries are cut against this rather than the server's clock, so the figures match the calendar the user is looking at.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/sessions/training-stats/GET/query/today`.
+                public var today: Swift.String?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - today: The device's own date. Week and month boundaries are cut against this rather than the server's clock, so the figures match the calendar the user is looking at.
+                public init(today: Swift.String? = nil) {
+                    self.today = today
+                }
+            }
+            public var query: Operations.SessionsTrainingStatsRetrieve.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/sessions/training-stats/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SessionsTrainingStatsRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SessionsTrainingStatsRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SessionsTrainingStatsRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.SessionsTrainingStatsRetrieve.Input.Query = .init(),
+                headers: Operations.SessionsTrainingStatsRetrieve.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/sessions/training-stats/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/sessions/training-stats/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.TrainingStats)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.TrainingStats {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SessionsTrainingStatsRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SessionsTrainingStatsRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/sessions/training-stats//get(sessions_training_stats_retrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SessionsTrainingStatsRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SessionsTrainingStatsRetrieve.Output.Ok {
                 get throws {
                     switch self {
                     case let .ok(response):
