@@ -109,8 +109,8 @@ struct RepbaseBottomNavigation: View {
             }
         }
         .padding(.horizontal, 6)
-        .padding(.vertical, 3)
-        .repbaseDepthSurface(cornerRadius: 16)
+        .padding(.vertical, 4)
+        .repbaseDepthSurface(cornerRadius: 17)
         .animation(.easeOut(duration: 0.18), value: tab)
     }
 
@@ -124,9 +124,9 @@ struct RepbaseBottomNavigation: View {
                 // Still larger than the original, because it carries the
                 // meaning the word underneath used to share — the bar around
                 // it is what shrinks, not the thing you aim at.
-                .font(.system(size: 18, weight: .semibold))
+                .font(.system(size: 19, weight: .semibold))
                 .foregroundStyle(isSelected ? activeColor : timeOfDay.secondaryText)
-                .frame(width: 34, height: 22)
+                .frame(width: 34, height: 24)
 
             // Kept, and now doing more work: with the labels gone this and the
             // colour are the only things saying which tab you are on.
@@ -136,10 +136,10 @@ struct RepbaseBottomNavigation: View {
                 .opacity(isSelected ? 1 : 0)
         }
         .foregroundStyle(isSelected ? activeColor : timeOfDay.secondaryText)
-        // 34 plus the bar's own padding leaves a target around 40pt tall and
-        // a fifth of the screen wide. Below iOS's 44pt guidance on one axis
-        // only, which is what its own compact tab bar does at 32pt.
-        .frame(maxWidth: .infinity, minHeight: 34)
+        // 38 plus the bar's own padding puts the tap target back above Apple's
+        // 44pt minimum, which the 34 that briefly replaced it was under.
+        // Between the original height and the too-slim one.
+        .frame(maxWidth: .infinity, minHeight: 38)
         .contentShape(Rectangle())
     }
 
