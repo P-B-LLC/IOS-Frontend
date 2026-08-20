@@ -35,13 +35,10 @@ struct TrainingDashboardContent: View {
                         .workoutCard()
                 } else {
                     workoutPlanCard
+                    StepsWidget(explainsWhenEmpty: true, compact: true)
                     intro
                     focusCard
                     momentumSection
-                    // Steps belong with training rather than on Home, and
-                    // this page says so when there are none: the point of
-                    // being here is what the body did today.
-                    StepsWidget(explainsWhenEmpty: true)
                     shareButton
                 }
             }
@@ -57,11 +54,11 @@ struct TrainingDashboardContent: View {
                 .font(.caption2.weight(.bold))
                 .tracking(1.4)
                 .foregroundStyle(phase.secondaryText)
-            Text("Build momentum.")
+            Text("Ready when you are.")
                 .font(.title.weight(.bold))
                 .tracking(-0.6)
                 .foregroundStyle(phase.primaryText)
-            Text("Today’s plan, your weekly goal, and the progress behind it.")
+            Text("Today’s plan, progress, and next move.")
                 .font(.footnote)
                 .foregroundStyle(phase.secondaryText)
         }
@@ -108,7 +105,8 @@ struct TrainingDashboardContent: View {
                     title: session.workoutName,
                     detail: "\(session.loggedSetCount) of \(session.totalSetCount) sets logged",
                     completed: metrics.completedThisWeek,
-                    goal: metrics.weeklyGoal
+                    goal: metrics.weeklyGoal,
+                    workoutType: session.workoutType
                 )
             }
             .buttonStyle(.plain)
@@ -122,6 +120,7 @@ struct TrainingDashboardContent: View {
                     detail: focusDescription(for: day),
                     completed: metrics.completedThisWeek,
                     goal: metrics.weeklyGoal,
+                    workoutType: store.workout(on: day)?.type ?? .lifting,
                     isDayComplete: store.workout(on: day).map {
                         store.isCompleted(
                             workoutName: $0.name,
@@ -369,6 +368,7 @@ private struct WorkoutDashboardHero: View {
     let detail: String
     let completed: Int
     let goal: Int
+    let workoutType: WorkoutType
     /// Whether the day this card points at has already been trained, so the
     /// pill can say what tapping it does rather than always saying Start.
     var isDayComplete = false
@@ -380,7 +380,7 @@ private struct WorkoutDashboardHero: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(eyebrow)
+                    Text("\(eyebrow)  ·  \(workoutType.title.uppercased())")
                         .font(.caption2.weight(.bold))
                         .tracking(1.4)
                         .foregroundStyle(Color.secondary)
@@ -395,7 +395,7 @@ private struct WorkoutDashboardHero: View {
                 Spacer(minLength: 12)
                 Label(
                     isDayComplete ? "View" : "Start",
-                    systemImage: isDayComplete ? "checkmark" : "arrow.up.right"
+                    systemImage: isDayComplete ? "checkmark" : "play.fill"
                 )
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(RepbasePalette.paper)
@@ -405,9 +405,26 @@ private struct WorkoutDashboardHero: View {
                     .shadow(color: Color.black.opacity(0.20), radius: 10, x: 0, y: 5)
             }
 
-            DashboardDumbbell()
-                .frame(maxWidth: .infinity)
-                .frame(height: 112)
+            HStack(spacing: 16) {
+                Image(systemName: workoutType.symbolName)
+                    .font(.system(size: 31, weight: .medium))
+                    .foregroundStyle(RepbaseDesign.accent)
+                    .frame(width: 58, height: 58)
+
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(workoutType == .running ? "Easy morning effort" : workoutTypePrompt)
+                        .font(.subheadline.weight(.semibold))
+                    Text("Your plan is ready to track.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Image(systemName: "arrow.up.right")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(RepbaseDesign.accent)
+            }
+            .padding(14)
+            .background(RepbaseDesign.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 20))
 
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
@@ -435,6 +452,15 @@ private struct WorkoutDashboardHero: View {
         }
         .padding(18)
         .dashboardSurface(radius: 24)
+    }
+
+    private var workoutTypePrompt: String {
+        switch workoutType {
+        case .lifting: "Strength session ready"
+        case .running: "Easy morning effort"
+        case .biking: "Ride plan ready"
+        case .swimming: "Swim session ready"
+        }
     }
 }
 
@@ -492,4 +518,3 @@ private extension View {
             .shadow(color: RepbaseDesign.deepShadow, radius: 22, x: 0, y: 10)
     }
 }
-

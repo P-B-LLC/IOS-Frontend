@@ -20,18 +20,62 @@ struct StepsWidget: View {
     /// page is where steps are the point, so there it says how to turn them
     /// on rather than leaving a gap.
     var explainsWhenEmpty: Bool = false
+    /// The training dashboard uses the glanceable single-row treatment. Home
+    /// keeps the seven-day history card.
+    var compact: Bool = false
 
     @Environment(ActivityStore.self) private var store
     @Environment(\.homeTimeOfDay) private var timeOfDay
 
     var body: some View {
         if store.week.isEmpty == false {
-            card
-                .padding(.top, 22)
+            if compact { compactCard } else { card.padding(.top, 22) }
         } else if explainsWhenEmpty, store.isHealthSupported {
             connectCard
                 .padding(.top, 22)
         }
+    }
+
+    private var compactCard: some View {
+        let goal = 8_000
+        let steps = store.stepsToday ?? 0
+        let progress = min(Double(steps) / Double(goal), 1)
+
+        return HStack(spacing: 14) {
+            Image(systemName: "figure.walk")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(RepbaseDesign.success)
+                .frame(width: 46, height: 46)
+                .background(RepbaseDesign.success.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text("TODAY'S MOVEMENT")
+                    .font(.system(size: 9, weight: .bold))
+                    .tracking(1.1)
+                    .foregroundStyle(RepbaseDesign.success)
+                Text("\(steps.formatted(.number)) steps")
+                    .font(.headline)
+                Text("Goal \(goal.formatted(.number))")
+                    .font(.caption)
+                    .foregroundStyle(timeOfDay.secondaryText)
+            }
+
+            Spacer(minLength: 8)
+
+            VStack(alignment: .trailing, spacing: 9) {
+                Text(progress.formatted(.percent.precision(.fractionLength(0))))
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(RepbaseDesign.success)
+                ProgressView(value: progress)
+                    .tint(RepbaseDesign.success)
+                    .frame(width: 92)
+            }
+        }
+        .padding(14)
+        .repbaseDepthSurface(cornerRadius: 20)
+        .task { await store.refresh() }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(steps.formatted(.number)) steps today, \(progress.formatted(.percent)) of goal")
     }
 
     /// Shown when there are no steps to draw.
