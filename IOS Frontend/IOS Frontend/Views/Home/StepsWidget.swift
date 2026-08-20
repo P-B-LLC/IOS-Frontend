@@ -40,42 +40,82 @@ struct StepsWidget: View {
         let goal = 8_000
         let steps = store.stepsToday ?? 0
         let progress = min(Double(steps) / Double(goal), 1)
+        let remaining = max(goal - steps, 0)
+        let currentMarker = min(Int(progress * 8), 7)
 
-        return HStack(spacing: 14) {
-            Image(systemName: "figure.walk")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(RepbaseDesign.success)
-                .frame(width: 46, height: 46)
-                .background(RepbaseDesign.success.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
+        return VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("TODAY'S MOVEMENT")
+                        .font(.caption2.weight(.bold))
+                        .tracking(0.5)
+                        .foregroundStyle(RepbaseDesign.success)
 
-            VStack(alignment: .leading, spacing: 3) {
-                Text("TODAY'S MOVEMENT")
+                    HStack(alignment: .firstTextBaseline, spacing: 7) {
+                        Text(steps.formatted(.number))
+                            .font(.title.weight(.bold))
+                            .contentTransition(.numericText())
+                        Text("steps today")
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(timeOfDay.secondaryText)
+                    }
+
+                    Text(remaining == 0 ? "Daily goal reached" : "\(remaining.formatted(.number)) more to reach your goal")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(RepbaseDesign.success)
+                }
+
+                Spacer(minLength: 10)
+
+                Text("\(goal / 1_000)K GOAL")
                     .font(.system(size: 9, weight: .bold))
-                    .tracking(1.1)
                     .foregroundStyle(RepbaseDesign.success)
-                Text("\(steps.formatted(.number)) steps")
-                    .font(.headline)
-                Text("Goal \(goal.formatted(.number))")
-                    .font(.caption)
-                    .foregroundStyle(timeOfDay.secondaryText)
+                    .padding(.horizontal, 10)
+                    .frame(height: 28)
+                    .background(RepbasePalette.paper, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
 
-            Spacer(minLength: 8)
+            ZStack {
+                Capsule()
+                    .fill(RepbaseDesign.success.opacity(0.55))
+                    .frame(height: 4)
 
-            VStack(alignment: .trailing, spacing: 9) {
-                Text(progress.formatted(.percent.precision(.fractionLength(0))))
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(RepbaseDesign.success)
-                ProgressView(value: progress)
-                    .tint(RepbaseDesign.success)
-                    .frame(width: 92)
+                HStack(spacing: 0) {
+                    ForEach(0..<8, id: \.self) { index in
+                        Circle()
+                            .fill(markerColor(at: index, currentMarker: currentMarker))
+                            .frame(width: 20, height: 20)
+                            .overlay {
+                                if index == currentMarker {
+                                    Circle()
+                                        .stroke(RepbaseDesign.accent.opacity(0.32), lineWidth: 4)
+                                        .frame(width: 28, height: 28)
+                                }
+                            }
+
+                        if index < 7 { Spacer(minLength: 0) }
+                    }
+                }
             }
+            .frame(height: 28)
+            .padding(.top, 7)
         }
-        .padding(14)
-        .repbaseDepthSurface(cornerRadius: 20)
+        .padding(.horizontal, 18)
+        .padding(.top, 15)
+        .padding(.bottom, 12)
+        .background(
+            Color(hex: 0xDDE8E1),
+            in: RoundedRectangle(cornerRadius: 24, style: .continuous)
+        )
         .task { await store.refresh() }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(steps.formatted(.number)) steps today, \(progress.formatted(.percent)) of goal")
+    }
+
+    private func markerColor(at index: Int, currentMarker: Int) -> Color {
+        if index < currentMarker { return RepbaseDesign.success }
+        if index == currentMarker { return RepbaseDesign.accent }
+        return RepbasePalette.paper
     }
 
     /// Shown when there are no steps to draw.

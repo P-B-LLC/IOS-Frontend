@@ -35,7 +35,6 @@ struct TrainingDashboardContent: View {
                 } else {
                     workoutPlanCard
                     StepsWidget(explainsWhenEmpty: true, compact: true)
-                    intro
                     focusCard
                     momentumSection
                 }
@@ -43,22 +42,6 @@ struct TrainingDashboardContent: View {
             .padding(.horizontal, RepbaseDesign.pageInset)
             .padding(.top, 10)
             .padding(.bottom, RepbaseDesign.quickActionClearance)
-        }
-    }
-
-    private var intro: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("YOUR TRAINING")
-                .font(.caption2.weight(.bold))
-                .tracking(1.4)
-                .foregroundStyle(phase.secondaryText)
-            Text("Ready when you are.")
-                .font(.title.weight(.bold))
-                .tracking(-0.6)
-                .foregroundStyle(phase.primaryText)
-            Text("Today’s plan, progress, and next move.")
-                .font(.footnote)
-                .foregroundStyle(phase.secondaryText)
         }
     }
 
