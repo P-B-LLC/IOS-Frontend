@@ -62,7 +62,12 @@ struct TrainingTabView: View {
 
                 quickActionMenu(timeOfDay: timeOfDay)
                     .padding(.trailing, RepbaseDesign.pageInset)
-                    .padding(.bottom, 10)
+                    // Clear of the bottom bar, which floats over this tab
+                    // rather than beside it: at 10 the button sat behind the
+                    // bar with only its top corner showing. The bar is 46
+                    // tall and sits 8 above the safe area, so this is that
+                    // plus a gap.
+                    .padding(.bottom, 64)
             }
             .homeTimeScreen(timeOfDay)
             .animation(.spring(response: 0.3, dampingFraction: 0.82), value: isShowingQuickActions)
