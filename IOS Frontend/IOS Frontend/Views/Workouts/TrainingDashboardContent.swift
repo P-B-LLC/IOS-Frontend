@@ -16,12 +16,10 @@ struct TrainingDashboardContent: View {
         store.activeSession == nil ? .prepare : .focus
     }
 
-    private var metrics: TrainingDashboardMetrics {
-        TrainingDashboardMetrics(
-            sessions: store.dashboardSessions,
-            plannedWorkoutCount: store.currentWeekWorkouts.count
-        )
-    }
+    /// Counted by the server. This used to be a reduction over every session
+    /// the account had ever recorded, which is why the dashboard paged the
+    /// whole history each time it appeared.
+    private var metrics: TrainingStats { store.trainingStats }
 
     var body: some View {
         ScrollView {
@@ -479,132 +477,6 @@ private struct DashboardDumbbell: View {
     }
 }
 
-private struct TrainingDashboardMetrics {
-    let sessions: [PostableSession]
-    let plannedWorkoutCount: Int
-    private let calendar = Calendar.current
-
-    /// One workout trained on one day, however many sessions that took.
-    ///
-    /// Everything below counts these rather than sessions. A session is
-    /// created by tapping Start, so counting sessions meant starting Tuesday's
-    /// workout six times read as six workouts and a met weekly goal — which is
-    /// what it did. Starting a day again, to redo a set or after discarding by
-    /// accident, is a normal thing to do and must not inflate the record of
-    /// what was trained.
-    private struct TrainingDay: Hashable {
-        let workoutName: String
-        let day: Date
-    }
-
-    /// The distinct days trained, newest first.
-    ///
-    /// A session that recorded nothing is not one of them. Finishing is a tap,
-    /// not a consequence of logging, so a day can be completed empty — and an
-    /// empty day counted towards the weekly goal is the goal reporting
-    /// training that never happened.
-    private var trainingDays: [TrainingDay] {
-        var seen: Set<TrainingDay> = []
-        var result: [TrainingDay] = []
-        for session in sessions
-            .filter(\.recordedSomething)
-            .sorted(by: { $0.performedAt > $1.performedAt }) {
-            let entry = TrainingDay(
-                workoutName: session.workoutName,
-                day: calendar.startOfDay(for: session.performedAt)
-            )
-            if seen.insert(entry).inserted {
-                result.append(entry)
-            }
-        }
-        return result
-    }
-
-    var totalWorkouts: Int { trainingDays.count }
-    var weeklyGoal: Int { max(plannedWorkoutCount, 1) }
-    var completedThisWeek: Int { count(in: .weekOfYear) }
-    var completedThisMonth: Int { count(in: .month) }
-    var monthDetail: String { completedThisMonth == 0 ? "None this month" : "+\(completedThisMonth) this month" }
-
-    private func count(in component: Calendar.Component) -> Int {
-        trainingDays.filter {
-            calendar.isDate($0.day, equalTo: Date(), toGranularity: component)
-        }.count
-    }
-
-    private var activeWeeks: Set<Date> {
-        Set(trainingDays.compactMap { calendar.dateInterval(of: .weekOfYear, for: $0.day)?.start })
-    }
-
-    var currentStreak: Int {
-        guard var cursor = calendar.dateInterval(of: .weekOfYear, for: Date())?.start else { return 0 }
-        if !activeWeeks.contains(cursor), let prior = calendar.date(byAdding: .weekOfYear, value: -1, to: cursor) {
-            cursor = prior
-        }
-        var result = 0
-        while activeWeeks.contains(cursor) {
-            result += 1
-            guard let prior = calendar.date(byAdding: .weekOfYear, value: -1, to: cursor) else { break }
-            cursor = prior
-        }
-        return result
-    }
-
-    var bestStreak: Int {
-        let weeks = activeWeeks.sorted()
-        guard !weeks.isEmpty else { return 0 }
-        var best = 1
-        var run = 1
-        for (earlier, later) in zip(weeks, weeks.dropFirst()) {
-            if calendar.dateComponents([.weekOfYear], from: earlier, to: later).weekOfYear == 1 {
-                run += 1
-                best = max(best, run)
-            } else {
-                run = 1
-            }
-        }
-        return best
-    }
-
-    var currentStreakText: String { "\(currentStreak) \(currentStreak == 1 ? "week" : "weeks")" }
-    var bestStreakText: String { "\(bestStreak) \(bestStreak == 1 ? "week" : "weeks")" }
-
-    var sixWeekCounts: [Int] {
-        guard let current = calendar.dateInterval(of: .weekOfYear, for: Date())?.start else {
-            return Array(repeating: 0, count: 6)
-        }
-        return (0..<6).reversed().map { offset in
-            guard let week = calendar.date(byAdding: .weekOfYear, value: -offset, to: current) else { return 0 }
-            return trainingDays.filter {
-                calendar.dateInterval(of: .weekOfYear, for: $0.day)?.start == week
-            }.count
-        }
-    }
-
-    private var trendPercent: Int {
-        let prior = sixWeekCounts[4]
-        let current = sixWeekCounts[5]
-        guard prior > 0 else { return current > 0 ? 100 : 0 }
-        return Int(((Double(current - prior) / Double(prior)) * 100).rounded())
-    }
-
-    var trendPercentText: String { String(format: "%+d%%", trendPercent) }
-    var trendLabel: String { trendPercent > 0 ? "Improving" : trendPercent < 0 ? "Easing" : "Steady" }
-    var trendSymbol: String { trendPercent > 0 ? "arrow.up.right" : trendPercent < 0 ? "arrow.down.right" : "arrow.right" }
-
-    func barHeight(for count: Int) -> CGFloat {
-        let maximum = max(sixWeekCounts.max() ?? 0, 1)
-        return max(12, 82 * CGFloat(count) / CGFloat(maximum))
-    }
-
-    var nextMilestone: Int { ((totalWorkouts / 10) + 1) * 10 }
-    var workoutsToMilestone: Int { nextMilestone - totalWorkouts }
-    var milestoneTitle: String { "\(workoutsToMilestone) workout\(workoutsToMilestone == 1 ? "" : "s") to reach \(nextMilestone)" }
-    var milestoneProgress: Double {
-        let start = max(nextMilestone - 10, 0)
-        return Double(totalWorkouts - start) / Double(max(nextMilestone - start, 1))
-    }
-}
 
 private extension View {
     func dashboardSurface(radius: CGFloat) -> some View {

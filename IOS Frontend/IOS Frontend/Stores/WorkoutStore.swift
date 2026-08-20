@@ -54,6 +54,11 @@ final class WorkoutStore {
     /// from the API and reduced into totals, streaks, and weekly trends by the
     /// view; the dashboard never fabricates progress values.
     private(set) var dashboardSessions: [PostableSession] = []
+    /// Totals, streaks and the trend, counted by the server.
+    ///
+    /// These were worked out here, from every session ever recorded, which
+    /// is why the history was paged in full on every visit to the dashboard.
+    private(set) var trainingStats = TrainingStats.empty
     private(set) var isLoadingDashboardSessions = false
 
     // MARK: - Cardio finisher
@@ -313,14 +318,35 @@ final class WorkoutStore {
         }
 
         do {
-            let sessions = try await repository.completedSessions(pageLimit: .max)
+            // The totals come from the server now, so this no longer has to
+            // page the whole history to produce them. What is still read is a
+            // bounded window, for the completed badges on the week strip and
+            // on a day that is opened.
+            async let statsRequest = repository.trainingStats()
+            async let sessionsRequest = repository.completedSessions(
+                since: Calendar.current.date(
+                    byAdding: .day,
+                    value: -Self.badgeHistoryDays,
+                    to: Date()
+                )
+            )
+            let (stats, sessions) = try await (statsRequest, sessionsRequest)
             guard connectionGeneration == generation else { return }
+            trainingStats = stats
             dashboardSessions = sessions
         } catch {
             guard connectionGeneration == generation else { return }
             persistenceError = error.localizedDescription
         }
     }
+
+    /// How far back the badge lookup reads.
+    ///
+    /// Only the current week is ever marked on the strip, and a day page asks
+    /// about the day it is showing, so this is generous rather than exact. It
+    /// exists so the read is bounded at all: it used to be every session the
+    /// account had, fetched again on every visit.
+    static let badgeHistoryDays = 120
 
     // MARK: - Lookups
 

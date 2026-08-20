@@ -31,10 +31,10 @@ nonisolated enum RepbaseTab: String, CaseIterable, Identifiable {
 
     var symbol: String {
         switch self {
-        case .home: "house.fill"
-        case .training: "dumbbell.fill"
+        case .home: "house"
+        case .training: "dumbbell"
         case .planner: "calendar"
-        case .social: "person.2.fill"
+        case .social: "person.2"
         case .account: "person"
         }
     }
@@ -124,6 +124,11 @@ struct RepbaseBottomNavigation: View {
                 .font(.system(size: 9, weight: .semibold))
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
+
+            Capsule()
+                .fill(activeColor)
+                .frame(width: 12, height: 2)
+                .opacity(isSelected ? 1 : 0)
         }
         .foregroundStyle(isSelected ? activeColor : timeOfDay.secondaryText)
         .frame(maxWidth: .infinity, minHeight: 50)

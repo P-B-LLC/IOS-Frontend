@@ -617,6 +617,43 @@ actor WorkoutAPIRepository {
         }
     }
 
+    /// Totals, streaks and the six-week trend, counted by the server.
+    ///
+    /// `today` is the device's own date: week and month boundaries are cut
+    /// against it rather than the server's clock, so the figures agree with
+    /// the calendar the user is looking at.
+    func trainingStats(today: Date = Date()) async throws -> TrainingStats {
+        let output = try await client.sessionsTrainingStatsRetrieve(
+            query: .init(today: Self.dayString(today))
+        )
+        switch output {
+        case .ok(let response):
+            let stats = try response.body.json
+            return TrainingStats(
+                totalWorkouts: stats.totalWorkouts,
+                completedThisWeek: stats.completedThisWeek,
+                completedThisMonth: stats.completedThisMonth,
+                currentStreakWeeks: stats.currentStreakWeeks,
+                bestStreakWeeks: stats.bestStreakWeeks,
+                sixWeekCounts: stats.sixWeekCounts,
+                weeklyGoal: stats.weeklyGoal
+            )
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// `YYYY-MM-DD` in the device's own calendar.
+    nonisolated static func dayString(_ date: Date) -> String {
+        let parts = Calendar.current.dateComponents([.year, .month, .day], from: date)
+        return String(
+            format: "%04d-%02d-%02d",
+            parts.year ?? 0,
+            parts.month ?? 0,
+            parts.day ?? 0
+        )
+    }
+
     /// The GPS track a session recorded, in the order it was walked.
     ///
     /// Read back from the server rather than kept from the recording, so the
@@ -905,13 +942,20 @@ actor WorkoutAPIRepository {
     /// before the newest are returned. Raising it costs a round-trip a page.
     /// The proper fix is an ordering parameter on the endpoint, which the
     /// contract does not have.
-    func completedSessions(pageLimit: Int = 5) async throws -> [PostableSession] {
+    func completedSessions(
+        pageLimit: Int = 5,
+        since: Date? = nil
+    ) async throws -> [PostableSession] {
         var page: Int?
         var visited: Set<Int> = []
         var values: [Components.Schemas.WorkoutSession] = []
         repeat {
             let output = try await client.sessionsList(
-                query: .init(page: page, status: .completed)
+                query: .init(
+                    page: page,
+                    since: since.map(Self.dayString),
+                    status: .completed
+                )
             )
             let response: Components.Schemas.PaginatedWorkoutSessionList
             switch output {
