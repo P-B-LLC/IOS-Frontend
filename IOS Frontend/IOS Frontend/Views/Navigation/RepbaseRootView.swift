@@ -114,24 +114,28 @@ struct RepbaseBottomNavigation: View {
         .animation(.easeOut(duration: 0.18), value: tab)
     }
 
+    /// Icons only. The names are still on the button as an accessibility
+    /// label, so VoiceOver reads "Calendar" even though nothing on screen
+    /// says it — dropping the text from the design should not drop it from
+    /// the app.
     private func itemLabel(_ item: RepbaseTab, isSelected: Bool) -> some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 5) {
             Image(systemName: item.symbol)
-                .font(.system(size: 15, weight: .semibold))
+                // Larger than it was, because it is now carrying the meaning
+                // the word underneath used to share.
+                .font(.system(size: 19, weight: .semibold))
                 .foregroundStyle(isSelected ? activeColor : timeOfDay.secondaryText)
                 .frame(width: 34, height: 26)
-            Text(item.title)
-                .font(.system(size: 9, weight: .semibold))
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
 
+            // Kept, and now doing more work: with the labels gone this and the
+            // colour are the only things saying which tab you are on.
             Capsule()
                 .fill(activeColor)
-                .frame(width: 12, height: 2)
+                .frame(width: 14, height: 2)
                 .opacity(isSelected ? 1 : 0)
         }
         .foregroundStyle(isSelected ? activeColor : timeOfDay.secondaryText)
-        .frame(maxWidth: .infinity, minHeight: 50)
+        .frame(maxWidth: .infinity, minHeight: 42)
         .contentShape(Rectangle())
     }
 
