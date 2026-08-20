@@ -286,7 +286,13 @@ private struct RecentFoodRow: View {
 
             Text("\(food.totalNutrition.calories.nutritionText) cal")
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.primary)
+
+            Image(systemName: "plus")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(RepbasePalette.cream)
+                .frame(width: 30, height: 30)
+                .background(RepbaseDesign.ink, in: RoundedRectangle(cornerRadius: 9))
         }
         .contentShape(.rect)
     }
