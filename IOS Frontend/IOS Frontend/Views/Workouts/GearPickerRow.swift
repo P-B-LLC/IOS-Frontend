@@ -56,47 +56,53 @@ struct GearPickerRow: View {
                 )
             )
         } label: {
-            HStack(spacing: 10) {
-                Image(systemName: kind.symbolName)
-                    .font(.footnote.weight(.bold))
-                    .foregroundStyle(accent)
-                    .frame(width: 26, height: 26)
-                    .background(
-                        accent.opacity(0.14),
-                        in: RoundedRectangle(cornerRadius: 8)
-                    )
-
-                if choices.isEmpty {
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(kind == .shoe ? "Add your shoes" : "Add your bike")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(primaryText)
-                        Text("Track how far each one has been.")
-                            .font(.caption)
-                            .foregroundStyle(secondaryText)
-                    }
-                    Spacer(minLength: 0)
-                } else {
-                    Text(kind == .shoe ? "Shoes" : "Bike")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(primaryText)
-                    Spacer(minLength: 6)
-                    Text(selectedName(from: choices) ?? "Choose")
-                        .font(.subheadline.weight(.medium))
+            HStack(spacing: 0) {
+                VStack(spacing: 2) {
+                    gearIcon(for: kind)
+                        .frame(width: 34, height: 34)
+                    Text("GEAR")
+                        .font(.system(size: 8, weight: .bold))
                         .foregroundStyle(accent)
+                }
+                .frame(width: 64)
+
+                Rectangle()
+                    .fill(accent.opacity(0.24))
+                    .frame(width: 1, height: 54)
+                    .padding(.horizontal, 14)
+
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(kind == .shoe ? "Shoes" : "Bike")
+                        .font(.headline)
+                        .foregroundStyle(primaryText)
+                    Text(selectionDetail(for: kind, choices: choices))
+                        .font(.caption)
+                        .foregroundStyle(secondaryText)
                         .lineLimit(1)
                 }
 
-                Image(systemName: "chevron.forward")
-                    .font(.caption.weight(.bold))
+                Spacer(minLength: 10)
+
+                Text(selectionAction(for: choices))
+                    .font(.subheadline.weight(.medium))
                     .foregroundStyle(accent)
+
+                Image(systemName: "chevron.forward")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(accent)
+                    .padding(.leading, 8)
             }
-            .padding(12)
+            .padding(.horizontal, 14)
+            .frame(minHeight: 82)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
-                accent.opacity(0.07),
-                in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                RepbasePalette.paper.opacity(0.92),
+                in: RoundedRectangle(cornerRadius: 20, style: .continuous)
             )
+            .overlay {
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .strokeBorder(accent.opacity(0.24), lineWidth: 1)
+            }
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -118,6 +124,36 @@ struct GearPickerRow: View {
         // a session recorded before it was retired.
         return (choices.first { $0.id == selectedID }
             ?? store.gear(withID: selectedID))?.displayName
+    }
+
+    @ViewBuilder
+    private func gearIcon(for kind: GearKind) -> some View {
+        if kind == .shoe {
+            Image("RepbaseSpeedSole")
+                .resizable()
+                .renderingMode(.template)
+                .scaledToFit()
+                .foregroundStyle(RepbaseDesign.success)
+        } else {
+            Image(systemName: kind.symbolName)
+                .font(.system(size: 24, weight: .medium))
+                .foregroundStyle(accent)
+        }
+    }
+
+    private func selectionDetail(for kind: GearKind, choices: [Gear]) -> String {
+        if choices.isEmpty {
+            return kind == .shoe
+                ? "Add shoes to track their distance"
+                : "Add a bike to track its distance"
+        }
+        if let selected = selectedName(from: choices) { return selected }
+        return kind == .shoe ? "Select gear for this run" : "Select gear for this ride"
+    }
+
+    private func selectionAction(for choices: [Gear]) -> String {
+        if choices.isEmpty { return "Add" }
+        return selectedName(from: choices) == nil ? "Choose" : "Change"
     }
 
     private func select(_ id: Int?) {
