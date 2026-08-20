@@ -117,34 +117,14 @@ struct TrainingTabView: View {
                         quickAction = action
                         closeQuickActions()
                     } label: {
-                        HStack(spacing: 10) {
-                            Image(systemName: action.symbol)
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(timeOfDay.accent)
-                                .frame(width: 32, height: 32)
-                                .background(timeOfDay.accent.opacity(0.14), in: RoundedRectangle(cornerRadius: 10))
-
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(action.title)
-                                    .font(.subheadline.weight(.semibold))
-                                    .foregroundStyle(timeOfDay.canvasPrimaryText)
-                                Text(action.detail)
-                                    .font(.caption2)
-                                    .foregroundStyle(timeOfDay.canvasSecondaryText)
-                                    .lineLimit(1)
-                            }
-                            Spacer(minLength: 0)
-                        }
-                        .padding(.horizontal, 8)
-                        .frame(width: 206, height: 48)
-                        .repbaseDepthSurface(cornerRadius: 16)
-                        // The row is 206 by 48, but the Spacer inside it is
-                        // not hit-testable on its own; without this the right
-                        // half of each row does nothing.
-                        .contentShape(Rectangle())
+                        Image(systemName: action.symbol)
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(timeOfDay.accent)
+                            .frame(width: 48, height: 48)
+                            .repbaseDepthSurface(cornerRadius: 15)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .accessibilityElement(children: .combine)
                     .accessibilityLabel(action.title)
                     .accessibilityHint(action.detail)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
