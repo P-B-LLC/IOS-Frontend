@@ -129,13 +129,17 @@ private struct AppRootView: View {
                             )
                             Text("With none")
                                 .font(.caption.weight(.bold))
+                            // An empty store, not a sport without gear:
+                            // swimming takes neither shoes nor a bike, so the
+                            // row correctly drew nothing and told me nothing.
                             GearPickerRow(
-                                workoutType: .swimming,
+                                workoutType: .running,
                                 destination: .pending(.constant(nil)),
                                 primaryText: WorkoutVisualPhase.prepare.primaryText,
                                 secondaryText: WorkoutVisualPhase.prepare.secondaryText,
                                 accent: WorkoutVisualPhase.prepare.accent
                             )
+                            .environment(GearStore())
                         }
                         .padding(RepbaseDesign.pageInset)
                     }
