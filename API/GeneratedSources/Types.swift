@@ -3407,6 +3407,8 @@ public enum Components {
             public var totalDistanceKm: Swift.Double
             /// - Remark: Generated from `#/components/schemas/Gear/session_count`.
             public var sessionCount: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/Gear/last_used_at`.
+            public var lastUsedAt: Foundation.Date?
             /// - Remark: Generated from `#/components/schemas/Gear/created_at`.
             public var createdAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/Gear/updated_at`.
@@ -3427,6 +3429,7 @@ public enum Components {
             ///   - isRetired:
             ///   - totalDistanceKm:
             ///   - sessionCount:
+            ///   - lastUsedAt:
             ///   - createdAt:
             ///   - updatedAt:
             public init(
@@ -3443,6 +3446,7 @@ public enum Components {
                 isRetired: Swift.Bool,
                 totalDistanceKm: Swift.Double,
                 sessionCount: Swift.Int,
+                lastUsedAt: Foundation.Date? = nil,
                 createdAt: Foundation.Date,
                 updatedAt: Foundation.Date
             ) {
@@ -3459,6 +3463,7 @@ public enum Components {
                 self.isRetired = isRetired
                 self.totalDistanceKm = totalDistanceKm
                 self.sessionCount = sessionCount
+                self.lastUsedAt = lastUsedAt
                 self.createdAt = createdAt
                 self.updatedAt = updatedAt
             }
@@ -3476,6 +3481,7 @@ public enum Components {
                 case isRetired = "is_retired"
                 case totalDistanceKm = "total_distance_km"
                 case sessionCount = "session_count"
+                case lastUsedAt = "last_used_at"
                 case createdAt = "created_at"
                 case updatedAt = "updated_at"
             }
