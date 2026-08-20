@@ -1,15 +1,14 @@
 # Repbase iOS — Work History and Claude Handoff
 
-Last updated: August 19, 2026 (social posting, performance, the planner's
-identity bugs)
+Last updated: August 19, 2026 (Apple Health, the route map, miles, and gear)
 
 This supersedes the previous handoff, which described the project at `ad1df5b`.
 Everything in that document still worth keeping has been folded in here.
 
 | Repository | GitHub | Branch | Verified commit |
 | --- | --- | --- | --- |
-| iOS frontend | `https://github.com/P-B-LLC/IOS-Frontend.git` | `main` | `db2f795` |
-| Django backend | `https://github.com/P-B-LLC/repbase.git` | `main` | `1884950` |
+| iOS frontend | `https://github.com/P-B-LLC/IOS-Frontend.git` | `main` | `64aa5cd` |
+| Django backend | `https://github.com/P-B-LLC/repbase.git` | `main` | `c1029f4` |
 
 Every commit below was built on the Mac from a clean clone of `main` before
 being pushed.
@@ -901,6 +900,80 @@ resolving the pk. **Probe a path the router cannot mistake for a detail route.**
 `restart-devserver.sh` in the backend repo now does the restart and the check
 together, and fails loudly on 404.
 
+## August 19: miles, and gear
+
+### The app reads imperial and stores metric
+
+Every distance, pace, speed and climb now reads in miles, mph, seconds per
+mile and feet. **Nothing about storage changed.** The server computes and keeps
+kilometres and metres, and conversion happens in `ImperialUnits` at the edge
+where a number becomes a string. Putting the unit into the database would mean
+every stored figure had to be read alongside whichever preference was in force
+when it was written.
+
+Two conversions that are easy to get backwards:
+
+- **Pace inverts.** A mile is longer than a kilometre, so seconds per mile is
+  the *larger* number. Getting it the wrong way makes a 5:00/km run into a
+  3:07/mi one, which is a world record rather than a Tuesday.
+- **Convert once.** `SessionProgressChart` converts its plotted points, so the
+  caption underneath must not convert the difference again — that would report
+  a mile of improvement as 0.62. Anything reading `points` is already imperial.
+
+Inputs convert the other way, at the same edge: what is typed in miles becomes
+kilometres before it is sent. That applies to the cardio distance box and to
+both mileage fields in the gear editor.
+
+Splits had to move too. The server cut them at kilometre boundaries, and a
+split measured in one unit but labelled in another describes a run nobody did,
+so `MILE_KM` is the boundary now. That renamed the field `kilometer` →
+`number`; `distance_km` still reports kilometres, so a full split reads 1.609.
+
+### Gear
+
+A shoe or bike is its own record, not a label on a session, because a shoe
+outlives any one run and the question worth answering is how much is left in
+it. Attaching gear to a running or biking session adds that session's distance
+to its total.
+
+**Mileage is summed on the server**, over every session the gear was attached
+to, plus whatever distance it arrived with. That last part matters: a shoe
+added half way through its life would otherwise claim to be new.
+
+This needed `WorkoutSession.recorded_distance_km`. `route_distance_km`
+recomputes from the stored track every time it is read — fine for one session,
+impossible to sum in SQL across the hundred a shoe was worn for. It is written
+once, when a track is uploaded or a workout is imported from Health.
+
+The picker appears **twice**, in the live session and again on the summary,
+because it is one decision reached two ways and forgetting beforehand should
+not be permanent. A default per kind is preselected; a single shoe is used
+without being marked default, since choosing between one thing is not a choice.
+
+**The wear bar only appears when the user states where the end is.** The
+obvious thing is to assume shoes last 500 miles and warn at 400, but that is a
+guess about somebody else's shoes presented as a measurement of theirs.
+
+Rules the server enforces, all verified against the database rather than read:
+a bike cannot be attached to a run, gear belonging to someone else is refused,
+retired gear is refused, retiring keeps every mile and drops it from the list,
+and detaching a session gives its distance back.
+
+### Two failures worth not repeating
+
+**An edit that matched nothing, silently.** `gear` was supposed to join the
+session serializer's field list and did not — a `perl -0777 -pe s///` that
+matched no text exits 0 and prints nothing. The contract shipped without it and
+only the Swift compiler noticed. Now these scripts read the result back and
+print it.
+
+**Inserting at a text marker without looking at what precedes it.** A python
+insert placed a method immediately before `def get_logged_set_count`, which sat
+under an `@extend_schema_field(serializers.IntegerField())` decorator. The
+decorator was orphaned onto the new method, `logged_set_count` fell back to
+`string` in the contract, and every client would have failed to decode it.
+Check for a decorator above any line you insert before.
+
 ## Contract additions this session
 
 All additive; nothing was removed.
@@ -971,6 +1044,17 @@ WorkoutSession.health_distance_km       distance as Health reported it,
                                         not derived from a GPS route
 POST /api/v1/sessions/import-health/    {workouts:[...]} -> {imported,
                                         skipped_overlapping, already_imported}
+
+Gear                                    kind (shoe|bike), name, brand, notes,
+                                        initial_distance_km, retire_at_km,
+                                        is_default, retired_at; read-only
+                                        total_distance_km, session_count
+GET  /api/v1/gear/?kind=&include_retired=
+POST/PATCH/DELETE /api/v1/gear/       retiring is a PATCH of retired_at
+WorkoutSession.gear                     writable; refused when the kind does
+                                        not suit the sport
+WorkoutSession.recorded_distance_km     read-only; what gear mileage sums
+SessionSplit.kilometer -> number        splits are cut at miles now
 ```
 
 Regenerate the client on macOS after any contract change:
@@ -1014,7 +1098,10 @@ the compiler this session and are worth remembering:
    session and its overview. What has not: **Redo Session, Undo, the calendar
    entry's Share, the empty-finish notice, and — as of August 19 — the
    Connect Apple Health button — since removed; Apple's sheet now appears on
-   its own.** The empty-finish notice came off this list the hard way: it was
+   its own; and every part of **gear**: adding a shoe, picking one for a
+   session, retiring one. The gear screens have only been seen with the
+   `REPBASE_GEAR_PREVIEW` sample data behind them; the rules underneath were
+   exercised against the database, but nobody has pressed any of the buttons.** The empty-finish notice came off this list the hard way: it was
    blocking **every run, ride and swim** from being finished at all. Its guard
    fired on `loggedSetCount == 0`, which a distance workout always is, and the
    notice explaining the refusal is only drawn on the lifting layout, so both
