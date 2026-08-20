@@ -135,10 +135,11 @@ struct TrainingTabView: View {
                 isShowingQuickActions.toggle()
             } label: {
                 Image(systemName: isShowingQuickActions ? "xmark" : "plus")
-                    .font(.system(size: 18, weight: .bold))
+                    .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(RepbasePalette.cream)
-                    .frame(width: 56, height: 56)
-                    .background(RepbaseDesign.ink, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    // 48 rather than 56, and still above the 44pt minimum.
+                    .frame(width: 48, height: 48)
+                    .background(RepbaseDesign.ink, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                     .shadow(color: Color.black.opacity(0.2), radius: 14, x: 0, y: 8)
             }
             .buttonStyle(.plain)

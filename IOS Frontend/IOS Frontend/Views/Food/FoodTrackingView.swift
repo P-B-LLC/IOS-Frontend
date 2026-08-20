@@ -71,7 +71,7 @@ struct FoodTrackingView: View {
             }
             .padding(.horizontal, RepbaseDesign.pageInset)
             .padding(.top, 16)
-            .padding(.bottom, RepbaseDesign.bottomBarClearance)
+            .padding(.bottom, RepbaseDesign.quickActionClearance)
         }
         .scrollIndicators(.hidden)
         .toolbar(.hidden, for: .navigationBar)

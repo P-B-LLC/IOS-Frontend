@@ -33,6 +33,16 @@ enum RepbaseDesign {
     // Tracks the bar's height. It was 118 when the bar carried labels; the
     // first icons-only pass cut both too far, so both came back part way.
     static let bottomBarClearance: CGFloat = 108
+
+    /// Bottom padding for the two pages that also carry the floating quick
+    /// action button.
+    ///
+    /// A smaller button still sits over whatever is beneath it, so shrinking
+    /// alone cannot stop it covering the last row — the content has to be able
+    /// to scroll past it. This is the bar's clearance plus the button and a
+    /// gap, and it is separate from `bottomBarClearance` because the three
+    /// pages without a button should not pay for one.
+    static let quickActionClearance: CGFloat = bottomBarClearance + 60
     static let deepShadow = RepbasePalette.espresso.opacity(0.12)
     static let softHighlight = RepbasePalette.paper.opacity(0.82)
 }
