@@ -7619,6 +7619,8 @@ public enum Components {
             public var workout: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/workout_name`.
             public var workoutName: Swift.String
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/workout_type`.
+            public var workoutType: Swift.String?
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/status`.
             public struct StatusPayload: Codable, Hashable, Sendable {
                 /// - Remark: Generated from `#/components/schemas/WorkoutSession/status/value1`.
@@ -7723,6 +7725,7 @@ public enum Components {
             ///   - repbaseUser:
             ///   - workout:
             ///   - workoutName:
+            ///   - workoutType:
             ///   - status:
             ///   - startedAt:
             ///   - endedAt:
@@ -7750,6 +7753,7 @@ public enum Components {
                 repbaseUser: Swift.Int,
                 workout: Swift.Int? = nil,
                 workoutName: Swift.String,
+                workoutType: Swift.String? = nil,
                 status: Components.Schemas.WorkoutSession.StatusPayload,
                 startedAt: Foundation.Date? = nil,
                 endedAt: Foundation.Date? = nil,
@@ -7777,6 +7781,7 @@ public enum Components {
                 self.repbaseUser = repbaseUser
                 self.workout = workout
                 self.workoutName = workoutName
+                self.workoutType = workoutType
                 self.status = status
                 self.startedAt = startedAt
                 self.endedAt = endedAt
@@ -7805,6 +7810,7 @@ public enum Components {
                 case repbaseUser = "repbase_user"
                 case workout
                 case workoutName = "workout_name"
+                case workoutType = "workout_type"
                 case status
                 case startedAt = "started_at"
                 case endedAt = "ended_at"
