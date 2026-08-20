@@ -46,7 +46,15 @@ struct GearPickerRow: View {
         let choices = store.active(kind)
 
         NavigationLink {
-            GearView()
+            // Opened to choose, not just to browse: the list shows a Select
+            // on each item of this kind and comes straight back with it.
+            GearView(
+                selection: GearView.Selection(
+                    kind: kind,
+                    currentID: selectedID,
+                    choose: { select($0) }
+                )
+            )
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: kind.symbolName)

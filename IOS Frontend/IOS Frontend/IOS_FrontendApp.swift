@@ -146,7 +146,14 @@ private struct AppRootView: View {
                     .repbaseScreen(.prepare)
                 }
             } else if ProcessInfo.processInfo.environment["REPBASE_GEAR_PREVIEW"] != nil {
-                NavigationStack { GearView() }
+                NavigationStack {
+                    GearView(
+                        selection: ProcessInfo.processInfo
+                            .environment["REPBASE_GEAR_PREVIEW"] == "select"
+                            ? GearView.Selection(kind: .shoe, currentID: 2, choose: { _ in })
+                            : nil
+                    )
+                }
             } else if ProcessInfo.processInfo.environment["REPBASE_ROUTE_PREVIEW"] != nil {
                 // The simulator has no GPS movement, so a real session there
                 // records no track and the map is correctly absent. This is
