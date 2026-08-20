@@ -32,6 +32,7 @@ struct IOS_FrontendApp: App {
 #if DEBUG
         _activityStore = State(
             initialValue: ProcessInfo.processInfo.environment["REPBASE_HEALTH_PREVIEW"] != nil
+                || ProcessInfo.processInfo.environment["REPBASE_STEPS_PREVIEW"] != nil
                 ? .preview
                 : ActivityStore()
         )
@@ -92,6 +93,7 @@ private struct AppRootView: View {
             || environment["REPBASE_HEALTH_PREVIEW"] != nil
             || environment["REPBASE_ROUTE_PREVIEW"] != nil
             || environment["REPBASE_GEAR_PREVIEW"] != nil
+            || environment["REPBASE_STEPS_PREVIEW"] != nil
     }
 #endif
 
@@ -111,6 +113,24 @@ private struct AppRootView: View {
                 // Whether the simulator honours a HealthKit entitlement that
                 // device signing strips is a runtime question, not a build one.
                 HealthKitProbeView()
+            } else if ProcessInfo.processInfo.environment["REPBASE_STEPS_PREVIEW"] != nil {
+                // The steps card in both states. It sits low on the workout
+                // page, which a script cannot scroll to.
+                NavigationStack {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("With steps")
+                                .font(.caption.weight(.bold))
+                            StepsWidget(explainsWhenEmpty: true)
+                            Text("Health not connected")
+                                .font(.caption.weight(.bold))
+                            StepsWidget(explainsWhenEmpty: true)
+                                .environment(ActivityStore())
+                        }
+                        .padding(RepbaseDesign.pageInset)
+                    }
+                    .repbaseScreen(.prepare)
+                }
             } else if ProcessInfo.processInfo.environment["REPBASE_GEAR_PREVIEW"] == "row" {
                 // The picker row in both states. It lives on a workout page
                 // reachable only by tapping, so this is the only way to see

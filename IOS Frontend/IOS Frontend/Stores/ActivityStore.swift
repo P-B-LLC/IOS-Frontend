@@ -52,6 +52,27 @@ final class ActivityStore {
 
     var isConnected: Bool { repository != nil }
 
+    /// Whether the device has Health at all.
+    var isHealthSupported: Bool { health.isSupported }
+
+    /// Whether Apple's sheet has been shown. It cannot say whether the answer
+    /// was yes — HealthKit refuses to report that, since saying so would leak
+    /// a refusal — so this only distinguishes "never offered" from "asked".
+    var hasAskedHealth: Bool { health.hasAsked }
+
+    var isRequestingHealthAccess: Bool { health.isRequestingAuthorization }
+
+    /// Asks for access from a control the user tapped.
+    ///
+    /// Only useful before the sheet has been shown once; afterwards iOS shows
+    /// nothing and the only way back is Settings, which is what the widget
+    /// says in that case rather than offering a button that does nothing.
+    func connectHealth() async {
+        let generation = connectionGeneration
+        guard await health.requestAuthorization() else { return }
+        await syncFromHealth(generation: generation)
+    }
+
     /// Today's steps as the server has them, or nil when it has no row for
     /// today. Nil means "not reported", never "zero": a day nobody walked and
     /// a day Health was never asked about are different, and only one of them

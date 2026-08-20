@@ -13,6 +13,14 @@
 import SwiftUI
 
 struct StepsWidget: View {
+    /// Whether to say something when there are no steps.
+    ///
+    /// Home stays quiet: a card there explaining that Health has not answered
+    /// is noise on a page nobody opened to think about Health. The workout
+    /// page is where steps are the point, so there it says how to turn them
+    /// on rather than leaving a gap.
+    var explainsWhenEmpty: Bool = false
+
     @Environment(ActivityStore.self) private var store
     @Environment(\.homeTimeOfDay) private var timeOfDay
 
@@ -20,6 +28,78 @@ struct StepsWidget: View {
         if store.week.isEmpty == false {
             card
                 .padding(.top, 22)
+        } else if explainsWhenEmpty, store.isHealthSupported {
+            connectCard
+                .padding(.top, 22)
+        }
+    }
+
+    /// Shown when there are no steps to draw.
+    ///
+    /// Tappable only before Apple's sheet has been shown. Afterwards iOS shows
+    /// nothing at all on a second request, so a button would be a control that
+    /// visibly does nothing; the text points at Settings instead.
+    @ViewBuilder
+    private var connectCard: some View {
+        if store.hasAskedHealth {
+            connectBody(
+                message: "No steps from Health yet. Turn Repbase on under Settings, Privacy & Security, Health.",
+                action: nil
+            )
+        } else {
+            connectBody(
+                message: "Connect to Apple Health to see steps.",
+                action: { Task { await store.connectHealth() } }
+            )
+        }
+    }
+
+    private func connectBody(
+        message: String,
+        action: (() -> Void)?
+    ) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "figure.walk")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(timeOfDay.accent)
+                .frame(width: 28, height: 28)
+                .background(
+                    timeOfDay.accent.opacity(0.12),
+                    in: RoundedRectangle(cornerRadius: 10)
+                )
+
+            Text(message)
+                .font(.footnote)
+                .foregroundStyle(timeOfDay.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Spacer(minLength: 0)
+
+            if store.isRequestingHealthAccess {
+                ProgressView().controlSize(.small)
+            } else if action != nil {
+                Image(systemName: "chevron.forward")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(timeOfDay.accent)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .repbaseDepthSurface(cornerRadius: RepbaseDesign.featureRadius)
+        .overlay {
+            RoundedRectangle(cornerRadius: 22)
+                .strokeBorder(timeOfDay.border, lineWidth: 1)
+                .allowsHitTesting(false)
+        }
+        .contentShape(Rectangle())
+        .onTapGesture { action?() }
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(action == nil ? [] : .isButton)
+        .task {
+            // The card with steps in it refreshes on appear; this one has to
+            // as well, or access granted in Settings would never be noticed
+            // and the card would keep asking for something already given.
+            await store.refresh()
         }
     }
 

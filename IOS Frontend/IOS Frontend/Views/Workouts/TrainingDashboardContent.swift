@@ -38,6 +38,10 @@ struct TrainingDashboardContent: View {
                     intro
                     focusCard
                     momentumSection
+                    // Steps belong with training rather than on Home, and
+                    // this page says so when there are none: the point of
+                    // being here is what the body did today.
+                    StepsWidget(explainsWhenEmpty: true)
                     shareButton
                 }
             }
