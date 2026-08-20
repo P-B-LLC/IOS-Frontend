@@ -29,12 +29,18 @@ struct GearView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Picker("Kind", selection: $kind) {
-                    ForEach(GearKind.allCases) { option in
-                        Text(option.title).tag(option)
+                // Both kinds only when browsing. Opened from a run, the Bike
+                // tab leads nowhere useful — a bike cannot be selected for a
+                // run, and the server refuses it — so offering the switch is
+                // offering a dead end.
+                if selection == nil {
+                    Picker("Kind", selection: $kind) {
+                        ForEach(GearKind.allCases) { option in
+                            Text(option.title).tag(option)
+                        }
                     }
+                    .pickerStyle(.segmented)
                 }
-                .pickerStyle(.segmented)
 
                 if let error = store.persistenceError {
                     Text(error)
@@ -87,7 +93,9 @@ struct GearView: View {
             .padding(.bottom, RepbaseDesign.bottomBarClearance)
         }
         .repbaseScreen(.prepare)
-        .navigationTitle("Gear")
+        // Named for what is on screen. With the switch hidden, a title of
+        // "Gear" over a list of only shoes reads like the bikes are missing.
+        .navigationTitle(selection == nil ? "Gear" : kind.title)
         .navigationBarTitleDisplayMode(.inline)
         .task {
             // Open on the kind that was asked for, once. Doing it on every
