@@ -111,9 +111,37 @@ private struct AppRootView: View {
                 // Whether the simulator honours a HealthKit entitlement that
                 // device signing strips is a runtime question, not a build one.
                 HealthKitProbeView()
+            } else if ProcessInfo.processInfo.environment["REPBASE_GEAR_PREVIEW"] == "row" {
+                // The picker row in both states. It lives on a workout page
+                // reachable only by tapping, so this is the only way to see
+                // whether it reads well.
+                NavigationStack {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("With shoes added")
+                                .font(.caption.weight(.bold))
+                            GearPickerRow(
+                                workoutType: .running,
+                                destination: .pending(.constant(nil)),
+                                primaryText: WorkoutVisualPhase.prepare.primaryText,
+                                secondaryText: WorkoutVisualPhase.prepare.secondaryText,
+                                accent: WorkoutVisualPhase.prepare.accent
+                            )
+                            Text("With none")
+                                .font(.caption.weight(.bold))
+                            GearPickerRow(
+                                workoutType: .swimming,
+                                destination: .pending(.constant(nil)),
+                                primaryText: WorkoutVisualPhase.prepare.primaryText,
+                                secondaryText: WorkoutVisualPhase.prepare.secondaryText,
+                                accent: WorkoutVisualPhase.prepare.accent
+                            )
+                        }
+                        .padding(RepbaseDesign.pageInset)
+                    }
+                    .repbaseScreen(.prepare)
+                }
             } else if ProcessInfo.processInfo.environment["REPBASE_GEAR_PREVIEW"] != nil {
-                // Gear is only reachable by tapping through Training, and a
-                // real account has no shoes in it yet.
                 NavigationStack { GearView() }
             } else if ProcessInfo.processInfo.environment["REPBASE_ROUTE_PREVIEW"] != nil {
                 // The simulator has no GPS movement, so a real session there
