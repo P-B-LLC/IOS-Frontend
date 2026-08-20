@@ -259,6 +259,15 @@ extension HealthKitService {
     ///
     /// Lives here rather than in the preview itself so the key stays private:
     /// nothing outside this type should be writing that flag.
+    /// A service that has never shown the sheet, whatever this simulator has
+    /// done before. Without it the "never asked" wording cannot be seen at all
+    /// after the first run on a given device.
+    static func previewNeverAsked() -> HealthKitService {
+        let defaults = UserDefaults(suiteName: "repbase.health.preview.fresh") ?? .standard
+        defaults.removeObject(forKey: hasAskedKey)
+        return HealthKitService(defaults: defaults)
+    }
+
     static func previewAlreadyAsked() -> HealthKitService {
         let defaults = UserDefaults(suiteName: "repbase.health.preview") ?? .standard
         defaults.set(true, forKey: hasAskedKey)

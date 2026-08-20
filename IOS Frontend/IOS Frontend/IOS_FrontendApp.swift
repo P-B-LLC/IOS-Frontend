@@ -125,7 +125,11 @@ private struct AppRootView: View {
                             Text("Health not connected")
                                 .font(.caption.weight(.bold))
                             StepsWidget(explainsWhenEmpty: true)
-                                .environment(ActivityStore())
+                                .environment(ActivityStore(health: .previewNeverAsked()))
+                            Text("Asked already, still nothing")
+                                .font(.caption.weight(.bold))
+                            StepsWidget(explainsWhenEmpty: true)
+                                .environment(ActivityStore(health: .previewAlreadyAsked()))
                         }
                         .padding(RepbaseDesign.pageInset)
                     }
