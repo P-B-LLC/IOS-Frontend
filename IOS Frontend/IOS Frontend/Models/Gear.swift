@@ -72,6 +72,8 @@ nonisolated struct Gear: Identifiable, Hashable, Sendable {
     var isDefault: Bool
     var retiredAt: Date?
     let sessionCount: Int
+    /// When it was last trained in. Nil until it has been used once.
+    let lastUsedAt: Date?
 
     var isRetired: Bool { retiredAt != nil }
 

@@ -164,7 +164,8 @@ actor GearAPIRepository {
             retireAtKilometers: payload.retireAtKm.flatMap(Double.init),
             isDefault: payload.isDefault ?? false,
             retiredAt: payload.retiredAt,
-            sessionCount: payload.sessionCount
+            sessionCount: payload.sessionCount,
+            lastUsedAt: payload.lastUsedAt
         )
     }
 

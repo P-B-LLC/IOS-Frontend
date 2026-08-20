@@ -2,11 +2,13 @@
 //  GearPickerRow.swift
 //  IOS Frontend
 //
-//  Choosing the shoe or bike a session is being done in.
+//  Which shoe or bike a session is being done in.
 //
-//  Appears twice: while the session runs, so the choice is made before the
-//  miles are, and again on the summary, so forgetting is not permanent. The
-//  same row in both places, because they are the same decision.
+//  It fills itself in with whatever was used last and then gets out of the
+//  way. Being asked to choose before every run is a question with the same
+//  answer almost every time, and a control that mostly repeats itself is a
+//  control worth removing. Changing it is a trip to the gear list, which is
+//  what the arrow is for.
 //
 
 import SwiftUI
@@ -17,8 +19,7 @@ struct GearPickerRow: View {
         /// Straight onto a session that already exists.
         case session(Int)
         /// Held until the session does. Before Start there is nothing to
-        /// attach to, but that is exactly when a runner knows which shoes are
-        /// on their feet, so the answer is kept and applied when it can be.
+        /// attach to, so the answer is kept and applied when it can be.
         case pending(Binding<Int?>)
     }
 
@@ -44,110 +45,69 @@ struct GearPickerRow: View {
     private func content(kind: GearKind) -> some View {
         let choices = store.active(kind)
 
-        HStack(spacing: 10) {
-            Image(systemName: kind.symbolName)
-                .font(.footnote.weight(.bold))
-                .foregroundStyle(accent)
-                .frame(width: 26, height: 26)
-                .background(accent.opacity(0.14), in: RoundedRectangle(cornerRadius: 8))
+        NavigationLink {
+            GearView()
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: kind.symbolName)
+                    .font(.footnote.weight(.bold))
+                    .foregroundStyle(accent)
+                    .frame(width: 26, height: 26)
+                    .background(
+                        accent.opacity(0.14),
+                        in: RoundedRectangle(cornerRadius: 8)
+                    )
 
-            if choices.isEmpty {
-                // Nothing to pick from, so the whole row becomes the way in.
-                // A disabled menu here would be a dead control next to the
-                // words explaining why, and the thing to do is add a shoe.
-                NavigationLink {
-                    GearView()
-                } label: {
-                    HStack(spacing: 10) {
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text(kind == .shoe ? "Add your shoes" : "Add your bike")
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(primaryText)
-                            Text("Track how far each one has been.")
-                                .font(.caption)
-                                .foregroundStyle(secondaryText)
-                        }
-                        Spacer(minLength: 0)
-                        Image(systemName: "chevron.forward")
-                            .font(.caption.weight(.bold))
-                            .foregroundStyle(accent)
-                    }
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            } else {
-                Menu {
-                    ForEach(choices) { item in
-                        Button {
-                            select(item.id)
-                        } label: {
-                            if item.id == selectedID {
-                                Label(item.displayName, systemImage: "checkmark")
-                            } else {
-                                Text(item.displayName)
-                            }
-                        }
-                    }
-                    Divider()
-                    Button("None") { select(nil) }
-                } label: {
-                    HStack(spacing: 6) {
-                        Text(kind == .shoe ? "Shoes" : "Bike")
+                if choices.isEmpty {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(kind == .shoe ? "Add your shoes" : "Add your bike")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(primaryText)
-                        Spacer(minLength: 6)
-                        Text(selectedName(from: choices) ?? "Choose")
-                            .font(.subheadline.weight(.medium))
-                            .lineLimit(1)
-                        Image(systemName: "chevron.up.chevron.down")
-                            .font(.caption2.weight(.bold))
+                        Text("Track how far each one has been.")
+                            .font(.caption)
+                            .foregroundStyle(secondaryText)
                     }
-                    .foregroundStyle(accent)
-                    .contentShape(Rectangle())
-                }
-                .disabled(store.isSaving)
-
-                // The way to the gear list, one tap from where the shoes are
-                // already being thought about. Separated by a rule so it does
-                // not read as part of the menu it sits beside.
-                Divider()
-                    .frame(height: 20)
-
-                NavigationLink {
-                    GearView()
-                } label: {
-                    Image(systemName: "chevron.forward")
-                        .font(.caption.weight(.bold))
+                    Spacer(minLength: 0)
+                } else {
+                    Text(kind == .shoe ? "Shoes" : "Bike")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(primaryText)
+                    Spacer(minLength: 6)
+                    Text(selectedName(from: choices) ?? "Choose")
+                        .font(.subheadline.weight(.medium))
                         .foregroundStyle(accent)
-                        .padding(.leading, 2)
-                        .contentShape(Rectangle())
+                        .lineLimit(1)
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel(kind == .shoe ? "All shoes" : "All bikes")
+
+                Image(systemName: "chevron.forward")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(accent)
             }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                accent.opacity(0.07),
+                in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+            )
+            .contentShape(Rectangle())
         }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            accent.opacity(0.07),
-            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
-        )
+        .buttonStyle(.plain)
         .task {
-            // Preselect the default once, and only when nothing is chosen yet.
-            // Re-applying it would overwrite a deliberate choice every time the
-            // view came back.
+            // Fill in once, and only when nothing is chosen yet. Re-applying
+            // would overwrite a deliberate choice every time the view came
+            // back, which is the opposite of remembering it.
             guard !didApplyDefault else { return }
             didApplyDefault = true
             guard selectedID == nil,
-                  let fallback = store.defaultGear(for: workoutType) else { return }
-            select(fallback.id)
+                  let remembered = store.defaultGear(for: workoutType) else { return }
+            select(remembered.id)
         }
     }
 
     private func selectedName(from choices: [Gear]) -> String? {
         guard let selectedID else { return nil }
         // Falls back to the full list so a retired item still names itself on
-        // a session that was recorded before it was retired.
+        // a session recorded before it was retired.
         return (choices.first { $0.id == selectedID }
             ?? store.gear(withID: selectedID))?.displayName
     }

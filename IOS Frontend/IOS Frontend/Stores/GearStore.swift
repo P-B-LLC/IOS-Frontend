@@ -50,13 +50,28 @@ final class GearStore {
     }
 
     /// What a new session of this type should start with, if anything.
+    ///
+    /// Whatever was worn last, first. That is the answer almost every time,
+    /// and it is a fact about what the user did rather than a flag they set
+    /// once and forgot — so it stays right when they switch to a new pair
+    /// without remembering to mark it.
+    ///
+    /// Then the explicit default, then the only one there is. With several
+    /// never-used pairs and no default, nothing is filled in: picking a
+    /// favourite among them would be a guess, and a wrong guess quietly puts
+    /// miles on the wrong shoe.
     func defaultGear(for workoutType: WorkoutType) -> Gear? {
         guard let kind = GearKind.forWorkoutType(workoutType) else { return nil }
         let candidates = active(kind)
-        // The explicit default, or the only one there is. Picking a favourite
-        // out of several would be a guess, and a wrong guess quietly puts
-        // miles on the wrong shoe.
-        return candidates.first { $0.isDefault } ?? (candidates.count == 1 ? candidates.first : nil)
+
+        let mostRecent = candidates
+            .compactMap { gear in gear.lastUsedAt.map { (gear, $0) } }
+            .max { $0.1 < $1.1 }?
+            .0
+        if let mostRecent { return mostRecent }
+
+        return candidates.first { $0.isDefault }
+            ?? (candidates.count == 1 ? candidates.first : nil)
     }
 
     func gear(withID id: Int) -> Gear? {
@@ -187,7 +202,10 @@ extension GearStore {
                 retireAtKilometers: 800,
                 isDefault: true,
                 retiredAt: nil,
-                sessionCount: 63
+                sessionCount: 63,
+                // The marked default, but not the most recent: auto-fill
+                // should pass over it in favour of the Vaporfly below.
+                lastUsedAt: Date().addingTimeInterval(-60 * 60 * 24 * 9)
             ),
             Gear(
                 id: 2,
@@ -200,7 +218,8 @@ extension GearStore {
                 retireAtKilometers: 240,
                 isDefault: false,
                 retiredAt: nil,
-                sessionCount: 9
+                sessionCount: 9,
+                lastUsedAt: Date().addingTimeInterval(-60 * 60 * 24 * 2)
             ),
             // Past its stated life, so the bar has something to overrun.
             Gear(
@@ -214,7 +233,8 @@ extension GearStore {
                 retireAtKilometers: 800,
                 isDefault: false,
                 retiredAt: nil,
-                sessionCount: 104
+                sessionCount: 104,
+                lastUsedAt: nil
             ),
             // No stated life at all, which is the default.
             Gear(
@@ -228,7 +248,8 @@ extension GearStore {
                 retireAtKilometers: nil,
                 isDefault: true,
                 retiredAt: nil,
-                sessionCount: 41
+                sessionCount: 41,
+                lastUsedAt: Date().addingTimeInterval(-60 * 60 * 24 * 4)
             ),
             Gear(
                 id: 5,
@@ -241,7 +262,8 @@ extension GearStore {
                 retireAtKilometers: 700,
                 isDefault: false,
                 retiredAt: Date().addingTimeInterval(-60 * 60 * 24 * 30),
-                sessionCount: 88
+                sessionCount: 88,
+                lastUsedAt: nil
             ),
         ]
         return store
