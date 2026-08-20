@@ -38,6 +38,16 @@ nonisolated enum RepbaseTab: String, CaseIterable, Identifiable {
         case .account: "person"
         }
     }
+
+    var iconAsset: String {
+        switch self {
+        case .home: "RepbaseHome"
+        case .training: "RepbaseTraining"
+        case .planner: "RepbaseCalendar"
+        case .social: "RepbaseSocial"
+        case .account: "RepbaseAccount"
+        }
+    }
 }
 
 /// Everything the signed-in app shows, with the bottom bar outside it.
@@ -120,13 +130,11 @@ struct RepbaseBottomNavigation: View {
     /// the app.
     private func itemLabel(_ item: RepbaseTab, isSelected: Bool) -> some View {
         VStack(spacing: 4) {
-            Image(systemName: item.symbol)
-                // Still larger than the original, because it carries the
-                // meaning the word underneath used to share — the bar around
-                // it is what shrinks, not the thing you aim at.
-                .font(.system(size: 19, weight: .semibold))
+            Image(item.iconAsset)
+                .resizable()
+                .scaledToFit()
                 .foregroundStyle(isSelected ? activeColor : timeOfDay.secondaryText)
-                .frame(width: 34, height: 24)
+                .frame(width: 24, height: 24)
 
             // Kept, and now doing more work: with the labels gone this and the
             // colour are the only things saying which tab you are on.

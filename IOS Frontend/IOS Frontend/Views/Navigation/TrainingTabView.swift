@@ -117,9 +117,11 @@ struct TrainingTabView: View {
                         quickAction = action
                         closeQuickActions()
                     } label: {
-                        Image(systemName: action.symbol)
-                            .font(.system(size: 17, weight: .semibold))
+                        Image(action.iconAsset)
+                            .resizable()
+                            .scaledToFit()
                             .foregroundStyle(timeOfDay.accent)
+                            .frame(width: 24, height: 24)
                             .frame(width: 48, height: 48)
                             .repbaseDepthSurface(cornerRadius: 15)
                             .contentShape(Rectangle())
@@ -205,6 +207,14 @@ private enum TrainingQuickAction: String, Identifiable {
         case .postFood, .postWorkout: "square.and.arrow.up"
         case .planMeals: "calendar.badge.plus"
         case .savedMeals, .savedWorkouts: "bookmark.fill"
+        }
+    }
+
+    var iconAsset: String {
+        switch self {
+        case .postFood, .postWorkout: "RepbasePost"
+        case .planMeals: "RepbasePlan"
+        case .savedMeals, .savedWorkouts: "RepbaseSaved"
         }
     }
 }
