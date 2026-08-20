@@ -9,44 +9,17 @@ import SwiftUI
 
 struct WorkoutsView: View {
     @Environment(WorkoutStore.self) private var store
-    /// Opens the composer on this page's own kind, so it asks which workout
-    /// rather than which feature.
-    @State private var isSharingWorkout = false
-
     private var phase: WorkoutVisualPhase {
         store.activeSession == nil ? .prepare : .focus
     }
 
     var body: some View {
-        TrainingDashboardContent(isSharingWorkout: $isSharingWorkout)
+        TrainingDashboardContent()
         .repbaseScreen(phase)
         .toolbar(.hidden, for: .navigationBar)
         .task {
             await store.loadDashboardSessions()
         }
-        .sheet(isPresented: $isSharingWorkout) {
-            PostComposerView(source: .workout)
-        }
-    }
-
-    /// Shares a session from the page that lists the week, the way a meal is
-    /// shared from the page that lists the meals.
-    ///
-    /// Always offered, unlike the food page's button. What can be posted here
-    /// is a *finished session*, which lives on the server rather than in this
-    /// screen's data, so knowing whether any exist would mean a request on
-    /// every visit to this page. The composer says what to do when the list
-    /// comes back empty instead.
-    private var shareWorkoutButton: some View {
-        Button {
-            isSharingWorkout = true
-        } label: {
-            Label("Share a workout", systemImage: "square.and.arrow.up")
-                .font(.subheadline.weight(.semibold))
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 11)
-        }
-        .repbaseControlSurface(cornerRadius: 15)
     }
 
     private var intro: some View {

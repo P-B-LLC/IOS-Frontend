@@ -10,7 +10,6 @@ import SwiftUI
 
 struct TrainingDashboardContent: View {
     @Environment(WorkoutStore.self) private var store
-    @Binding var isSharingWorkout: Bool
 
     private var phase: WorkoutVisualPhase {
         store.activeSession == nil ? .prepare : .focus
@@ -39,7 +38,6 @@ struct TrainingDashboardContent: View {
                     intro
                     focusCard
                     momentumSection
-                    shareButton
                 }
             }
             .padding(.horizontal, RepbaseDesign.pageInset)
@@ -267,18 +265,6 @@ struct TrainingDashboardContent: View {
         }
         .padding(16)
         .background(RepbasePalette.oatmeal, in: RoundedRectangle(cornerRadius: 19, style: .continuous))
-    }
-
-    private var shareButton: some View {
-        Button {
-            isSharingWorkout = true
-        } label: {
-            Label("Share a workout", systemImage: "square.and.arrow.up")
-                .font(.subheadline.weight(.semibold))
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 11)
-        }
-        .repbaseControlSurface(cornerRadius: 15)
     }
 
     private func errorCard(_ message: String) -> some View {

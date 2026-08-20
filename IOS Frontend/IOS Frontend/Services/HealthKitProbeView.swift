@@ -53,6 +53,32 @@ struct HealthKitProbeView: View {
         }
 
         found.append("status after: \(name(of: store.authorizationStatus(for: steps)))")
+
+        // The question the card cannot answer: is Health empty, or is the
+        // reading broken? "No steps" looks identical either way from the UI.
+        let service = HealthKitService()
+        let since = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
+        let days = await service.dailySteps(since: since)
+        found.append("days with steps in the last 7: \(days.count)")
+        for day in days.prefix(7) {
+            found.append("  \(day.day.formatted(.dateTime.month().day())): \(day.steps)")
+        }
+
+        // Raw sample count, so an empty statistics query can be told apart
+        // from an empty Health database.
+        let samples: Int = await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: steps,
+                predicate: HKQuery.predicateForSamples(withStart: since, end: Date()),
+                limit: HKObjectQueryNoLimit,
+                sortDescriptors: nil
+            ) { _, result, error in
+                continuation.resume(returning: error == nil ? (result?.count ?? 0) : -1)
+            }
+            store.execute(query)
+        }
+        found.append("raw step samples: \(samples) (-1 means the read failed)")
+
         lines = found
     }
 
