@@ -221,7 +221,7 @@ extension GearStore {
                 sessionCount: 9,
                 lastUsedAt: Date().addingTimeInterval(-60 * 60 * 24 * 2)
             ),
-            // Past its stated life, so the bar has something to overrun.
+            // No stated life, so its bar is drawn against the most worn.
             Gear(
                 id: 3,
                 kind: .shoe,
@@ -230,7 +230,7 @@ extension GearStore {
                 notes: "",
                 totalDistanceKilometers: 861.0,
                 initialDistanceKilometers: 0,
-                retireAtKilometers: 800,
+                retireAtKilometers: nil,
                 isDefault: false,
                 retiredAt: nil,
                 sessionCount: 104,

@@ -50,6 +50,9 @@ struct GearView: View {
                 }
 
                 let items = store.all(kind)
+                // The most-worn of this kind, so a pair with no stated
+                // retirement point can still be placed against the others.
+                let peak = items.map(\.totalDistanceKilometers).max() ?? 0
                 if items.isEmpty {
                     emptyState
                 } else {
@@ -60,6 +63,7 @@ struct GearView: View {
                             // cannot be selected for a run, and offering it
                             // would be an offer the server refuses.
                             isSelected: selection?.currentID == item.id,
+                            peakDistanceKilometers: peak,
                             selectAction: canSelect(item) ? { choose(item) } : nil
                         ) {
                             editing = .edit(item)
@@ -152,6 +156,9 @@ private struct GearCard: View {
     let gear: Gear
     /// Whether this is the one the session is using now.
     var isSelected: Bool = false
+    /// The highest mileage among gear of this kind, so a pair with no stated
+    /// retirement point can still be placed against the others.
+    var peakDistanceKilometers: Double = 0
     /// Set only when the list was opened to choose. Nil means the card is
     /// being browsed, not picked from.
     var selectAction: (() -> Void)?
@@ -256,24 +263,57 @@ private struct GearCard: View {
     /// into a warning about theirs.
     @ViewBuilder
     private var wearBar: some View {
-        if let fraction = gear.wearFraction, let remaining = gear.remainingKilometers {
-            VStack(alignment: .leading, spacing: 5) {
-                GeometryReader { proxy in
-                    ZStack(alignment: .leading) {
-                        Capsule()
-                            .fill(Color.primary.opacity(0.10))
-                        Capsule()
-                            .fill(barColor(fraction))
-                            .frame(width: proxy.size.width * min(fraction, 1))
-                    }
-                }
-                .frame(height: 6)
-
+        // Every pair gets a bar, so a glance answers "which of these has the
+        // least on it". What the bar is measured against differs, and the line
+        // underneath always says which — a bar meaning two things without
+        // saying so is worse than no bar.
+        VStack(alignment: .leading, spacing: 5) {
+            if let fraction = gear.wearFraction, let remaining = gear.remainingKilometers {
+                bar(fraction: fraction, colour: barColor(fraction))
                 Text(remainingText(remaining, fraction: fraction))
                     .font(.caption)
                     .foregroundStyle(fraction >= 1 ? barColor(fraction) : .secondary)
+            } else {
+                // Deliberately paler than a retirement bar. The two measure
+                // different things and should not look like the same gauge.
+                bar(fraction: relativeFraction, colour: RepbasePalette.caramel.opacity(0.5))
+                Text(relativeText)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
+    }
+
+    private func bar(fraction: Double, colour: Color) -> some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(Color.primary.opacity(0.10))
+                Capsule()
+                    .fill(colour)
+                    .frame(width: proxy.size.width * min(max(fraction, 0), 1))
+            }
+        }
+        .frame(height: 6)
+    }
+
+    /// How this compares with the most-worn item of the same kind.
+    ///
+    /// Used when the owner has not said where the end is. There is no honest
+    /// absolute scale then — assuming shoes last five hundred miles would be a
+    /// guess about somebody else's shoes — but "more worn than the others" is
+    /// a fact about theirs, and it is the one that decides which pair to reach
+    /// for today.
+    private var relativeFraction: Double {
+        guard peakDistanceKilometers > 0 else { return 0 }
+        return gear.totalDistanceKilometers / peakDistanceKilometers
+    }
+
+    private var relativeText: String {
+        guard peakDistanceKilometers > 0 else { return "Not used yet" }
+        let behind = peakDistanceKilometers - gear.totalDistanceKilometers
+        if behind <= 0.05 { return "Your most worn" }
+        return "\(ImperialUnits.distanceText(kilometers: behind, decimals: 0)) less than your most worn"
     }
 
     private func remainingText(_ remainingKilometers: Double, fraction: Double) -> String {
