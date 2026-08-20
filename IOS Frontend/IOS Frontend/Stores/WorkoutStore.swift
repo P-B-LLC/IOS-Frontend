@@ -756,9 +756,20 @@ final class WorkoutStore {
             activeSession = nil
             routeTracker.reset()
 
-            // Keep dashboard totals and streaks current when the user returns
-            // from the completed session without requiring a new sign-in.
-            if let refreshed = try? await repository.completedSessions(pageLimit: .max) {
+            // Keep the dashboard current when the user returns from the
+            // finished session. The totals are the server's, so this asks for
+            // them again rather than re-deriving them from a full history
+            // download, and the badge window stays bounded.
+            if let stats = try? await repository.trainingStats() {
+                trainingStats = stats
+            }
+            if let refreshed = try? await repository.completedSessions(
+                since: Calendar.current.date(
+                    byAdding: .day,
+                    value: -Self.badgeHistoryDays,
+                    to: Date()
+                )
+            ) {
                 dashboardSessions = refreshed
             }
 
