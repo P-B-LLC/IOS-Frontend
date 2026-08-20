@@ -86,7 +86,10 @@ struct FoodMonthView: View {
     private var monthSummary: String {
         let logged = daysInMonth.filter { store.hasLoggedFood(on: $0) }.count
         guard logged > 0 else { return "Nothing logged yet" }
-        return "^[\(logged) day](inflect: true) logged"
+        // Spelled out rather than using ^[...](inflect:), which only works on
+        // a LocalizedStringKey literal. Handed a String it prints the markup
+        // verbatim, which is what it did here.
+        return "\(logged) \(logged == 1 ? "day" : "days") logged"
     }
 
     private var weekdayHeadings: some View {

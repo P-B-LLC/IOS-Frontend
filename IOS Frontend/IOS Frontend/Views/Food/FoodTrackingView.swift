@@ -203,6 +203,11 @@ struct FoodTrackingView: View {
             }
         }
         .repbaseCard(contentPadding: 13, cornerRadius: RepbaseDesign.cardRadius)
+        // Anywhere that is not already a control opens the month. The buttons
+        // inside — a day, the week arrows, Today — take their own taps first,
+        // so this only catches the gaps between them.
+        .contentShape(Rectangle())
+        .onTapGesture { isShowingMonth = true }
     }
 
     private var dailySummary: some View {
