@@ -22,7 +22,7 @@ struct FoodPickerView: View {
             let timeOfDay = HomeTimeOfDay(date: context.date)
 
             ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
+                VStack(alignment: .leading, spacing: 20) {
                     pickerHeader(timeOfDay: timeOfDay)
 
                     VStack(alignment: .leading, spacing: 6) {
@@ -31,36 +31,30 @@ struct FoodPickerView: View {
                             .tracking(1.25)
                             .foregroundStyle(timeOfDay.accent)
                         Text("Find it quickly.")
-                            .font(.system(size: 34, weight: .bold, design: .rounded))
+                            .font(.system(size: 28, weight: .bold))
                             .tracking(-0.8)
                         Text("Search foods you have logged or enter nutrition manually.")
                             .font(.subheadline)
                             .foregroundStyle(timeOfDay.canvasSecondaryText)
                     }
 
-                    EditorialRuleGroup {
-                        EditorialRuleRow(showsDivider: false) {
-                            Image(systemName: "magnifyingglass")
-                                .foregroundStyle(timeOfDay.canvasSecondaryText)
-                            TextField("Search your foods", text: $searchText)
-                                .textInputAutocapitalization(.never)
-                                .autocorrectionDisabled()
-                        }
+                    HStack(spacing: 12) {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundStyle(timeOfDay.canvasSecondaryText)
+                        TextField("Search foods", text: $searchText)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
                     }
+                    .padding(.horizontal, 16)
+                    .frame(height: 52)
+                    .repbaseDepthSurface(cornerRadius: 18)
 
                     databaseEditorialSection(timeOfDay: timeOfDay)
                     recentEditorialSection(timeOfDay: timeOfDay)
 
-                    NavigationLink {
-                        FoodEntryEditorView(date: date, mealID: mealID) {
-                            dismiss()
-                        }
-                    } label: {
-                        Text("Enter manually")
-                    }
-                    .buttonStyle(EditorialPrimaryButtonStyle())
+                    manualEntryCard(timeOfDay: timeOfDay)
                 }
-                .padding(.horizontal, 24)
+                .padding(.horizontal, RepbaseDesign.pageInset)
                 .padding(.bottom, 28)
             }
             .scrollIndicators(.hidden)
@@ -84,30 +78,42 @@ struct FoodPickerView: View {
     }
 
     private func databaseEditorialSection(timeOfDay: HomeTimeOfDay) -> some View {
-        VStack(alignment: .leading, spacing: 13) {
-            EditorialSectionTitle(
-                title: "Online database",
-                detail: "Available after the documented search endpoint is connected."
-            )
-            EditorialRuleGroup {
-                EditorialRuleRow(showsDivider: false) {
-                    Image(systemName: "network.slash")
-                        .foregroundStyle(timeOfDay.canvasSecondaryText)
-                    Text("Search food database")
-                        .font(.subheadline)
-                    Spacer()
-                    Text("Not connected")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(timeOfDay.canvasSecondaryText)
-                }
+        HStack(spacing: 12) {
+            Image(systemName: "globe")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(timeOfDay.canvasSecondaryText)
+                .frame(width: 40, height: 40)
+                .background(RepbasePalette.oatmeal, in: RoundedRectangle(cornerRadius: 12))
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Online food database").font(.subheadline.weight(.semibold))
+                Text("Connect search to expand results")
+                    .font(.caption)
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
             }
+            Spacer(minLength: 4)
+            Text("OFFLINE")
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(timeOfDay.canvasSecondaryText)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 7)
+                .background(RepbasePalette.oatmeal, in: Capsule())
         }
+        .padding(12)
+        .repbaseDepthSurface(cornerRadius: 20)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Online food database, offline")
     }
 
     private func recentEditorialSection(timeOfDay: HomeTimeOfDay) -> some View {
-        VStack(alignment: .leading, spacing: 13) {
-            EditorialSectionTitle(title: "Previously used")
-            EditorialRuleGroup {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("RECENTLY USED")
+                .font(.caption2.weight(.bold))
+                .tracking(1.2)
+                .foregroundStyle(timeOfDay.accent)
+            Text("Add again in one tap")
+                .font(.footnote)
+                .foregroundStyle(timeOfDay.canvasSecondaryText)
+            VStack(spacing: 0) {
                 if filteredRecents.isEmpty {
                     Text(recentEmptyMessage)
                         .font(.subheadline)
@@ -117,15 +123,44 @@ struct FoodPickerView: View {
                 } else {
                     ForEach(Array(filteredRecents.enumerated()), id: \.element.id) { index, food in
                         Button { add(food) } label: {
-                            EditorialRuleRow(showsDivider: index < filteredRecents.count - 1) {
-                                RecentFoodRow(food: food)
-                            }
+                            RecentFoodRow(food: food)
+                                .padding(14)
                         }
                         .buttonStyle(.plain)
+                        if index < filteredRecents.count - 1 { Divider().padding(.leading, 68) }
                     }
                 }
             }
+            .repbaseDepthSurface(cornerRadius: 22)
         }
+    }
+
+    private func manualEntryCard(timeOfDay: HomeTimeOfDay) -> some View {
+        NavigationLink {
+            FoodEntryEditorView(date: date, mealID: mealID) { dismiss() }
+        } label: {
+            HStack(spacing: 14) {
+                Image(systemName: "square.and.pencil")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(timeOfDay.accent)
+                    .frame(width: 44, height: 44)
+                    .background(RepbasePalette.oatmeal, in: RoundedRectangle(cornerRadius: 14))
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Enter nutrition manually").font(.subheadline.weight(.semibold))
+                    Text("Calories, protein, carbs, and fat")
+                        .font(.caption)
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+            }
+            .padding(14)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .repbaseDepthSurface(cornerRadius: 20)
     }
 
     // MARK: - Sections

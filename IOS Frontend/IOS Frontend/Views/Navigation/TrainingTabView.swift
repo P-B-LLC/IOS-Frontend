@@ -133,8 +133,14 @@ struct TrainingTabView: View {
                         .padding(.horizontal, 8)
                         .frame(width: 206, height: 48)
                         .repbaseDepthSurface(cornerRadius: 16)
+                        // The row is 206 by 48, but the Spacer inside it is
+                        // not hit-testable on its own; without this the right
+                        // half of each row does nothing.
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel(action.title)
                     .accessibilityHint(action.detail)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
@@ -171,16 +177,10 @@ struct TrainingTabView: View {
             PostComposerView(source: .workout)
         case .savedMeals:
             NavigationStack { SavedMealsView(referenceDate: Date()) }
-        case .planMeals, .savedWorkouts:
-            NavigationStack {
-                ContentUnavailableView(
-                    action.title,
-                    systemImage: action.symbol,
-                    description: Text("This interface is ready for its data connection.")
-                )
-                .navigationTitle(action.title)
-                .navigationBarTitleDisplayMode(.inline)
-            }
+        case .planMeals:
+            NavigationStack { MealPlanView(initialDate: Date()) }
+        case .savedWorkouts:
+            NavigationStack { SavedWorkoutsView() }
         }
     }
 

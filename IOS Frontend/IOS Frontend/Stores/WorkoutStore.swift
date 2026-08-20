@@ -442,6 +442,55 @@ final class WorkoutStore {
 
     // MARK: - Day management
 
+    /// Schedules a workout the user already has on a date.
+    ///
+    /// Separate from `saveWorkout`, which sends a draft and lets the server
+    /// match it to a template by name. There is no draft here: the template is
+    /// known by id, so only a schedule row is written and the saved workout —
+    /// its exercises, their relationship rows, their target sets — is left
+    /// exactly as it was, wherever else it is also planned.
+    ///
+    /// Returns whether it was scheduled, so the caller can report the failure
+    /// rather than closing as though it had worked.
+    @discardableResult
+    func scheduleKnownWorkout(_ summary: WorkoutSummary, on date: Date) async -> Bool {
+        guard let repository, !isSaving else { return false }
+        let generation = connectionGeneration
+        isSaving = true
+        persistenceError = nil
+        defer { if connectionGeneration == generation { isSaving = false } }
+
+        do {
+            try await repository.scheduleExistingWorkout(
+                templateID: summary.serverID,
+                on: Self.dateString(date)
+            )
+            guard connectionGeneration == generation else { return false }
+            await reloadWeek(
+                using: repository,
+                generation: generation,
+                showsLoadingState: false
+            )
+            return true
+        } catch {
+            guard connectionGeneration == generation else { return false }
+            persistenceError = error.localizedDescription
+            return false
+        }
+    }
+
+    /// `YYYY-MM-DD` in the device's own calendar, matching every other date
+    /// this app sends.
+    nonisolated static func dateString(_ date: Date) -> String {
+        let parts = Calendar.current.dateComponents([.year, .month, .day], from: date)
+        return String(
+            format: "%04d-%02d-%02d",
+            parts.year ?? 0,
+            parts.month ?? 0,
+            parts.day ?? 0
+        )
+    }
+
     func saveWorkout(_ workout: Workout, on day: Weekday) {
         guard let repository, !isSaving else { return }
         let generation = connectionGeneration

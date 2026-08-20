@@ -315,6 +315,68 @@ final class FoodTrackingStore {
     /// One request for the whole set: the server applies them in a transaction,
     /// so a week of meal prep either lands or does not, rather than leaving the
     /// app to work out which days went through.
+    /// What applying a planned day actually managed to write.
+    ///
+    /// Each slot is its own request, so a plan can half-succeed. Saying "done"
+    /// over a day that took two of four meals would be a lie the user only
+    /// discovers by counting.
+    nonisolated struct PlanOutcome: Sendable {
+        var applied: [String] = []
+        var failed: [String] = []
+        var errorMessage: String?
+
+        var isCompleteSuccess: Bool { failed.isEmpty && errorMessage == nil }
+    }
+
+    /// Writes a planned day: each saved meal into its own numbered slot.
+    ///
+    /// One request per slot, because the endpoint copies one recipe into one
+    /// meal number across dates — there is no operation that takes a whole
+    /// day's plan at once, so the loop is the contract's shape, not a choice.
+    func applyPlan(
+        _ slots: [(meal: SavedFoodMeal, number: Int)],
+        to date: Date
+    ) async -> PlanOutcome {
+        guard let repository, !isSaving else {
+            return PlanOutcome(errorMessage: "Not connected to Repbase.")
+        }
+
+        let generation = connectionGeneration
+        let key = dateKey(for: date)
+        isSaving = true
+        defer { if connectionGeneration == generation { isSaving = false } }
+
+        var outcome = PlanOutcome()
+        for slot in slots {
+            guard let serverID = slot.meal.serverID else {
+                outcome.failed.append(slot.meal.name)
+                continue
+            }
+            do {
+                _ = try await repository.applyRecipe(
+                    serverID,
+                    toDates: [key],
+                    mealNumber: slot.number
+                )
+                outcome.applied.append(slot.meal.name)
+            } catch {
+                outcome.failed.append(slot.meal.name)
+                // The first failure's wording, not the last: later slots often
+                // fail for the same reason and the first is the one that
+                // explains it.
+                if outcome.errorMessage == nil {
+                    outcome.errorMessage = error.localizedDescription
+                }
+            }
+        }
+
+        guard connectionGeneration == generation else { return outcome }
+        // Read the day back rather than assuming what landed. Some slots may
+        // have been written and some not, and the server knows which.
+        openDay(key, using: repository)
+        return outcome
+    }
+
     func applyReusableMeal(
         _ savedMeal: SavedFoodMeal,
         to dates: [Date],

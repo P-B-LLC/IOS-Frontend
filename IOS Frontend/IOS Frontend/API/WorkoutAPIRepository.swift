@@ -220,6 +220,16 @@ actor WorkoutAPIRepository {
         }
     }
 
+    /// Puts a workout the user already has onto a date.
+    ///
+    /// Only a schedule row is written. Nothing about the template is touched:
+    /// not its exercises, not the WorkoutExercise rows joining them, not the
+    /// target sets, and it is never removed from wherever else it is planned.
+    /// Reusing a saved workout is scheduling it, not rewriting it.
+    func scheduleExistingWorkout(templateID: Int, on date: String) async throws {
+        try await scheduleWorkout(templateID: templateID, scheduledDate: date)
+    }
+
     func removeSchedule(_ workout: Workout) async throws {
         guard let scheduleID = workout.scheduleID else {
             throw APIServiceError.missingServerIdentifier("Workout schedule")
