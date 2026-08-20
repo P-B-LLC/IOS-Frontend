@@ -52,23 +52,30 @@ struct GearPickerRow: View {
                 .background(accent.opacity(0.14), in: RoundedRectangle(cornerRadius: 8))
 
             if choices.isEmpty {
-                // Nothing to pick from. Said plainly rather than shown as an
-                // empty menu, which reads as broken.
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(kind == .shoe ? "No shoes added" : "No bikes added")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(primaryText)
-                    Text("Add a \(kind.singular) in Gear to track its mileage.")
-                        .font(.caption)
-                        .foregroundStyle(secondaryText)
+                // Nothing to pick from, so the whole row becomes the way in.
+                // A disabled menu here would be a dead control next to the
+                // words explaining why, and the thing to do is add a shoe.
+                NavigationLink {
+                    GearView()
+                } label: {
+                    HStack(spacing: 10) {
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(kind == .shoe ? "Add your shoes" : "Add your bike")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(primaryText)
+                            Text("Track how far each one has been.")
+                                .font(.caption)
+                                .foregroundStyle(secondaryText)
+                        }
+                        Spacer(minLength: 0)
+                        Image(systemName: "chevron.forward")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(accent)
+                    }
+                    .contentShape(Rectangle())
                 }
-                Spacer(minLength: 0)
+                .buttonStyle(.plain)
             } else {
-                Text(kind == .shoe ? "Shoes" : "Bike")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(primaryText)
-                Spacer(minLength: 6)
-
                 Menu {
                     ForEach(choices) { item in
                         Button {
@@ -84,7 +91,11 @@ struct GearPickerRow: View {
                     Divider()
                     Button("None") { select(nil) }
                 } label: {
-                    HStack(spacing: 4) {
+                    HStack(spacing: 6) {
+                        Text(kind == .shoe ? "Shoes" : "Bike")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(primaryText)
+                        Spacer(minLength: 6)
                         Text(selectedName(from: choices) ?? "Choose")
                             .font(.subheadline.weight(.medium))
                             .lineLimit(1)
@@ -92,8 +103,27 @@ struct GearPickerRow: View {
                             .font(.caption2.weight(.bold))
                     }
                     .foregroundStyle(accent)
+                    .contentShape(Rectangle())
                 }
                 .disabled(store.isSaving)
+
+                // The way to the gear list, one tap from where the shoes are
+                // already being thought about. Separated by a rule so it does
+                // not read as part of the menu it sits beside.
+                Divider()
+                    .frame(height: 20)
+
+                NavigationLink {
+                    GearView()
+                } label: {
+                    Image(systemName: "chevron.forward")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(accent)
+                        .padding(.leading, 2)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(kind == .shoe ? "All shoes" : "All bikes")
             }
         }
         .padding(12)
