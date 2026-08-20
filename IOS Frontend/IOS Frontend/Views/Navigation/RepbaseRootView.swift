@@ -109,8 +109,8 @@ struct RepbaseBottomNavigation: View {
             }
         }
         .padding(.horizontal, 6)
-        .padding(.vertical, 5)
-        .repbaseDepthSurface(cornerRadius: 18)
+        .padding(.vertical, 3)
+        .repbaseDepthSurface(cornerRadius: 16)
         .animation(.easeOut(duration: 0.18), value: tab)
     }
 
@@ -119,13 +119,14 @@ struct RepbaseBottomNavigation: View {
     /// says it — dropping the text from the design should not drop it from
     /// the app.
     private func itemLabel(_ item: RepbaseTab, isSelected: Bool) -> some View {
-        VStack(spacing: 5) {
+        VStack(spacing: 4) {
             Image(systemName: item.symbol)
-                // Larger than it was, because it is now carrying the meaning
-                // the word underneath used to share.
-                .font(.system(size: 19, weight: .semibold))
+                // Still larger than the original, because it carries the
+                // meaning the word underneath used to share — the bar around
+                // it is what shrinks, not the thing you aim at.
+                .font(.system(size: 18, weight: .semibold))
                 .foregroundStyle(isSelected ? activeColor : timeOfDay.secondaryText)
-                .frame(width: 34, height: 26)
+                .frame(width: 34, height: 22)
 
             // Kept, and now doing more work: with the labels gone this and the
             // colour are the only things saying which tab you are on.
@@ -135,7 +136,10 @@ struct RepbaseBottomNavigation: View {
                 .opacity(isSelected ? 1 : 0)
         }
         .foregroundStyle(isSelected ? activeColor : timeOfDay.secondaryText)
-        .frame(maxWidth: .infinity, minHeight: 42)
+        // 34 plus the bar's own padding leaves a target around 40pt tall and
+        // a fifth of the screen wide. Below iOS's 44pt guidance on one axis
+        // only, which is what its own compact tab bar does at 32pt.
+        .frame(maxWidth: .infinity, minHeight: 34)
         .contentShape(Rectangle())
     }
 

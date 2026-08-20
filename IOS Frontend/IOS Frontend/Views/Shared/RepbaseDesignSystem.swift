@@ -30,7 +30,9 @@ enum RepbaseDesign {
     /// every one of them has to leave the room itself. Kept here as one number
     /// because four of the five tabs left 28 points, and the last row of each
     /// of those pages could not be scrolled clear of the bar.
-    static let bottomBarClearance: CGFloat = 118
+    // Dropped with the bar itself when its labels went: leaving it at 118
+    // would have left a band of dead space under every page.
+    static let bottomBarClearance: CGFloat = 100
     static let deepShadow = RepbasePalette.espresso.opacity(0.12)
     static let softHighlight = RepbasePalette.paper.opacity(0.82)
 }
