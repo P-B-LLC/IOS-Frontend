@@ -20,6 +20,9 @@ nonisolated struct PostableSession: Identifiable, Hashable, Sendable {
     let performedAt: Date
     let durationSeconds: Double?
     let routeDistanceKilometers: Double?
+    /// The sport, which decides what counts as having trained. Nil when the
+    /// workout behind the session has since been deleted.
+    let workoutType: WorkoutType?
     /// How many sets the session recorded, counted by the server.
     let loggedSetCount: Int
 
@@ -28,10 +31,22 @@ nonisolated struct PostableSession: Identifiable, Hashable, Sendable {
     /// Whether the session recorded any training at all.
     ///
     /// A session is finished by tapping Finish, not by logging anything, so a
-    /// completed session can hold nothing. A run counts on its distance
-    /// instead, having no sets to log.
+    /// completed session can hold nothing, and a day that recorded nothing
+    /// should not claim to have been trained.
+    ///
+    /// What counts as nothing depends on the sport. Lifting has sets. A run,
+    /// ride or swim has none, and used to be judged on distance alone — which
+    /// meant a treadmill run, a run with location refused, or any run on a
+    /// simulator recorded "nothing" and never got its completed badge. Time is
+    /// the evidence there: a run that took twenty minutes happened, whether or
+    /// not GPS was watching.
     var recordedSomething: Bool {
-        loggedSetCount > 0 || (routeDistanceKilometers ?? 0) > 0
+        switch workoutType {
+        case .running, .biking, .swimming:
+            (routeDistanceKilometers ?? 0) > 0 || (durationSeconds ?? 0) > 0
+        case .lifting, nil:
+            loggedSetCount > 0
+        }
     }
 }
 

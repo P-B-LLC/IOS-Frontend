@@ -938,6 +938,11 @@ actor WorkoutAPIRepository {
                     performedAt: performedAt,
                     durationSeconds: session.durationSeconds,
                     routeDistanceKilometers: session.routeDistanceKm,
+                    // A string rather than the enum, because the session
+                    // borrows it from a workout that may have been deleted.
+                    // An unrecognised value is left nil rather than guessed.
+                    workoutType: session.workoutType
+                        .flatMap { WorkoutType(rawValue: $0) },
                     loggedSetCount: session.loggedSetCount
                 )
             }

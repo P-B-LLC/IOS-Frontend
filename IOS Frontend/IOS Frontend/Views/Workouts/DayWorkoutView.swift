@@ -11,6 +11,7 @@ struct DayWorkoutView: View {
     let day: Weekday
 
     @Environment(WorkoutStore.self) private var store
+    @Environment(GearStore.self) private var gearStore
     @State private var setupDraft = Workout(name: "", exercises: [])
     @State private var editor: WorkoutEditorView.Mode?
     /// The workout awaiting a delete confirmation, if any.
@@ -21,6 +22,8 @@ struct DayWorkoutView: View {
     @State private var sharedWorkout: SharedPostSource?
     /// Set when Finish was tapped on a session that logged nothing.
     @State private var isConfirmingEmptyFinish = false
+    /// Gear chosen before the session exists, applied once it does.
+    @State private var pendingGearID: Int?
 
     private var workout: Workout? {
         store.workout(on: day)
@@ -59,6 +62,18 @@ struct DayWorkoutView: View {
                 withAnimation(.easeOut(duration: 0.2)) {
                     isConfirmingEmptyFinish = false
                 }
+            }
+        }
+        .onChange(of: activeSession?.serverID) { _, started in
+            // The session those shoes were picked for has just been created,
+            // so the choice made before Start can finally be attached to it.
+            guard let started, let chosen = pendingGearID else { return }
+            pendingGearID = nil
+            Task {
+                await gearStore.assign(
+                    gearStore.gear(withID: chosen),
+                    toSession: started
+                )
             }
         }
         .onChange(of: store.routeTracker.permission) {
@@ -446,10 +461,6 @@ struct DayWorkoutView: View {
                         Text(workout.name)
                             .font(.title2.weight(.bold))
                     }
-                    Spacer()
-                    Image(systemName: "figure.strengthtraining.traditional")
-                        .font(.title2)
-                        .foregroundStyle(WorkoutVisualPhase.prepare.accent)
                 }
 
                 Text("\(workout.exercises.count) exercises · \(workout.totalSets) target sets")
@@ -500,18 +511,18 @@ struct DayWorkoutView: View {
             // The finisher sits at the end of the workout it belongs to, not
             // as another workout in the day.
             if let machine = workout.cardioMachine {
-                HStack(spacing: 11) {
-                    Image(systemName: machine.symbolName)
-                        .font(.subheadline)
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("AFTER YOUR LAST SET")
+                        .font(.caption2.weight(.bold))
+                        .tracking(0.8)
                         .foregroundStyle(WorkoutVisualPhase.prepare.accent)
-                        .frame(width: 34, height: 34)
-                        .background(
-                            WorkoutVisualPhase.prepare.accent.opacity(0.14),
-                            in: RoundedRectangle(cornerRadius: 11)
-                        )
+
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Finish with \(machine.title)")
-                            .font(.subheadline.weight(.semibold))
+                        Text("Cardio finisher")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                        Text(machine.title)
+                            .font(.headline)
                         Text(
                             workout.cardioTargetMinutes
                                 .map { "\($0) min target · start it after your last set" }
@@ -520,10 +531,18 @@ struct DayWorkoutView: View {
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                     }
-                    Spacer(minLength: 0)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                    .background(
+                        WorkoutVisualPhase.prepare.surfaceStart,
+                        in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    )
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .strokeBorder(WorkoutVisualPhase.prepare.secondaryText.opacity(0.22))
+                    }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .workoutCard()
             }
 
             repeatToggle(for: workout)
@@ -534,10 +553,13 @@ struct DayWorkoutView: View {
             Button(role: .destructive) {
                 store.removeWorkout(workout, on: day)
             } label: {
-                Label("Remove \(workout.name) from \(day.fullName)", systemImage: "trash")
+                Text("Remove \(workout.name)")
+                    .font(.subheadline.weight(.semibold))
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(.plain)
+            .foregroundStyle(Color.red)
+            .padding(.vertical, 4)
             .disabled(!store.isEditingEnabled)
         }
     }
@@ -554,31 +576,24 @@ struct DayWorkoutView: View {
                 set: { store.setRepeat(workout, on: day, repeats: $0) }
             )
         ) {
-            HStack(spacing: 11) {
-                Image(systemName: "arrow.triangle.2.circlepath")
-                    .font(.subheadline)
-                    .foregroundStyle(WorkoutVisualPhase.prepare.accent)
-                    .frame(width: 34, height: 34)
-                    .background(
-                        WorkoutVisualPhase.prepare.accent.opacity(0.14),
-                        in: RoundedRectangle(cornerRadius: 11)
-                    )
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Repeat every \(day.fullName)")
-                        .font(.subheadline.weight(.semibold))
-                    Text(
-                        workout.repeatsWeekly
-                            ? "On every \(day.fullName) from now on."
-                            : "Planned for this \(day.fullName) only."
-                    )
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                }
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Repeat every \(day.fullName)")
+                    .font(.subheadline.weight(.semibold))
+                Text(
+                    workout.repeatsWeekly
+                        ? "Keep this workout on future \(day.fullName)s."
+                        : "Planned for this \(day.fullName) only."
+                )
+                .font(.caption2)
+                .foregroundStyle(.secondary)
             }
         }
-        .tint(WorkoutVisualPhase.prepare.accent)
+        .tint(RepbasePalette.charcoal)
+        .padding(.vertical, 12)
+        .overlay(alignment: .bottom) {
+            Divider()
+        }
         .disabled(!store.isEditingEnabled || workout.serverID == nil)
-        .workoutCard()
     }
 
     /// Everything scheduled for the day. A single workout fills the page; when
@@ -601,7 +616,12 @@ struct DayWorkoutView: View {
             Button {
                 editor = .create
             } label: {
-                Label("Add Another Workout to \(day.fullName)", systemImage: "plus")
+                HStack(spacing: 8) {
+                    Text("Add another workout")
+                    Image(systemName: "arrow.right")
+                        .font(.caption.weight(.semibold))
+                }
+                .font(.subheadline.weight(.semibold))
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)
@@ -688,7 +708,11 @@ struct DayWorkoutView: View {
                 NavigationLink {
                     DayWorkoutView(day: otherSession.day)
                 } label: {
-                    Label("Continue \(otherSession.workoutName)", systemImage: "arrow.right.circle.fill")
+                    HStack(spacing: 8) {
+                        Text("Continue \(otherSession.workoutName)")
+                        Image(systemName: "arrow.right")
+                            .font(.subheadline.weight(.semibold))
+                    }
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                 }
@@ -702,6 +726,19 @@ struct DayWorkoutView: View {
             // is what made six starts read as six workouts.
             EmptyView()
         } else {
+            // Before Start, because this is when a runner knows what is on
+            // their feet. There is no session to attach it to yet, so the
+            // answer is held and applied the moment one exists.
+            if workout.tracksDistance {
+                GearPickerRow(
+                    workoutType: workout.type,
+                    destination: .pending($pendingGearID),
+                    primaryText: WorkoutVisualPhase.prepare.primaryText,
+                    secondaryText: WorkoutVisualPhase.prepare.secondaryText,
+                    accent: WorkoutVisualPhase.prepare.accent
+                )
+            }
+
             Button {
                 completedSession = nil
                 // Ask before the session begins so tracking can start with the
@@ -712,7 +749,11 @@ struct DayWorkoutView: View {
                 }
                 store.startSession(on: day, workoutID: workout.id)
             } label: {
-                Label("Start Session", systemImage: "play.fill")
+                HStack(spacing: 8) {
+                    Text("Start session")
+                    Image(systemName: "arrow.right")
+                        .font(.subheadline.weight(.semibold))
+                }
                     .font(.headline)
                     .frame(maxWidth: .infinity)
             }
@@ -841,7 +882,7 @@ struct DayWorkoutView: View {
                 // whichever shoe is named here.
                 GearPickerRow(
                     workoutType: session.workoutType,
-                    sessionID: session.serverID,
+                    destination: .session(session.serverID),
                     primaryText: phase.primaryText,
                     secondaryText: phase.secondaryText,
                     accent: phase.accent
@@ -885,8 +926,12 @@ struct DayWorkoutView: View {
             Button {
                 endSession()
             } label: {
-                Label("End Session", systemImage: "flag.checkered")
-                    .font(.headline)
+                HStack(spacing: 8) {
+                    Text("Finish workout")
+                    Image(systemName: "arrow.right")
+                        .font(.subheadline.weight(.semibold))
+                }
+                .font(.headline)
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(WorkoutPrimaryButtonStyle(phase: phase))
@@ -895,9 +940,13 @@ struct DayWorkoutView: View {
             Button(role: .destructive) {
                 Task { await store.discardSession(on: day) }
             } label: {
-                Text("Discard Session")
+                Text("Discard session")
+                    .font(.subheadline.weight(.semibold))
                     .frame(maxWidth: .infinity)
             }
+            .buttonStyle(.plain)
+            .foregroundStyle(Color.red.opacity(0.88))
+            .padding(.vertical, 4)
             .disabled(store.isSaving || store.hasPendingSetChanges)
         }
         .foregroundStyle(phase.primaryText)
@@ -932,29 +981,13 @@ struct DayWorkoutView: View {
 
                 Spacer()
 
-                HStack(spacing: 8) {
-                    // The moment a workout is most worth posting is the one it
-                    // has just been finished in, so Share sits on the summary
-                    // rather than only back on the feed.
-                    Button {
-                        sharedWorkout = SharedPostSource(id: session.serverID)
-                    } label: {
-                        Image(systemName: "square.and.arrow.up")
-                            .font(.caption.weight(.bold))
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(Color(hex: 0xF3F7F5))
-                    .foregroundStyle(phase.primaryText)
-                    .accessibilityLabel("Share to Feed")
-
-                    Button("Done") {
-                        completedSession = nil
-                    }
-                    .font(.caption.weight(.bold))
-                    .buttonStyle(.borderedProminent)
-                    .tint(Color(hex: 0xF3F7F5))
-                    .foregroundStyle(phase.primaryText)
+                Button("Done") {
+                    completedSession = nil
                 }
+                .font(.caption.weight(.bold))
+                .buttonStyle(.borderedProminent)
+                .tint(Color(hex: 0xF3F7F5))
+                .foregroundStyle(phase.primaryText)
             }
 
             VStack(alignment: .leading, spacing: 11) {
@@ -1009,7 +1042,7 @@ struct DayWorkoutView: View {
             if session.tracksDistance {
                 GearPickerRow(
                     workoutType: session.workoutType,
-                    sessionID: session.serverID,
+                    destination: .session(session.serverID),
                     primaryText: phase.primaryText,
                     secondaryText: phase.secondaryText,
                     accent: phase.accent
@@ -1100,6 +1133,25 @@ struct DayWorkoutView: View {
                     phase: phase
                 )
             }
+
+            Button {
+                sharedWorkout = SharedPostSource(id: session.serverID)
+            } label: {
+                HStack {
+                    Text("Share result")
+                        .font(.subheadline.weight(.semibold))
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(phase.secondaryText)
+                }
+                .padding(.vertical, 10)
+            }
+            .buttonStyle(.plain)
+            .overlay(alignment: .bottom) {
+                Divider()
+            }
+            .accessibilityLabel("Share result to Feed")
 
             if !session.tracksDistance, !store.personalRecords.isEmpty {
                 personalRecordsSection(phase: phase)

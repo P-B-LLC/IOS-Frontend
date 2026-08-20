@@ -12,10 +12,20 @@
 import SwiftUI
 
 struct GearPickerRow: View {
+    /// Where the choice goes.
+    enum Destination {
+        /// Straight onto a session that already exists.
+        case session(Int)
+        /// Held until the session does. Before Start there is nothing to
+        /// attach to, but that is exactly when a runner knows which shoes are
+        /// on their feet, so the answer is kept and applied when it can be.
+        case pending(Binding<Int?>)
+    }
+
     let workoutType: WorkoutType
-    let sessionID: Int
-    /// Colours differ between the live session and the summary, so the caller
-    /// supplies them rather than the row guessing from its surroundings.
+    let destination: Destination
+    /// Colours differ between the planning page, the live session and the
+    /// summary, so the caller supplies them rather than the row guessing.
     let primaryText: Color
     let secondaryText: Color
     let accent: Color
@@ -114,8 +124,13 @@ struct GearPickerRow: View {
 
     private func select(_ id: Int?) {
         selectedID = id
-        Task {
-            await store.assign(id.flatMap(store.gear(withID:)), toSession: sessionID)
+        switch destination {
+        case .session(let sessionID):
+            Task {
+                await store.assign(id.flatMap(store.gear(withID:)), toSession: sessionID)
+            }
+        case .pending(let binding):
+            binding.wrappedValue = id
         }
     }
 }

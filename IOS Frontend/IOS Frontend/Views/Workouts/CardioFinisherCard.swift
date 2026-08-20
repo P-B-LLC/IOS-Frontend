@@ -32,7 +32,7 @@ struct CardioFinisherCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             header
 
             if let seconds = store.recordedCardioSeconds {
@@ -43,22 +43,20 @@ struct CardioFinisherCard: View {
                 idle
             }
         }
-        .padding(14)
-        .background(
-            phase.accent.opacity(0.12),
-            in: RoundedRectangle(cornerRadius: 18, style: .continuous)
-        )
     }
 
     private var header: some View {
-        HStack(spacing: 7) {
-            Image(systemName: "figure.mixed.cardio")
-                .font(.caption)
-                .foregroundStyle(phase.accent)
+        VStack(alignment: .leading, spacing: 6) {
             Text(store.recordedCardioSeconds == nil ? "CARDIO FINISHER" : "CARDIO COMPLETE")
                 .font(.caption2.weight(.bold))
+                .tracking(0.8)
                 .foregroundStyle(phase.accent)
-            Spacer(minLength: 0)
+            Text(
+                store.recordedCardioSeconds == nil
+                    ? "Keep the momentum going."
+                    : "Finisher saved."
+            )
+            .font(.title3.weight(.bold))
         }
     }
 
@@ -69,29 +67,24 @@ struct CardioFinisherCard: View {
             // A planned machine is preselected, but the user may have ended up
             // on a different one.
             ScrollView(.horizontal) {
-                HStack(spacing: 7) {
+                HStack(spacing: 24) {
                     ForEach(CardioMachine.allCases) { option in
                         Button {
                             machine = option
                         } label: {
-                            HStack(spacing: 5) {
-                                Image(systemName: option.symbolName)
-                                    .font(.caption)
-                                Text(option.title)
-                                    .font(.caption)
-                            }
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 7)
+                            Text(option.title)
+                                .font(.subheadline.weight(machine == option ? .semibold : .regular))
+                                .padding(.vertical, 8)
                             .foregroundStyle(
-                                machine == option ? phase.accent : phase.secondaryText
+                                machine == option ? phase.primaryText : phase.secondaryText
                             )
-                            .background(
-                                Capsule().fill(
-                                    machine == option
-                                        ? phase.accent.opacity(0.16)
-                                        : Color.primary.opacity(0.05)
-                                )
-                            )
+                            .overlay(alignment: .bottom) {
+                                if machine == option {
+                                    Capsule()
+                                        .fill(phase.primaryText)
+                                        .frame(height: 2)
+                                }
+                            }
                         }
                         .buttonStyle(.plain)
                     }
@@ -102,8 +95,12 @@ struct CardioFinisherCard: View {
             Button {
                 store.startCardio(machine: machine, sessionID: sessionID)
             } label: {
-                Label("Start \(machine.title)", systemImage: "play.fill")
-                    .font(.headline)
+                HStack(spacing: 8) {
+                    Text("Start \(machine.title.lowercased())")
+                    Image(systemName: "arrow.right")
+                        .font(.subheadline.weight(.semibold))
+                }
+                .font(.headline)
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(WorkoutPrimaryButtonStyle(phase: phase))
@@ -166,7 +163,11 @@ struct CardioFinisherCard: View {
                     if isSaving {
                         ProgressView()
                     } else {
-                        Label("Finish Cardio", systemImage: "flag.checkered")
+                        HStack(spacing: 8) {
+                            Text("Finish cardio")
+                            Image(systemName: "arrow.right")
+                                .font(.subheadline.weight(.semibold))
+                        }
                             .font(.headline)
                     }
                 }
@@ -178,12 +179,7 @@ struct CardioFinisherCard: View {
     }
 
     private func saved(seconds: Int) -> some View {
-        HStack(spacing: 11) {
-            Image(systemName: machineInProgress.symbolName)
-                .font(.subheadline)
-                .foregroundStyle(phase.accent)
-                .frame(width: 34, height: 34)
-                .background(phase.accent.opacity(0.16), in: Circle())
+        HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(machineInProgress.title)
                     .font(.subheadline.weight(.semibold))
