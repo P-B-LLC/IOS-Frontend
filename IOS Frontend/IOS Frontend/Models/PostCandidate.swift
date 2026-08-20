@@ -115,6 +115,23 @@ nonisolated struct PostCandidate: Identifiable, Hashable, Sendable {
     let sourceID: Int
     let title: String
     let subtitle: String
+    /// The day it happened, so the composer can offer one day at a time
+    /// instead of a list of everything ever recorded.
+    let day: Date?
+
+    init(
+        kind: PostKind,
+        sourceID: Int,
+        title: String,
+        subtitle: String,
+        day: Date? = nil
+    ) {
+        self.kind = kind
+        self.sourceID = sourceID
+        self.title = title
+        self.subtitle = subtitle
+        self.day = day
+    }
 
     /// Unique across sources: two different kinds can hold the same id, since
     /// each is numbered by its own table.

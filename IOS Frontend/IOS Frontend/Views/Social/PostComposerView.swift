@@ -23,6 +23,11 @@ struct PostComposerView: View {
 
     @State private var source: PostSource = .workout
     @State private var selection: PostCandidate?
+    /// The day the list is showing. Starts on the newest day that has anything
+    /// rather than on today: opening onto an empty list because nobody trained
+    /// this morning reads as "there is nothing to post".
+    @State private var selectedDay = Date()
+    @State private var didChooseOpeningDay = false
     @State private var caption = ""
     @State private var visibility: PostVisibility = .publicToAll
     @State private var pickedPhoto: PhotosPickerItem?
@@ -139,6 +144,19 @@ struct PostComposerView: View {
             // Meals and calendar entries are already held by their stores;
             // only finished sessions have to be asked for.
             await workoutStore.loadPostableSessions()
+            // After the fetch, not before: choosing from an empty list would
+            // always land on today.
+            chooseOpeningDayIfNeeded()
+        }
+        .onAppear {
+            // Meals need no fetch, so their opening day can be chosen at once.
+            if source == .meal { chooseOpeningDayIfNeeded() }
+        }
+        .onChange(of: source) {
+            // A different kind has different days worth opening on.
+            didChooseOpeningDay = false
+            selection = nil
+            chooseOpeningDayIfNeeded()
         }
     }
 
@@ -234,6 +252,10 @@ struct PostComposerView: View {
                 detail: "A post is built from what you have already recorded."
             )
 
+            if usesDayPicker {
+                daySelector(timeOfDay: timeOfDay)
+            }
+
             if source == .workout && workoutStore.isLoadingPostableSessions {
                 ProgressView()
                     .frame(maxWidth: .infinity)
@@ -290,8 +312,21 @@ struct PostComposerView: View {
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 
+    /// Opens on the newest day with something on it.
+    ///
+    /// Runs once, and only after the candidates have arrived — the workout
+    /// list is fetched, so on first appearance it is empty and choosing then
+    /// would always land on today.
+    private func chooseOpeningDayIfNeeded() {
+        guard usesDayPicker, !didChooseOpeningDay else { return }
+        let days = allCandidates.compactMap(\.day)
+        guard let newest = days.max() else { return }
+        didChooseOpeningDay = true
+        selectedDay = newest
+    }
+
     private func emptyRow(timeOfDay: HomeTimeOfDay) -> some View {
-        Text(source.emptyMessage)
+        Text(dayIsEmptyMessage ?? source.emptyMessage)
             .font(.subheadline)
             .foregroundStyle(timeOfDay.canvasSecondaryText)
             .fixedSize(horizontal: false, vertical: true)
@@ -597,7 +632,8 @@ struct PostComposerView: View {
 
     // MARK: - What there is to post
 
-    private var candidates: [PostCandidate] {
+    /// Everything postable of this kind, before the day filter.
+    private var allCandidates: [PostCandidate] {
         switch source {
         case .workout: workoutCandidates
         case .meal: mealCandidates
@@ -605,15 +641,154 @@ struct PostComposerView: View {
         }
     }
 
-    private var workoutCandidates: [PostCandidate] {
-        workoutStore.postableSessions.map { session in
-            PostCandidate(
-                kind: .workout,
-                sourceID: session.sessionID,
-                title: session.workoutName,
-                subtitle: Self.sessionSubtitle(session)
-            )
+    /// What the list shows: one day at a time for workouts and meals.
+    ///
+    /// The whole history was offered at once before, which for anyone who
+    /// trains regularly is a scrolling wall of the same few names. The planner
+    /// keeps the full list — its entries are already one per thing rather than
+    /// one per attempt.
+    private var candidates: [PostCandidate] {
+        guard usesDayPicker else { return allCandidates }
+        return allCandidates.filter { candidate in
+            guard let day = candidate.day else { return false }
+            return Calendar.current.isDate(day, inSameDayAs: selectedDay)
         }
+    }
+
+    private var usesDayPicker: Bool { source != .planner }
+
+    /// Distinguishes "nothing on this day" from "nothing at all", which the
+    /// source's own message cannot: with a day picker on screen, "you have no
+    /// finished workouts" is wrong for someone who simply picked Tuesday.
+    private var dayIsEmptyMessage: String? {
+        guard usesDayPicker, !allCandidates.isEmpty else { return nil }
+        let day = selectedDay.formatted(.dateTime.weekday(.wide).month(.abbreviated).day())
+        return "Nothing recorded on \(day). Pick another day above."
+    }
+
+    /// The seven days of the week `selectedDay` falls in, in the user's own
+    /// first-weekday order.
+    private var weekDays: [Date] {
+        let calendar = Calendar.current
+        guard let week = calendar.dateInterval(of: .weekOfYear, for: selectedDay) else {
+            return []
+        }
+        return (0..<7).compactMap {
+            calendar.date(byAdding: .day, value: $0, to: week.start)
+        }
+    }
+
+    private func hasSomething(on day: Date) -> Bool {
+        allCandidates.contains {
+            guard let candidateDay = $0.day else { return false }
+            return Calendar.current.isDate(candidateDay, inSameDayAs: day)
+        }
+    }
+
+    private func changeWeek(by weeks: Int) {
+        guard let moved = Calendar.current.date(
+            byAdding: .weekOfYear,
+            value: weeks,
+            to: selectedDay
+        ) else { return }
+        selectedDay = moved
+        // A day that is no longer on screen must not stay chosen underneath.
+        selection = nil
+    }
+
+    /// A week of days, with a dot under the ones that have anything to post.
+    private func daySelector(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(spacing: 10) {
+            HStack {
+                Button {
+                    changeWeek(by: -1)
+                } label: {
+                    Image(systemName: "chevron.left").frame(width: 44, height: 34)
+                }
+                .accessibilityLabel("Previous week")
+
+                Spacer()
+
+                Text(selectedDay.formatted(.dateTime.month(.abbreviated).day().year()))
+                    .font(.subheadline.weight(.semibold))
+
+                Spacer()
+
+                Button {
+                    changeWeek(by: 1)
+                } label: {
+                    Image(systemName: "chevron.right").frame(width: 44, height: 34)
+                }
+                .accessibilityLabel("Next week")
+            }
+
+            HStack(spacing: 0) {
+                ForEach(weekDays, id: \.self) { day in
+                    let isSelected = Calendar.current.isDate(day, inSameDayAs: selectedDay)
+                    Button {
+                        selectedDay = day
+                        selection = nil
+                    } label: {
+                        VStack(spacing: 5) {
+                            Text(day.formatted(.dateTime.weekday(.narrow)))
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(timeOfDay.secondaryText)
+                            Text(day.formatted(.dateTime.day()))
+                                .font(.caption.weight(.bold).monospacedDigit())
+                                .foregroundStyle(
+                                    isSelected ? RepbasePalette.cream : timeOfDay.primaryText
+                                )
+                                .frame(width: 30, height: 28)
+                                .background(
+                                    isSelected ? timeOfDay.accent : Color.clear,
+                                    in: Capsule()
+                                )
+                            // Says where there is anything worth opening, so
+                            // the empty days are not tapped one by one.
+                            Circle()
+                                .fill(timeOfDay.accent)
+                                .frame(width: 5, height: 5)
+                                .opacity(hasSomething(on: day) && !isSelected ? 1 : 0)
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(day.formatted(date: .complete, time: .omitted))
+                    .accessibilityValue(hasSomething(on: day) ? "Has entries" : "Nothing recorded")
+                    .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+                }
+            }
+        }
+        .padding(12)
+        .repbaseCard(contentPadding: 2, cornerRadius: RepbaseDesign.cardRadius)
+    }
+
+    /// `YYYY-MM-DD` back into a date, in the device's own calendar.
+    private static func day(fromKey key: String) -> Date? {
+        let parts = key.split(separator: "-").compactMap { Int($0) }
+        guard parts.count == 3 else { return nil }
+        return Calendar.current.date(
+            from: DateComponents(year: parts[0], month: parts[1], day: parts[2])
+        )
+    }
+
+    private var workoutCandidates: [PostCandidate] {
+        workoutStore.postableSessions
+            // Sessions that recorded nothing are not posts. Starting a day and
+            // stopping leaves a finished session behind, which is why the same
+            // workout appeared six times over: every abandoned start was
+            // offered as something to share.
+            .filter(\.recordedSomething)
+            .map { session in
+                PostCandidate(
+                    kind: .workout,
+                    sourceID: session.sessionID,
+                    title: session.workoutName,
+                    subtitle: Self.sessionSubtitle(session),
+                    day: session.performedAt
+                )
+            }
     }
 
     private var mealCandidates: [PostCandidate] {
@@ -631,7 +806,8 @@ struct PostComposerView: View {
                         kind: .meal,
                         sourceID: serverID,
                         title: meal.name,
-                        subtitle: "\(PostDateText.label(forKey: day.key)) · \(calories) kcal"
+                        subtitle: "\(PostDateText.label(forKey: day.key)) · \(calories) kcal",
+                        day: Self.day(fromKey: day.key)
                     )
                 }
             }
