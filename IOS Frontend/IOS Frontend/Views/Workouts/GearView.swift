@@ -172,41 +172,51 @@ private struct GearCard: View {
     var selectAction: (() -> Void)?
     let onTap: () -> Void
 
+    @Environment(\.homeTimeOfDay) private var timeOfDay
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             card
             if let selectAction {
-                selectButton(action: selectAction)
+                selectionControl(action: selectAction)
             }
         }
-        .padding(.vertical, 16)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 15)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            isSelected ? timeOfDay.accent.opacity(0.10) : Color.clear,
+            in: RoundedRectangle(cornerRadius: 20, style: .continuous)
+        )
         .overlay {
             if isSelected {
-                Rectangle()
-                    .fill(RepbasePalette.caramel)
-                    .frame(width: 3)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .strokeBorder(timeOfDay.accent.opacity(0.32), lineWidth: 1)
             }
         }
+        .animation(.easeInOut(duration: 0.2), value: isSelected)
         .opacity(gear.isRetired ? 0.55 : 1)
     }
 
     /// Selecting and editing are different intentions, so they are different
     /// controls: the body opens the editor, the button picks it for today.
-    private func selectButton(action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(isSelected ? "Selected" : "Select")
+    @ViewBuilder
+    private func selectionControl(action: @escaping () -> Void) -> some View {
+        if isSelected {
+            Label("Selected for this session", systemImage: "checkmark.circle.fill")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(timeOfDay.accent)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+                .transition(.opacity.combined(with: .scale(scale: 0.98)))
+        } else {
+            Button("Choose this pair", action: action)
                 .font(.footnote.weight(.semibold))
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
-                .foregroundStyle(
-                    isSelected ? RepbasePalette.caramel : Color.primary
-                )
+                .buttonStyle(.bordered)
+                .buttonBorderShape(.capsule)
         }
-        .buttonStyle(.bordered)
-        .buttonBorderShape(.capsule)
-        .disabled(isSelected)
     }
 
     private var card: some View {
@@ -220,6 +230,12 @@ private struct GearCard: View {
                         .font(.headline)
                         .lineLimit(1)
                     Spacer(minLength: 6)
+                    if isSelected {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(timeOfDay.accent)
+                            .accessibilityHidden(true)
+                    }
                     if gear.isDefault {
                         tag("DEFAULT")
                     }

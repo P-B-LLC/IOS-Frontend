@@ -5989,6 +5989,10 @@ components:
           format: decimal
           pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
           nullable: true
+        daily_step_goal:
+          type: integer
+          maximum: 100000
+          minimum: 1000
         unit_preference:
           $ref: '#/components/schemas/UnitPreferenceEnum'
         bio:
@@ -7124,6 +7128,10 @@ components:
           format: decimal
           pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
           nullable: true
+        daily_step_goal:
+          type: integer
+          maximum: 100000
+          minimum: 1000
         unit_preference:
           $ref: '#/components/schemas/UnitPreferenceEnum'
         bio:
@@ -7212,6 +7220,10 @@ components:
           format: decimal
           pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
           nullable: true
+        daily_step_goal:
+          type: integer
+          maximum: 100000
+          minimum: 1000
         unit_preference:
           $ref: '#/components/schemas/UnitPreferenceEnum'
         bio:

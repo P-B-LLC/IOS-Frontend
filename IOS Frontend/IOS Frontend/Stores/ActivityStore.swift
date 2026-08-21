@@ -101,7 +101,46 @@ final class ActivityStore {
     }
 
     /// Days that met the same 8K target used by the movement rail.
-    var goalDaysThisWeek: Int { recentDays.filter { $0.steps >= 8_000 }.count }
+    /// Steps a day the user is aiming for. Eight thousand until the profile
+    /// says otherwise, which is the figure the widget showed back when nobody
+    /// could change it.
+    private(set) var stepGoal: Int = 8_000
+    private(set) var isSavingGoal = false
+
+    var goalDaysThisWeek: Int { recentDays.filter { $0.steps >= stepGoal }.count }
+
+    /// Reads the goal off the profile. Quiet on failure: the default is a
+    /// usable number, and a banner over the steps card because a target could
+    /// not be read would cost more than the target is worth.
+    func loadStepGoal() async {
+        guard let repository else { return }
+        let generation = connectionGeneration
+        guard let loaded = try? await repository.stepGoal() else { return }
+        guard connectionGeneration == generation else { return }
+        stepGoal = loaded
+    }
+
+    /// Sets the goal, and says so if the server refuses.
+    ///
+    /// Not optimistic, unlike the steps themselves: this one is a number the
+    /// user typed on purpose, and showing it as saved when it was not is
+    /// worse than a moment's wait.
+    func updateStepGoal(_ steps: Int) async {
+        guard let repository, !isSavingGoal else { return }
+        let generation = connectionGeneration
+        isSavingGoal = true
+        defer { if connectionGeneration == generation { isSavingGoal = false } }
+
+        do {
+            let saved = try await repository.setStepGoal(steps)
+            guard connectionGeneration == generation else { return }
+            stepGoal = saved
+            persistenceError = nil
+        } catch {
+            guard connectionGeneration == generation else { return }
+            persistenceError = error.localizedDescription
+        }
+    }
 
     /// Direction of the latest reported day compared with the previous one.
     var latestDayChange: Int? {
@@ -129,6 +168,7 @@ final class ActivityStore {
         }
 
         await reload(generation: generation, showsLoadingState: true)
+        await loadStepGoal()
 
         // Apple's sheet is the whole of the asking. The app requests Health
         // access itself, once, rather than drawing a card that asks the user

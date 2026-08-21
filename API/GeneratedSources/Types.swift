@@ -5549,6 +5549,8 @@ public enum Components {
             public var weightKg: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PatchedRepbaseUserRequest/target_weight_kg`.
             public var targetWeightKg: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedRepbaseUserRequest/daily_step_goal`.
+            public var dailyStepGoal: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/PatchedRepbaseUserRequest/unit_preference`.
             public var unitPreference: Components.Schemas.UnitPreferenceEnum?
             /// - Remark: Generated from `#/components/schemas/PatchedRepbaseUserRequest/bio`.
@@ -5574,6 +5576,7 @@ public enum Components {
             ///   - heightCm:
             ///   - weightKg:
             ///   - targetWeightKg:
+            ///   - dailyStepGoal:
             ///   - unitPreference:
             ///   - bio:
             ///   - disciplines:
@@ -5590,6 +5593,7 @@ public enum Components {
                 heightCm: Swift.Int64? = nil,
                 weightKg: Swift.String? = nil,
                 targetWeightKg: Swift.String? = nil,
+                dailyStepGoal: Swift.Int? = nil,
                 unitPreference: Components.Schemas.UnitPreferenceEnum? = nil,
                 bio: Swift.String? = nil,
                 disciplines: [Components.Schemas.DisciplinesEnum]? = nil,
@@ -5606,6 +5610,7 @@ public enum Components {
                 self.heightCm = heightCm
                 self.weightKg = weightKg
                 self.targetWeightKg = targetWeightKg
+                self.dailyStepGoal = dailyStepGoal
                 self.unitPreference = unitPreference
                 self.bio = bio
                 self.disciplines = disciplines
@@ -5623,6 +5628,7 @@ public enum Components {
                 case heightCm = "height_cm"
                 case weightKg = "weight_kg"
                 case targetWeightKg = "target_weight_kg"
+                case dailyStepGoal = "daily_step_goal"
                 case unitPreference = "unit_preference"
                 case bio
                 case disciplines
@@ -7473,6 +7479,8 @@ public enum Components {
             public var weightKg: Swift.String?
             /// - Remark: Generated from `#/components/schemas/RepbaseUser/target_weight_kg`.
             public var targetWeightKg: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/RepbaseUser/daily_step_goal`.
+            public var dailyStepGoal: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/RepbaseUser/unit_preference`.
             public var unitPreference: Components.Schemas.UnitPreferenceEnum?
             /// - Remark: Generated from `#/components/schemas/RepbaseUser/bio`.
@@ -7509,6 +7517,7 @@ public enum Components {
             ///   - heightCm:
             ///   - weightKg:
             ///   - targetWeightKg:
+            ///   - dailyStepGoal:
             ///   - unitPreference:
             ///   - bio:
             ///   - profilePhotoUrl:
@@ -7531,6 +7540,7 @@ public enum Components {
                 heightCm: Swift.Int64? = nil,
                 weightKg: Swift.String? = nil,
                 targetWeightKg: Swift.String? = nil,
+                dailyStepGoal: Swift.Int? = nil,
                 unitPreference: Components.Schemas.UnitPreferenceEnum? = nil,
                 bio: Swift.String? = nil,
                 profilePhotoUrl: Swift.String? = nil,
@@ -7553,6 +7563,7 @@ public enum Components {
                 self.heightCm = heightCm
                 self.weightKg = weightKg
                 self.targetWeightKg = targetWeightKg
+                self.dailyStepGoal = dailyStepGoal
                 self.unitPreference = unitPreference
                 self.bio = bio
                 self.profilePhotoUrl = profilePhotoUrl
@@ -7576,6 +7587,7 @@ public enum Components {
                 case heightCm = "height_cm"
                 case weightKg = "weight_kg"
                 case targetWeightKg = "target_weight_kg"
+                case dailyStepGoal = "daily_step_goal"
                 case unitPreference = "unit_preference"
                 case bio
                 case profilePhotoUrl = "profile_photo_url"
@@ -7608,6 +7620,8 @@ public enum Components {
             public var weightKg: Swift.String?
             /// - Remark: Generated from `#/components/schemas/RepbaseUserRequest/target_weight_kg`.
             public var targetWeightKg: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/RepbaseUserRequest/daily_step_goal`.
+            public var dailyStepGoal: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/RepbaseUserRequest/unit_preference`.
             public var unitPreference: Components.Schemas.UnitPreferenceEnum?
             /// - Remark: Generated from `#/components/schemas/RepbaseUserRequest/bio`.
@@ -7633,6 +7647,7 @@ public enum Components {
             ///   - heightCm:
             ///   - weightKg:
             ///   - targetWeightKg:
+            ///   - dailyStepGoal:
             ///   - unitPreference:
             ///   - bio:
             ///   - disciplines:
@@ -7649,6 +7664,7 @@ public enum Components {
                 heightCm: Swift.Int64? = nil,
                 weightKg: Swift.String? = nil,
                 targetWeightKg: Swift.String? = nil,
+                dailyStepGoal: Swift.Int? = nil,
                 unitPreference: Components.Schemas.UnitPreferenceEnum? = nil,
                 bio: Swift.String? = nil,
                 disciplines: [Components.Schemas.DisciplinesEnum]? = nil,
@@ -7665,6 +7681,7 @@ public enum Components {
                 self.heightCm = heightCm
                 self.weightKg = weightKg
                 self.targetWeightKg = targetWeightKg
+                self.dailyStepGoal = dailyStepGoal
                 self.unitPreference = unitPreference
                 self.bio = bio
                 self.disciplines = disciplines
@@ -7682,6 +7699,7 @@ public enum Components {
                 case heightCm = "height_cm"
                 case weightKg = "weight_kg"
                 case targetWeightKg = "target_weight_kg"
+                case dailyStepGoal = "daily_step_goal"
                 case unitPreference = "unit_preference"
                 case bio
                 case disciplines

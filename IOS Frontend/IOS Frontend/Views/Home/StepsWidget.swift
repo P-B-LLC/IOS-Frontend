@@ -41,73 +41,64 @@ struct StepsWidget: View {
         let steps = store.stepsToday ?? 0
         let progress = min(Double(steps) / Double(goal), 1)
         let remaining = max(goal - steps, 0)
-        return VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 5) {
+        return VStack(alignment: .leading, spacing: 7) {
+            HStack(alignment: .center) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text("TODAY'S MOVEMENT")
-                        .font(.caption2.weight(.bold))
+                        .font(.system(size: 9, weight: .bold))
                         .tracking(0.5)
                         .foregroundStyle(RepbaseDesign.success)
 
-                    HStack(alignment: .firstTextBaseline, spacing: 7) {
+                    HStack(alignment: .firstTextBaseline, spacing: 5) {
                         Text(steps.formatted(.number))
-                            .font(.title.weight(.bold))
+                            .font(.title2.weight(.bold))
                             .contentTransition(.numericText())
                         Text("steps today")
-                            .font(.caption.weight(.medium))
+                            .font(.caption2.weight(.medium))
                             .foregroundStyle(timeOfDay.secondaryText)
                     }
-
                 }
 
                 Spacer(minLength: 10)
 
-                Text("\(goal / 1_000)K GOAL")
-                    .font(.system(size: 9, weight: .bold))
-                    .foregroundStyle(RepbaseDesign.success)
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("\(goal / 1_000)K GOAL")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(RepbaseDesign.success)
+                    Text(progress.formatted(.percent.precision(.fractionLength(0))))
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(timeOfDay.secondaryText)
+                }
             }
 
             GeometryReader { proxy in
-                let markerX = max(10, min(proxy.size.width - 10, proxy.size.width * progress))
+                let markerX = max(7, min(proxy.size.width - 7, proxy.size.width * progress))
                 ZStack(alignment: .leading) {
-                    Capsule().fill(RepbaseDesign.success.opacity(0.22)).frame(height: 4)
-                    Capsule().fill(RepbaseDesign.success).frame(width: markerX, height: 4)
+                    Capsule().fill(RepbaseDesign.success.opacity(0.18)).frame(height: 3)
+                    Capsule().fill(RepbaseDesign.success).frame(width: markerX, height: 3)
                     ForEach(0...4, id: \.self) { index in
                         Circle()
                             .fill(Double(index) / 4 <= progress ? RepbaseDesign.success : RepbasePalette.paper)
                             .overlay(Circle().stroke(RepbaseDesign.success.opacity(0.22), lineWidth: 1))
-                            .frame(width: 13, height: 13)
-                            .position(x: proxy.size.width * CGFloat(index) / 4, y: 18)
+                            .frame(width: 9, height: 9)
+                            .position(x: proxy.size.width * CGFloat(index) / 4, y: 11)
                     }
                     Circle()
                         .fill(RepbaseDesign.accent)
-                        .frame(width: 19, height: 19)
-                        .overlay(Circle().stroke(RepbaseDesign.accent.opacity(0.28), lineWidth: 6))
-                        .position(x: markerX, y: 18)
+                        .frame(width: 13, height: 13)
+                        .overlay(Circle().stroke(RepbaseDesign.accent.opacity(0.24), lineWidth: 4))
+                        .position(x: markerX, y: 11)
                 }
             }
-            .frame(height: 40)
+            .frame(height: 22)
 
-            HStack {
-                Text(remaining == 0 ? "Goal reached" : "\(remaining.formatted(.number)) to go")
-                Spacer()
-                Text(progress.formatted(.percent.precision(.fractionLength(0))))
-            }
-            .font(.system(size: 10, weight: .semibold))
+            Text(remaining == 0 ? "Goal reached" : "\(remaining.formatted(.number)) to go")
+            .font(.system(size: 9, weight: .semibold))
             .foregroundStyle(RepbaseDesign.success)
-
-            HStack(spacing: 0) {
-                compactInsight(store.weekAverage.map { $0.formatted(.number) } ?? "—", "DAILY AVG")
-                Divider().frame(height: 25)
-                compactInsight("\(store.goalDaysThisWeek)", "GOAL DAYS")
-                Divider().frame(height: 25)
-                compactInsight(changeText, "VS LAST DAY")
-            }
-            .padding(.top, 2)
         }
-        .padding(.horizontal, 18)
-        .padding(.top, 15)
-        .padding(.bottom, 14)
+        .padding(.horizontal, 12)
+        .padding(.top, 10)
+        .padding(.bottom, 9)
         .overlay(alignment: .bottom) { Divider() }
         .task { await store.refresh() }
         .accessibilityElement(children: .combine)

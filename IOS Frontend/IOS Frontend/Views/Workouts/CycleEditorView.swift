@@ -29,27 +29,46 @@ struct CycleEditorView: View {
     @Environment(CycleStore.self) private var store
     @Environment(WorkoutStore.self) private var workoutStore
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.homeTimeOfDay) private var timeOfDay
 
     @State private var draft = WorkoutCycleDraft()
     @State private var didLoad = false
 
     var body: some View {
-        Form {
+        List {
             Section {
-                TextField("Name (optional)", text: $draft.name)
+                VStack(alignment: .leading, spacing: 7) {
+                    Text("TRAINING ROTATION")
+                        .font(.caption2.weight(.bold))
+                        .tracking(1.3)
+                        .foregroundStyle(timeOfDay.accent)
+                    Text(isEditing ? "Refine your rhythm." : "Build your rhythm.")
+                        .font(.largeTitle.weight(.bold))
+                        .tracking(-0.8)
+                    Text("Create a cycle that repeats around your schedule.")
+                        .font(.subheadline)
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                }
+                .padding(.bottom, 8)
+
+                TextField("Name your rotation", text: $draft.name)
+                    .font(.title3.weight(.semibold))
+                    .textInputAutocapitalization(.words)
+                    .padding(.vertical, 8)
             } footer: {
-                Text("Something to recognise it by, like \"PPL + rest\".")
+                Text("A short name makes this rotation easy to recognize later.")
             }
 
             Section {
                 Stepper(value: lengthBinding, in: 2...31) {
                     LabeledContent("Cycle length") {
                         Text("\(draft.length) days")
-                            .foregroundStyle(.secondary)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(timeOfDay.accent)
                     }
                 }
                 DatePicker(
-                    "Day 1 falls on",
+                    "Starts on",
                     selection: $draft.anchorDate,
                     displayedComponents: .date
                 )
@@ -62,13 +81,19 @@ struct CycleEditorView: View {
                     slotRow(slot)
                 }
             } header: {
-                Text("Each day")
+                HStack(alignment: .firstTextBaseline) {
+                    Text("Your cycle")
+                        .font(.title3.weight(.bold))
+                        .textCase(nil)
+                        .foregroundStyle(timeOfDay.canvasPrimaryText)
+                    Spacer()
+                    Text("\(plannedSlotCount) of \(draft.length) planned")
+                        .font(.caption)
+                        .textCase(nil)
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                }
             } footer: {
-                Text(
-                    "Set builds the workout for that day. Swipe a day to clear "
-                        + "it back to rest — a rest day still counts towards the "
-                        + "cycle length."
-                )
+                Text("Choose a workout for each training day. Swipe a planned day to return it to rest.")
             }
 
             // Both stores can fail here, and they fail at different moments:
@@ -79,10 +104,13 @@ struct CycleEditorView: View {
                 Section {
                     Text(error)
                         .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.red)
                 }
             }
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .contentMargins(.horizontal, 22, for: .scrollContent)
         .navigationTitle(isEditing ? "Edit rotation" : "New rotation")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -110,6 +138,7 @@ struct CycleEditorView: View {
                 draft = WorkoutCycleDraft(cycle)
             }
         }
+        .homeTimeScreen(timeOfDay)
     }
 
     private var isEditing: Bool {
@@ -119,6 +148,10 @@ struct CycleEditorView: View {
 
     private var errors: [String] {
         [workoutStore.persistenceError, store.persistenceError].compactMap { $0 }
+    }
+
+    private var plannedSlotCount: Int {
+        draft.slots.filter { !$0.isRest }.count
     }
 
     /// Resizing keeps the days already chosen, so shortening a cycle by one
@@ -156,10 +189,32 @@ struct CycleEditorView: View {
                 Task { await assign(built, at: slot.position) }
             }
         } label: {
-            LabeledContent("Day \(slot.position)") {
-                Text(slot.isRest ? "Set" : slot.displayName)
-                    .foregroundStyle(slot.isRest ? Color.accentColor : .primary)
+            HStack(spacing: 12) {
+                Text("\(slot.position)")
+                    .font(.caption.weight(.bold).monospacedDigit())
+                    .foregroundStyle(slot.isRest ? timeOfDay.accent : RepbasePalette.cream)
+                    .frame(width: 30, height: 30)
+                    .background(
+                        slot.isRest ? timeOfDay.accent.opacity(0.12) : timeOfDay.accent,
+                        in: Circle()
+                    )
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(slot.isRest ? "Rest day" : slot.displayName)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(timeOfDay.canvasPrimaryText)
+                    Text(slot.isRest ? "Choose a workout or keep recovery" : "Workout planned")
+                        .font(.caption)
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                }
+
+                Spacer()
+
+                Text(slot.isRest ? "Set" : "Edit")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(timeOfDay.accent)
             }
+            .padding(.vertical, 5)
         }
         .swipeActions(edge: .trailing) {
             if !slot.isRest {

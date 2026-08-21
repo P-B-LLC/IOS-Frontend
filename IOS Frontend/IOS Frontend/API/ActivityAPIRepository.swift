@@ -142,6 +142,34 @@ actor ActivityAPIRepository {
 
     // MARK: - Mapping
 
+    // MARK: - The step goal
+
+    /// Steps a day the user is aiming for.
+    ///
+    /// Read from the profile rather than kept on the phone, so it follows
+    /// the account the way target weight does.
+    func stepGoal() async throws -> Int {
+        switch try await client.meRetrieve() {
+        case .ok(let response):
+            return try response.body.json.dailyStepGoal ?? 8_000
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    @discardableResult
+    func setStepGoal(_ steps: Int) async throws -> Int {
+        let output = try await client.mePartialUpdate(
+            body: .json(.init(dailyStepGoal: steps))
+        )
+        switch output {
+        case .ok(let response):
+            return try response.body.json.dailyStepGoal ?? steps
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
     private nonisolated static func activity(
         _ type: WorkoutType
     ) -> Components.Schemas.ActivityEnum {
