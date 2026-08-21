@@ -21,13 +21,11 @@ struct PostDetailView: View {
     /// came up in the day palette at eleven at night with the tab bar under
     /// it still dark.
     @State private var timeOfDay = HomeTimeOfDay(date: Date())
-
-    @State private var draft = CommentDraft()
-    @State private var confirmingDelete: PostComment?
     /// True until the first fetch has been attempted, so a post being loaded
     /// does not flash "this post is gone" on the way in.
     @State private var isFetching = true
-    @FocusState private var isWriting: Bool
+    /// Raised to put the cursor in the comment box.
+    @State private var focusRequest = 0
 
     private var post: FeedPost? { store.post(withID: postID) }
 
@@ -61,175 +59,35 @@ struct PostDetailView: View {
     }
 
     private func loaded(_ post: FeedPost) -> some View {
-        VStack(spacing: 0) {
+        PostCommentsView(
+            postID: postID,
+            timeOfDay: timeOfDay,
+            clearsBottomBar: true,
+            focusRequest: $focusRequest
+        )
+        // The post itself sits above the threads rather than scrolling with
+        // them: it is what the conversation is about, and losing it off the
+        // top while reading replies loses the subject.
+        .safeAreaInset(edge: .top, spacing: 0) {
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 14) {
-                    PostCard(post: post, timeOfDay: timeOfDay)
-
-                    threadsHeader(post)
-
-                    if store.isLoadingComments(for: postID) && threads.isEmpty {
-                        ProgressView()
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 30)
-                    } else if threads.isEmpty {
-                        emptyThreads
-                    } else {
-                        ForEach(threads) { thread in
-                            CommentThread(
-                                comment: thread,
-                                timeOfDay: timeOfDay,
-                                onReply: { begin(replyingTo: $0) },
-                                onDelete: { confirmingDelete = $0 }
-                            )
-                        }
-                    }
-                }
+                PostCard(
+                    post: post,
+                    timeOfDay: timeOfDay,
+                    // Already here, so the button puts the cursor in the box
+                    // rather than opening the page again.
+                    openComments: { focusRequest += 1 }
+                )
                 .padding(.horizontal, RepbaseDesign.pageInset)
-                .padding(.top, 12)
-                .padding(.bottom, 18)
             }
             .scrollIndicators(.hidden)
-
-            composer
-        }
-        .confirmationDialog(
-            "Delete this comment?",
-            isPresented: Binding(
-                get: { confirmingDelete != nil },
-                set: { if !$0 { confirmingDelete = nil } }
-            ),
-            titleVisibility: .visible,
-            presenting: confirmingDelete
-        ) { comment in
-            Button("Delete", role: .destructive) {
-                Task { await store.deleteComment(comment) }
-            }
-            Button("Keep", role: .cancel) {}
-        } message: { comment in
-            Text(
-                comment.replies.isEmpty
-                    ? "It will be removed for everyone."
-                    : "Its \(comment.replies.count == 1 ? "reply goes" : "replies go") with it."
-            )
-        }
-    }
-
-    private var threads: [PostComment] { store.comments(for: postID) }
-
-    private func threadsHeader(_ post: FeedPost) -> some View {
-        HStack {
-            Text(post.commentCount == 1 ? "1 comment" : "\(post.commentCount) comments")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(timeOfDay.primaryText)
-            Spacer()
-            if store.isLoadingComments(for: postID) && !threads.isEmpty {
-                ProgressView().controlSize(.mini)
-            }
-        }
-        .padding(.top, 4)
-    }
-
-    private var emptyThreads: some View {
-        VStack(spacing: 6) {
-            Image(systemName: "bubble.left")
-                .font(.title3)
-                .foregroundStyle(timeOfDay.accent)
-            Text("No comments yet.")
-                .font(.footnote)
-                .foregroundStyle(timeOfDay.secondaryText)
-            Text("Be the first to say something.")
-                .font(.caption)
-                .foregroundStyle(timeOfDay.secondaryText)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 28)
-    }
-
-    // MARK: - Writing
-
-    private var composer: some View {
-        VStack(spacing: 0) {
-            Divider()
-
-            if let replyingTo = draft.replyingTo {
-                HStack(spacing: 6) {
-                    Image(systemName: "arrowshape.turn.up.left.fill")
-                        .font(.caption2)
-                    Text("Replying to \(replyingTo.author.displayName)")
-                        .font(.caption)
-                        .lineLimit(1)
-                    Spacer(minLength: 0)
-                    Button("Cancel") { draft.replyingTo = nil }
-                        .font(.caption.weight(.semibold))
-                        .buttonStyle(.plain)
-                }
-                .foregroundStyle(timeOfDay.secondaryText)
-                .padding(.horizontal, RepbaseDesign.pageInset)
-                .padding(.top, 8)
-            }
-
-            HStack(alignment: .bottom, spacing: 10) {
-                TextField(draft.placeholder, text: $draft.body, axis: .vertical)
-                    .lineLimit(1...5)
-                    .textFieldStyle(.plain)
-                    .focused($isWriting)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 9)
-                    .background(
-                        timeOfDay.primaryText.opacity(0.06),
-                        in: RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    )
-
-                Button {
-                    send()
-                } label: {
-                    Image(systemName: "arrow.up.circle.fill")
-                        .font(.system(size: 27))
-                        .foregroundStyle(
-                            draft.isSendable ? timeOfDay.accent : timeOfDay.secondaryText.opacity(0.4)
-                        )
-                }
-                .buttonStyle(.plain)
-                .disabled(!draft.isSendable || store.isSendingComment)
-            }
-            .padding(.horizontal, RepbaseDesign.pageInset)
-            .padding(.vertical, 10)
-            // Lifted clear of the floating tab bar, which is drawn over this
-            // view rather than inset out of it — the composer was sitting
-            // exactly underneath it and could not be tapped or even seen.
-            //
-            // Dropped to nothing once the keyboard is up: the keyboard covers
-            // the bar, so the gap would just be a gap.
-            .padding(.bottom, isWriting ? 0 : RepbaseDesign.bottomBarClearance - 10)
-        }
-        .background(.thinMaterial)
-        .animation(.easeOut(duration: 0.2), value: isWriting)
-    }
-
-    private func begin(replyingTo comment: PostComment) {
-        // Always the thread's own comment, never a reply to a reply — which
-        // the server refuses, so offering it would be offering an error.
-        draft.replyingTo = comment.isReply ? nil : comment
-        isWriting = true
-    }
-
-    private func send() {
-        let sending = draft
-        // Cleared before the round trip so the field is ready for the next
-        // thought; a failure puts the words back rather than losing them.
-        draft.clear()
-        Task {
-            await store.addComment(sending, toPost: postID)
-            if store.errorMessage != nil, draft.body.isEmpty {
-                draft = sending
-            }
+            .frame(maxHeight: 420)
+            .background(.thinMaterial)
         }
     }
 }
 
 /// A comment and the replies under it.
-private struct CommentThread: View {
+struct CommentThread: View {
     let comment: PostComment
     let timeOfDay: HomeTimeOfDay
     let onReply: (PostComment) -> Void
@@ -268,7 +126,7 @@ private struct CommentThread: View {
     }
 }
 
-private struct CommentRow: View {
+struct CommentRow: View {
     let comment: PostComment
     let timeOfDay: HomeTimeOfDay
     let onReply: () -> Void

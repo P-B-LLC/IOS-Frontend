@@ -7,6 +7,11 @@
 
 import SwiftUI
 
+/// A post id that can be presented as a sheet.
+private struct CommentedPost: Identifiable, Hashable {
+    let id: Int
+}
+
 struct SocialFeedView: View {
     @Environment(SocialStore.self) private var store
 
@@ -17,8 +22,12 @@ struct SocialFeedView: View {
     var initiallyOpened: Int?
 
     @State private var isComposing = false
-    /// The post whose thread is open, if one is.
+    /// The post whose page is open, if one is.
     @State private var opened: Int?
+    /// The post whose comments are raised over the feed, if any. Wrapped
+    /// because `sheet(item:)` wants Identifiable and a bare Int is not —
+    /// unlike `navigationDestination(item:)`, which only wants Hashable.
+    @State private var commenting: CommentedPost?
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
@@ -39,6 +48,11 @@ struct SocialFeedView: View {
             if let raw = ProcessInfo.processInfo.environment["REPBASE_SOCIAL_OPEN"],
                let id = Int(raw) {
                 opened = id
+                return
+            }
+            if let raw = ProcessInfo.processInfo.environment["REPBASE_SOCIAL_COMMENT"],
+               let id = Int(raw) {
+                commenting = CommentedPost(id: id)
                 return
             }
 #endif
@@ -68,7 +82,10 @@ struct SocialFeedView: View {
                         PostCard(
                             post: post,
                             timeOfDay: timeOfDay,
-                            openComments: { opened = post.id }
+                            // The button raises the threads over the feed so
+                            // a comment can be left without losing your place
+                            // in it; tapping the card itself opens the post.
+                            openComments: { commenting = CommentedPost(id: post.id) }
                         )
                             .contentShape(Rectangle())
                             .onTapGesture { opened = post.id }
@@ -97,6 +114,9 @@ struct SocialFeedView: View {
         .homeTimeScreen(timeOfDay)
         .sheet(isPresented: $isComposing) {
             PostComposerView()
+        }
+        .sheet(item: $commenting) { target in
+            PostCommentsSheet(postID: target.id, timeOfDay: timeOfDay)
         }
     }
 
