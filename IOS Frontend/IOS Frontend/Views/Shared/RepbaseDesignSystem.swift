@@ -16,11 +16,11 @@ enum RepbaseDesign {
     static let warning = Color(hex: 0xC46A16)
     static let danger = Color(hex: 0xC33A4A)
 
-    static let pageInset: CGFloat = 20
-    static let sectionSpacing: CGFloat = 24
-    static let cardRadius: CGFloat = 14
+    static let pageInset: CGFloat = 18
+    static let sectionSpacing: CGFloat = 22
+    static let cardRadius: CGFloat = 16
     static let controlRadius: CGFloat = 10
-    static let featureRadius: CGFloat = 22
+    static let featureRadius: CGFloat = 20
 
     /// Room a scrolling page must leave below its content for the floating
     /// bottom bar.
@@ -47,8 +47,11 @@ enum RepbaseDesign {
     static let softHighlight = RepbasePalette.paper.opacity(0.82)
 }
 
-/// A raised architectural surface. The paired shadows establish one shared
-/// light source, so depth feels intentional instead of decorative.
+/// A quiet bounded surface for a true interactive module.
+///
+/// Earlier versions treated every section as a floating card. The approved
+/// direction keeps related information in one continuous page and reserves
+/// visible depth for controls people can actually open or change.
 private struct RepbaseDepthSurfaceModifier: ViewModifier {
     @Environment(\.homeTimeOfDay) private var timeOfDay
 
@@ -58,41 +61,20 @@ private struct RepbaseDepthSurfaceModifier: ViewModifier {
         content
             .background {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [timeOfDay.surfaceRaised, timeOfDay.surface],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .fill(timeOfDay.surfaceRaised)
                     .shadow(
                         color: timeOfDay.usesDarkAppearance
-                            ? Color.black.opacity(0.34)
-                            : RepbaseDesign.deepShadow,
-                        radius: 14,
+                            ? Color.black.opacity(0.20)
+                            : RepbasePalette.espresso.opacity(0.07),
+                        radius: 7,
                         x: 0,
-                        y: 7
-                    )
-                    .shadow(
-                        color: timeOfDay.usesDarkAppearance
-                            ? Color.white.opacity(0.035)
-                            : RepbaseDesign.softHighlight,
-                        radius: 2,
-                        x: 0,
-                        y: -1
+                        y: 3
                     )
             }
             .overlay {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .strokeBorder(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(timeOfDay.usesDarkAppearance ? 0.08 : 0.94),
-                                timeOfDay.border.opacity(0.42)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
+                        timeOfDay.border.opacity(timeOfDay.usesDarkAppearance ? 0.42 : 0.72),
                         lineWidth: 1
                     )
             }

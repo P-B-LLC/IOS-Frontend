@@ -39,11 +39,20 @@ struct ProfileDestinationView: View {
     }
 }
 
+/// A post id that can be presented as a sheet. `sheet(item:)` wants
+/// Identifiable, and a bare Int is not.
+private struct ProfileCommentTarget: Identifiable, Hashable {
+    let id: Int
+}
+
 struct SocialProfileView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AuthenticationStore.self) private var authentication
     @Environment(WorkoutStore.self) private var workoutStore
     @Environment(SocialProfileStore.self) private var store
+    /// The feed's store, because the posts on this page are the same posts:
+    /// liking one here has to be the like the feed shows.
+    @Environment(SocialStore.self) private var social
 
     let profile: SocialProfile
     var isCurrentUser = true
@@ -51,6 +60,8 @@ struct SocialProfileView: View {
     @State private var editingProfile = false
     @State private var showingSettings = false
     @State private var isFollowing = false
+    /// The post whose comments are raised over the profile, if any.
+    @State private var commenting: ProfileCommentTarget?
 
     private enum ProfileSection: String, CaseIterable, Identifiable {
         case posts = "Posts"
@@ -90,6 +101,18 @@ struct SocialProfileView: View {
             .fullScreenCover(isPresented: $showingSettings) {
                 ProfileSettingsView(profile: profile)
             }
+        }
+        // Out here, not inside the TimelineView, which tears its contents down
+        // on every tick.
+        //
+        // Keyed on the feed store's connection as well as the id. The stores
+        // connect in order and the profile's is first, so this page is already
+        // on screen — id and all — while the feed store still has no
+        // repository, and a task keyed on the id alone ran once against
+        // nothing and never again.
+        .task(id: "\(store.viewerID ?? 0)-\(social.isConnected)") {
+            guard let viewerID = store.viewerID, social.isConnected else { return }
+            await social.loadPosts(byAuthor: viewerID)
         }
     }
 
@@ -133,7 +156,10 @@ struct SocialProfileView: View {
                 ProfileAvatarView(profile: profile, size: 88, timeOfDay: timeOfDay)
 
                 HStack(spacing: 18) {
-                    profileStat("\(store.posts.count)", label: "Posts")
+                    // The real count, from the posts this page has loaded.
+                    // Followers and following are still a placeholder: the
+                    // endpoints exist but nothing here reads them yet.
+                    profileStat("\(myPostCount)", label: "Posts")
                     profileStat("0", label: "Followers")
                     profileStat("0", label: "Following")
                 }
@@ -185,6 +211,10 @@ struct SocialProfileView: View {
         }
         .padding(18)
         .repbaseDepthSurface(cornerRadius: RepbaseDesign.featureRadius)
+    }
+
+    private var myPostCount: Int {
+        store.viewerID.map { social.posts(byAuthor: $0).count } ?? 0
     }
 
     private var disciplineSummary: String {
@@ -250,60 +280,55 @@ struct SocialProfileView: View {
         }
     }
 
+    /// The user's own posts, drawn by the same card the feed uses.
+    ///
+    /// Read out of `SocialStore` rather than kept here: it is the same post,
+    /// and a like made on this page has to be the like the feed shows. Two
+    /// copies each keeping their own counts is the bug this avoids.
     @ViewBuilder
     private func postsSection(timeOfDay: HomeTimeOfDay) -> some View {
-        if store.posts.isEmpty {
-            VStack(spacing: 12) {
-                Image(systemName: "square.and.pencil")
-                    .font(.system(size: 30, weight: .medium))
-                    .foregroundStyle(timeOfDay.accent)
-                Text("No posts yet").font(.headline)
-                Text("Completed workouts and shared milestones will appear here.")
-                    .font(.subheadline)
-                    .foregroundStyle(timeOfDay.secondaryText)
-                    .multilineTextAlignment(.center)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 48)
-            .overlay(alignment: .bottom) {
-                Rectangle().fill(timeOfDay.border).frame(height: 1)
-            }
-        } else {
-            LazyVStack(spacing: 0) {
-                ForEach(store.posts) { post in
-                    HStack(spacing: 14) {
-                        Image(systemName: post.symbol)
-                            .font(.title3.weight(.semibold))
-                            .foregroundStyle(timeOfDay.accent)
-                            .frame(width: 48, height: 48)
-                            .background(timeOfDay.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 15))
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack {
-                                Text(post.title).font(.headline)
-                                Spacer()
-                                Text(post.timestamp).font(.caption).foregroundStyle(timeOfDay.secondaryText)
-                            }
-                            Text(post.detail).font(.subheadline).foregroundStyle(timeOfDay.secondaryText)
-                            HStack(spacing: 14) {
-                                Label("\(post.likes)", systemImage: "heart")
-                                Label("\(post.comments)", systemImage: "bubble.left")
-                            }
-                            .font(.caption.weight(.medium))
-                            .foregroundStyle(timeOfDay.secondaryText)
-                        }
-                    }
-                    .padding(.horizontal, 15)
-                    .padding(.vertical, 14)
+        let mine = store.viewerID.map { social.posts(byAuthor: $0) } ?? []
+        let isLoading = store.viewerID.map { social.isLoadingPosts(byAuthor: $0) } ?? false
 
-                    if post.id != store.posts.last?.id {
-                        Divider().padding(.leading, 76)
+        Group {
+            if !mine.isEmpty {
+                LazyVStack(spacing: 0) {
+                    ForEach(mine) { post in
+                        PostCard(
+                            post: post,
+                            timeOfDay: timeOfDay,
+                            openComments: { commenting = ProfileCommentTarget(id: post.id) }
+                        )
                     }
                 }
+                .padding(.horizontal, 15)
+            } else if isLoading {
+                ProgressView()
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 48)
+            } else {
+                VStack(spacing: 12) {
+                    Image(systemName: "square.and.pencil")
+                        .font(.system(size: 30, weight: .medium))
+                        .foregroundStyle(timeOfDay.accent)
+                    Text("No posts yet").font(.headline)
+                    Text("Completed workouts and shared milestones will appear here.")
+                        .font(.subheadline)
+                        .foregroundStyle(timeOfDay.secondaryText)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 48)
+                .overlay(alignment: .bottom) {
+                    Rectangle().fill(timeOfDay.border).frame(height: 1)
+                }
             }
-            .overlay(alignment: .top) { Rectangle().fill(timeOfDay.border).frame(height: 1) }
-            .overlay(alignment: .bottom) { Rectangle().fill(timeOfDay.border).frame(height: 1) }
+        }
+        .sheet(item: $commenting) { target in
+            PostCommentsSheet(postID: target.id, timeOfDay: timeOfDay)
         }
     }
+
 
     private func aboutSection(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(spacing: 0) {

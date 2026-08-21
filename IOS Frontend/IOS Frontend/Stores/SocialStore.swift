@@ -72,8 +72,12 @@ final class SocialStore {
         // One account's threads must never be shown to the next.
         comments = [:]
         openedPosts = [:]
+        authorPosts = [:]
         loadingCommentsFor = []
+        loadingPostsFor = []
         isSendingComment = false
+        lastSavedWorkout = nil
+        savingWorkoutFor = []
     }
 
     // MARK: - Reading
@@ -261,6 +265,42 @@ final class SocialStore {
         }
     }
 
+    // MARK: - One person's posts
+
+    /// Posts by author, for a profile page. Held here rather than in the
+    /// profile store so a like made on a profile is the same like the feed
+    /// shows, and the counts cannot drift apart.
+    private(set) var authorPosts: [Int: [FeedPost]] = [:]
+    private(set) var loadingPostsFor: Set<Int> = []
+
+    func posts(byAuthor authorID: Int) -> [FeedPost] {
+        authorPosts[authorID] ?? []
+    }
+
+    func isLoadingPosts(byAuthor authorID: Int) -> Bool {
+        loadingPostsFor.contains(authorID)
+    }
+
+    func loadPosts(byAuthor authorID: Int) async {
+        guard let repository else { return }
+        let generation = connectionGeneration
+        loadingPostsFor.insert(authorID)
+        defer {
+            if connectionGeneration == generation {
+                loadingPostsFor.remove(authorID)
+            }
+        }
+
+        do {
+            let loaded = try await repository.posts(byAuthor: authorID)
+            guard connectionGeneration == generation else { return }
+            authorPosts[authorID] = loaded
+        } catch {
+            guard connectionGeneration == generation else { return }
+            errorMessage = error.localizedDescription
+        }
+    }
+
     // MARK: - Taking a workout for yourself
 
     /// What the last save produced, for a message the reader can dismiss.
@@ -383,6 +423,12 @@ final class SocialStore {
             change(&opened)
             openedPosts[postID] = opened
         }
+        // And on a profile, which is a third place the same post is drawn.
+        for author in authorPosts.keys {
+            guard let index = authorPosts[author]?.firstIndex(where: { $0.id == postID })
+            else { continue }
+            change(&authorPosts[author]![index])
+        }
     }
 
     /// Puts a server copy over every card showing that post — the post itself,
@@ -393,6 +439,11 @@ final class SocialStore {
         }
         if openedPosts[post.id] != nil {
             openedPosts[post.id] = post
+        }
+        for author in authorPosts.keys {
+            guard let index = authorPosts[author]?.firstIndex(where: { $0.id == post.id })
+            else { continue }
+            authorPosts[author]![index] = post
         }
         for index in feed.indices where feed[index].repostOf?.id == post.id {
             feed[index].likeCount = post.likeCount

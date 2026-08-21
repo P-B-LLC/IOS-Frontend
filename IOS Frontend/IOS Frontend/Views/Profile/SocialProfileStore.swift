@@ -189,6 +189,8 @@ final class SocialProfileStore {
     private var connectionGeneration = UUID()
 
     private(set) var profile: SocialProfile?
+    /// The signed-in user's server id, so their posts can be asked for.
+    private(set) var viewerID: Int?
     private(set) var posts: [SocialPost] = []
     private(set) var isLoading = false
     private(set) var hasLoadedProfile = false
@@ -236,6 +238,9 @@ final class SocialProfileStore {
             let remote = try await repository.profile()
             guard connectionGeneration == generation else { return }
             profile = Self.profile(from: remote)
+            // Kept because the profile page has to ask the feed for "posts by
+            // this person", and the id is the only way to say who that is.
+            viewerID = remote.id
         } catch {
             profile = nil
             errorMessage = error.localizedDescription
@@ -246,6 +251,8 @@ final class SocialProfileStore {
         connectionGeneration = UUID()
         repository = nil
         profile = nil
+        // One account's identity must never be left behind for the next.
+        viewerID = nil
         isLoading = false
         hasLoadedProfile = false
         errorMessage = nil

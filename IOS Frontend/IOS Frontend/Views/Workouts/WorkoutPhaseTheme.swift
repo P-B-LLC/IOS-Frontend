@@ -183,27 +183,18 @@ private struct RepbaseCardModifier: ViewModifier {
             .foregroundStyle(phase.primaryText)
             .background {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [phase.surfaceStart, phase.surfaceEnd],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .shadow(color: phase.shadow, radius: phase == .focus ? 14 : 10, x: 0, y: 6)
+                    .fill(phase.surfaceStart)
                     .shadow(
-                        color: phase.usesDarkAppearance
-                            ? Color.white.opacity(0.035)
-                            : Color.white.opacity(0.90),
-                        radius: 2,
+                        color: phase.shadow.opacity(phase == .focus ? 0.58 : 0.32),
+                        radius: phase == .focus ? 9 : 5,
                         x: 0,
-                        y: -1
+                        y: 3
                     )
             }
             .overlay {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .strokeBorder(
-                        phase == .focus ? Color.white.opacity(0.10) : RepbasePalette.espresso.opacity(0.09),
+                        phase == .focus ? Color.white.opacity(0.10) : RepbasePalette.espresso.opacity(0.12),
                         lineWidth: 1
                     )
             }
@@ -218,14 +209,8 @@ private struct RepbaseControlSurfaceModifier: ViewModifier {
         content
             .background {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [phase.surfaceStart, phase.surfaceEnd.opacity(0.82)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .shadow(color: phase.shadow.opacity(0.50), radius: 5, x: 0, y: 3)
+                    .fill(phase.surfaceStart)
+                    .shadow(color: phase.shadow.opacity(0.28), radius: 3, x: 0, y: 2)
             }
             .overlay {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)

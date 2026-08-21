@@ -52,13 +52,27 @@ actor SocialAPIRepository {
     /// One person's posts, already narrowed by the server to what the reader
     /// is allowed to see.
     func posts(byAuthor authorID: Int) async throws -> [FeedPost] {
-        let output = try await client.socialPostsList(query: .init(author: authorID))
-        switch output {
-        case .ok(let response):
-            return try response.body.json.results.map(Self.post(from:))
-        case .undocumented(let statusCode, _):
-            throw APIServiceError.undocumentedStatus(statusCode)
-        }
+        var page: Int?
+        var visited: Set<Int> = []
+        var values: [FeedPost] = []
+        // Paged through rather than stopping at the first page: a profile is
+        // the one place somebody scrolls back through everything they have
+        // posted, and a count that stops at twenty would be wrong.
+        repeat {
+            let output = try await client.socialPostsList(
+                query: .init(author: authorID, page: page)
+            )
+            let body: Components.Schemas.PaginatedPostList
+            switch output {
+            case .ok(let response):
+                body = try response.body.json
+            case .undocumented(let statusCode, _):
+                throw APIServiceError.undocumentedStatus(statusCode)
+            }
+            values.append(contentsOf: body.results.map(Self.post(from:)))
+            page = try nextPage(body.next, visited: &visited)
+        } while page != nil
+        return values
     }
 
     // MARK: - Posting
