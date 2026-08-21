@@ -14,13 +14,15 @@ extension WorkoutType {
 struct WorkoutInkArtwork: View {
     let type: WorkoutType
     var size: CGFloat = 48
+    var color: Color = RepbaseDesign.ink
 
     var body: some View {
         Image(type.inkArtworkAsset)
             .resizable()
+            .renderingMode(.template)
             .scaledToFit()
             .frame(width: size, height: size)
-            .clipShape(RoundedRectangle(cornerRadius: size * 0.18, style: .continuous))
+            .foregroundStyle(color)
             .accessibilityHidden(true)
     }
 }

@@ -173,8 +173,12 @@ struct DayWorkoutView: View {
             VStack(spacing: 1) {
                 Text(day.shortName.uppercased())
                     .font(.caption.weight(.bold))
-                Image(systemName: headerIcon)
-                    .font(.title2)
+                if let workout {
+                    WorkoutInkArtwork(type: workout.type, size: 31, color: .white)
+                } else {
+                    Image(systemName: headerIcon)
+                        .font(.title2)
+                }
             }
             .foregroundStyle(Color.white)
             .frame(width: 58, height: 58)
