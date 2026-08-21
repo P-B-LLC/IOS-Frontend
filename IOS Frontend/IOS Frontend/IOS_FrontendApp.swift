@@ -153,6 +153,11 @@ private struct AppRootView: View {
                     switch mode {
                     case "editor":
                         CycleEditorView(mode: .create)
+                    case "build":
+                        // The builder as the editor pushes it. Whether a view
+                        // that carries its own NavigationStack draws a second
+                        // bar when pushed is not answerable by reading it.
+                        CycleEditorPreviewPush()
                     case "dashboard":
                         TrainingDashboardContent()
                     default:
@@ -429,3 +434,25 @@ private struct AppRootView: View {
         }
     }
 }
+
+#if DEBUG
+/// The rotation editor with the workout builder already pushed onto it.
+///
+/// `simctl` cannot tap, so the only way to see what the pushed builder looks
+/// like — and whether it draws a second navigation bar over its own header —
+/// is to arrive with it already on the stack.
+private struct CycleEditorPreviewPush: View {
+    @Environment(WorkoutStore.self) private var workoutStore
+    @State private var isPushed = true
+
+    var body: some View {
+        CycleEditorView(mode: .create)
+            .navigationDestination(isPresented: $isPushed) {
+                WorkoutEditorView(
+                    mode: .create,
+                    suggestions: workoutStore.knownWorkouts
+                )
+            }
+    }
+}
+#endif

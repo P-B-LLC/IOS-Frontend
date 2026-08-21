@@ -250,20 +250,39 @@ actor WorkoutAPIRepository {
         _ draft: Workout,
         scheduledDate: String
     ) async throws {
+        let templateID = try await createTemplate(draft)
+        do {
+            try await scheduleWorkout(
+                templateID: templateID,
+                scheduledDate: scheduledDate
+            )
+        } catch {
+            throw APIServiceError.partialWorkoutCreation(
+                "The template exists on the server, but its date assignment needs attention. \(error.localizedDescription)"
+            )
+        }
+    }
+
+    /// Creates a workout and its exercises, and answers with its server id.
+    ///
+    /// Nothing is put on the calendar. A rotation works out its own dates from
+    /// its anchor, so a schedule row written here would land the workout on a
+    /// day the cycle did not choose, and the cycle would then write its own
+    /// alongside it.
+    func createTemplate(_ draft: Workout) async throws -> Int {
         let template: Components.Schemas.WorkoutTemplate
 
         // Workout names are unique per user, and a template is meant to be
         // scheduled on as many days as the user likes. Reuse one they already
         // have by that name instead of failing on the uniqueness constraint.
+        //
+        // Reused as it stands: the exercises on screen are not written over
+        // the saved ones. A rotation day is a choice of which workout goes
+        // there, not a licence to rewrite a workout used elsewhere.
         if let existing = try await fetchAllWorkouts().first(
             where: { Self.normalizedName($0.name) == Self.normalizedName(draft.name) }
         ) {
-            template = existing
-            try await scheduleWorkout(
-                templateID: template.id,
-                scheduledDate: scheduledDate
-            )
-            return
+            return existing.id
         }
 
         let templateOutput = try await client.workoutsCreate(
@@ -311,16 +330,13 @@ actor WorkoutAPIRepository {
                     throw APIServiceError.undocumentedStatus(statusCode)
                 }
             }
-
-            try await scheduleWorkout(
-                templateID: template.id,
-                scheduledDate: scheduledDate
-            )
         } catch {
             throw APIServiceError.partialWorkoutCreation(
-                "The template exists on the server, but its exercises or date assignment need attention. \(error.localizedDescription)"
+                "The template exists on the server, but its exercises need attention. \(error.localizedDescription)"
             )
         }
+
+        return template.id
     }
 
     private func scheduleWorkout(

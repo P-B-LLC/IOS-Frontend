@@ -58,22 +58,24 @@ struct CycleEditorView: View {
             }
 
             Section {
-                if workoutStore.knownWorkouts.isEmpty {
-                    Text("Save a workout first, then you can put it in the rotation.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(draft.slots) { slot in
-                        slotRow(slot)
-                    }
+                ForEach(draft.slots) { slot in
+                    slotRow(slot)
                 }
             } header: {
                 Text("Each day")
             } footer: {
-                Text("Leave a day on Rest to keep it in the cycle without a workout.")
+                Text(
+                    "Set builds the workout for that day. Swipe a day to clear "
+                        + "it back to rest — a rest day still counts towards the "
+                        + "cycle length."
+                )
             }
 
-            if let error = store.persistenceError {
+            // Both stores can fail here, and they fail at different moments:
+            // the workout store when a day is set, the cycle store when the
+            // rotation is saved. Showing only one leaves a day that quietly
+            // stayed on Set with nothing on screen saying why.
+            ForEach(errors, id: \.self) { error in
                 Section {
                     Text(error)
                         .font(.footnote)
@@ -94,7 +96,9 @@ struct CycleEditorView: View {
                         dismiss()
                     }
                 }
-                .disabled(!draft.hasAnyWorkout || store.isSaving)
+                // Also while a day's workout is still being written: saving
+                // the rotation first would send a slot with no workout id.
+                .disabled(!draft.hasAnyWorkout || store.isSaving || workoutStore.isSaving)
             }
         }
         .task {
@@ -111,6 +115,10 @@ struct CycleEditorView: View {
     private var isEditing: Bool {
         if case .edit = mode { return true }
         return false
+    }
+
+    private var errors: [String] {
+        [workoutStore.persistenceError, store.persistenceError].compactMap { $0 }
     }
 
     /// Resizing keeps the days already chosen, so shortening a cycle by one
@@ -131,33 +139,54 @@ struct CycleEditorView: View {
             + "weekday twice."
     }
 
+    /// A day, and the way into building what goes on it.
+    ///
+    /// The builder is pushed rather than presented, so its Cancel is the way
+    /// back to this list and saving lands the user here too, with the day
+    /// filled in — rather than dropping them somewhere else mid-rotation.
     private func slotRow(_ slot: WorkoutCycleSlot) -> some View {
-        LabeledContent("Day \(slot.position)") {
-            Menu {
-                Button("Rest") { choose(nil, at: slot.position) }
-                Divider()
-                ForEach(workoutStore.knownWorkouts) { workout in
-                    Button(workout.name) {
-                        choose(workout, at: slot.position)
-                    }
-                }
-            } label: {
-                HStack(spacing: 5) {
-                    Text(slot.displayName)
-                        .foregroundStyle(slot.isRest ? .secondary : .primary)
-                    Image(systemName: "chevron.up.chevron.down")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
+        NavigationLink {
+            WorkoutEditorView(
+                mode: .create,
+                // The workouts already saved, offered as chips inside the
+                // builder. An eight-day split usually repeats three or four
+                // workouts, so reuse has to be a tap and not a retype.
+                suggestions: workoutStore.knownWorkouts
+            ) { built in
+                Task { await assign(built, at: slot.position) }
+            }
+        } label: {
+            LabeledContent("Day \(slot.position)") {
+                Text(slot.isRest ? "Set" : slot.displayName)
+                    .foregroundStyle(slot.isRest ? Color.accentColor : .primary)
+            }
+        }
+        .swipeActions(edge: .trailing) {
+            if !slot.isRest {
+                Button("Rest") { clear(at: slot.position) }
+                    .tint(.gray)
             }
         }
     }
 
-    private func choose(_ workout: WorkoutSummary?, at position: Int) {
+    /// Saves what was built and puts it on this day.
+    ///
+    /// The workout has to exist on the server before a slot can name it, and
+    /// the id it gets back is the only thing that identifies it — so the day
+    /// stays on rest if the save fails, rather than pointing at nothing.
+    private func assign(_ built: Workout, at position: Int) async {
+        guard let id = await workoutStore.createTemplate(built) else { return }
         guard let index = draft.slots.firstIndex(where: { $0.position == position })
         else { return }
-        draft.slots[index].workoutID = workout?.serverID
-        draft.slots[index].workoutName = workout?.name
+        draft.slots[index].workoutID = id
+        draft.slots[index].workoutName = built.name
+    }
+
+    private func clear(at position: Int) {
+        guard let index = draft.slots.firstIndex(where: { $0.position == position })
+        else { return }
+        draft.slots[index].workoutID = nil
+        draft.slots[index].workoutName = nil
     }
 
     private func save() async {

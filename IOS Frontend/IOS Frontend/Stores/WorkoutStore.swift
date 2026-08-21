@@ -491,6 +491,39 @@ final class WorkoutStore {
         )
     }
 
+    /// Saves a workout without putting it on any date, and answers with its
+    /// server id. Nil means it did not save, and the caller should not pretend
+    /// otherwise — `persistenceError` says why.
+    ///
+    /// For rotations: the cycle writes its own dates from its anchor, so the
+    /// workout has to exist as a template first and be scheduled by nothing
+    /// else. A name already in use resolves to that workout rather than a
+    /// second copy of it.
+    func createTemplate(_ workout: Workout) async -> Int? {
+        guard let repository, !isSaving else { return nil }
+        let generation = connectionGeneration
+        isSaving = true
+        persistenceError = nil
+        defer { isSaving = false }
+
+        do {
+            let id = try await repository.createTemplate(Self.normalized(workout))
+            guard connectionGeneration == generation else { return nil }
+            // So the new workout is offered the next time a day is set, and
+            // so the slot can name it without waiting for the next load.
+            await reloadWeek(
+                using: repository,
+                generation: generation,
+                showsLoadingState: false
+            )
+            return id
+        } catch {
+            guard connectionGeneration == generation else { return nil }
+            persistenceError = error.localizedDescription
+            return nil
+        }
+    }
+
     func saveWorkout(_ workout: Workout, on day: Weekday) {
         guard let repository, !isSaving else { return }
         let generation = connectionGeneration
