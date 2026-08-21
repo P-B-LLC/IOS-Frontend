@@ -9,6 +9,13 @@ import SwiftUI
 
 struct SocialFeedView: View {
     @Environment(SocialStore.self) private var store
+
+    /// Opens straight onto a post's thread. Only set by the preview launch
+    /// mode: `simctl` cannot tap, so pushing on arrival is the only way to
+    /// see that tapping a card leads anywhere at all — which is exactly what
+    /// was broken and shipped once already.
+    var initiallyOpened: Int?
+
     @State private var isComposing = false
     /// The post whose thread is open, if one is.
     @State private var opened: Int?
@@ -16,6 +23,16 @@ struct SocialFeedView: View {
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
             screen(timeOfDay: HomeTimeOfDay(date: context.date))
+        }
+        // Out here, not inside the TimelineView. In there it is torn down and
+        // re-declared on every tick, and a push never happened: liking a post
+        // worked because it needs no navigation, while tapping a card or its
+        // comment button did nothing at all.
+        .navigationDestination(item: $opened) { id in
+            PostDetailView(postID: id)
+        }
+        .task {
+            if let initiallyOpened { opened = initiallyOpened }
         }
     }
 
@@ -70,9 +87,6 @@ struct SocialFeedView: View {
         .homeTimeScreen(timeOfDay)
         .sheet(isPresented: $isComposing) {
             PostComposerView()
-        }
-        .navigationDestination(item: $opened) { id in
-            PostDetailView(postID: id)
         }
     }
 

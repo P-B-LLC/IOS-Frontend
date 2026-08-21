@@ -19,6 +19,9 @@ struct PostDetailView: View {
 
     @State private var draft = CommentDraft()
     @State private var confirmingDelete: PostComment?
+    /// True until the first fetch has been attempted, so a post being loaded
+    /// does not flash "this post is gone" on the way in.
+    @State private var isFetching = true
     @FocusState private var isWriting: Bool
 
     private var post: FeedPost? { store.post(withID: postID) }
@@ -27,6 +30,9 @@ struct PostDetailView: View {
         Group {
             if let post {
                 loaded(post)
+            } else if isFetching {
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 // The card that opened this has left the feed — deleted, or
                 // paged out from under it.
@@ -41,6 +47,10 @@ struct PostDetailView: View {
         .navigationTitle("Post")
         .navigationBarTitleDisplayMode(.inline)
         .task {
+            // Fetched first when the feed does not hold it — opened from a
+            // profile, or from a card that has since paged out.
+            await store.loadPost(id: postID)
+            isFetching = false
             await store.loadComments(for: postID)
         }
     }

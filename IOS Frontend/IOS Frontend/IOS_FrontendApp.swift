@@ -151,10 +151,14 @@ private struct AppRootView: View {
                 // account. Sample posts are the only way to see a like already
                 // on, a repost, and a thread with a reply in it.
                 NavigationStack {
-                    if ProcessInfo.processInfo
-                        .environment["REPBASE_SOCIAL_PREVIEW"] == "detail" {
+                    switch ProcessInfo.processInfo.environment["REPBASE_SOCIAL_PREVIEW"] {
+                    case "detail":
                         PostDetailView(postID: 1)
-                    } else {
+                    case "push":
+                        // Arrives with the thread already pushed, which is the
+                        // only way to check that a card leads anywhere.
+                        SocialFeedView(initiallyOpened: 1)
+                    default:
                         SocialFeedView()
                     }
                 }

@@ -69,6 +69,11 @@ final class SocialStore {
         isPosting = false
         errorMessage = nil
         lastPosted = nil
+        // One account's threads must never be shown to the next.
+        comments = [:]
+        openedPosts = [:]
+        loadingCommentsFor = []
+        isSendingComment = false
     }
 
     // MARK: - Reading
@@ -332,8 +337,15 @@ final class SocialStore {
     // MARK: - Keeping the feed in step
 
     private func apply(to postID: Int, _ change: (inout FeedPost) -> Void) {
-        guard let index = feed.firstIndex(where: { $0.id == postID }) else { return }
-        change(&feed[index])
+        if let index = feed.firstIndex(where: { $0.id == postID }) {
+            change(&feed[index])
+        }
+        // A post opened from outside the feed is held here instead, and a like
+        // made on its page has to show there too.
+        if var opened = openedPosts[postID] {
+            change(&opened)
+            openedPosts[postID] = opened
+        }
     }
 
     /// Puts a server copy over every card showing that post — the post itself,
@@ -342,6 +354,9 @@ final class SocialStore {
         for index in feed.indices where feed[index].id == post.id {
             feed[index] = post
         }
+        if openedPosts[post.id] != nil {
+            openedPosts[post.id] = post
+        }
         for index in feed.indices where feed[index].repostOf?.id == post.id {
             feed[index].likeCount = post.likeCount
             feed[index].commentCount = post.commentCount
@@ -349,10 +364,28 @@ final class SocialStore {
         }
     }
 
-    /// The post as the feed currently holds it, for a page that was opened
-    /// from a card and should follow it as counts change.
+    /// Posts opened from somewhere the feed does not hold — a profile, a
+    /// notification, a card that has since paged out.
+    private(set) var openedPosts: [Int: FeedPost] = [:]
+
+    /// The post as it currently stands, so a page opened from a card follows
+    /// it as counts change rather than freezing a copy.
     func post(withID id: Int) -> FeedPost? {
-        feed.first { $0.id == id }
+        feed.first { $0.id == id } ?? openedPosts[id]
+    }
+
+    /// Fetches a post the feed does not have. Does nothing when it does.
+    func loadPost(id: Int) async {
+        guard let repository, post(withID: id) == nil else { return }
+        let generation = connectionGeneration
+        do {
+            let loaded = try await repository.post(withID: id)
+            guard connectionGeneration == generation else { return }
+            openedPosts[id] = loaded
+        } catch {
+            guard connectionGeneration == generation else { return }
+            errorMessage = error.localizedDescription
+        }
     }
 
     func clearError() {

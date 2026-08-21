@@ -208,6 +208,16 @@ actor SocialAPIRepository {
         }
     }
 
+    /// One post, for a page opened from somewhere the feed does not cover.
+    func post(withID id: Int) async throws -> FeedPost {
+        switch try await client.socialPostsRetrieve(path: .init(id: id)) {
+        case .ok(let response):
+            return Self.post(from: try response.body.json)
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
     /// Every thread on a post, oldest first, replies nested inside each.
     func comments(forPost postID: Int) async throws -> [PostComment] {
         var page: Int?
