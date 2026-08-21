@@ -375,6 +375,7 @@ private struct ProfileSettingsView: View {
 
     let profile: SocialProfile
     @State private var editorDestination: ProfileEditorDestination?
+    @State private var showingPersonalization = false
     @State private var showingDeleteConfirmation = false
     @State private var deleteError: String?
 
@@ -440,6 +441,17 @@ private struct ProfileSettingsView: View {
                                 }
                                 .buttonStyle(.plain)
                             }
+                        }
+
+                        settingsSection("PERSONALIZATION", timeOfDay: timeOfDay) {
+                            Button { showingPersonalization = true } label: {
+                                settingsRow(
+                                    "Your Repbase",
+                                    detail: "Goals, training rhythm, experience, and home emphasis",
+                                    symbol: "slider.horizontal.3"
+                                )
+                            }
+                            .buttonStyle(.plain)
                         }
 
                         settingsSection("PRIVACY & PERMISSIONS", timeOfDay: timeOfDay) {
@@ -551,6 +563,11 @@ private struct ProfileSettingsView: View {
                     initialStep: destination.rawValue
                 )
                     .environment(store)
+            }
+        }
+        .fullScreenCover(isPresented: $showingPersonalization) {
+            RepbaseOnboardingView {
+                showingPersonalization = false
             }
         }
         .confirmationDialog(

@@ -63,6 +63,9 @@ final class AuthenticationStore {
     private(set) var token: String?
     private(set) var isWorking = false
     private(set) var errorMessage: String?
+    /// True only for the account created in this app session. Returning users
+    /// should never be forced through first-run questions after every launch.
+    private(set) var needsOnboarding = false
 
     init(
         configuration: APIConfiguration,
@@ -73,6 +76,7 @@ final class AuthenticationStore {
     }
 
     func restoreSession() async {
+        needsOnboarding = false
         phase = .checking
         errorMessage = nil
 
@@ -106,6 +110,7 @@ final class AuthenticationStore {
     }
 
     func login(username: String, password: String) async {
+        needsOnboarding = false
         await authenticate {
             let client = try anonymousClient()
             let output = try await client.authLoginCreate(
@@ -158,6 +163,13 @@ final class AuthenticationStore {
                 )
             }
         }
+        if token != nil {
+            needsOnboarding = true
+        }
+    }
+
+    func completeOnboarding() {
+        needsOnboarding = false
     }
 
     func signOut() async {
@@ -182,6 +194,7 @@ final class AuthenticationStore {
             errorMessage = error.localizedDescription
         }
         token = nil
+        needsOnboarding = false
         phase = .signedOut
     }
 

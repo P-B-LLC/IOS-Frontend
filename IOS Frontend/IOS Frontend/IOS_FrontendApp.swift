@@ -447,7 +447,13 @@ private struct AppRootView: View {
             case .signedOut:
                 AuthenticationView()
             case .signedIn:
-                RepbaseRootView()
+                if authentication.needsOnboarding {
+                    RepbaseOnboardingView {
+                        authentication.completeOnboarding()
+                    }
+                } else {
+                    RepbaseRootView()
+                }
             }
         }
     }
