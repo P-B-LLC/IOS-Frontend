@@ -593,6 +593,20 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /api/v1/sessions/import-health/`.
     /// - Remark: Generated from `#/paths//api/v1/sessions/import-health//post(sessions_import_health_create)`.
     func sessionsImportHealthCreate(_ input: Operations.SessionsImportHealthCreate.Input) async throws -> Operations.SessionsImportHealthCreate.Output
+    /// What this user last lifted, per exercise.
+    ///
+    /// One pass over their own set entries, newest first, keeping the first
+    /// occurrence of each (exercise, set number). The app used to do this by
+    /// reading recent sessions one at a time until it found one that had logged
+    /// something, which fails quietly on a run of sessions started and abandoned
+    /// -- and that run is nine long on real data.
+    ///
+    /// Scoped to the caller throughout. Somebody else's numbers are not a hint,
+    /// they are somebody else's training.
+    ///
+    /// - Remark: HTTP `GET /api/v1/sessions/previous-sets/`.
+    /// - Remark: Generated from `#/paths//api/v1/sessions/previous-sets//get(sessions_previous_sets_list)`.
+    func sessionsPreviousSetsList(_ input: Operations.SessionsPreviousSetsList.Input) async throws -> Operations.SessionsPreviousSetsList.Output
     /// Totals, streaks and the six-week trend.
     ///
     /// Counted here rather than on the device. The device used to page every
@@ -2246,6 +2260,28 @@ extension APIProtocol {
         try await sessionsImportHealthCreate(Operations.SessionsImportHealthCreate.Input(
             headers: headers,
             body: body
+        ))
+    }
+    /// What this user last lifted, per exercise.
+    ///
+    /// One pass over their own set entries, newest first, keeping the first
+    /// occurrence of each (exercise, set number). The app used to do this by
+    /// reading recent sessions one at a time until it found one that had logged
+    /// something, which fails quietly on a run of sessions started and abandoned
+    /// -- and that run is nine long on real data.
+    ///
+    /// Scoped to the caller throughout. Somebody else's numbers are not a hint,
+    /// they are somebody else's training.
+    ///
+    /// - Remark: HTTP `GET /api/v1/sessions/previous-sets/`.
+    /// - Remark: Generated from `#/paths//api/v1/sessions/previous-sets//get(sessions_previous_sets_list)`.
+    public func sessionsPreviousSetsList(
+        query: Operations.SessionsPreviousSetsList.Input.Query = .init(),
+        headers: Operations.SessionsPreviousSetsList.Input.Headers = .init()
+    ) async throws -> Operations.SessionsPreviousSetsList.Output {
+        try await sessionsPreviousSetsList(Operations.SessionsPreviousSetsList.Input(
+            query: query,
+            headers: headers
         ))
     }
     /// Totals, streaks and the six-week trend.
@@ -7097,6 +7133,49 @@ public enum Components {
                 case totalReps = "total_reps"
                 case volumeKg = "volume_kg"
                 case distanceKm = "distance_km"
+            }
+        }
+        /// One set from the last time an exercise was done.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PreviousSet`.
+        public struct PreviousSet: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PreviousSet/exercise`.
+            public var exercise: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PreviousSet/set_number`.
+            public var setNumber: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PreviousSet/weight_kg`.
+            public var weightKg: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PreviousSet/reps`.
+            public var reps: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PreviousSet/performed_at`.
+            public var performedAt: Foundation.Date?
+            /// Creates a new `PreviousSet`.
+            ///
+            /// - Parameters:
+            ///   - exercise:
+            ///   - setNumber:
+            ///   - weightKg:
+            ///   - reps:
+            ///   - performedAt:
+            public init(
+                exercise: Swift.Int,
+                setNumber: Swift.Int,
+                weightKg: Swift.String? = nil,
+                reps: Swift.Int? = nil,
+                performedAt: Foundation.Date? = nil
+            ) {
+                self.exercise = exercise
+                self.setNumber = setNumber
+                self.weightKg = weightKg
+                self.reps = reps
+                self.performedAt = performedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case exercise
+                case setNumber = "set_number"
+                case weightKg = "weight_kg"
+                case reps
+                case performedAt = "performed_at"
             }
         }
         /// A profile photo sent as base64.
@@ -22351,6 +22430,154 @@ public enum Operations {
             /// - Throws: An error if `self` is not `.ok`.
             /// - SeeAlso: `.ok`.
             public var ok: Operations.SessionsImportHealthCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// What this user last lifted, per exercise.
+    ///
+    /// One pass over their own set entries, newest first, keeping the first
+    /// occurrence of each (exercise, set number). The app used to do this by
+    /// reading recent sessions one at a time until it found one that had logged
+    /// something, which fails quietly on a run of sessions started and abandoned
+    /// -- and that run is nine long on real data.
+    ///
+    /// Scoped to the caller throughout. Somebody else's numbers are not a hint,
+    /// they are somebody else's training.
+    ///
+    /// - Remark: HTTP `GET /api/v1/sessions/previous-sets/`.
+    /// - Remark: Generated from `#/paths//api/v1/sessions/previous-sets//get(sessions_previous_sets_list)`.
+    public enum SessionsPreviousSetsList {
+        public static let id: Swift.String = "sessions_previous_sets_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/sessions/previous-sets/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// Ignore this session, which is the one being logged now.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/sessions/previous-sets/GET/query/exclude_session`.
+                public var excludeSession: Swift.Int?
+                /// Only exercises in this workout. Narrows the answer to what the screen is about to draw.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/sessions/previous-sets/GET/query/workout`.
+                public var workout: Swift.Int?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - excludeSession: Ignore this session, which is the one being logged now.
+                ///   - workout: Only exercises in this workout. Narrows the answer to what the screen is about to draw.
+                public init(
+                    excludeSession: Swift.Int? = nil,
+                    workout: Swift.Int? = nil
+                ) {
+                    self.excludeSession = excludeSession
+                    self.workout = workout
+                }
+            }
+            public var query: Operations.SessionsPreviousSetsList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/sessions/previous-sets/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SessionsPreviousSetsList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SessionsPreviousSetsList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SessionsPreviousSetsList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.SessionsPreviousSetsList.Input.Query = .init(),
+                headers: Operations.SessionsPreviousSetsList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/sessions/previous-sets/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/sessions/previous-sets/GET/responses/200/content/application\/json`.
+                    case json([Components.Schemas.PreviousSet])
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: [Components.Schemas.PreviousSet] {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SessionsPreviousSetsList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SessionsPreviousSetsList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/sessions/previous-sets//get(sessions_previous_sets_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SessionsPreviousSetsList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SessionsPreviousSetsList.Output.Ok {
                 get throws {
                     switch self {
                     case let .ok(response):

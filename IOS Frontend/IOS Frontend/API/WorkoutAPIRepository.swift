@@ -1055,6 +1055,41 @@ actor WorkoutAPIRepository {
         return [:]
     }
 
+    /// What this user last lifted, per exercise, in one request.
+    ///
+    /// Replaces walking recent sessions until one of them turns out to have
+    /// logged something. That walk cost a round trip per attempt and gave up
+    /// after five, which on a real account was five short: nine Push Days had
+    /// been started and abandoned, and the session with the numbers in it was
+    /// tenth. The server does it as one pass over the sets themselves, so a
+    /// run of empty sessions is not something the client has to outlast.
+    func previousSets(excludingSessionID: Int?) async throws -> [Int: [PreviousSet]] {
+        let output = try await client.sessionsPreviousSetsList(
+            query: .init(excludeSession: excludingSessionID)
+        )
+        switch output {
+        case .ok(let response):
+            var result: [Int: [PreviousSet]] = [:]
+            for row in try response.body.json {
+                result[row.exercise, default: []].append(
+                    PreviousSet(
+                        setNumber: row.setNumber,
+                        weightKilograms: row.weightKg.flatMap { Decimal(string: $0) },
+                        reps: row.reps
+                    )
+                )
+            }
+            // By set number, so set two's hint is set two's and not whichever
+            // row the database happened to return first.
+            for exercise in result.keys {
+                result[exercise]?.sort { $0.setNumber < $1.setNumber }
+            }
+            return result
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
     /// The sets logged in one session, by exercise. Empty when the session
     /// recorded nothing, which is what makes it worth skipping.
     private func loggedSets(

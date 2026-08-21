@@ -268,7 +268,6 @@ final class WorkoutStore {
         generation: UUID
     ) async {
         let loaded = try? await repository.previousSets(
-            workoutName: session.workoutName,
             excludingSessionID: session.serverID
         )
         guard connectionGeneration == generation else { return }

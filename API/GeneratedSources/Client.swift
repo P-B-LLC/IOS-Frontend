@@ -6876,6 +6876,89 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// What this user last lifted, per exercise.
+    ///
+    /// One pass over their own set entries, newest first, keeping the first
+    /// occurrence of each (exercise, set number). The app used to do this by
+    /// reading recent sessions one at a time until it found one that had logged
+    /// something, which fails quietly on a run of sessions started and abandoned
+    /// -- and that run is nine long on real data.
+    ///
+    /// Scoped to the caller throughout. Somebody else's numbers are not a hint,
+    /// they are somebody else's training.
+    ///
+    /// - Remark: HTTP `GET /api/v1/sessions/previous-sets/`.
+    /// - Remark: Generated from `#/paths//api/v1/sessions/previous-sets//get(sessions_previous_sets_list)`.
+    public func sessionsPreviousSetsList(_ input: Operations.SessionsPreviousSetsList.Input) async throws -> Operations.SessionsPreviousSetsList.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SessionsPreviousSetsList.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/sessions/previous-sets/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .get
+                )
+                suppressMutabilityWarning(&request)
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "exclude_session",
+                    value: input.query.excludeSession
+                )
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "workout",
+                    value: input.query.workout
+                )
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SessionsPreviousSetsList.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            [Components.Schemas.PreviousSet].self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
     /// Totals, streaks and the six-week trend.
     ///
     /// Counted here rather than on the device. The device used to page every

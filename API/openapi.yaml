@@ -2995,6 +2995,46 @@ paths:
               schema:
                 $ref: '#/components/schemas/HealthImportResult'
           description: ''
+  /api/v1/sessions/previous-sets/:
+    get:
+      operationId: sessions_previous_sets_list
+      description: |-
+        What this user last lifted, per exercise.
+
+        One pass over their own set entries, newest first, keeping the first
+        occurrence of each (exercise, set number). The app used to do this by
+        reading recent sessions one at a time until it found one that had logged
+        something, which fails quietly on a run of sessions started and abandoned
+        -- and that run is nine long on real data.
+
+        Scoped to the caller throughout. Somebody else's numbers are not a hint,
+        they are somebody else's training.
+      parameters:
+      - in: query
+        name: exclude_session
+        schema:
+          type: integer
+        description: Ignore this session, which is the one being logged now.
+      - in: query
+        name: workout
+        schema:
+          type: integer
+        description: Only exercises in this workout. Narrows the answer to what the
+          screen is about to draw.
+      tags:
+      - sessions
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PreviousSet'
+          description: ''
   /api/v1/sessions/training-stats/:
     get:
       operationId: sessions_training_stats_retrieve
@@ -6843,6 +6883,37 @@ components:
       - top_set_weight_kg
       - total_reps
       - volume_kg
+    PreviousSet:
+      type: object
+      description: One set from the last time an exercise was done.
+      properties:
+        exercise:
+          type: integer
+          readOnly: true
+        set_number:
+          type: integer
+          readOnly: true
+        weight_kg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        reps:
+          type: integer
+          readOnly: true
+          nullable: true
+        performed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - exercise
+      - performed_at
+      - reps
+      - set_number
+      - weight_kg
     ProfilePhotoUploadRequest:
       type: object
       description: |-
