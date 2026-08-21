@@ -2,8 +2,7 @@
 //  SavedMealsView.swift
 //  IOS Frontend
 //
-//  Local reusable recipe library. Nutrition resources are not yet represented
-//  in the supplied OAS, so these drafts intentionally do not call the API.
+//  Backend-backed reusable recipe library.
 //
 
 import SwiftUI
@@ -47,7 +46,7 @@ struct SavedMealsView: View {
                         }
                         }
                         .overlay(alignment: .top) { Divider() }
-                        Text("Saved meals are local drafts until nutrition endpoints are added to the API.")
+                        Text("Saved meals sync with your Repbase account and are ready on every signed-in device.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -211,8 +210,8 @@ private struct SavedMealEditorView: View {
 
             Section {
                 Label(
-                    "Saved recipes stay on this device session until the backend documents nutrition endpoints.",
-                    systemImage: "icloud.slash"
+                    "Saved recipes sync with your Repbase account.",
+                    systemImage: "checkmark.icloud"
                 )
                 .font(.caption)
                 .foregroundStyle(.secondary)

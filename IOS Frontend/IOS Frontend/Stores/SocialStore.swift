@@ -25,6 +25,10 @@ final class SocialStore {
     private(set) var errorMessage: String?
     /// Set when a post goes out, so a screen can say so and move on.
     private(set) var lastPosted: FeedPost?
+    private(set) var people: [PostAuthor] = []
+    private(set) var followersByUser: [Int: [PostAuthor]] = [:]
+    private(set) var followingByUser: [Int: [PostAuthor]] = [:]
+    private(set) var changingFollowFor: Set<Int> = []
 
     var isConnected: Bool { repository != nil }
 
@@ -69,6 +73,10 @@ final class SocialStore {
         isPosting = false
         errorMessage = nil
         lastPosted = nil
+        people = []
+        followersByUser = [:]
+        followingByUser = [:]
+        changingFollowFor = []
         // One account's threads must never be shown to the next.
         comments = [:]
         openedPosts = [:]
@@ -126,6 +134,49 @@ final class SocialStore {
             hasReachedEnd = page.nextCursor == nil
         } catch {
             guard connectionGeneration == generation else { return }
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func loadPeople() async {
+        guard let repository else { return }
+        let generation = connectionGeneration
+        do {
+            let loaded = try await repository.people()
+            guard connectionGeneration == generation else { return }
+            people = loaded
+        } catch {
+            guard connectionGeneration == generation else { return }
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func loadRelationships(for userID: Int) async {
+        guard let repository else { return }
+        let generation = connectionGeneration
+        do {
+            async let followers = repository.followers(of: userID)
+            async let following = repository.following(of: userID)
+            let values = try await (followers, following)
+            guard connectionGeneration == generation else { return }
+            followersByUser[userID] = values.0
+            followingByUser[userID] = values.1
+        } catch {
+            guard connectionGeneration == generation else { return }
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func setFollowing(_ follows: Bool, user: PostAuthor, viewerID: Int?) async {
+        guard let repository, !changingFollowFor.contains(user.id) else { return }
+        changingFollowFor.insert(user.id)
+        defer { changingFollowFor.remove(user.id) }
+        do {
+            if follows { try await repository.follow(user.id) }
+            else { try await repository.unfollow(user.id) }
+            applyToAuthor(user.id) { $0.viewerFollowsAuthor = follows }
+            if let viewerID { await loadRelationships(for: viewerID) }
+        } catch {
             errorMessage = error.localizedDescription
         }
     }
@@ -428,6 +479,24 @@ final class SocialStore {
             guard let index = authorPosts[author]?.firstIndex(where: { $0.id == postID })
             else { continue }
             change(&authorPosts[author]![index])
+        }
+    }
+
+    private func applyToAuthor(_ authorID: Int, _ change: (inout FeedPost) -> Void) {
+        for index in feed.indices where feed[index].author.id == authorID {
+            change(&feed[index])
+        }
+        for id in openedPosts.keys where openedPosts[id]?.author.id == authorID {
+            guard var post = openedPosts[id] else { continue }
+            change(&post)
+            openedPosts[id] = post
+        }
+        for author in authorPosts.keys {
+            guard var posts = authorPosts[author] else { continue }
+            for index in posts.indices where posts[index].author.id == authorID {
+                change(&posts[index])
+            }
+            authorPosts[author] = posts
         }
     }
 

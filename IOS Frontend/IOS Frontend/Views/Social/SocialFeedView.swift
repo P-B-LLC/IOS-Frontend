@@ -20,6 +20,7 @@ struct SocialFeedView: View {
     }
 
     @Environment(SocialStore.self) private var store
+    @Environment(SocialProfileStore.self) private var profileStore
 
     /// Opens straight onto a post's thread. Only set by the preview launch
     /// mode: `simctl` cannot tap, so pushing on arrival is the only way to
@@ -85,6 +86,8 @@ struct SocialFeedView: View {
                     .padding(.horizontal, 16)
                     .frame(height: 50)
                     .repbaseDepthSurface(cornerRadius: 18)
+
+                    peopleSection(timeOfDay: timeOfDay)
                 }
 
                 if let message = store.errorMessage {
@@ -151,6 +154,13 @@ struct SocialFeedView: View {
         .sheet(item: $commenting) { target in
             PostCommentsSheet(postID: target.id, timeOfDay: timeOfDay)
         }
+        .task(id: feedMode) {
+            guard feedMode == .discover else { return }
+            await store.loadPeople()
+            if let viewerID = profileStore.viewerID {
+                await store.loadRelationships(for: viewerID)
+            }
+        }
     }
 
     private func header(timeOfDay: HomeTimeOfDay) -> some View {
@@ -183,6 +193,78 @@ struct SocialFeedView: View {
         .padding(3)
         .repbaseInsetSurface(cornerRadius: 16)
         .tint(RepbaseDesign.ink)
+    }
+
+    private func peopleSection(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text("PEOPLE")
+                    .font(.caption2.weight(.bold))
+                    .tracking(1.2)
+                    .foregroundStyle(timeOfDay.accent)
+                Spacer()
+                Text("\(filteredPeople.count) found")
+                    .font(.caption2)
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+            }
+            .padding(.bottom, 8)
+
+            ForEach(Array(filteredPeople.prefix(8).enumerated()), id: \.element.id) { index, person in
+                HStack(spacing: 12) {
+                    Circle()
+                        .fill(timeOfDay.accent.opacity(0.12))
+                        .frame(width: 38, height: 38)
+                        .overlay {
+                            Text(person.initials)
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(timeOfDay.accent)
+                        }
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(person.displayName).font(.subheadline.weight(.semibold))
+                        Text("@\(person.username)")
+                            .font(.caption)
+                            .foregroundStyle(timeOfDay.canvasSecondaryText)
+                    }
+                    Spacer()
+                    if person.id != profileStore.viewerID {
+                        Button(isFollowing(person) ? "Following" : "Follow") {
+                            Task {
+                                await store.setFollowing(
+                                    !isFollowing(person),
+                                    user: person,
+                                    viewerID: profileStore.viewerID
+                                )
+                            }
+                        }
+                        .font(.caption.weight(.bold))
+                        .buttonStyle(.bordered)
+                        .buttonBorderShape(.capsule)
+                        .disabled(store.changingFollowFor.contains(person.id))
+                    }
+                }
+                .padding(.vertical, 10)
+                if index < min(filteredPeople.count, 8) - 1 { Divider() }
+            }
+        }
+        .padding(.vertical, 12)
+        .overlay(alignment: .top) { Divider() }
+        .overlay(alignment: .bottom) { Divider() }
+    }
+
+    private var filteredPeople: [PostAuthor] {
+        let viewerID = profileStore.viewerID
+        let available = store.people.filter { $0.id != viewerID }
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return available }
+        return available.filter {
+            $0.displayName.localizedCaseInsensitiveContains(query)
+                || $0.username.localizedCaseInsensitiveContains(query)
+        }
+    }
+
+    private func isFollowing(_ person: PostAuthor) -> Bool {
+        guard let viewerID = profileStore.viewerID else { return false }
+        return store.followingByUser[viewerID]?.contains(where: { $0.id == person.id }) == true
     }
 
     private var displayedPosts: [FeedPost] {

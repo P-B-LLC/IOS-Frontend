@@ -16,6 +16,10 @@ struct FoodPickerView: View {
     let mealID: FoodMeal.ID
 
     @State private var searchText = ""
+    @State private var databaseResults: [FoodEntry] = []
+    @State private var isSearchingDatabase = false
+    @State private var databaseError: String?
+    private let foodDatabase = FoodDatabaseRepository()
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
@@ -60,6 +64,7 @@ struct FoodPickerView: View {
             .scrollIndicators(.hidden)
             .toolbar(.hidden, for: .navigationBar)
             .homeTimeScreen(timeOfDay)
+            .task(id: searchText) { await searchDatabase() }
         }
     }
 
@@ -78,30 +83,46 @@ struct FoodPickerView: View {
     }
 
     private func databaseEditorialSection(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: "globe")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(timeOfDay.canvasSecondaryText)
-                .frame(width: 40, height: 40)
-                .background(RepbasePalette.oatmeal, in: RoundedRectangle(cornerRadius: 12))
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Online food database").font(.subheadline.weight(.semibold))
-                Text("Connect search to expand results")
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("FOOD DATABASE")
+                    .font(.caption2.weight(.bold))
+                    .tracking(1.2)
+                    .foregroundStyle(timeOfDay.accent)
+                Spacer()
+                if isSearchingDatabase { ProgressView().controlSize(.mini) }
+                else if searchText.trimmed.count >= 2 {
+                    Text("OPEN FOOD FACTS")
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                }
+            }
+
+            if let databaseError {
+                Text(databaseError)
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            } else if searchText.trimmed.count < 2 {
+                Text("Type at least two letters to search packaged foods worldwide.")
                     .font(.caption)
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
+            } else if !isSearchingDatabase && databaseResults.isEmpty {
+                Text("No database foods match this search.")
+                    .font(.caption)
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(databaseResults.enumerated()), id: \.element.id) { index, food in
+                        Button { add(food) } label: { RecentFoodRow(food: food).padding(.vertical, 12) }
+                            .buttonStyle(.plain)
+                        if index < databaseResults.count - 1 { Divider() }
+                    }
+                }
             }
-            Spacer(minLength: 4)
-            Text("OFFLINE")
-                .font(.caption2.weight(.bold))
-                .foregroundStyle(timeOfDay.canvasSecondaryText)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 7)
-                .background(RepbasePalette.oatmeal, in: Capsule())
         }
-        .padding(12)
-        .repbaseDepthSurface(cornerRadius: 20)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Online food database, offline")
+        .padding(.vertical, 14)
+        .overlay(alignment: .top) { Divider() }
+        .overlay(alignment: .bottom) { Divider() }
     }
 
     private func recentEditorialSection(timeOfDay: HomeTimeOfDay) -> some View {
@@ -259,6 +280,36 @@ struct FoodPickerView: View {
         )
         dismiss()
     }
+
+    private func searchDatabase() async {
+        let query = searchText.trimmed
+        guard query.count >= 2 else {
+            databaseResults = []
+            databaseError = nil
+            isSearchingDatabase = false
+            return
+        }
+        isSearchingDatabase = true
+        databaseError = nil
+        try? await Task.sleep(for: .milliseconds(350))
+        guard !Task.isCancelled else { return }
+        do {
+            let results = try await foodDatabase.search(query)
+            guard !Task.isCancelled, query == searchText.trimmed else { return }
+            databaseResults = results
+        } catch is CancellationError {
+            return
+        } catch {
+            guard !Task.isCancelled else { return }
+            databaseResults = []
+            databaseError = "The food database could not be reached. You can still reuse or enter a food manually."
+        }
+        isSearchingDatabase = false
+    }
+}
+
+private extension String {
+    var trimmed: String { trimmingCharacters(in: .whitespacesAndNewlines) }
 }
 
 private struct RecentFoodRow: View {

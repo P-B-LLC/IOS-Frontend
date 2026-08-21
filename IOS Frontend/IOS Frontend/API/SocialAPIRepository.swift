@@ -314,6 +314,56 @@ actor SocialAPIRepository {
 
     // MARK: - Following
 
+    func people() async throws -> [PostAuthor] {
+        try await pagedPeople { page in
+            switch try await self.client.usersList(query: .init(page: page)) {
+            case .ok(let response): return try response.body.json
+            case .undocumented(let statusCode, _):
+                throw APIServiceError.undocumentedStatus(statusCode)
+            }
+        }
+    }
+
+    func followers(of userID: Int) async throws -> [PostAuthor] {
+        try await pagedPeople { page in
+            switch try await self.client.usersFollowersList(
+                path: .init(id: userID),
+                query: .init(page: page)
+            ) {
+            case .ok(let response): return try response.body.json
+            case .undocumented(let statusCode, _):
+                throw APIServiceError.undocumentedStatus(statusCode)
+            }
+        }
+    }
+
+    func following(of userID: Int) async throws -> [PostAuthor] {
+        try await pagedPeople { page in
+            switch try await self.client.usersFollowingList(
+                path: .init(id: userID),
+                query: .init(page: page)
+            ) {
+            case .ok(let response): return try response.body.json
+            case .undocumented(let statusCode, _):
+                throw APIServiceError.undocumentedStatus(statusCode)
+            }
+        }
+    }
+
+    private func pagedPeople(
+        request: (Int?) async throws -> Components.Schemas.PaginatedPublicRepbaseUserList
+    ) async throws -> [PostAuthor] {
+        var page: Int?
+        var visited: Set<Int> = []
+        var values: [PostAuthor] = []
+        repeat {
+            let body = try await request(page)
+            values.append(contentsOf: body.results.map(Self.author(from:)))
+            page = try nextPage(body.next, visited: &visited)
+        } while page != nil
+        return values
+    }
+
     func follow(_ userID: Int) async throws {
         let output = try await client.usersFollowCreate(path: .init(id: userID))
         switch output {

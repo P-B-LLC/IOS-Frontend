@@ -455,3 +455,98 @@ actor FoodAPIRepository {
         return url.scheme?.lowercased() == "https" ? 443 : 80
     }
 }
+
+// MARK: - Public food catalogue
+
+/// Read-only Open Food Facts search. Repbase stores the selected nutrition in
+/// its own food-entry endpoint, so a third-party product is never a live
+/// dependency after it has been logged.
+actor FoodDatabaseRepository {
+    private let session: URLSession
+
+    init(session: URLSession = .shared) {
+        self.session = session
+    }
+
+    func search(_ query: String) async throws -> [FoodEntry] {
+        let term = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard term.count >= 2 else { return [] }
+
+        var components = URLComponents(string: "https://world.openfoodfacts.org/cgi/search.pl")!
+        components.queryItems = [
+            URLQueryItem(name: "search_terms", value: term),
+            URLQueryItem(name: "search_simple", value: "1"),
+            URLQueryItem(name: "action", value: "process"),
+            URLQueryItem(name: "json", value: "1"),
+            URLQueryItem(name: "page_size", value: "20"),
+            URLQueryItem(name: "fields", value: "code,product_name,brands,nutriments")
+        ]
+        guard let url = components.url else { throw APIServiceError.malformedResponse }
+
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 15
+        request.setValue("Repbase-iOS/1.0", forHTTPHeaderField: "User-Agent")
+        let (data, response) = try await session.data(for: request)
+        guard let http = response as? HTTPURLResponse, 200..<300 ~= http.statusCode else {
+            throw APIServiceError.malformedResponse
+        }
+
+        let result = try JSONDecoder().decode(OpenFoodFactsSearch.self, from: data)
+        var seen: Set<String> = []
+        return result.products.compactMap { product in
+            let name = product.productName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            guard !name.isEmpty,
+                  let calories = product.nutriments?.calories,
+                  calories >= 0 else { return nil }
+            let key = "\(name.lowercased())|\(product.brands?.lowercased() ?? "")"
+            guard seen.insert(key).inserted else { return nil }
+            let displayName = [name, product.brands]
+                .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
+                .joined(separator: " · ") + " (100 g)"
+            return FoodEntry(
+                name: displayName,
+                servings: 1,
+                nutritionPerServing: NutritionAmount(
+                    calories: Decimal(calories),
+                    proteinGrams: Decimal(product.nutriments?.proteins100g ?? 0),
+                    carbohydrateGrams: Decimal(product.nutriments?.carbohydrates100g ?? 0),
+                    fatGrams: Decimal(product.nutriments?.fat100g ?? 0)
+                )
+            )
+        }
+    }
+}
+
+private struct OpenFoodFactsSearch: Decodable {
+    let products: [OpenFoodFactsProduct]
+}
+
+private struct OpenFoodFactsProduct: Decodable {
+    let productName: String?
+    let brands: String?
+    let nutriments: OpenFoodFactsNutriments?
+
+    enum CodingKeys: String, CodingKey {
+        case productName = "product_name"
+        case brands, nutriments
+    }
+}
+
+private struct OpenFoodFactsNutriments: Decodable {
+    let energyKcal100g: Double?
+    let energyKcal: Double?
+    let proteins100g: Double?
+    let carbohydrates100g: Double?
+    let fat100g: Double?
+
+    var calories: Double? { energyKcal100g ?? energyKcal }
+
+    enum CodingKeys: String, CodingKey {
+        case energyKcal100g = "energy-kcal_100g"
+        case energyKcal = "energy-kcal"
+        case proteins100g = "proteins_100g"
+        case carbohydrates100g = "carbohydrates_100g"
+        case fat100g = "fat_100g"
+    }
+}

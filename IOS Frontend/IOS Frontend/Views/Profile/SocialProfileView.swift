@@ -112,7 +112,9 @@ struct SocialProfileView: View {
         // nothing and never again.
         .task(id: "\(store.viewerID ?? 0)-\(social.isConnected)") {
             guard let viewerID = store.viewerID, social.isConnected else { return }
-            await social.loadPosts(byAuthor: viewerID)
+            async let posts: Void = social.loadPosts(byAuthor: viewerID)
+            async let relationships: Void = social.loadRelationships(for: viewerID)
+            _ = await (posts, relationships)
         }
     }
 
@@ -156,12 +158,9 @@ struct SocialProfileView: View {
                 ProfileAvatarView(profile: profile, size: 88, timeOfDay: timeOfDay)
 
                 HStack(spacing: 18) {
-                    // The real count, from the posts this page has loaded.
-                    // Followers and following are still a placeholder: the
-                    // endpoints exist but nothing here reads them yet.
                     profileStat("\(myPostCount)", label: "Posts")
-                    profileStat("0", label: "Followers")
-                    profileStat("0", label: "Following")
+                    profileStat("\(followerCount)", label: "Followers")
+                    profileStat("\(followingCount)", label: "Following")
                 }
                 .frame(maxWidth: .infinity)
             }
@@ -214,6 +213,14 @@ struct SocialProfileView: View {
 
     private var myPostCount: Int {
         store.viewerID.map { social.posts(byAuthor: $0).count } ?? 0
+    }
+
+    private var followerCount: Int {
+        store.viewerID.flatMap { social.followersByUser[$0]?.count } ?? 0
+    }
+
+    private var followingCount: Int {
+        store.viewerID.flatMap { social.followingByUser[$0]?.count } ?? 0
     }
 
     private var disciplineSummary: String {
