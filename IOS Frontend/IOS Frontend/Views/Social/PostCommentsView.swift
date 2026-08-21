@@ -70,6 +70,18 @@ struct PostCommentsView: View {
         // the box was there and the keyboard was not.
         .task { if focusRequest > 0 { isWriting = true } }
         .onChange(of: focusRequest) { isWriting = true }
+#if DEBUG
+        // Types a comment and sends it. simctl cannot type, so this is the
+        // only way to see the round trip land and the keyboard go away.
+        .task {
+            guard clearsBottomBar,
+                  let text = ProcessInfo.processInfo
+                      .environment["REPBASE_SOCIAL_SEND"] else { return }
+            draft.body = text
+            try? await Task.sleep(for: .seconds(2))
+            send()
+        }
+#endif
         .confirmationDialog(
             "Delete this comment?",
             isPresented: Binding(
@@ -208,10 +220,16 @@ struct PostCommentsView: View {
         // Cleared before the round trip so the box is ready for the next
         // thought; a failure puts the words back rather than losing them.
         draft.clear()
+        // Away it goes: the comment is written, and the thread underneath is
+        // what the reader wants to see next, not half a screen of keyboard.
+        isWriting = false
         Task {
             await store.addComment(sending, toPost: postID)
             if store.errorMessage != nil, draft.body.isEmpty {
+                // Nothing was sent, so the words come back and so does the
+                // keyboard — the box is where the reader has to act next.
                 draft = sending
+                isWriting = true
             }
         }
     }
