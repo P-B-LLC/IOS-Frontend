@@ -400,17 +400,27 @@ struct PostComposerView: View {
                     matching: .images,
                     photoLibrary: .shared()
                 ) {
-                    Label("Add a photo", systemImage: "photo.badge.plus")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(timeOfDay.accent)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 13)
-                        .background(
-                            timeOfDay.accent.opacity(0.09),
-                            in: RoundedRectangle(
-                                cornerRadius: RepbaseDesign.controlRadius
-                            )
-                        )
+                    HStack(spacing: 12) {
+                        Image(systemName: "photo.on.rectangle.angled")
+                            .font(.system(size: 17, weight: .medium))
+                            .foregroundStyle(timeOfDay.accent)
+                            .frame(width: 24)
+
+                        Text("Add a photo")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(timeOfDay.canvasPrimaryText)
+
+                        Spacer()
+
+                        Image(systemName: "plus")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(timeOfDay.canvasSecondaryText)
+                    }
+                    .padding(.vertical, 13)
+                    .contentShape(Rectangle())
+                    .overlay(alignment: .bottom) {
+                        Divider()
+                    }
                 }
             }
 
@@ -495,22 +505,22 @@ struct PostComposerView: View {
         VStack(alignment: .leading, spacing: 11) {
             EditorialSectionTitle(title: "Caption", detail: "Optional.")
 
-            EditorialRuleGroup {
-                EditorialRuleRow(showsDivider: false) {
-                    TextField(
-                        "Say something about it",
-                        text: $caption,
-                        axis: .vertical
-                    )
-                    .lineLimit(2...6)
-                    .font(.subheadline)
-                    .foregroundStyle(timeOfDay.canvasPrimaryText)
-                    .textInputAutocapitalization(.sentences)
-                    .onChange(of: caption) { _, value in
-                        if value.count > Self.captionLimit {
-                            caption = String(value.prefix(Self.captionLimit))
-                        }
-                    }
+            TextField(
+                "Say something about it",
+                text: $caption,
+                axis: .vertical
+            )
+            .lineLimit(2...6)
+            .font(.body)
+            .foregroundStyle(timeOfDay.canvasPrimaryText)
+            .textInputAutocapitalization(.sentences)
+            .padding(.vertical, 12)
+            .overlay(alignment: .bottom) {
+                Divider()
+            }
+            .onChange(of: caption) { _, value in
+                if value.count > Self.captionLimit {
+                    caption = String(value.prefix(Self.captionLimit))
                 }
             }
 
@@ -561,7 +571,7 @@ struct PostComposerView: View {
         VStack(alignment: .leading, spacing: 13) {
             EditorialSectionTitle(title: "Who can see it")
 
-            EditorialRuleGroup {
+            VStack(spacing: 0) {
                 ForEach(PostVisibility.allCases) { level in
                     visibilityRow(
                         level,
@@ -582,7 +592,7 @@ struct PostComposerView: View {
         return Button {
             visibility = level
         } label: {
-            EditorialRuleRow(showsDivider: !isLast) {
+            HStack(spacing: 12) {
                 Image(systemName: level.symbol)
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(timeOfDay.accent)
@@ -608,6 +618,12 @@ struct PostComposerView: View {
                             ? timeOfDay.accent
                             : timeOfDay.canvasSecondaryText.opacity(0.38)
                     )
+            }
+            .padding(.vertical, 12)
+            .overlay(alignment: .bottom) {
+                if !isLast {
+                    Divider()
+                }
             }
             .contentShape(Rectangle())
         }
