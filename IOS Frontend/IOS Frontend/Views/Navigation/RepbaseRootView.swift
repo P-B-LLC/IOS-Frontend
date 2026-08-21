@@ -120,7 +120,12 @@ struct RepbaseBottomNavigation: View {
         }
         .padding(.horizontal, 6)
         .padding(.vertical, 4)
-        .repbaseDepthSurface(cornerRadius: 17)
+        .background(RepbaseDesign.ink, in: RoundedRectangle(cornerRadius: 17, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 17, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.08), lineWidth: 0.75)
+        }
+        .shadow(color: Color.black.opacity(0.18), radius: 10, x: 0, y: 5)
         .animation(.easeOut(duration: 0.18), value: tab)
     }
 
@@ -133,7 +138,7 @@ struct RepbaseBottomNavigation: View {
             Image(item.iconAsset)
                 .resizable()
                 .scaledToFit()
-                .foregroundStyle(isSelected ? activeColor : timeOfDay.secondaryText)
+                .foregroundStyle(isSelected ? activeColor : RepbasePalette.oatmeal.opacity(0.52))
                 .frame(width: 24, height: 24)
 
             // Kept, and now doing more work: with the labels gone this and the
@@ -152,6 +157,6 @@ struct RepbaseBottomNavigation: View {
     }
 
     private var activeColor: Color {
-        timeOfDay.usesDarkAppearance ? .white : RepbaseDesign.ink
+        RepbasePalette.paper
     }
 }

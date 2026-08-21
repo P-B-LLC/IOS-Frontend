@@ -47,8 +47,14 @@ struct PlannerView: View {
 
                     addButtons(timeOfDay: timeOfDay)
                     daySection(timeOfDay: timeOfDay)
+                        .padding(.leading, 12)
+                        .repbaseFeatureRail(RepbaseDesign.success, inset: 3)
                     pastDueSection(timeOfDay: timeOfDay)
+                        .padding(.leading, 12)
+                        .repbaseFeatureRail(Color(hex: 0xD8557A), inset: 3)
                     upcomingSection(timeOfDay: timeOfDay)
+                        .padding(.leading, 12)
+                        .repbaseFeatureRail(timeOfDay.accent, inset: 3)
 
                     if let error = store.persistenceError {
                         errorCard(error, timeOfDay: timeOfDay)

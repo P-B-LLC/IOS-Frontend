@@ -190,7 +190,7 @@ private struct RepbaseCardModifier: ViewModifier {
                             endPoint: .bottomTrailing
                         )
                     )
-                    .shadow(color: phase.shadow, radius: phase == .focus ? 14 : 10, x: 0, y: 6)
+                    .shadow(color: phase.shadow.opacity(phase == .focus ? 0.72 : 0.42), radius: phase == .focus ? 12 : 6, x: 0, y: 4)
                     .shadow(
                         color: phase.usesDarkAppearance
                             ? Color.white.opacity(0.035)
@@ -204,7 +204,7 @@ private struct RepbaseCardModifier: ViewModifier {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .strokeBorder(
                         phase == .focus ? Color.white.opacity(0.10) : RepbasePalette.espresso.opacity(0.09),
-                        lineWidth: 1
+                        lineWidth: 0.75
                     )
             }
     }

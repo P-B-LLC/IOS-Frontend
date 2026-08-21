@@ -206,6 +206,17 @@ private struct HomeDashboardSection<Destination: View, Content: View>: View {
             .buttonStyle(.plain)
             content
         }
+        .padding(.leading, 12)
+        .repbaseFeatureRail(sectionColor, inset: 2)
+    }
+
+    private var sectionColor: Color {
+        switch title {
+        case "Training": RepbaseDesign.accent
+        case "Schedule": RepbaseDesign.success
+        case "Nutrition": RepbaseDesign.warning
+        default: timeOfDay.accent
+        }
     }
 }
 

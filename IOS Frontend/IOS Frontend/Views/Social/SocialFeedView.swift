@@ -33,6 +33,8 @@ struct SocialFeedView: View {
                 } else {
                     ForEach(store.feed) { post in
                         PostCard(post: post, timeOfDay: timeOfDay)
+                            .padding(.leading, 12)
+                            .repbaseFeatureRail(postRailColor(post, timeOfDay: timeOfDay), inset: 10)
                             .task {
                                 // The last card asks for the next page as it
                                 // comes into view, so the feed keeps going
@@ -59,6 +61,13 @@ struct SocialFeedView: View {
         .sheet(isPresented: $isComposing) {
             PostComposerView()
         }
+    }
+
+    private func postRailColor(_ post: FeedPost, timeOfDay: HomeTimeOfDay) -> Color {
+        if post.workout != nil { return RepbaseDesign.accent }
+        if post.meal != nil { return RepbaseDesign.warning }
+        if post.planner != nil { return RepbaseDesign.success }
+        return timeOfDay.accent
     }
 
     private func header(timeOfDay: HomeTimeOfDay) -> some View {
