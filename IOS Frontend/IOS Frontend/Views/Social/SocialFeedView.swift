@@ -32,6 +32,16 @@ struct SocialFeedView: View {
             PostDetailView(postID: id)
         }
         .task {
+#if DEBUG
+            // Opens a real post inside the real signed-in app, tab bar and
+            // all. The preview harness renders this page on a bare stack,
+            // which is not the layout anyone actually gets.
+            if let raw = ProcessInfo.processInfo.environment["REPBASE_SOCIAL_OPEN"],
+               let id = Int(raw) {
+                opened = id
+                return
+            }
+#endif
             if let initiallyOpened { opened = initiallyOpened }
         }
     }

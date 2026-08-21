@@ -60,6 +60,15 @@ struct RepbaseRootView: View {
     @State private var tab: RepbaseTab
 
     init(initialTab: RepbaseTab = .home) {
+#if DEBUG
+        // Lands on a named tab, so a screen several taps in can be looked at
+        // in the real app rather than only in a preview harness.
+        if let raw = ProcessInfo.processInfo.environment["REPBASE_TAB"],
+           let named = RepbaseTab(rawValue: raw) {
+            _tab = State(initialValue: named)
+            return
+        }
+#endif
         _tab = State(initialValue: initialTab)
     }
 

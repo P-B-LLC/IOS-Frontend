@@ -15,7 +15,12 @@ struct PostDetailView: View {
     let postID: Int
 
     @Environment(SocialStore.self) private var store
-    @Environment(\.homeTimeOfDay) private var timeOfDay
+
+    /// Worked out here rather than read from the environment. A pushed screen
+    /// does not inherit what the feed set inside its own body, so this page
+    /// came up in the day palette at eleven at night with the tab bar under
+    /// it still dark.
+    @State private var timeOfDay = HomeTimeOfDay(date: Date())
 
     @State private var draft = CommentDraft()
     @State private var confirmingDelete: PostComment?
@@ -190,8 +195,16 @@ struct PostDetailView: View {
             }
             .padding(.horizontal, RepbaseDesign.pageInset)
             .padding(.vertical, 10)
+            // Lifted clear of the floating tab bar, which is drawn over this
+            // view rather than inset out of it — the composer was sitting
+            // exactly underneath it and could not be tapped or even seen.
+            //
+            // Dropped to nothing once the keyboard is up: the keyboard covers
+            // the bar, so the gap would just be a gap.
+            .padding(.bottom, isWriting ? 0 : RepbaseDesign.bottomBarClearance - 10)
         }
         .background(.thinMaterial)
+        .animation(.easeOut(duration: 0.2), value: isWriting)
     }
 
     private func begin(replyingTo comment: PostComment) {
