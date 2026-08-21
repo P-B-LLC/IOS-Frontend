@@ -149,9 +149,7 @@ struct DayWorkoutView: View {
             if let completedSession {
                 recoveryWorkspace(completedSession)
             } else {
-                if activeSession == nil {
-                    dayHeader
-                }
+                dayHeader
 
                 if let persistenceError = store.persistenceError {
                     persistenceErrorCard(persistenceError)
@@ -169,45 +167,91 @@ struct DayWorkoutView: View {
     }
 
     private var dayHeader: some View {
-        HStack(spacing: 14) {
-            VStack(spacing: 1) {
-                Text(day.shortName.uppercased())
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Text("\(day.shortName.uppercased()) · \(store.dateLabel(for: day).uppercased())")
                     .font(.caption.weight(.bold))
-                if let workout {
-                    WorkoutInkArtwork(type: workout.type, size: 31, color: .white)
-                } else {
-                    Image(systemName: headerIcon)
-                        .font(.title2)
-                }
-            }
-            .foregroundStyle(Color.white)
-            .frame(width: 58, height: 58)
-            .background(headerColor, in: RoundedRectangle(cornerRadius: 17))
+                    .foregroundStyle(headerColor)
 
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 7) {
-                    Text(headerEyebrow)
-                        .font(.caption.weight(.bold))
+                if store.today == day {
+                    Text("TODAY")
+                        .font(.caption2.weight(.bold))
                         .foregroundStyle(headerColor)
-                    if store.today == day {
-                        Text("TODAY")
-                            .font(.caption2.weight(.bold))
-                            .foregroundStyle(WorkoutVisualPhase.prepare.accent)
-                            .padding(.horizontal, 7)
-                            .padding(.vertical, 3)
-                            .background(WorkoutVisualPhase.prepare.accent.opacity(0.12), in: Capsule())
-                    }
                 }
-
-                Text(workout?.name ?? "No workout assigned")
-                    .font(.title3.weight(.bold))
-                Text(headerDescription)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
             }
+
+            HStack(alignment: .top, spacing: 12) {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(headerTitle)
+                        .font(.title2.weight(.bold))
+                        .foregroundStyle(visualPhase.primaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Text(headerDescription)
+                        .font(.caption)
+                        .foregroundStyle(visualPhase.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                headerAction
+            }
+            .padding(.leading, 14)
+            .padding(.top, 4)
+            .padding(.bottom, 18)
+            .overlay(alignment: .leading) {
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(headerColor)
+                    .frame(width: 3)
+            }
+
+            Divider()
+                .overlay(visualPhase.secondaryText.opacity(0.22))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .workoutCard()
+    }
+
+    @ViewBuilder
+    private var headerAction: some View {
+        if activeSession != nil {
+            Button {
+                isConfirmingEmptyFinish = false
+            } label: {
+                headerActionLabel("Resume")
+            }
+            .buttonStyle(.plain)
+        } else if let workout {
+            Button {
+                visibleWorkoutID = workout.id
+            } label: {
+                headerActionLabel("View")
+            }
+            .buttonStyle(.plain)
+        } else {
+            Button {
+                editor = .build(setupDraft)
+            } label: {
+                headerActionLabel("Plan")
+            }
+            .buttonStyle(.plain)
+            .disabled(!store.isEditingEnabled)
+        }
+    }
+
+    private func headerActionLabel(_ title: String) -> some View {
+        HStack(spacing: 5) {
+            Text(title)
+            Image(systemName: "arrow.up.right")
+                .font(.caption2.weight(.bold))
+        }
+        .font(.caption.weight(.semibold))
+        .foregroundStyle(visualPhase.surfaceStart)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(
+            visualPhase.primaryText,
+            in: RoundedRectangle(cornerRadius: 13, style: .continuous)
+        )
     }
 
     private var emptyDaySetup: some View {
@@ -1606,25 +1650,15 @@ struct DayWorkoutView: View {
         .shadow(color: phase.shadow.opacity(0.32), radius: 8, x: 0, y: 4)
     }
 
-    private var headerIcon: String {
-        if activeSession != nil { return "bolt.fill" }
-        return workout == nil ? "plus" : "figure.strengthtraining.traditional"
+    private var headerTitle: String {
+        if let activeSession { return activeSession.workoutName }
+        return workout?.name ?? "No workout planned"
     }
 
     private var headerColor: Color {
-        activeSession == nil
-            ? WorkoutVisualPhase.prepare.accent
-            : WorkoutVisualPhase.focus.accent
-    }
-
-    private var headerEyebrow: String {
-        let state: String
-        if activeSession != nil {
-            state = "ACTIVE WORKOUT"
-        } else {
-            state = workout == nil ? "PLAN YOUR DAY" : "WORKOUT PLAN"
-        }
-        return "\(state) | \(store.dateLabel(for: day).uppercased())"
+        activeSession != nil || workout != nil
+            ? RepbaseDesign.success
+            : WorkoutVisualPhase.prepare.accent
     }
 
     private var headerDescription: String {
@@ -1632,9 +1666,9 @@ struct DayWorkoutView: View {
             return "\(session.loggedSetCount) of \(session.totalSetCount) sets logged"
         }
         if let workout {
-            return "\(workout.exercises.count) exercises | \(workout.totalSets) target sets"
+            return "\(workout.exercises.count) exercises · \(workout.totalSets) target sets"
         }
-        return "Build it exactly the way you want."
+        return "Your day is open. Add a workout when you’re ready."
     }
 
     private func weightBinding(exerciseID: Exercise.ID, setID: WorkoutSetDraft.ID) -> Binding<String> {
