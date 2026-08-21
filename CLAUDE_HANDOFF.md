@@ -974,6 +974,100 @@ decorator was orphaned onto the new method, `logged_set_count` fell back to
 `string` in the contract, and every client would have failed to decode it.
 Check for a decorator above any line you insert before.
 
+## August 20: rotations, for splits that are not a week long
+
+An eight-day split does not land on a weekday. It falls on Monday, then
+Tuesday, then Wednesday, and keeps drifting. `WorkoutRecurrence` is a rule
+about a weekday and structurally cannot say this, so rotations are a separate
+thing rather than an option on the existing one.
+
+A rotation is a **length** and an **anchor date**. Everything else follows:
+the day of the cycle is `(days since anchor) mod length`, and shifting the
+whole plan is a matter of moving the anchor by a day. That is the reason it
+is anchored to a date at all — a weekly rule could only be "shifted" by
+becoming a rule about a different weekday, which is not the same thing.
+
+Rest days are slots. A six-workout two-rest split is an **eight**-day
+rotation, not a six-day one; leaving the rest days out makes it land wrong
+from the second turn onwards.
+
+### The two ways back on schedule
+
+They are different questions and both are needed.
+
+| Control | What it does | When |
+| --- | --- | --- |
+| **I rested today** | `POST cycles/{id}/shift/ {days: 1}` — pushes everything still to come back a day | One unplanned rest day, order kept |
+| **Resume today** | `POST cycles/{id}/resume-today/` — re-anchors so the workout that is owed lands today | Several days missed, no wish to count them |
+
+Both **replace** the rotation rather than editing it: the old one is closed
+with `effective_until` and a new one starts. That is why the store re-reads
+after a shift instead of patching in place, and why the old rule is kept
+rather than deleted — weeks already trained still have to resolve through
+whatever was planned at the time.
+
+Neither disturbs a day something already happened on. `_materialize` uses
+`get_or_create`, and the shift leaves days with a session, or added by hand,
+where they are — the response counts them as `kept`, and the screen says so.
+A plan quietly rearranging itself is unsettling; one that reports "6 days
+rescheduled, 1 left alone" is not.
+
+### The UI
+
+`CycleView` is reached from a row at the bottom of the Workout plan card,
+the same doorway pattern gear uses. The row shows **Day 3 of 8** and today's
+workout when a rotation is running, and a one-line offer when none is. Every
+number on it comes from the server; the app does no cycle arithmetic.
+
+`CycleEditorView` lists days 1..N in cycle order, because that is the
+template being defined. `CycleView` lists them **starting from today**,
+because that is a schedule. This is not cosmetic: in cycle order the dates
+run backwards partway down — on day 3 of 8, day 1 is six days out while day 4
+is tomorrow — and the header's "next: Push on Sat" then contradicts the first
+Push in the list. Fixed in `4f29f44` after a screenshot showed it.
+
+`REPBASE_CYCLE_PREVIEW` boots straight in: unset value or `1` for a running
+rotation, `empty` for the no-rotation state, `editor` for the editor,
+`dashboard` for the doorway row in place. The editor needs a saved library
+behind it, so the preview injects `WorkoutStore.previewWithLibrary`;
+`WorkoutStore.preview` alone leaves it showing nothing but "save a workout
+first".
+
+### A rest slot had no name
+
+`workout_name` was `CharField(source="workout.name", read_only=True)`. On a
+rest slot that chain hits `None`, and DRF answers a missing attribute on a
+non-required field by **dropping the field entirely** — not by sending null.
+The contract meanwhile marked it `required` and non-nullable, so the key was
+absent from a response that promised it, and the Swift client would have
+thrown `keyNotFound` on **any rotation containing a rest day**. Which is
+every eight-day split worth having.
+
+It is now a `SerializerMethodField` returning `"Rest"`, matching what
+`current_workout_name` already did. Fixed in backend `28f481c`.
+
+Worth generalising: a read-only field whose `source` traverses a nullable
+relation will silently vanish rather than serialise as null. `grep` for
+`source="` with a dot in it before trusting any such field to be present.
+
+### The backend's "today" is UTC
+
+`TIME_ZONE = 'UTC'` with `USE_TZ = True`, so `timezone.localdate()` is the
+**UTC** date. For a user in US Central that rolls over at **7pm local**: at
+8pm on Thursday the rotation already reports Friday's workout, and
+`_materialize` starts writing from the wrong day.
+
+This is not a rotation bug — every date-keyed feature has it, food days and
+streaks included — but rotations are where it shows most, because "which day
+of the cycle am I on" is the entire promise. It was found by a probe
+disagreeing with a simulator screenshot about what day it was, not by
+reasoning.
+
+Not fixed here. It is a cross-cutting decision: changing `TIME_ZONE` shifts
+the meaning of dates already stored, so it needs a deliberate choice about
+what a "day" means for this app — most likely a per-user timezone on the
+profile, with `localdate()` calls replaced by one helper that reads it.
+
 ## Contract additions this session
 
 All additive; nothing was removed.
@@ -1084,6 +1178,17 @@ the compiler this session and are worth remembering:
 
 ## Known limitations and next decisions
 
+1. **The backend's day is the UTC day.** `TIME_ZONE = 'UTC'`, so for a user
+   west of it the date rolls over before their evening is out — 7pm for US
+   Central. Rotations show it worst ("Day 3 of 8" advances early), but every
+   date-keyed feature shares it. See the August 20 section; the fix is a
+   per-user timezone, not a change to the global setting.
+2. **Nobody has tapped the rotation screens.** Built, installed, launched and
+   screenshotted in all four `REPBASE_CYCLE_PREVIEW` states, and the rules
+   underneath are exercised against the database by `/tmp/test_cycles.py`
+   (drift across weekdays, a shift sparing a trained day and a hand-added one,
+   the weekly-repeat clash refused). But no human has created a rotation,
+   pressed **I rested today**, or edited one.
 1. **Repeats are new and have not been used across a real week boundary.** The
    logic is verified against the API (see below), but nobody has yet opened the
    app on a Monday and watched the week fill in. That is the one thing worth
