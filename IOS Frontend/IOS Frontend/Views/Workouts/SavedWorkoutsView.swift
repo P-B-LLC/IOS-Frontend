@@ -22,13 +22,29 @@ struct SavedWorkoutsView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                DatePicker(
-                    "Add to",
-                    selection: $date,
-                    displayedComponents: .date
+            VStack(alignment: .leading, spacing: 22) {
+                RepbaseScreenHeader(
+                    eyebrow: "YOUR LIBRARY",
+                    title: "Saved workouts",
+                    detail: "Choose a plan and place it on your week."
                 )
-                .datePickerStyle(.compact)
+
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("PLAN FOR")
+                            .font(.system(size: 10, weight: .bold))
+                            .tracking(1.2)
+                            .foregroundStyle(RepbasePalette.caramel)
+                        Text(date.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))
+                            .font(.headline)
+                    }
+                    Spacer()
+                    DatePicker("Add to", selection: $date, displayedComponents: .date)
+                        .labelsHidden()
+                        .datePickerStyle(.compact)
+                }
+                .padding(16)
+                .repbaseDepthSurface()
                 .accessibilityHint("The day the workout you pick will be added to")
 
                 if let failureMessage {
@@ -41,8 +57,11 @@ struct SavedWorkoutsView: View {
                 if store.knownWorkouts.isEmpty {
                     empty
                 } else {
-                    ForEach(store.knownWorkouts) { workout in
-                        row(workout)
+                    VStack(spacing: 0) {
+                        ForEach(Array(store.knownWorkouts.enumerated()), id: \.element.id) { index, workout in
+                            row(workout)
+                            if index < store.knownWorkouts.count - 1 { Divider().opacity(0.45) }
+                        }
                     }
                 }
             }
@@ -78,12 +97,12 @@ struct SavedWorkoutsView: View {
     }
 
     private func row(_ workout: WorkoutSummary) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 14) {
             Image(systemName: workout.type.symbolName)
-                .font(.footnote.weight(.bold))
-                .foregroundStyle(.secondary)
-                .frame(width: 30, height: 30)
-                .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 9))
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(RepbasePalette.caramel)
+                .frame(width: 42, height: 42)
+                .background(RepbasePalette.caramel.opacity(0.10), in: RoundedRectangle(cornerRadius: 12))
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(workout.name)
@@ -110,14 +129,14 @@ struct SavedWorkoutsView: View {
                 .frame(minWidth: 60, minHeight: 44)
                 .contentShape(Rectangle())
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(RepbaseQuietButtonStyle())
             // One at a time. Two taps in flight would schedule the same
             // workout on the same day twice.
             .disabled(scheduling != nil || store.isSaving)
             .accessibilityLabel("Add \(workout.name)")
             .accessibilityHint("Schedules it on \(date.formatted(date: .abbreviated, time: .omitted))")
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 12)
     }
 
     private func detail(_ workout: WorkoutSummary) -> String {

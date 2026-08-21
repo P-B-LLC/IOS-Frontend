@@ -37,6 +37,11 @@ struct MealPlanView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
+                RepbaseScreenHeader(
+                    eyebrow: "MEAL PLANNER",
+                    title: "Shape the day.",
+                    detail: "Build a draft, review its balance, then apply it when it feels right."
+                )
                 totals
                 plannedSection
                 if let outcome { report(outcome) }
@@ -99,11 +104,8 @@ struct MealPlanView: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(
-            Color.primary.opacity(0.04),
-            in: RoundedRectangle(cornerRadius: 16, style: .continuous)
-        )
+        .padding(18)
+        .repbaseDepthSurface(cornerRadius: 20)
     }
 
     private func macro(_ title: String, _ value: Decimal) -> some View {
@@ -125,17 +127,20 @@ struct MealPlanView: View {
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         } else {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 0) {
                 Text("PLANNED DAY")
                     .font(.caption2.weight(.bold))
-                    .foregroundStyle(.secondary)
+                    .tracking(1.2)
+                    .foregroundStyle(RepbasePalette.caramel)
+                    .padding(.bottom, 8)
 
                 ForEach(Array(plan.enumerated()), id: \.offset) { index, meal in
                     HStack(spacing: 10) {
                         Text("\(index + 1)")
                             .font(.caption.weight(.bold).monospacedDigit())
                             .frame(width: 22, height: 22)
-                            .background(Color.primary.opacity(0.06), in: Circle())
+                            .foregroundStyle(RepbasePalette.caramel)
+                            .background(RepbasePalette.caramel.opacity(0.12), in: RoundedRectangle(cornerRadius: 7))
 
                         VStack(alignment: .leading, spacing: 1) {
                             Text(meal.name).font(.subheadline.weight(.semibold))
@@ -159,6 +164,7 @@ struct MealPlanView: View {
                         .accessibilityLabel("Remove \(meal.name) from the plan")
                     }
                     .padding(.vertical, 4)
+                    if index < plan.count - 1 { Divider().padding(.leading, 32).opacity(0.45) }
                 }
             }
         }
@@ -171,7 +177,8 @@ struct MealPlanView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("SAVED MEALS")
                 .font(.caption2.weight(.bold))
-                .foregroundStyle(.secondary)
+                .tracking(1.2)
+                .foregroundStyle(RepbasePalette.caramel)
 
             if store.savedMeals.isEmpty {
                 Text("No saved meals yet. Save a meal from a day to reuse it here.")
@@ -179,7 +186,7 @@ struct MealPlanView: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             } else {
-                ForEach(store.savedMeals) { meal in
+                ForEach(Array(store.savedMeals.enumerated()), id: \.element.id) { index, meal in
                     Button {
                         plan.append(meal)
                     } label: {
@@ -202,6 +209,7 @@ struct MealPlanView: View {
                     .buttonStyle(.plain)
                     .accessibilityLabel("Add \(meal.name) to the plan")
                     .accessibilityHint("Adds it as meal \(plan.count + 1) of the planned day")
+                    if index < store.savedMeals.count - 1 { Divider().opacity(0.45) }
                 }
             }
         }
@@ -235,11 +243,8 @@ struct MealPlanView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background(
-            Color.primary.opacity(0.04),
-            in: RoundedRectangle(cornerRadius: 12, style: .continuous)
-        )
+        .padding(14)
+        .repbaseDepthSurface(cornerRadius: 14)
         .fixedSize(horizontal: false, vertical: true)
     }
 

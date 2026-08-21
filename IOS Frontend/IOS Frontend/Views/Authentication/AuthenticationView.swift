@@ -19,12 +19,14 @@ struct AuthenticationView: View {
     @State private var username = ""
     @State private var password = ""
     @State private var isCreatingAccount = false
+    @State private var hasEntered = false
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
             let timeOfDay = HomeTimeOfDay(date: context.date)
 
-            GeometryReader { geometry in
+            if hasEntered {
+                GeometryReader { geometry in
                 ScrollView {
                     VStack(spacing: 0) {
                         Spacer(minLength: 56)
@@ -79,6 +81,9 @@ struct AuthenticationView: View {
                     .frame(minHeight: geometry.size.height)
                 }
                 .scrollDismissesKeyboard(.interactively)
+                }
+            } else {
+                welcome(timeOfDay: timeOfDay)
             }
             .homeTimeScreen(timeOfDay)
         }
@@ -87,6 +92,55 @@ struct AuthenticationView: View {
                 AccountRegistrationView()
             }
         }
+    }
+
+    private func welcome(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Spacer(minLength: 70)
+
+            Text("REPBASE")
+                .font(.caption.weight(.bold))
+                .tracking(2.2)
+                .foregroundStyle(timeOfDay.accent)
+
+            Text("Everything important,\nin one flow.")
+                .font(.system(size: 42, weight: .bold))
+                .tracking(-1.2)
+                .padding(.top, 14)
+
+            Text("Plan training, understand nutrition, and share progress without fighting the interface.")
+                .font(.body)
+                .foregroundStyle(timeOfDay.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 18)
+
+            Spacer()
+
+            VStack(spacing: 12) {
+                Button {
+                    withAnimation(.easeOut(duration: 0.2)) { hasEntered = true }
+                } label: {
+                    HStack {
+                        Text("Sign In")
+                        Spacer()
+                        Image(systemName: "arrow.right")
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(RepbasePrimaryButtonStyle())
+
+                Button {
+                    authentication.clearError()
+                    isCreatingAccount = true
+                } label: {
+                    Text("Create an account")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(RepbaseQuietButtonStyle())
+            }
+            .padding(.bottom, 28)
+        }
+        .padding(.horizontal, 24)
     }
 
     private func brand(timeOfDay: HomeTimeOfDay) -> some View {

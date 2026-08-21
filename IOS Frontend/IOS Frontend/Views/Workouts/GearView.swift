@@ -28,7 +28,12 @@ struct GearView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 20) {
+                RepbaseScreenHeader(
+                    eyebrow: "TRAINING GEAR",
+                    title: selection == nil ? "Your gear" : "Choose \(kind.singular)",
+                    detail: selection == nil ? "Keep the equipment behind every mile organized." : "Select what you are using for this session."
+                )
                 // Both kinds only when browsing. Opened from a run, the Bike
                 // tab leads nowhere useful — a bike cannot be selected for a
                 // run, and the server refuses it — so offering the switch is
@@ -40,6 +45,8 @@ struct GearView: View {
                         }
                     }
                     .pickerStyle(.segmented)
+                    .padding(4)
+                    .repbaseInsetSurface(cornerRadius: 12)
                 }
 
                 if let error = store.persistenceError {
@@ -89,7 +96,7 @@ struct GearView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(RepbasePrimaryButtonStyle())
                 .disabled(!store.isConnected)
             }
             .padding(.horizontal, RepbaseDesign.pageInset)
@@ -143,9 +150,9 @@ struct GearView: View {
             .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
+        .padding(18)
         .background(
-            Color.primary.opacity(0.04),
+            RepbasePalette.paper.opacity(0.72),
             in: RoundedRectangle(cornerRadius: 16, style: .continuous)
         )
     }
@@ -171,10 +178,10 @@ private struct GearCard: View {
                 selectButton(action: selectAction)
             }
         }
-        .padding(16)
+        .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            Color.primary.opacity(0.04),
+            RepbasePalette.paper.opacity(0.76),
             in: RoundedRectangle(cornerRadius: 16, style: .continuous)
         )
         .overlay {

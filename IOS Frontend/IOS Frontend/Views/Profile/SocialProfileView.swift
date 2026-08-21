@@ -457,6 +457,32 @@ private struct ProfileSettingsView: View {
                         settingsSection("PRIVACY & PERMISSIONS", timeOfDay: timeOfDay) {
                             VStack(spacing: 0) {
                                 NavigationLink {
+                                    AppleHealthConnectionView()
+                                } label: {
+                                    settingsRow(
+                                        "Apple Health",
+                                        detail: "Steps and completed workout imports",
+                                        symbol: "heart.text.square"
+                                    )
+                                }
+                                .buttonStyle(.plain)
+
+                                Rectangle().fill(timeOfDay.border).frame(height: 1)
+
+                                NavigationLink {
+                                    NotificationPreferencesView()
+                                } label: {
+                                    settingsRow(
+                                        "Notifications",
+                                        detail: "Training, nutrition, and community updates",
+                                        symbol: "bell"
+                                    )
+                                }
+                                .buttonStyle(.plain)
+
+                                Rectangle().fill(timeOfDay.border).frame(height: 1)
+
+                                NavigationLink {
                                     PrivacyAndPermissionsView()
                                 } label: {
                                     settingsRow(

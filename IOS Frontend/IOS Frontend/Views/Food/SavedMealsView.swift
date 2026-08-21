@@ -33,9 +33,15 @@ struct SavedMealsView: View {
                     .buttonStyle(.borderedProminent)
                 }
             } else {
-                List {
-                    Section {
-                        ForEach(store.savedMeals) { savedMeal in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        RepbaseScreenHeader(
+                            eyebrow: "YOUR LIBRARY",
+                            title: "Saved meals",
+                            detail: "Recipes and combinations ready for another day."
+                        )
+                        VStack(spacing: 0) {
+                            ForEach(Array(store.savedMeals.enumerated()), id: \.element.id) { index, savedMeal in
                             SavedMealRow(savedMeal: savedMeal) {
                                 mealToApply = savedMeal
                             } onEdit: {
@@ -46,12 +52,17 @@ struct SavedMealsView: View {
                                     store.removeReusableMeal(id: savedMeal.id)
                                 }
                             }
+                            if index < store.savedMeals.count - 1 { Divider().opacity(0.45) }
                         }
-                    } header: {
-                        Text("Recipes & meals")
-                    } footer: {
+                        }
+                        .padding(.horizontal, 16)
+                        .repbaseDepthSurface(cornerRadius: 20)
                         Text("Saved meals are local drafts until nutrition endpoints are added to the API.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
+                    .padding(.horizontal, RepbaseDesign.pageInset)
+                    .padding(.vertical, 16)
                 }
             }
         }
@@ -108,15 +119,13 @@ private struct SavedMealRow: View {
             }
 
             HStack(spacing: 8) {
-                Button("Use This Week", systemImage: "calendar.badge.plus", action: onUse)
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.small)
-                Button("Edit", systemImage: "pencil", action: onEdit)
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
+                Button("Use this week", action: onUse)
+                    .buttonStyle(RepbasePrimaryButtonStyle())
+                Button("Edit", action: onEdit)
+                    .buttonStyle(RepbaseQuietButtonStyle())
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 14)
     }
 
     private var ingredientSummary: String {
