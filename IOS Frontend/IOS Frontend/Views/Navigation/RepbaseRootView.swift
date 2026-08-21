@@ -8,6 +8,29 @@
 
 import SwiftUI
 
+/// Raised by a screen that needs the bottom of the window to itself.
+///
+/// The bar is a `safeAreaInset`, so when the keyboard comes up the bar rises
+/// with it and sits directly on whatever is being typed into. A text box
+/// pinned to the bottom has to be able to say "not while I am being written
+/// in"; a system tab bar would take `.toolbar(.hidden, for: .tabBar)`, and
+/// this one is ours, so it takes this.
+nonisolated struct HidesBottomBarPreference: PreferenceKey {
+    static let defaultValue = false
+
+    /// Any one screen asking is enough. Several may be on the stack at once,
+    /// and the innermost is not reliably the last to report.
+    static func reduce(value: inout Bool, nextValue: () -> Bool) {
+        value = value || nextValue()
+    }
+}
+
+extension View {
+    func hidesBottomBar(_ hidden: Bool) -> some View {
+        preference(key: HidesBottomBarPreference.self, value: hidden)
+    }
+}
+
 nonisolated enum RepbaseTab: String, CaseIterable, Identifiable {
     case home
     /// Workouts and food together. They were a slot each, which is two of five
@@ -58,6 +81,8 @@ nonisolated enum RepbaseTab: String, CaseIterable, Identifiable {
 /// coming back to one returns to where it was left.
 struct RepbaseRootView: View {
     @State private var tab: RepbaseTab
+    /// Set while a screen is writing into something pinned to the bottom.
+    @State private var isBarHidden = false
 
     init(initialTab: RepbaseTab = .home) {
 #if DEBUG
@@ -93,18 +118,23 @@ struct RepbaseRootView: View {
                 .toolbar(.hidden, for: .tabBar)
                 .tag(RepbaseTab.account)
         }
-        .safeAreaInset(edge: .bottom, spacing: 8) {
+        .onPreferenceChange(HidesBottomBarPreference.self) { isBarHidden = $0 }
+        .safeAreaInset(edge: .bottom, spacing: isBarHidden ? 0 : 8) {
             // The clock wraps only the bar. Wrapping the whole TabView in a
             // TimelineView collapsed it to an empty screen, and would have
             // rebuilt every tab once a minute besides.
-            TimelineView(.periodic(from: .now, by: 60)) { context in
-                let timeOfDay = HomeTimeOfDay(date: context.date)
-                RepbaseBottomNavigation(tab: $tab)
-                    .environment(\.homeTimeOfDay, timeOfDay)
-                    .tint(timeOfDay.accent)
-                    .padding(.horizontal, RepbaseDesign.pageInset)
+            if !isBarHidden {
+                TimelineView(.periodic(from: .now, by: 60)) { context in
+                    let timeOfDay = HomeTimeOfDay(date: context.date)
+                    RepbaseBottomNavigation(tab: $tab)
+                        .environment(\.homeTimeOfDay, timeOfDay)
+                        .tint(timeOfDay.accent)
+                        .padding(.horizontal, RepbaseDesign.pageInset)
+                }
+                .transition(.opacity)
             }
         }
+        .animation(.easeOut(duration: 0.18), value: isBarHidden)
     }
 }
 

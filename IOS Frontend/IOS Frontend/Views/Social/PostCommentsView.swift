@@ -61,6 +61,10 @@ struct PostCommentsView: View {
 
             composer
         }
+        // The bar rides up with the keyboard and lands on the box. Asked away
+        // only while writing, and only where there is a bar: in a sheet
+        // nothing is behind this view to hide.
+        .hidesBottomBar(clearsBottomBar && isWriting)
         // Both, deliberately. `onChange` alone never fired for the sheet,
         // which arrives with the request already set and so never changes it:
         // the box was there and the keyboard was not.

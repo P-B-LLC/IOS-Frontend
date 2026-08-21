@@ -55,6 +55,13 @@ struct PostDetailView: View {
             await store.loadPost(id: postID)
             isFetching = false
             await store.loadComments(for: postID)
+#if DEBUG
+            // Arrives mid-comment, keyboard up. The bar riding over the box
+            // is only visible in that state, and simctl cannot type.
+            if ProcessInfo.processInfo.environment["REPBASE_SOCIAL_FOCUS"] != nil {
+                focusRequest += 1
+            }
+#endif
         }
     }
 
