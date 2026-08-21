@@ -19,6 +19,7 @@ struct EditorialFormHeader: View {
     let canSave: Bool
     let onDismiss: () -> Void
     let onSave: () -> Void
+    var showsSaveAction = true
 
     @Environment(\.homeTimeOfDay) private var timeOfDay
 
@@ -51,21 +52,25 @@ struct EditorialFormHeader: View {
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
             Spacer()
 
-            Button(action: onSave) {
-                HStack(spacing: 6) {
-                    Text(saveTitle)
-                    Image(systemName: "arrow.up.right")
-                        .font(.caption.weight(.bold))
+            if showsSaveAction {
+                Button(action: onSave) {
+                    HStack(spacing: 6) {
+                        Text(saveTitle)
+                        Image(systemName: "arrow.up.right")
+                            .font(.caption.weight(.bold))
+                    }
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(RepbasePalette.cream)
+                    .padding(.horizontal, 13)
+                    .frame(height: 40)
+                    .background(timeOfDay.ink, in: RoundedRectangle(cornerRadius: 13))
                 }
-                .font(.subheadline.weight(.bold))
-                .foregroundStyle(RepbasePalette.cream)
-                .padding(.horizontal, 13)
-                .frame(height: 40)
-                .background(timeOfDay.ink, in: RoundedRectangle(cornerRadius: 13))
-            }
                 .buttonStyle(.plain)
                 .disabled(!canSave)
                 .opacity(canSave ? 1 : 0.35)
+            } else {
+                Color.clear.frame(width: 42, height: 42)
+            }
         }
         .frame(height: 48)
     }

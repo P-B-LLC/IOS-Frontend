@@ -456,21 +456,8 @@ struct DayWorkoutView: View {
 
     private func plannedWorkout(_ workout: Workout) -> some View {
         VStack(alignment: .leading, spacing: 24) {
-            VStack(alignment: .leading, spacing: 14) {
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("TODAY")
-                            .font(.caption.weight(.bold))
-                            .foregroundStyle(WorkoutVisualPhase.prepare.accent)
-                        Text(workout.name)
-                            .font(.title2.weight(.bold))
-                    }
-                }
-
-                Text("\(workout.exercises.count) exercises · \(workout.totalSets) target sets")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-
+            VStack(alignment: .leading, spacing: 16) {
+                sessionOverview(for: workout)
                 sessionStartControl(for: workout)
             }
 
@@ -568,6 +555,41 @@ struct DayWorkoutView: View {
         }
     }
 
+    private func sessionOverview(for workout: Workout) -> some View {
+        HStack(spacing: 14) {
+            WorkoutInkArtwork(
+                type: workout.type,
+                size: 48,
+                color: WorkoutVisualPhase.prepare.primaryText
+            )
+            .frame(width: 58, height: 58)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(workout.type.sessionTitle)
+                    .font(.title3.weight(.bold))
+                Text(planDescription(for: workout))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer(minLength: 8)
+
+            Image(systemName: "arrow.up.right")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(WorkoutVisualPhase.prepare.accent)
+        }
+        .padding(.vertical, 14)
+        .overlay(alignment: .top) { Divider() }
+        .overlay(alignment: .bottom) { Divider() }
+        .accessibilityElement(children: .combine)
+    }
+
+    private func planDescription(for workout: Workout) -> String {
+        let exercise = workout.exercises.count == 1 ? "exercise" : "exercises"
+        let set = workout.totalSets == 1 ? "target set" : "target sets"
+        return "\(workout.exercises.count) \(exercise) · \(workout.totalSets) \(set)"
+    }
+
     /// Keeps a workout on this weekday in the weeks ahead.
     ///
     /// Turning it off only clears weeks that have not arrived yet. This week
@@ -628,7 +650,9 @@ struct DayWorkoutView: View {
                 .font(.subheadline.weight(.semibold))
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(.plain)
+            .padding(.vertical, 13)
+            .overlay(alignment: .top) { Divider() }
             .disabled(!store.isEditingEnabled)
         }
         .onAppear {
@@ -1404,14 +1428,17 @@ struct DayWorkoutView: View {
     }
 
     private func sessionExerciseCard(_ exercise: SessionExerciseDraft) -> some View {
+        let phase = WorkoutVisualPhase.focus
+
         VStack(alignment: .leading, spacing: 14) {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(exercise.name)
                         .font(.headline)
+                        .foregroundStyle(phase.primaryText)
                     Text("\(exercise.sets.filter(\.isLogged).count) of \(exercise.sets.count) logged")
                         .font(.caption)
-                        .foregroundStyle(WorkoutVisualPhase.focus.secondaryText)
+                        .foregroundStyle(phase.secondaryText)
                 }
                 Spacer()
             }
@@ -1424,10 +1451,10 @@ struct DayWorkoutView: View {
                 Text("REPS")
                     .frame(maxWidth: .infinity)
                 Text("LOG")
-                    .frame(width: 40)
+                    .frame(width: 62)
             }
             .font(.caption2.weight(.bold))
-            .foregroundStyle(.secondary)
+            .foregroundStyle(phase.secondaryText)
 
             ForEach(exercise.sets) { set in
                 // What this set was last time, so an empty field says "60 × 8"
@@ -1446,20 +1473,24 @@ struct DayWorkoutView: View {
                 HStack(spacing: 8) {
                     Text("\(set.setNumber)")
                         .font(.subheadline.weight(.semibold).monospacedDigit())
+                        .foregroundStyle(phase.primaryText)
                         .frame(width: 34)
 
                     TextField(
-                        weightHint,
-                        text: weightBinding(exerciseID: exercise.id, setID: set.id)
+                        "",
+                        text: weightBinding(exerciseID: exercise.id, setID: set.id),
+                        prompt: Text(weightHint).foregroundStyle(phase.secondaryText.opacity(0.72))
                     )
                         .keyboardType(.decimalPad)
                         .multilineTextAlignment(.center)
+                        .foregroundStyle(phase.primaryText)
+                        .tint(phase.accent)
                         .padding(.vertical, 10)
                         .frame(maxWidth: .infinity)
                         .background(
                             set.isLogged
-                                ? RepbaseDesign.success.opacity(0.16)
-                                : RepbasePalette.oatmeal.opacity(0.72),
+                                ? RepbaseDesign.success.opacity(0.18)
+                                : Color.white.opacity(0.065),
                             in: RoundedRectangle(cornerRadius: 12, style: .continuous)
                         )
                         .overlay {
@@ -1470,17 +1501,20 @@ struct DayWorkoutView: View {
                         .accessibilityLabel("Set \(set.setNumber) weight in kilograms")
 
                     TextField(
-                        repsHint,
-                        text: repsBinding(exerciseID: exercise.id, setID: set.id)
+                        "",
+                        text: repsBinding(exerciseID: exercise.id, setID: set.id),
+                        prompt: Text(repsHint).foregroundStyle(phase.secondaryText.opacity(0.72))
                     )
                         .keyboardType(.numberPad)
                         .multilineTextAlignment(.center)
+                        .foregroundStyle(phase.primaryText)
+                        .tint(phase.accent)
                         .padding(.vertical, 10)
                         .frame(maxWidth: .infinity)
                         .background(
                             set.isLogged
-                                ? RepbaseDesign.success.opacity(0.16)
-                                : RepbasePalette.oatmeal.opacity(0.72),
+                                ? RepbaseDesign.success.opacity(0.18)
+                                : Color.white.opacity(0.065),
                             in: RoundedRectangle(cornerRadius: 12, style: .continuous)
                         )
                         .overlay {
@@ -1497,21 +1531,25 @@ struct DayWorkoutView: View {
                             if store.isSetPending(set.id) {
                                 ProgressView()
                             } else if set.isLogged {
-                                Image(systemName: "checkmark")
-                                    .font(.system(size: 14, weight: .bold))
-                                    .foregroundStyle(Color.white)
-                                    .frame(width: 30, height: 30)
-                                    .background(
-                                        RepbaseDesign.success,
-                                        in: RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                    )
+                                Label("Logged", systemImage: "checkmark")
                             } else {
-                                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                    .strokeBorder(RepbasePalette.oatmeal, lineWidth: 1)
-                                    .frame(width: 30, height: 30)
+                                Text("Log")
                             }
                         }
-                        .frame(width: 40, height: 40)
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(set.isLogged ? phase.onAccent : phase.primaryText)
+                        .frame(width: 62, height: 38)
+                        .background(
+                            set.isLogged ? RepbaseDesign.success : Color.white.opacity(0.08),
+                            in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        )
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .strokeBorder(
+                                    set.isLogged ? Color.clear : phase.secondaryText.opacity(0.3),
+                                    lineWidth: 1
+                                )
+                        }
                     }
                     .buttonStyle(.plain)
                     .disabled(
@@ -1523,6 +1561,7 @@ struct DayWorkoutView: View {
             }
 
             Divider()
+                .overlay(phase.secondaryText.opacity(0.22))
 
             HStack {
                 Button {
@@ -1530,6 +1569,7 @@ struct DayWorkoutView: View {
                 } label: {
                     Label("Add Set", systemImage: "plus")
                 }
+                .foregroundStyle(phase.primaryText)
 
                 Spacer()
 
@@ -1538,6 +1578,7 @@ struct DayWorkoutView: View {
                 } label: {
                     Label("Remove Last", systemImage: "minus")
                 }
+                .foregroundStyle(phase.secondaryText)
                 .disabled(
                     exercise.sets.count <= 1
                         || exercise.sets.last.map {
@@ -1549,13 +1590,18 @@ struct DayWorkoutView: View {
         }
         .padding(16)
         .background(
-            RepbasePalette.paper.opacity(0.96),
+            LinearGradient(
+                colors: [phase.surfaceStart, phase.surfaceEnd],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            ),
             in: RoundedRectangle(cornerRadius: 22, style: .continuous)
         )
         .overlay {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.72), lineWidth: 1)
+                .strokeBorder(Color.white.opacity(0.10), lineWidth: 1)
         }
+        .shadow(color: phase.shadow.opacity(0.32), radius: 8, x: 0, y: 4)
     }
 
     private var headerIcon: String {

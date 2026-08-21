@@ -51,6 +51,37 @@ actor SocialAPIRepository {
 
     /// One person's posts, already narrowed by the server to what the reader
     /// is allowed to see.
+    /// Everyone's posts, newest first — what Discover shows.
+    ///
+    /// The unfiltered post list, not the feed. The feed is deliberately only
+    /// the people you follow; this is the same visibility rules applied to
+    /// everybody, so a stranger's public post is here and their private one
+    /// is not.
+    func allPosts(limitPages: Int = 5) async throws -> [FeedPost] {
+        var page: Int?
+        var visited: Set<Int> = []
+        var values: [FeedPost] = []
+        var pagesRead = 0
+        repeat {
+            let output = try await client.socialPostsList(query: .init(page: page))
+            let body: Components.Schemas.PaginatedPostList
+            switch output {
+            case .ok(let response):
+                body = try response.body.json
+            case .undocumented(let statusCode, _):
+                throw APIServiceError.undocumentedStatus(statusCode)
+            }
+            values.append(contentsOf: body.results.map(Self.post(from:)))
+            pagesRead += 1
+            // Capped. Every post on the server is not a thing to pull down in
+            // one go, and nobody scrolls past the first few hundred.
+            page = pagesRead < limitPages
+                ? try nextPage(body.next, visited: &visited)
+                : nil
+        } while page != nil
+        return values
+    }
+
     func posts(byAuthor authorID: Int) async throws -> [FeedPost] {
         var page: Int?
         var visited: Set<Int> = []

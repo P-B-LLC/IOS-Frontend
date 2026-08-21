@@ -57,7 +57,8 @@ struct FoodEntryEditorView: View {
                         saveTitle: "Save",
                         canSave: isValid,
                         onDismiss: { dismiss() },
-                        onSave: save
+                        onSave: save,
+                        showsSaveAction: false
                     )
 
                     VStack(alignment: .leading, spacing: 6) {
@@ -75,28 +76,52 @@ struct FoodEntryEditorView: View {
 
                     VStack(alignment: .leading, spacing: 13) {
                         EditorialSectionTitle(title: "Food")
-                        EditorialRuleGroup {
-                            EditorialRuleRow {
-                                TextField("Food name", text: $name)
-                                    .font(.title3)
-                                    .textContentType(.name)
-                            }
-                            EditorialRuleRow(showsDivider: false) {
-                                Text("Servings").font(.subheadline)
-                                Spacer()
-                                editorialNumberField($servings, placeholder: "1", unit: nil)
-                            }
+                        TextField("Food name", text: $name)
+                            .font(.title2.weight(.semibold))
+                            .textContentType(.name)
+                            .padding(.vertical, 10)
+                            .overlay(alignment: .bottom) { Divider() }
+
+                        HStack(alignment: .firstTextBaseline) {
+                            Text("Servings")
+                                .font(.subheadline.weight(.medium))
+                            Spacer()
+                            TextField("1", text: $servings)
+                                .keyboardType(.decimalPad)
+                                .multilineTextAlignment(.trailing)
+                                .font(.title3.weight(.semibold))
+                                .frame(width: 80)
                         }
+                        .padding(.vertical, 10)
+                        .overlay(alignment: .bottom) { Divider() }
                     }
 
                     VStack(alignment: .leading, spacing: 13) {
                         EditorialSectionTitle(title: "Nutrition per serving")
-                        EditorialRuleGroup {
-                            editorialNutritionRow("Calories", unit: "cal", text: $calories)
-                            editorialNutritionRow("Protein", unit: "g", text: $protein)
-                            editorialNutritionRow("Carbohydrates", unit: "g", text: $carbohydrates)
-                            editorialNutritionRow("Fat", unit: "g", text: $fat, showsDivider: false)
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("CALORIES")
+                                .font(.system(size: 10, weight: .bold))
+                                .tracking(1)
+                                .foregroundStyle(timeOfDay.canvasSecondaryText)
+                            HStack(alignment: .firstTextBaseline) {
+                                TextField("0", text: $calories)
+                                    .keyboardType(.decimalPad)
+                                    .font(.system(size: 38, weight: .bold, design: .rounded))
+                                Spacer()
+                                Text("kcal")
+                                    .font(.subheadline.weight(.medium))
+                                    .foregroundStyle(timeOfDay.accent)
+                            }
                         }
+                        .padding(.vertical, 8)
+                        .overlay(alignment: .bottom) { Divider() }
+
+                        HStack(alignment: .top, spacing: 18) {
+                            macroField("PROTEIN", text: $protein, tint: Color(hex: 0xD9824B))
+                            macroField("CARBS", text: $carbohydrates, tint: Color(hex: 0x4AAFB3))
+                            macroField("FAT", text: $fat, tint: Color(hex: 0xB76AA5))
+                        }
+                        .padding(.top, 8)
                     }
 
                     Button(isEditing ? "Save changes" : "Add food") { save() }
@@ -125,36 +150,29 @@ struct FoodEntryEditorView: View {
         }
     }
 
-    private func editorialNutritionRow(
+    private func macroField(
         _ title: String,
-        unit: String,
         text: Binding<String>,
-        showsDivider: Bool = true
+        tint: Color
     ) -> some View {
-        EditorialRuleRow(showsDivider: showsDivider) {
-            Text(title).font(.subheadline)
-            Spacer()
-            editorialNumberField(text, placeholder: "0", unit: unit)
-        }
-    }
-
-    private func editorialNumberField(
-        _ text: Binding<String>,
-        placeholder: String,
-        unit: String?
-    ) -> some View {
-        HStack(spacing: 5) {
-            TextField(placeholder, text: text)
-                .keyboardType(.decimalPad)
-                .multilineTextAlignment(.trailing)
-                .frame(width: 72)
-            if let unit {
-                Text(unit)
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.system(size: 9, weight: .bold))
+                .tracking(0.8)
+                .foregroundStyle(.secondary)
+            HStack(alignment: .firstTextBaseline, spacing: 3) {
+                TextField("0", text: text)
+                    .font(.title2.weight(.semibold))
+                    .keyboardType(.decimalPad)
+                Text("g")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .frame(width: 24, alignment: .leading)
             }
+            Capsule()
+                .fill(tint)
+                .frame(height: 4)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var isValid: Bool {

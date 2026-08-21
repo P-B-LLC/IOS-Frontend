@@ -39,6 +39,17 @@ nonisolated enum WorkoutType: String, CaseIterable, Identifiable, Hashable, Coda
     /// weighted reps.
     var tracksDistance: Bool { self != .lifting }
 
+    /// Plain-language label used when the action is the session itself rather
+    /// than the saved workout name.
+    var sessionTitle: String {
+        switch self {
+        case .lifting: return "Strength session"
+        case .running: return "Run session"
+        case .biking: return "Ride session"
+        case .swimming: return "Swim session"
+        }
+    }
+
     /// How the logged distance is described for this type.
     var distanceTitle: String {
         switch self {

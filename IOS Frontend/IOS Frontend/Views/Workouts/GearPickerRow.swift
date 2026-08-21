@@ -93,16 +93,10 @@ struct GearPickerRow: View {
                     .padding(.leading, 8)
             }
             .padding(.horizontal, 14)
-            .frame(minHeight: 82)
+            .frame(minHeight: 72)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RepbasePalette.paper.opacity(0.92),
-                in: RoundedRectangle(cornerRadius: 20, style: .continuous)
-            )
-            .overlay {
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .strokeBorder(accent.opacity(0.24), lineWidth: 1)
-            }
+            .overlay(alignment: .top) { Divider() }
+            .overlay(alignment: .bottom) { Divider() }
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

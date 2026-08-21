@@ -54,11 +54,36 @@ struct NutritionGoalsView: View {
                             .foregroundStyle(timeOfDay.canvasSecondaryText)
                     }
 
-                    EditorialRuleGroup {
-                        goalRow("Calories", unit: "cal", text: $calories)
-                        goalRow("Protein", unit: "g", text: $protein)
-                        goalRow("Carbohydrates", unit: "g", text: $carbohydrates)
-                        goalRow("Fat", unit: "g", text: $fat, showsDivider: false)
+                    calorieTarget(timeOfDay: timeOfDay)
+
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Macro balance")
+                            .font(.headline)
+
+                        HStack(alignment: .top, spacing: 18) {
+                            macroTarget(
+                                "PROTEIN",
+                                text: $protein,
+                                tint: Color(hex: 0xD9824B),
+                                caloriesPerGram: 4
+                            )
+                            macroTarget(
+                                "CARBS",
+                                text: $carbohydrates,
+                                tint: Color(hex: 0x4AAFB3),
+                                caloriesPerGram: 4
+                            )
+                            macroTarget(
+                                "FAT",
+                                text: $fat,
+                                tint: Color(hex: 0xB76AA5),
+                                caloriesPerGram: 9
+                            )
+                        }
+
+                        Text("Tap any value to edit your daily target.")
+                            .font(.caption)
+                            .foregroundStyle(timeOfDay.canvasSecondaryText)
                     }
 
                     Button("Save goals") { save() }
@@ -74,27 +99,69 @@ struct NutritionGoalsView: View {
         }
     }
 
-    private func goalRow(
-        _ title: String,
-        unit: String,
-        text: Binding<String>,
-        showsDivider: Bool = true
-    ) -> some View {
-        EditorialRuleRow(showsDivider: showsDivider) {
-            Text(title).font(.subheadline)
-            Spacer()
-            HStack(spacing: 6) {
-                TextField("0", text: text)
+    private func calorieTarget(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("TOTAL CALORIES")
+                .font(.system(size: 10, weight: .bold))
+                .tracking(1)
+                .foregroundStyle(timeOfDay.canvasSecondaryText)
+
+            HStack(alignment: .firstTextBaseline) {
+                TextField("0", text: $calories)
                     .keyboardType(.decimalPad)
-                    .multilineTextAlignment(.trailing)
-                    .font(.title3.weight(.semibold))
-                    .frame(width: 92)
-                Text(unit)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .frame(width: 24, alignment: .leading)
+                    .font(.system(size: 42, weight: .bold, design: .rounded))
+                    .minimumScaleFactor(0.7)
+                Spacer()
+                Text("kcal per day")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(timeOfDay.accent)
             }
         }
+        .padding(.bottom, 18)
+        .overlay(alignment: .bottom) { Divider() }
+    }
+
+    private func macroTarget(
+        _ title: String,
+        text: Binding<String>,
+        tint: Color,
+        caloriesPerGram: Decimal
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.system(size: 9, weight: .bold))
+                .tracking(0.8)
+                .foregroundStyle(.secondary)
+
+            HStack(alignment: .firstTextBaseline, spacing: 3) {
+                TextField("0", text: text)
+                    .keyboardType(.decimalPad)
+                    .font(.title2.weight(.semibold))
+                    .minimumScaleFactor(0.7)
+                Text("g")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(tint.opacity(0.16))
+                    Capsule()
+                        .fill(tint)
+                        .frame(width: proxy.size.width * macroShare(text.wrappedValue, caloriesPerGram: caloriesPerGram))
+                }
+            }
+            .frame(height: 4)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func macroShare(_ grams: String, caloriesPerGram: Decimal) -> CGFloat {
+        guard let total = positive(calories),
+              let grams = positive(grams),
+              total > 0 else { return 0 }
+        let share = NSDecimalNumber(decimal: grams * caloriesPerGram / total).doubleValue
+        return CGFloat(min(max(share, 0), 1))
     }
 
     private var isValid: Bool {
@@ -130,26 +197,5 @@ struct NutritionGoalsView: View {
             return nil
         }
         return value
-    }
-}
-
-private struct NutritionGoalField: View {
-    let title: String
-    let unit: String
-    @Binding var text: String
-
-    var body: some View {
-        HStack {
-            Text(title)
-            Spacer()
-            TextField("0", text: $text)
-                .keyboardType(.decimalPad)
-                .multilineTextAlignment(.trailing)
-                .frame(maxWidth: 110)
-            Text(unit)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .frame(width: 25, alignment: .leading)
-        }
     }
 }

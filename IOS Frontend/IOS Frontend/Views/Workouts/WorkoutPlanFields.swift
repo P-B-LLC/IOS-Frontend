@@ -41,16 +41,19 @@ struct WorkoutPlanFields: View {
 
     private var nameCard: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Label("Workout Name", systemImage: "character.cursor.ibeam")
-                .font(.subheadline.weight(.semibold))
+            Text("WORKOUT NAME")
+                .font(.system(size: 10, weight: .bold))
+                .tracking(1)
+                .foregroundStyle(phase.secondaryText)
             TextField(namePlaceholder, text: $draft.name)
                 .textInputAutocapitalization(.words)
-                .padding(12)
-                .background(phase.primaryText.opacity(0.045), in: RoundedRectangle(cornerRadius: 12))
+                .font(.title3.weight(.semibold))
+                .padding(.vertical, 10)
+                .overlay(alignment: .bottom) { Divider() }
 
             nameGuidance
         }
-        .workoutCard()
+        .padding(.vertical, 4)
     }
 
     /// Either confirms the name will join an existing workout's history, or
@@ -171,9 +174,11 @@ struct WorkoutPlanFields: View {
     }
 
     private var typeCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Workout Type")
-                .font(.subheadline.weight(.semibold))
+        VStack(alignment: .leading, spacing: 12) {
+            Text("WORKOUT TYPE")
+                .font(.system(size: 10, weight: .bold))
+                .tracking(1)
+                .foregroundStyle(phase.secondaryText)
             HStack(spacing: 7) {
                 ForEach(WorkoutType.allCases) { type in
                     Button {
@@ -187,7 +192,7 @@ struct WorkoutPlanFields: View {
                                 .minimumScaleFactor(0.75)
                         }
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
+                        .padding(.vertical, 6)
                         .foregroundStyle(
                             draft.type == type ? phase.accent : phase.secondaryText
                         )
@@ -215,7 +220,8 @@ struct WorkoutPlanFields: View {
                 }
             }
         }
-        .workoutCard()
+        .padding(.vertical, 8)
+        .overlay(alignment: .bottom) { Divider() }
     }
 
     /// Distance workouts have nothing to plan up front and nothing to enter
@@ -478,73 +484,97 @@ private struct ExercisePlanEditorCard: View {
     let onRemove: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Text("Exercise \(position)")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(phase.accent)
-                Spacer()
-                Menu {
-                    Button("Move Up", systemImage: "arrow.up", action: onMoveUp)
-                        .disabled(!canMoveUp)
-                    Button("Move Down", systemImage: "arrow.down", action: onMoveDown)
-                        .disabled(!canMoveDown)
-                    Divider()
-                    Button("Remove Exercise", systemImage: "trash", role: .destructive, action: onRemove)
-                } label: {
-                    Image(systemName: "ellipsis.circle")
-                        .font(.title3)
-                        .foregroundStyle(phase.secondaryText)
-                }
-                .accessibilityLabel("Exercise options")
-            }
+        HStack(alignment: .top, spacing: 12) {
+            Text("\(position)")
+                .font(.caption.weight(.bold).monospacedDigit())
+                .foregroundStyle(phase.accent)
+                .frame(width: 28, height: 28)
+                .background(phase.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 9))
 
-            TextField("Exercise name", text: $exercise.name)
-                .textInputAutocapitalization(.words)
-                .font(.body.weight(.medium))
-                .padding(12)
-                .background(phase.primaryText.opacity(0.045), in: RoundedRectangle(cornerRadius: 12))
-
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Target Sets")
-                        .font(.subheadline.weight(.semibold))
-                    Text("Weight and reps are entered during the session.")
-                        .font(.caption2)
+            VStack(alignment: .leading, spacing: 14) {
+                HStack {
+                    Text("EXERCISE \(position)")
+                        .font(.system(size: 9, weight: .bold))
+                        .tracking(0.9)
                         .foregroundStyle(phase.secondaryText)
+                    Spacer()
+                    directAction("arrow.up", label: "Move exercise up", enabled: canMoveUp, action: onMoveUp)
+                    directAction("arrow.down", label: "Move exercise down", enabled: canMoveDown, action: onMoveDown)
+                    Button(role: .destructive, action: onRemove) {
+                        Image(systemName: "trash")
+                            .frame(width: 28, height: 28)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(Color.red.opacity(0.82))
+                    .accessibilityLabel("Remove exercise")
                 }
 
-                Spacer(minLength: 12)
+                TextField("Exercise name", text: $exercise.name)
+                    .textInputAutocapitalization(.words)
+                    .font(.title3.weight(.semibold))
+                    .padding(.vertical, 8)
+                    .overlay(alignment: .bottom) { Divider() }
 
-                HStack(spacing: 12) {
-                    Button {
-                        exercise.sets = max(1, exercise.sets - 1)
-                    } label: {
-                        Image(systemName: "minus")
-                            .frame(width: 30, height: 30)
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Target sets")
+                            .font(.subheadline.weight(.semibold))
+                        Text("Log weight and reps during training.")
+                            .font(.caption2)
+                            .foregroundStyle(phase.secondaryText)
                     }
-                    .buttonStyle(.bordered)
-                    .disabled(exercise.sets <= 1)
-                    .accessibilityLabel("Decrease target sets")
 
-                    Text("\(exercise.sets)")
-                        .font(.headline.monospacedDigit())
-                        .frame(minWidth: 22)
+                    Spacer(minLength: 12)
 
-                    Button {
-                        exercise.sets += 1
-                    } label: {
-                        Image(systemName: "plus")
-                            .frame(width: 30, height: 30)
+                    HStack(spacing: 10) {
+                        Button {
+                            exercise.sets = max(1, exercise.sets - 1)
+                        } label: {
+                            Image(systemName: "minus")
+                                .frame(width: 28, height: 28)
+                        }
+                        .buttonStyle(.plain)
+                        .background(phase.primaryText.opacity(0.07), in: RoundedRectangle(cornerRadius: 10))
+                        .disabled(exercise.sets <= 1)
+                        .accessibilityLabel("Decrease target sets")
+
+                        Text("\(exercise.sets)")
+                            .font(.headline.monospacedDigit())
+                            .frame(minWidth: 22)
+
+                        Button {
+                            exercise.sets += 1
+                        } label: {
+                            Image(systemName: "plus")
+                                .frame(width: 28, height: 28)
+                        }
+                        .buttonStyle(.plain)
+                        .background(phase.primaryText.opacity(0.07), in: RoundedRectangle(cornerRadius: 10))
+                        .accessibilityLabel("Increase target sets")
                     }
-                    .buttonStyle(.bordered)
-                    .accessibilityLabel("Increase target sets")
                 }
             }
         }
-        .padding(.vertical, 10)
+        .padding(.vertical, 14)
         .overlay(alignment: .bottom) {
             Divider()
         }
+    }
+
+    private func directAction(
+        _ symbol: String,
+        label: String,
+        enabled: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .frame(width: 28, height: 28)
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(phase.secondaryText)
+        .disabled(!enabled)
+        .opacity(enabled ? 1 : 0.25)
+        .accessibilityLabel(label)
     }
 }

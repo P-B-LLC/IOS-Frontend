@@ -170,52 +170,81 @@ private struct SavedMealEditorView: View {
     }
 
     var body: some View {
-        Form {
-            Section("Recipe") {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 28) {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("RECIPE NAME")
+                        .font(.system(size: 10, weight: .bold))
+                        .tracking(1)
+                        .foregroundStyle(phase.secondaryText)
                 TextField("Recipe or meal name", text: $draft.name)
                     .textContentType(.name)
-            }
-
-            Section {
-                if draft.ingredients.isEmpty {
-                    Text("Add each ingredient using the nutrition shown for one serving.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    .font(.title2.weight(.semibold))
+                    .padding(.vertical, 10)
+                    .overlay(alignment: .bottom) { Divider() }
                 }
 
-                ForEach(draft.ingredients) { ingredient in
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Ingredients")
+                        .font(.title3.weight(.bold))
+
+                    if draft.ingredients.isEmpty {
+                        Text("Add each ingredient using the nutrition shown for one serving.")
+                            .font(.subheadline)
+                            .foregroundStyle(phase.secondaryText)
+                            .padding(.vertical, 10)
+                    } else {
+                        ForEach(Array(draft.ingredients.enumerated()), id: \.element.id) { index, ingredient in
+                            HStack(spacing: 12) {
+                                Button { ingredientToEdit = ingredient } label: {
+                                    IngredientRow(ingredient: ingredient)
+                                }
+                                .buttonStyle(.plain)
+
+                                Button(role: .destructive) {
+                                    draft.ingredients.removeAll { $0.id == ingredient.id }
+                                } label: {
+                                    Image(systemName: "trash")
+                                        .frame(width: 32, height: 32)
+                                }
+                                .buttonStyle(.plain)
+                                .foregroundStyle(Color.red.opacity(0.82))
+                                .accessibilityLabel("Remove \(ingredient.name)")
+                            }
+                            .padding(.vertical, 13)
+                            if index < draft.ingredients.count - 1 { Divider() }
+                        }
+                    }
+
                     Button {
-                        ingredientToEdit = ingredient
+                        isAddingIngredient = true
                     } label: {
-                        IngredientRow(ingredient: ingredient)
+                        Label("Add ingredient", systemImage: "plus")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.vertical, 14)
                     }
                     .buttonStyle(.plain)
-                }
-                .onDelete { offsets in
-                    draft.ingredients.remove(atOffsets: offsets)
+                    .overlay(alignment: .top) { Divider() }
+                    .overlay(alignment: .bottom) { Divider() }
                 }
 
-                Button("Add Ingredient", systemImage: "plus") {
-                    isAddingIngredient = true
+                if !draft.ingredients.isEmpty {
+                    VStack(alignment: .leading, spacing: 14) {
+                        Text("Recipe total")
+                            .font(.title3.weight(.bold))
+                        NutritionTotalRow(amount: draft.totalNutrition)
+                    }
                 }
-            } header: {
-                Text("Ingredients")
-            }
 
-            if !draft.ingredients.isEmpty {
-                Section("Recipe total") {
-                    NutritionTotalRow(amount: draft.totalNutrition)
-                }
-            }
-
-            Section {
                 Label(
                     "Saved recipes sync with your Repbase account.",
                     systemImage: "checkmark.icloud"
                 )
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(phase.secondaryText)
             }
+            .padding(22)
         }
         .navigationTitle(draft.name.isEmpty ? "New Recipe" : draft.name)
         .navigationBarTitleDisplayMode(.inline)
@@ -278,6 +307,8 @@ private struct IngredientRow: View {
                 .font(.caption2.weight(.bold))
                 .foregroundStyle(.tertiary)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
     }
 }
 
@@ -285,26 +316,27 @@ private struct NutritionTotalRow: View {
     let amount: NutritionAmount
 
     var body: some View {
-        Grid(alignment: .leading, horizontalSpacing: 20, verticalSpacing: 7) {
-            GridRow {
-                metric("Calories", amount.calories, "cal")
-                metric("Protein", amount.proteinGrams, "g")
-            }
-            GridRow {
-                metric("Carbs", amount.carbohydrateGrams, "g")
-                metric("Fat", amount.fatGrams, "g")
-            }
+        HStack(alignment: .top, spacing: 18) {
+            metric("CALORIES", amount.calories, "kcal", tint: RepbasePalette.caramel)
+            metric("PROTEIN", amount.proteinGrams, "g", tint: Color(hex: 0xD9824B))
+            metric("CARBS", amount.carbohydrateGrams, "g", tint: Color(hex: 0x4AAFB3))
+            metric("FAT", amount.fatGrams, "g", tint: Color(hex: 0xB76AA5))
         }
     }
 
-    private func metric(_ label: String, _ value: Decimal, _ unit: String) -> some View {
-        HStack {
+    private func metric(_ label: String, _ value: Decimal, _ unit: String, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
             Text(label)
+                .font(.system(size: 8, weight: .bold))
+                .tracking(0.6)
                 .foregroundStyle(.secondary)
-            Spacer()
             Text("\(value.nutritionText) \(unit)")
-                .fontWeight(.semibold)
+                .font(.subheadline.weight(.semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.65)
+            Capsule().fill(tint).frame(height: 3)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -334,18 +366,60 @@ private struct RecipeIngredientEditorView: View {
     }
 
     var body: some View {
-        Form {
-            Section("Ingredient") {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 28) {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("INGREDIENT")
+                        .font(.system(size: 10, weight: .bold))
+                        .tracking(1)
+                        .foregroundStyle(phase.secondaryText)
                 TextField("Ingredient name", text: $name)
-                FoodNutritionField(title: "Servings", unit: "", text: $servings)
-            }
+                        .font(.title2.weight(.semibold))
+                        .padding(.vertical, 10)
+                        .overlay(alignment: .bottom) { Divider() }
 
-            Section("Nutrition per serving") {
-                FoodNutritionField(title: "Calories", unit: "cal", text: $calories)
-                FoodNutritionField(title: "Protein", unit: "g", text: $protein)
-                FoodNutritionField(title: "Carbohydrates", unit: "g", text: $carbohydrates)
-                FoodNutritionField(title: "Fat", unit: "g", text: $fat)
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("Servings").font(.subheadline.weight(.medium))
+                        Spacer()
+                        TextField("1", text: $servings)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                            .font(.title3.weight(.semibold))
+                            .frame(width: 80)
+                    }
+                    .padding(.vertical, 10)
+                    .overlay(alignment: .bottom) { Divider() }
+                }
+
+                VStack(alignment: .leading, spacing: 14) {
+                    Text("Nutrition per serving")
+                        .font(.title3.weight(.bold))
+                    VStack(alignment: .leading, spacing: 7) {
+                        Text("CALORIES")
+                            .font(.system(size: 10, weight: .bold))
+                            .tracking(1)
+                            .foregroundStyle(phase.secondaryText)
+                        HStack(alignment: .firstTextBaseline) {
+                            TextField("0", text: $calories)
+                                .keyboardType(.decimalPad)
+                                .font(.system(size: 38, weight: .bold, design: .rounded))
+                            Spacer()
+                            Text("kcal")
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(phase.accent)
+                        }
+                    }
+                    .padding(.vertical, 8)
+                    .overlay(alignment: .bottom) { Divider() }
+
+                    HStack(alignment: .top, spacing: 18) {
+                        ingredientMacro("PROTEIN", text: $protein, tint: Color(hex: 0xD9824B))
+                        ingredientMacro("CARBS", text: $carbohydrates, tint: Color(hex: 0x4AAFB3))
+                        ingredientMacro("FAT", text: $fat, tint: Color(hex: 0xB76AA5))
+                    }
+                }
             }
+            .padding(22)
         }
         .navigationTitle(name.isEmpty ? "Add Ingredient" : name)
         .navigationBarTitleDisplayMode(.inline)
@@ -359,6 +433,23 @@ private struct RecipeIngredientEditorView: View {
             }
         }
         .repbaseScreen(phase)
+    }
+
+    private func ingredientMacro(_ title: String, text: Binding<String>, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.system(size: 9, weight: .bold))
+                .tracking(0.7)
+                .foregroundStyle(.secondary)
+            HStack(alignment: .firstTextBaseline, spacing: 3) {
+                TextField("0", text: text)
+                    .keyboardType(.decimalPad)
+                    .font(.title2.weight(.semibold))
+                Text("g").font(.caption).foregroundStyle(.secondary)
+            }
+            Capsule().fill(tint).frame(height: 4)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var isValid: Bool {

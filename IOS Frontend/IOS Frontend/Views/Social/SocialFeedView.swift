@@ -105,9 +105,9 @@ struct SocialFeedView: View {
                     .onTapGesture { store.lastSavedWorkout = nil }
                 }
 
-                if store.isLoading && store.feed.isEmpty {
+                if isListLoading && displayedPosts.isEmpty {
                     ProgressView().padding(.top, 40)
-                } else if store.feed.isEmpty {
+                } else if displayedPosts.isEmpty {
                     emptyState(timeOfDay: timeOfDay)
                 } else {
                     ForEach(displayedPosts) { post in
@@ -156,6 +156,7 @@ struct SocialFeedView: View {
         }
         .task(id: feedMode) {
             guard feedMode == .discover else { return }
+            await store.loadDiscover()
             await store.loadPeople()
             if let viewerID = profileStore.viewerID {
                 await store.loadRelationships(for: viewerID)
@@ -267,11 +268,21 @@ struct SocialFeedView: View {
         return store.followingByUser[viewerID]?.contains(where: { $0.id == person.id }) == true
     }
 
+    private var isListLoading: Bool {
+        feedMode == .discover ? store.isLoadingDiscover : store.isLoading
+    }
+
+    /// What the list shows: the people you follow, or everybody.
+    ///
+    /// Discover reads its own list rather than filtering the feed. The feed is
+    /// deliberately only the people you follow, so filtering it could never
+    /// surface a stranger — which is the entire point of Discover.
     private var displayedPosts: [FeedPost] {
         guard feedMode == .discover else { return store.feed }
+        let everyone = store.discoverPosts
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        guard !query.isEmpty else { return store.feed }
-        return store.feed.filter { post in
+        guard !query.isEmpty else { return everyone }
+        return everyone.filter { post in
             let shown = post.displayed
             return shown.author.displayName.lowercased().contains(query)
                 || shown.author.username.lowercased().contains(query)
@@ -416,23 +427,27 @@ struct PostCard: View {
     /// card's real content is the snapshot underneath, and it should still
     /// read cleanly when the picture cannot be fetched.
     private func photo(_ url: URL) -> some View {
-        AsyncImage(url: url) { phase in
-            switch phase {
-            case .success(let image):
-                image
-                    .resizable()
-                    .scaledToFill()
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 200)
-                    .clipped()
-            case .empty:
-                ProgressView()
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 200)
-            default:
-                EmptyView()
-            }
+        RemoteImage(url: url, maxPixel: 1_200) {
+            // The card keeps its shape while the photo arrives, so the rows
+            // under it do not jump once it does.
+            RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius)
+                .fill(timeOfDay.primaryText.opacity(0.06))
+                .overlay { ProgressView() }
+        } failure: {
+            // Says the photo is missing rather than drawing nothing. Nothing
+            // is indistinguishable from a post that never had one.
+            RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius)
+                .fill(timeOfDay.primaryText.opacity(0.06))
+                .overlay {
+                    Image(systemName: "photo")
+                        .font(.title3)
+                        .foregroundStyle(timeOfDay.secondaryText)
+                }
         }
+        .scaledToFill()
+        .frame(maxWidth: .infinity)
+        .frame(height: 200)
+        .clipped()
         .clipShape(RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius))
     }
 

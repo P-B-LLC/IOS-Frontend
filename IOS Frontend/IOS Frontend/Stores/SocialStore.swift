@@ -316,6 +316,30 @@ final class SocialStore {
         }
     }
 
+    // MARK: - Discover
+
+    /// Everyone's posts, not just the people you follow. Kept apart from
+    /// `feed` because they answer different questions and a reader switching
+    /// tabs should not have to wait for the other one to reload.
+    private(set) var discoverPosts: [FeedPost] = []
+    private(set) var isLoadingDiscover = false
+
+    func loadDiscover() async {
+        guard let repository, !isLoadingDiscover else { return }
+        let generation = connectionGeneration
+        isLoadingDiscover = true
+        defer { if connectionGeneration == generation { isLoadingDiscover = false } }
+
+        do {
+            let loaded = try await repository.allPosts()
+            guard connectionGeneration == generation else { return }
+            discoverPosts = loaded
+        } catch {
+            guard connectionGeneration == generation else { return }
+            errorMessage = error.localizedDescription
+        }
+    }
+
     // MARK: - One person's posts
 
     /// Posts by author, for a profile page. Held here rather than in the
