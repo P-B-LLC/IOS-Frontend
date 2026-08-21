@@ -743,7 +743,12 @@ private struct ProfileSettingsView: View {
 private struct PrivacyAndPermissionsView: View {
     @Environment(\.openURL) private var openURL
     @Environment(ActivityStore.self) private var activity
-    @State private var locationStatus = CLLocationManager.authorizationStatus
+    /// Held rather than made on each read. `CLLocationManager.authorizationStatus`
+    /// without parentheses is the class method itself, not the status it
+    /// returns, so this was a `() -> CLAuthorizationStatus` and the switch
+    /// below had nothing it could match.
+    @State private var locationManager = CLLocationManager()
+    @State private var locationStatus: CLAuthorizationStatus = .notDetermined
     @State private var notificationStatus: UNAuthorizationStatus = .notDetermined
 
     var body: some View {
@@ -852,7 +857,7 @@ private struct PrivacyAndPermissionsView: View {
     }
 
     private func refreshPermissionStatus() async {
-        locationStatus = CLLocationManager.authorizationStatus
+        locationStatus = locationManager.authorizationStatus
         notificationStatus = await UNUserNotificationCenter.current()
             .notificationSettings().authorizationStatus
     }

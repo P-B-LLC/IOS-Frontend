@@ -25,6 +25,11 @@ struct AuthenticationView: View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
             let timeOfDay = HomeTimeOfDay(date: context.date)
 
+            // Grouped so the screen modifier below has something to attach
+            // to. A modifier cannot be applied to a bare if/else in a
+            // ViewBuilder, and the compiler reports that as `homeTimeScreen`
+            // being used on the type `View` rather than on a value.
+            Group {
             if hasEntered {
                 GeometryReader { geometry in
                 ScrollView {
@@ -84,6 +89,7 @@ struct AuthenticationView: View {
                 }
             } else {
                 welcome(timeOfDay: timeOfDay)
+            }
             }
             .homeTimeScreen(timeOfDay)
         }
