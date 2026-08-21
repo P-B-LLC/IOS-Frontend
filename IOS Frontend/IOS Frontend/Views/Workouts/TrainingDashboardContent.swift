@@ -34,16 +34,9 @@ struct TrainingDashboardContent: View {
                         .padding(.vertical, 30)
                         .workoutCard()
                 } else {
-                    trainingHeader
                     workoutPlanCard
-                    VStack(spacing: 0) {
-                        StepsWidget(explainsWhenEmpty: true, compact: true)
-                            .repbaseFeatureRail(RepbaseDesign.success, inset: 14)
-                        Divider().padding(.horizontal, 18)
-                        focusCard
-                            .repbaseFeatureRail(RepbaseDesign.accent, inset: 16)
-                    }
-                    .background(RepbasePalette.paper.opacity(0.52), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+                    StepsWidget(explainsWhenEmpty: true, compact: true)
+                    focusCard
                     momentumSection
                 }
             }
@@ -51,22 +44,6 @@ struct TrainingDashboardContent: View {
             .padding(.top, 10)
             .padding(.bottom, RepbaseDesign.quickActionClearance)
         }
-    }
-
-    private var trainingHeader: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Text("YOUR TRAINING")
-                .font(.system(size: 10, weight: .bold))
-                .tracking(1.35)
-                .foregroundStyle(RepbaseDesign.accent)
-            Text(Date.now.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))
-                .font(.system(size: 27, weight: .bold))
-                .tracking(-0.55)
-            Text("Everything important, in one flow.")
-                .font(.caption.weight(.medium))
-                .foregroundStyle(phase.secondaryText)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var workoutPlanCard: some View {

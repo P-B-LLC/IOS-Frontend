@@ -56,8 +56,6 @@ struct FoodTrackingView: View {
                 foodHeader(timeOfDay: timeOfDay)
                 weekSelector(timeOfDay: timeOfDay)
                 dailySummary
-                    .padding(.leading, 12)
-                    .repbaseFeatureRail(RepbaseDesign.success, inset: 4)
 
                 if let message = store.errorMessage {
                     syncNotice(message, timeOfDay: timeOfDay)
@@ -69,11 +67,7 @@ struct FoodTrackingView: View {
                 }
 
                 mealsSection(timeOfDay: timeOfDay)
-                    .padding(.leading, 12)
-                    .repbaseFeatureRail(timeOfDay.accent, inset: 3)
                 nutritionBreakdownLink(timeOfDay: timeOfDay)
-                    .padding(.leading, 12)
-                    .repbaseFeatureRail(RepbaseDesign.warning, inset: 3)
             }
             .padding(.horizontal, RepbaseDesign.pageInset)
             .padding(.top, 16)

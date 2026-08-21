@@ -17,9 +17,9 @@ enum RepbaseDesign {
     static let danger = Color(hex: 0xC33A4A)
 
     static let pageInset: CGFloat = 20
-    static let sectionSpacing: CGFloat = 20
-    static let cardRadius: CGFloat = 20
-    static let controlRadius: CGFloat = 12
+    static let sectionSpacing: CGFloat = 24
+    static let cardRadius: CGFloat = 14
+    static let controlRadius: CGFloat = 10
     static let featureRadius: CGFloat = 22
 
     /// Room a scrolling page must leave below its content for the floating
@@ -47,23 +47,6 @@ enum RepbaseDesign {
     static let softHighlight = RepbasePalette.paper.opacity(0.82)
 }
 
-/// A quiet vertical accent that identifies a feature without wrapping it in
-/// another card. Primary dashboards use this to connect related moments.
-private struct RepbaseFeatureRailModifier: ViewModifier {
-    let color: Color
-    let inset: CGFloat
-
-    func body(content: Content) -> some View {
-        content.overlay(alignment: .leading) {
-            Capsule()
-                .fill(color)
-                .frame(width: 4)
-                .padding(.vertical, inset)
-                .allowsHitTesting(false)
-        }
-    }
-}
-
 /// A raised architectural surface. The paired shadows establish one shared
 /// light source, so depth feels intentional instead of decorative.
 private struct RepbaseDepthSurfaceModifier: ViewModifier {
@@ -84,11 +67,11 @@ private struct RepbaseDepthSurfaceModifier: ViewModifier {
                     )
                     .shadow(
                         color: timeOfDay.usesDarkAppearance
-                            ? Color.black.opacity(0.24)
-                            : RepbaseDesign.deepShadow.opacity(0.52),
-                        radius: 8,
+                            ? Color.black.opacity(0.34)
+                            : RepbaseDesign.deepShadow,
+                        radius: 14,
                         x: 0,
-                        y: 4
+                        y: 7
                     )
                     .shadow(
                         color: timeOfDay.usesDarkAppearance
@@ -147,10 +130,6 @@ extension View {
 
     func repbaseInsetSurface(cornerRadius: CGFloat = RepbaseDesign.controlRadius) -> some View {
         modifier(RepbaseInsetSurfaceModifier(cornerRadius: cornerRadius))
-    }
-
-    func repbaseFeatureRail(_ color: Color, inset: CGFloat = 12) -> some View {
-        modifier(RepbaseFeatureRailModifier(color: color, inset: inset))
     }
 }
 
