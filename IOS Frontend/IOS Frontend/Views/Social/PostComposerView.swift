@@ -30,6 +30,10 @@ struct PostComposerView: View {
     @State private var didChooseOpeningDay = false
     @State private var caption = ""
     @State private var visibility: PostVisibility = .publicToAll
+    /// Whether the numbers lifted go out with the workout. On by default:
+    /// somebody who says nothing has posted a workout, and one without its
+    /// numbers is the unusual case.
+    @State private var showsWeights = true
     @State private var pickedPhoto: PhotosPickerItem?
     /// The chosen picture, already encoded. Held as bytes as well so the sheet
     /// can show what is about to be posted.
@@ -121,6 +125,9 @@ struct PostComposerView: View {
                     }
                     photoSection(timeOfDay: timeOfDay)
                     captionSection(timeOfDay: timeOfDay)
+                    if source == .workout {
+                        weightsSection(timeOfDay: timeOfDay)
+                    }
                     visibilitySection(timeOfDay: timeOfDay)
                 }
                 .padding(.horizontal, RepbaseDesign.pageInset)
@@ -493,6 +500,40 @@ struct PostComposerView: View {
 
     // MARK: - Visibility
 
+    /// Whether the load goes out with the workout.
+    ///
+    /// Separate from who can see the post, because it is a different question:
+    /// this one is about how much of what you did is shown, not about who is
+    /// shown it. Turning it off withholds the weights and the volume; the
+    /// exercises, sets and reps still go — "4 × 8" is what was done, and it is
+    /// the load people are shy about, not the count.
+    private func weightsSection(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(alignment: .leading, spacing: 13) {
+            EditorialSectionTitle(title: "What to show")
+
+            EditorialRuleGroup {
+                Toggle(isOn: $showsWeights) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Show the weights I lifted")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(timeOfDay.primaryText)
+                        Text(
+                            showsWeights
+                                ? "Your top set and total volume go out with the workout."
+                                : "Exercises, sets and reps still go out. The load does not."
+                        )
+                        .font(.caption)
+                        .foregroundStyle(timeOfDay.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .tint(timeOfDay.accent)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+            }
+        }
+    }
+
     private func visibilitySection(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(alignment: .leading, spacing: 13) {
             EditorialSectionTitle(title: "Who can see it")
@@ -622,6 +663,7 @@ struct PostComposerView: View {
                 sourceID: selection.sourceID,
                 caption: caption.trimmingCharacters(in: .whitespacesAndNewlines),
                 visibility: visibility,
+                showsWeights: showsWeights,
                 photo: attachedPhoto
             )
             // Left open when it failed, so the error is read beside the post it

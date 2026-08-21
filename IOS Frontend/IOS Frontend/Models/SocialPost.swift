@@ -201,8 +201,23 @@ nonisolated struct FeedPost: Identifiable, Equatable, Hashable, Sendable {
     /// drawn in the right state on first paint.
     var viewerHasLiked: Bool = false
     var viewerHasReposted: Bool = false
+    /// Whether the author showed what they lifted. False means the numbers
+    /// were held back — which is a different thing from a bodyweight session,
+    /// where there were none to show.
+    var showsWeights: Bool = true
+    /// Whether the reader wrote it. Offering to save your own workout back
+    /// into your own workouts is not an offer worth making.
+    var viewerIsAuthor: Bool = false
     /// The original, when this is a repost.
     var repostOf: RepostedPost?
+
+    /// Whether this post offers a workout the reader could take for
+    /// themselves. Their own is already theirs, and a workout with no
+    /// exercises recorded is nothing to save.
+    var offersWorkoutToSave: Bool {
+        guard !viewerIsAuthor else { return false }
+        return !(displayed.workout?.exercises.isEmpty ?? true)
+    }
 
     /// Whether this build knows how to draw the post at all.
     ///
@@ -231,5 +246,25 @@ nonisolated struct FeedPost: Identifiable, Equatable, Hashable, Sendable {
             meal: meal,
             planner: planner
         )
+    }
+}
+
+/// What saving somebody's posted workout produced.
+///
+/// The name is carried because it is not always the one on the post: workout
+/// names are unique per person, so a copy of a "Push Day" you already have
+/// arrives under a name saying where it came from, and the app has to be able
+/// to tell you which one you got.
+nonisolated struct SavedWorkoutOutcome: Equatable, Hashable, Sendable {
+    let name: String
+    let exerciseCount: Int
+    let wasRenamed: Bool
+
+    var message: String {
+        let exercises = exerciseCount == 1 ? "1 exercise" : "\(exerciseCount) exercises"
+        if wasRenamed {
+            return "Saved as \"\(name)\" — \(exercises). You already had one by its own name."
+        }
+        return "Saved \"\(name)\" to your workouts — \(exercises)."
     }
 }

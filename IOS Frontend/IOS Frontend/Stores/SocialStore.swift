@@ -139,6 +139,7 @@ final class SocialStore {
         sourceID: Int,
         caption: String,
         visibility: PostVisibility,
+        showsWeights: Bool = true,
         photo: PostPhoto? = nil
     ) async -> Bool {
         guard let repository else {
@@ -157,6 +158,7 @@ final class SocialStore {
                 sourceID: sourceID,
                 caption: caption,
                 visibility: visibility,
+                showsWeights: showsWeights,
                 photo: photo
             )
             guard connectionGeneration == generation else { return false }
@@ -253,6 +255,41 @@ final class SocialStore {
                     feed.removeAll { $0.id == post.id }
                 }
             }
+        } catch {
+            guard connectionGeneration == generation else { return }
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    // MARK: - Taking a workout for yourself
+
+    /// What the last save produced, for a message the reader can dismiss.
+    var lastSavedWorkout: SavedWorkoutOutcome?
+    private(set) var savingWorkoutFor: Set<Int> = []
+
+    func isSavingWorkout(from postID: Int) -> Bool {
+        savingWorkoutFor.contains(postID)
+    }
+
+    /// Copies a posted workout into the reader's own workouts.
+    ///
+    /// Not optimistic and not silent: the name it lands under is not always
+    /// the one on the post, so there is something to say afterwards that only
+    /// the server knows.
+    func saveWorkout(from post: FeedPost) async {
+        guard let repository, !savingWorkoutFor.contains(post.id) else { return }
+        let generation = connectionGeneration
+        savingWorkoutFor.insert(post.id)
+        defer {
+            if connectionGeneration == generation {
+                savingWorkoutFor.remove(post.id)
+            }
+        }
+
+        do {
+            let outcome = try await repository.saveWorkout(fromPost: post.id)
+            guard connectionGeneration == generation else { return }
+            lastSavedWorkout = outcome
         } catch {
             guard connectionGeneration == generation else { return }
             errorMessage = error.localizedDescription
@@ -417,7 +454,27 @@ extension SocialStore {
             totalSetCount: 18,
             totalVolumeKg: 4_820,
             routeDistanceKm: nil,
-            exercises: []
+            exercises: [
+                PostExerciseLine(id: 1, name: "Bench Press", setCount: 4, topSetWeightKg: 100, topSetReps: 5),
+                PostExerciseLine(id: 2, name: "Overhead Press", setCount: 4, topSetWeightKg: 60, topSetReps: 8),
+                PostExerciseLine(id: 3, name: "Incline Dumbbell", setCount: 3, topSetWeightKg: 34, topSetReps: 10),
+            ]
+        )
+        /// The same shape of session posted with the load held back: sets and
+        /// reps survive, the weights and the volume do not.
+        let quiet = PostWorkoutSnapshot(
+            title: "Quiet Day",
+            workoutType: "lifting",
+            performedAt: Date().addingTimeInterval(-60 * 60 * 50),
+            durationSeconds: 3_000,
+            exerciseCount: 2,
+            totalSetCount: 8,
+            totalVolumeKg: nil,
+            routeDistanceKm: nil,
+            exercises: [
+                PostExerciseLine(id: 4, name: "Bench Press", setCount: 4, topSetWeightKg: nil, topSetReps: 5),
+                PostExerciseLine(id: 5, name: "Overhead Press", setCount: 4, topSetWeightKg: nil, topSetReps: 8),
+            ]
         )
         let run = PostWorkoutSnapshot(
             title: "Morning Run",
@@ -439,10 +496,25 @@ extension SocialStore {
             viewerFollowsAuthor: true, sourceID: nil,
             workout: push, meal: nil, planner: nil,
             likeCount: 12, commentCount: 3, repostCount: 2,
-            viewerHasLiked: true, viewerHasReposted: false, repostOf: nil
+            viewerHasLiked: true, viewerHasReposted: false,
+            // Somebody else's, so it offers its workout.
+            showsWeights: true, viewerIsAuthor: false, repostOf: nil
         )
         store.feed = [
             original,
+            // Weights held back. The rows read "4 × 5" with no load, there is
+            // no "kg lifted" figure, and the workout is still worth saving.
+            FeedPost(
+                id: 4, author: mara, kind: .workout,
+                caption: "Kept the numbers to myself today.",
+                imageURL: nil, visibility: .publicToAll,
+                createdAt: Date().addingTimeInterval(-60 * 60 * 50),
+                viewerFollowsAuthor: true, sourceID: nil,
+                workout: quiet, meal: nil, planner: nil,
+                likeCount: 3, commentCount: 0, repostCount: 0,
+                viewerHasLiked: false, viewerHasReposted: false,
+                showsWeights: false, viewerIsAuthor: false, repostOf: nil
+            ),
             FeedPost(
                 id: 2, author: mara, kind: .workout, caption: "",
                 imageURL: nil, visibility: .publicToAll,

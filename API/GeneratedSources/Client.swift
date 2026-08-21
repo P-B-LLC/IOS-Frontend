@@ -8533,6 +8533,68 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// Copy a posted workout into your own workouts. The exercises and their set counts are taken; weights are not, because a workout you save is a plan to follow rather than a record of somebody else's session.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/save-workout/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-workout//post(social_posts_save_workout_create)`.
+    public func socialPostsSaveWorkoutCreate(_ input: Operations.SocialPostsSaveWorkoutCreate.Input) async throws -> Operations.SocialPostsSaveWorkoutCreate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SocialPostsSaveWorkoutCreate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/social/posts/{}/save-workout/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .post
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 201:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SocialPostsSaveWorkoutCreate.Output.Created.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.SavedWorkoutResult.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .created(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
     /// Steps as Health reported them. Read here, written only by ``record``.
     ///
     /// - Remark: HTTP `GET /api/v1/step-counts/`.

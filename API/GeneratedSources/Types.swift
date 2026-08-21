@@ -786,6 +786,11 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/repost/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/repost//delete(social_posts_repost_destroy)`.
     func socialPostsRepostDestroy(_ input: Operations.SocialPostsRepostDestroy.Input) async throws -> Operations.SocialPostsRepostDestroy.Output
+    /// Copy a posted workout into your own workouts. The exercises and their set counts are taken; weights are not, because a workout you save is a plan to follow rather than a record of somebody else's session.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/save-workout/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-workout//post(social_posts_save_workout_create)`.
+    func socialPostsSaveWorkoutCreate(_ input: Operations.SocialPostsSaveWorkoutCreate.Input) async throws -> Operations.SocialPostsSaveWorkoutCreate.Output
     /// Steps as Health reported them. Read here, written only by ``record``.
     ///
     /// - Remark: HTTP `GET /api/v1/step-counts/`.
@@ -2620,6 +2625,19 @@ extension APIProtocol {
             headers: headers
         ))
     }
+    /// Copy a posted workout into your own workouts. The exercises and their set counts are taken; weights are not, because a workout you save is a plan to follow rather than a record of somebody else's session.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/save-workout/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-workout//post(social_posts_save_workout_create)`.
+    public func socialPostsSaveWorkoutCreate(
+        path: Operations.SocialPostsSaveWorkoutCreate.Input.Path,
+        headers: Operations.SocialPostsSaveWorkoutCreate.Input.Headers = .init()
+    ) async throws -> Operations.SocialPostsSaveWorkoutCreate.Output {
+        try await socialPostsSaveWorkoutCreate(Operations.SocialPostsSaveWorkoutCreate.Input(
+            path: path,
+            headers: headers
+        ))
+    }
     /// Steps as Health reported them. Read here, written only by ``record``.
     ///
     /// - Remark: HTTP `GET /api/v1/step-counts/`.
@@ -3211,6 +3229,8 @@ public enum Components {
             public var sourceId: Swift.Int
             /// - Remark: Generated from `#/components/schemas/CreatePostRequest/caption`.
             public var caption: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/CreatePostRequest/shows_weights`.
+            public var showsWeights: Swift.Bool?
             /// - Remark: Generated from `#/components/schemas/CreatePostRequest/visibility`.
             public struct VisibilityPayload: Codable, Hashable, Sendable {
                 /// - Remark: Generated from `#/components/schemas/CreatePostRequest/visibility/value1`.
@@ -3243,6 +3263,7 @@ public enum Components {
             ///   - kind:
             ///   - sourceId:
             ///   - caption:
+            ///   - showsWeights:
             ///   - visibility:
             ///   - contentType:
             ///   - imageBase64: The image bytes, base64 encoded, without a data: prefix.
@@ -3250,6 +3271,7 @@ public enum Components {
                 kind: Components.Schemas.CreatePostKindEnum,
                 sourceId: Swift.Int,
                 caption: Swift.String? = nil,
+                showsWeights: Swift.Bool? = nil,
                 visibility: Components.Schemas.CreatePostRequest.VisibilityPayload? = nil,
                 contentType: Components.Schemas.ContentTypeEnum? = nil,
                 imageBase64: Swift.String? = nil
@@ -3257,6 +3279,7 @@ public enum Components {
                 self.kind = kind
                 self.sourceId = sourceId
                 self.caption = caption
+                self.showsWeights = showsWeights
                 self.visibility = visibility
                 self.contentType = contentType
                 self.imageBase64 = imageBase64
@@ -3265,6 +3288,7 @@ public enum Components {
                 case kind
                 case sourceId = "source_id"
                 case caption
+                case showsWeights = "shows_weights"
                 case visibility
                 case contentType = "content_type"
                 case imageBase64 = "image_base64"
@@ -6368,6 +6392,10 @@ public enum Components {
             public var sourceId: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/Post/viewer_follows_author`.
             public var viewerFollowsAuthor: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/Post/shows_weights`.
+            public var showsWeights: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/Post/viewer_is_author`.
+            public var viewerIsAuthor: Swift.Bool
             /// - Remark: Generated from `#/components/schemas/Post/like_count`.
             public var likeCount: Swift.Int
             /// - Remark: Generated from `#/components/schemas/Post/comment_count`.
@@ -6416,6 +6444,8 @@ public enum Components {
             ///   - planner:
             ///   - sourceId:
             ///   - viewerFollowsAuthor:
+            ///   - showsWeights:
+            ///   - viewerIsAuthor:
             ///   - likeCount:
             ///   - commentCount:
             ///   - repostCount:
@@ -6436,6 +6466,8 @@ public enum Components {
                 planner: Components.Schemas.Post.PlannerPayload? = nil,
                 sourceId: Swift.Int? = nil,
                 viewerFollowsAuthor: Swift.Bool,
+                showsWeights: Swift.Bool,
+                viewerIsAuthor: Swift.Bool,
                 likeCount: Swift.Int,
                 commentCount: Swift.Int,
                 repostCount: Swift.Int,
@@ -6456,6 +6488,8 @@ public enum Components {
                 self.planner = planner
                 self.sourceId = sourceId
                 self.viewerFollowsAuthor = viewerFollowsAuthor
+                self.showsWeights = showsWeights
+                self.viewerIsAuthor = viewerIsAuthor
                 self.likeCount = likeCount
                 self.commentCount = commentCount
                 self.repostCount = repostCount
@@ -6477,6 +6511,8 @@ public enum Components {
                 case planner
                 case sourceId = "source_id"
                 case viewerFollowsAuthor = "viewer_follows_author"
+                case showsWeights = "shows_weights"
+                case viewerIsAuthor = "viewer_is_author"
                 case likeCount = "like_count"
                 case commentCount = "comment_count"
                 case repostCount = "repost_count"
@@ -7900,6 +7936,47 @@ public enum Components {
             public enum CodingKeys: String, CodingKey {
                 case name
                 case ingredients
+            }
+        }
+        /// What saving somebody else's posted workout produced.
+        ///
+        /// The name is returned because it is not always the one on the post: a user
+        /// who already has a "Push Day" gets the copy under a name saying where it
+        /// came from, and the app has to be able to tell them so.
+        ///
+        /// - Remark: Generated from `#/components/schemas/SavedWorkoutResult`.
+        public struct SavedWorkoutResult: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SavedWorkoutResult/workout`.
+            public var workout: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SavedWorkoutResult/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SavedWorkoutResult/exercise_count`.
+            public var exerciseCount: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/SavedWorkoutResult/renamed`.
+            public var renamed: Swift.Bool
+            /// Creates a new `SavedWorkoutResult`.
+            ///
+            /// - Parameters:
+            ///   - workout:
+            ///   - name:
+            ///   - exerciseCount:
+            ///   - renamed:
+            public init(
+                workout: Swift.String,
+                name: Swift.String,
+                exerciseCount: Swift.Int,
+                renamed: Swift.Bool
+            ) {
+                self.workout = workout
+                self.name = name
+                self.exerciseCount = exerciseCount
+                self.renamed = renamed
+            }
+            public enum CodingKeys: String, CodingKey {
+                case workout
+                case name
+                case exerciseCount = "exercise_count"
+                case renamed
             }
         }
         /// A cardio finisher performed after a session's exercises.
@@ -25410,6 +25487,136 @@ public enum Operations {
                     default:
                         try throwUnexpectedResponseStatus(
                             expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Copy a posted workout into your own workouts. The exercises and their set counts are taken; weights are not, because a workout you save is a plan to follow rather than a record of somebody else's session.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/save-workout/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-workout//post(social_posts_save_workout_create)`.
+    public enum SocialPostsSaveWorkoutCreate {
+        public static let id: Swift.String = "social_posts_save_workout_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-workout/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this post.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-workout/POST/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this post.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialPostsSaveWorkoutCreate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-workout/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsSaveWorkoutCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsSaveWorkoutCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialPostsSaveWorkoutCreate.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.SocialPostsSaveWorkoutCreate.Input.Path,
+                headers: Operations.SocialPostsSaveWorkoutCreate.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Created: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-workout/POST/responses/201/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-workout/POST/responses/201/content/application\/json`.
+                    case json(Components.Schemas.SavedWorkoutResult)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.SavedWorkoutResult {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialPostsSaveWorkoutCreate.Output.Created.Body
+                /// Creates a new `Created`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialPostsSaveWorkoutCreate.Output.Created.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-workout//post(social_posts_save_workout_create)/responses/201`.
+            ///
+            /// HTTP response code: `201 created`.
+            case created(Operations.SocialPostsSaveWorkoutCreate.Output.Created)
+            /// The associated value of the enum case if `self` is `.created`.
+            ///
+            /// - Throws: An error if `self` is not `.created`.
+            /// - SeeAlso: `.created`.
+            public var created: Operations.SocialPostsSaveWorkoutCreate.Output.Created {
+                get throws {
+                    switch self {
+                    case let .created(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "created",
                             response: self
                         )
                     }

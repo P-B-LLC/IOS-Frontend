@@ -3728,6 +3728,31 @@ paths:
               schema:
                 $ref: '#/components/schemas/Post'
           description: ''
+  /api/v1/social/posts/{id}/save-workout/:
+    post:
+      operationId: social_posts_save_workout_create
+      description: Copy a posted workout into your own workouts. The exercises and
+        their set counts are taken; weights are not, because a workout you save is
+        a plan to follow rather than a record of somebody else's session.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this post.
+        required: true
+      tags:
+      - social
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SavedWorkoutResult'
+          description: ''
   /api/v1/step-counts/:
     get:
       operationId: step_counts_list
@@ -4495,6 +4520,9 @@ components:
           type: string
           default: ''
           maxLength: 300
+        shows_weights:
+          type: boolean
+          default: true
         visibility:
           allOf:
           - $ref: '#/components/schemas/VisibilityEnum'
@@ -6344,6 +6372,12 @@ components:
         viewer_follows_author:
           type: boolean
           readOnly: true
+        shows_weights:
+          type: boolean
+          readOnly: true
+        viewer_is_author:
+          type: boolean
+          readOnly: true
         like_count:
           type: integer
           readOnly: true
@@ -6385,11 +6419,13 @@ components:
       - planner
       - repost_count
       - repost_of
+      - shows_weights
       - source_id
       - updated_at
       - viewer_follows_author
       - viewer_has_liked
       - viewer_has_reposted
+      - viewer_is_author
       - visibility
       - workout
     PostComment:
@@ -7302,6 +7338,32 @@ components:
       required:
       - ingredients
       - name
+    SavedWorkoutResult:
+      type: object
+      description: |-
+        What saving somebody else's posted workout produced.
+
+        The name is returned because it is not always the one on the post: a user
+        who already has a "Push Day" gets the copy under a name saying where it
+        came from, and the app has to be able to tell them so.
+      properties:
+        workout:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        exercise_count:
+          type: integer
+          readOnly: true
+        renamed:
+          type: boolean
+          readOnly: true
+      required:
+      - exercise_count
+      - name
+      - renamed
+      - workout
     SessionCardioRequest:
       type: object
       description: A cardio finisher performed after a session's exercises.

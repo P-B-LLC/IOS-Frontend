@@ -69,6 +69,17 @@ struct SocialFeedView: View {
                     notice(message, symbol: "exclamationmark.triangle.fill", timeOfDay: timeOfDay)
                 }
 
+                // Said rather than assumed: the name a saved workout lands
+                // under is not always the one on the post.
+                if let saved = store.lastSavedWorkout {
+                    notice(
+                        saved.message,
+                        symbol: "checkmark.circle.fill",
+                        timeOfDay: timeOfDay
+                    )
+                    .onTapGesture { store.lastSavedWorkout = nil }
+                }
+
                 if store.isLoading && store.feed.isEmpty {
                     ProgressView().padding(.top, 40)
                 } else if store.feed.isEmpty {
@@ -201,6 +212,8 @@ struct SocialFeedView: View {
 /// `kind`, so a post whose kind this build does not know still draws whatever
 /// of it is recognisable.
 struct PostCard: View {
+    @Environment(SocialStore.self) private var store
+
     let post: FeedPost
     let timeOfDay: HomeTimeOfDay
     /// Opens the thread. Nil on the detail page, where the card is already
@@ -370,7 +383,39 @@ struct PostCard: View {
                 }
                 .padding(.top, 2)
             }
+
+            if post.offersWorkoutToSave {
+                saveWorkoutButton
+            }
         }
+    }
+
+    /// Takes the workout into your own. Offered only on somebody else's post:
+    /// your own is already in your workouts.
+    @ViewBuilder
+    private var saveWorkoutButton: some View {
+        let isSaving = store.isSavingWorkout(from: post.id)
+        Button {
+            Task { await store.saveWorkout(from: post) }
+        } label: {
+            HStack(spacing: 6) {
+                if isSaving {
+                    ProgressView().controlSize(.mini)
+                } else {
+                    Image(systemName: "square.and.arrow.down")
+                        .font(.system(size: 12, weight: .semibold))
+                }
+                Text("Save workout")
+                    .font(.caption.weight(.semibold))
+            }
+            .foregroundStyle(timeOfDay.accent)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(timeOfDay.accent.opacity(0.12), in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .disabled(isSaving)
+        .padding(.top, 4)
     }
 
     private func mealBody(_ meal: PostMealSnapshot) -> some View {
@@ -452,9 +497,14 @@ struct PostCard: View {
         }
     }
 
+    /// Reps without a load still say something, so they are printed on their
+    /// own rather than collapsing to a bare set count. Which is the point of
+    /// posting without weights: "4 × 5" is what was done, and it is the load
+    /// people hold back, not the count.
     private static func setSummary(_ line: PostExerciseLine) -> String {
-        guard let weight = line.topSetWeightKg, let reps = line.topSetReps else {
-            return "\(line.setCount) sets"
+        guard let reps = line.topSetReps else { return "\(line.setCount) sets" }
+        guard let weight = line.topSetWeightKg else {
+            return "\(line.setCount) × \(reps)"
         }
         return "\(line.setCount) × \(reps) @ \(weight.nutritionText) kg"
     }

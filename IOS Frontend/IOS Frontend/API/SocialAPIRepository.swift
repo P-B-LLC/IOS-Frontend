@@ -74,6 +74,7 @@ actor SocialAPIRepository {
         sourceID: Int,
         caption: String,
         visibility: PostVisibility,
+        showsWeights: Bool = true,
         photo: PostPhoto? = nil
     ) async throws -> FeedPost {
         guard let kindPayload = Components.Schemas.CreatePostKindEnum(
@@ -103,6 +104,7 @@ actor SocialAPIRepository {
                     kind: kindPayload,
                     sourceId: sourceID,
                     caption: caption,
+                    showsWeights: showsWeights,
                     visibility: .init(value1: visibilityPayload),
                     contentType: contentType,
                     imageBase64: photo?.base64
@@ -203,6 +205,29 @@ actor SocialAPIRepository {
         switch try await client.socialPostsRepostDestroy(path: .init(id: postID)) {
         case .ok(let response):
             return Self.post(from: try response.body.json)
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// Copies a posted workout into the reader's own workouts.
+    ///
+    /// Exercises and their set counts, not weights: what is saved is a plan to
+    /// follow, not a record of somebody else's session. The name comes back
+    /// because it is not always the one on the post — a copy of a workout you
+    /// already have is named after who it came from.
+    func saveWorkout(fromPost postID: Int) async throws -> SavedWorkoutOutcome {
+        let output = try await client.socialPostsSaveWorkoutCreate(
+            path: .init(id: postID)
+        )
+        switch output {
+        case .created(let response):
+            let result = try response.body.json
+            return SavedWorkoutOutcome(
+                name: result.name,
+                exerciseCount: result.exerciseCount,
+                wasRenamed: result.renamed
+            )
         case .undocumented(let statusCode, _):
             throw APIServiceError.undocumentedStatus(statusCode)
         }
@@ -325,6 +350,8 @@ actor SocialAPIRepository {
             repostCount: payload.repostCount,
             viewerHasLiked: payload.viewerHasLiked,
             viewerHasReposted: payload.viewerHasReposted,
+            showsWeights: payload.showsWeights,
+            viewerIsAuthor: payload.viewerIsAuthor,
             repostOf: payload.repostOf.map { reposted(from: $0.value1) }
         )
     }
