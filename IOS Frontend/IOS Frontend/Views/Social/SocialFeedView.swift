@@ -170,9 +170,9 @@ struct PostCard: View {
                 unsupportedBody
             }
         }
-        .padding(14)
+        .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .repbaseDepthSurface(cornerRadius: RepbaseDesign.featureRadius)
+        .overlay(alignment: .bottom) { Divider() }
     }
 
     /// The author's photo, above the numbers it was posted with.

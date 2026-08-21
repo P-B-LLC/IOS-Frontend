@@ -408,30 +408,9 @@ private struct CalorieGoalCard: View {
                         .font(.headline)
                 }
                 Spacer()
-                Image(systemName: "ellipsis")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(phase.usesDarkAppearance ? RepbasePalette.cream : RepbaseDesign.ink)
-                    .frame(width: 32, height: 32)
-                    .background(Color.primary.opacity(0.045), in: Circle())
             }
 
             ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [phase.surfaceStart, phase.surfaceEnd],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .shadow(color: phase.shadow, radius: 16, x: 0, y: 10)
-                    .shadow(
-                        color: Color.white.opacity(phase.usesDarkAppearance ? 0.04 : 0.9),
-                        radius: 3,
-                        x: 0,
-                        y: -2
-                    )
-
                 ForEach(0..<48, id: \.self) { index in
                     Capsule()
                         .fill(index == progressTick ? RepbaseDesign.accent : phase.primaryText.opacity(index.isMultiple(of: 4) ? 0.62 : 0.22))
@@ -474,7 +453,8 @@ private struct CalorieGoalCard: View {
                 dialStat(title: "Foods", value: "\(loggedFoodCount)")
             }
         }
-        .repbaseCard(contentPadding: 18, cornerRadius: RepbaseDesign.featureRadius)
+        .padding(.vertical, 16)
+        .overlay(alignment: .bottom) { Divider() }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Calories, \(value.nutritionText) of \(goal.nutritionText), \(remaining.nutritionText) remaining")
     }
@@ -527,7 +507,8 @@ private struct MacroGoalCard: View {
             .frame(height: 5)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .repbaseCard(contentPadding: 12, cornerRadius: 17)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 10)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(title), \(value.nutritionText) of \(goal.nutritionText) grams")
     }

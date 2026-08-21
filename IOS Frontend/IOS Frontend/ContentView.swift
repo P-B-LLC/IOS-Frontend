@@ -168,8 +168,8 @@ private struct WeeklyTargetCard: View {
             }
             .frame(height: 18)
         }
-        .padding(16)
-        .repbaseDepthSurface(cornerRadius: RepbaseDesign.featureRadius)
+        .padding(.vertical, 16)
+        .overlay(alignment: .bottom) { Divider() }
     }
 
     private var planned: Int { Weekday.allCases.reduce(0) { $0 + store.workouts(on: $1).count } }

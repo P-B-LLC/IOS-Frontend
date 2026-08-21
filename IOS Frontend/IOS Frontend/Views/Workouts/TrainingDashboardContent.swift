@@ -212,7 +212,8 @@ struct TrainingDashboardContent: View {
             )
         }
         .padding(.vertical, 17)
-        .dashboardSurface(radius: 21)
+        .overlay(alignment: .top) { Divider() }
+        .overlay(alignment: .bottom) { Divider() }
     }
 
     private func metric(eyebrow: String, value: String, detail: String, color: Color) -> some View {
@@ -254,9 +255,7 @@ struct TrainingDashboardContent: View {
                 Spacer()
                 Label(metrics.trendLabel, systemImage: metrics.trendSymbol)
                     .font(.caption2.weight(.semibold))
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 7)
-                    .background(RepbasePalette.oatmeal, in: Capsule())
+                    .foregroundStyle(phase.secondaryText)
             }
 
             HStack(alignment: .bottom, spacing: 12) {
@@ -280,8 +279,8 @@ struct TrainingDashboardContent: View {
                 }
             }
         }
-        .padding(18)
-        .dashboardSurface(radius: 22)
+        .padding(.vertical, 18)
+        .overlay(alignment: .bottom) { Divider() }
     }
 
     private var milestoneCard: some View {
@@ -304,8 +303,7 @@ struct TrainingDashboardContent: View {
                     .foregroundStyle(phase.secondaryText)
             }
         }
-        .padding(16)
-        .background(RepbasePalette.oatmeal, in: RoundedRectangle(cornerRadius: 19, style: .continuous))
+        .padding(.vertical, 14)
     }
 
     private func errorCard(_ message: String) -> some View {

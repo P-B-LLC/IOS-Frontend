@@ -65,9 +65,6 @@ struct StepsWidget: View {
                 Text("\(goal / 1_000)K GOAL")
                     .font(.system(size: 9, weight: .bold))
                     .foregroundStyle(RepbaseDesign.success)
-                    .padding(.horizontal, 10)
-                    .frame(height: 28)
-                    .background(RepbasePalette.paper, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
 
             GeometryReader { proxy in
@@ -102,10 +99,7 @@ struct StepsWidget: View {
         .padding(.horizontal, 18)
         .padding(.top, 15)
         .padding(.bottom, 14)
-        .background(
-            Color(hex: 0xDDE8E1),
-            in: RoundedRectangle(cornerRadius: 24, style: .continuous)
-        )
+        .overlay(alignment: .bottom) { Divider() }
         .task { await store.refresh() }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(steps.formatted(.number)) steps today, \(progress.formatted(.percent)) of goal")
