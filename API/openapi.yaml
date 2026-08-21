@@ -3283,6 +3283,165 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/social/comments/:
+    get:
+      operationId: social_comments_list
+      description: |-
+        Comments on a post.
+
+        Reading is governed by the post, not by the comment: if you may see the
+        post you may read what people said about it, and if you may not, its
+        comments are a 404 for the same reason the post is. Writing and deleting
+        belong to the comment's own author.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: post
+        schema:
+          type: integer
+        description: Only comments on this post.
+      tags:
+      - social
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPostCommentList'
+          description: ''
+    post:
+      operationId: social_comments_create
+      description: |-
+        Comments on a post.
+
+        Reading is governed by the post, not by the comment: if you may see the
+        post you may read what people said about it, and if you may not, its
+        comments are a 404 for the same reason the post is. Writing and deleting
+        belong to the comment's own author.
+      tags:
+      - social
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostCommentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PostCommentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PostCommentRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostComment'
+          description: ''
+  /api/v1/social/comments/{id}/:
+    get:
+      operationId: social_comments_retrieve
+      description: |-
+        Comments on a post.
+
+        Reading is governed by the post, not by the comment: if you may see the
+        post you may read what people said about it, and if you may not, its
+        comments are a 404 for the same reason the post is. Writing and deleting
+        belong to the comment's own author.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this post comment.
+        required: true
+      tags:
+      - social
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostComment'
+          description: ''
+    patch:
+      operationId: social_comments_partial_update
+      description: |-
+        Comments on a post.
+
+        Reading is governed by the post, not by the comment: if you may see the
+        post you may read what people said about it, and if you may not, its
+        comments are a 404 for the same reason the post is. Writing and deleting
+        belong to the comment's own author.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this post comment.
+        required: true
+      tags:
+      - social
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPostCommentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPostCommentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPostCommentRequest'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostComment'
+          description: ''
+    delete:
+      operationId: social_comments_destroy
+      description: |-
+        Comments on a post.
+
+        Reading is governed by the post, not by the comment: if you may see the
+        post you may read what people said about it, and if you may not, its
+        comments are a 404 for the same reason the post is. Writing and deleting
+        belong to the comment's own author.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this post comment.
+        required: true
+      tags:
+      - social
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/social/feed/:
     get:
       operationId: social_feed_list
@@ -3478,6 +3637,97 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/social/posts/{id}/like/:
+    post:
+      operationId: social_posts_like_create
+      description: Like this post.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this post.
+        required: true
+      tags:
+      - social
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+          description: ''
+    delete:
+      operationId: social_posts_like_destroy
+      description: Remove your like. Answers with the post, not 204.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this post.
+        required: true
+      tags:
+      - social
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+          description: ''
+  /api/v1/social/posts/{id}/repost/:
+    post:
+      operationId: social_posts_repost_create
+      description: Pass this post on to your followers. Reposting a repost passes
+        on the original, and the original is what comes back.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this post.
+        required: true
+      tags:
+      - social
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+          description: ''
+    delete:
+      operationId: social_posts_repost_destroy
+      description: Withdraw your repost. Answers with the post, not 204.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this post.
+        required: true
+      tags:
+      - social
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+          description: ''
   /api/v1/step-counts/:
     get:
       operationId: step_counts_list
@@ -4219,11 +4469,13 @@ components:
       - workout
       - meal
       - planner
+      - repost
       type: string
       description: |-
         * `workout` - Workout
         * `meal` - Meal
         * `planner` - Planner
+        * `repost` - Repost
     CreatePostRequest:
       type: object
       description: |-
@@ -5142,6 +5394,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PlannerEntry'
+    PaginatedPostCommentList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PostComment'
     PaginatedPostList:
       type: object
       required:
@@ -5589,6 +5864,24 @@ components:
         notes:
           type: string
           maxLength: 300
+    PatchedPostCommentRequest:
+      type: object
+      description: |-
+        A comment, and the replies hanging off it.
+
+        `replies` is filled only for a top-level comment, and is never more than
+        one deep because the model refuses a reply to a reply. The client can
+        therefore render a thread without walking anything.
+      properties:
+        post:
+          type: integer
+        parent:
+          type: integer
+          nullable: true
+        body:
+          type: string
+          minLength: 1
+          maxLength: 1000
     PatchedRepbaseUserRequest:
       type: object
       properties:
@@ -6051,6 +6344,26 @@ components:
         viewer_follows_author:
           type: boolean
           readOnly: true
+        like_count:
+          type: integer
+          readOnly: true
+        comment_count:
+          type: integer
+          readOnly: true
+        repost_count:
+          type: integer
+          readOnly: true
+        viewer_has_liked:
+          type: boolean
+          readOnly: true
+        viewer_has_reposted:
+          type: boolean
+          readOnly: true
+        repost_of:
+          allOf:
+          - $ref: '#/components/schemas/RepostedPost'
+          nullable: true
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -6062,17 +6375,93 @@ components:
       required:
       - author
       - caption
+      - comment_count
       - created_at
       - id
       - image_url
       - kind
+      - like_count
       - meal
       - planner
+      - repost_count
+      - repost_of
       - source_id
       - updated_at
       - viewer_follows_author
+      - viewer_has_liked
+      - viewer_has_reposted
       - visibility
       - workout
+    PostComment:
+      type: object
+      description: |-
+        A comment, and the replies hanging off it.
+
+        `replies` is filled only for a top-level comment, and is never more than
+        one deep because the model refuses a reply to a reply. The client can
+        therefore render a thread without walking anything.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        post:
+          type: integer
+        author:
+          allOf:
+          - $ref: '#/components/schemas/PublicRepbaseUser'
+          readOnly: true
+        parent:
+          type: integer
+          nullable: true
+        body:
+          type: string
+          maxLength: 1000
+        replies:
+          type: array
+          items:
+            $ref: '#/components/schemas/PostReply'
+          readOnly: true
+        viewer_is_author:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - author
+      - body
+      - created_at
+      - id
+      - post
+      - replies
+      - updated_at
+      - viewer_is_author
+    PostCommentRequest:
+      type: object
+      description: |-
+        A comment, and the replies hanging off it.
+
+        `replies` is filled only for a top-level comment, and is never more than
+        one deep because the model refuses a reply to a reply. The client can
+        therefore render a thread without walking anything.
+      properties:
+        post:
+          type: integer
+        parent:
+          type: integer
+          nullable: true
+        body:
+          type: string
+          minLength: 1
+          maxLength: 1000
+      required:
+      - body
+      - post
     PostMeal:
       type: object
       description: |-
@@ -6227,6 +6616,53 @@ components:
       - scheduled_date
       - scheduled_time
       - title
+    PostReply:
+      type: object
+      description: |-
+        A reply, as it appears nested under the comment it answers.
+
+        The same fields as a comment without `replies`, because a reply cannot
+        have any -- the model refuses a reply to a reply. Kept a separate class so
+        the contract can name the type instead of describing an array of anonymous
+        objects, which is what a self-referential field generates.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        post:
+          type: integer
+          readOnly: true
+        author:
+          allOf:
+          - $ref: '#/components/schemas/PublicRepbaseUser'
+          readOnly: true
+        parent:
+          type: integer
+          readOnly: true
+          nullable: true
+        body:
+          type: string
+          readOnly: true
+        viewer_is_author:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - author
+      - body
+      - created_at
+      - id
+      - parent
+      - post
+      - updated_at
+      - viewer_is_author
     PostWorkout:
       type: object
       description: |-
@@ -6692,6 +7128,62 @@ components:
       - first_name
       - last_name
       - username
+    RepostedPost:
+      type: object
+      description: |-
+        The original, as it appears inside a repost.
+
+        Deliberately not `PostSerializer`. That one carries `repost_of`, and a
+        serializer that contains itself is a schema no generator can express and a
+        depth no reader wants. A repost cannot be reposted, so one level is all
+        there is to show.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        author:
+          allOf:
+          - $ref: '#/components/schemas/PublicRepbaseUser'
+          readOnly: true
+        kind:
+          type: string
+          readOnly: true
+        image_url:
+          type: string
+          nullable: true
+          readOnly: true
+        caption:
+          type: string
+          readOnly: true
+        workout:
+          allOf:
+          - $ref: '#/components/schemas/PostWorkout'
+          readOnly: true
+          nullable: true
+        meal:
+          allOf:
+          - $ref: '#/components/schemas/PostMeal'
+          readOnly: true
+          nullable: true
+        planner:
+          allOf:
+          - $ref: '#/components/schemas/PostPlannerEntry'
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - author
+      - caption
+      - created_at
+      - id
+      - image_url
+      - kind
+      - meal
+      - planner
+      - workout
     SavedFoodIngredient:
       type: object
       properties:

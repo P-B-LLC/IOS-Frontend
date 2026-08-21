@@ -10,6 +10,8 @@ import SwiftUI
 struct SocialFeedView: View {
     @Environment(SocialStore.self) private var store
     @State private var isComposing = false
+    /// The post whose thread is open, if one is.
+    @State private var opened: Int?
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
@@ -32,7 +34,17 @@ struct SocialFeedView: View {
                     emptyState(timeOfDay: timeOfDay)
                 } else {
                     ForEach(store.feed) { post in
-                        PostCard(post: post, timeOfDay: timeOfDay)
+                        // The card is not itself a button: the action bar
+                        // inside it has four of its own, and a button holding
+                        // buttons swallows their taps. A tap anywhere else
+                        // opens the post.
+                        PostCard(
+                            post: post,
+                            timeOfDay: timeOfDay,
+                            openComments: { opened = post.id }
+                        )
+                            .contentShape(Rectangle())
+                            .onTapGesture { opened = post.id }
                             .task {
                                 // The last card asks for the next page as it
                                 // comes into view, so the feed keeps going
@@ -58,6 +70,9 @@ struct SocialFeedView: View {
         .homeTimeScreen(timeOfDay)
         .sheet(isPresented: $isComposing) {
             PostComposerView()
+        }
+        .navigationDestination(item: $opened) { id in
+            PostDetailView(postID: id)
         }
     }
 
@@ -144,35 +159,61 @@ struct SocialFeedView: View {
 struct PostCard: View {
     let post: FeedPost
     let timeOfDay: HomeTimeOfDay
+    /// Opens the thread. Nil on the detail page, where the card is already
+    /// the thing being read and must not push another copy of itself.
+    var openComments: (() -> Void)?
+
+    /// What is drawn: the original when this is a repost, itself otherwise.
+    /// The engagement figures always come from `post`.
+    private var shown: RepostedPost { post.displayed }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 11) {
+            if post.repostOf != nil {
+                repostHeader
+            }
+
             author
 
-            if let imageURL = post.imageURL {
+            if let imageURL = shown.imageURL {
                 photo(imageURL)
             }
 
-            if !post.caption.isEmpty {
-                Text(post.caption)
+            if !shown.caption.isEmpty {
+                Text(shown.caption)
                     .font(.subheadline)
                     .foregroundStyle(timeOfDay.primaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            if let workout = post.workout {
+            if let workout = shown.workout {
                 workoutBody(workout)
-            } else if let meal = post.meal {
+            } else if let meal = shown.meal {
                 mealBody(meal)
-            } else if let planner = post.planner {
+            } else if let planner = shown.planner {
                 plannerBody(planner)
             } else {
                 unsupportedBody
             }
+
+            PostActionBar(post: post, timeOfDay: timeOfDay, openComments: openComments)
         }
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .overlay(alignment: .bottom) { Divider() }
+    }
+
+    /// Who passed it on, above the post itself — so the name beside the
+    /// avatar stays the person who actually trained.
+    private var repostHeader: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "arrow.2.squarepath")
+                .font(.system(size: 11, weight: .semibold))
+            Text("\(post.author.displayName) reposted")
+                .font(.caption.weight(.semibold))
+                .lineLimit(1)
+        }
+        .foregroundStyle(timeOfDay.secondaryText)
     }
 
     /// The author's photo, above the numbers it was posted with.
@@ -201,19 +242,23 @@ struct PostCard: View {
         .clipShape(RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius))
     }
 
+    /// Whoever made the post being shown. On a repost that is the original
+    /// author, not the person passing it on — they are named in the line
+    /// above, and putting a reposter's name over someone else's training
+    /// would credit them with it.
     private var author: some View {
         HStack(spacing: 10) {
-            Text(post.author.initials)
+            Text(shown.author.initials)
                 .font(.system(size: 13, weight: .bold))
                 .foregroundStyle(Color.white)
                 .frame(width: 36, height: 36)
                 .background(timeOfDay.accent, in: Circle())
 
             VStack(alignment: .leading, spacing: 1) {
-                Text(post.author.displayName)
+                Text(shown.author.displayName)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(timeOfDay.primaryText)
-                Text("@\(post.author.username)")
+                Text("@" + shown.author.username)
                     .font(.caption2)
                     .foregroundStyle(timeOfDay.secondaryText)
             }
@@ -221,7 +266,7 @@ struct PostCard: View {
             Spacer()
 
             VStack(alignment: .trailing, spacing: 2) {
-                Text(post.createdAt, format: .relative(presentation: .named))
+                Text(shown.createdAt, format: .relative(presentation: .named))
                     .font(.caption2)
                     .foregroundStyle(timeOfDay.secondaryText)
                 if post.visibility != .publicToAll {

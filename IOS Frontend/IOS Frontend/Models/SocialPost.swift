@@ -18,6 +18,9 @@ nonisolated enum PostKind: Equatable, Hashable, Sendable {
     case workout
     case meal
     case planner
+    /// Someone else's post, passed on. The only kind carrying no snapshot of
+    /// its own: what it shows is the post it points at.
+    case repost
     case unknown(String)
 
     init(_ raw: String) {
@@ -25,6 +28,7 @@ nonisolated enum PostKind: Equatable, Hashable, Sendable {
         case "workout": self = .workout
         case "meal": self = .meal
         case "planner": self = .planner
+        case "repost": self = .repost
         default: self = .unknown(raw)
         }
     }
@@ -34,6 +38,7 @@ nonisolated enum PostKind: Equatable, Hashable, Sendable {
         case .workout: "workout"
         case .meal: "meal"
         case .planner: "planner"
+        case .repost: "repost"
         case .unknown(let raw): raw
         }
     }
@@ -153,6 +158,24 @@ nonisolated struct PostPhoto: Equatable, Hashable, Sendable {
     let base64: String
 }
 
+/// The post inside a repost.
+///
+/// A shape of its own rather than a `FeedPost` holding a `FeedPost`, which a
+/// struct cannot do. It carries no engagement figures because none are its
+/// own: liking a repost likes the repost, and the counts shown belong to
+/// whichever card is on screen.
+nonisolated struct RepostedPost: Equatable, Hashable, Sendable {
+    let id: Int
+    var author: PostAuthor
+    var kind: PostKind
+    var caption: String
+    var imageURL: URL?
+    var createdAt: Date
+    var workout: PostWorkoutSnapshot?
+    var meal: PostMealSnapshot?
+    var planner: PostPlannerSnapshot?
+}
+
 nonisolated struct FeedPost: Identifiable, Equatable, Hashable, Sendable {
     let id: Int
     var author: PostAuthor
@@ -169,8 +192,44 @@ nonisolated struct FeedPost: Identifiable, Equatable, Hashable, Sendable {
     var meal: PostMealSnapshot?
     var planner: PostPlannerSnapshot?
 
+    // What other people have done with it. Counted by the server, because a
+    // client only ever sees the page in front of it.
+    var likeCount: Int = 0
+    var commentCount: Int = 0
+    var repostCount: Int = 0
+    /// Whether the person reading has already done it, so the buttons can be
+    /// drawn in the right state on first paint.
+    var viewerHasLiked: Bool = false
+    var viewerHasReposted: Bool = false
+    /// The original, when this is a repost.
+    var repostOf: RepostedPost?
+
     /// Whether this build knows how to draw the post at all.
+    ///
+    /// A repost is drawable when the post underneath it is: it has no snapshot
+    /// of its own and never will.
     var isRenderable: Bool {
-        workout != nil || meal != nil || planner != nil
+        if let repostOf {
+            return repostOf.workout != nil
+                || repostOf.meal != nil
+                || repostOf.planner != nil
+        }
+        return workout != nil || meal != nil || planner != nil
+    }
+
+    /// What the card actually draws — the original for a repost, itself
+    /// otherwise. The engagement figures stay with `self` either way.
+    var displayed: RepostedPost {
+        repostOf ?? RepostedPost(
+            id: id,
+            author: author,
+            kind: kind,
+            caption: caption,
+            imageURL: imageURL,
+            createdAt: createdAt,
+            workout: workout,
+            meal: meal,
+            planner: planner
+        )
     }
 }

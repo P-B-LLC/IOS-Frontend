@@ -657,6 +657,56 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/social/blocks/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/social/blocks/{id}//delete(social_blocks_destroy)`.
     func socialBlocksDestroy(_ input: Operations.SocialBlocksDestroy.Input) async throws -> Operations.SocialBlocksDestroy.Output
+    /// Comments on a post.
+    ///
+    /// Reading is governed by the post, not by the comment: if you may see the
+    /// post you may read what people said about it, and if you may not, its
+    /// comments are a 404 for the same reason the post is. Writing and deleting
+    /// belong to the comment's own author.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/comments/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/comments//get(social_comments_list)`.
+    func socialCommentsList(_ input: Operations.SocialCommentsList.Input) async throws -> Operations.SocialCommentsList.Output
+    /// Comments on a post.
+    ///
+    /// Reading is governed by the post, not by the comment: if you may see the
+    /// post you may read what people said about it, and if you may not, its
+    /// comments are a 404 for the same reason the post is. Writing and deleting
+    /// belong to the comment's own author.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/comments/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/comments//post(social_comments_create)`.
+    func socialCommentsCreate(_ input: Operations.SocialCommentsCreate.Input) async throws -> Operations.SocialCommentsCreate.Output
+    /// Comments on a post.
+    ///
+    /// Reading is governed by the post, not by the comment: if you may see the
+    /// post you may read what people said about it, and if you may not, its
+    /// comments are a 404 for the same reason the post is. Writing and deleting
+    /// belong to the comment's own author.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/comments/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/comments/{id}//get(social_comments_retrieve)`.
+    func socialCommentsRetrieve(_ input: Operations.SocialCommentsRetrieve.Input) async throws -> Operations.SocialCommentsRetrieve.Output
+    /// Comments on a post.
+    ///
+    /// Reading is governed by the post, not by the comment: if you may see the
+    /// post you may read what people said about it, and if you may not, its
+    /// comments are a 404 for the same reason the post is. Writing and deleting
+    /// belong to the comment's own author.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/social/comments/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/comments/{id}//patch(social_comments_partial_update)`.
+    func socialCommentsPartialUpdate(_ input: Operations.SocialCommentsPartialUpdate.Input) async throws -> Operations.SocialCommentsPartialUpdate.Output
+    /// Comments on a post.
+    ///
+    /// Reading is governed by the post, not by the comment: if you may see the
+    /// post you may read what people said about it, and if you may not, its
+    /// comments are a 404 for the same reason the post is. Writing and deleting
+    /// belong to the comment's own author.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/comments/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/comments/{id}//delete(social_comments_destroy)`.
+    func socialCommentsDestroy(_ input: Operations.SocialCommentsDestroy.Input) async throws -> Operations.SocialCommentsDestroy.Output
     /// What the people you follow have posted, newest first.
     ///
     /// Fanned out on read: a page is one indexed walk over the posts of everyone
@@ -716,6 +766,26 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}//delete(social_posts_destroy)`.
     func socialPostsDestroy(_ input: Operations.SocialPostsDestroy.Input) async throws -> Operations.SocialPostsDestroy.Output
+    /// Like this post.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/like/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/like//post(social_posts_like_create)`.
+    func socialPostsLikeCreate(_ input: Operations.SocialPostsLikeCreate.Input) async throws -> Operations.SocialPostsLikeCreate.Output
+    /// Remove your like. Answers with the post, not 204.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/like/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/like//delete(social_posts_like_destroy)`.
+    func socialPostsLikeDestroy(_ input: Operations.SocialPostsLikeDestroy.Input) async throws -> Operations.SocialPostsLikeDestroy.Output
+    /// Pass this post on to your followers. Reposting a repost passes on the original, and the original is what comes back.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/repost/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/repost//post(social_posts_repost_create)`.
+    func socialPostsRepostCreate(_ input: Operations.SocialPostsRepostCreate.Input) async throws -> Operations.SocialPostsRepostCreate.Output
+    /// Withdraw your repost. Answers with the post, not 204.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/repost/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/repost//delete(social_posts_repost_destroy)`.
+    func socialPostsRepostDestroy(_ input: Operations.SocialPostsRepostDestroy.Input) async throws -> Operations.SocialPostsRepostDestroy.Output
     /// Steps as Health reported them. Read here, written only by ``record``.
     ///
     /// - Remark: HTTP `GET /api/v1/step-counts/`.
@@ -2309,6 +2379,92 @@ extension APIProtocol {
     public func socialBlocksDestroy(path: Operations.SocialBlocksDestroy.Input.Path) async throws -> Operations.SocialBlocksDestroy.Output {
         try await socialBlocksDestroy(Operations.SocialBlocksDestroy.Input(path: path))
     }
+    /// Comments on a post.
+    ///
+    /// Reading is governed by the post, not by the comment: if you may see the
+    /// post you may read what people said about it, and if you may not, its
+    /// comments are a 404 for the same reason the post is. Writing and deleting
+    /// belong to the comment's own author.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/comments/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/comments//get(social_comments_list)`.
+    public func socialCommentsList(
+        query: Operations.SocialCommentsList.Input.Query = .init(),
+        headers: Operations.SocialCommentsList.Input.Headers = .init()
+    ) async throws -> Operations.SocialCommentsList.Output {
+        try await socialCommentsList(Operations.SocialCommentsList.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Comments on a post.
+    ///
+    /// Reading is governed by the post, not by the comment: if you may see the
+    /// post you may read what people said about it, and if you may not, its
+    /// comments are a 404 for the same reason the post is. Writing and deleting
+    /// belong to the comment's own author.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/comments/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/comments//post(social_comments_create)`.
+    public func socialCommentsCreate(
+        headers: Operations.SocialCommentsCreate.Input.Headers = .init(),
+        body: Operations.SocialCommentsCreate.Input.Body
+    ) async throws -> Operations.SocialCommentsCreate.Output {
+        try await socialCommentsCreate(Operations.SocialCommentsCreate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Comments on a post.
+    ///
+    /// Reading is governed by the post, not by the comment: if you may see the
+    /// post you may read what people said about it, and if you may not, its
+    /// comments are a 404 for the same reason the post is. Writing and deleting
+    /// belong to the comment's own author.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/comments/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/comments/{id}//get(social_comments_retrieve)`.
+    public func socialCommentsRetrieve(
+        path: Operations.SocialCommentsRetrieve.Input.Path,
+        headers: Operations.SocialCommentsRetrieve.Input.Headers = .init()
+    ) async throws -> Operations.SocialCommentsRetrieve.Output {
+        try await socialCommentsRetrieve(Operations.SocialCommentsRetrieve.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Comments on a post.
+    ///
+    /// Reading is governed by the post, not by the comment: if you may see the
+    /// post you may read what people said about it, and if you may not, its
+    /// comments are a 404 for the same reason the post is. Writing and deleting
+    /// belong to the comment's own author.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/social/comments/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/comments/{id}//patch(social_comments_partial_update)`.
+    public func socialCommentsPartialUpdate(
+        path: Operations.SocialCommentsPartialUpdate.Input.Path,
+        headers: Operations.SocialCommentsPartialUpdate.Input.Headers = .init(),
+        body: Operations.SocialCommentsPartialUpdate.Input.Body? = nil
+    ) async throws -> Operations.SocialCommentsPartialUpdate.Output {
+        try await socialCommentsPartialUpdate(Operations.SocialCommentsPartialUpdate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Comments on a post.
+    ///
+    /// Reading is governed by the post, not by the comment: if you may see the
+    /// post you may read what people said about it, and if you may not, its
+    /// comments are a 404 for the same reason the post is. Writing and deleting
+    /// belong to the comment's own author.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/comments/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/comments/{id}//delete(social_comments_destroy)`.
+    public func socialCommentsDestroy(path: Operations.SocialCommentsDestroy.Input.Path) async throws -> Operations.SocialCommentsDestroy.Output {
+        try await socialCommentsDestroy(Operations.SocialCommentsDestroy.Input(path: path))
+    }
     /// What the people you follow have posted, newest first.
     ///
     /// Fanned out on read: a page is one indexed walk over the posts of everyone
@@ -2411,6 +2567,58 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}//delete(social_posts_destroy)`.
     public func socialPostsDestroy(path: Operations.SocialPostsDestroy.Input.Path) async throws -> Operations.SocialPostsDestroy.Output {
         try await socialPostsDestroy(Operations.SocialPostsDestroy.Input(path: path))
+    }
+    /// Like this post.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/like/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/like//post(social_posts_like_create)`.
+    public func socialPostsLikeCreate(
+        path: Operations.SocialPostsLikeCreate.Input.Path,
+        headers: Operations.SocialPostsLikeCreate.Input.Headers = .init()
+    ) async throws -> Operations.SocialPostsLikeCreate.Output {
+        try await socialPostsLikeCreate(Operations.SocialPostsLikeCreate.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Remove your like. Answers with the post, not 204.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/like/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/like//delete(social_posts_like_destroy)`.
+    public func socialPostsLikeDestroy(
+        path: Operations.SocialPostsLikeDestroy.Input.Path,
+        headers: Operations.SocialPostsLikeDestroy.Input.Headers = .init()
+    ) async throws -> Operations.SocialPostsLikeDestroy.Output {
+        try await socialPostsLikeDestroy(Operations.SocialPostsLikeDestroy.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Pass this post on to your followers. Reposting a repost passes on the original, and the original is what comes back.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/repost/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/repost//post(social_posts_repost_create)`.
+    public func socialPostsRepostCreate(
+        path: Operations.SocialPostsRepostCreate.Input.Path,
+        headers: Operations.SocialPostsRepostCreate.Input.Headers = .init()
+    ) async throws -> Operations.SocialPostsRepostCreate.Output {
+        try await socialPostsRepostCreate(Operations.SocialPostsRepostCreate.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Withdraw your repost. Answers with the post, not 204.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/repost/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/repost//delete(social_posts_repost_destroy)`.
+    public func socialPostsRepostDestroy(
+        path: Operations.SocialPostsRepostDestroy.Input.Path,
+        headers: Operations.SocialPostsRepostDestroy.Input.Headers = .init()
+    ) async throws -> Operations.SocialPostsRepostDestroy.Output {
+        try await socialPostsRepostDestroy(Operations.SocialPostsRepostDestroy.Input(
+            path: path,
+            headers: headers
+        ))
     }
     /// Steps as Health reported them. Read here, written only by ``record``.
     ///
@@ -2979,12 +3187,14 @@ public enum Components {
         /// * `workout` - Workout
         /// * `meal` - Meal
         /// * `planner` - Planner
+        /// * `repost` - Repost
         ///
         /// - Remark: Generated from `#/components/schemas/CreatePostKindEnum`.
         @frozen public enum CreatePostKindEnum: String, Codable, Hashable, Sendable, CaseIterable {
             case workout = "workout"
             case meal = "meal"
             case planner = "planner"
+            case repost = "repost"
         }
         /// What to post, and who may see it.
         ///
@@ -4423,6 +4633,41 @@ public enum Components {
                 case results
             }
         }
+        /// - Remark: Generated from `#/components/schemas/PaginatedPostCommentList`.
+        public struct PaginatedPostCommentList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PaginatedPostCommentList/count`.
+            public var count: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PaginatedPostCommentList/next`.
+            public var next: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedPostCommentList/previous`.
+            public var previous: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedPostCommentList/results`.
+            public var results: [Components.Schemas.PostComment]
+            /// Creates a new `PaginatedPostCommentList`.
+            ///
+            /// - Parameters:
+            ///   - count:
+            ///   - next:
+            ///   - previous:
+            ///   - results:
+            public init(
+                count: Swift.Int,
+                next: Swift.String? = nil,
+                previous: Swift.String? = nil,
+                results: [Components.Schemas.PostComment]
+            ) {
+                self.count = count
+                self.next = next
+                self.previous = previous
+                self.results = results
+            }
+            public enum CodingKeys: String, CodingKey {
+                case count
+                case next
+                case previous
+                case results
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/PaginatedPostList`.
         public struct PaginatedPostList: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PaginatedPostList/next`.
@@ -5189,6 +5434,41 @@ public enum Components {
                 case isComplete = "is_complete"
                 case workout
                 case notes
+            }
+        }
+        /// A comment, and the replies hanging off it.
+        ///
+        /// `replies` is filled only for a top-level comment, and is never more than
+        /// one deep because the model refuses a reply to a reply. The client can
+        /// therefore render a thread without walking anything.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PatchedPostCommentRequest`.
+        public struct PatchedPostCommentRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PatchedPostCommentRequest/post`.
+            public var post: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PatchedPostCommentRequest/parent`.
+            public var parent: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PatchedPostCommentRequest/body`.
+            public var body: Swift.String?
+            /// Creates a new `PatchedPostCommentRequest`.
+            ///
+            /// - Parameters:
+            ///   - post:
+            ///   - parent:
+            ///   - body:
+            public init(
+                post: Swift.Int? = nil,
+                parent: Swift.Int? = nil,
+                body: Swift.String? = nil
+            ) {
+                self.post = post
+                self.parent = parent
+                self.body = body
+            }
+            public enum CodingKeys: String, CodingKey {
+                case post
+                case parent
+                case body
             }
         }
         /// - Remark: Generated from `#/components/schemas/PatchedRepbaseUserRequest`.
@@ -6088,6 +6368,36 @@ public enum Components {
             public var sourceId: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/Post/viewer_follows_author`.
             public var viewerFollowsAuthor: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/Post/like_count`.
+            public var likeCount: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/Post/comment_count`.
+            public var commentCount: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/Post/repost_count`.
+            public var repostCount: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/Post/viewer_has_liked`.
+            public var viewerHasLiked: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/Post/viewer_has_reposted`.
+            public var viewerHasReposted: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/Post/repost_of`.
+            public struct RepostOfPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/Post/repost_of/value1`.
+                public var value1: Components.Schemas.RepostedPost
+                /// Creates a new `RepostOfPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.RepostedPost) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/Post/repost_of`.
+            public var repostOf: Components.Schemas.Post.RepostOfPayload?
             /// - Remark: Generated from `#/components/schemas/Post/created_at`.
             public var createdAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/Post/updated_at`.
@@ -6106,6 +6416,12 @@ public enum Components {
             ///   - planner:
             ///   - sourceId:
             ///   - viewerFollowsAuthor:
+            ///   - likeCount:
+            ///   - commentCount:
+            ///   - repostCount:
+            ///   - viewerHasLiked:
+            ///   - viewerHasReposted:
+            ///   - repostOf:
             ///   - createdAt:
             ///   - updatedAt:
             public init(
@@ -6120,6 +6436,12 @@ public enum Components {
                 planner: Components.Schemas.Post.PlannerPayload? = nil,
                 sourceId: Swift.Int? = nil,
                 viewerFollowsAuthor: Swift.Bool,
+                likeCount: Swift.Int,
+                commentCount: Swift.Int,
+                repostCount: Swift.Int,
+                viewerHasLiked: Swift.Bool,
+                viewerHasReposted: Swift.Bool,
+                repostOf: Components.Schemas.Post.RepostOfPayload? = nil,
                 createdAt: Foundation.Date,
                 updatedAt: Foundation.Date
             ) {
@@ -6134,6 +6456,12 @@ public enum Components {
                 self.planner = planner
                 self.sourceId = sourceId
                 self.viewerFollowsAuthor = viewerFollowsAuthor
+                self.likeCount = likeCount
+                self.commentCount = commentCount
+                self.repostCount = repostCount
+                self.viewerHasLiked = viewerHasLiked
+                self.viewerHasReposted = viewerHasReposted
+                self.repostOf = repostOf
                 self.createdAt = createdAt
                 self.updatedAt = updatedAt
             }
@@ -6149,8 +6477,138 @@ public enum Components {
                 case planner
                 case sourceId = "source_id"
                 case viewerFollowsAuthor = "viewer_follows_author"
+                case likeCount = "like_count"
+                case commentCount = "comment_count"
+                case repostCount = "repost_count"
+                case viewerHasLiked = "viewer_has_liked"
+                case viewerHasReposted = "viewer_has_reposted"
+                case repostOf = "repost_of"
                 case createdAt = "created_at"
                 case updatedAt = "updated_at"
+            }
+        }
+        /// A comment, and the replies hanging off it.
+        ///
+        /// `replies` is filled only for a top-level comment, and is never more than
+        /// one deep because the model refuses a reply to a reply. The client can
+        /// therefore render a thread without walking anything.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PostComment`.
+        public struct PostComment: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PostComment/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PostComment/post`.
+            public var post: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PostComment/author`.
+            public struct AuthorPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PostComment/author/value1`.
+                public var value1: Components.Schemas.PublicRepbaseUser
+                /// Creates a new `AuthorPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PublicRepbaseUser) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/PostComment/author`.
+            public var author: Components.Schemas.PostComment.AuthorPayload
+            /// - Remark: Generated from `#/components/schemas/PostComment/parent`.
+            public var parent: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PostComment/body`.
+            public var body: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PostComment/replies`.
+            public var replies: [Components.Schemas.PostReply]
+            /// - Remark: Generated from `#/components/schemas/PostComment/viewer_is_author`.
+            public var viewerIsAuthor: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/PostComment/created_at`.
+            public var createdAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/PostComment/updated_at`.
+            public var updatedAt: Foundation.Date
+            /// Creates a new `PostComment`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - post:
+            ///   - author:
+            ///   - parent:
+            ///   - body:
+            ///   - replies:
+            ///   - viewerIsAuthor:
+            ///   - createdAt:
+            ///   - updatedAt:
+            public init(
+                id: Swift.Int,
+                post: Swift.Int,
+                author: Components.Schemas.PostComment.AuthorPayload,
+                parent: Swift.Int? = nil,
+                body: Swift.String,
+                replies: [Components.Schemas.PostReply],
+                viewerIsAuthor: Swift.Bool,
+                createdAt: Foundation.Date,
+                updatedAt: Foundation.Date
+            ) {
+                self.id = id
+                self.post = post
+                self.author = author
+                self.parent = parent
+                self.body = body
+                self.replies = replies
+                self.viewerIsAuthor = viewerIsAuthor
+                self.createdAt = createdAt
+                self.updatedAt = updatedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case post
+                case author
+                case parent
+                case body
+                case replies
+                case viewerIsAuthor = "viewer_is_author"
+                case createdAt = "created_at"
+                case updatedAt = "updated_at"
+            }
+        }
+        /// A comment, and the replies hanging off it.
+        ///
+        /// `replies` is filled only for a top-level comment, and is never more than
+        /// one deep because the model refuses a reply to a reply. The client can
+        /// therefore render a thread without walking anything.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PostCommentRequest`.
+        public struct PostCommentRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PostCommentRequest/post`.
+            public var post: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PostCommentRequest/parent`.
+            public var parent: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PostCommentRequest/body`.
+            public var body: Swift.String
+            /// Creates a new `PostCommentRequest`.
+            ///
+            /// - Parameters:
+            ///   - post:
+            ///   - parent:
+            ///   - body:
+            public init(
+                post: Swift.Int,
+                parent: Swift.Int? = nil,
+                body: Swift.String
+            ) {
+                self.post = post
+                self.parent = parent
+                self.body = body
+            }
+            public enum CodingKeys: String, CodingKey {
+                case post
+                case parent
+                case body
             }
         }
         /// A posted meal, frozen at the moment it was posted.
@@ -6345,6 +6803,90 @@ public enum Components {
                 case scheduledDate = "scheduled_date"
                 case scheduledTime = "scheduled_time"
                 case isComplete = "is_complete"
+            }
+        }
+        /// A reply, as it appears nested under the comment it answers.
+        ///
+        /// The same fields as a comment without `replies`, because a reply cannot
+        /// have any -- the model refuses a reply to a reply. Kept a separate class so
+        /// the contract can name the type instead of describing an array of anonymous
+        /// objects, which is what a self-referential field generates.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PostReply`.
+        public struct PostReply: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PostReply/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PostReply/post`.
+            public var post: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PostReply/author`.
+            public struct AuthorPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PostReply/author/value1`.
+                public var value1: Components.Schemas.PublicRepbaseUser
+                /// Creates a new `AuthorPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PublicRepbaseUser) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/PostReply/author`.
+            public var author: Components.Schemas.PostReply.AuthorPayload
+            /// - Remark: Generated from `#/components/schemas/PostReply/parent`.
+            public var parent: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PostReply/body`.
+            public var body: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PostReply/viewer_is_author`.
+            public var viewerIsAuthor: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/PostReply/created_at`.
+            public var createdAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/PostReply/updated_at`.
+            public var updatedAt: Foundation.Date
+            /// Creates a new `PostReply`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - post:
+            ///   - author:
+            ///   - parent:
+            ///   - body:
+            ///   - viewerIsAuthor:
+            ///   - createdAt:
+            ///   - updatedAt:
+            public init(
+                id: Swift.Int,
+                post: Swift.Int,
+                author: Components.Schemas.PostReply.AuthorPayload,
+                parent: Swift.Int? = nil,
+                body: Swift.String,
+                viewerIsAuthor: Swift.Bool,
+                createdAt: Foundation.Date,
+                updatedAt: Foundation.Date
+            ) {
+                self.id = id
+                self.post = post
+                self.author = author
+                self.parent = parent
+                self.body = body
+                self.viewerIsAuthor = viewerIsAuthor
+                self.createdAt = createdAt
+                self.updatedAt = updatedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case post
+                case author
+                case parent
+                case body
+                case viewerIsAuthor = "viewer_is_author"
+                case createdAt = "created_at"
+                case updatedAt = "updated_at"
             }
         }
         /// A posted workout, frozen at the moment it was posted.
@@ -7032,6 +7574,150 @@ public enum Components {
                 case showsHeight = "shows_height"
                 case showsWeight = "shows_weight"
                 case showsTargetWeight = "shows_target_weight"
+            }
+        }
+        /// The original, as it appears inside a repost.
+        ///
+        /// Deliberately not `PostSerializer`. That one carries `repost_of`, and a
+        /// serializer that contains itself is a schema no generator can express and a
+        /// depth no reader wants. A repost cannot be reposted, so one level is all
+        /// there is to show.
+        ///
+        /// - Remark: Generated from `#/components/schemas/RepostedPost`.
+        public struct RepostedPost: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/author`.
+            public struct AuthorPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/RepostedPost/author/value1`.
+                public var value1: Components.Schemas.PublicRepbaseUser
+                /// Creates a new `AuthorPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PublicRepbaseUser) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/author`.
+            public var author: Components.Schemas.RepostedPost.AuthorPayload
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/kind`.
+            public var kind: Swift.String
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/image_url`.
+            public var imageUrl: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/caption`.
+            public var caption: Swift.String
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/workout`.
+            public struct WorkoutPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/RepostedPost/workout/value1`.
+                public var value1: Components.Schemas.PostWorkout
+                /// Creates a new `WorkoutPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PostWorkout) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/workout`.
+            public var workout: Components.Schemas.RepostedPost.WorkoutPayload?
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/meal`.
+            public struct MealPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/RepostedPost/meal/value1`.
+                public var value1: Components.Schemas.PostMeal
+                /// Creates a new `MealPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PostMeal) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/meal`.
+            public var meal: Components.Schemas.RepostedPost.MealPayload?
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/planner`.
+            public struct PlannerPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/RepostedPost/planner/value1`.
+                public var value1: Components.Schemas.PostPlannerEntry
+                /// Creates a new `PlannerPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PostPlannerEntry) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/planner`.
+            public var planner: Components.Schemas.RepostedPost.PlannerPayload?
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/created_at`.
+            public var createdAt: Foundation.Date
+            /// Creates a new `RepostedPost`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - author:
+            ///   - kind:
+            ///   - imageUrl:
+            ///   - caption:
+            ///   - workout:
+            ///   - meal:
+            ///   - planner:
+            ///   - createdAt:
+            public init(
+                id: Swift.Int,
+                author: Components.Schemas.RepostedPost.AuthorPayload,
+                kind: Swift.String,
+                imageUrl: Swift.String? = nil,
+                caption: Swift.String,
+                workout: Components.Schemas.RepostedPost.WorkoutPayload? = nil,
+                meal: Components.Schemas.RepostedPost.MealPayload? = nil,
+                planner: Components.Schemas.RepostedPost.PlannerPayload? = nil,
+                createdAt: Foundation.Date
+            ) {
+                self.id = id
+                self.author = author
+                self.kind = kind
+                self.imageUrl = imageUrl
+                self.caption = caption
+                self.workout = workout
+                self.meal = meal
+                self.planner = planner
+                self.createdAt = createdAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case author
+                case kind
+                case imageUrl = "image_url"
+                case caption
+                case workout
+                case meal
+                case planner
+                case createdAt = "created_at"
             }
         }
         /// - Remark: Generated from `#/components/schemas/SavedFoodIngredient`.
@@ -22845,6 +23531,632 @@ public enum Operations {
             case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
         }
     }
+    /// Comments on a post.
+    ///
+    /// Reading is governed by the post, not by the comment: if you may see the
+    /// post you may read what people said about it, and if you may not, its
+    /// comments are a 404 for the same reason the post is. Writing and deleting
+    /// belong to the comment's own author.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/comments/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/comments//get(social_comments_list)`.
+    public enum SocialCommentsList {
+        public static let id: Swift.String = "social_comments_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/comments/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/comments/GET/query/page`.
+                public var page: Swift.Int?
+                /// Only comments on this post.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/comments/GET/query/post`.
+                public var post: Swift.Int?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - page: A page number within the paginated result set.
+                ///   - post: Only comments on this post.
+                public init(
+                    page: Swift.Int? = nil,
+                    post: Swift.Int? = nil
+                ) {
+                    self.page = page
+                    self.post = post
+                }
+            }
+            public var query: Operations.SocialCommentsList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/social/comments/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialCommentsList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialCommentsList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialCommentsList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.SocialCommentsList.Input.Query = .init(),
+                headers: Operations.SocialCommentsList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/comments/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/comments/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedPostCommentList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedPostCommentList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialCommentsList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialCommentsList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/comments//get(social_comments_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialCommentsList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialCommentsList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Comments on a post.
+    ///
+    /// Reading is governed by the post, not by the comment: if you may see the
+    /// post you may read what people said about it, and if you may not, its
+    /// comments are a 404 for the same reason the post is. Writing and deleting
+    /// belong to the comment's own author.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/comments/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/comments//post(social_comments_create)`.
+    public enum SocialCommentsCreate {
+        public static let id: Swift.String = "social_comments_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/comments/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialCommentsCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialCommentsCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialCommentsCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/social/comments/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/comments/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.PostCommentRequest)
+            }
+            public var body: Operations.SocialCommentsCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.SocialCommentsCreate.Input.Headers = .init(),
+                body: Operations.SocialCommentsCreate.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Created: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/comments/POST/responses/201/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/comments/POST/responses/201/content/application\/json`.
+                    case json(Components.Schemas.PostComment)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PostComment {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialCommentsCreate.Output.Created.Body
+                /// Creates a new `Created`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialCommentsCreate.Output.Created.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/comments//post(social_comments_create)/responses/201`.
+            ///
+            /// HTTP response code: `201 created`.
+            case created(Operations.SocialCommentsCreate.Output.Created)
+            /// The associated value of the enum case if `self` is `.created`.
+            ///
+            /// - Throws: An error if `self` is not `.created`.
+            /// - SeeAlso: `.created`.
+            public var created: Operations.SocialCommentsCreate.Output.Created {
+                get throws {
+                    switch self {
+                    case let .created(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "created",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Comments on a post.
+    ///
+    /// Reading is governed by the post, not by the comment: if you may see the
+    /// post you may read what people said about it, and if you may not, its
+    /// comments are a 404 for the same reason the post is. Writing and deleting
+    /// belong to the comment's own author.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/comments/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/comments/{id}//get(social_comments_retrieve)`.
+    public enum SocialCommentsRetrieve {
+        public static let id: Swift.String = "social_comments_retrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/comments/{id}/GET/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this post comment.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/comments/{id}/GET/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this post comment.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialCommentsRetrieve.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/social/comments/{id}/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialCommentsRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialCommentsRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialCommentsRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.SocialCommentsRetrieve.Input.Path,
+                headers: Operations.SocialCommentsRetrieve.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/comments/{id}/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/comments/{id}/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PostComment)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PostComment {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialCommentsRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialCommentsRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/comments/{id}//get(social_comments_retrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialCommentsRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialCommentsRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Comments on a post.
+    ///
+    /// Reading is governed by the post, not by the comment: if you may see the
+    /// post you may read what people said about it, and if you may not, its
+    /// comments are a 404 for the same reason the post is. Writing and deleting
+    /// belong to the comment's own author.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/social/comments/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/comments/{id}//patch(social_comments_partial_update)`.
+    public enum SocialCommentsPartialUpdate {
+        public static let id: Swift.String = "social_comments_partial_update"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/comments/{id}/PATCH/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this post comment.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/comments/{id}/PATCH/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this post comment.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialCommentsPartialUpdate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/social/comments/{id}/PATCH/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialCommentsPartialUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialCommentsPartialUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialCommentsPartialUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/social/comments/{id}/PATCH/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/comments/{id}/PATCH/requestBody/content/application\/json`.
+                case json(Components.Schemas.PatchedPostCommentRequest)
+            }
+            public var body: Operations.SocialCommentsPartialUpdate.Input.Body?
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.SocialCommentsPartialUpdate.Input.Path,
+                headers: Operations.SocialCommentsPartialUpdate.Input.Headers = .init(),
+                body: Operations.SocialCommentsPartialUpdate.Input.Body? = nil
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/comments/{id}/PATCH/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/comments/{id}/PATCH/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PostComment)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PostComment {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialCommentsPartialUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialCommentsPartialUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/comments/{id}//patch(social_comments_partial_update)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialCommentsPartialUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialCommentsPartialUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Comments on a post.
+    ///
+    /// Reading is governed by the post, not by the comment: if you may see the
+    /// post you may read what people said about it, and if you may not, its
+    /// comments are a 404 for the same reason the post is. Writing and deleting
+    /// belong to the comment's own author.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/comments/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/comments/{id}//delete(social_comments_destroy)`.
+    public enum SocialCommentsDestroy {
+        public static let id: Swift.String = "social_comments_destroy"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/comments/{id}/DELETE/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this post comment.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/comments/{id}/DELETE/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this post comment.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialCommentsDestroy.Input.Path
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            public init(path: Operations.SocialCommentsDestroy.Input.Path) {
+                self.path = path
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct NoContent: Sendable, Hashable {
+                /// Creates a new `NoContent`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/comments/{id}//delete(social_comments_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            case noContent(Operations.SocialCommentsDestroy.Output.NoContent)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/comments/{id}//delete(social_comments_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            public static var noContent: Self {
+                .noContent(.init())
+            }
+            /// The associated value of the enum case if `self` is `.noContent`.
+            ///
+            /// - Throws: An error if `self` is not `.noContent`.
+            /// - SeeAlso: `.noContent`.
+            public var noContent: Operations.SocialCommentsDestroy.Output.NoContent {
+                get throws {
+                    switch self {
+                    case let .noContent(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "noContent",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
     /// What the people you follow have posted, newest first.
     ///
     /// Fanned out on read: a page is one indexed walk over the posts of everyone
@@ -23612,6 +24924,526 @@ public enum Operations {
             ///
             /// A response with a code that is not documented in the OpenAPI document.
             case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// Like this post.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/like/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/like//post(social_posts_like_create)`.
+    public enum SocialPostsLikeCreate {
+        public static let id: Swift.String = "social_posts_like_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/like/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this post.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/like/POST/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this post.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialPostsLikeCreate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/like/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsLikeCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsLikeCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialPostsLikeCreate.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.SocialPostsLikeCreate.Input.Path,
+                headers: Operations.SocialPostsLikeCreate.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/like/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/like/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Post)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Post {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialPostsLikeCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialPostsLikeCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/like//post(social_posts_like_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialPostsLikeCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialPostsLikeCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Remove your like. Answers with the post, not 204.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/like/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/like//delete(social_posts_like_destroy)`.
+    public enum SocialPostsLikeDestroy {
+        public static let id: Swift.String = "social_posts_like_destroy"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/like/DELETE/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this post.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/like/DELETE/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this post.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialPostsLikeDestroy.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/like/DELETE/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsLikeDestroy.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsLikeDestroy.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialPostsLikeDestroy.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.SocialPostsLikeDestroy.Input.Path,
+                headers: Operations.SocialPostsLikeDestroy.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/like/DELETE/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/like/DELETE/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Post)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Post {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialPostsLikeDestroy.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialPostsLikeDestroy.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/like//delete(social_posts_like_destroy)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialPostsLikeDestroy.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialPostsLikeDestroy.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Pass this post on to your followers. Reposting a repost passes on the original, and the original is what comes back.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/repost/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/repost//post(social_posts_repost_create)`.
+    public enum SocialPostsRepostCreate {
+        public static let id: Swift.String = "social_posts_repost_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/repost/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this post.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/repost/POST/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this post.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialPostsRepostCreate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/repost/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsRepostCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsRepostCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialPostsRepostCreate.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.SocialPostsRepostCreate.Input.Path,
+                headers: Operations.SocialPostsRepostCreate.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/repost/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/repost/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Post)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Post {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialPostsRepostCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialPostsRepostCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/repost//post(social_posts_repost_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialPostsRepostCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialPostsRepostCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Withdraw your repost. Answers with the post, not 204.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/repost/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/repost//delete(social_posts_repost_destroy)`.
+    public enum SocialPostsRepostDestroy {
+        public static let id: Swift.String = "social_posts_repost_destroy"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/repost/DELETE/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this post.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/repost/DELETE/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this post.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialPostsRepostDestroy.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/repost/DELETE/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsRepostDestroy.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsRepostDestroy.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialPostsRepostDestroy.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.SocialPostsRepostDestroy.Input.Path,
+                headers: Operations.SocialPostsRepostDestroy.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/repost/DELETE/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/repost/DELETE/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Post)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Post {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialPostsRepostDestroy.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialPostsRepostDestroy.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/repost//delete(social_posts_repost_destroy)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialPostsRepostDestroy.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialPostsRepostDestroy.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
         }
     }
     /// Steps as Health reported them. Read here, written only by ``record``.

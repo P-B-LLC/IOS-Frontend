@@ -160,6 +160,109 @@ actor SocialAPIRepository {
         }
     }
 
+    // MARK: - Liking, reposting, commenting
+
+    /// Sets whether the reader likes this post, and answers with the card as
+    /// it now stands.
+    ///
+    /// The server sends the whole post back rather than a count, so the reply
+    /// also carries any likes and comments that arrived while this one was in
+    /// flight. Both directions are idempotent: a second tap, or a retry of a
+    /// request whose answer was lost, lands on the same state.
+    func setLiked(_ liked: Bool, postID: Int) async throws -> FeedPost {
+        if liked {
+            switch try await client.socialPostsLikeCreate(path: .init(id: postID)) {
+            case .ok(let response):
+                return Self.post(from: try response.body.json)
+            case .undocumented(let statusCode, _):
+                throw APIServiceError.undocumentedStatus(statusCode)
+            }
+        }
+        switch try await client.socialPostsLikeDestroy(path: .init(id: postID)) {
+        case .ok(let response):
+            return Self.post(from: try response.body.json)
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// Passes the post on to the reader's followers, or takes it back.
+    ///
+    /// Answers with the **original**, which is not always the post asked
+    /// about: reposting a repost passes on what it points at, and the counts
+    /// that changed are the original's.
+    func setReposted(_ reposted: Bool, postID: Int) async throws -> FeedPost {
+        if reposted {
+            switch try await client.socialPostsRepostCreate(path: .init(id: postID)) {
+            case .ok(let response):
+                return Self.post(from: try response.body.json)
+            case .undocumented(let statusCode, _):
+                throw APIServiceError.undocumentedStatus(statusCode)
+            }
+        }
+        switch try await client.socialPostsRepostDestroy(path: .init(id: postID)) {
+        case .ok(let response):
+            return Self.post(from: try response.body.json)
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// Every thread on a post, oldest first, replies nested inside each.
+    func comments(forPost postID: Int) async throws -> [PostComment] {
+        var page: Int?
+        var visited: Set<Int> = []
+        var values: [PostComment] = []
+        repeat {
+            let output = try await client.socialCommentsList(
+                query: .init(page: page, post: postID)
+            )
+            let response: Components.Schemas.PaginatedPostCommentList
+            switch output {
+            case .ok(let success):
+                response = try success.body.json
+            case .undocumented(let statusCode, _):
+                throw APIServiceError.undocumentedStatus(statusCode)
+            }
+            values.append(contentsOf: response.results.map(Self.comment(from:)))
+            page = try nextPage(response.next, visited: &visited)
+        } while page != nil
+        return values
+    }
+
+    @discardableResult
+    func addComment(
+        _ body: String,
+        toPost postID: Int,
+        replyingTo parentID: Int?
+    ) async throws -> PostComment {
+        let output = try await client.socialCommentsCreate(
+            body: .json(
+                Components.Schemas.PostCommentRequest(
+                    post: postID,
+                    parent: parentID,
+                    body: body
+                )
+            )
+        )
+        switch output {
+        case .created(let response):
+            return Self.comment(from: try response.body.json)
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    func deleteComment(_ commentID: Int) async throws {
+        let output = try await client.socialCommentsDestroy(path: .init(id: commentID))
+        switch output {
+        case .noContent:
+            return
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
     // MARK: - Following
 
     func follow(_ userID: Int) async throws {
@@ -206,7 +309,60 @@ actor SocialAPIRepository {
             sourceID: payload.sourceId,
             workout: payload.workout.map { workout(from: $0.value1) },
             meal: payload.meal.map { meal(from: $0.value1) },
+            planner: payload.planner.map { planner(from: $0.value1) },
+            likeCount: payload.likeCount,
+            commentCount: payload.commentCount,
+            repostCount: payload.repostCount,
+            viewerHasLiked: payload.viewerHasLiked,
+            viewerHasReposted: payload.viewerHasReposted,
+            repostOf: payload.repostOf.map { reposted(from: $0.value1) }
+        )
+    }
+
+    private static func reposted(
+        from payload: Components.Schemas.RepostedPost
+    ) -> RepostedPost {
+        RepostedPost(
+            id: payload.id,
+            author: author(from: payload.author.value1),
+            kind: PostKind(payload.kind),
+            caption: payload.caption,
+            imageURL: payload.imageUrl.flatMap { URL(string: $0) },
+            createdAt: payload.createdAt,
+            workout: payload.workout.map { workout(from: $0.value1) },
+            meal: payload.meal.map { meal(from: $0.value1) },
             planner: payload.planner.map { planner(from: $0.value1) }
+        )
+    }
+
+    private static func comment(
+        from payload: Components.Schemas.PostComment
+    ) -> PostComment {
+        PostComment(
+            id: payload.id,
+            postID: payload.post,
+            author: author(from: payload.author.value1),
+            parentID: payload.parent,
+            body: payload.body,
+            replies: payload.replies.map { reply(from: $0) },
+            viewerIsAuthor: payload.viewerIsAuthor,
+            createdAt: payload.createdAt
+        )
+    }
+
+    private static func reply(
+        from payload: Components.Schemas.PostReply
+    ) -> PostComment {
+        PostComment(
+            id: payload.id,
+            postID: payload.post,
+            author: author(from: payload.author.value1),
+            parentID: payload.parent,
+            body: payload.body,
+            // A reply cannot have replies; the server refuses to make one.
+            replies: [],
+            viewerIsAuthor: payload.viewerIsAuthor,
+            createdAt: payload.createdAt
         )
     }
 
@@ -298,6 +454,30 @@ actor SocialAPIRepository {
             throw APIServiceError.untrustedPaginationURL
         }
         return cursor
+    }
+
+    /// The same check for the numbered pages comments use.
+    ///
+    /// Comments are not paged by cursor: a thread is read from the top and
+    /// grows at the bottom, so a page number means the same thing on the next
+    /// request. `visited` stops a server that answers with a `next` pointing
+    /// backwards from looping this forever.
+    private func nextPage(
+        _ next: String?,
+        visited: inout Set<Int>
+    ) throws -> Int? {
+        guard let next else { return nil }
+        guard let url = URL(string: next, relativeTo: configuration.serverURL)?.absoluteURL,
+              Self.sameOrigin(url, configuration.serverURL),
+              let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              let value = components.queryItems?
+                .first(where: { $0.name == "page" })?.value,
+              let page = Int(value),
+              page > 0,
+              visited.insert(page).inserted else {
+            throw APIServiceError.untrustedPaginationURL
+        }
+        return page
     }
 
     private static func sameOrigin(_ lhs: URL, _ rhs: URL) -> Bool {

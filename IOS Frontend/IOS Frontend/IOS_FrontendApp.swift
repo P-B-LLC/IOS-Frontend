@@ -103,6 +103,7 @@ private struct AppRootView: View {
             || environment["REPBASE_GEAR_PREVIEW"] != nil
             || environment["REPBASE_STEPS_PREVIEW"] != nil
             || environment["REPBASE_CYCLE_PREVIEW"] != nil
+            || environment["REPBASE_SOCIAL_PREVIEW"] != nil
     }
 #endif
 
@@ -145,6 +146,19 @@ private struct AppRootView: View {
                     }
                     .repbaseScreen(.prepare)
                 }
+            } else if ProcessInfo.processInfo.environment["REPBASE_SOCIAL_PREVIEW"] != nil {
+                // A feed needs other people in it, and the simulator has one
+                // account. Sample posts are the only way to see a like already
+                // on, a repost, and a thread with a reply in it.
+                NavigationStack {
+                    if ProcessInfo.processInfo
+                        .environment["REPBASE_SOCIAL_PREVIEW"] == "detail" {
+                        PostDetailView(postID: 1)
+                    } else {
+                        SocialFeedView()
+                    }
+                }
+                .environment(SocialStore.preview)
             } else if ProcessInfo.processInfo.environment["REPBASE_CYCLE_PREVIEW"] != nil {
                 // A rotation is several taps deep and needs a saved library
                 // behind it, neither of which a script can arrange.
