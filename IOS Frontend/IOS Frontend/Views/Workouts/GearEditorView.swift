@@ -43,64 +43,82 @@ struct GearEditorView: View {
     @State private var didLoad = false
 
     var body: some View {
-        Form {
-            Section {
-                TextField(namePlaceholder, text: $name)
-                TextField("Brand (optional)", text: $brand)
-            } header: {
-                Text(mode.kind == .shoe ? "Shoes" : "Bike")
-            }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 28) {
+                RepbaseScreenHeader(
+                    eyebrow: isEditing ? "GEAR DETAILS" : "NEW GEAR",
+                    title: screenTitle,
+                    detail: introText
+                )
 
-            Section {
-                LabeledContent("Already covered") {
-                    milesField($startingMilesText, placeholder: "0")
+                editorSection("IDENTITY") {
+                    VStack(spacing: 0) {
+                        editorialField(mode.kind == .shoe ? "SHOE NAME" : "BIKE NAME", text: $name, placeholder: namePlaceholder)
+                        Divider().padding(.leading, 18)
+                        editorialField("BRAND", text: $brand, placeholder: "Optional")
+                    }
                 }
-            } footer: {
-                Text(
-                    "Miles it had on it before Repbase started counting. Leave at zero if it is new."
-                )
-            }
 
-            Section {
-                LabeledContent("Replace at") {
-                    milesField($retireAtMilesText, placeholder: "None")
+                editorSection("MILEAGE & LIFECYCLE") {
+                    VStack(spacing: 0) {
+                        mileageRow(
+                            title: "Already covered",
+                            detail: mode.kind == .shoe
+                                ? "Starting mileage before Repbase begins tracking."
+                                : "Existing mileage before Repbase begins tracking rides.",
+                            text: $startingMilesText,
+                            placeholder: "0"
+                        )
+                        Divider().padding(.leading, 18)
+                        mileageRow(
+                            title: mode.kind == .shoe ? "Replace at" : "Service at",
+                            detail: mode.kind == .shoe
+                                ? "We will show remaining distance as sessions are saved."
+                                : "Repbase will show the distance remaining until service.",
+                            text: $retireAtMilesText,
+                            placeholder: "None"
+                        )
+                    }
                 }
-            } footer: {
-                Text(
-                    mode.kind == .shoe
-                        ? "Optional. Set a figure and Repbase shows how much is left; leave it empty and it just counts. How long a pair lasts depends on the shoe and the runner, so nothing is assumed."
-                        : "Optional. Set a figure to be told when a service is due; leave it empty and it just counts."
-                )
-            }
 
-            Section {
-                Toggle("Use by default", isOn: $isDefault)
-            } footer: {
-                Text(
-                    "Preselected when you start a \(mode.kind == .shoe ? "run" : "ride"). You can still change it for any single session."
-                )
-            }
+                VStack(alignment: .leading, spacing: 12) {
+                    sectionLabel("PREFERENCE")
+                    Toggle(isOn: $isDefault) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(mode.kind == .shoe ? "Use by default" : "Use for rides by default")
+                                .font(.headline)
+                            Text("Automatically select this \(mode.kind == .shoe ? "pair for runs" : "bike for cycling sessions").")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .tint(RepbasePalette.caramel)
+                }
 
-            Section {
-                TextField("Notes (optional)", text: $notes, axis: .vertical)
-                    .lineLimit(1...4)
-            }
+                VStack(alignment: .leading, spacing: 10) {
+                    sectionLabel("NOTES")
+                    TextField(notesPlaceholder, text: $notes, axis: .vertical)
+                        .lineLimit(2...4)
+                        .padding(.vertical, 12)
+                        .overlay(alignment: .top) { Divider() }
+                }
 
-            if case .edit(let gear) = mode {
-                Section {
-                    Button(gear.isRetired ? "Put back into use" : "Retire") {
+                if case .edit(let gear) = mode {
+                    Button(gear.isRetired ? "Put back into use" : "Retire gear") {
                         Task {
                             await store.setRetired(gear, retired: !gear.isRetired)
                             dismiss()
                         }
                     }
-                } footer: {
-                    Text(
-                        "Retiring keeps every mile it has done and stops it being offered for new sessions."
-                    )
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(gear.isRetired ? RepbasePalette.sage : Color.red)
+                    .frame(maxWidth: .infinity)
                 }
             }
+            .padding(.horizontal, RepbaseDesign.pageInset)
+            .padding(.vertical, 18)
         }
+        .repbaseScreen(.prepare)
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -130,6 +148,85 @@ struct GearEditorView: View {
                 isDefault = gear.isDefault
             }
         }
+    }
+
+    private var isEditing: Bool {
+        if case .edit(_) = mode { return true }
+        return false
+    }
+
+    private var screenTitle: String {
+        if isEditing { return mode.kind == .shoe ? "Edit running shoes" : "Edit bike" }
+        return mode.kind == .shoe ? "Add running shoes" : "Add a bike"
+    }
+
+    private var introText: String {
+        mode.kind == .shoe
+            ? "Give this pair a name, then decide how you want mileage tracked."
+            : "Add the bike, then choose when Repbase should flag its next service."
+    }
+
+    private var notesPlaceholder: String {
+        mode.kind == .shoe
+            ? "Optional details about fit, color, or rotation"
+            : "Optional details about setup, components, or service"
+    }
+
+    private func sectionLabel(_ text: String) -> some View {
+        Text(text)
+            .font(.caption2.weight(.bold))
+            .tracking(1.1)
+            .foregroundStyle(RepbasePalette.sage)
+    }
+
+    private func editorSection<Content: View>(
+        _ title: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionLabel(title)
+            content()
+                .background(RepbasePalette.paper, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .strokeBorder(RepbasePalette.sand.opacity(0.8), lineWidth: 1)
+                }
+        }
+    }
+
+    private func editorialField(
+        _ label: String,
+        text: Binding<String>,
+        placeholder: String
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Text(label)
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(RepbasePalette.caramel)
+            TextField(placeholder, text: text)
+                .font(.headline)
+        }
+        .padding(18)
+    }
+
+    private func mileageRow(
+        title: String,
+        detail: String,
+        text: Binding<String>,
+        placeholder: String
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(title).font(.headline)
+                Spacer()
+                milesField(text, placeholder: placeholder)
+                    .foregroundStyle(text.wrappedValue.isEmpty ? Color.secondary : RepbasePalette.caramel)
+            }
+            Text(detail)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(18)
     }
 
     private var title: String {

@@ -962,45 +962,61 @@ struct DayWorkoutView: View {
         )
 
         return VStack(alignment: .leading, spacing: 18) {
-            // The tick that used to sit here was an Image, not a Button, drawn
-            // as a filled circle with a shadow -- the same shape every control
-            // on this screen uses. It read as tappable, did nothing, and said
-            // what the badge beside it already says.
             HStack {
+                Image(systemName: "checkmark")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(phase.accent)
+                    .frame(width: 40, height: 40)
+                    .background(RepbasePalette.paper, in: Circle())
+
+                Spacer()
+
                 HStack(spacing: 7) {
                     Circle()
-                        .fill(RepbasePalette.caramel)
+                        .fill(phase.accent)
                         .frame(width: 7, height: 7)
                     Text("COMPLETE")
                         .font(.caption2.weight(.bold))
                 }
-                .foregroundStyle(Color(hex: 0xF3F7F5))
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(phase.accent, in: Capsule())
-                .shadow(color: phase.accent.opacity(0.25), radius: 10, y: 5)
+                .foregroundStyle(phase.accent)
+                .padding(.horizontal, 18)
+                .frame(height: 32)
+                .background(phase.accent.opacity(0.10), in: Capsule())
 
                 Spacer()
 
-                Button("Done") {
-                    completedSession = nil
+                HStack(spacing: 12) {
+                    Button {
+                        sharedWorkout = SharedPostSource(id: session.serverID)
+                    } label: {
+                        Image(systemName: "arrow.up.right")
+                    }
+                    .buttonStyle(.bordered)
+                    .buttonBorderShape(.circle)
+                    .accessibilityLabel("Share result")
+
+                    Button("Done") { completedSession = nil }
+                        .font(.caption.weight(.bold))
+                        .buttonStyle(.plain)
                 }
-                .font(.caption.weight(.bold))
-                .buttonStyle(.borderedProminent)
-                .tint(Color(hex: 0xF3F7F5))
-                .foregroundStyle(phase.primaryText)
+            }
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text("WORKOUT COMPLETE")
+                    .font(.caption2.weight(.bold))
+                    .tracking(1.0)
+                    .foregroundStyle(phase.accent)
+                Text("You showed up.")
+                    .font(.largeTitle.weight(.bold))
+                Text("\(session.workoutName) · \(dayDate.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))")
+                    .font(.subheadline)
+                    .foregroundStyle(phase.secondaryText)
             }
 
             VStack(alignment: .leading, spacing: 11) {
-                Text("WORKOUT COMPLETE")
+                Text(session.workoutName.uppercased())
                     .font(.caption2.weight(.bold))
                     .foregroundStyle(Color(hex: 0xB7DCCB))
-
-                Text(session.workoutName.uppercased())
-                    .font(.largeTitle.weight(.bold))
-                    .foregroundStyle(Color(hex: 0xF3F7F5))
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.72)
 
                 HStack(alignment: .lastTextBaseline, spacing: 8) {
                     Text(elapsedTime(from: session.startedAt, to: completed.endedAt))
@@ -1012,13 +1028,13 @@ struct DayWorkoutView: View {
                         .foregroundStyle(Color(hex: 0xB7DCCB))
                 }
 
-                HStack {
-                    Text("START  \(session.startedAt.formatted(date: .omitted, time: .shortened))")
-                    Spacer()
-                    Text("END  \(completed.endedAt.formatted(date: .omitted, time: .shortened))")
+                Divider().overlay(Color(hex: 0x648474))
+
+                HStack(spacing: 0) {
+                    summaryDatum("START", session.startedAt.formatted(date: .omitted, time: .shortened))
+                    summaryDatum("END", completed.endedAt.formatted(date: .omitted, time: .shortened))
+                    summaryDatum("COMPLETE", "\(completionPercentage)%")
                 }
-                .font(.caption)
-                .foregroundStyle(Color(hex: 0xB7DCCB))
             }
             .padding(18)
             .background {
@@ -1162,6 +1178,33 @@ struct DayWorkoutView: View {
                 LiftProgressChart(series: store.liftProgress, phase: phase)
             }
 
+            if !session.exercises.isEmpty {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("WHAT YOU LOGGED")
+                        .font(.caption2.weight(.bold))
+                        .tracking(1)
+                        .foregroundStyle(RepbasePalette.caramel)
+                        .padding(.bottom, 8)
+
+                    ForEach(Array(session.exercises.enumerated()), id: \.element.id) { index, exercise in
+                        HStack(spacing: 12) {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(exercise.name).font(.headline)
+                                Text(loggedSetSummary(exercise))
+                                    .font(.caption)
+                                    .foregroundStyle(phase.secondaryText)
+                            }
+                            Spacer()
+                            Image(systemName: "checkmark")
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(phase.accent)
+                        }
+                        .padding(.vertical, 13)
+                        if index < session.exercises.count - 1 { Divider() }
+                    }
+                }
+            }
+
             if let persistenceError = store.persistenceError {
                 persistenceErrorCard(persistenceError)
             }
@@ -1179,6 +1222,29 @@ struct DayWorkoutView: View {
             guard session.tracksDistance else { return }
             await store.loadCompletedRoute(sessionID: session.serverID)
         }
+    }
+
+    private func summaryDatum(_ title: String, _ value: String) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(title)
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(Color(hex: 0xB7DCCB))
+            Text(value)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(Color(hex: 0xF3F7F5))
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func loggedSetSummary(_ exercise: SessionExerciseDraft) -> String {
+        let logged = exercise.sets.filter(\.isLogged)
+        guard !logged.isEmpty else { return "No sets logged" }
+        return logged.map { set in
+            let weight = set.weightKilograms.trimmingCharacters(in: .whitespacesAndNewlines)
+            let reps = set.reps.trimmingCharacters(in: .whitespacesAndNewlines)
+            if weight.isEmpty { return reps.isEmpty ? "Logged" : "\(reps) reps" }
+            return reps.isEmpty ? "\(weight) kg" : "\(weight) × \(reps)"
+        }.joined(separator: "  ·  ")
     }
 
     /// The date this day falls on, for asking whether it has been trained.
@@ -1200,26 +1266,52 @@ struct DayWorkoutView: View {
             .max { $0.performedAt < $1.performedAt }
         let overview = session.flatMap { store.sessionOverviews[$0.sessionID] }
 
-        return VStack(alignment: .leading, spacing: 13) {
-            HStack(alignment: .top, spacing: 11) {
-                Image(systemName: "checkmark.seal.fill")
-                    .font(.title3)
-                    .foregroundStyle(WorkoutVisualPhase.recover.accent)
-
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("\(workout.name) completed")
-                        .font(.subheadline.weight(.semibold))
+        return VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(dayDate.formatted(.dateTime.month(.wide).day()).uppercased())
+                        .font(.caption2.weight(.bold))
+                        .tracking(1)
+                        .foregroundStyle(RepbasePalette.caramel)
+                    Text(workout.name)
+                        .font(.title.weight(.bold))
                     if let overview {
-                        Text(Self.overviewSummary(overview))
+                        Text("Completed at \(overview.performedAt.formatted(date: .omitted, time: .shortened))")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                 }
-
-                Spacer(minLength: 8)
+                Spacer()
+                Label("DONE", systemImage: "checkmark")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(WorkoutVisualPhase.recover.accent)
+                    .padding(.horizontal, 12)
+                    .frame(height: 28)
+                    .background(WorkoutVisualPhase.recover.accent.opacity(0.10), in: Capsule())
             }
 
             if let overview {
+                VStack(alignment: .leading, spacing: 14) {
+                    Text("RECORDED SESSION")
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(Color(hex: 0xB7DCCB))
+                    Text(workout.name)
+                        .font(.title2.weight(.bold))
+                        .foregroundStyle(Color(hex: 0xF3F7F5))
+                    Divider().overlay(Color(hex: 0x648474))
+                    HStack(spacing: 0) {
+                        historyMetric("\(overview.loggedSetCount)", "SETS")
+                        historyMetric("\(overview.lines.count)", "EXERCISES")
+                        historyMetric(overview.totalVolumeKilograms.map { "\($0.nutritionText) kg" } ?? "—", "VOLUME")
+                    }
+                }
+                .padding(20)
+                .background(WorkoutVisualPhase.recover.accent, in: RoundedRectangle(cornerRadius: 25, style: .continuous))
+
+                Text("EXERCISES LOGGED")
+                    .font(.caption2.weight(.bold))
+                    .tracking(1)
+                    .foregroundStyle(WorkoutVisualPhase.recover.accent)
                 sessionOverviewLines(overview)
             } else if let session, store.loadingOverviewIDs.contains(session.sessionID) {
                 ProgressView()
@@ -1237,11 +1329,10 @@ struct DayWorkoutView: View {
                         )
                     }
                 } label: {
-                    Label("Redo Session", systemImage: "arrow.counterclockwise")
+                    Label("Repeat workout", systemImage: "arrow.counterclockwise")
                         .font(.caption.weight(.bold))
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(WorkoutVisualPhase.recover.accent)
+                .buttonStyle(RepbasePrimaryButtonStyle())
                 .disabled(store.isSaving || !store.isEditingEnabled)
 
                 Button("Undo") {
@@ -1259,15 +1350,24 @@ struct DayWorkoutView: View {
                 Spacer(minLength: 0)
             }
         }
-        .padding(13)
-        .background(
-            WorkoutVisualPhase.recover.accent.opacity(0.11),
-            in: RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius)
-        )
         .task(id: session?.sessionID) {
             guard let session else { return }
             await store.loadOverview(for: session)
         }
+    }
+
+    private func historyMetric(_ value: String, _ title: String) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(value)
+                .font(.headline.monospacedDigit())
+                .foregroundStyle(Color(hex: 0xF3F7F5))
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+            Text(title)
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(Color(hex: 0xB7DCCB))
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     /// What the day amounted to: when, how many sets, and how much was moved.
@@ -1282,17 +1382,23 @@ struct DayWorkoutView: View {
 
     /// Every exercise of the finished session with the sets as logged.
     private func sessionOverviewLines(_ overview: SessionOverview) -> some View {
-        VStack(alignment: .leading, spacing: 7) {
-            ForEach(overview.lines) { line in
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(Array(overview.lines.enumerated()), id: \.element.id) { index, line in
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(String(format: "%02d", index + 1))
+                        .font(.caption.weight(.bold).monospacedDigit())
+                        .foregroundStyle(RepbasePalette.caramel)
+                        .frame(width: 26, alignment: .leading)
                     Text(line.name)
-                        .font(.caption.weight(.semibold))
+                        .font(.subheadline.weight(.semibold))
                     Spacer(minLength: 8)
                     Text(line.setsText)
                         .font(.caption.monospacedDigit())
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.trailing)
                 }
+                .padding(.vertical, 12)
+                if index < overview.lines.count - 1 { Divider() }
             }
         }
     }

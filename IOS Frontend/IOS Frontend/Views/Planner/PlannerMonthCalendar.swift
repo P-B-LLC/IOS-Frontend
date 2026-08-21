@@ -18,27 +18,19 @@ struct PlannerMonthCalendar: View {
     private let calendar = Calendar.current
 
     var body: some View {
-        VStack(spacing: 14) {
-            header
+        VStack(spacing: 18) {
+            monthControls
             weekdayLabels
             grid
+            legend
         }
-        .repbaseCard(contentPadding: 16, cornerRadius: 20)
+        .repbaseCard(contentPadding: 18, cornerRadius: 24)
     }
 
     // MARK: - Header
 
-    private var header: some View {
+    private var monthControls: some View {
         HStack(spacing: 10) {
-            VStack(alignment: .leading, spacing: 1) {
-                Text(monthName)
-                    .font(.title2.weight(.semibold))
-                    .foregroundStyle(timeOfDay.primaryText)
-                Text(yearName)
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(timeOfDay.secondaryText)
-            }
-
             Spacer(minLength: 0)
 
             if !isShowingCurrentMonth {
@@ -52,17 +44,23 @@ struct PlannerMonthCalendar: View {
             stepper(systemImage: "chevron.left", label: "Previous month", months: -1)
             stepper(systemImage: "chevron.right", label: "Next month", months: 1)
 
-            if let onClose {
-                Button(action: onClose) {
-                    Image(systemName: "xmark")
-                        .font(.footnote.weight(.bold))
-                        .frame(width: 32, height: 32)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(timeOfDay.primaryText)
-                .accessibilityLabel("Close the month")
-            }
+            if let onClose { Button("Week", action: onClose).font(.caption.weight(.semibold)) }
+        }
+    }
+
+    private var legend: some View {
+        HStack(spacing: 18) {
+            legendItem("Workout", color: Color(hex: 0xB96F4C))
+            legendItem("Meals", color: Color(hex: 0x4AAFB3))
+            legendItem("Complete", color: Color(hex: 0x356B5B))
+            Spacer(minLength: 0)
+        }
+    }
+
+    private func legendItem(_ title: String, color: Color) -> some View {
+        HStack(spacing: 4) {
+            Circle().fill(color).frame(width: 6, height: 6)
+            Text(title).font(.system(size: 9, weight: .medium)).foregroundStyle(timeOfDay.secondaryText)
         }
     }
 

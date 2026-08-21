@@ -91,17 +91,17 @@ struct PlannerEntryEditorView: View {
                         )
 
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("PLANNER / \(draft.kind.title.uppercased())")
+                            Text(draft.kind == .task ? "NEW TASK" : "NEW EVENT")
                                 .font(.system(size: 10, weight: .bold))
                                 .tracking(1.25)
                                 .foregroundStyle(timeOfDay.accent)
-                            Text(draft.kind == .task ? "What needs doing?" : "What is happening?")
+                            Text(draft.kind == .task ? "Add something to your day." : "Put time on the calendar.")
                                 .font(.system(size: 34, weight: .bold, design: .rounded))
                                 .tracking(-0.8)
                             Text(
                                 draft.kind == .task
-                                    ? "Tasks stay visible until they are complete."
-                                    : "Events live on your schedule and are not checked off."
+                                    ? "A quick reminder that lives beside your events."
+                                    : "Plan a moment with a clear start and finish."
                             )
                             .font(.subheadline)
                             .foregroundStyle(timeOfDay.canvasSecondaryText)
@@ -174,7 +174,7 @@ struct PlannerEntryEditorView: View {
 
     private func editorialNameAndType(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(alignment: .leading, spacing: 13) {
-            EditorialSectionTitle(title: "Entry")
+            EditorialSectionTitle(title: draft.kind == .task ? "Task" : "Event")
             EditorialRuleGroup {
                 EditorialRuleRow {
                     TextField(
@@ -214,7 +214,7 @@ struct PlannerEntryEditorView: View {
 
     private func editorialDetails(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(alignment: .leading, spacing: 13) {
-            EditorialSectionTitle(title: "Details")
+            EditorialSectionTitle(title: "Schedule")
             EditorialRuleGroup {
                 EditorialRuleRow {
                     Text("Category").font(.subheadline)

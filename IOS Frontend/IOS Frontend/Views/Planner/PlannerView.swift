@@ -14,9 +14,9 @@ struct PlannerView: View {
 
     @State private var editor: PlannerEntryEditorView.Mode?
     @State private var categoryFilter: PlannerCategory?
-    /// The month starts closed. The week is what a day is usually chosen from,
-    /// and the full grid is a detour most of the time.
-    @State private var isMonthShown = false
+    /// The approved calendar opens on the month; the compact week remains one
+    /// tap away when the user wants a tighter planning view.
+    @State private var isMonthShown = true
     @State private var openingDay: Weekday?
 
     var body: some View {
@@ -25,11 +25,19 @@ struct PlannerView: View {
 
             ScrollView {
                 VStack(spacing: 14) {
-                    RepbaseScreenHeader(
-                        eyebrow: "Schedule",
-                        title: "Calendar",
-                        detail: "Plan the work, training, and events that shape your week."
-                    )
+                    HStack(alignment: .bottom) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("CALENDAR")
+                                .font(.system(size: 10, weight: .bold))
+                                .tracking(1.2)
+                                .foregroundStyle(timeOfDay.accent)
+                            Text(store.visibleMonth.formatted(.dateTime.month(.wide).year()))
+                                .font(.system(size: 32, weight: .bold))
+                                .tracking(-0.7)
+                                .foregroundStyle(timeOfDay.canvasPrimaryText)
+                        }
+                        Spacer(minLength: 0)
+                    }
 
                     if isMonthShown {
                         PlannerMonthCalendar {
@@ -38,13 +46,15 @@ struct PlannerView: View {
                         .transition(.opacity.combined(with: .move(edge: .top)))
                     }
 
-                    PlannerWeekStrip(
-                        categoryFilter: $categoryFilter,
-                        isMonthShown: isMonthShown,
-                        onToggleMonth: {
-                            withAnimation(.easeOut(duration: 0.2)) { isMonthShown.toggle() }
-                        }
-                    )
+                    if !isMonthShown {
+                        PlannerWeekStrip(
+                            categoryFilter: $categoryFilter,
+                            isMonthShown: isMonthShown,
+                            onToggleMonth: {
+                                withAnimation(.easeOut(duration: 0.2)) { isMonthShown.toggle() }
+                            }
+                        )
+                    }
 
                     addButtons(timeOfDay: timeOfDay)
                     daySection(timeOfDay: timeOfDay)

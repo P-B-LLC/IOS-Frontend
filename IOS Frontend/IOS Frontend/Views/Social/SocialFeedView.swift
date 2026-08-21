@@ -13,6 +13,12 @@ private struct CommentedPost: Identifiable, Hashable {
 }
 
 struct SocialFeedView: View {
+    private enum FeedMode: String, CaseIterable, Identifiable {
+        case following = "Following"
+        case discover = "Discover"
+        var id: String { rawValue }
+    }
+
     @Environment(SocialStore.self) private var store
 
     /// Opens straight onto a post's thread. Only set by the preview launch
@@ -28,6 +34,8 @@ struct SocialFeedView: View {
     /// because `sheet(item:)` wants Identifiable and a bare Int is not —
     /// unlike `navigationDestination(item:)`, which only wants Hashable.
     @State private var commenting: CommentedPost?
+    @State private var feedMode: FeedMode = .following
+    @State private var searchText = ""
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
@@ -64,6 +72,20 @@ struct SocialFeedView: View {
         ScrollView {
             LazyVStack(spacing: 14) {
                 header(timeOfDay: timeOfDay)
+                modePicker(timeOfDay: timeOfDay)
+
+                if feedMode == .discover {
+                    HStack(spacing: 10) {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundStyle(timeOfDay.accent)
+                        TextField("Search people or posts", text: $searchText)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                    }
+                    .padding(.horizontal, 16)
+                    .frame(height: 50)
+                    .repbaseDepthSurface(cornerRadius: 18)
+                }
 
                 if let message = store.errorMessage {
                     notice(message, symbol: "exclamationmark.triangle.fill", timeOfDay: timeOfDay)
@@ -85,7 +107,7 @@ struct SocialFeedView: View {
                 } else if store.feed.isEmpty {
                     emptyState(timeOfDay: timeOfDay)
                 } else {
-                    ForEach(store.feed) { post in
+                    ForEach(displayedPosts) { post in
                         // The card is not itself a button: the action bar
                         // inside it has four of its own, and a button holding
                         // buttons swallows their taps. A tap anywhere else
@@ -104,7 +126,7 @@ struct SocialFeedView: View {
                                 // The last card asks for the next page as it
                                 // comes into view, so the feed keeps going
                                 // without a button to press.
-                                if post.id == store.feed.last?.id {
+                                if feedMode == .following, post.id == store.feed.last?.id {
                                     await store.loadMore()
                                 }
                             }
@@ -134,14 +156,47 @@ struct SocialFeedView: View {
     private func header(timeOfDay: HomeTimeOfDay) -> some View {
         HStack(alignment: .top, spacing: 12) {
             RepbaseScreenHeader(
-                eyebrow: "Community",
-                title: "Social",
-                detail: "Training updates and progress from the people you follow."
+                eyebrow: "SOCIAL",
+                title: "Your community"
             )
 
-            composeButton(timeOfDay: timeOfDay)
+            Button {
+                feedMode = .discover
+            } label: {
+                Image(systemName: "magnifyingglass")
+            }
+            .buttonStyle(.bordered)
+            .buttonBorderShape(.circle)
+            .tint(timeOfDay.accent)
+            .accessibilityLabel("Discover people and posts")
         }
         .padding(.bottom, 2)
+    }
+
+    private func modePicker(timeOfDay: HomeTimeOfDay) -> some View {
+        Picker("Feed", selection: $feedMode) {
+            ForEach(FeedMode.allCases) { mode in
+                Text(mode.rawValue).tag(mode)
+            }
+        }
+        .pickerStyle(.segmented)
+        .padding(3)
+        .repbaseInsetSurface(cornerRadius: 16)
+        .tint(RepbaseDesign.ink)
+    }
+
+    private var displayedPosts: [FeedPost] {
+        guard feedMode == .discover else { return store.feed }
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !query.isEmpty else { return store.feed }
+        return store.feed.filter { post in
+            let shown = post.displayed
+            return shown.author.displayName.lowercased().contains(query)
+                || shown.author.username.lowercased().contains(query)
+                || shown.caption.lowercased().contains(query)
+                || shown.workout?.title.lowercased().contains(query) == true
+                || shown.meal?.name.lowercased().contains(query) == true
+        }
     }
 
     /// Opens the composer. Kept beside the title rather than floating over the

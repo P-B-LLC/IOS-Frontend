@@ -209,8 +209,7 @@ struct SocialProfileView: View {
                     Rectangle().fill(timeOfDay.border).frame(height: 1)
                 }
         }
-        .padding(18)
-        .repbaseDepthSurface(cornerRadius: RepbaseDesign.featureRadius)
+        .padding(.vertical, 8)
     }
 
     private var myPostCount: Int {
@@ -255,29 +254,15 @@ struct SocialProfileView: View {
     }
 
     private func sectionPicker(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack(spacing: 32) {
+        Picker("Profile section", selection: $selectedSection) {
             ForEach(ProfileSection.allCases) { section in
-                Button {
-                    withAnimation(.easeOut(duration: 0.18)) { selectedSection = section }
-                } label: {
-                    VStack(spacing: 7) {
-                        Label(section.rawValue, systemImage: section == .posts ? "square.grid.2x2" : "person.text.rectangle")
-                            .font(.subheadline.weight(.semibold))
-                        Capsule()
-                            .fill(selectedSection == section ? timeOfDay.accent : Color.clear)
-                            .frame(height: 3)
-                    }
-                    .foregroundStyle(selectedSection == section ? timeOfDay.primaryText : timeOfDay.secondaryText)
-                    .fixedSize(horizontal: true, vertical: false)
-                }
-                .buttonStyle(.plain)
+                Text(section.rawValue).tag(section)
             }
-            Spacer()
         }
-        .padding(.top, 14)
-        .overlay(alignment: .top) {
-            Rectangle().fill(timeOfDay.border).frame(height: 1)
-        }
+        .pickerStyle(.segmented)
+        .padding(3)
+        .repbaseInsetSurface(cornerRadius: 16)
+        .tint(RepbaseDesign.ink)
     }
 
     /// The user's own posts, drawn by the same card the feed uses.

@@ -113,6 +113,8 @@ struct PostComposerView: View {
                         notice(message, timeOfDay: timeOfDay)
                     }
 
+                    composerIntroduction(timeOfDay: timeOfDay)
+
                     if let fixedSubject {
                         subjectSection(fixedSubject, timeOfDay: timeOfDay)
                     } else {
@@ -164,6 +166,27 @@ struct PostComposerView: View {
             didChooseOpeningDay = false
             selection = nil
             chooseOpeningDayIfNeeded()
+        }
+    }
+
+    private func composerIntroduction(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(source == .meal ? "SHARE FOOD" : source == .workout ? "SHARE WORKOUT" : "SHARE YOUR DAY")
+                .font(.caption2.weight(.bold))
+                .tracking(1.1)
+                .foregroundStyle(timeOfDay.accent)
+            Text(source == .meal ? "Tell the story of this meal." : source == .workout ? "Share the work." : "Share the moment.")
+                .font(.title.weight(.bold))
+                .tracking(-0.5)
+            Text(
+                source == .meal
+                    ? "Nutrition comes from your log. You choose what to say."
+                    : source == .workout
+                        ? "Your session is ready. Decide what others can see."
+                        : "The details come from your calendar. Add the context."
+            )
+            .font(.subheadline)
+            .foregroundStyle(timeOfDay.canvasSecondaryText)
         }
     }
 

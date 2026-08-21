@@ -102,9 +102,9 @@ struct MealDetailView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(meal.entries.isEmpty ? "Build your plate." : "Your meal, at a glance.")
+                Text(meal.entries.isEmpty ? "Build your plate." : "Your plate, in balance.")
                     .font(.title2.weight(.bold))
-                Text(meal.entries.isEmpty ? "Add one food and the mix comes to life." : "See what this meal is made of—not a daily target.")
+                Text(meal.entries.isEmpty ? "Add one food and the balance comes to life." : "A useful view of this meal—not a daily target.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
