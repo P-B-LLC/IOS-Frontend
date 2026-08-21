@@ -20,8 +20,15 @@ struct IOS_FrontendApp: App {
 #if DEBUG
     @State private var gearStore = ProcessInfo.processInfo
         .environment["REPBASE_GEAR_PREVIEW"] != nil ? GearStore.preview : GearStore()
+    @State private var cycleStore = ProcessInfo.processInfo
+        .environment["REPBASE_CYCLE_PREVIEW"] == "empty"
+        ? CycleStore.previewEmpty
+        : (ProcessInfo.processInfo.environment["REPBASE_CYCLE_PREVIEW"] != nil
+            ? CycleStore.preview
+            : CycleStore())
 #else
     @State private var gearStore = GearStore()
+    @State private var cycleStore = CycleStore()
 #endif
 
     init() {
@@ -74,6 +81,7 @@ struct IOS_FrontendApp: App {
                 .environment(socialStore)
                 .environment(activityStore)
                 .environment(gearStore)
+                .environment(cycleStore)
         }
     }
 }
@@ -94,6 +102,7 @@ private struct AppRootView: View {
             || environment["REPBASE_ROUTE_PREVIEW"] != nil
             || environment["REPBASE_GEAR_PREVIEW"] != nil
             || environment["REPBASE_STEPS_PREVIEW"] != nil
+            || environment["REPBASE_CYCLE_PREVIEW"] != nil
     }
 #endif
 
@@ -105,6 +114,7 @@ private struct AppRootView: View {
     @Environment(SocialStore.self) private var socialStore
     @Environment(ActivityStore.self) private var activityStore
     @Environment(GearStore.self) private var gearStore
+    @Environment(CycleStore.self) private var cycleStore
 
     var body: some View {
         Group {
@@ -135,6 +145,23 @@ private struct AppRootView: View {
                     }
                     .repbaseScreen(.prepare)
                 }
+            } else if ProcessInfo.processInfo.environment["REPBASE_CYCLE_PREVIEW"] != nil {
+                // A rotation is several taps deep and needs a saved library
+                // behind it, neither of which a script can arrange.
+                let mode = ProcessInfo.processInfo.environment["REPBASE_CYCLE_PREVIEW"]
+                NavigationStack {
+                    switch mode {
+                    case "editor":
+                        CycleEditorView(mode: .create)
+                    case "dashboard":
+                        TrainingDashboardContent()
+                    default:
+                        // "empty" arrives here too, with an empty store behind
+                        // it, which is the no-rotation state.
+                        CycleView()
+                    }
+                }
+                .environment(WorkoutStore.previewWithLibrary)
             } else if ProcessInfo.processInfo.environment["REPBASE_GEAR_PREVIEW"] == "row" {
                 // The picker row in both states. It lives on a workout page
                 // reachable only by tapping, so this is the only way to see
@@ -334,6 +361,7 @@ private struct AppRootView: View {
                 socialStore.disconnect()
                 activityStore.disconnect()
                 gearStore.disconnect()
+                cycleStore.disconnect()
                 foodTrackingStore.reset()
                 return
             }
@@ -362,6 +390,10 @@ private struct AppRootView: View {
                 token: token
             )
             await gearStore.connect(
+                configuration: authentication.configuration,
+                token: token
+            )
+            await cycleStore.connect(
                 configuration: authentication.configuration,
                 token: token
             )

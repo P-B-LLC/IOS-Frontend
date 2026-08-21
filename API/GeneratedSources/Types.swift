@@ -41,6 +41,59 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/body-weight/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/body-weight/{id}//delete(body_weight_destroy)`.
     func bodyWeightDestroy(_ input: Operations.BodyWeightDestroy.Input) async throws -> Operations.BodyWeightDestroy.Output
+    /// Rotations that repeat every N days rather than every week.
+    ///
+    /// - Remark: HTTP `GET /api/v1/cycles/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles//get(cycles_list)`.
+    func cyclesList(_ input: Operations.CyclesList.Input) async throws -> Operations.CyclesList.Output
+    /// Rotations that repeat every N days rather than every week.
+    ///
+    /// - Remark: HTTP `POST /api/v1/cycles/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles//post(cycles_create)`.
+    func cyclesCreate(_ input: Operations.CyclesCreate.Input) async throws -> Operations.CyclesCreate.Output
+    /// Rotations that repeat every N days rather than every week.
+    ///
+    /// - Remark: HTTP `GET /api/v1/cycles/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}//get(cycles_retrieve)`.
+    func cyclesRetrieve(_ input: Operations.CyclesRetrieve.Input) async throws -> Operations.CyclesRetrieve.Output
+    /// Rotations that repeat every N days rather than every week.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/cycles/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}//patch(cycles_partial_update)`.
+    func cyclesPartialUpdate(_ input: Operations.CyclesPartialUpdate.Input) async throws -> Operations.CyclesPartialUpdate.Output
+    /// Rotations that repeat every N days rather than every week.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/cycles/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}//put(cycles_update)`.
+    func cyclesUpdate(_ input: Operations.CyclesUpdate.Input) async throws -> Operations.CyclesUpdate.Output
+    /// Rotations that repeat every N days rather than every week.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/cycles/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}//delete(cycles_destroy)`.
+    func cyclesDestroy(_ input: Operations.CyclesDestroy.Input) async throws -> Operations.CyclesDestroy.Output
+    /// Writes schedule rows for the rotation up to a date.
+    ///
+    /// - Remark: HTTP `POST /api/v1/cycles/{id}/plan-ahead/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}/plan-ahead//post(cycles_plan_ahead_create)`.
+    func cyclesPlanAheadCreate(_ input: Operations.CyclesPlanAheadCreate.Input) async throws -> Operations.CyclesPlanAheadCreate.Output
+    /// Makes the next workout in the rotation happen today.
+    ///
+    /// For somebody who has already drifted: rather than counting how many
+    /// days behind they are, the rotation is re-anchored so the workout they
+    /// owe lands on today and the rest follows from there.
+    ///
+    /// - Remark: HTTP `POST /api/v1/cycles/{id}/resume-today/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}/resume-today//post(cycles_resume_today_create)`.
+    func cyclesResumeTodayCreate(_ input: Operations.CyclesResumeTodayCreate.Input) async throws -> Operations.CyclesResumeTodayCreate.Output
+    /// Pushes the rest of the rotation back, after an unplanned rest day.
+    ///
+    /// The anchor moves and every future date moves with it. That is the whole
+    /// reason a rotation is anchored to a date: a weekly rule could only be
+    /// shifted by becoming a rule about a different weekday.
+    ///
+    /// - Remark: HTTP `POST /api/v1/cycles/{id}/shift/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}/shift//post(cycles_shift_create)`.
+    func cyclesShiftCreate(_ input: Operations.CyclesShiftCreate.Input) async throws -> Operations.CyclesShiftCreate.Output
     /// - Remark: HTTP `GET /api/v1/exercises/`.
     /// - Remark: Generated from `#/paths//api/v1/exercises//get(exercises_list)`.
     func exercisesList(_ input: Operations.ExercisesList.Input) async throws -> Operations.ExercisesList.Output
@@ -851,6 +904,133 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//api/v1/body-weight/{id}//delete(body_weight_destroy)`.
     public func bodyWeightDestroy(path: Operations.BodyWeightDestroy.Input.Path) async throws -> Operations.BodyWeightDestroy.Output {
         try await bodyWeightDestroy(Operations.BodyWeightDestroy.Input(path: path))
+    }
+    /// Rotations that repeat every N days rather than every week.
+    ///
+    /// - Remark: HTTP `GET /api/v1/cycles/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles//get(cycles_list)`.
+    public func cyclesList(
+        query: Operations.CyclesList.Input.Query = .init(),
+        headers: Operations.CyclesList.Input.Headers = .init()
+    ) async throws -> Operations.CyclesList.Output {
+        try await cyclesList(Operations.CyclesList.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Rotations that repeat every N days rather than every week.
+    ///
+    /// - Remark: HTTP `POST /api/v1/cycles/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles//post(cycles_create)`.
+    public func cyclesCreate(
+        headers: Operations.CyclesCreate.Input.Headers = .init(),
+        body: Operations.CyclesCreate.Input.Body
+    ) async throws -> Operations.CyclesCreate.Output {
+        try await cyclesCreate(Operations.CyclesCreate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Rotations that repeat every N days rather than every week.
+    ///
+    /// - Remark: HTTP `GET /api/v1/cycles/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}//get(cycles_retrieve)`.
+    public func cyclesRetrieve(
+        path: Operations.CyclesRetrieve.Input.Path,
+        headers: Operations.CyclesRetrieve.Input.Headers = .init()
+    ) async throws -> Operations.CyclesRetrieve.Output {
+        try await cyclesRetrieve(Operations.CyclesRetrieve.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Rotations that repeat every N days rather than every week.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/cycles/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}//patch(cycles_partial_update)`.
+    public func cyclesPartialUpdate(
+        path: Operations.CyclesPartialUpdate.Input.Path,
+        headers: Operations.CyclesPartialUpdate.Input.Headers = .init(),
+        body: Operations.CyclesPartialUpdate.Input.Body? = nil
+    ) async throws -> Operations.CyclesPartialUpdate.Output {
+        try await cyclesPartialUpdate(Operations.CyclesPartialUpdate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Rotations that repeat every N days rather than every week.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/cycles/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}//put(cycles_update)`.
+    public func cyclesUpdate(
+        path: Operations.CyclesUpdate.Input.Path,
+        headers: Operations.CyclesUpdate.Input.Headers = .init(),
+        body: Operations.CyclesUpdate.Input.Body
+    ) async throws -> Operations.CyclesUpdate.Output {
+        try await cyclesUpdate(Operations.CyclesUpdate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Rotations that repeat every N days rather than every week.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/cycles/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}//delete(cycles_destroy)`.
+    public func cyclesDestroy(path: Operations.CyclesDestroy.Input.Path) async throws -> Operations.CyclesDestroy.Output {
+        try await cyclesDestroy(Operations.CyclesDestroy.Input(path: path))
+    }
+    /// Writes schedule rows for the rotation up to a date.
+    ///
+    /// - Remark: HTTP `POST /api/v1/cycles/{id}/plan-ahead/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}/plan-ahead//post(cycles_plan_ahead_create)`.
+    public func cyclesPlanAheadCreate(
+        path: Operations.CyclesPlanAheadCreate.Input.Path,
+        headers: Operations.CyclesPlanAheadCreate.Input.Headers = .init(),
+        body: Operations.CyclesPlanAheadCreate.Input.Body
+    ) async throws -> Operations.CyclesPlanAheadCreate.Output {
+        try await cyclesPlanAheadCreate(Operations.CyclesPlanAheadCreate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Makes the next workout in the rotation happen today.
+    ///
+    /// For somebody who has already drifted: rather than counting how many
+    /// days behind they are, the rotation is re-anchored so the workout they
+    /// owe lands on today and the rest follows from there.
+    ///
+    /// - Remark: HTTP `POST /api/v1/cycles/{id}/resume-today/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}/resume-today//post(cycles_resume_today_create)`.
+    public func cyclesResumeTodayCreate(
+        path: Operations.CyclesResumeTodayCreate.Input.Path,
+        headers: Operations.CyclesResumeTodayCreate.Input.Headers = .init()
+    ) async throws -> Operations.CyclesResumeTodayCreate.Output {
+        try await cyclesResumeTodayCreate(Operations.CyclesResumeTodayCreate.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Pushes the rest of the rotation back, after an unplanned rest day.
+    ///
+    /// The anchor moves and every future date moves with it. That is the whole
+    /// reason a rotation is anchored to a date: a weekly rule could only be
+    /// shifted by becoming a rule about a different weekday.
+    ///
+    /// - Remark: HTTP `POST /api/v1/cycles/{id}/shift/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}/shift//post(cycles_shift_create)`.
+    public func cyclesShiftCreate(
+        path: Operations.CyclesShiftCreate.Input.Path,
+        headers: Operations.CyclesShiftCreate.Input.Headers = .init(),
+        body: Operations.CyclesShiftCreate.Input.Body
+    ) async throws -> Operations.CyclesShiftCreate.Output {
+        try await cyclesShiftCreate(Operations.CyclesShiftCreate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
     }
     /// - Remark: HTTP `GET /api/v1/exercises/`.
     /// - Remark: Generated from `#/paths//api/v1/exercises//get(exercises_list)`.
@@ -2880,6 +3060,83 @@ public enum Components {
                 case imageBase64 = "image_base64"
             }
         }
+        /// How far forward to write schedule rows.
+        ///
+        /// - Remark: Generated from `#/components/schemas/CyclePlanAheadRequest`.
+        public struct CyclePlanAheadRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CyclePlanAheadRequest/through`.
+            public var through: Swift.String
+            /// Creates a new `CyclePlanAheadRequest`.
+            ///
+            /// - Parameters:
+            ///   - through:
+            public init(through: Swift.String) {
+                self.through = through
+            }
+            public enum CodingKeys: String, CodingKey {
+                case through
+            }
+        }
+        /// How many days to push the rest of the rotation back.
+        ///
+        /// - Remark: Generated from `#/components/schemas/CycleShiftRequest`.
+        public struct CycleShiftRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CycleShiftRequest/days`.
+            public var days: Swift.Int
+            /// Creates a new `CycleShiftRequest`.
+            ///
+            /// - Parameters:
+            ///   - days:
+            public init(days: Swift.Int) {
+                self.days = days
+            }
+            public enum CodingKeys: String, CodingKey {
+                case days
+            }
+        }
+        /// What the shift did, counted.
+        ///
+        /// - Remark: Generated from `#/components/schemas/CycleShiftResult`.
+        public struct CycleShiftResult: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CycleShiftResult/cycle`.
+            public var cycle: Components.Schemas.WorkoutCycle
+            /// - Remark: Generated from `#/components/schemas/CycleShiftResult/days_shifted`.
+            public var daysShifted: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/CycleShiftResult/removed`.
+            public var removed: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/CycleShiftResult/scheduled`.
+            public var scheduled: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/CycleShiftResult/kept`.
+            public var kept: Swift.Int
+            /// Creates a new `CycleShiftResult`.
+            ///
+            /// - Parameters:
+            ///   - cycle:
+            ///   - daysShifted:
+            ///   - removed:
+            ///   - scheduled:
+            ///   - kept:
+            public init(
+                cycle: Components.Schemas.WorkoutCycle,
+                daysShifted: Swift.Int,
+                removed: Swift.Int,
+                scheduled: Swift.Int,
+                kept: Swift.Int
+            ) {
+                self.cycle = cycle
+                self.daysShifted = daysShifted
+                self.removed = removed
+                self.scheduled = scheduled
+                self.kept = kept
+            }
+            public enum CodingKeys: String, CodingKey {
+                case cycle
+                case daysShifted = "days_shifted"
+                case removed
+                case scheduled
+                case kept
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/DailyStepCount`.
         public struct DailyStepCount: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/DailyStepCount/id`.
@@ -4370,6 +4627,41 @@ public enum Components {
                 case results
             }
         }
+        /// - Remark: Generated from `#/components/schemas/PaginatedWorkoutCycleList`.
+        public struct PaginatedWorkoutCycleList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PaginatedWorkoutCycleList/count`.
+            public var count: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PaginatedWorkoutCycleList/next`.
+            public var next: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedWorkoutCycleList/previous`.
+            public var previous: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedWorkoutCycleList/results`.
+            public var results: [Components.Schemas.WorkoutCycle]
+            /// Creates a new `PaginatedWorkoutCycleList`.
+            ///
+            /// - Parameters:
+            ///   - count:
+            ///   - next:
+            ///   - previous:
+            ///   - results:
+            public init(
+                count: Swift.Int,
+                next: Swift.String? = nil,
+                previous: Swift.String? = nil,
+                results: [Components.Schemas.WorkoutCycle]
+            ) {
+                self.count = count
+                self.next = next
+                self.previous = previous
+                self.results = results
+            }
+            public enum CodingKeys: String, CodingKey {
+                case count
+                case next
+                case previous
+                case results
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/PaginatedWorkoutExerciseList`.
         public struct PaginatedWorkoutExerciseList: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PaginatedWorkoutExerciseList/count`.
@@ -5135,6 +5427,41 @@ public enum Components {
             public enum CodingKeys: String, CodingKey {
                 case caption
                 case visibility
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PatchedWorkoutCycleRequest`.
+        public struct PatchedWorkoutCycleRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PatchedWorkoutCycleRequest/name`.
+            public var name: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedWorkoutCycleRequest/length`.
+            public var length: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PatchedWorkoutCycleRequest/anchor_date`.
+            public var anchorDate: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedWorkoutCycleRequest/slots`.
+            public var slots: [Components.Schemas.WorkoutCycleSlotRequest]?
+            /// Creates a new `PatchedWorkoutCycleRequest`.
+            ///
+            /// - Parameters:
+            ///   - name:
+            ///   - length:
+            ///   - anchorDate:
+            ///   - slots:
+            public init(
+                name: Swift.String? = nil,
+                length: Swift.Int? = nil,
+                anchorDate: Swift.String? = nil,
+                slots: [Components.Schemas.WorkoutCycleSlotRequest]? = nil
+            ) {
+                self.name = name
+                self.length = length
+                self.anchorDate = anchorDate
+                self.slots = slots
+            }
+            public enum CodingKeys: String, CodingKey {
+                case name
+                case length
+                case anchorDate = "anchor_date"
+                case slots
             }
         }
         /// - Remark: Generated from `#/components/schemas/PatchedWorkoutExerciseRequest`.
@@ -7359,6 +7686,206 @@ public enum Components {
             case _5 = 5
             case _6 = 6
         }
+        /// - Remark: Generated from `#/components/schemas/WorkoutCycle`.
+        public struct WorkoutCycle: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/WorkoutCycle/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/WorkoutCycle/owner`.
+            public var owner: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/WorkoutCycle/name`.
+            public var name: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/WorkoutCycle/length`.
+            public var length: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/WorkoutCycle/anchor_date`.
+            public var anchorDate: Swift.String
+            /// - Remark: Generated from `#/components/schemas/WorkoutCycle/effective_from`.
+            public var effectiveFrom: Swift.String
+            /// - Remark: Generated from `#/components/schemas/WorkoutCycle/effective_until`.
+            public var effectiveUntil: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/WorkoutCycle/is_active`.
+            public var isActive: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/WorkoutCycle/slots`.
+            public var slots: [Components.Schemas.WorkoutCycleSlot]
+            /// - Remark: Generated from `#/components/schemas/WorkoutCycle/current_position`.
+            public var currentPosition: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/WorkoutCycle/current_workout_name`.
+            public var currentWorkoutName: Swift.String
+            /// - Remark: Generated from `#/components/schemas/WorkoutCycle/next_workout_name`.
+            public var nextWorkoutName: Swift.String
+            /// - Remark: Generated from `#/components/schemas/WorkoutCycle/next_workout_date`.
+            public var nextWorkoutDate: Swift.String
+            /// - Remark: Generated from `#/components/schemas/WorkoutCycle/created_at`.
+            public var createdAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/WorkoutCycle/updated_at`.
+            public var updatedAt: Foundation.Date
+            /// Creates a new `WorkoutCycle`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - owner:
+            ///   - name:
+            ///   - length:
+            ///   - anchorDate:
+            ///   - effectiveFrom:
+            ///   - effectiveUntil:
+            ///   - isActive:
+            ///   - slots:
+            ///   - currentPosition:
+            ///   - currentWorkoutName:
+            ///   - nextWorkoutName:
+            ///   - nextWorkoutDate:
+            ///   - createdAt:
+            ///   - updatedAt:
+            public init(
+                id: Swift.Int,
+                owner: Swift.Int,
+                name: Swift.String? = nil,
+                length: Swift.Int,
+                anchorDate: Swift.String,
+                effectiveFrom: Swift.String,
+                effectiveUntil: Swift.String? = nil,
+                isActive: Swift.Bool,
+                slots: [Components.Schemas.WorkoutCycleSlot],
+                currentPosition: Swift.Int,
+                currentWorkoutName: Swift.String,
+                nextWorkoutName: Swift.String,
+                nextWorkoutDate: Swift.String,
+                createdAt: Foundation.Date,
+                updatedAt: Foundation.Date
+            ) {
+                self.id = id
+                self.owner = owner
+                self.name = name
+                self.length = length
+                self.anchorDate = anchorDate
+                self.effectiveFrom = effectiveFrom
+                self.effectiveUntil = effectiveUntil
+                self.isActive = isActive
+                self.slots = slots
+                self.currentPosition = currentPosition
+                self.currentWorkoutName = currentWorkoutName
+                self.nextWorkoutName = nextWorkoutName
+                self.nextWorkoutDate = nextWorkoutDate
+                self.createdAt = createdAt
+                self.updatedAt = updatedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case owner
+                case name
+                case length
+                case anchorDate = "anchor_date"
+                case effectiveFrom = "effective_from"
+                case effectiveUntil = "effective_until"
+                case isActive = "is_active"
+                case slots
+                case currentPosition = "current_position"
+                case currentWorkoutName = "current_workout_name"
+                case nextWorkoutName = "next_workout_name"
+                case nextWorkoutDate = "next_workout_date"
+                case createdAt = "created_at"
+                case updatedAt = "updated_at"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/WorkoutCycleRequest`.
+        public struct WorkoutCycleRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/WorkoutCycleRequest/name`.
+            public var name: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/WorkoutCycleRequest/length`.
+            public var length: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/WorkoutCycleRequest/anchor_date`.
+            public var anchorDate: Swift.String
+            /// - Remark: Generated from `#/components/schemas/WorkoutCycleRequest/slots`.
+            public var slots: [Components.Schemas.WorkoutCycleSlotRequest]
+            /// Creates a new `WorkoutCycleRequest`.
+            ///
+            /// - Parameters:
+            ///   - name:
+            ///   - length:
+            ///   - anchorDate:
+            ///   - slots:
+            public init(
+                name: Swift.String? = nil,
+                length: Swift.Int,
+                anchorDate: Swift.String,
+                slots: [Components.Schemas.WorkoutCycleSlotRequest]
+            ) {
+                self.name = name
+                self.length = length
+                self.anchorDate = anchorDate
+                self.slots = slots
+            }
+            public enum CodingKeys: String, CodingKey {
+                case name
+                case length
+                case anchorDate = "anchor_date"
+                case slots
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/WorkoutCycleSlot`.
+        public struct WorkoutCycleSlot: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/WorkoutCycleSlot/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/WorkoutCycleSlot/position`.
+            public var position: Swift.Int64
+            /// - Remark: Generated from `#/components/schemas/WorkoutCycleSlot/workout`.
+            public var workout: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/WorkoutCycleSlot/workout_name`.
+            public var workoutName: Swift.String
+            /// - Remark: Generated from `#/components/schemas/WorkoutCycleSlot/is_rest`.
+            public var isRest: Swift.Bool
+            /// Creates a new `WorkoutCycleSlot`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - position:
+            ///   - workout:
+            ///   - workoutName:
+            ///   - isRest:
+            public init(
+                id: Swift.Int,
+                position: Swift.Int64,
+                workout: Swift.Int? = nil,
+                workoutName: Swift.String,
+                isRest: Swift.Bool
+            ) {
+                self.id = id
+                self.position = position
+                self.workout = workout
+                self.workoutName = workoutName
+                self.isRest = isRest
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case position
+                case workout
+                case workoutName = "workout_name"
+                case isRest = "is_rest"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/WorkoutCycleSlotRequest`.
+        public struct WorkoutCycleSlotRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/WorkoutCycleSlotRequest/position`.
+            public var position: Swift.Int64
+            /// - Remark: Generated from `#/components/schemas/WorkoutCycleSlotRequest/workout`.
+            public var workout: Swift.Int?
+            /// Creates a new `WorkoutCycleSlotRequest`.
+            ///
+            /// - Parameters:
+            ///   - position:
+            ///   - workout:
+            public init(
+                position: Swift.Int64,
+                workout: Swift.Int? = nil
+            ) {
+                self.position = position
+                self.workout = workout
+            }
+            public enum CodingKeys: String, CodingKey {
+                case position
+                case workout
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/WorkoutExercise`.
         public struct WorkoutExercise: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/WorkoutExercise/id`.
@@ -9272,6 +9799,1153 @@ public enum Operations {
             ///
             /// A response with a code that is not documented in the OpenAPI document.
             case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// Rotations that repeat every N days rather than every week.
+    ///
+    /// - Remark: HTTP `GET /api/v1/cycles/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles//get(cycles_list)`.
+    public enum CyclesList {
+        public static let id: Swift.String = "cycles_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/cycles/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/cycles/GET/query/page`.
+                public var page: Swift.Int?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - page: A page number within the paginated result set.
+                public init(page: Swift.Int? = nil) {
+                    self.page = page
+                }
+            }
+            public var query: Operations.CyclesList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/cycles/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CyclesList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CyclesList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CyclesList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.CyclesList.Input.Query = .init(),
+                headers: Operations.CyclesList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/cycles/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/cycles/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedWorkoutCycleList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedWorkoutCycleList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CyclesList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CyclesList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/cycles//get(cycles_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CyclesList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CyclesList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Rotations that repeat every N days rather than every week.
+    ///
+    /// - Remark: HTTP `POST /api/v1/cycles/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles//post(cycles_create)`.
+    public enum CyclesCreate {
+        public static let id: Swift.String = "cycles_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/cycles/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CyclesCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CyclesCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CyclesCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/cycles/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/cycles/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.WorkoutCycleRequest)
+            }
+            public var body: Operations.CyclesCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.CyclesCreate.Input.Headers = .init(),
+                body: Operations.CyclesCreate.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Created: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/cycles/POST/responses/201/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/cycles/POST/responses/201/content/application\/json`.
+                    case json(Components.Schemas.WorkoutCycle)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.WorkoutCycle {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CyclesCreate.Output.Created.Body
+                /// Creates a new `Created`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CyclesCreate.Output.Created.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/cycles//post(cycles_create)/responses/201`.
+            ///
+            /// HTTP response code: `201 created`.
+            case created(Operations.CyclesCreate.Output.Created)
+            /// The associated value of the enum case if `self` is `.created`.
+            ///
+            /// - Throws: An error if `self` is not `.created`.
+            /// - SeeAlso: `.created`.
+            public var created: Operations.CyclesCreate.Output.Created {
+                get throws {
+                    switch self {
+                    case let .created(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "created",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Rotations that repeat every N days rather than every week.
+    ///
+    /// - Remark: HTTP `GET /api/v1/cycles/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}//get(cycles_retrieve)`.
+    public enum CyclesRetrieve {
+        public static let id: Swift.String = "cycles_retrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/GET/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this workout cycle.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/GET/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this workout cycle.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.CyclesRetrieve.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CyclesRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CyclesRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CyclesRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.CyclesRetrieve.Input.Path,
+                headers: Operations.CyclesRetrieve.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.WorkoutCycle)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.WorkoutCycle {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CyclesRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CyclesRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/cycles/{id}//get(cycles_retrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CyclesRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CyclesRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Rotations that repeat every N days rather than every week.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/cycles/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}//patch(cycles_partial_update)`.
+    public enum CyclesPartialUpdate {
+        public static let id: Swift.String = "cycles_partial_update"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/PATCH/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this workout cycle.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/PATCH/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this workout cycle.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.CyclesPartialUpdate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/PATCH/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CyclesPartialUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CyclesPartialUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CyclesPartialUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/PATCH/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/PATCH/requestBody/content/application\/json`.
+                case json(Components.Schemas.PatchedWorkoutCycleRequest)
+            }
+            public var body: Operations.CyclesPartialUpdate.Input.Body?
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.CyclesPartialUpdate.Input.Path,
+                headers: Operations.CyclesPartialUpdate.Input.Headers = .init(),
+                body: Operations.CyclesPartialUpdate.Input.Body? = nil
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/PATCH/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/PATCH/responses/200/content/application\/json`.
+                    case json(Components.Schemas.WorkoutCycle)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.WorkoutCycle {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CyclesPartialUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CyclesPartialUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/cycles/{id}//patch(cycles_partial_update)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CyclesPartialUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CyclesPartialUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Rotations that repeat every N days rather than every week.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/cycles/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}//put(cycles_update)`.
+    public enum CyclesUpdate {
+        public static let id: Swift.String = "cycles_update"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/PUT/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this workout cycle.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/PUT/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this workout cycle.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.CyclesUpdate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/PUT/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CyclesUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CyclesUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CyclesUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/PUT/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/PUT/requestBody/content/application\/json`.
+                case json(Components.Schemas.WorkoutCycleRequest)
+            }
+            public var body: Operations.CyclesUpdate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.CyclesUpdate.Input.Path,
+                headers: Operations.CyclesUpdate.Input.Headers = .init(),
+                body: Operations.CyclesUpdate.Input.Body
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/PUT/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/PUT/responses/200/content/application\/json`.
+                    case json(Components.Schemas.WorkoutCycle)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.WorkoutCycle {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CyclesUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CyclesUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/cycles/{id}//put(cycles_update)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CyclesUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CyclesUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Rotations that repeat every N days rather than every week.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/cycles/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}//delete(cycles_destroy)`.
+    public enum CyclesDestroy {
+        public static let id: Swift.String = "cycles_destroy"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/DELETE/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this workout cycle.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/DELETE/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this workout cycle.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.CyclesDestroy.Input.Path
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            public init(path: Operations.CyclesDestroy.Input.Path) {
+                self.path = path
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct NoContent: Sendable, Hashable {
+                /// Creates a new `NoContent`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/cycles/{id}//delete(cycles_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            case noContent(Operations.CyclesDestroy.Output.NoContent)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/cycles/{id}//delete(cycles_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            public static var noContent: Self {
+                .noContent(.init())
+            }
+            /// The associated value of the enum case if `self` is `.noContent`.
+            ///
+            /// - Throws: An error if `self` is not `.noContent`.
+            /// - SeeAlso: `.noContent`.
+            public var noContent: Operations.CyclesDestroy.Output.NoContent {
+                get throws {
+                    switch self {
+                    case let .noContent(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "noContent",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// Writes schedule rows for the rotation up to a date.
+    ///
+    /// - Remark: HTTP `POST /api/v1/cycles/{id}/plan-ahead/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}/plan-ahead//post(cycles_plan_ahead_create)`.
+    public enum CyclesPlanAheadCreate {
+        public static let id: Swift.String = "cycles_plan_ahead_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/plan-ahead/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this workout cycle.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/plan-ahead/POST/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this workout cycle.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.CyclesPlanAheadCreate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/plan-ahead/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CyclesPlanAheadCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CyclesPlanAheadCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CyclesPlanAheadCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/plan-ahead/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/plan-ahead/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.CyclePlanAheadRequest)
+            }
+            public var body: Operations.CyclesPlanAheadCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.CyclesPlanAheadCreate.Input.Path,
+                headers: Operations.CyclesPlanAheadCreate.Input.Headers = .init(),
+                body: Operations.CyclesPlanAheadCreate.Input.Body
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/plan-ahead/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/plan-ahead/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.WorkoutCycle)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.WorkoutCycle {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CyclesPlanAheadCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CyclesPlanAheadCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/cycles/{id}/plan-ahead//post(cycles_plan_ahead_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CyclesPlanAheadCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CyclesPlanAheadCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Makes the next workout in the rotation happen today.
+    ///
+    /// For somebody who has already drifted: rather than counting how many
+    /// days behind they are, the rotation is re-anchored so the workout they
+    /// owe lands on today and the rest follows from there.
+    ///
+    /// - Remark: HTTP `POST /api/v1/cycles/{id}/resume-today/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}/resume-today//post(cycles_resume_today_create)`.
+    public enum CyclesResumeTodayCreate {
+        public static let id: Swift.String = "cycles_resume_today_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/resume-today/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this workout cycle.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/resume-today/POST/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this workout cycle.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.CyclesResumeTodayCreate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/resume-today/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CyclesResumeTodayCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CyclesResumeTodayCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CyclesResumeTodayCreate.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.CyclesResumeTodayCreate.Input.Path,
+                headers: Operations.CyclesResumeTodayCreate.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/resume-today/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/resume-today/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.CycleShiftResult)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.CycleShiftResult {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CyclesResumeTodayCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CyclesResumeTodayCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/cycles/{id}/resume-today//post(cycles_resume_today_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CyclesResumeTodayCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CyclesResumeTodayCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Pushes the rest of the rotation back, after an unplanned rest day.
+    ///
+    /// The anchor moves and every future date moves with it. That is the whole
+    /// reason a rotation is anchored to a date: a weekly rule could only be
+    /// shifted by becoming a rule about a different weekday.
+    ///
+    /// - Remark: HTTP `POST /api/v1/cycles/{id}/shift/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}/shift//post(cycles_shift_create)`.
+    public enum CyclesShiftCreate {
+        public static let id: Swift.String = "cycles_shift_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/shift/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this workout cycle.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/shift/POST/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this workout cycle.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.CyclesShiftCreate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/shift/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CyclesShiftCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CyclesShiftCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CyclesShiftCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/shift/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/shift/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.CycleShiftRequest)
+            }
+            public var body: Operations.CyclesShiftCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.CyclesShiftCreate.Input.Path,
+                headers: Operations.CyclesShiftCreate.Input.Headers = .init(),
+                body: Operations.CyclesShiftCreate.Input.Body
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/shift/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/shift/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.CycleShiftResult)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.CycleShiftResult {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CyclesShiftCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CyclesShiftCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/cycles/{id}/shift//post(cycles_shift_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CyclesShiftCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CyclesShiftCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
         }
     }
     /// - Remark: HTTP `GET /api/v1/exercises/`.

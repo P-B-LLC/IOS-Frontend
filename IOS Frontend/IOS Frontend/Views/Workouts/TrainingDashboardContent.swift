@@ -10,6 +10,7 @@ import SwiftUI
 
 struct TrainingDashboardContent: View {
     @Environment(WorkoutStore.self) private var store
+    @Environment(CycleStore.self) private var cycles
 
     private var phase: WorkoutVisualPhase {
         store.activeSession == nil ? .prepare : .focus
@@ -70,9 +71,66 @@ struct TrainingDashboardContent: View {
                     .buttonStyle(.plain)
                 }
             }
+
+            Divider()
+            cycleRow
         }
         .padding(16)
         .dashboardSurface(radius: 22)
+    }
+
+    /// The way into rotations, and the only place the current day of one is
+    /// shown without going looking for it.
+    ///
+    /// A row rather than a button, because it has something to say when a
+    /// rotation is running: which day of it today is. That is the whole
+    /// difficulty of an eight-day split, and the strip of weekdays above
+    /// cannot express it.
+    private var cycleRow: some View {
+        NavigationLink {
+            CycleView()
+        } label: {
+            HStack(spacing: 11) {
+                if let cycle = cycles.activeCycle {
+                    Text("\(cycle.currentPosition)")
+                        .font(.footnote.weight(.bold))
+                        .foregroundStyle(Color.white)
+                        .frame(width: 26, height: 26)
+                        .background(Circle().fill(phase.accent))
+                } else {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(phase.secondaryText)
+                        .frame(width: 26, height: 26)
+                        .background(Circle().fill(RepbasePalette.oatmeal))
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(cycles.activeCycle?.positionText ?? "Repeating split")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(phase.primaryText)
+                    Text(cycleDetail)
+                        .font(.caption)
+                        .foregroundStyle(phase.secondaryText)
+                        .lineLimit(1)
+                }
+
+                Spacer(minLength: 0)
+
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(phase.secondaryText)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var cycleDetail: String {
+        guard let cycle = cycles.activeCycle else {
+            return "Train on a cycle, not a weekly plan"
+        }
+        return "\(cycle.currentWorkoutName) today"
     }
 
     @ViewBuilder

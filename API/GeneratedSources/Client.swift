@@ -632,6 +632,598 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// Rotations that repeat every N days rather than every week.
+    ///
+    /// - Remark: HTTP `GET /api/v1/cycles/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles//get(cycles_list)`.
+    public func cyclesList(_ input: Operations.CyclesList.Input) async throws -> Operations.CyclesList.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.CyclesList.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/cycles/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .get
+                )
+                suppressMutabilityWarning(&request)
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "page",
+                    value: input.query.page
+                )
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.CyclesList.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.PaginatedWorkoutCycleList.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Rotations that repeat every N days rather than every week.
+    ///
+    /// - Remark: HTTP `POST /api/v1/cycles/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles//post(cycles_create)`.
+    public func cyclesCreate(_ input: Operations.CyclesCreate.Input) async throws -> Operations.CyclesCreate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.CyclesCreate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/cycles/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .post
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                let body: OpenAPIRuntime.HTTPBody?
+                switch input.body {
+                case let .json(value):
+                    body = try converter.setRequiredRequestBodyAsJSON(
+                        value,
+                        headerFields: &request.headerFields,
+                        contentType: "application/json; charset=utf-8"
+                    )
+                }
+                return (request, body)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 201:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.CyclesCreate.Output.Created.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.WorkoutCycle.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .created(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Rotations that repeat every N days rather than every week.
+    ///
+    /// - Remark: HTTP `GET /api/v1/cycles/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}//get(cycles_retrieve)`.
+    public func cyclesRetrieve(_ input: Operations.CyclesRetrieve.Input) async throws -> Operations.CyclesRetrieve.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.CyclesRetrieve.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/cycles/{}/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .get
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.CyclesRetrieve.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.WorkoutCycle.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Rotations that repeat every N days rather than every week.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/cycles/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}//patch(cycles_partial_update)`.
+    public func cyclesPartialUpdate(_ input: Operations.CyclesPartialUpdate.Input) async throws -> Operations.CyclesPartialUpdate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.CyclesPartialUpdate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/cycles/{}/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .patch
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                let body: OpenAPIRuntime.HTTPBody?
+                switch input.body {
+                case .none:
+                    body = nil
+                case let .json(value):
+                    body = try converter.setOptionalRequestBodyAsJSON(
+                        value,
+                        headerFields: &request.headerFields,
+                        contentType: "application/json; charset=utf-8"
+                    )
+                }
+                return (request, body)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.CyclesPartialUpdate.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.WorkoutCycle.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Rotations that repeat every N days rather than every week.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/cycles/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}//put(cycles_update)`.
+    public func cyclesUpdate(_ input: Operations.CyclesUpdate.Input) async throws -> Operations.CyclesUpdate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.CyclesUpdate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/cycles/{}/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .put
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                let body: OpenAPIRuntime.HTTPBody?
+                switch input.body {
+                case let .json(value):
+                    body = try converter.setRequiredRequestBodyAsJSON(
+                        value,
+                        headerFields: &request.headerFields,
+                        contentType: "application/json; charset=utf-8"
+                    )
+                }
+                return (request, body)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.CyclesUpdate.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.WorkoutCycle.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Rotations that repeat every N days rather than every week.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/cycles/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}//delete(cycles_destroy)`.
+    public func cyclesDestroy(_ input: Operations.CyclesDestroy.Input) async throws -> Operations.CyclesDestroy.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.CyclesDestroy.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/cycles/{}/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .delete
+                )
+                suppressMutabilityWarning(&request)
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 204:
+                    return .noContent(.init())
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Writes schedule rows for the rotation up to a date.
+    ///
+    /// - Remark: HTTP `POST /api/v1/cycles/{id}/plan-ahead/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}/plan-ahead//post(cycles_plan_ahead_create)`.
+    public func cyclesPlanAheadCreate(_ input: Operations.CyclesPlanAheadCreate.Input) async throws -> Operations.CyclesPlanAheadCreate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.CyclesPlanAheadCreate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/cycles/{}/plan-ahead/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .post
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                let body: OpenAPIRuntime.HTTPBody?
+                switch input.body {
+                case let .json(value):
+                    body = try converter.setRequiredRequestBodyAsJSON(
+                        value,
+                        headerFields: &request.headerFields,
+                        contentType: "application/json; charset=utf-8"
+                    )
+                }
+                return (request, body)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.CyclesPlanAheadCreate.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.WorkoutCycle.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Makes the next workout in the rotation happen today.
+    ///
+    /// For somebody who has already drifted: rather than counting how many
+    /// days behind they are, the rotation is re-anchored so the workout they
+    /// owe lands on today and the rest follows from there.
+    ///
+    /// - Remark: HTTP `POST /api/v1/cycles/{id}/resume-today/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}/resume-today//post(cycles_resume_today_create)`.
+    public func cyclesResumeTodayCreate(_ input: Operations.CyclesResumeTodayCreate.Input) async throws -> Operations.CyclesResumeTodayCreate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.CyclesResumeTodayCreate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/cycles/{}/resume-today/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .post
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.CyclesResumeTodayCreate.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.CycleShiftResult.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Pushes the rest of the rotation back, after an unplanned rest day.
+    ///
+    /// The anchor moves and every future date moves with it. That is the whole
+    /// reason a rotation is anchored to a date: a weekly rule could only be
+    /// shifted by becoming a rule about a different weekday.
+    ///
+    /// - Remark: HTTP `POST /api/v1/cycles/{id}/shift/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}/shift//post(cycles_shift_create)`.
+    public func cyclesShiftCreate(_ input: Operations.CyclesShiftCreate.Input) async throws -> Operations.CyclesShiftCreate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.CyclesShiftCreate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/cycles/{}/shift/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .post
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                let body: OpenAPIRuntime.HTTPBody?
+                switch input.body {
+                case let .json(value):
+                    body = try converter.setRequiredRequestBodyAsJSON(
+                        value,
+                        headerFields: &request.headerFields,
+                        contentType: "application/json; charset=utf-8"
+                    )
+                }
+                return (request, body)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.CyclesShiftCreate.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.CycleShiftResult.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
     /// - Remark: HTTP `GET /api/v1/exercises/`.
     /// - Remark: Generated from `#/paths//api/v1/exercises//get(exercises_list)`.
     public func exercisesList(_ input: Operations.ExercisesList.Input) async throws -> Operations.ExercisesList.Output {

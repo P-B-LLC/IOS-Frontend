@@ -1120,4 +1120,20 @@ extension WorkoutStore {
             ]
         )
     }
+
+    /// The same, with a saved library behind it. The rotation editor picks
+    /// each day out of `knownWorkouts`, so without this its only screen is
+    /// the one telling you to go and save a workout first.
+    static var previewWithLibrary: WorkoutStore {
+        let store = preview
+        store.knownWorkouts = previewWorkouts.enumerated().map { index, workout in
+            WorkoutSummary(
+                serverID: index + 1,
+                name: workout.name,
+                type: .lifting,
+                exercises: workout.exercises
+            )
+        }
+        return store
+    }
 }
