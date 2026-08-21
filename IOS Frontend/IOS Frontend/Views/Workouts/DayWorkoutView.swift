@@ -1430,7 +1430,9 @@ struct DayWorkoutView: View {
     private func sessionExerciseCard(_ exercise: SessionExerciseDraft) -> some View {
         let phase = WorkoutVisualPhase.focus
 
-        VStack(alignment: .leading, spacing: 14) {
+        // Spelled out: a body with a statement before the view is no longer a
+        // single expression, so Swift stops inferring the return.
+        return VStack(alignment: .leading, spacing: 14) {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(exercise.name)
