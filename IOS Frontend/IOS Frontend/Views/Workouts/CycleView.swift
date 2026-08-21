@@ -247,14 +247,15 @@ struct CycleView: View {
                 .padding(.top, 15)
                 .padding(.bottom, 10)
 
-            ForEach(cycle.orderedSlots) { slot in
+            let days = upcoming(cycle)
+            ForEach(Array(days.enumerated()), id: \.element.slot.position) { index, day in
                 CycleSlotRow(
-                    slot: slot,
-                    date: date(of: slot, in: cycle),
-                    isToday: slot.position == cycle.currentPosition,
+                    slot: day.slot,
+                    date: day.date,
+                    isToday: index == 0,
                     phase: phase
                 )
-                if slot.position != cycle.length {
+                if index != days.count - 1 {
                     Divider().padding(.leading, 16)
                 }
             }
@@ -264,17 +265,28 @@ struct CycleView: View {
         .cycleSurface(radius: 20)
     }
 
-    /// When this slot next comes round, counting forward from today so the
-    /// list reads as a plan rather than a table.
-    private func date(of slot: WorkoutCycleSlot, in cycle: WorkoutCycle) -> Date? {
-        let length = max(cycle.length, 1)
-        // Positions count from one; the distance forward wraps at the length.
-        let ahead = (slot.position - cycle.currentPosition + length) % length
-        return Calendar.current.date(
-            byAdding: .day,
-            value: ahead,
-            to: Calendar.current.startOfDay(for: Date())
-        )
+    /// One turn of the rotation, starting from today rather than from day one.
+    ///
+    /// In cycle order the dates run backwards partway down: on day 3 of 8,
+    /// day 1 is six days out while day 4 is tomorrow, so the list reads as
+    /// broken. Starting at today makes it a schedule you can read downwards,
+    /// and the numbered badges still say where in the turn each day falls.
+    private func upcoming(
+        _ cycle: WorkoutCycle
+    ) -> [(slot: WorkoutCycleSlot, date: Date)] {
+        let slots = cycle.orderedSlots
+        let length = max(min(cycle.length, slots.count), 1)
+        // Positions count from one, and the server's answer is trusted but
+        // not assumed to be in range.
+        let start = min(max(cycle.currentPosition, 1), length) - 1
+        let today = Calendar.current.startOfDay(for: Date())
+
+        return (0..<length).compactMap { offset in
+            guard let date = Calendar.current.date(
+                byAdding: .day, value: offset, to: today
+            ) else { return nil }
+            return (slots[(start + offset) % length], date)
+        }
     }
 
     private func footer(_ cycle: WorkoutCycle) -> some View {

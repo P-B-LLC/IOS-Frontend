@@ -103,12 +103,7 @@ struct CycleEditorView: View {
             guard !didLoad else { return }
             didLoad = true
             if case .edit(let cycle) = mode {
-                draft = WorkoutCycleDraft(
-                    name: cycle.name,
-                    length: cycle.length,
-                    anchorDate: cycle.anchorDate,
-                    slots: cycle.orderedSlots
-                )
+                draft = WorkoutCycleDraft(cycle)
             }
         }
     }
@@ -183,11 +178,15 @@ struct CycleEditorView: View {
 extension WorkoutCycleDraft {
     /// Builds a draft from a rotation already saved, so editing starts from
     /// what is there rather than from the default eight blank days.
-    init(name: String, length: Int, anchorDate: Date, slots: [WorkoutCycleSlot]) {
+    ///
+    /// Named rather than memberwise: the four stored properties in order are
+    /// exactly the synthesized initializer, and this one has to run `resize`
+    /// afterwards to hold the slots-match-length invariant.
+    init(_ cycle: WorkoutCycle) {
         self.init()
-        self.name = name
-        self.anchorDate = anchorDate
-        self.slots = slots
-        resize(to: length)
+        name = cycle.name
+        anchorDate = cycle.anchorDate
+        slots = cycle.orderedSlots
+        resize(to: cycle.length)
     }
 }
