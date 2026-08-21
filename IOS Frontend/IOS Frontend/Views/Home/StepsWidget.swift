@@ -95,6 +95,15 @@ struct StepsWidget: View {
             }
             .font(.system(size: 10, weight: .semibold))
             .foregroundStyle(RepbaseDesign.success)
+
+            HStack(spacing: 0) {
+                compactInsight(store.weekAverage.map { $0.formatted(.number) } ?? "—", "DAILY AVG")
+                Divider().frame(height: 25)
+                compactInsight("\(store.goalDaysThisWeek)", "GOAL DAYS")
+                Divider().frame(height: 25)
+                compactInsight(changeText, "VS LAST DAY")
+            }
+            .padding(.top, 2)
         }
         .padding(.horizontal, 18)
         .padding(.top, 15)
@@ -103,6 +112,24 @@ struct StepsWidget: View {
         .task { await store.refresh() }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(steps.formatted(.number)) steps today, \(progress.formatted(.percent)) of goal")
+    }
+
+    private func compactInsight(_ value: String, _ label: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(value).font(.caption.weight(.bold))
+            Text(label)
+                .font(.system(size: 8, weight: .bold))
+                .tracking(0.45)
+                .foregroundStyle(timeOfDay.secondaryText)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var changeText: String {
+        guard let change = store.latestDayChange else { return "—" }
+        if change == 0 { return "Even" }
+        return "\(change > 0 ? "+" : "")\(change.formatted(.number))"
     }
 
     /// Shown when there are no steps to draw.

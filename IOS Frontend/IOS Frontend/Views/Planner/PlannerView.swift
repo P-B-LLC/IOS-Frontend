@@ -167,6 +167,8 @@ struct PlannerView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
+            dayOverview(timeOfDay: timeOfDay)
+
             if categoryFilter == nil {
                 PlannerDaySchedule(
                     onSelect: { editor = .edit($0) },
@@ -176,6 +178,42 @@ struct PlannerView: View {
                 filteredList(timeOfDay: timeOfDay)
             }
         }
+    }
+
+    private func dayOverview(timeOfDay: HomeTimeOfDay) -> some View {
+        let entries = store.entries(on: store.selectedDate)
+        let counts = store.taskCounts(on: store.selectedDate)
+        let events = entries.filter { $0.kind == .event }.count
+        let next = store.timedEntries(on: store.selectedDate).first {
+            guard Calendar.current.isDateInToday(store.selectedDate),
+                  let time = $0.time else { return true }
+            let now = Date().formatted(.dateTime.hour(.twoDigits(amPM: .omitted)).minute(.twoDigits))
+            return String(time.prefix(5)) >= now
+        }
+
+        return HStack(spacing: 0) {
+            dayMetric("\(counts.done)/\(counts.total)", "TASKS", tint: timeOfDay.accent)
+            Divider().frame(height: 30)
+            dayMetric("\(events)", "EVENTS", tint: RepbasePalette.sage)
+            Divider().frame(height: 30)
+            dayMetric(next?.displayTime ?? "Clear", "NEXT", tint: timeOfDay.canvasPrimaryText)
+        }
+        .padding(.vertical, 12)
+        .overlay(alignment: .top) { Divider() }
+        .overlay(alignment: .bottom) { Divider() }
+    }
+
+    private func dayMetric(_ value: String, _ label: String, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(value).font(.subheadline.weight(.bold)).foregroundStyle(tint)
+            Text(label)
+                .font(.system(size: 9, weight: .bold))
+                .tracking(0.7)
+                .foregroundStyle(Color.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 10)
+        .accessibilityElement(children: .combine)
     }
 
     /// A filtered day is a plain list, not a schedule.

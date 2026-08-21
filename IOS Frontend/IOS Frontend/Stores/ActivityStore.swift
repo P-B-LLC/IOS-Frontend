@@ -27,6 +27,8 @@ final class ActivityStore {
     private(set) var persistenceError: String?
     /// What the last import brought in, or nil before one has run.
     private(set) var lastImport: HealthImportSummary?
+    /// When the device last completed a Health-to-server refresh.
+    private(set) var lastSyncedAt: Date?
 
     /// How far back the widget reads and sends.
     ///
@@ -92,6 +94,22 @@ final class ActivityStore {
     /// is nothing to scale against.
     var weekPeak: Int? { recentDays.map(\.steps).max() }
 
+    /// Averages only reported days. Missing Health data is not treated as zero.
+    var weekAverage: Int? {
+        guard !recentDays.isEmpty else { return nil }
+        return recentDays.reduce(0) { $0 + $1.steps } / recentDays.count
+    }
+
+    /// Days that met the same 8K target used by the movement rail.
+    var goalDaysThisWeek: Int { recentDays.filter { $0.steps >= 8_000 }.count }
+
+    /// Direction of the latest reported day compared with the previous one.
+    var latestDayChange: Int? {
+        let ordered = recentDays.sorted { $0.day < $1.day }
+        guard ordered.count >= 2 else { return nil }
+        return ordered[ordered.count - 1].steps - ordered[ordered.count - 2].steps
+    }
+
     // MARK: - Connection
 
     func connect(configuration: APIConfiguration, token: String) async {
@@ -129,6 +147,7 @@ final class ActivityStore {
         // One user's steps must never be shown to the next.
         recentDays = []
         lastImport = nil
+        lastSyncedAt = nil
         persistenceError = nil
         isLoading = false
         isSyncing = false
@@ -183,6 +202,8 @@ final class ActivityStore {
                 lastImport = summary
             }
             await reload(generation: generation, showsLoadingState: false)
+            guard generation == connectionGeneration else { return }
+            lastSyncedAt = Date()
         } catch {
             guard generation == connectionGeneration else { return }
             persistenceError = error.localizedDescription

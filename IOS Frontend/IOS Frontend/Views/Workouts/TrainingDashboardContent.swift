@@ -74,9 +74,34 @@ struct TrainingDashboardContent: View {
 
             Divider()
             cycleRow
+            weekReadiness
         }
         .padding(16)
         .dashboardSurface(radius: 22)
+    }
+
+    private var weekReadiness: some View {
+        let planned = store.currentWeekWorkouts.count
+        let completed = min(metrics.completedThisWeek, planned)
+        let remaining = max(planned - completed, 0)
+        return VStack(alignment: .leading, spacing: 9) {
+            HStack {
+                Text("WEEKLY PROGRESS")
+                    .font(.system(size: 9, weight: .bold))
+                    .tracking(0.8)
+                    .foregroundStyle(phase.secondaryText)
+                Spacer()
+                Text(remaining == 0 && planned > 0 ? "Week complete" : "\(remaining) remaining")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(remaining == 0 ? RepbaseDesign.success : phase.secondaryText)
+            }
+            ProgressView(value: planned == 0 ? 0 : Double(completed) / Double(planned))
+                .tint(remaining == 0 && planned > 0 ? RepbaseDesign.success : phase.accent)
+            Text(planned == 0 ? "Plan a workout to shape your week." : "\(completed) completed · \(planned) planned")
+                .font(.caption)
+                .foregroundStyle(phase.secondaryText)
+        }
+        .accessibilityElement(children: .combine)
     }
 
     /// The way into rotations, and the only place the current day of one is

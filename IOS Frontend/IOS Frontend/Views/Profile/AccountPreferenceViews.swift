@@ -23,6 +23,14 @@ struct AppleHealthConnectionView: View {
                         statusRow("Access requested", value: activity.hasAskedHealth ? "Yes" : "Not yet")
                         Divider()
                         statusRow("Today's steps", value: activity.stepsToday?.formatted() ?? "Not reported")
+                        Divider()
+                        statusRow("7-day average", value: activity.weekAverage.map { "\($0.formatted()) steps" } ?? "Not reported")
+                        Divider()
+                        statusRow("8K goal days", value: "\(activity.goalDaysThisWeek) this week")
+                        if let synced = activity.lastSyncedAt {
+                            Divider()
+                            statusRow("Last synced", value: synced.formatted(.relative(presentation: .named)))
+                        }
                     }
 
                     if let summary = activity.lastImport {
@@ -54,6 +62,17 @@ struct AppleHealthConnectionView: View {
                     }
                     .buttonStyle(RepbasePrimaryButtonStyle())
                     .disabled(!activity.isHealthSupported || activity.isRequestingHealthAccess)
+
+                    if activity.hasAskedHealth {
+                        Button {
+                            Task { await activity.refresh() }
+                        } label: {
+                            Label(activity.isSyncing ? "Syncing activity" : "Sync activity now", systemImage: "arrow.triangle.2.circlepath")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.bordered)
+                        .disabled(activity.isSyncing)
+                    }
                 }
                 .padding(RepbaseDesign.pageInset)
             }
