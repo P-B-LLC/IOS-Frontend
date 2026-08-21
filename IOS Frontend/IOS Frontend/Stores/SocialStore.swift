@@ -58,7 +58,7 @@ final class SocialStore {
         } catch {
             guard connectionGeneration == generation else { return }
             repository = nil
-            errorMessage = error.localizedDescription
+            errorMessage = error.userFacingMessage
         }
     }
 
@@ -102,7 +102,7 @@ final class SocialStore {
             hasReachedEnd = page.nextCursor == nil
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.localizedDescription
+            errorMessage = error.userFacingMessage
         }
     }
 
@@ -134,7 +134,7 @@ final class SocialStore {
             hasReachedEnd = page.nextCursor == nil
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.localizedDescription
+            errorMessage = error.userFacingMessage
         }
     }
 
@@ -147,7 +147,7 @@ final class SocialStore {
             people = loaded
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.localizedDescription
+            errorMessage = error.userFacingMessage
         }
     }
 
@@ -163,7 +163,7 @@ final class SocialStore {
             followingByUser[userID] = values.1
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.localizedDescription
+            errorMessage = error.userFacingMessage
         }
     }
 
@@ -177,7 +177,7 @@ final class SocialStore {
             applyToAuthor(user.id) { $0.viewerFollowsAuthor = follows }
             if let viewerID { await loadRelationships(for: viewerID) }
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = error.userFacingMessage
         }
     }
 
@@ -226,7 +226,7 @@ final class SocialStore {
             return true
         } catch {
             guard connectionGeneration == generation else { return false }
-            errorMessage = error.localizedDescription
+            errorMessage = error.userFacingMessage
             return false
         }
     }
@@ -241,7 +241,7 @@ final class SocialStore {
                 feed.removeAll { $0.id == post.id }
             } catch {
                 guard connectionGeneration == generation else { return }
-                errorMessage = error.localizedDescription
+                errorMessage = error.userFacingMessage
             }
         }
     }
@@ -277,7 +277,7 @@ final class SocialStore {
                 $0.viewerHasLiked = !wanted
                 $0.likeCount = max(0, $0.likeCount + (wanted ? -1 : 1))
             }
-            errorMessage = error.localizedDescription
+            errorMessage = error.userFacingMessage
         }
     }
 
@@ -312,7 +312,7 @@ final class SocialStore {
             }
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.localizedDescription
+            errorMessage = error.userFacingMessage
         }
     }
 
@@ -336,7 +336,7 @@ final class SocialStore {
             discoverPosts = loaded
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.localizedDescription
+            errorMessage = error.userFacingMessage
         }
     }
 
@@ -372,7 +372,7 @@ final class SocialStore {
             authorPosts[authorID] = loaded
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.localizedDescription
+            errorMessage = error.userFacingMessage
         }
     }
 
@@ -407,7 +407,7 @@ final class SocialStore {
             lastSavedWorkout = outcome
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.localizedDescription
+            errorMessage = error.userFacingMessage
         }
     }
 
@@ -445,7 +445,7 @@ final class SocialStore {
             apply(to: postID) { $0.commentCount = loaded.reduce(0) { $0 + $1.totalCount } }
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.localizedDescription
+            errorMessage = error.userFacingMessage
         }
     }
 
@@ -469,7 +469,7 @@ final class SocialStore {
             await loadComments(for: postID)
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.localizedDescription
+            errorMessage = error.userFacingMessage
         }
     }
 
@@ -482,7 +482,7 @@ final class SocialStore {
             await loadComments(for: comment.postID)
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.localizedDescription
+            errorMessage = error.userFacingMessage
         }
     }
 
@@ -565,7 +565,7 @@ final class SocialStore {
             openedPosts[id] = loaded
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.localizedDescription
+            errorMessage = error.userFacingMessage
         }
     }
 

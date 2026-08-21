@@ -84,7 +84,7 @@ final class PlannerStore {
         } catch {
             self.repository = nil
             entriesByDate = [:]
-            persistenceError = error.localizedDescription
+            persistenceError = error.userFacingMessage
         }
     }
 
@@ -251,7 +251,7 @@ final class PlannerStore {
                 await reloadMonth(generation: generation, showsLoadingState: false)
             } catch {
                 guard connectionGeneration == generation else { return }
-                persistenceError = error.localizedDescription
+                persistenceError = error.userFacingMessage
             }
             isSaving = false
         }
@@ -287,7 +287,7 @@ final class PlannerStore {
                 withAnimation(.easeOut(duration: 0.25)) {
                     apply(to: entry) { $0.isComplete = previous }
                 }
-                persistenceError = error.localizedDescription
+                persistenceError = error.userFacingMessage
             }
         }
     }
@@ -310,7 +310,7 @@ final class PlannerStore {
                 upcomingEvents.removeAll { $0.isSameEntry(as: entry) }
             } catch {
                 guard connectionGeneration == generation else { return }
-                persistenceError = error.localizedDescription
+                persistenceError = error.userFacingMessage
             }
             isSaving = false
         }
@@ -343,7 +343,7 @@ final class PlannerStore {
             entriesByDate = Dictionary(grouping: loaded, by: \.date)
         } catch {
             guard connectionGeneration == generation else { return }
-            persistenceError = error.localizedDescription
+            persistenceError = error.userFacingMessage
         }
 
         await reloadSurroundings(generation: generation)
@@ -386,7 +386,7 @@ final class PlannerStore {
             }
         } catch {
             guard connectionGeneration == generation else { return }
-            persistenceError = error.localizedDescription
+            persistenceError = error.userFacingMessage
         }
     }
 

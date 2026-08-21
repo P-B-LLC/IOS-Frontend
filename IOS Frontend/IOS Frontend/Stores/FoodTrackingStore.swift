@@ -101,7 +101,7 @@ final class FoodTrackingStore {
         } catch {
             guard connectionGeneration == generation else { return }
             repository = nil
-            errorMessage = error.localizedDescription
+            errorMessage = error.userFacingMessage
         }
     }
 
@@ -365,7 +365,7 @@ final class FoodTrackingStore {
                 // fail for the same reason and the first is the one that
                 // explains it.
                 if outcome.errorMessage == nil {
-                    outcome.errorMessage = error.localizedDescription
+                    outcome.errorMessage = error.userFacingMessage
                 }
             }
         }
@@ -497,7 +497,7 @@ final class FoodTrackingStore {
 
     private func report(_ error: Error, generation: UUID) {
         guard connectionGeneration == generation else { return }
-        errorMessage = error.localizedDescription
+        errorMessage = error.userFacingMessage
     }
 }
 

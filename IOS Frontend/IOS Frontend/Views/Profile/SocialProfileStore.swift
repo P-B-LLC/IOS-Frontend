@@ -243,7 +243,7 @@ final class SocialProfileStore {
             viewerID = remote.id
         } catch {
             profile = nil
-            errorMessage = error.localizedDescription
+            errorMessage = error.userFacingMessage
         }
     }
 
@@ -301,7 +301,7 @@ final class SocialProfileStore {
             return true
         } catch {
             guard connectionGeneration == generation else { return false }
-            errorMessage = error.localizedDescription
+            errorMessage = error.userFacingMessage
             return false
         }
     }
@@ -347,7 +347,7 @@ final class SocialProfileStore {
         do {
             return try await repository.searchGyms(query).map(Self.identity(from:))
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = error.userFacingMessage
             return []
         }
     }
@@ -362,7 +362,7 @@ final class SocialProfileStore {
             )
             return Self.identity(from: created)
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = error.userFacingMessage
             return nil
         }
     }

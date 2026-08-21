@@ -100,7 +100,6 @@ final class ActivityStore {
         return recentDays.reduce(0) { $0 + $1.steps } / recentDays.count
     }
 
-    /// Days that met the same 8K target used by the movement rail.
     /// Steps a day the user is aiming for. Eight thousand until the profile
     /// says otherwise, which is the figure the widget showed back when nobody
     /// could change it.
@@ -138,7 +137,7 @@ final class ActivityStore {
             persistenceError = nil
         } catch {
             guard connectionGeneration == generation else { return }
-            persistenceError = error.localizedDescription
+            persistenceError = error.userFacingMessage
         }
     }
 
@@ -163,7 +162,7 @@ final class ActivityStore {
         } catch {
             repository = nil
             recentDays = []
-            persistenceError = error.localizedDescription
+            persistenceError = error.userFacingMessage
             return
         }
 
@@ -250,7 +249,7 @@ final class ActivityStore {
             lastSyncedAt = Date()
         } catch {
             guard generation == connectionGeneration else { return }
-            persistenceError = error.localizedDescription
+            persistenceError = error.userFacingMessage
         }
     }
 
@@ -276,7 +275,7 @@ final class ActivityStore {
             persistenceError = nil
         } catch {
             guard generation == connectionGeneration else { return }
-            persistenceError = error.localizedDescription
+            persistenceError = error.userFacingMessage
         }
     }
 }

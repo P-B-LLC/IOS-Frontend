@@ -92,7 +92,7 @@ final class GearStore {
         } catch {
             repository = nil
             gear = []
-            persistenceError = error.localizedDescription
+            persistenceError = error.userFacingMessage
             return
         }
 
@@ -133,7 +133,7 @@ final class GearStore {
             persistenceError = nil
         } catch {
             guard connectionGeneration == generation else { return }
-            persistenceError = error.localizedDescription
+            persistenceError = error.userFacingMessage
         }
     }
 
@@ -180,7 +180,7 @@ final class GearStore {
             await reload(generation: generation, showsLoadingState: false)
         } catch {
             guard connectionGeneration == generation else { return }
-            persistenceError = error.localizedDescription
+            persistenceError = error.userFacingMessage
         }
     }
 }

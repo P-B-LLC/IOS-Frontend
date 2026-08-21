@@ -106,7 +106,7 @@ final class WorkoutStore {
         } catch {
             self.repository = nil
             schedule = [:]
-            persistenceError = error.localizedDescription
+            persistenceError = error.userFacingMessage
         }
     }
 
@@ -237,7 +237,7 @@ final class WorkoutStore {
             await loadDashboardSessions()
         } catch {
             guard connectionGeneration == generation else { return }
-            persistenceError = error.localizedDescription
+            persistenceError = error.userFacingMessage
         }
     }
 
@@ -299,7 +299,7 @@ final class WorkoutStore {
             postableSessions = sessions
         } catch {
             guard connectionGeneration == generation else { return }
-            persistenceError = error.localizedDescription
+            persistenceError = error.userFacingMessage
         }
     }
 
@@ -335,7 +335,7 @@ final class WorkoutStore {
             dashboardSessions = sessions
         } catch {
             guard connectionGeneration == generation else { return }
-            persistenceError = error.localizedDescription
+            persistenceError = error.userFacingMessage
         }
     }
 
@@ -473,7 +473,7 @@ final class WorkoutStore {
             return true
         } catch {
             guard connectionGeneration == generation else { return false }
-            persistenceError = error.localizedDescription
+            persistenceError = error.userFacingMessage
             return false
         }
     }
@@ -518,7 +518,7 @@ final class WorkoutStore {
             return id
         } catch {
             guard connectionGeneration == generation else { return nil }
-            persistenceError = error.localizedDescription
+            persistenceError = error.userFacingMessage
             return nil
         }
     }
@@ -548,7 +548,7 @@ final class WorkoutStore {
                 )
             } catch {
                 guard connectionGeneration == generation else { return }
-                persistenceError = error.localizedDescription
+                persistenceError = error.userFacingMessage
             }
             // Cleared unconditionally. Operations are serialized by the
             // `!isSaving` guard at entry, so no newer save can be running, and
@@ -576,7 +576,7 @@ final class WorkoutStore {
                 }
             } catch {
                 guard connectionGeneration == generation else { return }
-                persistenceError = error.localizedDescription
+                persistenceError = error.userFacingMessage
             }
             // Cleared unconditionally. Operations are serialized by the
             // `!isSaving` guard at entry, so no newer save can be running, and
@@ -614,7 +614,7 @@ final class WorkoutStore {
                 mutateWorkout(workout, on: day) { $0.recurrenceID = recurrenceID }
             } catch {
                 guard connectionGeneration == generation else { return }
-                persistenceError = error.localizedDescription
+                persistenceError = error.userFacingMessage
             }
             // Cleared unconditionally, for the same reason as the saves above.
             isSaving = false
@@ -677,7 +677,7 @@ final class WorkoutStore {
                 }
             } catch {
                 guard connectionGeneration == generation else { return }
-                persistenceError = error.localizedDescription
+                persistenceError = error.userFacingMessage
             }
             // Cleared unconditionally. Operations are serialized by the
             // `!isSaving` guard at entry, so no newer save can be running, and
@@ -747,7 +747,7 @@ final class WorkoutStore {
                     }
                 }
             } catch {
-                persistenceError = error.localizedDescription
+                persistenceError = error.userFacingMessage
             }
             pendingSetIDs.remove(setID)
         }
@@ -795,7 +795,7 @@ final class WorkoutStore {
                     setID: lastSet.id
                 )
             } catch {
-                persistenceError = error.localizedDescription
+                persistenceError = error.userFacingMessage
             }
             pendingSetIDs.remove(lastSet.id)
         }
@@ -881,7 +881,7 @@ final class WorkoutStore {
 
             return session.loggedSetCount
         } catch {
-            persistenceError = error.localizedDescription
+            persistenceError = error.userFacingMessage
             return nil
         }
     }
@@ -906,7 +906,7 @@ final class WorkoutStore {
             routeSummary = nil
             completedRoute = []
         } catch {
-            persistenceError = error.localizedDescription
+            persistenceError = error.userFacingMessage
         }
     }
 
@@ -950,7 +950,7 @@ final class WorkoutStore {
             knownWorkouts = loaded.library
         } catch {
             guard connectionGeneration == generation else { return }
-            persistenceError = error.localizedDescription
+            persistenceError = error.userFacingMessage
         }
     }
 

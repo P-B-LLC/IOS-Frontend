@@ -51,7 +51,7 @@ final class CycleStore {
         } catch {
             repository = nil
             cycles = []
-            persistenceError = error.localizedDescription
+            persistenceError = error.userFacingMessage
             return
         }
 
@@ -91,7 +91,7 @@ final class CycleStore {
             persistenceError = nil
         } catch {
             guard connectionGeneration == generation else { return }
-            persistenceError = error.localizedDescription
+            persistenceError = error.userFacingMessage
         }
     }
 
@@ -157,7 +157,7 @@ final class CycleStore {
             await reload(generation: generation, showsLoadingState: false)
         } catch {
             guard connectionGeneration == generation else { return }
-            persistenceError = error.localizedDescription
+            persistenceError = error.userFacingMessage
         }
     }
 
@@ -189,7 +189,7 @@ final class CycleStore {
             await reload(generation: generation, showsLoadingState: false)
         } catch {
             guard connectionGeneration == generation else { return }
-            persistenceError = error.localizedDescription
+            persistenceError = error.userFacingMessage
         }
     }
 }
