@@ -88,15 +88,6 @@ struct StepsWidget: View {
                         .overlay(Circle().stroke(RepbaseDesign.accent.opacity(0.28), lineWidth: 6))
                         .position(x: markerX, y: 18)
                 }
-                .overlay(alignment: .topLeading) {
-                    Text(steps.formatted(.number))
-                        .font(.system(size: 9, weight: .bold))
-                        .foregroundStyle(RepbasePalette.paper)
-                        .padding(.horizontal, 9)
-                        .frame(height: 24)
-                        .background(RepbaseDesign.ink, in: Capsule())
-                        .offset(x: max(0, min(proxy.size.width - 54, markerX - 27)), y: -22)
-                }
             }
             .frame(height: 40)
 

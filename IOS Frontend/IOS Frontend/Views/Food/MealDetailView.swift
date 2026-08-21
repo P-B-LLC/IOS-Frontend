@@ -102,15 +102,15 @@ struct MealDetailView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(meal.entries.isEmpty ? "Build your plate." : "Your plate, in balance.")
+                Text(meal.entries.isEmpty ? "Build your plate." : "Your meal, at a glance.")
                     .font(.title2.weight(.bold))
-                Text(meal.entries.isEmpty ? "Add one food and the balance comes to life." : "Every total is calculated from the foods in this meal.")
+                Text(meal.entries.isEmpty ? "Add one food and the mix comes to life." : "See what this meal is made of—not a daily target.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
             HStack(spacing: 18) {
-                PlateBalanceRing(nutrition: meal.totalNutrition, goals: store.goals)
+                MacroMixRing(nutrition: meal.totalNutrition)
                     .frame(width: 128, height: 128)
 
                 VStack(spacing: 9) {
@@ -118,12 +118,14 @@ struct MealDetailView: View {
                         MealMacro(
                             title: macro.title,
                             value: macro.grams(in: meal.totalNutrition),
-                            goal: macroGoal(for: macro),
+                            share: meal.totalNutrition.energyShare(for: macro),
                             color: macro.color
                         )
                     }
                 }
             }
+
+            MacroMixRibbon(nutrition: meal.totalNutrition)
         }
         .foodCard()
     }
@@ -253,69 +255,97 @@ struct MealDetailView: View {
         store.meals(on: date).first { $0.id == mealID }
     }
 
-    private func macroGoal(for macro: Macro) -> Decimal {
-        switch macro {
-        case .protein: store.goals.proteinGrams
-        case .carbs: store.goals.carbohydrateGrams
-        case .fat: store.goals.fatGrams
-        }
-    }
 }
 
 private struct MealMacro: View {
     let title: String
     let value: Decimal
-    let goal: Decimal
+    let share: Double
     let color: Color
 
-    private var progress: Double {
-        guard goal > 0 else { return 0 }
-        return min(NSDecimalNumber(decimal: value / goal).doubleValue, 1)
-    }
-
     var body: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            HStack {
-                Text(title.uppercased()).font(.system(size: 9, weight: .bold)).foregroundStyle(.secondary)
-                Spacer()
-                Text("\(value.nutritionText) / \(goal.nutritionText)g")
-                    .font(.system(size: 9, weight: .bold))
+        HStack(spacing: 9) {
+            Circle().fill(color).frame(width: 8, height: 8)
+            Text(title)
+                .font(.caption.weight(.medium))
+                .foregroundStyle(.secondary)
+            Spacer()
+            VStack(alignment: .trailing, spacing: 1) {
+                Text("\(value.nutritionText)g").font(.subheadline.weight(.bold))
+                Text(share.formatted(.percent.precision(.fractionLength(0))))
+                    .font(.system(size: 9, weight: .semibold))
                     .foregroundStyle(color)
             }
-            GeometryReader { proxy in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(color.opacity(0.12))
-                    Capsule().fill(color).frame(width: max(7, proxy.size.width * progress))
-                }
-            }
-            .frame(height: 7)
         }
         .padding(12)
         .background(color.opacity(0.07), in: RoundedRectangle(cornerRadius: 14))
     }
 }
 
-private struct PlateBalanceRing: View {
+private struct MacroMixRing: View {
     let nutrition: NutritionAmount
-    let goals: NutritionGoals
-
-    private var calorieProgress: Double {
-        guard goals.calories > 0 else { return 0 }
-        return min(NSDecimalNumber(decimal: nutrition.calories / goals.calories).doubleValue, 1)
-    }
 
     var body: some View {
         ZStack {
             Circle().stroke(RepbasePalette.oatmeal, lineWidth: 14)
-            Circle()
-                .trim(from: 0, to: calorieProgress)
-                .stroke(RepbaseDesign.accent, style: StrokeStyle(lineWidth: 14, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-            Image(systemName: nutrition.calories == 0 ? "plus" : "checkmark")
-                .font(.title2.weight(.medium))
-                .foregroundStyle(RepbaseDesign.accent)
+            ForEach(Macro.allCases) { macro in
+                Circle()
+                    .trim(from: 0, to: max(0, nutrition.energyShare(for: macro) - 0.018))
+                    .stroke(macro.color, style: StrokeStyle(lineWidth: 14, lineCap: .round))
+                    .rotationEffect(.degrees(-90 + nutrition.startAngle(for: macro)))
+            }
+            VStack(spacing: 2) {
+                Text("Meal mix").font(.subheadline.weight(.bold))
+                Text("BY ENERGY")
+                    .font(.system(size: 8, weight: .bold))
+                    .tracking(0.8)
+                    .foregroundStyle(.secondary)
+            }
         }
-        .accessibilityLabel("\(calorieProgress.formatted(.percent)) of calorie goal")
+        .accessibilityLabel("Meal macro energy composition")
+    }
+}
+
+private struct MacroMixRibbon: View {
+    let nutrition: NutritionAmount
+
+    var body: some View {
+        GeometryReader { proxy in
+            let availableWidth = max(0, proxy.size.width - 6)
+            HStack(spacing: 3) {
+                ForEach(Macro.allCases) { macro in
+                    Capsule()
+                        .fill(macro.color.opacity(0.78))
+                        .frame(width: max(3, availableWidth * nutrition.energyShare(for: macro)))
+                }
+            }
+        }
+        .frame(height: 8)
+        .accessibilityHidden(true)
+    }
+}
+
+private extension NutritionAmount {
+    func energyShare(for macro: Macro) -> Double {
+        let total = macroEnergyTotal
+        guard total > 0 else { return 0 }
+        return energy(for: macro) / total
+    }
+
+    func startAngle(for macro: Macro) -> Double {
+        switch macro {
+        case .protein: 0
+        case .carbs: energyShare(for: .protein) * 360
+        case .fat: (energyShare(for: .protein) + energyShare(for: .carbs)) * 360
+        }
+    }
+
+    private var macroEnergyTotal: Double {
+        Macro.allCases.reduce(0) { $0 + energy(for: $1) }
+    }
+
+    private func energy(for macro: Macro) -> Double {
+        NSDecimalNumber(decimal: macro.grams(in: self)).doubleValue * macro.caloriesPerGram
     }
 }
 
