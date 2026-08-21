@@ -191,6 +191,10 @@ final class ActivityStore {
         persistenceError = nil
         isLoading = false
         isSyncing = false
+        // Back to the default, so one account's target is never the number
+        // the next account is measured against.
+        stepGoal = 8_000
+        isSavingGoal = false
     }
 
     // MARK: - Health
