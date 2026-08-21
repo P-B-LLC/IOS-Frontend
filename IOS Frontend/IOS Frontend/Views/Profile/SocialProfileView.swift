@@ -5,8 +5,10 @@
 //  Profile onboarding and the public-facing athlete profile.
 //
 
+import CoreLocation
 import PhotosUI
 import SwiftUI
+import UserNotifications
 
 struct ProfileDestinationView: View {
     @Environment(SocialProfileStore.self) private var store
@@ -370,6 +372,7 @@ private struct ProfileSettingsView: View {
     @State private var showingPersonalization = false
     @State private var showingDeleteConfirmation = false
     @State private var deleteError: String?
+    @State private var securityMessage: String?
 
     private enum ProfileEditorDestination: Int, Identifiable {
         case basics = 1
@@ -527,6 +530,27 @@ private struct ProfileSettingsView: View {
 
                         settingsSection("ACCOUNT", timeOfDay: timeOfDay) {
                             VStack(spacing: 0) {
+                                Button {
+                                    Task {
+                                        do {
+                                            try await authentication.rotateSessionToken()
+                                            securityMessage = "Your saved account credential was replaced. You are still signed in on this device."
+                                        } catch {
+                                            deleteError = error.localizedDescription
+                                        }
+                                    }
+                                } label: {
+                                    settingsRow(
+                                        "Refresh account security",
+                                        detail: "Replace the credential saved on this device",
+                                        symbol: "key.horizontal",
+                                        color: timeOfDay.accent
+                                    )
+                                }
+                                .buttonStyle(.plain)
+
+                                Rectangle().fill(timeOfDay.border).frame(height: 1)
+
                                 Button(role: .destructive) {
                                     Task { await authentication.signOut() }
                                 } label: {
@@ -606,13 +630,21 @@ private struct ProfileSettingsView: View {
         } message: {
             Text("This permanently removes your profile and all associated Repbase data. This cannot be undone.")
         }
-        .alert("Account Could Not Be Deleted", isPresented: Binding(
+        .alert("Account Request Could Not Be Completed", isPresented: Binding(
             get: { deleteError != nil },
             set: { if !$0 { deleteError = nil } }
         )) {
             Button("OK", role: .cancel) { deleteError = nil }
         } message: {
             Text(deleteError ?? "Please try again.")
+        }
+        .alert("Account Security Updated", isPresented: Binding(
+            get: { securityMessage != nil },
+            set: { if !$0 { securityMessage = nil } }
+        )) {
+            Button("Done", role: .cancel) { securityMessage = nil }
+        } message: {
+            Text(securityMessage ?? "Your account security was updated.")
         }
     }
 
@@ -710,6 +742,9 @@ private struct ProfileSettingsView: View {
 
 private struct PrivacyAndPermissionsView: View {
     @Environment(\.openURL) private var openURL
+    @Environment(ActivityStore.self) private var activity
+    @State private var locationStatus = CLLocationManager.authorizationStatus
+    @State private var notificationStatus: UNAuthorizationStatus = .notDetermined
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
@@ -732,17 +767,32 @@ private struct PrivacyAndPermissionsView: View {
                     permissionExplanation(
                         "Location",
                         detail: "Used only during a route workout you start, to map distance and pace.",
-                        symbol: "location"
+                        symbol: "location",
+                        status: locationLabel
                     )
                     permissionExplanation(
                         "Photos",
                         detail: "Used when you choose a profile photo. Repbase does not browse your library in the background.",
-                        symbol: "photo"
+                        symbol: "photo",
+                        status: "Selected items only"
+                    )
+                    permissionExplanation(
+                        "Apple Health",
+                        detail: "Read-only access to steps and completed workouts. Repbase never writes to Health.",
+                        symbol: "heart.text.square",
+                        status: activity.hasAskedHealth ? "Access requested" : "Not connected"
+                    )
+                    permissionExplanation(
+                        "Notifications",
+                        detail: "Used only for reminders you enable in Repbase.",
+                        symbol: "bell",
+                        status: notificationLabel
                     )
                     permissionExplanation(
                         "Your data",
                         detail: "Profile, workout, planner, and nutrition data are stored with your Repbase account so they sync across sessions.",
-                        symbol: "lock.shield"
+                        symbol: "lock.shield",
+                        status: "Account protected"
                     )
 
                     Button {
@@ -762,20 +812,49 @@ private struct PrivacyAndPermissionsView: View {
             .navigationTitle("Privacy")
             .navigationBarTitleDisplayMode(.inline)
             .homeTimeScreen(timeOfDay)
+            .task { await refreshPermissionStatus() }
         }
     }
 
-    private func permissionExplanation(_ title: String, detail: String, symbol: String) -> some View {
+    private func permissionExplanation(_ title: String, detail: String, symbol: String, status: String) -> some View {
         HStack(alignment: .top, spacing: 14) {
             Image(systemName: symbol)
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundStyle(RepbasePalette.caramel)
                 .frame(width: 30)
             VStack(alignment: .leading, spacing: 5) {
-                Text(title).font(.headline)
+                HStack {
+                    Text(title).font(.headline)
+                    Spacer()
+                    Text(status).font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
+                }
                 Text(detail).font(.subheadline).foregroundStyle(.secondary)
             }
         }
+    }
+
+    private var locationLabel: String {
+        switch locationStatus {
+        case .authorizedAlways, .authorizedWhenInUse: return "Allowed"
+        case .denied, .restricted: return "Off"
+        case .notDetermined: return "Not requested"
+        @unknown default: return "Unknown"
+        }
+    }
+
+    private var notificationLabel: String {
+        switch notificationStatus {
+        case .authorized, .provisional, .ephemeral: return "Allowed"
+        case .denied: return "Off"
+        case .notDetermined: return "Not requested"
+        @unknown default: return "Unknown"
+        }
+    }
+
+    private func refreshPermissionStatus() async {
+        locationStatus = CLLocationManager.authorizationStatus
+        notificationStatus = await UNUserNotificationCenter.current()
+            .notificationSettings().authorizationStatus
     }
 }
 

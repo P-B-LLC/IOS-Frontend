@@ -295,7 +295,9 @@
 				CODE_SIGN_ENTITLEMENTS = "IOS Frontend.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				ENABLE_PREVIEWS = YES;
+				COPY_PHASE_STRIP = YES;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_PREVIEWS = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_REPBASE_API_URL = "$(REPBASE_API_URL)";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Repbase uses your location to map your route and measure distance and pace while a run, ride, or swim session is running. Tracking only happens during a session you start, and stops when you end it.";
@@ -318,6 +320,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
+				STRIP_INSTALLED_PRODUCT = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;

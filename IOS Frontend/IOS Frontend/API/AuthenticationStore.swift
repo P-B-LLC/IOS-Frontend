@@ -198,6 +198,36 @@ final class AuthenticationStore {
         phase = .signedOut
     }
 
+    /// Replaces the current API credential without ending the user's session.
+    func rotateSessionToken() async throws {
+        guard !isWorking else { return }
+        guard let token else { return }
+        isWorking = true
+        errorMessage = nil
+        defer { isWorking = false }
+
+        do {
+            let client = try authenticatedClient(token: token)
+            let output = try await client.authRotateTokenCreate()
+            let response: Components.Schemas.AuthResponse
+            switch output {
+            case .ok(let success):
+                response = try success.body.json
+            case .undocumented(let statusCode, let payload):
+                throw await RepbaseAPIHTTPError.decode(
+                    statusCode: statusCode,
+                    payload: payload
+                )
+            }
+            try tokenStore.save(response.token)
+            self.token = response.token
+            phase = .signedIn(Self.map(response.user.value1))
+        } catch {
+            errorMessage = error.localizedDescription
+            throw error
+        }
+    }
+
     func deleteAccount() async throws {
         guard !isWorking else { return }
         guard let token else { return }
