@@ -376,11 +376,8 @@ private struct WorkoutDashboardHero: View {
                     .shadow(color: Color.black.opacity(0.20), radius: 10, x: 0, y: 5)
             }
 
-            HStack(spacing: 16) {
-                Image(systemName: workoutType.symbolName)
-                    .font(.system(size: 31, weight: .medium))
-                    .foregroundStyle(RepbaseDesign.accent)
-                    .frame(width: 58, height: 58)
+            HStack(spacing: 14) {
+                WorkoutInkArtwork(type: workoutType, size: 68)
 
                 VStack(alignment: .leading, spacing: 5) {
                     Text(workoutTypePrompt)
@@ -395,7 +392,7 @@ private struct WorkoutDashboardHero: View {
                     .foregroundStyle(RepbaseDesign.accent)
             }
             .padding(14)
-            .background(RepbaseDesign.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 20))
+            .background(RepbaseDesign.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 20))
 
             VStack(alignment: .leading, spacing: 10) {
                 HStack {

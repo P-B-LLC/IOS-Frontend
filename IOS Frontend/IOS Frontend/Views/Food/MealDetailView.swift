@@ -86,36 +86,42 @@ struct MealDetailView: View {
     }
 
     private func mealSummary(_ meal: FoodMeal) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("MEAL OVERVIEW")
+        VStack(alignment: .leading, spacing: 18) {
+            HStack {
+                Text(meal.name.uppercased())
                 .font(.caption2.weight(.bold))
                 .tracking(1.2)
                 .foregroundStyle(phase.accent)
-            HStack {
-                VStack(alignment: .leading, spacing: 3) {
-                    // Food counts the moment it is added, so a meal holding any
-                    // food is logged. There is no separate confirmation step.
-                    Text(meal.entries.isEmpty ? "Nothing logged yet" : "Meal logged")
-                        .font(.title3.weight(.bold))
-                    Text(meal.entries.isEmpty ? "Build this meal one food at a time." : "\(meal.entries.count) food\(meal.entries.count == 1 ? "" : "s")")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
                 Spacer()
-                Text("\(meal.totalNutrition.calories.nutritionText) cal")
-                    .font(.title3.weight(.bold))
+                Text("\(meal.totalNutrition.calories.nutritionText) KCAL")
+                    .font(.caption2.weight(.bold))
                     .foregroundStyle(RepbaseDesign.warning)
+                    .padding(.horizontal, 13)
+                    .frame(height: 30)
+                    .background(RepbasePalette.oatmeal, in: Capsule())
             }
 
-            // Shares the app-wide macro colors so this card and the breakdown
-            // below it never disagree about what protein or carbs look like.
-            HStack(spacing: 8) {
-                ForEach(Macro.allCases) { macro in
-                    MealMacro(
-                        title: macro.title,
-                        value: macro.grams(in: meal.totalNutrition),
-                        color: macro.color
-                    )
+            VStack(alignment: .leading, spacing: 4) {
+                Text(meal.entries.isEmpty ? "Build your plate." : "Your plate, in balance.")
+                    .font(.title2.weight(.bold))
+                Text(meal.entries.isEmpty ? "Add one food and the balance comes to life." : "Every total is calculated from the foods in this meal.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            HStack(spacing: 18) {
+                PlateBalanceRing(nutrition: meal.totalNutrition, goals: store.goals)
+                    .frame(width: 128, height: 128)
+
+                VStack(spacing: 9) {
+                    ForEach(Macro.allCases) { macro in
+                        MealMacro(
+                            title: macro.title,
+                            value: macro.grams(in: meal.totalNutrition),
+                            goal: macroGoal(for: macro),
+                            color: macro.color
+                        )
+                    }
                 }
             }
         }
@@ -246,25 +252,70 @@ struct MealDetailView: View {
     private var meal: FoodMeal? {
         store.meals(on: date).first { $0.id == mealID }
     }
+
+    private func macroGoal(for macro: Macro) -> Decimal {
+        switch macro {
+        case .protein: store.goals.proteinGrams
+        case .carbs: store.goals.carbohydrateGrams
+        case .fat: store.goals.fatGrams
+        }
+    }
 }
 
 private struct MealMacro: View {
     let title: String
     let value: Decimal
+    let goal: Decimal
     let color: Color
 
+    private var progress: Double {
+        guard goal > 0 else { return 0 }
+        return min(NSDecimalNumber(decimal: value / goal).doubleValue, 1)
+    }
+
     var body: some View {
-        VStack(spacing: 4) {
-            Text(title)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-            Text("\(value.nutritionText)g")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(color)
+        VStack(alignment: .leading, spacing: 7) {
+            HStack {
+                Text(title.uppercased()).font(.system(size: 9, weight: .bold)).foregroundStyle(.secondary)
+                Spacer()
+                Text("\(value.nutritionText) / \(goal.nutritionText)g")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundStyle(color)
+            }
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(color.opacity(0.12))
+                    Capsule().fill(color).frame(width: max(7, proxy.size.width * progress))
+                }
+            }
+            .frame(height: 7)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 10)
-        .background(color.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+        .padding(12)
+        .background(color.opacity(0.07), in: RoundedRectangle(cornerRadius: 14))
+    }
+}
+
+private struct PlateBalanceRing: View {
+    let nutrition: NutritionAmount
+    let goals: NutritionGoals
+
+    private var calorieProgress: Double {
+        guard goals.calories > 0 else { return 0 }
+        return min(NSDecimalNumber(decimal: nutrition.calories / goals.calories).doubleValue, 1)
+    }
+
+    var body: some View {
+        ZStack {
+            Circle().stroke(RepbasePalette.oatmeal, lineWidth: 14)
+            Circle()
+                .trim(from: 0, to: calorieProgress)
+                .stroke(RepbaseDesign.accent, style: StrokeStyle(lineWidth: 14, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+            Image(systemName: nutrition.calories == 0 ? "plus" : "checkmark")
+                .font(.title2.weight(.medium))
+                .foregroundStyle(RepbaseDesign.accent)
+        }
+        .accessibilityLabel("\(calorieProgress.formatted(.percent)) of calorie goal")
     }
 }
 

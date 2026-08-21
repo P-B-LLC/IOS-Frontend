@@ -172,23 +172,22 @@ struct WorkoutPlanFields: View {
 
     private var typeCard: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Label("Workout Type", systemImage: "figure.mixed.cardio")
+            Text("Workout Type")
                 .font(.subheadline.weight(.semibold))
             HStack(spacing: 7) {
                 ForEach(WorkoutType.allCases) { type in
                     Button {
                         withAnimation(.snappy) { draft.type = type }
                     } label: {
-                        VStack(spacing: 5) {
-                            Image(systemName: type.symbolName)
-                                .font(.title3)
+                        VStack(spacing: 4) {
+                            WorkoutInkArtwork(type: type, size: 48)
                             Text(type.title)
                                 .font(.caption2.weight(.medium))
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.75)
                         }
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
+                        .padding(.vertical, 8)
                         .foregroundStyle(
                             draft.type == type ? phase.accent : phase.secondaryText
                         )
