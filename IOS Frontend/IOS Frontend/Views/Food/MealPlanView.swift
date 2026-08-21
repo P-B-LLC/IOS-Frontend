@@ -42,7 +42,7 @@ struct MealPlanView: View {
                     title: "Shape the day.",
                     detail: "Build a draft, review its balance, then apply it when it feels right."
                 )
-                totals
+                daySummary
                 plannedSection
                 if let outcome { report(outcome) }
                 library
@@ -74,29 +74,43 @@ struct MealPlanView: View {
 
     // MARK: - Totals
 
-    private var totals: some View {
+    private var daySummary: some View {
         let total = plan.reduce(NutritionAmount.zero) { $0 + $1.totalNutrition }
-        return VStack(alignment: .leading, spacing: 8) {
+        return VStack(alignment: .leading, spacing: 14) {
             DatePicker("Apply to", selection: $date, displayedComponents: .date)
                 .datePickerStyle(.compact)
                 .font(.subheadline.weight(.semibold))
                 .accessibilityHint("The day this plan will be written to")
 
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text(total.calories.nutritionText)
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .contentTransition(.numericText())
-                Text("kcal planned")
-                    .font(.footnote.weight(.medium))
-                    .foregroundStyle(.secondary)
+            HStack(alignment: .bottom) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(plan.isEmpty ? "START WITH A SAVED MEAL" : "DAY IN PROGRESS")
+                        .font(.caption2.weight(.bold))
+                        .tracking(1)
+                        .foregroundStyle(RepbasePalette.caramel)
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        Text(total.calories.nutritionText)
+                            .font(.largeTitle.weight(.bold))
+                            .contentTransition(.numericText())
+                        Text("kcal")
+                            .font(.footnote.weight(.medium))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                Spacer()
+                Text("\(plan.count) \(plan.count == 1 ? "meal" : "meals")")
+                    .font(.caption.weight(.bold))
+                    .padding(.horizontal, 11)
+                    .padding(.vertical, 7)
+                    .background(RepbasePalette.oatmeal, in: Capsule())
             }
 
             // Every figure comes from the saved meals the server holds; none
             // of it is typed in here.
-            HStack(spacing: 14) {
-                macro("Protein", total.proteinGrams)
-                macro("Carbs", total.carbohydrateGrams)
-                macro("Fat", total.fatGrams)
+            HStack(spacing: 10) {
+                macro("Protein", total.proteinGrams, color: Color(hex: 0xD9824B))
+                macro("Carbs", total.carbohydrateGrams, color: Color(hex: 0x4AAFB3))
+                macro("Fat", total.fatGrams, color: Color(hex: 0xB76AA5))
             }
 
             Text("Nothing is saved until you apply this to the day.")
@@ -104,18 +118,21 @@ struct MealPlanView: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(18)
-        .repbaseDepthSurface(cornerRadius: 20)
+        .padding(.vertical, 18)
+        .overlay(alignment: .top) { Divider() }
+        .overlay(alignment: .bottom) { Divider() }
     }
 
-    private func macro(_ title: String, _ value: Decimal) -> some View {
-        VStack(alignment: .leading, spacing: 1) {
+    private func macro(_ title: String, _ value: Decimal, color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
             Text(title)
                 .font(.caption2.weight(.semibold))
                 .foregroundStyle(.secondary)
             Text("\(value.nutritionText) g")
                 .font(.subheadline.weight(.bold).monospacedDigit())
+            Capsule().fill(color).frame(height: 4)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: - The draft

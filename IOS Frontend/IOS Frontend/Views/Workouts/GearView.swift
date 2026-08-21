@@ -63,8 +63,9 @@ struct GearView: View {
                 if items.isEmpty {
                     emptyState
                 } else {
-                    ForEach(items) { item in
-                        GearCard(
+                    VStack(spacing: 0) {
+                        ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+                            GearCard(
                             gear: item,
                             // Only for the kind that was asked for. A bike
                             // cannot be selected for a run, and offering it
@@ -72,8 +73,10 @@ struct GearView: View {
                             isSelected: selection?.currentID == item.id,
                             peakDistanceKilometers: peak,
                             selectAction: canSelect(item) ? { choose(item) } : nil
-                        ) {
-                            editing = .edit(item)
+                            ) {
+                                editing = .edit(item)
+                            }
+                            if index < items.count - 1 { Divider() }
                         }
                     }
                 }
@@ -150,11 +153,9 @@ struct GearView: View {
             .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(18)
-        .background(
-            RepbasePalette.paper.opacity(0.72),
-            in: RoundedRectangle(cornerRadius: 16, style: .continuous)
-        )
+        .padding(.vertical, 20)
+        .overlay(alignment: .top) { Divider() }
+        .overlay(alignment: .bottom) { Divider() }
     }
 }
 
@@ -178,16 +179,14 @@ private struct GearCard: View {
                 selectButton(action: selectAction)
             }
         }
-        .padding(18)
+        .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RepbasePalette.paper.opacity(0.76),
-            in: RoundedRectangle(cornerRadius: 16, style: .continuous)
-        )
         .overlay {
             if isSelected {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(RepbasePalette.caramel, lineWidth: 2)
+                Rectangle()
+                    .fill(RepbasePalette.caramel)
+                    .frame(width: 3)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
         .opacity(gear.isRetired ? 0.55 : 1)
@@ -200,18 +199,13 @@ private struct GearCard: View {
             Text(isSelected ? "Selected" : "Select")
                 .font(.footnote.weight(.semibold))
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 9)
-                .background(
-                    isSelected
-                        ? RepbasePalette.caramel.opacity(0.18)
-                        : Color.primary.opacity(0.06),
-                    in: Capsule()
-                )
+                .padding(.vertical, 8)
                 .foregroundStyle(
                     isSelected ? RepbasePalette.caramel : Color.primary
                 )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.bordered)
+        .buttonBorderShape(.capsule)
         .disabled(isSelected)
     }
 

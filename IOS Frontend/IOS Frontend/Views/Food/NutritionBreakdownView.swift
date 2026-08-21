@@ -58,7 +58,9 @@ struct NutritionBreakdownView: View {
             .font(.caption)
             .foregroundStyle(.secondary)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .foodCard()
+            .padding(.vertical, 18)
+            .overlay(alignment: .top) { Divider() }
+            .overlay(alignment: .bottom) { Divider() }
     }
 
     // MARK: - Calorie split
@@ -86,7 +88,9 @@ struct NutritionBreakdownView: View {
                 }
             }
         }
-        .foodCard()
+        .padding(.vertical, 16)
+        .overlay(alignment: .top) { Divider() }
+        .overlay(alignment: .bottom) { Divider() }
     }
 
     // MARK: - Sources
@@ -117,7 +121,8 @@ struct NutritionBreakdownView: View {
                 }
             }
         }
-        .foodCard()
+        .padding(.vertical, 16)
+        .overlay(alignment: .bottom) { Divider() }
     }
 
     // MARK: - Per meal
@@ -149,7 +154,8 @@ struct NutritionBreakdownView: View {
                 }
             }
         }
-        .foodCard()
+        .padding(.vertical, 16)
+        .overlay(alignment: .bottom) { Divider() }
     }
 
     /// Micronutrients are not part of `NutritionAmount` and no food database is
@@ -334,9 +340,9 @@ enum Macro: String, CaseIterable, Identifiable {
     /// Matches the colors already used by the daily summary metrics.
     var color: Color {
         switch self {
-        case .protein: return .orange
-        case .carbs: return .teal
-        case .fat: return .purple
+        case .protein: return Color(hex: 0xD9824B)
+        case .carbs: return Color(hex: 0x4AAFB3)
+        case .fat: return Color(hex: 0xB76AA5)
         }
     }
 

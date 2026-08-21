@@ -22,16 +22,7 @@ struct SavedMealsView: View {
     var body: some View {
         Group {
             if store.savedMeals.isEmpty {
-                ContentUnavailableView {
-                    Label("No Saved Meals", systemImage: "bookmark")
-                } description: {
-                    Text("Create a recipe once, then add it to one or several days of your week.")
-                } actions: {
-                    Button("Create Recipe", systemImage: "plus") {
-                        isCreatingMeal = true
-                    }
-                    .buttonStyle(.borderedProminent)
-                }
+                emptyLibrary
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
@@ -55,8 +46,7 @@ struct SavedMealsView: View {
                             if index < store.savedMeals.count - 1 { Divider().opacity(0.45) }
                         }
                         }
-                        .padding(.horizontal, 16)
-                        .repbaseDepthSurface(cornerRadius: 20)
+                        .overlay(alignment: .top) { Divider() }
                         Text("Saved meals are local drafts until nutrition endpoints are added to the API.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -95,6 +85,36 @@ struct SavedMealsView: View {
             }
         }
     }
+
+    private var emptyLibrary: some View {
+        VStack(alignment: .leading, spacing: 22) {
+            RepbaseScreenHeader(
+                eyebrow: "YOUR LIBRARY",
+                title: "Save it once.",
+                detail: "Keep complete meals here, then place them into any day without rebuilding them."
+            )
+            VStack(alignment: .leading, spacing: 8) {
+                Text("NO SAVED MEALS YET")
+                    .font(.caption2.weight(.bold))
+                    .tracking(1.1)
+                    .foregroundStyle(RepbasePalette.caramel)
+                Text("Your fastest meals will live here.")
+                    .font(.title2.weight(.bold))
+                Text("Build a recipe with its real ingredients and nutrition. Repbase keeps the totals ready to reuse.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.vertical, 20)
+            .overlay(alignment: .top) { Divider() }
+            .overlay(alignment: .bottom) { Divider() }
+
+            Button("Create your first meal", systemImage: "plus") { isCreatingMeal = true }
+                .buttonStyle(RepbasePrimaryButtonStyle())
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, RepbaseDesign.pageInset)
+        .padding(.vertical, 18)
+    }
 }
 
 private struct SavedMealRow: View {
@@ -103,7 +123,7 @@ private struct SavedMealRow: View {
     let onEdit: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(savedMeal.name)
@@ -118,14 +138,15 @@ private struct SavedMealRow: View {
                     .font(.subheadline.weight(.semibold))
             }
 
-            HStack(spacing: 8) {
-                Button("Use this week", action: onUse)
-                    .buttonStyle(RepbasePrimaryButtonStyle())
-                Button("Edit", action: onEdit)
-                    .buttonStyle(RepbaseQuietButtonStyle())
+            HStack(spacing: 18) {
+                Button("Add to days", systemImage: "calendar.badge.plus", action: onUse)
+                Button("Edit", systemImage: "pencil", action: onEdit)
             }
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(RepbasePalette.caramel)
+            .buttonStyle(.plain)
         }
-        .padding(.vertical, 14)
+        .padding(.vertical, 16)
     }
 
     private var ingredientSummary: String {

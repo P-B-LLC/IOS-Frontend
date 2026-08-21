@@ -43,8 +43,9 @@ struct SavedWorkoutsView: View {
                         .labelsHidden()
                         .datePickerStyle(.compact)
                 }
-                .padding(16)
-                .repbaseDepthSurface()
+                .padding(.vertical, 16)
+                .overlay(alignment: .top) { Divider() }
+                .overlay(alignment: .bottom) { Divider() }
                 .accessibilityHint("The day the workout you pick will be added to")
 
                 if let failureMessage {
@@ -89,11 +90,9 @@ struct SavedWorkoutsView: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(
-            Color.primary.opacity(0.04),
-            in: RoundedRectangle(cornerRadius: 16, style: .continuous)
-        )
+        .padding(.vertical, 20)
+        .overlay(alignment: .top) { Divider() }
+        .overlay(alignment: .bottom) { Divider() }
     }
 
     private func row(_ workout: WorkoutSummary) -> some View {
@@ -101,8 +100,7 @@ struct SavedWorkoutsView: View {
             Image(systemName: workout.type.symbolName)
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(RepbasePalette.caramel)
-                .frame(width: 42, height: 42)
-                .background(RepbasePalette.caramel.opacity(0.10), in: RoundedRectangle(cornerRadius: 12))
+                .frame(width: 30, alignment: .leading)
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(workout.name)
@@ -126,10 +124,11 @@ struct SavedWorkoutsView: View {
                             .font(.footnote.weight(.semibold))
                     }
                 }
-                .frame(minWidth: 60, minHeight: 44)
+                .frame(minWidth: 52, minHeight: 44)
                 .contentShape(Rectangle())
             }
-            .buttonStyle(RepbaseQuietButtonStyle())
+            .buttonStyle(.bordered)
+            .buttonBorderShape(.capsule)
             // One at a time. Two taps in flight would schedule the same
             // workout on the same day twice.
             .disabled(scheduling != nil || store.isSaving)

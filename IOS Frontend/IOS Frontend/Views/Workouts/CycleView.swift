@@ -102,8 +102,12 @@ struct CycleView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(18)
-        .cycleSurface(radius: 22)
+        .padding(.leading, 18)
+        .padding(.vertical, 18)
+        .overlay(alignment: .leading) {
+            RoundedRectangle(cornerRadius: 2).fill(phase.accent).frame(width: 4)
+        }
+        .overlay(alignment: .bottom) { Divider() }
     }
 
     /// What is coming, said as a date rather than a countdown. On a rotation
@@ -146,8 +150,9 @@ struct CycleView: View {
             )
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .cycleSurface(radius: 20)
+        .padding(.vertical, 16)
+        .overlay(alignment: .top) { Divider() }
+        .overlay(alignment: .bottom) { Divider() }
     }
 
     private func shiftButton(
@@ -178,9 +183,8 @@ struct CycleView: View {
                 }
                 Spacer(minLength: 0)
             }
-            .padding(12)
+            .padding(.vertical, 11)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(RepbasePalette.oatmeal.opacity(0.55), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
         .buttonStyle(.plain)
         .disabled(store.isSaving)
