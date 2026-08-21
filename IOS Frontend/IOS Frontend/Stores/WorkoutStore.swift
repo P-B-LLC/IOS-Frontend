@@ -1032,6 +1032,16 @@ final class WorkoutStore {
         )
     }
 
+    /// The weekday a `YYYY-MM-DD` date falls on, but only within the week the
+    /// schedule holds.
+    ///
+    /// Nil for any other date. The schedule is one week wide, so a day view
+    /// for last Tuesday opens on an empty page — better to know that before
+    /// offering to go there.
+    func weekday(forDateString value: String) -> Weekday? {
+        Weekday.allCases.first { dateString(for: $0) == value }
+    }
+
     /// The calendar date this weekday falls on in the week being shown.
     /// Exposed so a day can ask whether it has already been trained.
     func workoutDate(

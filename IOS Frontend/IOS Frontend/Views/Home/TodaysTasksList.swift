@@ -21,6 +21,11 @@ struct TodaysTasksList: View {
     @Environment(\.homeTimeOfDay) private var timeOfDay
 
     @State private var editor: PlannerEntryEditorView.Mode?
+    /// The workout tick waiting on an answer, if one is.
+    @State private var confirming: PlannerEntry?
+    /// The training day to open when the answer is "not yet". Pushed in the
+    /// home tab's own stack, so coming back lands on the home page again.
+    @State private var openingDay: Weekday?
 
     /// How many rows fit before the list takes over the page. The rest are
     /// reported as a count rather than silently dropped.
@@ -62,6 +67,15 @@ struct TodaysTasksList: View {
                 onSaved: { store.save($0) },
                 onDeleted: { store.delete($0) }
             )
+        }
+        .plannerWorkoutCompletionDialog(
+            entry: $confirming,
+            openableDay: { PlannerWorkoutCompletion.openableDay($0, workouts: workoutStore) },
+            onOpen: { openingDay = $0 },
+            onTickAnyway: { store.setComplete($0, true) }
+        )
+        .navigationDestination(item: $openingDay) { day in
+            DayWorkoutView(day: day)
         }
     }
 
@@ -142,7 +156,13 @@ struct TodaysTasksList: View {
 
     private func checkbox(_ task: PlannerEntry) -> some View {
         Button {
-            store.setComplete(task, !task.isComplete)
+            // A planned workout that has not been trained asks first: the tick
+            // alone records no session, so nothing about the workout is kept.
+            if PlannerWorkoutCompletion.needsConfirmation(task, workouts: workoutStore) {
+                confirming = task
+            } else {
+                store.setComplete(task, !task.isComplete)
+            }
         } label: {
             ZStack {
                 RoundedRectangle(cornerRadius: 4)

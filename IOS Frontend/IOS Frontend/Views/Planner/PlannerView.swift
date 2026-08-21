@@ -17,6 +17,7 @@ struct PlannerView: View {
     /// The month starts closed. The week is what a day is usually chosen from,
     /// and the full grid is a detour most of the time.
     @State private var isMonthShown = false
+    @State private var openingDay: Weekday?
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
@@ -82,6 +83,9 @@ struct PlannerView: View {
                 onSaved: { store.save($0) },
                 onDeleted: { store.delete($0) }
             )
+        }
+        .navigationDestination(item: $openingDay) { day in
+            DayWorkoutView(day: day)
         }
         // Selecting another day can only narrow what is on screen; a filter
         // left over from yesterday would read as an empty day.
@@ -160,7 +164,10 @@ struct PlannerView: View {
             }
 
             if categoryFilter == nil {
-                PlannerDaySchedule { editor = .edit($0) }
+                PlannerDaySchedule(
+                    onSelect: { editor = .edit($0) },
+                    onOpenWorkout: { openingDay = $0 }
+                )
             } else {
                 filteredList(timeOfDay: timeOfDay)
             }
@@ -182,9 +189,12 @@ struct PlannerView: View {
                     .repbaseCard(contentPadding: 12, cornerRadius: 18)
             } else {
                 ForEach(filtered) { entry in
-                    PlannerEntryRow(entry: entry, showsDate: false) {
-                        editor = .edit(entry)
-                    }
+                    PlannerEntryRow(
+                        entry: entry,
+                        showsDate: false,
+                        onEdit: { editor = .edit(entry) },
+                        onOpenWorkout: { openingDay = $0 }
+                    )
                 }
             }
         }
@@ -209,9 +219,12 @@ struct PlannerView: View {
                     timeOfDay: timeOfDay
                 )
                 ForEach(store.pastDue) { entry in
-                    PlannerEntryRow(entry: entry, showsDate: true) {
-                        editor = .edit(entry)
-                    }
+                    PlannerEntryRow(
+                        entry: entry,
+                        showsDate: true,
+                        onEdit: { editor = .edit(entry) },
+                        onOpenWorkout: { openingDay = $0 }
+                    )
                 }
             }
         }
@@ -230,9 +243,12 @@ struct PlannerView: View {
                     timeOfDay: timeOfDay
                 )
                 ForEach(store.upcomingEvents.prefix(6)) { entry in
-                    PlannerEntryRow(entry: entry, showsDate: true) {
-                        editor = .edit(entry)
-                    }
+                    PlannerEntryRow(
+                        entry: entry,
+                        showsDate: true,
+                        onEdit: { editor = .edit(entry) },
+                        onOpenWorkout: { openingDay = $0 }
+                    )
                 }
                 if store.upcomingEvents.count > 6 {
                     Text("+\(store.upcomingEvents.count - 6) more")
@@ -286,6 +302,7 @@ struct PlannerView: View {
 /// One task or event as a row, for the lists that are not a schedule.
 struct PlannerEntryRow: View {
     @Environment(PlannerStore.self) private var store
+    @Environment(WorkoutStore.self) private var workouts
     @Environment(\.homeTimeOfDay) private var timeOfDay
 
     let entry: PlannerEntry
@@ -293,6 +310,9 @@ struct PlannerEntryRow: View {
     /// is the whole point.
     var showsDate: Bool = false
     let onEdit: () -> Void
+    var onOpenWorkout: ((Weekday) -> Void)?
+
+    @State private var confirming: PlannerEntry?
 
     var body: some View {
         HStack(spacing: 11) {
@@ -338,6 +358,12 @@ struct PlannerEntryRow: View {
         .opacity(entry.isComplete ? 0.6 : 1)
         .padding(.vertical, 2)
         .repbaseCard(contentPadding: 12, cornerRadius: 16)
+        .plannerWorkoutCompletionDialog(
+            entry: $confirming,
+            openableDay: { PlannerWorkoutCompletion.openableDay($0, workouts: workouts) },
+            onOpen: { onOpenWorkout?($0) },
+            onTickAnyway: { store.setComplete($0, true) }
+        )
         // Fades and collapses when it leaves, which is what a finished overdue
         // task does once its line has been drawn.
         .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))
@@ -374,7 +400,12 @@ struct PlannerEntryRow: View {
 
     private var completionToggle: some View {
         Button {
-            store.setComplete(entry, !entry.isComplete)
+            if onOpenWorkout != nil,
+               PlannerWorkoutCompletion.needsConfirmation(entry, workouts: workouts) {
+                confirming = entry
+            } else {
+                store.setComplete(entry, !entry.isComplete)
+            }
         } label: {
             Image(systemName: entry.isComplete ? "checkmark.circle.fill" : "circle")
                 .font(.title3)

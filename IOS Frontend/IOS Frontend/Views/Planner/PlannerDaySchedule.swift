@@ -14,9 +14,26 @@ import SwiftUI
 /// would say something the user never said, so they are listed underneath.
 struct PlannerDaySchedule: View {
     @Environment(PlannerStore.self) private var store
+    @Environment(WorkoutStore.self) private var workouts
     @Environment(\.homeTimeOfDay) private var timeOfDay
 
     let onSelect: (PlannerEntry) -> Void
+    /// Where to send someone who says they have not trained yet. Nil leaves
+    /// the tick as a plain tick, with no offer to open anything.
+    var onOpenWorkout: ((Weekday) -> Void)?
+
+    /// The workout tick waiting on an answer, if one is.
+    @State private var confirming: PlannerEntry?
+
+    /// Spelled out rather than left to the memberwise one, which a private
+    /// stored property takes out of reach of the other file that builds this.
+    init(
+        onSelect: @escaping (PlannerEntry) -> Void,
+        onOpenWorkout: ((Weekday) -> Void)? = nil
+    ) {
+        self.onSelect = onSelect
+        self.onOpenWorkout = onOpenWorkout
+    }
 
     /// The height of one hour. Blocks are a fixed height rather than sized to
     /// a duration: an entry records when it starts and nothing about how long
@@ -36,6 +53,12 @@ struct PlannerDaySchedule: View {
                 emptyDay
             }
         }
+        .plannerWorkoutCompletionDialog(
+            entry: $confirming,
+            openableDay: { PlannerWorkoutCompletion.openableDay($0, workouts: workouts) },
+            onOpen: { onOpenWorkout?($0) },
+            onTickAnyway: { store.setComplete($0, true) }
+        )
     }
 
     // MARK: - The hour grid
@@ -177,7 +200,14 @@ struct PlannerDaySchedule: View {
     /// at every hour.
     private func completionToggle(_ entry: PlannerEntry, onCanvas: Bool) -> some View {
         Button {
-            store.setComplete(entry, !entry.isComplete)
+            // A planned workout that has not been trained asks first: the tick
+            // alone records no session, so nothing about the workout is kept.
+            if onOpenWorkout != nil,
+               PlannerWorkoutCompletion.needsConfirmation(entry, workouts: workouts) {
+                confirming = entry
+            } else {
+                store.setComplete(entry, !entry.isComplete)
+            }
         } label: {
             Image(systemName: entry.isComplete ? "checkmark.circle.fill" : "circle")
                 .font(.system(size: 17, weight: .regular))
