@@ -175,17 +175,12 @@ struct PlannerDaySchedule: View {
     }
 
     private var emptyDay: some View {
-        VStack(spacing: 7) {
-            Image(systemName: "calendar.day.timeline.left")
-                .font(.title3)
-                .foregroundStyle(timeOfDay.accent)
-            Text("Nothing planned for this day yet.")
-                .font(.footnote)
-                .foregroundStyle(timeOfDay.secondaryText)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 24)
-        .repbaseCard(contentPadding: 12, cornerRadius: 18)
+        Text("Nothing planned for this day yet.")
+            .font(.footnote)
+            .foregroundStyle(timeOfDay.secondaryText)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.top, 2)
+            .accessibilityLabel("Nothing planned for this day yet")
     }
 
     // MARK: - Pieces

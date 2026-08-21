@@ -54,6 +54,7 @@ struct FoodTrackingView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 foodHeader(timeOfDay: timeOfDay)
+                weekSelector(timeOfDay: timeOfDay)
                 dailySummary
 
                 if let message = store.errorMessage {

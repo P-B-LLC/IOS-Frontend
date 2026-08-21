@@ -87,7 +87,8 @@ struct PlannerEntryEditorView: View {
                             saveTitle: "Save",
                             canSave: canSave,
                             onDismiss: { dismiss() },
-                            onSave: save
+                            onSave: save,
+                            showsSaveAction: false
                         )
 
                         VStack(alignment: .leading, spacing: 6) {
@@ -173,41 +174,26 @@ struct PlannerEntryEditorView: View {
     }
 
     private func editorialNameAndType(timeOfDay: HomeTimeOfDay) -> some View {
-        VStack(alignment: .leading, spacing: 13) {
-            EditorialSectionTitle(title: draft.kind == .task ? "Task" : "Event")
-            EditorialRuleGroup {
-                EditorialRuleRow {
-                    TextField(
-                        draft.kind == .task ? "Task title" : "Event title",
-                        text: $draft.title
-                    )
-                    .font(.title3)
-                    .textInputAutocapitalization(.sentences)
-                }
+        VStack(alignment: .leading, spacing: 17) {
+            TextField(
+                draft.kind == .task ? "What needs doing?" : "What is happening?",
+                text: $draft.title
+            )
+            .font(.title2.weight(.semibold))
+            .foregroundStyle(timeOfDay.canvasPrimaryText)
+            .textInputAutocapitalization(.sentences)
+            .padding(.vertical, 10)
+            .overlay(alignment: .bottom) { Divider() }
 
-                EditorialRuleRow(showsDivider: false) {
-                    Text("Type").font(.subheadline)
-                    Spacer()
-                    HStack(spacing: 18) {
-                        ForEach(PlannerKind.allCases) { kind in
-                            Button {
-                                draft.kind = kind
-                                guard !draft.category.suits(kind) else { return }
-                                draft.category = .other
-                            } label: {
-                                VStack(spacing: 7) {
-                                    Text(kind.title)
-                                        .font(.subheadline.weight(draft.kind == kind ? .bold : .regular))
-                                    Rectangle()
-                                        .fill(draft.kind == kind ? timeOfDay.accent : Color.clear)
-                                        .frame(height: 2)
-                                }
-                            }
-                            .buttonStyle(.plain)
-                            .foregroundStyle(draft.kind == kind ? timeOfDay.canvasPrimaryText : timeOfDay.canvasSecondaryText)
-                        }
-                    }
+            Picker("Type", selection: $draft.kind) {
+                ForEach(PlannerKind.allCases) { kind in
+                    Text(kind.title).tag(kind)
                 }
+            }
+            .pickerStyle(.segmented)
+            .onChange(of: draft.kind) { _, kind in
+                guard !draft.category.suits(kind) else { return }
+                draft.category = .other
             }
         }
     }
@@ -215,8 +201,8 @@ struct PlannerEntryEditorView: View {
     private func editorialDetails(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(alignment: .leading, spacing: 13) {
             EditorialSectionTitle(title: "Schedule")
-            EditorialRuleGroup {
-                EditorialRuleRow {
+            VStack(spacing: 0) {
+                HStack {
                     Text("Category").font(.subheadline)
                     Spacer()
                     Menu {
@@ -233,9 +219,11 @@ struct PlannerEntryEditorView: View {
                             .foregroundStyle(timeOfDay.accent)
                     }
                 }
+                .padding(.vertical, 13)
+                .overlay(alignment: .bottom) { Divider() }
 
                 if draft.category == .workout {
-                    EditorialRuleRow {
+                    HStack {
                         Text("Workout").font(.subheadline)
                         Spacer()
                         Picker("Workout", selection: $draft.workoutID) {
@@ -252,31 +240,40 @@ struct PlannerEntryEditorView: View {
                             draft.title = match.name
                         }
                     }
+                    .padding(.vertical, 13)
+                    .overlay(alignment: .bottom) { Divider() }
                 }
 
-                EditorialRuleRow {
+                HStack {
                     Text("Date").font(.subheadline)
                     Spacer()
                     DatePicker("Date", selection: $date, displayedComponents: .date)
                         .labelsHidden()
                         .datePickerStyle(.compact)
                 }
+                .padding(.vertical, 13)
+                .overlay(alignment: .bottom) { Divider() }
 
-                EditorialRuleRow(showsDivider: hasTime) {
+                HStack {
                     Text("Set a time").font(.subheadline)
                     Spacer()
                     Toggle("Set a time", isOn: $hasTime)
                         .labelsHidden()
                         .tint(timeOfDay.accent)
                 }
+                .padding(.vertical, 13)
+                .overlay(alignment: .bottom) {
+                    if hasTime { Divider() }
+                }
 
                 if hasTime {
-                    EditorialRuleRow(showsDivider: false) {
+                    HStack {
                         Text(draft.kind == .task ? "Do it by" : "Starts").font(.subheadline)
                         Spacer()
                         DatePicker("Time", selection: $time, displayedComponents: .hourAndMinute)
                             .labelsHidden()
                     }
+                    .padding(.vertical, 13)
                 }
             }
         }
@@ -285,11 +282,10 @@ struct PlannerEntryEditorView: View {
     private var editorialNotes: some View {
         VStack(alignment: .leading, spacing: 13) {
             EditorialSectionTitle(title: "Notes", detail: "Optional")
-            EditorialRuleGroup {
-                TextField("Anything worth remembering", text: $draft.notes, axis: .vertical)
-                    .lineLimit(2...5)
-                    .padding(.vertical, 15)
-            }
+            TextField("Anything worth remembering", text: $draft.notes, axis: .vertical)
+                .lineLimit(2...5)
+                .padding(.vertical, 12)
+                .overlay(alignment: .bottom) { Divider() }
         }
     }
 
