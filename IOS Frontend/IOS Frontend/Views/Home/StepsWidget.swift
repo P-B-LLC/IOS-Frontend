@@ -27,6 +27,19 @@ struct StepsWidget: View {
     @Environment(ActivityStore.self) private var store
     @Environment(\.homeTimeOfDay) private var timeOfDay
 
+    @State private var isEditingGoal = false
+    /// Held while the sheet is open so cancelling leaves the saved goal alone.
+    @State private var goalDraft = 8_000
+
+    /// "8K GOAL" while the number is round, the full figure when it is not:
+    /// 8,500 shown as "8K" would be wrong, and "8.5K" is harder to read at
+    /// nine points than the number itself.
+    static func goalText(_ goal: Int) -> String {
+        goal % 1_000 == 0
+            ? "\(goal / 1_000)K GOAL"
+            : "\(goal.formatted(.number)) GOAL"
+    }
+
     var body: some View {
         if store.week.isEmpty == false {
             if compact { compactCard } else { card.padding(.top, 22) }
@@ -37,7 +50,7 @@ struct StepsWidget: View {
     }
 
     private var compactCard: some View {
-        let goal = 8_000
+        let goal = store.stepGoal
         let steps = store.stepsToday ?? 0
         let progress = min(Double(steps) / Double(goal), 1)
         let remaining = max(goal - steps, 0)
@@ -62,9 +75,27 @@ struct StepsWidget: View {
                 Spacer(minLength: 10)
 
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text("\(goal / 1_000)K GOAL")
-                        .font(.system(size: 9, weight: .bold))
+                    Button {
+                        goalDraft = goal
+                        isEditingGoal = true
+                    } label: {
+                        HStack(spacing: 3) {
+                            Text(Self.goalText(goal))
+                                .font(.system(size: 9, weight: .bold))
+                            Image(systemName: "pencil")
+                                .font(.system(size: 7, weight: .bold))
+                        }
                         .foregroundStyle(RepbaseDesign.success)
+                        // A label this small is hard to hit, so the target is
+                        // padded well past what is drawn.
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 4)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(
+                        "Change your daily step goal, currently \(goal.formatted(.number))"
+                    )
                     Text(progress.formatted(.percent.precision(.fractionLength(0))))
                         .font(.caption2.weight(.semibold))
                         .foregroundStyle(timeOfDay.secondaryText)
@@ -101,8 +132,14 @@ struct StepsWidget: View {
         .padding(.bottom, 9)
         .overlay(alignment: .bottom) { Divider() }
         .task { await store.refresh() }
-        .accessibilityElement(children: .combine)
+        // Not combined into one element, or the goal button disappears from
+        // VoiceOver along with everything else on the row.
         .accessibilityLabel("\(steps.formatted(.number)) steps today, \(progress.formatted(.percent)) of goal")
+        .sheet(isPresented: $isEditingGoal) {
+            StepGoalEditor(goal: $goalDraft) { chosen in
+                Task { await store.updateStepGoal(chosen) }
+            }
+        }
     }
 
     private func compactInsight(_ value: String, _ label: String) -> some View {
@@ -342,5 +379,95 @@ struct StepsWidget: View {
         guard counted > 0 else { return "No steps in the last seven days" }
         let total = store.week.reduce(0) { $0 + $1.steps }
         return "\(total.formatted(.number)) steps across \(counted) of the last seven days"
+    }
+}
+
+/// Setting the daily step goal.
+///
+/// A stepper in round hundreds rather than a free text field: the goal is a
+/// round target, not a measurement, and a keyboard invites "8" or "80000".
+/// The bounds match what the server accepts, so the sheet cannot compose a
+/// request the API will refuse.
+private struct StepGoalEditor: View {
+    @Binding var goal: Int
+    let onSave: (Int) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.homeTimeOfDay) private var timeOfDay
+
+    private static let lowest = 1_000
+    private static let highest = 100_000
+    private static let step = 500
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 26) {
+                VStack(spacing: 6) {
+                    Text(goal.formatted(.number))
+                        .font(.system(size: 46, weight: .bold))
+                        .contentTransition(.numericText())
+                        .animation(.easeOut(duration: 0.15), value: goal)
+                    Text("steps a day")
+                        .font(.subheadline)
+                        .foregroundStyle(timeOfDay.secondaryText)
+                }
+                .padding(.top, 20)
+
+                Stepper(
+                    value: $goal,
+                    in: Self.lowest...Self.highest,
+                    step: Self.step
+                ) {
+                    Text("Adjust")
+                        .font(.subheadline.weight(.semibold))
+                }
+                .padding(.horizontal, RepbaseDesign.pageInset)
+
+                // The usual answers, so the common case is one tap rather
+                // than twenty on a stepper.
+                HStack(spacing: 8) {
+                    ForEach([5_000, 8_000, 10_000, 12_000], id: \.self) { preset in
+                        Button {
+                            goal = preset
+                        } label: {
+                            Text("\(preset / 1_000)K")
+                                .font(.footnote.weight(.semibold))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 9)
+                                .background(
+                                    goal == preset
+                                        ? RepbaseDesign.success.opacity(0.18)
+                                        : timeOfDay.primaryText.opacity(0.06),
+                                    in: Capsule()
+                                )
+                                .foregroundStyle(
+                                    goal == preset
+                                        ? RepbaseDesign.success
+                                        : timeOfDay.primaryText
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, RepbaseDesign.pageInset)
+
+                Spacer(minLength: 0)
+            }
+            .navigationTitle("Daily step goal")
+            .navigationBarTitleDisplayMode(.inline)
+            .homeTimeScreen(timeOfDay)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        onSave(goal)
+                        dismiss()
+                    }
+                }
+            }
+        }
+        .presentationDetents([.height(340)])
     }
 }
