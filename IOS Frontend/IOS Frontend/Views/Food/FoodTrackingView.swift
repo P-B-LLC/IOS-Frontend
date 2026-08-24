@@ -55,7 +55,7 @@ struct FoodTrackingView: View {
             VStack(alignment: .leading, spacing: 14) {
                 foodHeader(timeOfDay: timeOfDay)
                 weekSelector(timeOfDay: timeOfDay)
-                dailySummary
+                dailySummary(timeOfDay: timeOfDay)
 
                 if let message = store.errorMessage {
                     syncNotice(message, timeOfDay: timeOfDay)
@@ -210,7 +210,7 @@ struct FoodTrackingView: View {
         .onTapGesture { isShowingMonth = true }
     }
 
-    private var dailySummary: some View {
+    private func dailySummary(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             CalorieGoalCard(
                 value: total.calories,
@@ -225,10 +225,11 @@ struct FoodTrackingView: View {
             }
         }
         .padding(18)
-        .background(RepbasePalette.paper, in: RoundedRectangle(cornerRadius: 25, style: .continuous))
+        .foregroundStyle(timeOfDay.primaryText)
+        .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 25, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 25, style: .continuous)
-                .strokeBorder(RepbasePalette.sand.opacity(0.8), lineWidth: 1)
+                .strokeBorder(timeOfDay.border, lineWidth: 1)
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Daily nutrition totals")
@@ -426,12 +427,12 @@ private struct CalorieGoalCard: View {
 
             Text("\(remaining.nutritionText) kcal remaining")
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(RepbasePalette.caramel)
+                .foregroundStyle(phase.accent)
 
             GeometryReader { proxy in
                 ZStack(alignment: .leading) {
-                    Capsule().fill(RepbasePalette.oatmeal)
-                    Capsule().fill(RepbasePalette.caramel)
+                    Capsule().fill(phase.secondaryText.opacity(0.20))
+                    Capsule().fill(phase.accent)
                         .frame(width: proxy.size.width * progress)
                 }
             }
@@ -469,7 +470,7 @@ private struct MacroGoalCard: View {
 
             GeometryReader { proxy in
                 ZStack(alignment: .leading) {
-                    Capsule().fill(RepbasePalette.oatmeal)
+                    Capsule().fill(phase.secondaryText.opacity(0.18))
                     Capsule().fill(color).frame(width: proxy.size.width * progress)
                 }
             }
