@@ -1068,6 +1068,169 @@ the meaning of dates already stored, so it needs a deliberate choice about
 what a "day" means for this app — most likely a per-user timezone on the
 profile, with `localdate()` calls replaced by one helper that reads it.
 
+## August 21: the feed becomes social, and four traps
+
+Two sessions worked the same tree all day. Most of what follows is one
+session's; where a commit message does not match its contents, that is why —
+`git add -A` picked up the other's work in progress more than once. Stage
+explicit paths.
+
+### Likes, comments, reposts, saving
+
+A post could be made and read and nothing else. Now:
+
+- **Likes** are a row per like, not a counter. Unliking is a delete, two taps
+  in a second cannot both increment, and the count is exactly who is in the
+  table.
+- **Comments** nest one level. A reply to a reply is refused rather than
+  quietly re-parented, so a thread stays a comment and the replies under it.
+- **A repost is a `Post`** with `repost_of` set and a fourth `kind`, so it
+  inherits the feed ordering, the visibility rules and the cursor paging
+  instead of needing a second model all three would have to learn. Reposting
+  a repost passes on the original.
+- **save-workout** copies a posted workout's exercises and set counts into
+  the reader's own workouts — a plan to follow, not a record of somebody
+  else's session, so no weights. Names are unique per user, so a copy of a
+  "Push Day" you already have arrives as "Push Day (from @them)".
+- **Weights are optional at post time.** Withholding happens at *snapshot*
+  time: the numbers are never written, rather than written and filtered on
+  every read. That matches how a post already works — it freezes a copy so
+  editing last week cannot rewrite what people have read. The cost is that
+  changing your mind means reposting.
+
+Counts are correlated subqueries, not `Count` over joins. Three aggregates
+pulled through three multi-valued relations multiply out: a post with four
+likes and three comments reports twelve of each.
+
+### Four traps, all of which cost a build or more
+
+**A `.task` inside a `TimelineView` may never run.** The feed and several
+other screens rebuild once a minute for the time-of-day palette. Anything
+attached inside that closure is torn down and re-declared on every tick. A
+`navigationDestination` there never pushed — tapping a post did nothing while
+liking one worked, because liking needs no navigation. A `.task` there never
+fetched. **Attach navigation and loading to `body`, outside the
+`TimelineView`.**
+
+**The bottom bar is drawn over pushed screens, not inset out of them.** It is
+a `safeAreaInset` on the `TabView`, so the keyboard lifts it and it lands on
+anything pinned to the bottom. The comment box sat underneath it, invisible.
+Scrolling pages pad by `RepbaseDesign.bottomBarClearance`; a pinned control
+has to as well. A screen can also ask the bar away entirely with
+`hidesBottomBar(_:)` — a preference the shell reads — which is what the
+comment box does while it is being written in.
+
+**Inserting a class above `class Foo` can steal its decorator.** Anchoring on
+the `class` line put a new view between `PostViewSet` and its
+`@extend_schema_view`, which then applied to the new view. `CreatePostRequest`,
+`VisibilityEnum`, `CreatePostKindEnum` and `PatchedUpdatePostRequest` all
+vanished from the contract and the client stopped compiling. Anchor *above
+the decorator*. This is the second time in two days — see the
+`logged_set_count` note.
+
+**A serializer field sourced through a nullable relation vanishes.** Covered
+under the rotation section; it bit again here. `SerializerMethodField` is the
+safe form when the source can be null.
+
+### Cancelled is not failed
+
+`NSURLErrorDomain Code=-999` means the app cancelled its own request, which
+SwiftUI does whenever a `.task`'s view goes away or its id changes. It
+arrives at a `catch` looking exactly like a server being down, and 56 sites
+across eight stores were putting it on screen with a Retry button for work
+the app had deliberately abandoned. `Error.userFacingMessage` returns nil for
+a cancellation; every store reports through it. The check walks
+`NSUnderlyingErrorKey`, because the generated client buries the URLSession
+error under its own.
+
+### Photos
+
+Post photos are two to four megabytes. `AsyncImage` caches nothing, so every
+rebuild restarted the download — once a minute, forever, inside the feed's
+`TimelineView` — and decoded at full size on the main thread for a box 200
+points tall. That is why a picture appeared on a post's own page, which draws
+one, and not in a feed drawing several. `RemoteImage` fetches once per URL and
+decodes at the size drawn. A failure now draws a placeholder: nothing at all
+is indistinguishable from a post that never had a picture.
+
+Server-side thumbnails would be the better fix and do not exist yet.
+
+### Two things worth knowing about the data
+
+There are **two Aaron accounts**: `AARONPIO` (RepbaseUser 5, no posts, no
+follows, stale) and `aaron.pio` (RepbaseUser 59, the live one). Querying the
+wrong one made a working follow look broken. Check `user__username`.
+
+**Discover lists 77 accounts**, nearly all `*_probe_*` users left by test
+scripts from several sessions. Worth a cleanup; they make the tab useless for
+judging the real thing.
+
+### Prev: on the set fields
+
+The hint existed and had never once appeared. The client found it by reading
+recent sessions of the same workout until one turned out to have logged
+something, giving up after five — and the account's last **nine** Push Days
+had been started and abandoned, with the session holding the numbers tenth.
+Raising the number moves the cliff and costs a round trip per attempt.
+`GET /api/v1/sessions/previous-sets/` answers it in one query, per exercise,
+so an exercise that moves between workouts keeps its history.
+
+### The step goal
+
+`8_000` was hardcoded in two places and shown as a label nobody could change.
+It is `RepbaseUser.daily_step_goal` now, beside target weight, so it follows
+the account rather than the phone. Bounded 1,000–100,000 server-side, and the
+sheet's stepper uses the same bounds so it cannot compose a refused request.
+
+### The dev server fights itself
+
+`restart-devserver.sh` used to `pkill` the server and start its own with
+`nohup`. The server belongs to the **launchd agent `com.repbase.devserver`**,
+which has `KeepAlive`, so that started a race: both fought for port 5000, the
+loser retried forever, and because it redirected with `>` it truncated the
+shared log on every attempt — which is how the traceback behind a 500 went
+missing. While both were briefly alive they were two writers on one SQLite
+file, which reaches the app as an HTTP 500.
+
+A `nohup` server is reparented to pid 1 when its shell exits, so it looks
+exactly like a launchd child in `ps`. **`launchctl list` is what tells them
+apart**: a dash in the PID column means the agent's own job is not running and
+something else holds its port. The script now unloads the agent, clears any
+stray, loads it again, and refuses to report success while more than one
+server is alive.
+
+### Launch flags added this session
+
+`simctl` still cannot tap, and a preview harness renders a screen on a bare
+stack with no tab bar — which is not the layout anyone gets, and is how a
+comment box that could not be reached shipped twice. These open the **real
+signed-in app**:
+
+| Flag | Opens |
+| --- | --- |
+| `REPBASE_TAB=social\|training\|planner\|account\|home` | that tab |
+| `REPBASE_SOCIAL_OPEN=<post id>` | that post's page, pushed through the feed |
+| `REPBASE_SOCIAL_COMMENT=<post id>` | the comments sheet over the feed |
+| `REPBASE_SOCIAL_FOCUS=1` | arrives mid-comment, keyboard up |
+| `REPBASE_SOCIAL_SEND=<text>` | types a comment and sends it |
+| `REPBASE_SOCIAL_PREVIEW=feed\|detail\|push` | sample data, no account needed |
+| `REPBASE_CYCLE_PREVIEW=1\|empty\|editor\|dashboard` | the rotation screens |
+
+`REPBASE_SOCIAL_SEND` writes a real comment. Delete it afterwards.
+
+### Build before pushing
+
+Three commits reached `main` this session that did not compile — a missing
+`return` on a multi-statement view body, a modifier on a bare `if/else`, and
+`CLLocationManager.authorizationStatus` without its parentheses. Each blocked
+every later commit from reaching the simulator until someone noticed.
+
+Nothing gates a push on a build. Until something does, **build before you
+commit, not after** — and when verifying an install, check the clone's SHA
+*and* that it is not dirty, not only that the installed binary matches the
+build product. A blocked merge leaves the clone a commit behind while that
+MD5 check still passes.
+
 ## Contract additions this session
 
 All additive; nothing was removed.
@@ -1178,6 +1341,21 @@ the compiler this session and are worth remembering:
 
 ## Known limitations and next decisions
 
+1. **Nothing gates a push on a build.** Three commits reached `main` on
+   August 21 that did not compile, each blocking every later one from
+   reaching the simulator. A pre-push hook running the Mac build would end
+   this; nobody has added one.
+2. **The social features are barely tapped.** Verified against the database
+   and rendered in the real signed-in app, and a comment has been sent by
+   hand end to end. Untouched by a human: **Save workout**, the weights
+   toggle at post time, reposting, deleting a comment, and Discover's search
+   box.
+3. **Two Aaron accounts and 77 probe users** are in the development database.
+   `aaron.pio` (RepbaseUser 59) is the live one; `AARONPIO` (5) is stale.
+   The probe accounts fill Discover and make it useless for judging.
+4. **Post photos are served at full size.** Two to four megabytes each, with
+   the client shrinking them after download. Server-side thumbnails are the
+   real fix and do not exist.
 1. **The backend's day is the UTC day.** `TIME_ZONE = 'UTC'`, so for a user
    west of it the date rolls over before their evening is out — 7pm for US
    Central. Rotations show it worst ("Day 3 of 8" advances early), but every
