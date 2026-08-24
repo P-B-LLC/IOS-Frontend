@@ -487,11 +487,6 @@ private struct WeeklyPlanCard: View {
         .background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: RepbaseDesign.controlRadius))
     }
 
-    private func completed(_ day: Weekday) -> Bool {
-        store.completedSessions.contains { $0.session.day == day }
-        }
-    }
-
     @ViewBuilder
     private func planIcon(for item: PlannedWorkoutItem) -> some View {
         if completed(item.day) {
@@ -503,6 +498,11 @@ private struct WeeklyPlanCard: View {
                 size: 12,
                 color: Color.primary
             )
+        }
+    }
+
+    private func completed(_ day: Weekday) -> Bool {
+        store.completedSessions.contains { $0.session.day == day }
         }
     }
 
