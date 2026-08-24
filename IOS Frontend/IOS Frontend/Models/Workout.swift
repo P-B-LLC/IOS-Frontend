@@ -26,15 +26,6 @@ nonisolated enum WorkoutType: String, CaseIterable, Identifiable, Hashable, Coda
         }
     }
 
-    var symbolName: String {
-        switch self {
-        case .lifting: return "figure.strengthtraining.traditional"
-        case .running: return "figure.run"
-        case .biking: return "figure.outdoor.cycle"
-        case .swimming: return "figure.pool.swim"
-        }
-    }
-
     /// Distance types log a distance covered and a session time instead of
     /// weighted reps.
     var tracksDistance: Bool { self != .lifting }
@@ -90,17 +81,6 @@ nonisolated enum CardioMachine: String, CaseIterable, Identifiable, Hashable, Co
         }
     }
 
-    var symbolName: String {
-        switch self {
-        case .treadmill: return "figure.run.treadmill"
-        case .stationaryBike, .assaultBike: return "figure.indoor.cycle"
-        case .stairMaster: return "figure.stair.stepper"
-        case .elliptical: return "figure.elliptical"
-        case .rowingMachine: return "figure.indoor.rowing"
-        case .skiErg: return "figure.skiing.crosscountry"
-        case .other: return "figure.mixed.cardio"
-        }
-    }
 }
 
 /// A single exercise within a workout (e.g. "Bench Press"), with a target

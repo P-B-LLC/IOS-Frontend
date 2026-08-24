@@ -111,8 +111,15 @@ struct CardioFinisherCard: View {
     private var running: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Label(machineInProgress.title, systemImage: machineInProgress.symbolName)
-                    .font(.subheadline.weight(.semibold))
+                HStack(spacing: 7) {
+                    ActivityIconArtwork(
+                        kind: machineInProgress.activityIcon,
+                        size: 19,
+                        color: phase.primaryText
+                    )
+                    Text(machineInProgress.title)
+                        .font(.subheadline.weight(.semibold))
+                }
                 Spacer()
                 if let started = store.cardioStartedAt {
                     TimelineView(.periodic(from: .now, by: 1)) { context in

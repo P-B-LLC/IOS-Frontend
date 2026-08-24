@@ -120,19 +120,12 @@ struct GearPickerRow: View {
             ?? store.gear(withID: selectedID))?.displayName
     }
 
-    @ViewBuilder
     private func gearIcon(for kind: GearKind) -> some View {
-        if kind == .shoe {
-            Image("RepbaseSpeedSole")
-                .resizable()
-                .renderingMode(.template)
-                .scaledToFit()
-                .foregroundStyle(RepbaseDesign.success)
-        } else {
-            Image(systemName: kind.symbolName)
-                .font(.system(size: 24, weight: .medium))
-                .foregroundStyle(accent)
-        }
+        ActivityIconArtwork(
+            kind: kind.activityIcon,
+            size: 28,
+            color: kind == .shoe ? RepbaseDesign.success : accent
+        )
     }
 
     private func selectionDetail(for kind: GearKind, choices: [Gear]) -> String {

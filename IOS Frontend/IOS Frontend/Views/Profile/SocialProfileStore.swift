@@ -55,17 +55,14 @@ enum AthleteDiscipline: String, Codable, CaseIterable, Identifiable {
         self = match
     }
 
-    var symbol: String {
+    var activityIcon: ActivityIconKind {
         switch self {
-        case .powerlifting: "figure.strengthtraining.traditional"
-        case .bodybuilding: "dumbbell.fill"
-        case .crossFit: "figure.cross.training"
-        case .rockClimbing: "figure.climbing"
-        case .triathlon: "figure.triathlon"
-        case .running: "figure.run"
-        case .cycling: "figure.outdoor.cycle"
-        case .swimming: "figure.pool.swim"
-        case .generalFitness: "figure.mixed.cardio"
+        case .powerlifting, .bodybuilding, .crossFit: .lifting
+        case .rockClimbing: .otherCardio
+        case .triathlon, .generalFitness: .cardio
+        case .running: .running
+        case .cycling: .biking
+        case .swimming: .swimming
         }
     }
 }

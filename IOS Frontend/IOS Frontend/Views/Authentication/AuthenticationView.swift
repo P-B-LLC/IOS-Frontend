@@ -151,9 +151,7 @@ struct AuthenticationView: View {
 
     private func brand(timeOfDay: HomeTimeOfDay) -> some View {
         HStack(spacing: 14) {
-            Image(systemName: "figure.strengthtraining.traditional")
-                .font(.system(size: 22, weight: .semibold))
-                .foregroundStyle(Color.white)
+            ActivityIconArtwork(kind: .lifting, size: 27, color: Color.white)
                 .frame(width: 50, height: 50)
                 .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 12))
 

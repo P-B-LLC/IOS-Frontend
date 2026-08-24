@@ -1,6 +1,6 @@
 # Repbase iOS — Work History and Claude Handoff
 
-Last updated: August 19, 2026 (Apple Health, the route map, miles, and gear)
+Last updated: August 23, 2026 (custom activity icon system)
 
 This supersedes the previous handoff, which described the project at `ad1df5b`.
 Everything in that document still worth keeping has been folded in here.
@@ -9,6 +9,41 @@ Everything in that document still worth keeping has been folded in here.
 | --- | --- | --- | --- |
 | iOS frontend | `https://github.com/P-B-LLC/IOS-Frontend.git` | `main` | `64aa5cd` |
 | Django backend | `https://github.com/P-B-LLC/repbase.git` | `main` | `c1029f4` |
+
+## August 23 UI context — custom activity icons
+
+The user rejected the previous hand-drawn `Canvas` workout figures and approved
+the compact sports-pictogram family shown in:
+
+- `DesignReferences/activity-icon-reference.png` — committed source reference.
+- Figma file `zavGrRPLRkrcKfcVlpDVcR`, node `488:2` — the 15-icon replacement
+  audit and screen-usage inventory. The Figma connector required
+  reauthentication on August 23; the source image is therefore the durable
+  repository reference.
+
+`Views/Shared/WorkoutInkArtwork.swift` is now the single semantic icon entry
+point. `ActivityIconKind` contains all 15 approved roles and
+`ActivityIconArtwork` performs template rendering so selected/unselected,
+light, and night colors come from each screen. `WorkoutInkArtwork` remains only
+as a compatibility wrapper and no longer draws figures with `Canvas`.
+
+The custom activity set covers:
+
+1. Lifting, running, biking, and swimming.
+2. Treadmill, stationary bike, Stair Master, elliptical, rower, assault bike,
+   Ski Erg, and other cardio.
+3. The cardio-section mark, running-shoe gear mark, and bike-gear mark.
+
+The running-shoe role intentionally reuses the already-approved
+`RepbaseSpeedSole` vector. The other assets are in
+`Assets.xcassets/Activity*.imageset`. The deterministic extraction script is
+`Scripts/build-activity-icon-assets.ps1`; rerunning it rebuilds the tintable PNG
+assets from the committed reference without generative reinterpretation.
+
+All workout/cardio/gear `symbolName` APIs were removed so new call sites cannot
+quietly return to the rejected SF Symbols. Utility symbols such as back, add,
+check, delete, navigation, and the steps walking mark are intentionally outside
+this activity-icon scope.
 
 Every commit below was built on the Mac from a clean clone of `main` before
 being pushed.

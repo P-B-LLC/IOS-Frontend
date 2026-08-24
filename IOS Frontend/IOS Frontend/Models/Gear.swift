@@ -28,13 +28,6 @@ nonisolated enum GearKind: String, CaseIterable, Identifiable, Hashable, Sendabl
         }
     }
 
-    var symbolName: String {
-        switch self {
-        case .shoe: "shoeprints.fill"
-        case .bike: "bicycle"
-        }
-    }
-
     /// The sport this kind of gear belongs to. A bike is not worn on a run,
     /// and the server refuses the pairing, so the picker never offers it.
     var workoutType: WorkoutType {

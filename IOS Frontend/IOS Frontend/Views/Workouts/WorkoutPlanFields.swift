@@ -80,8 +80,11 @@ struct WorkoutPlanFields: View {
                                 reuse(workout)
                             } label: {
                                 HStack(spacing: 5) {
-                                    Image(systemName: workout.type.symbolName)
-                                        .font(.caption2)
+                                    ActivityIconArtwork(
+                                        kind: workout.type.activityIcon,
+                                        size: 13,
+                                        color: phase.primaryText
+                                    )
                                     Text(workout.name)
                                         .font(.caption)
                                         .lineLimit(1)
@@ -243,8 +246,15 @@ struct WorkoutPlanFields: View {
     private var cardioFinisherCard: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Label("Finish With Cardio", systemImage: "figure.mixed.cardio")
-                    .font(.subheadline.weight(.semibold))
+                HStack(spacing: 7) {
+                    ActivityIconArtwork(
+                        kind: .cardio,
+                        size: 18,
+                        color: phase.primaryText
+                    )
+                    Text("Finish With Cardio")
+                        .font(.subheadline.weight(.semibold))
+                }
                 Spacer()
                 if draft.cardioMachine != nil {
                     Button("Remove") {
@@ -271,8 +281,11 @@ struct WorkoutPlanFields: View {
                             }
                         } label: {
                             VStack(spacing: 5) {
-                                Image(systemName: machine.symbolName)
-                                    .font(.title3)
+                                ActivityIconArtwork(
+                                    kind: machine.activityIcon,
+                                    size: 24,
+                                    color: isSelected ? phase.accent : phase.secondaryText
+                                )
                                 Text(machine.title)
                                     .font(.caption2.weight(.medium))
                                     .lineLimit(1)

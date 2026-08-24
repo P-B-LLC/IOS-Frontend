@@ -97,9 +97,11 @@ struct SavedWorkoutsView: View {
 
     private func row(_ workout: WorkoutSummary) -> some View {
         HStack(spacing: 14) {
-            Image(systemName: workout.type.symbolName)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(RepbasePalette.caramel)
+            ActivityIconArtwork(
+                kind: workout.type.activityIcon,
+                size: 22,
+                color: RepbasePalette.caramel
+            )
                 .frame(width: 30, alignment: .leading)
 
             VStack(alignment: .leading, spacing: 1) {

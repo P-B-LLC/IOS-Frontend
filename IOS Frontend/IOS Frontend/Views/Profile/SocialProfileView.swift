@@ -184,7 +184,14 @@ struct SocialProfileView: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 if !profile.disciplines.isEmpty {
-                    Label(disciplineSummary, systemImage: "figure.strengthtraining.traditional")
+                    HStack(spacing: 6) {
+                        ActivityIconArtwork(
+                            kind: .cardio,
+                            size: 15,
+                            color: timeOfDay.secondaryText
+                        )
+                        Text(disciplineSummary)
+                    }
                 }
                 if let gym = profile.gym {
                     HStack(spacing: 6) {
@@ -428,10 +435,10 @@ private struct ProfileSettingsView: View {
                                 Rectangle().fill(timeOfDay.border).frame(height: 1)
 
                                 Button { editorDestination = .identity } label: {
-                                    settingsRow(
+                                    settingsActivityRow(
                                         "Training identity",
                                         detail: "Photo, disciplines, and gym",
-                                        symbol: "figure.strengthtraining.traditional"
+                                        icon: .lifting
                                     )
                                 }
                                 .buttonStyle(.plain)
@@ -708,6 +715,33 @@ private struct ProfileSettingsView: View {
             Image(systemName: "arrow.up.right")
                 .font(.caption.weight(.bold))
                 .foregroundStyle(color ?? .secondary)
+        }
+        .padding(.vertical, 16)
+        .contentShape(Rectangle())
+    }
+
+    private func settingsActivityRow(
+        _ title: String,
+        detail: String,
+        icon: ActivityIconKind
+    ) -> some View {
+        HStack(spacing: 14) {
+            ActivityIconArtwork(
+                kind: icon,
+                size: 21,
+                color: RepbasePalette.caramel
+            )
+            .frame(width: 28)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title).font(.headline)
+                Text(detail).font(.caption).foregroundStyle(.secondary)
+            }
+
+            Spacer(minLength: 8)
+            Image(systemName: "arrow.up.right")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.secondary)
         }
         .padding(.vertical, 16)
         .contentShape(Rectangle())
@@ -1228,7 +1262,11 @@ struct ProfileOnboardingView: View {
             else { draft.disciplines.insert(discipline) }
         } label: {
             HStack(spacing: 8) {
-                Image(systemName: discipline.symbol)
+                ActivityIconArtwork(
+                    kind: discipline.activityIcon,
+                    size: 18,
+                    color: selected ? .white : timeOfDay.primaryText
+                )
                 Text(discipline.rawValue).lineLimit(1)
                 Spacer(minLength: 0)
                 if selected { Image(systemName: "checkmark") }

@@ -177,7 +177,9 @@ private struct WorkoutReferenceHero: View {
                     .padding(.trailing, 28)
 
                 VStack(spacing: 5) {
-                    railButton("figure.strengthtraining.traditional", selected: true)
+                    ActivityIconArtwork(kind: .lifting, size: 14, color: RepbasePalette.cream)
+                        .frame(width: 30, height: 30)
+                        .background(RepbaseDesign.ink, in: Circle())
                     railButton("list.bullet", selected: false)
                     railButton(isActive ? "bolt.fill" : "plus", selected: false)
                     railButton("chart.line.uptrend.xyaxis", selected: false)

@@ -223,9 +223,11 @@ private struct GearCard: View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Image(systemName: gear.kind.symbolName)
-                        .font(.footnote.weight(.bold))
-                        .foregroundStyle(.secondary)
+                    ActivityIconArtwork(
+                        kind: gear.kind.activityIcon,
+                        size: 18,
+                        color: Color.secondary
+                    )
                     Text(gear.displayName)
                         .font(.headline)
                         .lineLimit(1)

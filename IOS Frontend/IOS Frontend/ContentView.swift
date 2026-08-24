@@ -458,8 +458,7 @@ private struct WeeklyPlanCard: View {
 
     private func planRow(_ item: PlannedWorkoutItem) -> some View {
         HStack(spacing: 8) {
-            Image(systemName: completed(item.day) ? "checkmark" : item.workout.type.symbolName)
-                .font(.system(size: 9, weight: .bold))
+            planIcon(for: item)
                 .frame(width: 18, height: 18)
                 .background(Color.primary.opacity(0.08), in: Circle())
             VStack(alignment: .leading, spacing: 1) {
@@ -490,8 +489,22 @@ private struct WeeklyPlanCard: View {
 
     private func completed(_ day: Weekday) -> Bool {
         store.completedSessions.contains { $0.session.day == day }
+        }
     }
-}
+
+    @ViewBuilder
+    private func planIcon(for item: PlannedWorkoutItem) -> some View {
+        if completed(item.day) {
+            Image(systemName: "checkmark")
+                .font(.system(size: 9, weight: .bold))
+        } else {
+            ActivityIconArtwork(
+                kind: item.workout.type.activityIcon,
+                size: 12,
+                color: Color.primary
+            )
+        }
+    }
 
 private struct TodayWorkoutCard: View {
     @Environment(WorkoutStore.self) private var store
