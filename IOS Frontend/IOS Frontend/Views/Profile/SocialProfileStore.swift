@@ -101,6 +101,13 @@ struct GymIdentity: Codable, Equatable, Identifiable {
 }
 
 struct SocialProfile: Codable, Equatable {
+    /// Who this profile belongs to. Nil only for one being filled in during
+    /// sign-up, before the server has given it an identity.
+    var id: Int?
+    /// Answered questions. Carried on the profile because the public payload
+    /// brings them along; the signed-in user's own come from the store, which
+    /// loads them separately.
+    var prompts: [ProfilePromptAnswer] = []
     var provider: ConnectedAccountProvider
     var firstName: String
     var lastName: String
@@ -199,6 +206,8 @@ final class SocialProfileStore {
     /// Other people's featured lifts, kept by user id so a profile visited
     /// twice does not ask twice.
     private(set) var highlightsByUser: [Int: [HighlightLift]] = [:]
+    /// Profiles of other people, same reasoning.
+    private(set) var peopleByID: [Int: SocialProfile] = [:]
 
     init() {}
 
@@ -245,6 +254,19 @@ final class SocialProfileStore {
             // this person", and the id is the only way to say who that is.
             viewerID = remote.id
 
+            // Keep the server's idea of this person's day in step with the
+            // phone's. Every date the server derives from a moment comes off
+            // it -- which day a workout lands on, where a rotation has got to
+            // -- and left on UTC those roll over mid-evening for anyone west
+            // of Greenwich.
+            //
+            // Not worth failing sign-in over: the worst case is that dates
+            // stay where they were until the next launch.
+            let phoneZone = TimeZone.current.identifier
+            if remote.timeZone != phoneZone {
+                try? await repository.saveTimeZone(phoneZone)
+            }
+
             // Started together: neither depends on the other, and run one
             // after the next they cost two round trips to draw one page.
             async let answersRequest = repository.prompts()
@@ -268,6 +290,7 @@ final class SocialProfileStore {
         prompts = []
         highlights = []
         highlightsByUser = [:]
+        peopleByID = [:]
         isLoading = false
         hasLoadedProfile = false
         errorMessage = nil
@@ -324,6 +347,8 @@ final class SocialProfileStore {
     private static func profile(from remote: RemoteProfile) -> SocialProfile {
         let height = ProfileUnits.feetAndInches(centimetres: remote.heightCentimetres)
         return SocialProfile(
+            id: remote.id,
+            prompts: remote.prompts,
             provider: .apple,
             firstName: remote.firstName,
             lastName: remote.lastName,
@@ -402,6 +427,28 @@ final class SocialProfileStore {
             guard connectionGeneration == generation else { return false }
             errorMessage = error.userFacingMessage
             return false
+        }
+    }
+
+    /// Somebody else's profile, read once and kept.
+    ///
+    /// Returns what is already held straight away, so opening a profile a
+    /// second time draws immediately rather than blanking while it asks again.
+    @discardableResult
+    func person(_ userID: Int) async -> SocialProfile? {
+        if let held = peopleByID[userID] { return held }
+        guard let repository else { return nil }
+        let generation = connectionGeneration
+        do {
+            let remote = try await repository.publicProfile(userID: userID)
+            guard connectionGeneration == generation else { return nil }
+            let profile = Self.profile(from: remote)
+            peopleByID[userID] = profile
+            return profile
+        } catch {
+            guard connectionGeneration == generation else { return nil }
+            errorMessage = error.userFacingMessage
+            return nil
         }
     }
 

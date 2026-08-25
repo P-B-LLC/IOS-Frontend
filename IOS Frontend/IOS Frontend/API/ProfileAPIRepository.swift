@@ -87,6 +87,12 @@ nonisolated struct RemoteProfile: Equatable, Sendable {
     var gymID: Int?
     var gymName: String?
     var gymCity: String?
+    /// The IANA zone the server files this person's days under. Not shown
+    /// anywhere; the app keeps it in step with the phone's own zone.
+    var timeZone: String
+    /// Answered questions. Empty from `/me/`, which does not carry them;
+    /// filled in when this is somebody else's public profile.
+    var prompts: [ProfilePromptAnswer] = []
 }
 
 /// A gym as the server knows it, with the integer identity the API uses.
@@ -218,6 +224,72 @@ actor ProfileAPIRepository {
 
     /// Gyms matching what the user typed. Searching before creating is what
     /// keeps one gym from being listed six ways.
+    /// Somebody else's profile, as the public is allowed to see it.
+    ///
+    /// A different shape from `/me/`: measurements arrive already withheld by
+    /// the server according to their three switches, and the answered
+    /// questions ride along, so a visited profile costs one request rather
+    /// than three.
+    func publicProfile(userID: Int) async throws -> RemoteProfile {
+        let output = try await client.usersRetrieve(path: .init(id: userID))
+        switch output {
+        case .ok(let response):
+            let payload = try response.body.json
+            return RemoteProfile(
+                id: payload.id,
+                username: payload.username,
+                firstName: payload.firstName,
+                lastName: payload.lastName,
+                bio: payload.bio ?? "",
+                photoURL: payload.profilePhotoUrl,
+                heightCentimetres: payload.heightCm,
+                weightKilograms: payload.weightKg,
+                targetWeightKilograms: payload.targetWeightKg,
+                showsHeight: payload.showsHeight ?? false,
+                showsWeight: payload.showsWeight ?? false,
+                showsTargetWeight: payload.showsTargetWeight ?? false,
+                // Already strings here, unlike on /me/ where the contract
+                // gives a closed enum.
+                disciplines: payload.disciplines,
+                gymID: payload.gym,
+                gymName: payload.gymName,
+                gymCity: payload.gymCity,
+                // Not public, and not needed: the app only ever corrects its
+                // own. Somebody else's zone is a hint about where they live.
+                timeZone: "UTC",
+                prompts: payload.prompts.map {
+                    ProfilePromptAnswer(
+                        question: $0.question,
+                        questionLabel: $0.questionLabel,
+                        answer: $0.answer
+                    )
+                }
+            )
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// Tells the server which zone this phone is in.
+    ///
+    /// Sent on its own, not folded into a profile save: it is not something
+    /// the user edits, and it has to be corrected on a launch where they
+    /// changed nothing else -- after a flight, most obviously.
+    @discardableResult
+    func saveTimeZone(_ identifier: String) async throws -> RemoteProfile {
+        let output = try await client.mePartialUpdate(
+            body: .json(
+                Components.Schemas.PatchedRepbaseUserRequest(timeZone: identifier)
+            )
+        )
+        switch output {
+        case .ok(let response):
+            return Self.profile(from: try response.body.json)
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
     // MARK: - Prompts and highlights
 
     /// The questions the signed-in user has answered.
@@ -365,7 +437,8 @@ actor ProfileAPIRepository {
             disciplines: (payload.disciplines ?? []).map(\.rawValue),
             gymID: payload.gym,
             gymName: payload.gymName,
-            gymCity: payload.gymCity
+            gymCity: payload.gymCity,
+            timeZone: payload.timeZone ?? "UTC"
         )
     }
 

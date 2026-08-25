@@ -13,7 +13,7 @@ import Foundation
 /// `questionLabel` is the server's wording, not the app's. A question added
 /// after this build shipped still reads correctly, because the text to draw
 /// arrives with the answer rather than being looked up in a table here.
-nonisolated struct ProfilePromptAnswer: Identifiable, Equatable, Hashable, Sendable {
+nonisolated struct ProfilePromptAnswer: Identifiable, Equatable, Hashable, Codable, Sendable {
     var question: String
     var questionLabel: String
     var answer: String

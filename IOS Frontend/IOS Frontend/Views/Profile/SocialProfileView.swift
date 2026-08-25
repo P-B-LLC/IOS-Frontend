@@ -66,6 +66,11 @@ struct SocialProfileView: View {
     @State private var commenting: ProfileCommentTarget?
     @State private var editingExpression = false
 
+    /// Whose profile this is. Every count, list and request on the page is
+    /// keyed off it rather than off the signed-in user, which is what makes
+    /// the same screen serve somebody else's profile.
+    private var subjectID: Int? { profile.id ?? store.viewerID }
+
     private enum ProfileSection: String, CaseIterable, Identifiable {
         case posts = "Posts"
         case about = "About"
@@ -118,15 +123,56 @@ struct SocialProfileView: View {
         // on screen — id and all — while the feed store still has no
         // repository, and a task keyed on the id alone ran once against
         // nothing and never again.
-        .task(id: "\(store.viewerID ?? 0)-\(social.isConnected)") {
-            guard let viewerID = store.viewerID, social.isConnected else { return }
-            async let posts: Void = social.loadPosts(byAuthor: viewerID)
-            async let relationships: Void = social.loadRelationships(for: viewerID)
-            _ = await (posts, relationships)
+        .task(id: "\(subjectID ?? 0)-\(social.isConnected)") {
+            guard let subjectID, social.isConnected else { return }
+            async let posts: Void = social.loadPosts(byAuthor: subjectID)
+            async let relationships: Void = social.loadRelationships(for: subjectID)
+            // Somebody else's featured lifts are their own request; the
+            // signed-in user's arrive with their profile.
+            async let lifts: Void = isCurrentUser
+                ? ()
+                : store.loadHighlights(forUser: subjectID)
+            _ = await (posts, relationships, lifts)
         }
     }
 
+    /// Your own profile is a place in the app; somebody else's is somewhere you
+    /// navigated to. So one gets the section heading and the settings menu, and
+    /// the other gets their name and a way back.
+    @ViewBuilder
     private func profileHeader(timeOfDay: HomeTimeOfDay) -> some View {
+        if isCurrentUser {
+            ownHeader(timeOfDay: timeOfDay)
+        } else {
+            HStack(alignment: .center, spacing: 12) {
+                Button { dismiss() } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 17, weight: .semibold))
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(timeOfDay.canvasPrimaryText)
+                .accessibilityLabel("Back")
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("PROFILE")
+                        .font(.system(size: 10, weight: .bold))
+                        .tracking(1.5)
+                        .foregroundStyle(timeOfDay.accent)
+                    Text(profile.displayName)
+                        .font(.system(size: 22, weight: .bold))
+                        .tracking(-0.4)
+                        .foregroundStyle(timeOfDay.canvasPrimaryText)
+                        .lineLimit(1)
+                }
+                Spacer()
+            }
+            .padding(.bottom, 8)
+        }
+    }
+
+    private func ownHeader(timeOfDay: HomeTimeOfDay) -> some View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("ACCOUNT")
@@ -206,15 +252,15 @@ struct SocialProfileView: View {
     }
 
     private var myPostCount: Int {
-        store.viewerID.map { social.posts(byAuthor: $0).count } ?? 0
+        subjectID.map { social.posts(byAuthor: $0).count } ?? 0
     }
 
     private var followerCount: Int {
-        store.viewerID.flatMap { social.followersByUser[$0]?.count } ?? 0
+        subjectID.flatMap { social.followersByUser[$0]?.count } ?? 0
     }
 
     private var followingCount: Int {
-        store.viewerID.flatMap { social.followingByUser[$0]?.count } ?? 0
+        subjectID.flatMap { social.followingByUser[$0]?.count } ?? 0
     }
 
     @ViewBuilder
@@ -265,8 +311,8 @@ struct SocialProfileView: View {
     /// copies each keeping their own counts is the bug this avoids.
     @ViewBuilder
     private func postsSection(timeOfDay: HomeTimeOfDay) -> some View {
-        let mine = store.viewerID.map { social.posts(byAuthor: $0) } ?? []
-        let isLoading = store.viewerID.map { social.isLoadingPosts(byAuthor: $0) } ?? false
+        let mine = subjectID.map { social.posts(byAuthor: $0) } ?? []
+        let isLoading = subjectID.map { social.isLoadingPosts(byAuthor: $0) } ?? false
 
         Group {
             if !mine.isEmpty {
@@ -321,11 +367,14 @@ struct SocialProfileView: View {
     /// has its own request. Only the signed-in user's are wired so far -- a
     /// visited profile has no id on it to key another person's by.
     private var myPrompts: [ProfilePromptAnswer] {
-        isCurrentUser ? store.prompts : []
+        // The signed-in user's come from the store, which loads them on
+        // connect; somebody else's ride along on their public profile.
+        isCurrentUser ? store.prompts : profile.prompts
     }
 
     private var myHighlights: [HighlightLift] {
-        isCurrentUser ? store.highlights : []
+        if isCurrentUser { return store.highlights }
+        return subjectID.flatMap { store.highlightsByUser[$0] } ?? []
     }
 
     private func aboutSection(timeOfDay: HomeTimeOfDay) -> some View {

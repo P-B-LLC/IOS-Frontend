@@ -5631,6 +5631,8 @@ public enum Components {
             public var dailyStepGoal: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/PatchedRepbaseUserRequest/unit_preference`.
             public var unitPreference: Components.Schemas.UnitPreferenceEnum?
+            /// - Remark: Generated from `#/components/schemas/PatchedRepbaseUserRequest/time_zone`.
+            public var timeZone: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PatchedRepbaseUserRequest/bio`.
             public var bio: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PatchedRepbaseUserRequest/disciplines`.
@@ -5656,6 +5658,7 @@ public enum Components {
             ///   - targetWeightKg:
             ///   - dailyStepGoal:
             ///   - unitPreference:
+            ///   - timeZone:
             ///   - bio:
             ///   - disciplines:
             ///   - gym:
@@ -5673,6 +5676,7 @@ public enum Components {
                 targetWeightKg: Swift.String? = nil,
                 dailyStepGoal: Swift.Int? = nil,
                 unitPreference: Components.Schemas.UnitPreferenceEnum? = nil,
+                timeZone: Swift.String? = nil,
                 bio: Swift.String? = nil,
                 disciplines: [Components.Schemas.DisciplinesEnum]? = nil,
                 gym: Swift.Int? = nil,
@@ -5690,6 +5694,7 @@ public enum Components {
                 self.targetWeightKg = targetWeightKg
                 self.dailyStepGoal = dailyStepGoal
                 self.unitPreference = unitPreference
+                self.timeZone = timeZone
                 self.bio = bio
                 self.disciplines = disciplines
                 self.gym = gym
@@ -5708,6 +5713,7 @@ public enum Components {
                 case targetWeightKg = "target_weight_kg"
                 case dailyStepGoal = "daily_step_goal"
                 case unitPreference = "unit_preference"
+                case timeZone = "time_zone"
                 case bio
                 case disciplines
                 case gym
@@ -7748,6 +7754,8 @@ public enum Components {
             public var dailyStepGoal: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/RepbaseUser/unit_preference`.
             public var unitPreference: Components.Schemas.UnitPreferenceEnum?
+            /// - Remark: Generated from `#/components/schemas/RepbaseUser/time_zone`.
+            public var timeZone: Swift.String?
             /// - Remark: Generated from `#/components/schemas/RepbaseUser/bio`.
             public var bio: Swift.String?
             /// - Remark: Generated from `#/components/schemas/RepbaseUser/profile_photo_url`.
@@ -7784,6 +7792,7 @@ public enum Components {
             ///   - targetWeightKg:
             ///   - dailyStepGoal:
             ///   - unitPreference:
+            ///   - timeZone:
             ///   - bio:
             ///   - profilePhotoUrl:
             ///   - disciplines:
@@ -7807,6 +7816,7 @@ public enum Components {
                 targetWeightKg: Swift.String? = nil,
                 dailyStepGoal: Swift.Int? = nil,
                 unitPreference: Components.Schemas.UnitPreferenceEnum? = nil,
+                timeZone: Swift.String? = nil,
                 bio: Swift.String? = nil,
                 profilePhotoUrl: Swift.String? = nil,
                 disciplines: [Components.Schemas.DisciplinesEnum]? = nil,
@@ -7830,6 +7840,7 @@ public enum Components {
                 self.targetWeightKg = targetWeightKg
                 self.dailyStepGoal = dailyStepGoal
                 self.unitPreference = unitPreference
+                self.timeZone = timeZone
                 self.bio = bio
                 self.profilePhotoUrl = profilePhotoUrl
                 self.disciplines = disciplines
@@ -7854,6 +7865,7 @@ public enum Components {
                 case targetWeightKg = "target_weight_kg"
                 case dailyStepGoal = "daily_step_goal"
                 case unitPreference = "unit_preference"
+                case timeZone = "time_zone"
                 case bio
                 case profilePhotoUrl = "profile_photo_url"
                 case disciplines
@@ -7889,6 +7901,8 @@ public enum Components {
             public var dailyStepGoal: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/RepbaseUserRequest/unit_preference`.
             public var unitPreference: Components.Schemas.UnitPreferenceEnum?
+            /// - Remark: Generated from `#/components/schemas/RepbaseUserRequest/time_zone`.
+            public var timeZone: Swift.String?
             /// - Remark: Generated from `#/components/schemas/RepbaseUserRequest/bio`.
             public var bio: Swift.String?
             /// - Remark: Generated from `#/components/schemas/RepbaseUserRequest/disciplines`.
@@ -7914,6 +7928,7 @@ public enum Components {
             ///   - targetWeightKg:
             ///   - dailyStepGoal:
             ///   - unitPreference:
+            ///   - timeZone:
             ///   - bio:
             ///   - disciplines:
             ///   - gym:
@@ -7931,6 +7946,7 @@ public enum Components {
                 targetWeightKg: Swift.String? = nil,
                 dailyStepGoal: Swift.Int? = nil,
                 unitPreference: Components.Schemas.UnitPreferenceEnum? = nil,
+                timeZone: Swift.String? = nil,
                 bio: Swift.String? = nil,
                 disciplines: [Components.Schemas.DisciplinesEnum]? = nil,
                 gym: Swift.Int? = nil,
@@ -7948,6 +7964,7 @@ public enum Components {
                 self.targetWeightKg = targetWeightKg
                 self.dailyStepGoal = dailyStepGoal
                 self.unitPreference = unitPreference
+                self.timeZone = timeZone
                 self.bio = bio
                 self.disciplines = disciplines
                 self.gym = gym
@@ -7966,6 +7983,7 @@ public enum Components {
                 case targetWeightKg = "target_weight_kg"
                 case dailyStepGoal = "daily_step_goal"
                 case unitPreference = "unit_preference"
+                case timeZone = "time_zone"
                 case bio
                 case disciplines
                 case gym

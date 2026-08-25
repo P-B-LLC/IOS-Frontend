@@ -12,6 +12,12 @@ private struct CommentedPost: Identifiable, Hashable {
     let id: Int
 }
 
+/// A person id being navigated to. Its own type rather than a bare Int so it
+/// does not collide with the post destination, which is also an Int.
+private struct VisitedPerson: Identifiable, Hashable {
+    let id: Int
+}
+
 struct SocialFeedView: View {
     private enum FeedMode: String, CaseIterable, Identifiable {
         case following = "Following"
@@ -37,6 +43,8 @@ struct SocialFeedView: View {
     @State private var commenting: CommentedPost?
     @State private var feedMode: FeedMode = .following
     @State private var searchText = ""
+    /// Whose profile is open, if anyone's.
+    @State private var visiting: VisitedPerson?
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
@@ -48,6 +56,9 @@ struct SocialFeedView: View {
         // comment button did nothing at all.
         .navigationDestination(item: $opened) { id in
             PostDetailView(postID: id)
+        }
+        .navigationDestination(item: $visiting) { person in
+            PersonProfileView(userID: person.id)
         }
         .task {
 #if DEBUG
@@ -227,6 +238,9 @@ struct SocialFeedView: View {
                             .foregroundStyle(timeOfDay.canvasSecondaryText)
                     }
                     Spacer()
+                        // The gap is part of the row, so the whole line opens
+                        // the profile rather than just the name.
+                        .contentShape(Rectangle())
                     if person.id != profileStore.viewerID {
                         Button(isFollowing(person) ? "Following" : "Follow") {
                             Task {
@@ -244,6 +258,10 @@ struct SocialFeedView: View {
                     }
                 }
                 .padding(.vertical, 10)
+                .contentShape(Rectangle())
+                // Not a Button wrapping the row: it holds the Follow button,
+                // and a button inside a button swallows the inner tap.
+                .onTapGesture { visiting = VisitedPerson(id: person.id) }
                 if index < min(filteredPeople.count, 8) - 1 { Divider() }
             }
         }
