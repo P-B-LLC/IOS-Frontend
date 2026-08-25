@@ -14,11 +14,14 @@ import SwiftUI
 /// icon is caramel at every hour. The time-aware tokens below are what change
 /// with the clock, and everything structural should still use those.
 enum RepbasePalette {
-    static let cream = Color(hex: 0xF7F2EC)
-    static let paper = Color(hex: 0xFFF9F4)
-    static let oatmeal = Color(hex: 0xE9DDD3)
-    static let sand = Color(hex: 0xD7C1B1)
-    static let caramel = Color(hex: 0xA8795E)
+    /// Light mode uses true white rather than a warm off-white. Keeping the
+    /// aliases means existing screens inherit the change without duplicating
+    /// appearance checks throughout the view hierarchy.
+    static let cream = Color.white
+    static let paper = Color.white
+    static let oatmeal = Color(hex: 0xF2F2F2)
+    static let sand = Color(hex: 0xD1D1D1)
+    static let caramel = Color(hex: 0xF86722)
     static let cocoa = Color(hex: 0x6F5548)
     static let espresso = Color(hex: 0x493B35)
     static let charcoal = Color(hex: 0x242120)
@@ -49,8 +52,7 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
 
     var canvasStart: Color {
         switch self {
-        case .dawn: Color(hex: 0xFCF7F1)
-        case .day: RepbasePalette.cream
+        case .dawn, .day: Color.white
         case .dusk: Color(hex: 0x896C5E)
         case .night: Color(hex: 0x252220)
         }
@@ -58,8 +60,7 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
 
     var canvasMiddle: Color {
         switch self {
-        case .dawn: Color(hex: 0xF4E9DF)
-        case .day: Color(hex: 0xF0E6DE)
+        case .dawn, .day: Color.white
         case .dusk: Color(hex: 0x6A5147)
         case .night: Color(hex: 0x1D1B1A)
         }
@@ -67,8 +68,7 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
 
     var canvasEnd: Color {
         switch self {
-        case .dawn: Color(hex: 0xE8D5C7)
-        case .day: Color(hex: 0xE2D2C6)
+        case .dawn, .day: Color.white
         case .dusk: Color(hex: 0x3F3430)
         case .night: RepbasePalette.night
         }
@@ -85,21 +85,19 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
     var surface: Color {
         switch self {
         case .night: Color(hex: 0x292624)
-        case .dusk: Color(hex: 0xF0E5DC)
-        case .dawn, .day: Color(hex: 0xF2E8E0)
+        case .dawn, .day, .dusk: Color.white
         }
     }
 
     var surfaceRaised: Color {
         switch self {
         case .night: Color(hex: 0x332F2C)
-        case .dusk: Color(hex: 0xFFF7F0)
-        case .dawn, .day: RepbasePalette.paper
+        case .dawn, .day, .dusk: Color.white
         }
     }
 
     var selectorSurface: Color {
-        usesDarkAppearance ? Color(hex: 0x3B3633) : RepbasePalette.oatmeal.opacity(0.72)
+        usesDarkAppearance ? Color(hex: 0x3B3633) : RepbasePalette.oatmeal
     }
 
     var emptyDaySurface: Color {
@@ -108,8 +106,20 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
 
     var plannedDaySurface: Color { RepbasePalette.espresso }
     var completedDaySurface: Color { RepbasePalette.paper }
-    var accent: Color { self == .night ? Color(hex: 0xC69B7F) : RepbasePalette.caramel }
+    /// The brand accent stays constant when appearance changes.
+    var accent: Color { RepbasePalette.caramel }
     var ink: Color { RepbasePalette.charcoal }
+
+    /// Primary actions invert in dark canvas states so they remain the most
+    /// visible control on the page. Persistent navigation continues to use
+    /// `ink`; these tokens are reserved for actionable controls.
+    var primaryActionSurface: Color {
+        hasDarkCanvas ? Color.white : RepbasePalette.charcoal
+    }
+
+    var onPrimaryAction: Color {
+        hasDarkCanvas ? RepbasePalette.ink : Color.white
+    }
 
     var heroEnd: Color {
         switch self {
@@ -228,13 +238,13 @@ struct RepbaseAccentCapsuleButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.subheadline.weight(.bold))
-            .foregroundStyle(RepbasePalette.cream)
+            .foregroundStyle(timeOfDay.onPrimaryAction)
             .padding(.horizontal, 15)
             .frame(height: 42)
             .background {
                 ZStack {
                     RoundedRectangle(cornerRadius: 10)
-                        .fill(RepbaseDesign.ink)
+                        .fill(timeOfDay.primaryActionSurface)
                         .shadow(color: timeOfDay.shadow.opacity(0.75), radius: 8, x: 0, y: 4)
                 }
             }

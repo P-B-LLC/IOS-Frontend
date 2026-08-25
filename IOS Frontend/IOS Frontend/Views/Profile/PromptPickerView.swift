@@ -2,29 +2,27 @@
 //  PromptPickerView.swift
 //  IOS Frontend
 //
-//  Swipe through the questions, answer one, add it to your profile.
+//  One page: swipe through the questions, answer whichever is showing.
 //
 
 import SwiftUI
 
-/// One question at a time.
+/// The questions on a single page.
 ///
-/// A page each rather than a list of twelve: choosing what to say about
-/// yourself is easier when you are looking at one question than when you are
-/// scanning a menu, and a full-width answer box invites more than a line does.
-///
-/// Saves as you go. "Add to profile" means it, so backing out of here does not
-/// quietly discard an answer somebody just wrote.
+/// Swiping moves through the questions; the answer box below stays put and
+/// belongs to whichever one is showing. A page each meant the box scrolled
+/// away with the question and the page count made twelve questions feel like
+/// twelve steps, when it is one question and one answer.
 struct PromptPickerView: View {
     @Environment(SocialProfileStore.self) private var store
     @Environment(\.dismiss) private var dismiss
 
     @State private var selection: PromptQuestion = .whyITrain
-    /// What is in the box for each question, keyed by question. Seeded from
-    /// whatever is already on the profile so an existing answer can be edited
-    /// rather than retyped.
+    /// What is typed against each question, so swiping away and back does not
+    /// lose an answer that has not been added yet.
     @State private var drafts: [String: String] = [:]
     @State private var hasSeeded = false
+    @FocusState private var isWriting: Bool
 
     private var maxPrompts: Int { 3 }
 
@@ -32,18 +30,27 @@ struct PromptPickerView: View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
             let timeOfDay = HomeTimeOfDay(date: context.date)
 
-            VStack(spacing: 0) {
-                header(timeOfDay: timeOfDay)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    header(timeOfDay: timeOfDay)
+                    questionCarousel(timeOfDay: timeOfDay)
+                    answerBox(timeOfDay: timeOfDay)
+                    addButton(timeOfDay: timeOfDay)
 
-                TabView(selection: $selection) {
-                    ForEach(PromptQuestion.allCases) { question in
-                        page(question, timeOfDay: timeOfDay)
-                            .tag(question)
+                    if let error = store.errorMessage {
+                        Label(error, systemImage: "exclamationmark.triangle.fill")
+                            .font(.footnote)
+                            .foregroundStyle(.red)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
+
+                    answeredSoFar(timeOfDay: timeOfDay)
                 }
-                .tabViewStyle(.page(indexDisplayMode: .always))
-                .indexViewStyle(.page(backgroundDisplayMode: .always))
+                .padding(.horizontal, RepbaseDesign.pageInset)
+                .padding(.top, 12)
+                .padding(.bottom, 40)
             }
+            .scrollDismissesKeyboard(.interactively)
             .toolbar(.hidden, for: .navigationBar)
             .homeTimeScreen(timeOfDay)
         }
@@ -52,7 +59,7 @@ struct PromptPickerView: View {
             for answer in store.prompts {
                 drafts[answer.question] = answer.answer
             }
-            // Open on the first unanswered question, so somebody adding their
+            // Opens on the first unanswered question, so somebody adding their
             // second answer does not land on the one they already wrote.
             selection = PromptQuestion.allCases.first { question in
                 store.prompts.allSatisfy { $0.question != question.rawValue }
@@ -86,114 +93,181 @@ struct PromptPickerView: View {
 
             Spacer()
         }
-        .padding(.horizontal, RepbaseDesign.pageInset)
-        .padding(.bottom, 4)
     }
 
-    // MARK: - One question
+    // MARK: - The questions
 
-    private func page(_ question: PromptQuestion, timeOfDay: HomeTimeOfDay) -> some View {
-        let answered = store.prompts.first { $0.question == question.rawValue }
-        let draft = drafts[question.rawValue] ?? ""
-        let trimmed = draft.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        return ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                VStack(alignment: .leading, spacing: 8) {
-                    if answered != nil {
-                        Label("On your profile", systemImage: "checkmark.circle.fill")
-                            .font(.caption2.weight(.bold))
-                            .foregroundStyle(timeOfDay.accent)
+    /// Only the question swipes. The box below is the same box throughout, so
+    /// the page reads as one thing being filled in rather than twelve screens.
+    private func questionCarousel(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            TabView(selection: $selection) {
+                ForEach(PromptQuestion.allCases) { question in
+                    VStack(alignment: .leading, spacing: 7) {
+                        if isAnswered(question) {
+                            Label("On your profile", systemImage: "checkmark.circle.fill")
+                                .font(.caption2.weight(.bold))
+                                .foregroundStyle(timeOfDay.accent)
+                        }
+                        Text(question.label)
+                            .font(.system(size: 26, weight: .bold))
+                            .foregroundStyle(timeOfDay.canvasPrimaryText)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Spacer(minLength: 0)
                     }
-                    Text(question.label)
-                        .font(.system(size: 27, weight: .bold))
-                        .foregroundStyle(timeOfDay.canvasPrimaryText)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-
-                TextField(
-                    question.hint,
-                    text: binding(for: question),
-                    axis: .vertical
-                )
-                .font(.system(size: 17))
-                .lineLimit(4...8)
-                .padding(14)
-                .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 16))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 16)
-                        .strokeBorder(timeOfDay.border, lineWidth: 1)
-                }
-
-                HStack {
-                    Text("\(draft.count)/140")
-                        .font(.caption2)
-                        .foregroundStyle(draft.count > 140 ? .red : timeOfDay.canvasSecondaryText)
-                    Spacer()
-                    if answered != nil {
-                        Button("Remove", role: .destructive) { remove(question) }
-                            .font(.caption.weight(.semibold))
-                    }
-                }
-
-                if let message = blockingMessage(for: question, answered: answered) {
-                    Text(message)
-                        .font(.caption)
-                        .foregroundStyle(timeOfDay.canvasSecondaryText)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-
-                Button {
-                    add(question)
-                } label: {
-                    HStack(spacing: 9) {
-                        if store.isSaving { ProgressView().tint(.white) }
-                        Text(answered == nil ? "Add to profile" : "Update answer")
-                    }
-                    .font(.headline.weight(.bold))
-                    .foregroundStyle(Color.white)
-                    .frame(maxWidth: .infinity, minHeight: 54)
-                    .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 17))
-                }
-                .buttonStyle(.plain)
-                .disabled(!canAdd(question, answered: answered, trimmed: trimmed))
-                .opacity(canAdd(question, answered: answered, trimmed: trimmed) ? 1 : 0.42)
-
-                if let error = store.errorMessage {
-                    Label(error, systemImage: "exclamationmark.triangle.fill")
-                        .font(.footnote)
-                        .foregroundStyle(.red)
-                        .fixedSize(horizontal: false, vertical: true)
+                    .padding(.trailing, 8)
+                    .tag(question)
                 }
             }
-            .padding(.horizontal, RepbaseDesign.pageInset)
-            .padding(.top, 10)
-            .padding(.bottom, 40)
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .frame(height: 96)
+
+            // Dots of our own: the built-in ones sit at the bottom of the
+            // TabView, which here is the middle of the page.
+            HStack(spacing: 5) {
+                ForEach(PromptQuestion.allCases) { question in
+                    Capsule()
+                        .fill(
+                            question == selection
+                                ? timeOfDay.accent
+                                : timeOfDay.canvasSecondaryText.opacity(0.3)
+                        )
+                        .frame(width: question == selection ? 16 : 5, height: 5)
+                }
+            }
+            .animation(.easeOut(duration: 0.18), value: selection)
+
+            Text("Swipe for another question")
+                .font(.caption2)
+                .foregroundStyle(timeOfDay.canvasSecondaryText)
         }
-        .scrollDismissesKeyboard(.interactively)
+    }
+
+    // MARK: - The answer
+
+    private func answerBox(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(alignment: .leading, spacing: 7) {
+            TextField(
+                selection.hint,
+                text: binding(for: selection),
+                axis: .vertical
+            )
+            .focused($isWriting)
+            .font(.system(size: 17))
+            .lineLimit(4...8)
+            .padding(14)
+            .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 16))
+            .overlay {
+                RoundedRectangle(cornerRadius: 16)
+                    .strokeBorder(
+                        isWriting ? timeOfDay.accent : timeOfDay.border,
+                        lineWidth: 1
+                    )
+            }
+
+            HStack {
+                Text("\(draft.count)/140")
+                    .font(.caption2)
+                    .foregroundStyle(draft.count > 140 ? .red : timeOfDay.canvasSecondaryText)
+                Spacer()
+                if isAnswered(selection) {
+                    Button("Remove from profile", role: .destructive) {
+                        remove(selection)
+                    }
+                    .font(.caption.weight(.semibold))
+                }
+            }
+        }
+    }
+
+    private func addButton(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if !isAnswered(selection), store.prompts.count >= maxPrompts {
+                Text("You have three answers on your profile. Remove one to add this.")
+                    .font(.caption)
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Button {
+                isWriting = false
+                add(selection)
+            } label: {
+                HStack(spacing: 9) {
+                    if store.isSaving { ProgressView().tint(.white) }
+                    Text(isAnswered(selection) ? "Update answer" : "Add to profile")
+                }
+                .font(.headline.weight(.bold))
+                .foregroundStyle(Color.white)
+                .frame(maxWidth: .infinity, minHeight: 54)
+                .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 17))
+            }
+            .buttonStyle(.plain)
+            .disabled(!canAdd)
+            .opacity(canAdd ? 1 : 0.42)
+        }
+    }
+
+    /// What is already on the profile, so the three slots are visible without
+    /// swiping the whole set to find them.
+    @ViewBuilder
+    private func answeredSoFar(timeOfDay: HomeTimeOfDay) -> some View {
+        if !store.prompts.isEmpty {
+            VStack(alignment: .leading, spacing: 10) {
+                Rectangle()
+                    .fill(timeOfDay.canvasBorder)
+                    .frame(height: 1)
+
+                Text("ON YOUR PROFILE")
+                    .font(.system(size: 9, weight: .bold))
+                    .tracking(1.1)
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+
+                ForEach(store.prompts) { answer in
+                    Button {
+                        if let question = PromptQuestion(rawValue: answer.question) {
+                            selection = question
+                        }
+                    } label: {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(answer.questionLabel.uppercased())
+                                .font(.system(size: 9, weight: .bold))
+                                .tracking(1)
+                                .foregroundStyle(timeOfDay.accent)
+                            Text(answer.answer)
+                                .font(.subheadline)
+                                .foregroundStyle(timeOfDay.canvasPrimaryText)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .multilineTextAlignment(.leading)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
     }
 
     // MARK: - Rules
 
-    /// Why the button is off, when it is off for a reason worth explaining.
-    /// An empty box needs no explanation; a full profile does.
-    private func blockingMessage(
-        for question: PromptQuestion,
-        answered: ProfilePromptAnswer?
-    ) -> String? {
-        guard answered == nil, store.prompts.count >= maxPrompts else { return nil }
-        return "You have three answers on your profile. Remove one to add this."
+    private var draft: String { drafts[selection.rawValue] ?? "" }
+
+    private var trimmedDraft: String {
+        draft.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private func canAdd(
-        _ question: PromptQuestion,
-        answered: ProfilePromptAnswer?,
-        trimmed: String
-    ) -> Bool {
-        guard !store.isSaving, !trimmed.isEmpty, trimmed.count <= 140 else { return false }
-        // A question already on the profile can always be rewritten; a new one
+    private var canAdd: Bool {
+        guard !store.isSaving, !trimmedDraft.isEmpty, trimmedDraft.count <= 140
+        else { return false }
+        // An answer already on the profile can always be rewritten; a new one
         // needs a free slot, which is the server's rule as well as this one.
-        return answered != nil || store.prompts.count < maxPrompts
+        return isAnswered(selection) || store.prompts.count < maxPrompts
+    }
+
+    private func isAnswered(_ question: PromptQuestion) -> Bool {
+        store.prompts.contains { $0.question == question.rawValue }
     }
 
     private func binding(for question: PromptQuestion) -> Binding<String> {
@@ -206,11 +280,9 @@ struct PromptPickerView: View {
     // MARK: - Writing
 
     /// Sends the whole set, because that is what the endpoint takes: replacing
-    /// three rows is cheaper than reconciling them, and it cannot leave a
-    /// fourth answer stranded.
+    /// three rows is cheaper than reconciling them and cannot strand a fourth.
     private func add(_ question: PromptQuestion) {
-        let trimmed = (drafts[question.rawValue] ?? "")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmed = trimmedDraft
         guard !trimmed.isEmpty else { return }
 
         var next = store.prompts

@@ -11,6 +11,12 @@ import SwiftUI
 struct PlannerView: View {
     @Environment(PlannerStore.self) private var store
     @Environment(WorkoutStore.self) private var workoutStore
+    @Environment(\.dismiss) private var dismiss
+
+    /// Set when this was pushed rather than opened as its own tab. The page
+    /// hides the navigation bar, which on a pushed copy removed the only way
+    /// back, so it has to draw its own.
+    var showsBackButton = false
 
     @State private var editor: PlannerEntryEditorView.Mode?
     @State private var categoryFilter: PlannerCategory?
@@ -26,6 +32,19 @@ struct PlannerView: View {
             ScrollView {
                 VStack(spacing: 14) {
                     HStack(alignment: .bottom) {
+                        if showsBackButton {
+                            Button { dismiss() } label: {
+                                Image(systemName: "chevron.left")
+                                    .font(.system(size: 17, weight: .semibold))
+                                    .frame(width: 40, height: 40)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(timeOfDay.canvasPrimaryText)
+                            .accessibilityLabel("Back")
+                            .padding(.trailing, 2)
+                        }
+
                         VStack(alignment: .leading, spacing: 8) {
                             Text("CALENDAR")
                                 .font(.system(size: 10, weight: .bold))

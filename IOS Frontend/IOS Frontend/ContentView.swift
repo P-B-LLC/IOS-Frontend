@@ -13,6 +13,11 @@ struct ContentView: View {
     @Environment(PlannerStore.self) private var plannerStore
     @Environment(FoodTrackingStore.self) private var foodStore
 
+    /// The day the page is showing. Tapping the week strip moves it and every
+    /// section below reads from it, so Home can answer "what about Thursday?"
+    /// without leaving Home.
+    @State private var selectedDate = Calendar.current.startOfDay(for: Date())
+
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
             let timeOfDay = HomeTimeOfDay(date: context.date)
@@ -20,11 +25,11 @@ struct ContentView: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 14) {
                     HomeCommandHeader(date: context.date)
-                    HomeWeekStrip(date: context.date)
-                    HomeUpNextSection(date: context.date)
-                    HomeTrainingSection(date: context.date)
-                    HomeMacroSection(date: context.date)
-                    HomeRemainingTasksSection(date: context.date)
+                    HomeWeekStrip(today: context.date, selection: $selectedDate)
+                    HomeUpNextSection(date: selectedDate, today: context.date)
+                    HomeTrainingSection(date: selectedDate, today: context.date)
+                    HomeMacroSection(date: selectedDate, today: context.date)
+                    HomeRemainingTasksSection(date: selectedDate, today: context.date)
 
                     // Every store that Home reads from, not just workouts.
                     // A task that failed to tick rolled back in silence, and a
@@ -152,52 +157,72 @@ private struct HomeWeekStrip: View {
     @Environment(WorkoutStore.self) private var workouts
     @Environment(\.homeTimeOfDay) private var timeOfDay
 
-    let date: Date
+    /// The real today, so it stays marked even while another day is read.
+    let today: Date
+    @Binding var selection: Date
 
     var body: some View {
         HStack(spacing: 0) {
             ForEach(weekDates, id: \.self) { day in
-                NavigationLink {
-                    PlannerView()
-                        // The planner reads its day from the store, so the tap
-                        // sets it before the push. Without this every date in
-                        // the strip opened on whatever was last selected.
-                        .onAppear { planner.select(day) }
+                // A button, not a link. Tapping a date used to push the
+                // calendar, which hides its navigation bar and so left no way
+                // back to Home; and leaving Home to find out what is on
+                // Thursday is the opposite of what a command centre is for.
+                Button {
+                    selection = day
+                    // Kept in step, so opening the calendar next lands on the
+                    // same day rather than on whatever was last selected there.
+                    planner.select(day)
                 } label: {
                     VStack(spacing: 3) {
                         Text(day.formatted(.dateTime.weekday(.abbreviated)).uppercased())
                             .font(.system(size: 9, weight: .semibold))
                         Text(day.formatted(.dateTime.day()))
-                            .font(.subheadline.weight(isToday(day) ? .bold : .semibold))
+                            .font(.subheadline.weight(isSelected(day) || isToday(day) ? .bold : .semibold))
 
                         Circle()
-                            .fill(dayHasContent(day) ? (isToday(day) ? Color.white : timeOfDay.commandAccent) : .clear)
+                            .fill(dayHasContent(day) ? (isSelected(day) ? Color.white : timeOfDay.commandAccent) : .clear)
                             .frame(width: 3, height: 3)
                     }
-                    .foregroundStyle(isToday(day) ? Color.white : timeOfDay.canvasPrimaryText)
+                    // The filled pill follows the selection; today keeps the
+                    // accent colour when it is not the day being read, so it
+                    // is still findable after tapping a different date.
+                    .foregroundStyle(
+                        isSelected(day)
+                            ? Color.white
+                            : (isToday(day) ? timeOfDay.commandAccent : timeOfDay.canvasPrimaryText)
+                    )
                     .frame(maxWidth: .infinity, minHeight: 58)
                     .background {
-                        if isToday(day) {
+                        if isSelected(day) {
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
                                 .fill(timeOfDay.commandAccent)
                         }
                     }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(day.formatted(date: .complete, time: .omitted))
+                .accessibilityAddTraits(isSelected(day) ? [.isSelected] : [])
             }
         }
         .frame(height: 64)
+        .animation(.easeOut(duration: 0.18), value: selection)
     }
 
     private var weekDates: [Date] {
         let calendar = Calendar.current
-        guard let interval = calendar.dateInterval(of: .weekOfYear, for: date) else { return [date] }
+        guard let interval = calendar.dateInterval(of: .weekOfYear, for: selection)
+        else { return [selection] }
         return (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: interval.start) }
     }
 
     private func isToday(_ day: Date) -> Bool {
-        Calendar.current.isDate(day, inSameDayAs: date)
+        Calendar.current.isDate(day, inSameDayAs: today)
+    }
+
+    private func isSelected(_ day: Date) -> Bool {
+        Calendar.current.isDate(day, inSameDayAs: selection)
     }
 
     private func dayHasContent(_ day: Date) -> Bool {
@@ -213,13 +238,23 @@ private struct HomeUpNextSection: View {
     @Environment(\.homeTimeOfDay) private var timeOfDay
 
     let date: Date
+    let today: Date
+
+    private var isToday: Bool { Calendar.current.isDate(date, inSameDayAs: today) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            HomeSectionHeader(title: "UP NEXT", action: "OPEN CALENDAR", destination: PlannerView())
+            HomeSectionHeader(
+                title: isToday ? "UP NEXT" : "ON \(date.formatted(.dateTime.weekday(.wide)).uppercased())",
+                action: "OPEN CALENDAR",
+                destination: PlannerView(showsBackButton: true)
+            )
 
             if items.isEmpty {
-                HomeEmptyLine(symbol: "calendar", title: "Nothing scheduled next")
+                HomeEmptyLine(
+                    symbol: "calendar",
+                    title: isToday ? "Nothing scheduled next" : "Nothing scheduled"
+                )
                     .frame(height: 44)
             } else {
                 ForEach(items.prefix(2)) { item in
@@ -258,9 +293,11 @@ private struct HomeUpNextSection: View {
     }
 
     private var items: [PlannerEntry] {
-        let overdue = planner.pastDue.filter { !$0.isComplete }
-        let today = planner.entries(on: date).filter { !$0.isComplete || !$0.isCompletable }
-        return unique(overdue + today).sorted {
+        // Overdue belongs to today only. Reading Thursday and being shown
+        // Monday's unfinished tasks says nothing about Thursday.
+        let overdue = isToday ? planner.pastDue.filter { !$0.isComplete } : []
+        let onDay = planner.entries(on: date).filter { !$0.isComplete || !$0.isCompletable }
+        return unique(overdue + onDay).sorted {
             if isPastDue($0) != isPastDue($1) { return isPastDue($0) }
             return ($0.time ?? "99:99:99") < ($1.time ?? "99:99:99")
         }
@@ -292,10 +329,23 @@ private struct HomeTrainingSection: View {
     @Environment(\.homeTimeOfDay) private var timeOfDay
 
     let date: Date
+    let today: Date
+
+    private var isToday: Bool { Calendar.current.isDate(date, inSameDayAs: today) }
+
+    /// The weekday the plan is keyed by. Workouts repeat weekly, so the plan
+    /// for a date is the plan for its weekday.
+    private var weekday: Weekday? {
+        Weekday(calendarWeekday: Calendar.current.component(.weekday, from: date))
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
-            HomeSectionHeader(title: "TRAINING  /  TODAY", action: "OPEN WORKOUTS", destination: WorkoutsView())
+            HomeSectionHeader(
+                title: "TRAINING  /  \(isToday ? "TODAY" : date.formatted(.dateTime.weekday(.wide)).uppercased())",
+                action: "OPEN WORKOUTS",
+                destination: WorkoutsView()
+            )
 
             NavigationLink {
                 workoutDestination
@@ -331,17 +381,17 @@ private struct HomeTrainingSection: View {
                     Text(actionTitle)
                         .font(.subheadline.weight(.semibold))
                     Spacer()
-                    Image(systemName: store.activeSession == nil ? "play.fill" : "arrow.right")
+                    Image(systemName: activeSession == nil ? "play.fill" : "arrow.right")
                         .font(.caption.weight(.bold))
                         .foregroundStyle(.white)
                         .frame(width: 32, height: 32)
                         .background(timeOfDay.commandAccent, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                 }
-                .foregroundStyle(RepbasePalette.cream)
+                .foregroundStyle(timeOfDay.onPrimaryAction)
                 .padding(.leading, 16)
                 .padding(.trailing, 6)
                 .frame(height: 44)
-                .background(timeOfDay.ink, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+                .background(timeOfDay.primaryActionSurface, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
             }
             .buttonStyle(.plain)
             .accessibilityHint("Opens today's workout")
@@ -355,29 +405,40 @@ private struct HomeTrainingSection: View {
 
     @ViewBuilder
     private var workoutDestination: some View {
-        if let day = store.today {
-            DayWorkoutView(day: day)
+        if let weekday {
+            DayWorkoutView(day: weekday)
         } else {
             WorkoutsView()
         }
     }
 
     private var workout: Workout? {
-        guard let today = store.today else { return nil }
-        return store.workout(on: today)
+        guard let weekday else { return nil }
+        return store.workout(on: weekday)
+    }
+
+    /// A session is running now, or it is not; it does not belong to a day
+    /// being read ahead of time.
+    private var activeSession: ActiveWorkoutSession? {
+        isToday ? store.activeSession : nil
     }
 
     private var title: String {
-        store.activeSession?.workoutName ?? workout?.name ?? "Plan today's workout"
+        activeSession?.workoutName
+            ?? workout?.name
+            ?? (isToday ? "Plan today's workout" : "Nothing planned")
     }
 
     private var actionTitle: String {
-        if store.activeSession != nil { return "Continue workout" }
-        return workout == nil ? "Plan workout" : "Start workout"
+        if activeSession != nil { return "Continue workout" }
+        if workout == nil { return "Plan workout" }
+        return isToday ? "Start workout" : "Open workout"
     }
 
     private var metadata: String {
-        guard let workout else { return "No workout is scheduled yet" }
+        guard let workout else {
+            return isToday ? "No workout is scheduled yet" : "Nothing scheduled for this day"
+        }
         if workout.tracksDistance { return workout.type.title }
         let exercises = workout.exercises.count
         return "\(exercises) \(exercises == 1 ? "exercise" : "exercises")  ·  \(workout.totalSets) target sets"
@@ -403,13 +464,20 @@ private struct HomeMacroSection: View {
     @Environment(\.homeTimeOfDay) private var timeOfDay
 
     let date: Date
+    let today: Date
+
+    private var isToday: Bool { Calendar.current.isDate(date, inSameDayAs: today) }
 
     var body: some View {
         let total = food.total(on: date)
         let goals = food.goals
 
         VStack(alignment: .leading, spacing: 7) {
-            HomeSectionHeader(title: "MACROS TODAY", action: "OPEN FOOD", destination: FoodTrackingView())
+            HomeSectionHeader(
+                title: isToday ? "MACROS TODAY" : "MACROS  /  \(date.formatted(.dateTime.weekday(.wide)).uppercased())",
+                action: "OPEN FOOD",
+                destination: FoodTrackingView()
+            )
 
             HStack(alignment: .firstTextBaseline) {
                 Text("\(total.calories.nutritionText) / \(goals.calories.nutritionText) kcal")
@@ -483,13 +551,16 @@ private struct HomeRemainingTasksSection: View {
     @Environment(\.homeTimeOfDay) private var timeOfDay
 
     let date: Date
+    let today: Date
+
+    private var isToday: Bool { Calendar.current.isDate(date, inSameDayAs: today) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HomeSectionHeader(
                 title: "STILL TO DO",
                 action: "\(tasks.count) REMAINING  ·  OPEN",
-                destination: PlannerView()
+                destination: PlannerView(showsBackButton: true)
             )
             .frame(height: 24)
 
@@ -542,11 +613,15 @@ private struct HomeRemainingTasksSection: View {
     }
 
     private var tasks: [PlannerEntry] {
-        let overdue = planner.pastDue.filter { $0.isCompletable && !$0.isComplete }
-        let today = planner.entries(on: date).filter { $0.isCompletable && !$0.isComplete }
+        // As in Up Next: what is overdue is overdue as of today, and has
+        // nothing to say about a day being read ahead.
+        let overdue = isToday
+            ? planner.pastDue.filter { $0.isCompletable && !$0.isComplete }
+            : []
+        let onDay = planner.entries(on: date).filter { $0.isCompletable && !$0.isComplete }
         var seenServerIDs: Set<Int> = []
         var seenLocalIDs: Set<UUID> = []
-        return (overdue + today).filter { entry in
+        return (overdue + onDay).filter { entry in
             if let serverID = entry.serverID { return seenServerIDs.insert(serverID).inserted }
             return seenLocalIDs.insert(entry.id).inserted
         }
@@ -656,15 +731,8 @@ private struct HomeLoadingOverlay: View {
 }
 
 private extension HomeTimeOfDay {
-    /// The approved command-center orange, softened after sunset so the
-    /// hierarchy stays legible without turning the night screen neon.
-    var commandAccent: Color {
-        switch self {
-        case .dawn, .day: Color(hex: 0xF86722)
-        case .dusk: Color(hex: 0xFF7540)
-        case .night: Color(hex: 0xFF966D)
-        }
-    }
+    /// The approved command-center orange remains stable across appearances.
+    var commandAccent: Color { RepbasePalette.caramel }
 }
 
 #Preview {
