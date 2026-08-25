@@ -10,6 +10,8 @@ import SwiftUI
 
 struct ContentView: View {
     @Environment(WorkoutStore.self) private var workoutStore
+    @Environment(PlannerStore.self) private var plannerStore
+    @Environment(FoodTrackingStore.self) private var foodStore
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
@@ -24,8 +26,22 @@ struct ContentView: View {
                     HomeMacroSection(date: context.date)
                     HomeRemainingTasksSection(date: context.date)
 
+                    // Every store that Home reads from, not just workouts.
+                    // A task that failed to tick rolled back in silence, and a
+                    // food read that failed left the macros reading zero with
+                    // nothing to say why.
                     if let error = workoutStore.persistenceError {
-                        HomePersistenceError(message: error)
+                        HomePersistenceError(message: error) {
+                            workoutStore.retryPersistence()
+                        }
+                    }
+                    if let error = plannerStore.persistenceError {
+                        HomePersistenceError(message: error) {
+                            plannerStore.retry()
+                        }
+                    }
+                    if let error = foodStore.errorMessage {
+                        HomePersistenceError(message: error, retry: nil)
                     }
                 }
                 .padding(.horizontal, 24)
@@ -101,15 +117,22 @@ private struct HomeCommandHeader: View {
         .accessibilityLabel("Account")
     }
 
+    /// The name the account actually holds, not the first word of the
+    /// display name. Splitting guessed wrong for anyone whose first name has
+    /// a space in it, and the authenticated user carries the real field.
     private var firstName: String {
         guard case .signedIn(let user) = authentication.phase else { return "there" }
-        return user.displayName.split(separator: " ").first.map(String.init) ?? user.displayName
+        let given = user.firstName.trimmingCharacters(in: .whitespaces)
+        return given.isEmpty ? user.username : given
     }
 
     private var initials: String {
         guard case .signedIn(let user) = authentication.phase else { return "R" }
-        let parts = user.displayName.split(separator: " ").prefix(2)
-        let value = parts.compactMap(\.first).map(String.init).joined()
+        // Built from the two real name fields for the same reason.
+        let value = [user.firstName, user.lastName]
+            .compactMap { $0.trimmingCharacters(in: .whitespaces).first }
+            .map(String.init)
+            .joined()
         return value.isEmpty ? String(user.username.prefix(2)).uppercased() : value.uppercased()
     }
 
@@ -136,6 +159,10 @@ private struct HomeWeekStrip: View {
             ForEach(weekDates, id: \.self) { day in
                 NavigationLink {
                     PlannerView()
+                        // The planner reads its day from the store, so the tap
+                        // sets it before the push. Without this every date in
+                        // the strip opened on whatever was last selected.
+                        .onAppear { planner.select(day) }
                 } label: {
                     VStack(spacing: 3) {
                         Text(day.formatted(.dateTime.weekday(.abbreviated)).uppercased())
@@ -358,7 +385,9 @@ private struct HomeTrainingSection: View {
 
     private var workoutSymbol: String {
         guard let workout else { return "plus" }
-        switch workout.type {
+        // `return` is required: a switch is only an expression when it is the
+        // whole body, and the guard above makes this a statement.
+        return switch workout.type {
         case .lifting: "dumbbell.fill"
         case .running: "figure.run"
         case .biking: "bicycle"
@@ -582,10 +611,17 @@ private struct HomeEmptyLine: View {
 }
 
 private struct HomePersistenceError: View {
-    @Environment(WorkoutStore.self) private var store
     @Environment(\.homeTimeOfDay) private var timeOfDay
 
     let message: String
+    /// Nil where the store has no retry to offer, in which case the line says
+    /// what went wrong and does not pretend there is a button that fixes it.
+    var retry: (() -> Void)?
+
+    init(message: String, retry: (() -> Void)? = nil) {
+        self.message = message
+        self.retry = retry
+    }
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
@@ -593,8 +629,10 @@ private struct HomePersistenceError: View {
                 .foregroundStyle(timeOfDay.commandAccent)
             VStack(alignment: .leading, spacing: 7) {
                 Text(message).font(.footnote)
-                Button("Retry") { store.retryPersistence() }
-                    .font(.footnote.weight(.semibold))
+                if let retry {
+                    Button("Retry", action: retry)
+                        .font(.footnote.weight(.semibold))
+                }
             }
             Spacer()
         }
