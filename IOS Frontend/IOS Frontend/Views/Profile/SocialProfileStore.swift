@@ -408,7 +408,7 @@ final class SocialProfileStore {
     }
 
     @discardableResult
-    func saveHighlights(_ exerciseIDs: [Int]) async -> Bool {
+    func saveHighlights(_ lifts: [HighlightLift]) async -> Bool {
         guard let repository else {
             errorMessage = "Connect to Repbase before editing your profile."
             return false
@@ -419,7 +419,7 @@ final class SocialProfileStore {
         defer { if connectionGeneration == generation { isSaving = false } }
 
         do {
-            let saved = try await repository.saveHighlights(exerciseIDs)
+            let saved = try await repository.saveHighlights(lifts)
             guard connectionGeneration == generation else { return false }
             highlights = saved
             return true
@@ -551,28 +551,34 @@ final class SocialProfileStore {
         ]
         store.highlights = [
             HighlightLift(
-                exerciseID: 1,
-                exerciseName: "Deadlift",
-                bestWeightKilograms: Decimal(string: "197.50"),
-                bestReps: 3,
+                lift: .deadlift,
+                label: "Deadlift",
+                source: .logged,
+                weightKilograms: Decimal(string: "197.50"),
+                reps: 3,
                 estimatedOneRepMaxKilograms: Decimal(string: "217.25"),
-                performedAt: Date(timeIntervalSince1970: 1_786_000_000)
+                performedAt: Date(timeIntervalSince1970: 1_786_000_000),
+                exerciseName: "Conventional Deadlift"
             ),
             HighlightLift(
-                exerciseID: 2,
-                exerciseName: "Back Squat",
-                bestWeightKilograms: Decimal(string: "160.00"),
-                bestReps: 5,
+                lift: .squat,
+                label: "Squat",
+                source: .manual,
+                weightKilograms: Decimal(string: "160.00"),
+                reps: 5,
                 estimatedOneRepMaxKilograms: Decimal(string: "186.67"),
-                performedAt: Date(timeIntervalSince1970: 1_785_600_000)
+                performedAt: nil,
+                exerciseName: nil
             ),
             HighlightLift(
-                exerciseID: 3,
-                exerciseName: "Weighted Pull-up",
-                bestWeightKilograms: nil,
-                bestReps: nil,
+                lift: .bench,
+                label: "Bench Press",
+                source: .none,
+                weightKilograms: nil,
+                reps: nil,
                 estimatedOneRepMaxKilograms: nil,
-                performedAt: nil
+                performedAt: nil,
+                exerciseName: nil
             )
         ]
         store.hasLoadedProfile = true

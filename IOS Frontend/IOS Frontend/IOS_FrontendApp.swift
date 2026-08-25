@@ -104,6 +104,8 @@ private struct AppRootView: View {
             || environment["REPBASE_STEPS_PREVIEW"] != nil
             || environment["REPBASE_CYCLE_PREVIEW"] != nil
             || environment["REPBASE_SOCIAL_PREVIEW"] != nil
+            || environment["REPBASE_PROMPT_PREVIEW"] != nil
+            || environment["REPBASE_LIFTS_PREVIEW"] != nil
     }
 #endif
 
@@ -146,6 +148,14 @@ private struct AppRootView: View {
                     }
                     .repbaseScreen(.prepare)
                 }
+            } else if ProcessInfo.processInfo.environment["REPBASE_PROMPT_PREVIEW"] != nil {
+                // Both of these sit behind Profile -> About -> a button, which
+                // no script can press.
+                NavigationStack { PromptPickerView() }
+                    .environment(SocialProfileStore.preview)
+            } else if ProcessInfo.processInfo.environment["REPBASE_LIFTS_PREVIEW"] != nil {
+                NavigationStack { ProfileExpressionEditorView() }
+                    .environment(SocialProfileStore.preview)
             } else if ProcessInfo.processInfo.environment["REPBASE_SOCIAL_PREVIEW"] != nil {
                 // A feed needs other people in it, and the simulator has one
                 // account. Sample posts are the only way to see a like already

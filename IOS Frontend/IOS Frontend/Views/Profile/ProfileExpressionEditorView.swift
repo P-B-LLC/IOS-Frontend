@@ -7,24 +7,22 @@
 
 import SwiftUI
 
-/// Edits the answered questions and the featured lifts together.
+/// The featured lifts, and the way through to the questions.
 ///
-/// One screen for both because they are the same decision from the reader's
-/// side — what this profile says about the person — and splitting them would
-/// mean two trips through settings to fill in one page.
+/// The questions live on their own page because answering one is a different
+/// kind of task from ticking a lift — it wants the whole screen and one
+/// question at a time. This page keeps what is left: which of the three lifts
+/// to show, and what each will say.
 struct ProfileExpressionEditorView: View {
     @Environment(SocialProfileStore.self) private var store
-    @Environment(WorkoutStore.self) private var workoutStore
     @Environment(\.dismiss) private var dismiss
 
-    /// Working copies. Nothing is sent until Save, so backing out of the
-    /// screen leaves the profile as it was.
-    @State private var answers: [ProfilePromptAnswer] = []
-    @State private var featured: [Int] = []
+    /// Working copies, keyed by lift. Nothing is sent until Save.
+    @State private var featured: Set<FeaturedLift> = []
+    @State private var poundsDraft: [FeaturedLift: String] = [:]
+    @State private var repsDraft: [FeaturedLift: String] = [:]
     @State private var hasLoaded = false
-
-    private var maxPrompts: Int { 3 }
-    private var maxHighlights: Int { 3 }
+    @State private var showingPrompts = false
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
@@ -33,8 +31,8 @@ struct ProfileExpressionEditorView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 26) {
                     header(timeOfDay: timeOfDay)
-                    promptsSection(timeOfDay: timeOfDay)
-                    highlightsSection(timeOfDay: timeOfDay)
+                    questionsSection(timeOfDay: timeOfDay)
+                    liftsSection(timeOfDay: timeOfDay)
 
                     if let message = store.errorMessage {
                         Label(message, systemImage: "exclamationmark.triangle.fill")
@@ -53,12 +51,20 @@ struct ProfileExpressionEditorView: View {
             .toolbar(.hidden, for: .navigationBar)
             .homeTimeScreen(timeOfDay)
         }
+        .sheet(isPresented: $showingPrompts) {
+            NavigationStack { PromptPickerView() }
+        }
         .task {
-            // Seeded once. Re-seeding on every appearance would throw away
-            // whatever was being typed when the keyboard resigned.
+            // Seeded once, or typing would be thrown away every time the
+            // keyboard resigned.
             guard !hasLoaded else { return }
-            answers = store.prompts
-            featured = store.highlights.map(\.exerciseID)
+            for lift in store.highlights {
+                featured.insert(lift.lift)
+                if lift.source == .manual {
+                    poundsDraft[lift.lift] = lift.displayPounds.map(String.init) ?? ""
+                    repsDraft[lift.lift] = lift.reps.map(String.init) ?? ""
+                }
+            }
             hasLoaded = true
         }
     }
@@ -92,170 +98,245 @@ struct ProfileExpressionEditorView: View {
         }
     }
 
-    // MARK: - Prompts
+    // MARK: - Questions
 
-    private func promptsSection(timeOfDay: HomeTimeOfDay) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+    private func questionsSection(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
             sectionTitle("Questions", detail: "Answer up to three.", timeOfDay: timeOfDay)
 
-            ForEach(Array(answers.enumerated()), id: \.element.question) { index, answer in
-                VStack(alignment: .leading, spacing: 7) {
-                    HStack {
-                        Text(answer.questionLabel.uppercased())
-                            .font(.system(size: 9, weight: .bold))
-                            .tracking(1.1)
-                            .foregroundStyle(timeOfDay.accent)
-                        Spacer()
-                        Button {
-                            answers.remove(at: index)
-                        } label: {
-                            Image(systemName: "minus.circle.fill")
-                                .foregroundStyle(.red)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Remove this question")
-                    }
-
-                    TextField(
-                        PromptQuestion(rawValue: answer.question)?.hint ?? "Your answer",
-                        text: binding(for: index),
-                        axis: .vertical
-                    )
-                    .lineLimit(2...4)
-                    .padding(12)
-                    .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 14))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 14)
-                            .strokeBorder(timeOfDay.border, lineWidth: 1)
-                    }
-
-                    Text("\(answer.answer.count)/140")
-                        .font(.caption2)
-                        .foregroundStyle(
-                            answer.answer.count > 140 ? Color.red : timeOfDay.canvasSecondaryText
-                        )
-                }
-            }
-
-            if answers.count < maxPrompts, !unusedQuestions.isEmpty {
-                Menu {
-                    ForEach(unusedQuestions) { question in
-                        Button(question.label) {
-                            answers.append(
-                                ProfilePromptAnswer(
-                                    question: question.rawValue,
-                                    questionLabel: question.label,
-                                    answer: ""
-                                )
-                            )
-                        }
-                    }
-                } label: {
-                    Label("Add a question", systemImage: "plus.circle.fill")
-                        .font(.subheadline.weight(.semibold))
+            ForEach(store.prompts) { answer in
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(answer.questionLabel.uppercased())
+                        .font(.system(size: 9, weight: .bold))
+                        .tracking(1.1)
                         .foregroundStyle(timeOfDay.accent)
+                    Text(answer.answer)
+                        .font(.subheadline)
+                        .foregroundStyle(timeOfDay.canvasPrimaryText)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
+
+            Button {
+                showingPrompts = true
+            } label: {
+                Label(
+                    store.prompts.isEmpty ? "Answer a question" : "Change your answers",
+                    systemImage: "text.bubble"
+                )
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(timeOfDay.accent)
+            }
+            .buttonStyle(.plain)
         }
-    }
-
-    /// The questions not already answered, so the menu never offers a
-    /// duplicate the server would refuse.
-    private var unusedQuestions: [PromptQuestion] {
-        let taken = Set(answers.map(\.question))
-        return PromptQuestion.allCases.filter { !taken.contains($0.rawValue) }
-    }
-
-    private func binding(for index: Int) -> Binding<String> {
-        Binding(
-            get: { answers.indices.contains(index) ? answers[index].answer : "" },
-            set: { if answers.indices.contains(index) { answers[index].answer = $0 } }
-        )
     }
 
     // MARK: - Featured lifts
 
-    private func highlightsSection(timeOfDay: HomeTimeOfDay) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+    private func liftsSection(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
             sectionTitle(
                 "Featured lifts",
-                detail: "Show up to three. The numbers come from what you have logged, so there is nothing to type.",
+                detail: "Bench, squat and deadlift. Each one shows your heaviest logged set, or the numbers you enter here.",
                 timeOfDay: timeOfDay
             )
 
-            if availableExercises.isEmpty {
-                Text("Add exercises to a workout first, and they can be featured here.")
-                    .font(.subheadline)
-                    .foregroundStyle(timeOfDay.canvasSecondaryText)
-                    .fixedSize(horizontal: false, vertical: true)
-            } else {
-                VStack(spacing: 0) {
-                    ForEach(availableExercises, id: \.id) { exercise in
-                        let isOn = featured.contains(exercise.id)
-                        Button {
-                            toggle(exercise.id)
-                        } label: {
-                            HStack(spacing: 12) {
-                                Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
-                                    .foregroundStyle(isOn ? timeOfDay.accent : timeOfDay.secondaryText)
-                                Text(exercise.name)
-                                    .font(.subheadline)
-                                    .foregroundStyle(timeOfDay.primaryText)
-                                Spacer(minLength: 0)
-                            }
-                            .padding(.vertical, 12)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        // A fourth would be refused by the server, so it is
-                        // not offered here.
-                        .disabled(!isOn && featured.count >= maxHighlights)
-                        .opacity(!isOn && featured.count >= maxHighlights ? 0.4 : 1)
-
-                        if exercise.id != availableExercises.last?.id {
-                            Divider().opacity(0.3)
-                        }
+            VStack(spacing: 0) {
+                ForEach(FeaturedLift.allCases) { lift in
+                    liftRow(lift, timeOfDay: timeOfDay)
+                    if lift != FeaturedLift.allCases.last {
+                        Divider().opacity(0.3)
                     }
                 }
-                .padding(.horizontal, 14)
-                .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 16))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 16)
-                        .strokeBorder(timeOfDay.border, lineWidth: 1)
+            }
+            .padding(.horizontal, 14)
+            .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 16))
+            .overlay {
+                RoundedRectangle(cornerRadius: 16)
+                    .strokeBorder(timeOfDay.border, lineWidth: 1)
+            }
+        }
+    }
+
+    private func liftRow(_ lift: FeaturedLift, timeOfDay: HomeTimeOfDay) -> some View {
+        let logged = store.highlights.first { $0.lift == lift && $0.source == .logged }
+        let isOn = featured.contains(lift)
+
+        return VStack(alignment: .leading, spacing: 9) {
+            Button {
+                if isOn { featured.remove(lift) } else { featured.insert(lift) }
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
+                        .foregroundStyle(isOn ? timeOfDay.accent : timeOfDay.secondaryText)
+                    Text(lift.label)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(timeOfDay.primaryText)
+                    Spacer(minLength: 0)
+                    if let logged, let summary = logged.setSummary {
+                        Text(summary)
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(timeOfDay.primaryText)
+                    }
+                }
+                .padding(.vertical, 13)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            if isOn {
+                if let logged, let summary = logged.setSummary {
+                    // Nothing to type: the number is already better evidence
+                    // than anything that could be entered here, and it keeps
+                    // itself up to date.
+                    Label(
+                        "\(summary) from \(logged.exerciseName ?? "your log"). This updates itself as you train.",
+                        systemImage: "checkmark.seal"
+                    )
+                    .font(.caption)
+                    .foregroundStyle(timeOfDay.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.bottom, 12)
+                } else {
+                    manualFields(lift, timeOfDay: timeOfDay)
                 }
             }
         }
     }
 
-    /// Every exercise in this person's plan, once each.
-    ///
-    /// Their own plan rather than the whole catalogue: featuring a lift you
-    /// have never programmed is not a thing anyone wants to do, and the whole
-    /// exercise table would be a thousand rows to scroll.
-    private var availableExercises: [(id: Int, name: String)] {
-        var seen: Set<Int> = []
-        var found: [(id: Int, name: String)] = []
-        for day in Weekday.allCases {
-            for workout in workoutStore.workouts(on: day) {
-                for exercise in workout.exercises {
-                    guard let serverID = exercise.serverID,
-                          seen.insert(serverID).inserted else { continue }
-                    found.append((id: serverID, name: exercise.serverName ?? exercise.name))
-                }
+    private func manualFields(_ lift: FeaturedLift, timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Text("Nothing logged for this yet. Enter your best set.")
+                .font(.caption)
+                .foregroundStyle(timeOfDay.secondaryText)
+
+            HStack(spacing: 10) {
+                numberField("Weight", unit: "lb", text: poundsBinding(lift), timeOfDay: timeOfDay)
+                numberField("Reps", unit: "", text: repsBinding(lift), timeOfDay: timeOfDay)
             }
         }
-        return found.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        .padding(.bottom, 12)
     }
 
-    private func toggle(_ exerciseID: Int) {
-        if let index = featured.firstIndex(of: exerciseID) {
-            featured.remove(at: index)
-        } else if featured.count < maxHighlights {
-            featured.append(exerciseID)
+    private func numberField(
+        _ title: String,
+        unit: String,
+        text: Binding<String>,
+        timeOfDay: HomeTimeOfDay
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(title.uppercased())
+                .font(.system(size: 8, weight: .bold))
+                .foregroundStyle(timeOfDay.secondaryText)
+            HStack(spacing: 4) {
+                TextField("0", text: text)
+                    .keyboardType(.numberPad)
+                    .font(.subheadline.weight(.semibold))
+                if !unit.isEmpty {
+                    Text(unit)
+                        .font(.caption)
+                        .foregroundStyle(timeOfDay.secondaryText)
+                }
+            }
+            .padding(.horizontal, 11)
+            .frame(height: 40)
+            .background(timeOfDay.selectorSurface, in: RoundedRectangle(cornerRadius: 11))
+            .overlay {
+                RoundedRectangle(cornerRadius: 11)
+                    .strokeBorder(timeOfDay.border, lineWidth: 1)
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func poundsBinding(_ lift: FeaturedLift) -> Binding<String> {
+        Binding(
+            get: { poundsDraft[lift] ?? "" },
+            set: { poundsDraft[lift] = $0.filter(\.isNumber) }
+        )
+    }
+
+    private func repsBinding(_ lift: FeaturedLift) -> Binding<String> {
+        Binding(
+            get: { repsDraft[lift] ?? "" },
+            set: { repsDraft[lift] = $0.filter(\.isNumber) }
+        )
+    }
+
+    // MARK: - Saving
+
+    /// What will be sent. A lift with a logged set goes out bare, because the
+    /// server reads the set itself; one without goes out with whatever pair
+    /// was typed, and only if both halves are there.
+    private var payload: [HighlightLift] {
+        FeaturedLift.allCases.filter(featured.contains).map { lift in
+            let logged = store.highlights.first { $0.lift == lift && $0.source == .logged }
+            if logged != nil {
+                return HighlightLift(
+                    lift: lift, label: lift.label, source: .none,
+                    weightKilograms: nil, reps: nil,
+                    estimatedOneRepMaxKilograms: nil, performedAt: nil, exerciseName: nil
+                )
+            }
+            let pounds = Int(poundsDraft[lift] ?? "")
+            let reps = Int(repsDraft[lift] ?? "")
+            guard let pounds, let reps, pounds > 0, reps > 0 else {
+                return HighlightLift(
+                    lift: lift, label: lift.label, source: .none,
+                    weightKilograms: nil, reps: nil,
+                    estimatedOneRepMaxKilograms: nil, performedAt: nil, exerciseName: nil
+                )
+            }
+            return HighlightLift(
+                lift: lift, label: lift.label, source: .manual,
+                weightKilograms: HighlightLift.kilograms(fromPounds: pounds),
+                reps: reps,
+                estimatedOneRepMaxKilograms: nil, performedAt: nil, exerciseName: nil
+            )
         }
     }
 
-    // MARK: - Pieces
+    /// A half-filled pair is the one thing the server will refuse, so it is
+    /// caught here where the empty box is on screen to point at.
+    private var incompleteLift: FeaturedLift? {
+        FeaturedLift.allCases.filter(featured.contains).first { lift in
+            guard store.highlights.first(where: { $0.lift == lift && $0.source == .logged }) == nil
+            else { return false }
+            let hasPounds = !(poundsDraft[lift] ?? "").isEmpty
+            let hasReps = !(repsDraft[lift] ?? "").isEmpty
+            return hasPounds != hasReps
+        }
+    }
+
+    private func saveButton(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if let incomplete = incompleteLift {
+                Text("Give \(incomplete.label) both a weight and a rep count, or leave both empty.")
+                    .font(.caption)
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Button {
+                Task {
+                    if await store.saveHighlights(payload) { dismiss() }
+                }
+            } label: {
+                HStack(spacing: 9) {
+                    if store.isSaving { ProgressView().tint(.white) }
+                    Text("Save")
+                }
+                .font(.headline.weight(.bold))
+                .foregroundStyle(Color.white)
+                .frame(maxWidth: .infinity, minHeight: 54)
+                .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 17))
+            }
+            .buttonStyle(.plain)
+            .disabled(store.isSaving || incompleteLift != nil)
+            .opacity(incompleteLift == nil ? 1 : 0.42)
+        }
+    }
 
     private func sectionTitle(
         _ title: String,
@@ -271,43 +352,5 @@ struct ProfileExpressionEditorView: View {
                 .foregroundStyle(timeOfDay.canvasSecondaryText)
                 .fixedSize(horizontal: false, vertical: true)
         }
-    }
-
-    private var canSave: Bool {
-        // An answered question with nothing in it would be refused, and the
-        // refusal would name a question rather than the empty box on screen.
-        answers.allSatisfy {
-            !$0.answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                && $0.answer.count <= 140
-        }
-    }
-
-    private func saveButton(timeOfDay: HomeTimeOfDay) -> some View {
-        Button {
-            Task {
-                let trimmed = answers.map {
-                    ProfilePromptAnswer(
-                        question: $0.question,
-                        questionLabel: $0.questionLabel,
-                        answer: $0.answer.trimmingCharacters(in: .whitespacesAndNewlines)
-                    )
-                }
-                let wrotePrompts = await store.savePrompts(trimmed)
-                let wroteLifts = await store.saveHighlights(featured)
-                if wrotePrompts && wroteLifts { dismiss() }
-            }
-        } label: {
-            HStack(spacing: 9) {
-                if store.isSaving { ProgressView().tint(.white) }
-                Text("Save")
-            }
-            .font(.headline.weight(.bold))
-            .foregroundStyle(Color.white)
-            .frame(maxWidth: .infinity, minHeight: 54)
-            .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 17))
-        }
-        .buttonStyle(.plain)
-        .disabled(store.isSaving || !canSave)
-        .opacity(canSave ? 1 : 0.42)
     }
 }

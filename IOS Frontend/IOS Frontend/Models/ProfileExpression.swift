@@ -80,25 +80,66 @@ nonisolated enum PromptQuestion: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
-/// A lift someone chose to feature, with the best set behind it.
+/// Which of the three lifts a highlight is for.
 ///
-/// Every figure is optional together. Choosing a lift before training it is
-/// the ordinary first state of a highlight, and the card says so rather than
-/// printing a zero that reads like a failed attempt.
-nonisolated struct HighlightLift: Identifiable, Equatable, Hashable, Sendable {
-    let exerciseID: Int
-    var exerciseName: String
-    var bestWeightKilograms: Decimal?
-    var bestReps: Int?
+/// Three and only three: the point of a featured lift is comparison, and a
+/// number only compares against the same movement. "Incline Chest" next to
+/// somebody else's "Lateral Raises" tells a reader nothing.
+nonisolated enum FeaturedLift: String, CaseIterable, Identifiable, Codable, Sendable {
+    case bench
+    case squat
+    case deadlift
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .bench: "Bench Press"
+        case .squat: "Squat"
+        case .deadlift: "Deadlift"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .bench: "figure.strengthtraining.traditional"
+        case .squat: "figure.strengthtraining.functional"
+        case .deadlift: "figure.strengthtraining.traditional"
+        }
+    }
+}
+
+/// Where a featured lift's number came from.
+///
+/// Kept as its own value rather than inferred from which fields are filled in,
+/// because the difference matters to a reader: a set the server read out of a
+/// finished session is evidence, and a number somebody typed is a claim.
+nonisolated enum HighlightSource: String, Codable, Sendable {
+    case logged
+    case manual
+    case none
+
+    init(_ raw: String) {
+        self = HighlightSource(rawValue: raw) ?? .none
+    }
+}
+
+/// A lift someone chose to show, and what they have to show for it.
+nonisolated struct HighlightLift: Identifiable, Equatable, Hashable, Codable, Sendable {
+    var lift: FeaturedLift
+    var label: String
+    var source: HighlightSource
+    var weightKilograms: Decimal?
+    var reps: Int?
     var estimatedOneRepMaxKilograms: Decimal?
     var performedAt: Date?
+    /// What the set was logged under, for a logged one. Nil otherwise.
+    var exerciseName: String?
 
-    var id: Int { exerciseID }
-
-    var hasLoggedSet: Bool { bestWeightKilograms != nil && bestReps != nil }
+    var id: String { lift.rawValue }
 
     /// Pounds, rounded, because every other weight the app shows is in pounds.
-    private static func pounds(_ kilograms: Decimal?) -> Int? {
+    static func pounds(_ kilograms: Decimal?) -> Int? {
         guard let kilograms else { return nil }
         let pounds = kilograms / Decimal(string: "0.45359237")!
         return Int(truncating: NSDecimalNumber(decimal: pounds).rounding(
@@ -113,12 +154,16 @@ nonisolated struct HighlightLift: Identifiable, Equatable, Hashable, Sendable {
         ))
     }
 
-    var bestPounds: Int? { Self.pounds(bestWeightKilograms) }
+    static func kilograms(fromPounds pounds: Int) -> Decimal {
+        Decimal(pounds) * Decimal(string: "0.45359237")!
+    }
+
+    var displayPounds: Int? { Self.pounds(weightKilograms) }
     var estimatedOneRepMaxPounds: Int? { Self.pounds(estimatedOneRepMaxKilograms) }
 
-    /// "225 lb × 5", or nil when nothing has been logged.
-    var bestSetSummary: String? {
-        guard let pounds = bestPounds, let reps = bestReps else { return nil }
+    /// "265 lb × 3", or nil when there is nothing to show.
+    var setSummary: String? {
+        guard let pounds = displayPounds, let reps else { return nil }
         return "\(pounds) lb × \(reps)"
     }
 }

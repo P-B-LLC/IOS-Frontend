@@ -353,11 +353,32 @@ actor ProfileAPIRepository {
         }
     }
 
+    /// Replaces the featured lifts.
+    ///
+    /// A typed weight goes out only when a rep count goes with it: the server
+    /// refuses half a set, and sending one would fail the whole save over a
+    /// field the user may not have meant to fill in.
     @discardableResult
-    func saveHighlights(_ exerciseIDs: [Int]) async throws -> [HighlightLift] {
+    func saveHighlights(_ lifts: [HighlightLift]) async throws -> [HighlightLift] {
+        let written = lifts.compactMap { entry -> Components.Schemas.ProfileHighlightWriteRequest? in
+            guard let lift = Components.Schemas.LiftEnum(rawValue: entry.lift.rawValue)
+            else { return nil }
+            // Only a typed pair is sent back. A logged figure belongs to the
+            // session it came from, and echoing it here would freeze it.
+            let manual = entry.source == .manual ? entry : nil
+            let weight = manual?.weightKilograms
+            let reps = manual?.reps
+            return .init(
+                lift: lift,
+                manualWeightKg: (weight != nil && reps != nil)
+                    ? FoodDecimal.string(weight!) : nil,
+                manualReps: (weight != nil && reps != nil) ? reps : nil
+            )
+        }
+
         let output = try await client.meHighlightsUpdate(
             body: .json(
-                Components.Schemas.ProfileHighlightsRequestRequest(exercises: exerciseIDs)
+                Components.Schemas.ProfileHighlightsRequestRequest(highlights: written)
             )
         )
         switch output {
@@ -382,13 +403,18 @@ actor ProfileAPIRepository {
         from payload: Components.Schemas.ProfileHighlight
     ) -> HighlightLift {
         HighlightLift(
-            exerciseID: payload.exercise,
-            exerciseName: payload.exerciseName,
-            bestWeightKilograms: payload.bestWeightKg.flatMap { Decimal(string: $0) },
-            bestReps: payload.bestReps,
+            // A lift this build does not know falls back to bench rather than
+            // dropping the row: the label comes from the server anyway, so the
+            // card still reads correctly.
+            lift: FeaturedLift(rawValue: payload.lift) ?? .bench,
+            label: payload.liftLabel,
+            source: HighlightSource(payload.source),
+            weightKilograms: payload.weightKg.flatMap { Decimal(string: $0) },
+            reps: payload.reps,
             estimatedOneRepMaxKilograms: payload.estimatedOneRepMaxKg
                 .flatMap { Decimal(string: $0) },
-            performedAt: payload.performedAt
+            performedAt: payload.performedAt,
+            exerciseName: payload.exerciseName
         )
     }
 

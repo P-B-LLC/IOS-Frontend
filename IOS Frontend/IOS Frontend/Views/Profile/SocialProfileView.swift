@@ -556,27 +556,45 @@ struct SocialProfileView: View {
     }
 
     /// One featured lift. The set is the evidence, so it is the biggest thing
-    /// in the row; the estimate is a smaller number beside it, because it is a
+    /// in the row; the estimate is smaller beside it, because it is a
     /// calculation rather than something that happened.
+    ///
+    /// A typed number says so. It is the whole reason the server sends a
+    /// source: a figure nobody logged must not read like one that was.
     private func highlightRow(
         _ lift: HighlightLift,
         timeOfDay: HomeTimeOfDay
     ) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(lift.exerciseName)
+                Text(lift.label)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(timeOfDay.primaryText)
-                if let performed = lift.performedAt {
-                    Text(performed, format: .dateTime.month(.abbreviated).day().year())
+
+                switch lift.source {
+                case .logged:
+                    HStack(spacing: 5) {
+                        if let performed = lift.performedAt {
+                            Text(performed, format: .dateTime.month(.abbreviated).day().year())
+                        }
+                        if let name = lift.exerciseName {
+                            Text("· \(name)").lineLimit(1)
+                        }
+                    }
+                    .font(.caption2)
+                    .foregroundStyle(timeOfDay.secondaryText)
+                case .manual:
+                    Label("Entered by hand", systemImage: "pencil")
                         .font(.caption2)
                         .foregroundStyle(timeOfDay.secondaryText)
+                case .none:
+                    EmptyView()
                 }
             }
 
             Spacer(minLength: 8)
 
-            if let summary = lift.bestSetSummary {
+            if let summary = lift.setSummary {
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(summary)
                         .font(.system(size: 17, weight: .bold, design: .rounded))
@@ -588,9 +606,9 @@ struct SocialProfileView: View {
                     }
                 }
             } else {
-                // Chosen but not yet trained. Said plainly rather than shown
-                // as a zero, which reads like a lift that failed.
-                Text("Not logged yet")
+                // Chosen but with nothing behind it. Said plainly rather than
+                // shown as a zero, which reads like a lift that failed.
+                Text("Nothing logged yet")
                     .font(.caption.weight(.medium))
                     .foregroundStyle(timeOfDay.secondaryText)
             }

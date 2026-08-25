@@ -4370,6 +4370,16 @@ public enum Components {
                 case distanceKm = "distance_km"
             }
         }
+        /// * `bench` - Bench Press
+        /// * `squat` - Squat
+        /// * `deadlift` - Deadlift
+        ///
+        /// - Remark: Generated from `#/components/schemas/LiftEnum`.
+        @frozen public enum LiftEnum: String, Codable, Hashable, Sendable, CaseIterable {
+            case bench = "bench"
+            case squat = "squat"
+            case deadlift = "deadlift"
+        }
         /// - Remark: Generated from `#/components/schemas/LoginRequest`.
         public struct LoginRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/LoginRequest/username`.
@@ -7268,74 +7278,121 @@ public enum Components {
                 case performedAt = "performed_at"
             }
         }
-        /// A featured lift, with the best set behind it.
+        /// A featured lift and the set behind it.
         ///
-        /// Every figure is nullable together: choosing an exercise before training it
-        /// is the ordinary first state of a highlight, and the app draws "not logged
-        /// yet" rather than a zero that reads like a failed lift.
+        /// `source` is the important field. "logged" means the server read this out
+        /// of a finished session and can point at the day; "manual" means the person
+        /// typed it; "none" means there is nothing to show yet. A reader is told
+        /// which, because a number nobody logged must not look like one that was.
+        ///
+        /// A plain string, not a closed enum, so a source added later does not stop an
+        /// older build decoding the profile around it.
         ///
         /// - Remark: Generated from `#/components/schemas/ProfileHighlight`.
         public struct ProfileHighlight: Codable, Hashable, Sendable {
-            /// - Remark: Generated from `#/components/schemas/ProfileHighlight/exercise`.
-            public var exercise: Swift.Int
-            /// - Remark: Generated from `#/components/schemas/ProfileHighlight/exercise_name`.
-            public var exerciseName: Swift.String
-            /// - Remark: Generated from `#/components/schemas/ProfileHighlight/best_weight_kg`.
-            public var bestWeightKg: Swift.String?
-            /// - Remark: Generated from `#/components/schemas/ProfileHighlight/best_reps`.
-            public var bestReps: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/ProfileHighlight/lift`.
+            public var lift: Swift.String
+            /// - Remark: Generated from `#/components/schemas/ProfileHighlight/lift_label`.
+            public var liftLabel: Swift.String
+            /// - Remark: Generated from `#/components/schemas/ProfileHighlight/source`.
+            public var source: Swift.String
+            /// - Remark: Generated from `#/components/schemas/ProfileHighlight/weight_kg`.
+            public var weightKg: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/ProfileHighlight/reps`.
+            public var reps: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/ProfileHighlight/estimated_one_rep_max_kg`.
             public var estimatedOneRepMaxKg: Swift.String?
             /// - Remark: Generated from `#/components/schemas/ProfileHighlight/performed_at`.
             public var performedAt: Foundation.Date?
+            /// - Remark: Generated from `#/components/schemas/ProfileHighlight/exercise_name`.
+            public var exerciseName: Swift.String?
             /// Creates a new `ProfileHighlight`.
             ///
             /// - Parameters:
-            ///   - exercise:
-            ///   - exerciseName:
-            ///   - bestWeightKg:
-            ///   - bestReps:
+            ///   - lift:
+            ///   - liftLabel:
+            ///   - source:
+            ///   - weightKg:
+            ///   - reps:
             ///   - estimatedOneRepMaxKg:
             ///   - performedAt:
+            ///   - exerciseName:
             public init(
-                exercise: Swift.Int,
-                exerciseName: Swift.String,
-                bestWeightKg: Swift.String? = nil,
-                bestReps: Swift.Int? = nil,
+                lift: Swift.String,
+                liftLabel: Swift.String,
+                source: Swift.String,
+                weightKg: Swift.String? = nil,
+                reps: Swift.Int? = nil,
                 estimatedOneRepMaxKg: Swift.String? = nil,
-                performedAt: Foundation.Date? = nil
+                performedAt: Foundation.Date? = nil,
+                exerciseName: Swift.String? = nil
             ) {
-                self.exercise = exercise
-                self.exerciseName = exerciseName
-                self.bestWeightKg = bestWeightKg
-                self.bestReps = bestReps
+                self.lift = lift
+                self.liftLabel = liftLabel
+                self.source = source
+                self.weightKg = weightKg
+                self.reps = reps
                 self.estimatedOneRepMaxKg = estimatedOneRepMaxKg
                 self.performedAt = performedAt
+                self.exerciseName = exerciseName
             }
             public enum CodingKeys: String, CodingKey {
-                case exercise
-                case exerciseName = "exercise_name"
-                case bestWeightKg = "best_weight_kg"
-                case bestReps = "best_reps"
+                case lift
+                case liftLabel = "lift_label"
+                case source
+                case weightKg = "weight_kg"
+                case reps
                 case estimatedOneRepMaxKg = "estimated_one_rep_max_kg"
                 case performedAt = "performed_at"
+                case exerciseName = "exercise_name"
             }
         }
-        /// Which exercises to feature, in the order they should appear.
+        /// One featured lift on its way in.
+        ///
+        /// - Remark: Generated from `#/components/schemas/ProfileHighlightWriteRequest`.
+        public struct ProfileHighlightWriteRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ProfileHighlightWriteRequest/lift`.
+            public var lift: Components.Schemas.LiftEnum
+            /// - Remark: Generated from `#/components/schemas/ProfileHighlightWriteRequest/manual_weight_kg`.
+            public var manualWeightKg: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/ProfileHighlightWriteRequest/manual_reps`.
+            public var manualReps: Swift.Int?
+            /// Creates a new `ProfileHighlightWriteRequest`.
+            ///
+            /// - Parameters:
+            ///   - lift:
+            ///   - manualWeightKg:
+            ///   - manualReps:
+            public init(
+                lift: Components.Schemas.LiftEnum,
+                manualWeightKg: Swift.String? = nil,
+                manualReps: Swift.Int? = nil
+            ) {
+                self.lift = lift
+                self.manualWeightKg = manualWeightKg
+                self.manualReps = manualReps
+            }
+            public enum CodingKeys: String, CodingKey {
+                case lift
+                case manualWeightKg = "manual_weight_kg"
+                case manualReps = "manual_reps"
+            }
+        }
+        /// Which lifts to feature, in the order they should appear.
         ///
         /// - Remark: Generated from `#/components/schemas/ProfileHighlightsRequestRequest`.
         public struct ProfileHighlightsRequestRequest: Codable, Hashable, Sendable {
-            /// - Remark: Generated from `#/components/schemas/ProfileHighlightsRequestRequest/exercises`.
-            public var exercises: [Swift.Int]
+            /// - Remark: Generated from `#/components/schemas/ProfileHighlightsRequestRequest/highlights`.
+            public var highlights: [Components.Schemas.ProfileHighlightWriteRequest]
             /// Creates a new `ProfileHighlightsRequestRequest`.
             ///
             /// - Parameters:
-            ///   - exercises:
-            public init(exercises: [Swift.Int]) {
-                self.exercises = exercises
+            ///   - highlights:
+            public init(highlights: [Components.Schemas.ProfileHighlightWriteRequest]) {
+                self.highlights = highlights
             }
             public enum CodingKeys: String, CodingKey {
-                case exercises
+                case highlights
             }
         }
         /// A profile photo sent as base64.
