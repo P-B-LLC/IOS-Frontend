@@ -64,6 +64,7 @@ struct SocialProfileView: View {
     @State private var isFollowing = false
     /// The post whose comments are raised over the profile, if any.
     @State private var commenting: ProfileCommentTarget?
+    @State private var editingExpression = false
 
     private enum ProfileSection: String, CaseIterable, Identifiable {
         case posts = "Posts"
@@ -102,6 +103,11 @@ struct SocialProfileView: View {
             }
             .fullScreenCover(isPresented: $showingSettings) {
                 ProfileSettingsView(profile: profile)
+            }
+            .sheet(isPresented: $editingExpression) {
+                NavigationStack {
+                    ProfileExpressionEditorView()
+                }
             }
         }
         // Out here, not inside the TimelineView, which tears its contents down
@@ -307,8 +313,63 @@ struct SocialProfileView: View {
     /// Identity first, then the measurements, because how someone trains and
     /// where is what a stranger reads a profile for; the numbers are detail
     /// underneath it, and are each behind their own switch besides.
+    /// What this person has written and what they have chosen to show.
+    ///
+    /// Read from the store rather than the profile because both are loaded
+    /// separately from it: prompts are three rows that ride along on a public
+    /// profile, and highlights cost a look through the set history, so each
+    /// has its own request. Only the signed-in user's are wired so far -- a
+    /// visited profile has no id on it to key another person's by.
+    private var myPrompts: [ProfilePromptAnswer] {
+        isCurrentUser ? store.prompts : []
+    }
+
+    private var myHighlights: [HighlightLift] {
+        isCurrentUser ? store.highlights : []
+    }
+
     private func aboutSection(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(spacing: 0) {
+            if !myPrompts.isEmpty {
+                VStack(alignment: .leading, spacing: 14) {
+                    ForEach(myPrompts) { prompt in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(prompt.questionLabel.uppercased())
+                                .font(.system(size: 9, weight: .bold))
+                                .tracking(1.1)
+                                .foregroundStyle(timeOfDay.accent)
+                            Text(prompt.answer)
+                                .font(.system(size: 17, weight: .medium))
+                                .foregroundStyle(timeOfDay.primaryText)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+                .padding(.vertical, 18)
+                .overlay(alignment: .bottom) {
+                    Rectangle().fill(timeOfDay.border).frame(height: 1)
+                }
+            }
+
+            if !myHighlights.isEmpty {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("FEATURED LIFTS")
+                        .font(.system(size: 9, weight: .bold))
+                        .tracking(1.1)
+                        .foregroundStyle(timeOfDay.accent)
+
+                    ForEach(myHighlights) { lift in
+                        highlightRow(lift, timeOfDay: timeOfDay)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 18)
+                .overlay(alignment: .bottom) {
+                    Rectangle().fill(timeOfDay.border).frame(height: 1)
+                }
+            }
+
             if !profile.disciplines.isEmpty {
                 aboutRow(
                     "Trains as",
@@ -336,13 +397,39 @@ struct SocialProfileView: View {
             if profile.showsTargetWeight {
                 aboutRow("Target weight", value: "\(profile.targetWeightPounds) lb", symbol: "scope")
             }
-            if isAboutEmpty {
-                Text("This athlete hasn't shared anything about themselves yet.")
-                    .font(.subheadline)
-                    .foregroundStyle(timeOfDay.secondaryText)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: .infinity)
-                    .padding(28)
+            if isAboutEmpty && myPrompts.isEmpty && myHighlights.isEmpty {
+                Text(
+                    isCurrentUser
+                        ? "Nothing here yet. Answer a question or feature a lift so people know who they are following."
+                        : "This athlete hasn't shared anything about themselves yet."
+                )
+                .font(.subheadline)
+                .foregroundStyle(timeOfDay.secondaryText)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+                .padding(28)
+            }
+
+            if isCurrentUser {
+                Button {
+                    editingExpression = true
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "square.and.pencil")
+                        Text(
+                            myPrompts.isEmpty && myHighlights.isEmpty
+                                ? "Add questions and featured lifts"
+                                : "Edit questions and featured lifts"
+                        )
+                        Spacer(minLength: 0)
+                        Image(systemName: "chevron.right").font(.caption2)
+                    }
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(timeOfDay.accent)
+                    .padding(.vertical, 15)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
             }
         }
         .overlay(alignment: .top) { Rectangle().fill(timeOfDay.border).frame(height: 1) }
@@ -367,6 +454,49 @@ struct SocialProfileView: View {
             .sorted { $0.rawValue < $1.rawValue }
             .map(\.rawValue)
             .joined(separator: " · ")
+    }
+
+    /// One featured lift. The set is the evidence, so it is the biggest thing
+    /// in the row; the estimate is a smaller number beside it, because it is a
+    /// calculation rather than something that happened.
+    private func highlightRow(
+        _ lift: HighlightLift,
+        timeOfDay: HomeTimeOfDay
+    ) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(lift.exerciseName)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(timeOfDay.primaryText)
+                if let performed = lift.performedAt {
+                    Text(performed, format: .dateTime.month(.abbreviated).day().year())
+                        .font(.caption2)
+                        .foregroundStyle(timeOfDay.secondaryText)
+                }
+            }
+
+            Spacer(minLength: 8)
+
+            if let summary = lift.bestSetSummary {
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(summary)
+                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                        .foregroundStyle(timeOfDay.primaryText)
+                    if let estimate = lift.estimatedOneRepMaxPounds {
+                        Text("est. 1RM \(estimate) lb")
+                            .font(.caption2)
+                            .foregroundStyle(timeOfDay.secondaryText)
+                    }
+                }
+            } else {
+                // Chosen but not yet trained. Said plainly rather than shown
+                // as a zero, which reads like a lift that failed.
+                Text("Not logged yet")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(timeOfDay.secondaryText)
+            }
+        }
+        .padding(.vertical, 6)
     }
 
     private func aboutRow(

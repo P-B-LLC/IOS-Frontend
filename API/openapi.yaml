@@ -1794,6 +1794,54 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/me/highlights/:
+    get:
+      operationId: me_highlights_list
+      description: The lifts the signed-in user has chosen to show.
+      tags:
+      - me
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProfileHighlight'
+          description: ''
+    put:
+      operationId: me_highlights_update
+      description: Replace the featured lifts with the exercises sent, in the order
+        sent. An empty list clears them.
+      tags:
+      - me
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileHighlightsRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProfileHighlightsRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProfileHighlightsRequestRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProfileHighlight'
+          description: ''
   /api/v1/me/photo/:
     put:
       operationId: me_photo_update
@@ -1836,6 +1884,54 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RepbaseUser'
+          description: ''
+  /api/v1/me/prompts/:
+    get:
+      operationId: me_prompts_list
+      description: The questions the signed-in user has answered.
+      tags:
+      - me
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProfilePrompt'
+          description: ''
+    put:
+      operationId: me_prompts_update
+      description: Replace every answered question with the set sent. Sending an empty
+        list clears them.
+      tags:
+      - me
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfilePromptsRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProfilePromptsRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProfilePromptsRequestRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProfilePrompt'
           description: ''
   /api/v1/planner/:
     get:
@@ -4009,6 +4105,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedPublicRepbaseUserList'
+          description: ''
+  /api/v1/users/{id}/highlights/:
+    get:
+      operationId: users_highlights_list
+      description: The lifts this user features, each with the best set they have
+        logged of it. Its own request because every highlight costs a look through
+        their set history.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this repbase user.
+        required: true
+      tags:
+      - users
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProfileHighlight'
           description: ''
   /api/v1/workout-exercises/:
     get:
@@ -6918,6 +7041,61 @@ components:
       - reps
       - set_number
       - weight_kg
+    ProfileHighlight:
+      type: object
+      description: |-
+        A featured lift, with the best set behind it.
+
+        Every figure is nullable together: choosing an exercise before training it
+        is the ordinary first state of a highlight, and the app draws "not logged
+        yet" rather than a zero that reads like a failed lift.
+      properties:
+        exercise:
+          type: integer
+          readOnly: true
+        exercise_name:
+          type: string
+          readOnly: true
+        best_weight_kg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        best_reps:
+          type: integer
+          readOnly: true
+          nullable: true
+        estimated_one_rep_max_kg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        performed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - best_reps
+      - best_weight_kg
+      - estimated_one_rep_max_kg
+      - exercise
+      - exercise_name
+      - performed_at
+    ProfileHighlightsRequestRequest:
+      type: object
+      description: Which exercises to feature, in the order they should appear.
+      properties:
+        exercises:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 3
+      required:
+      - exercises
     ProfilePhotoUploadRequest:
       type: object
       description: |-
@@ -6936,6 +7114,60 @@ components:
       required:
       - content_type
       - image_base64
+    ProfilePrompt:
+      type: object
+      description: |-
+        One answered question, as anybody reading the profile sees it.
+
+        `question` goes out as a plain string and the readable wording comes with
+        it. A client draws the label, so a question added to the server after this
+        build shipped renders correctly on it rather than failing to decode, which
+        a closed enum in a response would guarantee.
+      properties:
+        question:
+          type: string
+          readOnly: true
+        question_label:
+          type: string
+          readOnly: true
+        answer:
+          type: string
+          readOnly: true
+      required:
+      - answer
+      - question
+      - question_label
+    ProfilePromptWriteRequest:
+      type: object
+      description: |-
+        One answer on its way in. Closed, unlike the response: a question the
+        server does not offer is a mistake worth reporting, not a value to keep.
+      properties:
+        question:
+          $ref: '#/components/schemas/QuestionEnum'
+        answer:
+          type: string
+          minLength: 1
+          maxLength: 140
+      required:
+      - answer
+      - question
+    ProfilePromptsRequestRequest:
+      type: object
+      description: |-
+        The whole set at once.
+
+        Replace rather than patch, because the screen behind this edits all three
+        together: sending the set that should exist afterwards cannot leave a
+        fourth answer behind that nobody can see to delete.
+      properties:
+        prompts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfilePromptWriteRequest'
+          maxItems: 3
+      required:
+      - prompts
     PublicRepbaseUser:
       type: object
       properties:
@@ -6962,6 +7194,11 @@ components:
           type: array
           items:
             type: string
+          readOnly: true
+        prompts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfilePrompt'
           readOnly: true
         gym:
           type: integer
@@ -7010,6 +7247,7 @@ components:
       - id
       - last_name
       - profile_photo_url
+      - prompts
       - target_weight_kg
       - username
       - weight_kg
@@ -7028,6 +7266,34 @@ components:
           type: boolean
         shows_target_weight:
           type: boolean
+    QuestionEnum:
+      enum:
+      - why_i_train
+      - current_goal
+      - favourite_lift
+      - hardest_part
+      - best_advice
+      - proudest
+      - rest_day
+      - pre_workout
+      - post_workout
+      - training_to
+      - one_more_rep
+      - training_partner
+      type: string
+      description: |-
+        * `why_i_train` - Why I train
+        * `current_goal` - What I am working towards
+        * `favourite_lift` - Favourite lift
+        * `hardest_part` - The hardest part for me
+        * `best_advice` - Best advice I have been given
+        * `proudest` - Proudest moment in the gym
+        * `rest_day` - A rest day looks like
+        * `pre_workout` - What I eat before training
+        * `post_workout` - What I eat after
+        * `training_to` - What I train to
+        * `one_more_rep` - What gets me one more rep
+        * `training_partner` - Looking for a training partner who
     RecentFood:
       type: object
       description: A food the user has logged before, for the picker.

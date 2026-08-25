@@ -4218,6 +4218,135 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// The lifts the signed-in user has chosen to show.
+    ///
+    /// - Remark: HTTP `GET /api/v1/me/highlights/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/highlights//get(me_highlights_list)`.
+    public func meHighlightsList(_ input: Operations.MeHighlightsList.Input) async throws -> Operations.MeHighlightsList.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.MeHighlightsList.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/me/highlights/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .get
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.MeHighlightsList.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            [Components.Schemas.ProfileHighlight].self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Replace the featured lifts with the exercises sent, in the order sent. An empty list clears them.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/me/highlights/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/highlights//put(me_highlights_update)`.
+    public func meHighlightsUpdate(_ input: Operations.MeHighlightsUpdate.Input) async throws -> Operations.MeHighlightsUpdate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.MeHighlightsUpdate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/me/highlights/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .put
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                let body: OpenAPIRuntime.HTTPBody?
+                switch input.body {
+                case let .json(value):
+                    body = try converter.setRequiredRequestBodyAsJSON(
+                        value,
+                        headerFields: &request.headerFields,
+                        contentType: "application/json; charset=utf-8"
+                    )
+                }
+                return (request, body)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.MeHighlightsUpdate.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            [Components.Schemas.ProfileHighlight].self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
     /// Replace the profile photo. Any previous file is deleted.
     ///
     /// - Remark: HTTP `PUT /api/v1/me/photo/`.
@@ -4326,6 +4455,135 @@ public struct Client: APIProtocol {
                     case "application/json":
                         body = try await converter.getResponseBodyAsJSON(
                             Components.Schemas.RepbaseUser.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// The questions the signed-in user has answered.
+    ///
+    /// - Remark: HTTP `GET /api/v1/me/prompts/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/prompts//get(me_prompts_list)`.
+    public func mePromptsList(_ input: Operations.MePromptsList.Input) async throws -> Operations.MePromptsList.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.MePromptsList.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/me/prompts/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .get
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.MePromptsList.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            [Components.Schemas.ProfilePrompt].self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Replace every answered question with the set sent. Sending an empty list clears them.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/me/prompts/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/prompts//put(me_prompts_update)`.
+    public func mePromptsUpdate(_ input: Operations.MePromptsUpdate.Input) async throws -> Operations.MePromptsUpdate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.MePromptsUpdate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/me/prompts/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .put
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                let body: OpenAPIRuntime.HTTPBody?
+                switch input.body {
+                case let .json(value):
+                    body = try converter.setRequiredRequestBodyAsJSON(
+                        value,
+                        headerFields: &request.headerFields,
+                        contentType: "application/json; charset=utf-8"
+                    )
+                }
+                return (request, body)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.MePromptsUpdate.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            [Components.Schemas.ProfilePrompt].self,
                             from: responseBody,
                             transforming: { value in
                                 .json(value)
@@ -9136,6 +9394,68 @@ public struct Client: APIProtocol {
                     case "application/json":
                         body = try await converter.getResponseBodyAsJSON(
                             Components.Schemas.PaginatedPublicRepbaseUserList.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// The lifts this user features, each with the best set they have logged of it. Its own request because every highlight costs a look through their set history.
+    ///
+    /// - Remark: HTTP `GET /api/v1/users/{id}/highlights/`.
+    /// - Remark: Generated from `#/paths//api/v1/users/{id}/highlights//get(users_highlights_list)`.
+    public func usersHighlightsList(_ input: Operations.UsersHighlightsList.Input) async throws -> Operations.UsersHighlightsList.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.UsersHighlightsList.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/users/{}/highlights/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .get
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.UsersHighlightsList.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            [Components.Schemas.ProfileHighlight].self,
                             from: responseBody,
                             transforming: { value in
                                 .json(value)

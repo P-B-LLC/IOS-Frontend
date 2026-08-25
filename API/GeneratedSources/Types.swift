@@ -367,6 +367,16 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/me/`.
     /// - Remark: Generated from `#/paths//api/v1/me//delete(me_destroy)`.
     func meDestroy(_ input: Operations.MeDestroy.Input) async throws -> Operations.MeDestroy.Output
+    /// The lifts the signed-in user has chosen to show.
+    ///
+    /// - Remark: HTTP `GET /api/v1/me/highlights/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/highlights//get(me_highlights_list)`.
+    func meHighlightsList(_ input: Operations.MeHighlightsList.Input) async throws -> Operations.MeHighlightsList.Output
+    /// Replace the featured lifts with the exercises sent, in the order sent. An empty list clears them.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/me/highlights/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/highlights//put(me_highlights_update)`.
+    func meHighlightsUpdate(_ input: Operations.MeHighlightsUpdate.Input) async throws -> Operations.MeHighlightsUpdate.Output
     /// Replace the profile photo. Any previous file is deleted.
     ///
     /// - Remark: HTTP `PUT /api/v1/me/photo/`.
@@ -377,6 +387,16 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/me/photo/`.
     /// - Remark: Generated from `#/paths//api/v1/me/photo//delete(me_photo_destroy)`.
     func mePhotoDestroy(_ input: Operations.MePhotoDestroy.Input) async throws -> Operations.MePhotoDestroy.Output
+    /// The questions the signed-in user has answered.
+    ///
+    /// - Remark: HTTP `GET /api/v1/me/prompts/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/prompts//get(me_prompts_list)`.
+    func mePromptsList(_ input: Operations.MePromptsList.Input) async throws -> Operations.MePromptsList.Output
+    /// Replace every answered question with the set sent. Sending an empty list clears them.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/me/prompts/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/prompts//put(me_prompts_update)`.
+    func mePromptsUpdate(_ input: Operations.MePromptsUpdate.Input) async throws -> Operations.MePromptsUpdate.Output
     /// Tasks and events on the planner.
     ///
     /// The date range is a filter rather than a required window so the same
@@ -858,6 +878,11 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /api/v1/users/{id}/following/`.
     /// - Remark: Generated from `#/paths//api/v1/users/{id}/following//get(users_following_list)`.
     func usersFollowingList(_ input: Operations.UsersFollowingList.Input) async throws -> Operations.UsersFollowingList.Output
+    /// The lifts this user features, each with the best set they have logged of it. Its own request because every highlight costs a look through their set history.
+    ///
+    /// - Remark: HTTP `GET /api/v1/users/{id}/highlights/`.
+    /// - Remark: Generated from `#/paths//api/v1/users/{id}/highlights//get(users_highlights_list)`.
+    func usersHighlightsList(_ input: Operations.UsersHighlightsList.Input) async throws -> Operations.UsersHighlightsList.Output
     /// - Remark: HTTP `GET /api/v1/workout-exercises/`.
     /// - Remark: Generated from `#/paths//api/v1/workout-exercises//get(workout_exercises_list)`.
     func workoutExercisesList(_ input: Operations.WorkoutExercisesList.Input) async throws -> Operations.WorkoutExercisesList.Output
@@ -1728,6 +1753,26 @@ extension APIProtocol {
     public func meDestroy() async throws -> Operations.MeDestroy.Output {
         try await meDestroy(Operations.MeDestroy.Input())
     }
+    /// The lifts the signed-in user has chosen to show.
+    ///
+    /// - Remark: HTTP `GET /api/v1/me/highlights/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/highlights//get(me_highlights_list)`.
+    public func meHighlightsList(headers: Operations.MeHighlightsList.Input.Headers = .init()) async throws -> Operations.MeHighlightsList.Output {
+        try await meHighlightsList(Operations.MeHighlightsList.Input(headers: headers))
+    }
+    /// Replace the featured lifts with the exercises sent, in the order sent. An empty list clears them.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/me/highlights/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/highlights//put(me_highlights_update)`.
+    public func meHighlightsUpdate(
+        headers: Operations.MeHighlightsUpdate.Input.Headers = .init(),
+        body: Operations.MeHighlightsUpdate.Input.Body
+    ) async throws -> Operations.MeHighlightsUpdate.Output {
+        try await meHighlightsUpdate(Operations.MeHighlightsUpdate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
     /// Replace the profile photo. Any previous file is deleted.
     ///
     /// - Remark: HTTP `PUT /api/v1/me/photo/`.
@@ -1747,6 +1792,26 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//api/v1/me/photo//delete(me_photo_destroy)`.
     public func mePhotoDestroy(headers: Operations.MePhotoDestroy.Input.Headers = .init()) async throws -> Operations.MePhotoDestroy.Output {
         try await mePhotoDestroy(Operations.MePhotoDestroy.Input(headers: headers))
+    }
+    /// The questions the signed-in user has answered.
+    ///
+    /// - Remark: HTTP `GET /api/v1/me/prompts/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/prompts//get(me_prompts_list)`.
+    public func mePromptsList(headers: Operations.MePromptsList.Input.Headers = .init()) async throws -> Operations.MePromptsList.Output {
+        try await mePromptsList(Operations.MePromptsList.Input(headers: headers))
+    }
+    /// Replace every answered question with the set sent. Sending an empty list clears them.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/me/prompts/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/prompts//put(me_prompts_update)`.
+    public func mePromptsUpdate(
+        headers: Operations.MePromptsUpdate.Input.Headers = .init(),
+        body: Operations.MePromptsUpdate.Input.Body
+    ) async throws -> Operations.MePromptsUpdate.Output {
+        try await mePromptsUpdate(Operations.MePromptsUpdate.Input(
+            headers: headers,
+            body: body
+        ))
     }
     /// Tasks and events on the planner.
     ///
@@ -2774,6 +2839,19 @@ extension APIProtocol {
         try await usersFollowingList(Operations.UsersFollowingList.Input(
             path: path,
             query: query,
+            headers: headers
+        ))
+    }
+    /// The lifts this user features, each with the best set they have logged of it. Its own request because every highlight costs a look through their set history.
+    ///
+    /// - Remark: HTTP `GET /api/v1/users/{id}/highlights/`.
+    /// - Remark: Generated from `#/paths//api/v1/users/{id}/highlights//get(users_highlights_list)`.
+    public func usersHighlightsList(
+        path: Operations.UsersHighlightsList.Input.Path,
+        headers: Operations.UsersHighlightsList.Input.Headers = .init()
+    ) async throws -> Operations.UsersHighlightsList.Output {
+        try await usersHighlightsList(Operations.UsersHighlightsList.Input(
+            path: path,
             headers: headers
         ))
     }
@@ -7184,6 +7262,76 @@ public enum Components {
                 case performedAt = "performed_at"
             }
         }
+        /// A featured lift, with the best set behind it.
+        ///
+        /// Every figure is nullable together: choosing an exercise before training it
+        /// is the ordinary first state of a highlight, and the app draws "not logged
+        /// yet" rather than a zero that reads like a failed lift.
+        ///
+        /// - Remark: Generated from `#/components/schemas/ProfileHighlight`.
+        public struct ProfileHighlight: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ProfileHighlight/exercise`.
+            public var exercise: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/ProfileHighlight/exercise_name`.
+            public var exerciseName: Swift.String
+            /// - Remark: Generated from `#/components/schemas/ProfileHighlight/best_weight_kg`.
+            public var bestWeightKg: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/ProfileHighlight/best_reps`.
+            public var bestReps: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/ProfileHighlight/estimated_one_rep_max_kg`.
+            public var estimatedOneRepMaxKg: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/ProfileHighlight/performed_at`.
+            public var performedAt: Foundation.Date?
+            /// Creates a new `ProfileHighlight`.
+            ///
+            /// - Parameters:
+            ///   - exercise:
+            ///   - exerciseName:
+            ///   - bestWeightKg:
+            ///   - bestReps:
+            ///   - estimatedOneRepMaxKg:
+            ///   - performedAt:
+            public init(
+                exercise: Swift.Int,
+                exerciseName: Swift.String,
+                bestWeightKg: Swift.String? = nil,
+                bestReps: Swift.Int? = nil,
+                estimatedOneRepMaxKg: Swift.String? = nil,
+                performedAt: Foundation.Date? = nil
+            ) {
+                self.exercise = exercise
+                self.exerciseName = exerciseName
+                self.bestWeightKg = bestWeightKg
+                self.bestReps = bestReps
+                self.estimatedOneRepMaxKg = estimatedOneRepMaxKg
+                self.performedAt = performedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case exercise
+                case exerciseName = "exercise_name"
+                case bestWeightKg = "best_weight_kg"
+                case bestReps = "best_reps"
+                case estimatedOneRepMaxKg = "estimated_one_rep_max_kg"
+                case performedAt = "performed_at"
+            }
+        }
+        /// Which exercises to feature, in the order they should appear.
+        ///
+        /// - Remark: Generated from `#/components/schemas/ProfileHighlightsRequestRequest`.
+        public struct ProfileHighlightsRequestRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ProfileHighlightsRequestRequest/exercises`.
+            public var exercises: [Swift.Int]
+            /// Creates a new `ProfileHighlightsRequestRequest`.
+            ///
+            /// - Parameters:
+            ///   - exercises:
+            public init(exercises: [Swift.Int]) {
+                self.exercises = exercises
+            }
+            public enum CodingKeys: String, CodingKey {
+                case exercises
+            }
+        }
         /// A profile photo sent as base64.
         ///
         /// Base64 in JSON rather than multipart: every other call this API takes is
@@ -7215,6 +7363,89 @@ public enum Components {
                 case imageBase64 = "image_base64"
             }
         }
+        /// One answered question, as anybody reading the profile sees it.
+        ///
+        /// `question` goes out as a plain string and the readable wording comes with
+        /// it. A client draws the label, so a question added to the server after this
+        /// build shipped renders correctly on it rather than failing to decode, which
+        /// a closed enum in a response would guarantee.
+        ///
+        /// - Remark: Generated from `#/components/schemas/ProfilePrompt`.
+        public struct ProfilePrompt: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ProfilePrompt/question`.
+            public var question: Swift.String
+            /// - Remark: Generated from `#/components/schemas/ProfilePrompt/question_label`.
+            public var questionLabel: Swift.String
+            /// - Remark: Generated from `#/components/schemas/ProfilePrompt/answer`.
+            public var answer: Swift.String
+            /// Creates a new `ProfilePrompt`.
+            ///
+            /// - Parameters:
+            ///   - question:
+            ///   - questionLabel:
+            ///   - answer:
+            public init(
+                question: Swift.String,
+                questionLabel: Swift.String,
+                answer: Swift.String
+            ) {
+                self.question = question
+                self.questionLabel = questionLabel
+                self.answer = answer
+            }
+            public enum CodingKeys: String, CodingKey {
+                case question
+                case questionLabel = "question_label"
+                case answer
+            }
+        }
+        /// One answer on its way in. Closed, unlike the response: a question the
+        /// server does not offer is a mistake worth reporting, not a value to keep.
+        ///
+        /// - Remark: Generated from `#/components/schemas/ProfilePromptWriteRequest`.
+        public struct ProfilePromptWriteRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ProfilePromptWriteRequest/question`.
+            public var question: Components.Schemas.QuestionEnum
+            /// - Remark: Generated from `#/components/schemas/ProfilePromptWriteRequest/answer`.
+            public var answer: Swift.String
+            /// Creates a new `ProfilePromptWriteRequest`.
+            ///
+            /// - Parameters:
+            ///   - question:
+            ///   - answer:
+            public init(
+                question: Components.Schemas.QuestionEnum,
+                answer: Swift.String
+            ) {
+                self.question = question
+                self.answer = answer
+            }
+            public enum CodingKeys: String, CodingKey {
+                case question
+                case answer
+            }
+        }
+        /// The whole set at once.
+        ///
+        /// Replace rather than patch, because the screen behind this edits all three
+        /// together: sending the set that should exist afterwards cannot leave a
+        /// fourth answer behind that nobody can see to delete.
+        ///
+        /// - Remark: Generated from `#/components/schemas/ProfilePromptsRequestRequest`.
+        public struct ProfilePromptsRequestRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ProfilePromptsRequestRequest/prompts`.
+            public var prompts: [Components.Schemas.ProfilePromptWriteRequest]
+            /// Creates a new `ProfilePromptsRequestRequest`.
+            ///
+            /// - Parameters:
+            ///   - prompts:
+            public init(prompts: [Components.Schemas.ProfilePromptWriteRequest]) {
+                self.prompts = prompts
+            }
+            public enum CodingKeys: String, CodingKey {
+                case prompts
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser`.
         public struct PublicRepbaseUser: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/id`.
@@ -7231,6 +7462,8 @@ public enum Components {
             public var profilePhotoUrl: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/disciplines`.
             public var disciplines: [Swift.String]
+            /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/prompts`.
+            public var prompts: [Components.Schemas.ProfilePrompt]
             /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/gym`.
             public var gym: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/gym_name`.
@@ -7261,6 +7494,7 @@ public enum Components {
             ///   - bio:
             ///   - profilePhotoUrl:
             ///   - disciplines:
+            ///   - prompts:
             ///   - gym:
             ///   - gymName:
             ///   - gymCity:
@@ -7279,6 +7513,7 @@ public enum Components {
                 bio: Swift.String? = nil,
                 profilePhotoUrl: Swift.String? = nil,
                 disciplines: [Swift.String],
+                prompts: [Components.Schemas.ProfilePrompt],
                 gym: Swift.Int? = nil,
                 gymName: Swift.String? = nil,
                 gymCity: Swift.String? = nil,
@@ -7297,6 +7532,7 @@ public enum Components {
                 self.bio = bio
                 self.profilePhotoUrl = profilePhotoUrl
                 self.disciplines = disciplines
+                self.prompts = prompts
                 self.gym = gym
                 self.gymName = gymName
                 self.gymCity = gymCity
@@ -7316,6 +7552,7 @@ public enum Components {
                 case bio
                 case profilePhotoUrl = "profile_photo_url"
                 case disciplines
+                case prompts
                 case gym
                 case gymName = "gym_name"
                 case gymCity = "gym_city"
@@ -7368,6 +7605,34 @@ public enum Components {
                 case showsWeight = "shows_weight"
                 case showsTargetWeight = "shows_target_weight"
             }
+        }
+        /// * `why_i_train` - Why I train
+        /// * `current_goal` - What I am working towards
+        /// * `favourite_lift` - Favourite lift
+        /// * `hardest_part` - The hardest part for me
+        /// * `best_advice` - Best advice I have been given
+        /// * `proudest` - Proudest moment in the gym
+        /// * `rest_day` - A rest day looks like
+        /// * `pre_workout` - What I eat before training
+        /// * `post_workout` - What I eat after
+        /// * `training_to` - What I train to
+        /// * `one_more_rep` - What gets me one more rep
+        /// * `training_partner` - Looking for a training partner who
+        ///
+        /// - Remark: Generated from `#/components/schemas/QuestionEnum`.
+        @frozen public enum QuestionEnum: String, Codable, Hashable, Sendable, CaseIterable {
+            case whyITrain = "why_i_train"
+            case currentGoal = "current_goal"
+            case favouriteLift = "favourite_lift"
+            case hardestPart = "hardest_part"
+            case bestAdvice = "best_advice"
+            case proudest = "proudest"
+            case restDay = "rest_day"
+            case preWorkout = "pre_workout"
+            case postWorkout = "post_workout"
+            case trainingTo = "training_to"
+            case oneMoreRep = "one_more_rep"
+            case trainingPartner = "training_partner"
         }
         /// A food the user has logged before, for the picker.
         ///
@@ -17427,6 +17692,237 @@ public enum Operations {
             case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
         }
     }
+    /// The lifts the signed-in user has chosen to show.
+    ///
+    /// - Remark: HTTP `GET /api/v1/me/highlights/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/highlights//get(me_highlights_list)`.
+    public enum MeHighlightsList {
+        public static let id: Swift.String = "me_highlights_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/me/highlights/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MeHighlightsList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MeHighlightsList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.MeHighlightsList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            public init(headers: Operations.MeHighlightsList.Input.Headers = .init()) {
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/me/highlights/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/me/highlights/GET/responses/200/content/application\/json`.
+                    case json([Components.Schemas.ProfileHighlight])
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: [Components.Schemas.ProfileHighlight] {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.MeHighlightsList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.MeHighlightsList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/me/highlights//get(me_highlights_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.MeHighlightsList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.MeHighlightsList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Replace the featured lifts with the exercises sent, in the order sent. An empty list clears them.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/me/highlights/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/highlights//put(me_highlights_update)`.
+    public enum MeHighlightsUpdate {
+        public static let id: Swift.String = "me_highlights_update"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/me/highlights/PUT/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MeHighlightsUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MeHighlightsUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.MeHighlightsUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/me/highlights/PUT/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/me/highlights/PUT/requestBody/content/application\/json`.
+                case json(Components.Schemas.ProfileHighlightsRequestRequest)
+            }
+            public var body: Operations.MeHighlightsUpdate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.MeHighlightsUpdate.Input.Headers = .init(),
+                body: Operations.MeHighlightsUpdate.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/me/highlights/PUT/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/me/highlights/PUT/responses/200/content/application\/json`.
+                    case json([Components.Schemas.ProfileHighlight])
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: [Components.Schemas.ProfileHighlight] {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.MeHighlightsUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.MeHighlightsUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/me/highlights//put(me_highlights_update)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.MeHighlightsUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.MeHighlightsUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
     /// Replace the profile photo. Any previous file is deleted.
     ///
     /// - Remark: HTTP `PUT /api/v1/me/photo/`.
@@ -17615,6 +18111,237 @@ public enum Operations {
             /// - Throws: An error if `self` is not `.ok`.
             /// - SeeAlso: `.ok`.
             public var ok: Operations.MePhotoDestroy.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// The questions the signed-in user has answered.
+    ///
+    /// - Remark: HTTP `GET /api/v1/me/prompts/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/prompts//get(me_prompts_list)`.
+    public enum MePromptsList {
+        public static let id: Swift.String = "me_prompts_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/me/prompts/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MePromptsList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MePromptsList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.MePromptsList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            public init(headers: Operations.MePromptsList.Input.Headers = .init()) {
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/me/prompts/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/me/prompts/GET/responses/200/content/application\/json`.
+                    case json([Components.Schemas.ProfilePrompt])
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: [Components.Schemas.ProfilePrompt] {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.MePromptsList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.MePromptsList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/me/prompts//get(me_prompts_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.MePromptsList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.MePromptsList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Replace every answered question with the set sent. Sending an empty list clears them.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/me/prompts/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/prompts//put(me_prompts_update)`.
+    public enum MePromptsUpdate {
+        public static let id: Swift.String = "me_prompts_update"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/me/prompts/PUT/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MePromptsUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MePromptsUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.MePromptsUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/me/prompts/PUT/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/me/prompts/PUT/requestBody/content/application\/json`.
+                case json(Components.Schemas.ProfilePromptsRequestRequest)
+            }
+            public var body: Operations.MePromptsUpdate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.MePromptsUpdate.Input.Headers = .init(),
+                body: Operations.MePromptsUpdate.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/me/prompts/PUT/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/me/prompts/PUT/responses/200/content/application\/json`.
+                    case json([Components.Schemas.ProfilePrompt])
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: [Components.Schemas.ProfilePrompt] {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.MePromptsUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.MePromptsUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/me/prompts//put(me_prompts_update)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.MePromptsUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.MePromptsUpdate.Output.Ok {
                 get throws {
                     switch self {
                     case let .ok(response):
@@ -26840,6 +27567,136 @@ public enum Operations {
             /// - Throws: An error if `self` is not `.ok`.
             /// - SeeAlso: `.ok`.
             public var ok: Operations.UsersFollowingList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// The lifts this user features, each with the best set they have logged of it. Its own request because every highlight costs a look through their set history.
+    ///
+    /// - Remark: HTTP `GET /api/v1/users/{id}/highlights/`.
+    /// - Remark: Generated from `#/paths//api/v1/users/{id}/highlights//get(users_highlights_list)`.
+    public enum UsersHighlightsList {
+        public static let id: Swift.String = "users_highlights_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/users/{id}/highlights/GET/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this repbase user.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/users/{id}/highlights/GET/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this repbase user.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.UsersHighlightsList.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/users/{id}/highlights/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.UsersHighlightsList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.UsersHighlightsList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.UsersHighlightsList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.UsersHighlightsList.Input.Path,
+                headers: Operations.UsersHighlightsList.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/users/{id}/highlights/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/users/{id}/highlights/GET/responses/200/content/application\/json`.
+                    case json([Components.Schemas.ProfileHighlight])
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: [Components.Schemas.ProfileHighlight] {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.UsersHighlightsList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.UsersHighlightsList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/users/{id}/highlights//get(users_highlights_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.UsersHighlightsList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.UsersHighlightsList.Output.Ok {
                 get throws {
                     switch self {
                     case let .ok(response):

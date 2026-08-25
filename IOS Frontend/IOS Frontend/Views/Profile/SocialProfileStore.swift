@@ -193,6 +193,12 @@ final class SocialProfileStore {
     private(set) var hasLoadedProfile = false
     private(set) var isSaving = false
     private(set) var errorMessage: String?
+    /// Questions the signed-in user has answered, and lifts they feature.
+    private(set) var prompts: [ProfilePromptAnswer] = []
+    private(set) var highlights: [HighlightLift] = []
+    /// Other people's featured lifts, kept by user id so a profile visited
+    /// twice does not ask twice.
+    private(set) var highlightsByUser: [Int: [HighlightLift]] = [:]
 
     init() {}
 
@@ -238,6 +244,15 @@ final class SocialProfileStore {
             // Kept because the profile page has to ask the feed for "posts by
             // this person", and the id is the only way to say who that is.
             viewerID = remote.id
+
+            // Started together: neither depends on the other, and run one
+            // after the next they cost two round trips to draw one page.
+            async let answersRequest = repository.prompts()
+            async let liftsRequest = repository.highlights()
+            let (answers, lifts) = try await (answersRequest, liftsRequest)
+            guard connectionGeneration == generation else { return }
+            prompts = answers
+            highlights = lifts
         } catch {
             profile = nil
             errorMessage = error.userFacingMessage
@@ -250,6 +265,9 @@ final class SocialProfileStore {
         profile = nil
         // One account's identity must never be left behind for the next.
         viewerID = nil
+        prompts = []
+        highlights = []
+        highlightsByUser = [:]
         isLoading = false
         hasLoadedProfile = false
         errorMessage = nil
@@ -338,6 +356,72 @@ final class SocialProfileStore {
 
     /// Gyms on the server matching what was typed. Searching before creating
     /// is what keeps one gym from being listed six ways.
+    // MARK: - Prompts and highlights
+
+    /// Saves the answered questions and adopts whatever the server returns.
+    @discardableResult
+    func savePrompts(_ answers: [ProfilePromptAnswer]) async -> Bool {
+        guard let repository else {
+            errorMessage = "Connect to Repbase before editing your profile."
+            return false
+        }
+        let generation = connectionGeneration
+        isSaving = true
+        errorMessage = nil
+        defer { if connectionGeneration == generation { isSaving = false } }
+
+        do {
+            let saved = try await repository.savePrompts(answers)
+            guard connectionGeneration == generation else { return false }
+            prompts = saved
+            return true
+        } catch {
+            guard connectionGeneration == generation else { return false }
+            errorMessage = error.userFacingMessage
+            return false
+        }
+    }
+
+    @discardableResult
+    func saveHighlights(_ exerciseIDs: [Int]) async -> Bool {
+        guard let repository else {
+            errorMessage = "Connect to Repbase before editing your profile."
+            return false
+        }
+        let generation = connectionGeneration
+        isSaving = true
+        errorMessage = nil
+        defer { if connectionGeneration == generation { isSaving = false } }
+
+        do {
+            let saved = try await repository.saveHighlights(exerciseIDs)
+            guard connectionGeneration == generation else { return false }
+            highlights = saved
+            return true
+        } catch {
+            guard connectionGeneration == generation else { return false }
+            errorMessage = error.userFacingMessage
+            return false
+        }
+    }
+
+    /// Somebody else's featured lifts, read once per profile visited.
+    func loadHighlights(forUser userID: Int) async {
+        guard let repository, highlightsByUser[userID] == nil else { return }
+        let generation = connectionGeneration
+        do {
+            let lifts = try await repository.highlights(forUser: userID)
+            guard connectionGeneration == generation else { return }
+            highlightsByUser[userID] = lifts
+        } catch {
+            // A profile that will not give up its lifts is still a profile
+            // worth showing, so this fails quietly rather than replacing the
+            // page with an error.
+            guard connectionGeneration == generation else { return }
+            highlightsByUser[userID] = []
+        }
+    }
+
     func searchGyms(_ query: String) async -> [GymIdentity] {
         guard let repository, !query.trimmingCharacters(in: .whitespaces).isEmpty
         else { return [] }
@@ -398,6 +482,52 @@ final class SocialProfileStore {
                 ),
                 profileImageData: nil
             )
+        // Sample answers and lifts, so the About tab can be looked at before
+        // anybody has filled one in. The lift figures are the shape the server
+        // sends: a set that happened, and an estimate derived from it.
+        store.prompts = [
+            ProfilePromptAnswer(
+                question: "why_i_train",
+                questionLabel: "Why I train",
+                answer: "So my kids never see me quit."
+            ),
+            ProfilePromptAnswer(
+                question: "current_goal",
+                questionLabel: "What I am working towards",
+                answer: "A 500 lb deadlift before June."
+            ),
+            ProfilePromptAnswer(
+                question: "training_partner",
+                questionLabel: "Looking for a training partner who",
+                answer: "Turns up at six and does not chat."
+            )
+        ]
+        store.highlights = [
+            HighlightLift(
+                exerciseID: 1,
+                exerciseName: "Deadlift",
+                bestWeightKilograms: Decimal(string: "197.50"),
+                bestReps: 3,
+                estimatedOneRepMaxKilograms: Decimal(string: "217.25"),
+                performedAt: Date(timeIntervalSince1970: 1_786_000_000)
+            ),
+            HighlightLift(
+                exerciseID: 2,
+                exerciseName: "Back Squat",
+                bestWeightKilograms: Decimal(string: "160.00"),
+                bestReps: 5,
+                estimatedOneRepMaxKilograms: Decimal(string: "186.67"),
+                performedAt: Date(timeIntervalSince1970: 1_785_600_000)
+            ),
+            HighlightLift(
+                exerciseID: 3,
+                exerciseName: "Weighted Pull-up",
+                bestWeightKilograms: nil,
+                bestReps: nil,
+                estimatedOneRepMaxKilograms: nil,
+                performedAt: nil
+            )
+        ]
         store.hasLoadedProfile = true
         store.posts = [
             SocialPost(

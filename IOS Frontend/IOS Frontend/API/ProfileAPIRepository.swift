@@ -218,6 +218,108 @@ actor ProfileAPIRepository {
 
     /// Gyms matching what the user typed. Searching before creating is what
     /// keeps one gym from being listed six ways.
+    // MARK: - Prompts and highlights
+
+    /// The questions the signed-in user has answered.
+    func prompts() async throws -> [ProfilePromptAnswer] {
+        let output = try await client.mePromptsList()
+        switch output {
+        case .ok(let response):
+            return try response.body.json.map(Self.prompt(from:))
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// Replaces every answer with the set given.
+    ///
+    /// The whole set rather than one at a time, because the screen behind this
+    /// edits all three together: sending what should exist afterwards cannot
+    /// leave a fourth answer stranded where nobody can see to delete it.
+    @discardableResult
+    func savePrompts(_ answers: [ProfilePromptAnswer]) async throws -> [ProfilePromptAnswer] {
+        let written = answers.compactMap { answer -> Components.Schemas.ProfilePromptWriteRequest? in
+            // A question this build cannot name is one it must not send: the
+            // request enum is closed, and inventing a value would be refused.
+            guard let question = Components.Schemas.QuestionEnum(rawValue: answer.question)
+            else { return nil }
+            return .init(question: question, answer: answer.answer)
+        }
+
+        let output = try await client.mePromptsUpdate(
+            body: .json(Components.Schemas.ProfilePromptsRequestRequest(prompts: written))
+        )
+        switch output {
+        case .ok(let response):
+            return try response.body.json.map(Self.prompt(from:))
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// The lifts the signed-in user features, each with their best logged set.
+    func highlights() async throws -> [HighlightLift] {
+        let output = try await client.meHighlightsList()
+        switch output {
+        case .ok(let response):
+            return try response.body.json.map(Self.highlight(from:))
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// Somebody else's featured lifts. Its own request rather than part of
+    /// their profile, because each highlight costs a look through their set
+    /// history and a list of people would pay it per person.
+    func highlights(forUser userID: Int) async throws -> [HighlightLift] {
+        let output = try await client.usersHighlightsList(path: .init(id: userID))
+        switch output {
+        case .ok(let response):
+            return try response.body.json.map(Self.highlight(from:))
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    @discardableResult
+    func saveHighlights(_ exerciseIDs: [Int]) async throws -> [HighlightLift] {
+        let output = try await client.meHighlightsUpdate(
+            body: .json(
+                Components.Schemas.ProfileHighlightsRequestRequest(exercises: exerciseIDs)
+            )
+        )
+        switch output {
+        case .ok(let response):
+            return try response.body.json.map(Self.highlight(from:))
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    private static func prompt(
+        from payload: Components.Schemas.ProfilePrompt
+    ) -> ProfilePromptAnswer {
+        ProfilePromptAnswer(
+            question: payload.question,
+            questionLabel: payload.questionLabel,
+            answer: payload.answer
+        )
+    }
+
+    private static func highlight(
+        from payload: Components.Schemas.ProfileHighlight
+    ) -> HighlightLift {
+        HighlightLift(
+            exerciseID: payload.exercise,
+            exerciseName: payload.exerciseName,
+            bestWeightKilograms: payload.bestWeightKg.flatMap { Decimal(string: $0) },
+            bestReps: payload.bestReps,
+            estimatedOneRepMaxKilograms: payload.estimatedOneRepMaxKg
+                .flatMap { Decimal(string: $0) },
+            performedAt: payload.performedAt
+        )
+    }
+
     func searchGyms(_ query: String) async throws -> [RemoteGym] {
         let output = try await client.gymsList(query: .init(search: query))
         switch output {
