@@ -86,12 +86,12 @@ struct TrainingTabView: View {
                 } label: {
                     Label(item.title, systemImage: item.symbol)
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(item == half ? RepbasePalette.cream : timeOfDay.canvasSecondaryText)
+                        .foregroundStyle(item == half ? timeOfDay.onPrimaryAction : timeOfDay.canvasSecondaryText)
                         .frame(maxWidth: .infinity, minHeight: 40)
                         .background {
                             if item == half {
                                 RoundedRectangle(cornerRadius: 9)
-                                    .fill(RepbaseDesign.ink)
+                                    .fill(timeOfDay.primaryActionSurface)
                                     .shadow(color: Color.black.opacity(0.16), radius: 6, x: 0, y: 3)
                             }
                         }
@@ -138,10 +138,10 @@ struct TrainingTabView: View {
             } label: {
                 Image(systemName: isShowingQuickActions ? "xmark" : "plus")
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(RepbasePalette.cream)
+                    .foregroundStyle(timeOfDay.onPrimaryAction)
                     // 48 rather than 56, and still above the 44pt minimum.
                     .frame(width: 48, height: 48)
-                    .background(RepbaseDesign.ink, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .background(timeOfDay.primaryActionSurface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                     .shadow(color: Color.black.opacity(0.2), radius: 14, x: 0, y: 8)
             }
             .buttonStyle(.plain)

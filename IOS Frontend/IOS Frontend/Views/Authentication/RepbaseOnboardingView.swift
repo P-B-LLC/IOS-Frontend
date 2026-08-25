@@ -248,7 +248,7 @@ struct RepbaseOnboardingView: View {
                 weeklyTarget = max(1, weeklyTarget - 1)
             }
             Text("\(weeklyTarget)").font(.title3.weight(.bold)).frame(width: 26)
-            targetButton("plus", background: RepbaseDesign.ink, foreground: .white) {
+            targetButton("plus", background: RepbaseDesign.ink, foreground: RepbaseDesign.onInk) {
                 weeklyTarget = min(7, weeklyTarget + 1)
             }
         }

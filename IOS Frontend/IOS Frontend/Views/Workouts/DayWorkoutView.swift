@@ -1090,7 +1090,7 @@ struct DayWorkoutView: View {
                     Text(elapsedTime(from: session.startedAt, to: completed.endedAt))
                         .font(.system(.largeTitle, design: .default, weight: .bold))
                         .monospacedDigit()
-                        .foregroundStyle(Color(hex: 0xF3F7F5))
+                        .foregroundStyle(Color.white)
                     Text("WORKOUT TIME")
                         .font(.subheadline.weight(.bold))
                         .foregroundStyle(Color(hex: 0xB7DCCB))
@@ -1299,7 +1299,7 @@ struct DayWorkoutView: View {
                 .foregroundStyle(Color(hex: 0xB7DCCB))
             Text(value)
                 .font(.caption.weight(.bold))
-                .foregroundStyle(Color(hex: 0xF3F7F5))
+                .foregroundStyle(Color.white)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -1365,7 +1365,7 @@ struct DayWorkoutView: View {
                         .foregroundStyle(Color(hex: 0xB7DCCB))
                     Text(workout.name)
                         .font(.title2.weight(.bold))
-                        .foregroundStyle(Color(hex: 0xF3F7F5))
+                        .foregroundStyle(Color.white)
                     Divider().overlay(Color(hex: 0x648474))
                     HStack(spacing: 0) {
                         historyMetric("\(overview.loggedSetCount)", "SETS")
@@ -1428,7 +1428,7 @@ struct DayWorkoutView: View {
         VStack(alignment: .leading, spacing: 5) {
             Text(value)
                 .font(.headline.monospacedDigit())
-                .foregroundStyle(Color(hex: 0xF3F7F5))
+                .foregroundStyle(Color.white)
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
             Text(title)

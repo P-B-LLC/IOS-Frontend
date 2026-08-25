@@ -275,7 +275,7 @@ private struct RecentFoodRow: View {
 
             Image(systemName: "plus")
                 .font(.caption.weight(.bold))
-                .foregroundStyle(RepbasePalette.cream)
+                .foregroundStyle(RepbaseDesign.onInk)
                 .frame(width: 30, height: 30)
                 .background(RepbaseDesign.ink, in: RoundedRectangle(cornerRadius: 9))
         }

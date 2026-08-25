@@ -348,7 +348,7 @@ private struct DashboardDayItem: View {
                     .fill(isToday ? RepbaseDesign.warning : isPlanned ? RepbaseDesign.ink : RepbasePalette.oatmeal)
                 Image(systemName: isSessionActive ? "bolt.fill" : isPlanned ? "minus" : "plus")
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(isPlanned || isSessionActive ? RepbasePalette.paper : Color.secondary)
+                    .foregroundStyle(isPlanned || isSessionActive ? RepbaseDesign.onInk : Color.secondary)
             }
             .frame(width: 34, height: 34)
             .overlay(alignment: .topTrailing) {
@@ -425,7 +425,7 @@ private struct WorkoutDashboardHero: View {
                     systemImage: isDayComplete ? "checkmark" : "play.fill"
                 )
                     .font(.footnote.weight(.semibold))
-                    .foregroundStyle(RepbasePalette.paper)
+                    .foregroundStyle(RepbaseDesign.onInk)
                     .padding(.horizontal, 13)
                     .frame(height: 36)
                     .background(RepbaseDesign.ink, in: Capsule())

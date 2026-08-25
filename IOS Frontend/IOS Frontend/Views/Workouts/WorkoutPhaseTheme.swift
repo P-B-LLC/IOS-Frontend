@@ -14,32 +14,32 @@ enum WorkoutVisualPhase: Sendable, Equatable {
 
     var canvasStart: Color {
         switch self {
-        case .prepare: RepbasePalette.cream
+        case .prepare: Color.white
         case .focus: Color(hex: 0x252220)
-        case .recover: Color(hex: 0xF3F1EA)
+        case .recover: Color.white
         }
     }
 
     var canvasEnd: Color {
         switch self {
-        case .prepare: Color(hex: 0xE2D2C6)
+        case .prepare: Color.white
         case .focus: RepbasePalette.night
-        case .recover: Color(hex: 0xDDE5DD)
+        case .recover: Color.white
         }
     }
 
     var canvasMiddle: Color {
         switch self {
-        case .prepare: Color(hex: 0xF0E6DE)
+        case .prepare: Color.white
         case .focus: Color(hex: 0x1E1C1B)
-        case .recover: Color(hex: 0xE8ECE5)
+        case .recover: Color.white
         }
     }
 
     var accent: Color {
         switch self {
         case .prepare: RepbasePalette.caramel
-        case .focus: Color(hex: 0xC69B7F)
+        case .focus: RepbasePalette.caramel
         case .recover: RepbasePalette.sage
         }
     }
@@ -62,17 +62,17 @@ enum WorkoutVisualPhase: Sendable, Equatable {
 
     var surfaceStart: Color {
         switch self {
-        case .prepare: RepbasePalette.paper
+        case .prepare: Color.white
         case .focus: Color(hex: 0x312D2A)
-        case .recover: Color(hex: 0xFAF9F4)
+        case .recover: Color.white
         }
     }
 
     var surfaceEnd: Color {
         switch self {
-        case .prepare: Color(hex: 0xF1E7DF)
+        case .prepare: Color.white
         case .focus: Color(hex: 0x282522)
-        case .recover: Color(hex: 0xE5EAE4)
+        case .recover: Color.white
         }
     }
 
@@ -97,6 +97,14 @@ enum WorkoutVisualPhase: Sendable, Equatable {
         case .focus: RepbasePalette.charcoal
         case .prepare, .recover: RepbasePalette.cream
         }
+    }
+
+    var primaryActionSurface: Color {
+        usesDarkAppearance ? Color.white : RepbasePalette.charcoal
+    }
+
+    var onPrimaryAction: Color {
+        usesDarkAppearance ? RepbasePalette.ink : Color.white
     }
 
     var shadow: Color {
@@ -230,12 +238,12 @@ struct WorkoutPrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.headline)
-            .foregroundStyle(RepbasePalette.cream)
+            .foregroundStyle(phase.onPrimaryAction)
             .padding(.horizontal, 18)
             .padding(.vertical, 14)
             .background {
                 RoundedRectangle(cornerRadius: 15, style: .continuous)
-                    .fill(phase == .focus ? phase.accent : RepbasePalette.charcoal)
+                    .fill(phase.primaryActionSurface)
                     .shadow(color: phase.shadow, radius: 9, x: 0, y: 5)
             }
             .overlay {

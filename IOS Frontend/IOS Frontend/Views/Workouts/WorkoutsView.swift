@@ -166,7 +166,7 @@ private struct WorkoutReferenceHero: View {
                 Spacer(minLength: 12)
                 Image(systemName: "arrow.up.right")
                     .font(.caption.weight(.bold))
-                    .foregroundStyle(RepbasePalette.cream)
+                    .foregroundStyle(RepbaseDesign.onInk)
                     .frame(width: 34, height: 34)
                     .background(RepbaseDesign.ink, in: Circle())
             }
@@ -177,7 +177,7 @@ private struct WorkoutReferenceHero: View {
                     .padding(.trailing, 28)
 
                 VStack(spacing: 5) {
-                    ActivityIconArtwork(kind: .lifting, size: 14, color: RepbasePalette.cream)
+                    ActivityIconArtwork(kind: .lifting, size: 14, color: RepbaseDesign.onInk)
                         .frame(width: 30, height: 30)
                         .background(RepbaseDesign.ink, in: Circle())
                     railButton("list.bullet", selected: false)
@@ -202,7 +202,7 @@ private struct WorkoutReferenceHero: View {
     private func railButton(_ symbol: String, selected: Bool) -> some View {
         Image(systemName: symbol)
             .font(.system(size: 11, weight: .bold))
-            .foregroundStyle(selected ? RepbasePalette.cream : RepbaseDesign.ink)
+            .foregroundStyle(selected ? RepbaseDesign.onInk : RepbaseDesign.ink)
             .frame(width: 30, height: 30)
             .background(selected ? RepbaseDesign.ink : Color.clear, in: Circle())
     }

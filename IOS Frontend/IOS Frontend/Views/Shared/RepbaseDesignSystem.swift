@@ -9,7 +9,11 @@ import SwiftUI
 
 enum RepbaseDesign {
     static let accent = RepbasePalette.caramel
-    static let ink = RepbasePalette.charcoal
+    /// Adaptive ink is black in Light mode and white in Dark mode. This keeps
+    /// artwork and legacy direct uses visible while dedicated navigation
+    /// surfaces continue to use `HomeTimeOfDay.ink`.
+    static let ink = Color.primary
+    static let onInk = Color(uiColor: .systemBackground)
     static let canvas = RepbasePalette.cream
     static let inset = RepbasePalette.oatmeal
     static let success = RepbasePalette.sage
@@ -194,7 +198,7 @@ struct RepbasePrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.subheadline.weight(.bold))
-            .foregroundStyle(RepbasePalette.cream)
+            .foregroundStyle(RepbaseDesign.onInk)
             .padding(.horizontal, 16)
             .frame(minHeight: 44)
             .background(RepbaseDesign.ink, in: RoundedRectangle(cornerRadius: 12, style: .continuous))

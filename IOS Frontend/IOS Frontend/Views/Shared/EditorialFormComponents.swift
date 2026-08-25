@@ -60,10 +60,10 @@ struct EditorialFormHeader: View {
                             .font(.caption.weight(.bold))
                     }
                     .font(.subheadline.weight(.bold))
-                    .foregroundStyle(RepbasePalette.cream)
+                    .foregroundStyle(timeOfDay.onPrimaryAction)
                     .padding(.horizontal, 13)
                     .frame(height: 40)
-                    .background(timeOfDay.ink, in: RoundedRectangle(cornerRadius: 13))
+                    .background(timeOfDay.primaryActionSurface, in: RoundedRectangle(cornerRadius: 13))
                 }
                 .buttonStyle(.plain)
                 .disabled(!canSave)
@@ -149,12 +149,12 @@ struct EditorialPrimaryButtonStyle: ButtonStyle {
             Image(systemName: "arrow.right")
         }
         .font(.headline.weight(.bold))
-        .foregroundStyle(RepbasePalette.cream)
+        .foregroundStyle(timeOfDay.onPrimaryAction)
         .padding(.horizontal, 18)
         .frame(height: 56)
         .background {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(timeOfDay.ink)
+                .fill(timeOfDay.primaryActionSurface)
                 .shadow(color: timeOfDay.shadow.opacity(0.72), radius: 9, x: 0, y: 5)
         }
         .opacity(isEnabled ? (configuration.isPressed ? 0.62 : 1) : 0.35)
