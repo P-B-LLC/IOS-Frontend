@@ -51,11 +51,11 @@ struct ActivityIconArtwork: View {
     @ViewBuilder
     var body: some View {
         if kind == .swimming {
-            // The extracted artwork read as a person reclining rather than a
-            // swimmer at selector size. This system glyph keeps the pool and
-            // swimming stroke visible even in the compact workout picker.
+            // Matches the approved Figma Icon/Swimming component: a clear,
+            // regular-weight pool swimmer scaled to fill its semantic frame.
             Image(systemName: "figure.pool.swim")
-                .font(.system(size: size * 0.82, weight: .medium))
+                .font(.system(size: size * 0.84, weight: .regular))
+                .symbolRenderingMode(.monochrome)
                 .foregroundStyle(color)
                 .frame(width: size, height: size)
                 .accessibilityHidden(true)
