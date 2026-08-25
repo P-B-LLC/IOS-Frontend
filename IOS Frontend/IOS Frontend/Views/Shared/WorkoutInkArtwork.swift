@@ -48,14 +48,30 @@ struct ActivityIconArtwork: View {
     var size: CGFloat = 24
     var color: Color = RepbaseDesign.ink
 
+    @ViewBuilder
     var body: some View {
-        Image(kind.assetName)
-            .resizable()
-            .renderingMode(.template)
-            .scaledToFit()
-            .foregroundStyle(color)
-            .frame(width: size, height: size)
-            .accessibilityHidden(true)
+        if kind == .swimming {
+            // The extracted artwork read as a person reclining rather than a
+            // swimmer at selector size. This system glyph keeps the pool and
+            // swimming stroke visible even in the compact workout picker.
+            Image(systemName: "figure.pool.swim")
+                .font(.system(size: size * 0.82, weight: .medium))
+                .foregroundStyle(color)
+                .frame(width: size, height: size)
+                .accessibilityHidden(true)
+        } else {
+            Image(kind.assetName)
+                .resizable()
+                .renderingMode(.template)
+                .scaledToFit()
+                .foregroundStyle(color)
+                .frame(width: size, height: size)
+                // The reference-sheet exports contain generous transparent
+                // margins. Compensate visually while retaining the original
+                // layout frame and tap target.
+                .scaleEffect(1.65)
+                .accessibilityHidden(true)
+        }
     }
 }
 

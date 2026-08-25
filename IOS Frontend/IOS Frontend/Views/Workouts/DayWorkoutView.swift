@@ -603,10 +603,10 @@ struct DayWorkoutView: View {
         HStack(spacing: 14) {
             WorkoutInkArtwork(
                 type: workout.type,
-                size: 48,
+                size: 54,
                 color: WorkoutVisualPhase.prepare.primaryText
             )
-            .frame(width: 58, height: 58)
+            .frame(width: 62, height: 62)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(workout.type.sessionTitle)

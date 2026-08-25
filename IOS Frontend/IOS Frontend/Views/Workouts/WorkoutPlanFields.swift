@@ -188,7 +188,7 @@ struct WorkoutPlanFields: View {
                         withAnimation(.snappy) { draft.type = type }
                     } label: {
                         VStack(spacing: 4) {
-                            WorkoutInkArtwork(type: type, size: 48)
+                            WorkoutInkArtwork(type: type, size: 54)
                             Text(type.title)
                                 .font(.caption2.weight(.medium))
                                 .lineLimit(1)
@@ -283,7 +283,7 @@ struct WorkoutPlanFields: View {
                             VStack(spacing: 5) {
                                 ActivityIconArtwork(
                                     kind: machine.activityIcon,
-                                    size: 24,
+                                    size: 30,
                                     color: isSelected ? phase.accent : phase.secondaryText
                                 )
                                 Text(machine.title)
