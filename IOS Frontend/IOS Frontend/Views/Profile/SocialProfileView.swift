@@ -182,30 +182,9 @@ struct SocialProfileView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            VStack(alignment: .leading, spacing: 6) {
-                if !profile.disciplines.isEmpty {
-                    HStack(spacing: 6) {
-                        ActivityIconArtwork(
-                            kind: .cardio,
-                            size: 15,
-                            color: timeOfDay.secondaryText
-                        )
-                        Text(disciplineSummary)
-                    }
-                }
-                if let gym = profile.gym {
-                    HStack(spacing: 6) {
-                        Label("\(gym.name) · \(gym.city)", systemImage: "building.2")
-                        if !isCurrentUser {
-                            Text("Same gym")
-                                .font(.caption2.weight(.bold))
-                                .foregroundStyle(timeOfDay.accent)
-                        }
-                    }
-                }
-            }
-            .font(.caption.weight(.medium))
-            .foregroundStyle(timeOfDay.secondaryText)
+            // Discipline and gym live in About with everything else the public
+            // is shown. The header keeps only what identifies the person:
+            // their name, their handle, and what they wrote about themselves.
 
             profileAction(timeOfDay: timeOfDay)
                 .padding(.vertical, 12)
@@ -230,14 +209,6 @@ struct SocialProfileView: View {
 
     private var followingCount: Int {
         store.viewerID.flatMap { social.followingByUser[$0]?.count } ?? 0
-    }
-
-    private var disciplineSummary: String {
-        Array(profile.disciplines)
-            .sorted { $0.rawValue < $1.rawValue }
-            .prefix(2)
-            .map(\.rawValue)
-            .joined(separator: " · ")
     }
 
     @ViewBuilder
@@ -331,8 +302,31 @@ struct SocialProfileView: View {
     }
 
 
+    /// Everything the public is shown about this person, in one place.
+    ///
+    /// Identity first, then the measurements, because how someone trains and
+    /// where is what a stranger reads a profile for; the numbers are detail
+    /// underneath it, and are each behind their own switch besides.
     private func aboutSection(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(spacing: 0) {
+            if !profile.disciplines.isEmpty {
+                aboutRow(
+                    "Trains as",
+                    value: fullDisciplineSummary,
+                    symbol: "figure.strengthtraining.traditional"
+                )
+            }
+            if let gym = profile.gym {
+                aboutRow(
+                    "Gym",
+                    value: gym.city.isEmpty ? gym.name : "\(gym.name) · \(gym.city)",
+                    symbol: "building.2",
+                    // Only worth saying to somebody else. On your own profile
+                    // it would be telling you that you train where you train.
+                    badge: isCurrentUser ? nil : "Same gym",
+                    timeOfDay: timeOfDay
+                )
+            }
             if profile.showsHeight {
                 aboutRow("Height", value: "\(profile.heightFeet)′ \(profile.heightInches)″", symbol: "ruler")
             }
@@ -342,10 +336,11 @@ struct SocialProfileView: View {
             if profile.showsTargetWeight {
                 aboutRow("Target weight", value: "\(profile.targetWeightPounds) lb", symbol: "scope")
             }
-            if !profile.showsHeight && !profile.showsWeight && !profile.showsTargetWeight {
-                Text("This athlete keeps their body measurements private.")
+            if isAboutEmpty {
+                Text("This athlete hasn't shared anything about themselves yet.")
                     .font(.subheadline)
                     .foregroundStyle(timeOfDay.secondaryText)
+                    .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity)
                     .padding(28)
             }
@@ -354,12 +349,45 @@ struct SocialProfileView: View {
         .overlay(alignment: .bottom) { Rectangle().fill(timeOfDay.border).frame(height: 1) }
     }
 
-    private func aboutRow(_ title: String, value: String, symbol: String) -> some View {
+    /// True only when there is nothing at all to show. The old copy blamed
+    /// private measurements, which read as secretive on a profile that had
+    /// simply never been filled in.
+    private var isAboutEmpty: Bool {
+        profile.disciplines.isEmpty
+            && profile.gym == nil
+            && !profile.showsHeight
+            && !profile.showsWeight
+            && !profile.showsTargetWeight
+    }
+
+    /// Every discipline, not the first two. The header had to stay to one
+    /// line; a row in a list does not.
+    private var fullDisciplineSummary: String {
+        Array(profile.disciplines)
+            .sorted { $0.rawValue < $1.rawValue }
+            .map(\.rawValue)
+            .joined(separator: " · ")
+    }
+
+    private func aboutRow(
+        _ title: String,
+        value: String,
+        symbol: String,
+        badge: String? = nil,
+        timeOfDay: HomeTimeOfDay? = nil
+    ) -> some View {
         HStack(spacing: 12) {
             Image(systemName: symbol).foregroundStyle(RepbasePalette.caramel).frame(width: 28)
             Text(title).font(.subheadline)
             Spacer()
-            Text(value).font(.subheadline.weight(.bold))
+            if let badge, let timeOfDay {
+                Text(badge)
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(timeOfDay.accent)
+            }
+            Text(value)
+                .font(.subheadline.weight(.bold))
+                .multilineTextAlignment(.trailing)
         }
         .padding(.vertical, 15)
     }
