@@ -42,7 +42,7 @@ struct TrainingDashboardContent: View {
             }
             .padding(.horizontal, RepbaseDesign.pageInset)
             .padding(.top, 10)
-            .padding(.bottom, RepbaseDesign.quickActionClearance)
+            .padding(.bottom, RepbaseDesign.bottomBarClearance)
         }
     }
 

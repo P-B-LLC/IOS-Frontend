@@ -36,49 +36,39 @@ struct TrainingTabView: View {
     }
 
     @State private var half: Half = .workouts
-    @State private var isShowingQuickActions = false
     @State private var quickAction: TrainingQuickAction?
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
             let timeOfDay = HomeTimeOfDay(date: context.date)
 
-            ZStack(alignment: .bottomTrailing) {
-                VStack(spacing: 0) {
-                    switcher(timeOfDay: timeOfDay)
+            VStack(spacing: 0) {
+                switcher(timeOfDay: timeOfDay)
 
-                    switch half {
-                    case .workouts: WorkoutsView()
-                    case .food: FoodTrackingView()
-                    }
+                switch half {
+                case .workouts: WorkoutsView()
+                case .food: FoodTrackingView()
                 }
-
-                if isShowingQuickActions {
-                    Color.black.opacity(0.22)
-                        .ignoresSafeArea()
-                        .onTapGesture { closeQuickActions() }
-                        .transition(.opacity)
-                }
-
-                quickActionMenu(timeOfDay: timeOfDay)
-                    .padding(.trailing, RepbaseDesign.pageInset)
-                    // Clear of the bottom bar, which floats over this tab
-                    // rather than beside it: at 10 the button sat behind the
-                    // bar with only its top corner showing. The bar is 46
-                    // tall and sits 8 above the safe area, so this is that
-                    // plus a gap.
-                    .padding(.bottom, 64)
             }
             .homeTimeScreen(timeOfDay)
-            .animation(.spring(response: 0.3, dampingFraction: 0.82), value: isShowingQuickActions)
         }
-        .onChange(of: half) { closeQuickActions() }
         .sheet(item: $quickAction) { action in
             quickActionDestination(action)
         }
     }
 
     private func switcher(timeOfDay: HomeTimeOfDay) -> some View {
+        HStack(spacing: 8) {
+            halfPicker(timeOfDay: timeOfDay)
+            quickActionButton(timeOfDay: timeOfDay)
+        }
+        .padding(.horizontal, RepbaseDesign.pageInset)
+        .padding(.top, 10)
+        .padding(.bottom, 8)
+        .animation(.easeOut(duration: 0.18), value: half)
+    }
+
+    private func halfPicker(timeOfDay: HomeTimeOfDay) -> some View {
         HStack(spacing: 3) {
             ForEach(Half.allCases) { item in
                 Button {
@@ -103,50 +93,35 @@ struct TrainingTabView: View {
         }
         .padding(4)
         .repbaseInsetSurface(cornerRadius: 13)
-        .padding(.horizontal, RepbaseDesign.pageInset)
-        .padding(.top, 10)
-        .padding(.bottom, 8)
-        .animation(.easeOut(duration: 0.18), value: half)
     }
 
-    private func quickActionMenu(timeOfDay: HomeTimeOfDay) -> some View {
-        VStack(alignment: .trailing, spacing: 8) {
-            if isShowingQuickActions {
-                ForEach(actions) { action in
-                    Button {
-                        quickAction = action
-                        closeQuickActions()
-                    } label: {
-                        Image(action.iconAsset)
-                            .resizable()
-                            .scaledToFit()
-                            .foregroundStyle(timeOfDay.accent)
-                            .frame(width: 24, height: 24)
-                            .frame(width: 48, height: 48)
-                            .repbaseDepthSurface(cornerRadius: 15)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(action.title)
-                    .accessibilityHint(action.detail)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+    /// The same actions, from a menu beside the switcher.
+    ///
+    /// It used to be a button floating over the page, which meant it sat on
+    /// top of whatever happened to scroll under it -- the weekly-goal row, on
+    /// a phone -- and it was already as low as it could go, ten points above
+    /// the bottom bar. Up here it covers nothing and is always in one place.
+    private func quickActionButton(timeOfDay: HomeTimeOfDay) -> some View {
+        Menu {
+            ForEach(actions) { action in
+                Button {
+                    quickAction = action
+                } label: {
+                    Label(action.title, systemImage: action.symbol)
                 }
             }
-
-            Button {
-                isShowingQuickActions.toggle()
-            } label: {
-                Image(systemName: isShowingQuickActions ? "xmark" : "plus")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(timeOfDay.onPrimaryAction)
-                    // 48 rather than 56, and still above the 44pt minimum.
-                    .frame(width: 48, height: 48)
-                    .background(timeOfDay.primaryActionSurface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .shadow(color: Color.black.opacity(0.2), radius: 14, x: 0, y: 8)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(isShowingQuickActions ? "Close quick actions" : "Open quick actions")
+        } label: {
+            Image(systemName: "plus")
+                .font(.system(size: 16, weight: .bold))
+                .foregroundStyle(timeOfDay.onPrimaryAction)
+                // 48 square, comfortably over the 44pt minimum.
+                .frame(width: 48, height: 48)
+                .background(
+                    timeOfDay.primaryActionSurface,
+                    in: RoundedRectangle(cornerRadius: 13, style: .continuous)
+                )
         }
+        .accessibilityLabel(half == .food ? "Food actions" : "Workout actions")
     }
 
     private var actions: [TrainingQuickAction] {
@@ -172,9 +147,6 @@ struct TrainingTabView: View {
         }
     }
 
-    private func closeQuickActions() {
-        isShowingQuickActions = false
-    }
 }
 
 private enum TrainingQuickAction: String, Identifiable {
@@ -210,11 +182,4 @@ private enum TrainingQuickAction: String, Identifiable {
         }
     }
 
-    var iconAsset: String {
-        switch self {
-        case .postFood, .postWorkout: "RepbasePost"
-        case .planMeals: "RepbasePlan"
-        case .savedMeals, .savedWorkouts: "RepbaseSaved"
-        }
-    }
 }
