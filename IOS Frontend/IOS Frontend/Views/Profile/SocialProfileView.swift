@@ -71,6 +71,36 @@ struct SocialProfileView: View {
     /// the same screen serve somebody else's profile.
     private var subjectID: Int? { profile.id ?? store.viewerID }
 
+    /// Whether the signed-in user follows whoever this profile belongs to.
+    ///
+    /// Derived rather than stored, so it is right the moment the page opens
+    /// and stays right when the same follow is changed from Discover.
+    private var viewerFollowsSubject: Bool {
+        guard let viewerID = store.viewerID, let subjectID else { return false }
+        return social.followingByUser[viewerID]?
+            .contains { $0.id == subjectID } == true
+    }
+
+    /// The signed-in user's own following list, which the Follow button reads.
+    /// A function rather than an inline optional map: `Optional.map` cannot
+    /// host an await.
+    private func loadViewerRelationships() async {
+        guard let viewerID = store.viewerID else { return }
+        await social.loadRelationships(for: viewerID)
+    }
+
+    /// The subject in the shape the follow call wants.
+    private var subjectAsAuthor: PostAuthor? {
+        guard let subjectID else { return nil }
+        return PostAuthor(
+            id: subjectID,
+            username: profile.username,
+            firstName: profile.firstName,
+            lastName: profile.lastName,
+            photoURL: profile.profilePhotoURL
+        )
+    }
+
     private enum ProfileSection: String, CaseIterable, Identifiable {
         case posts = "Posts"
         case about = "About"
@@ -127,12 +157,15 @@ struct SocialProfileView: View {
             guard let subjectID, social.isConnected else { return }
             async let posts: Void = social.loadPosts(byAuthor: subjectID)
             async let relationships: Void = social.loadRelationships(for: subjectID)
+            // The viewer's own list too, which is what the Follow button reads.
+            // Without it the button says "Follow" for somebody already followed.
+            async let mine: Void = loadViewerRelationships()
             // Somebody else's featured lifts are their own request; the
             // signed-in user's arrive with their profile.
             async let lifts: Void = isCurrentUser
                 ? ()
                 : store.loadHighlights(forUser: subjectID)
-            _ = await (posts, relationships, lifts)
+            _ = await (posts, relationships, lifts, mine)
         }
     }
 
@@ -274,13 +307,30 @@ struct SocialProfileView: View {
             .buttonStyle(.plain)
             .foregroundStyle(timeOfDay.accent)
         } else {
-            Button { isFollowing.toggle() } label: {
-                Label(isFollowing ? "Following" : "Follow", systemImage: isFollowing ? "checkmark" : "plus")
+            // Read from the relationships the store holds and written through
+            // it, the same way Discover does. It used to toggle a local flag:
+            // the label changed, the server never heard, and the button read
+            // "Follow" for somebody you already followed.
+            Button {
+                guard let author = subjectAsAuthor else { return }
+                Task {
+                    await social.setFollowing(
+                        !viewerFollowsSubject,
+                        user: author,
+                        viewerID: store.viewerID
+                    )
+                }
+            } label: {
+                Label(
+                    viewerFollowsSubject ? "Following" : "Follow",
+                    systemImage: viewerFollowsSubject ? "checkmark" : "plus"
+                )
             }
             .font(.caption.weight(.bold))
             .textCase(.uppercase)
             .buttonStyle(.plain)
             .foregroundStyle(timeOfDay.accent)
+            .disabled(subjectAsAuthor.map { social.changingFollowFor.contains($0.id) } ?? true)
         }
     }
 
