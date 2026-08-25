@@ -26,6 +26,8 @@ struct PostDetailView: View {
     @State private var isFetching = true
     /// Raised to put the cursor in the comment box.
     @State private var focusRequest = 0
+    /// The author's profile, when it has been opened from the card.
+    @State private var visitingAuthor: Int?
 
     private var post: FeedPost? { store.post(withID: postID) }
 
@@ -49,6 +51,9 @@ struct PostDetailView: View {
         .homeTimeScreen(timeOfDay)
         .navigationTitle("Post")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(item: $visitingAuthor) { userID in
+            PersonProfileView(userID: userID)
+        }
         .task {
             // Fetched first when the feed does not hold it — opened from a
             // profile, or from a card that has since paged out.
@@ -82,7 +87,8 @@ struct PostDetailView: View {
                     timeOfDay: timeOfDay,
                     // Already here, so the button puts the cursor in the box
                     // rather than opening the page again.
-                    openComments: { focusRequest += 1 }
+                    openComments: { focusRequest += 1 },
+                    openAuthor: { visitingAuthor = $0 }
                 )
                 .padding(.horizontal, RepbaseDesign.pageInset)
             }

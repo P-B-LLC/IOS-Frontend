@@ -132,7 +132,8 @@ struct SocialFeedView: View {
                             // The button raises the threads over the feed so
                             // a comment can be left without losing your place
                             // in it; tapping the card itself opens the post.
-                            openComments: { commenting = CommentedPost(id: post.id) }
+                            openComments: { commenting = CommentedPost(id: post.id) },
+                            openAuthor: { visiting = VisitedPerson(id: $0) }
                         )
                             .contentShape(Rectangle())
                             .onTapGesture { opened = post.id }
@@ -385,6 +386,9 @@ struct PostCard: View {
     /// Opens the thread. Nil on the detail page, where the card is already
     /// the thing being read and must not push another copy of itself.
     var openComments: (() -> Void)?
+    /// Opens the author's profile. Nil where there is nowhere to push to, or
+    /// where the profile being read is already theirs.
+    var openAuthor: ((Int) -> Void)?
 
     /// What is drawn: the original when this is a repost, itself otherwise.
     /// The engagement figures always come from `post`.
@@ -475,20 +479,29 @@ struct PostCard: View {
     /// would credit them with it.
     private var author: some View {
         HStack(spacing: 10) {
-            Text(shown.author.initials)
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(Color.white)
-                .frame(width: 36, height: 36)
-                .background(timeOfDay.accent, in: Circle())
+            // The avatar and the name together are the way to the person.
+            // Not a Button around the row: the row ends in the timestamp and
+            // the card itself opens the post, so only the identity is theirs.
+            HStack(spacing: 10) {
+                Text(shown.author.initials)
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(Color.white)
+                    .frame(width: 36, height: 36)
+                    .background(timeOfDay.accent, in: Circle())
 
-            VStack(alignment: .leading, spacing: 1) {
-                Text(shown.author.displayName)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(timeOfDay.primaryText)
-                Text("@" + shown.author.username)
-                    .font(.caption2)
-                    .foregroundStyle(timeOfDay.secondaryText)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(shown.author.displayName)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(timeOfDay.primaryText)
+                    Text("@" + shown.author.username)
+                        .font(.caption2)
+                        .foregroundStyle(timeOfDay.secondaryText)
+                }
             }
+            .contentShape(Rectangle())
+            .onTapGesture { openAuthor?(shown.author.id) }
+            .accessibilityAddTraits(openAuthor == nil ? [] : .isButton)
+            .accessibilityHint(openAuthor == nil ? "" : "Opens this person's profile")
 
             Spacer()
 
