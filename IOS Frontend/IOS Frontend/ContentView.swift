@@ -2,283 +2,51 @@
 //  ContentView.swift
 //  IOS Frontend
 //
-//  Created by user299988 on 8/9/26.
+//  Home is a command center, not a stack of dashboard widgets. Every section
+//  below reads from an existing store and routes into an existing feature.
 //
 
 import SwiftUI
 
-/// The app's time-aware dashboard. Every value and destination is backed by an
-/// existing workout, food, or account feature; the presentation changes with
-/// the local time without changing the underlying behavior.
 struct ContentView: View {
-    @Environment(AuthenticationStore.self) private var authentication
     @Environment(WorkoutStore.self) private var workoutStore
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
             let timeOfDay = HomeTimeOfDay(date: context.date)
 
-            // The navigation stack and the bottom bar belong to
-            // `RepbaseRootView`, so the bar stays put wherever this page
-            // navigates to rather than existing only here.
-            Group {
-                ScrollView {
-                    VStack(spacing: 0) {
-                        HomeHeader(date: context.date)
-                        HomeModeStrip()
-                            .padding(.top, 18)
-                        WeeklyTargetCard()
-                            .padding(.top, 14)
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 14) {
+                    HomeCommandHeader(date: context.date)
+                    HomeWeekStrip(date: context.date)
+                    HomeUpNextSection(date: context.date)
+                    HomeTrainingSection(date: context.date)
+                    HomeMacroSection(date: context.date)
+                    HomeRemainingTasksSection(date: context.date)
 
-                        HomeDashboardSection(title: "Training", detail: "View plan", destination: WorkoutsView()) {
-                            HStack(alignment: .top, spacing: 16) {
-                                WeeklyPlanCard()
-                                TodayWorkoutCard()
-                            }
-                        }
-                        .padding(.top, 22)
-
-                        StepsWidget()
-
-                        HomeDashboardSection(title: "Schedule", detail: "Open calendar", destination: PlannerView()) {
-                            VStack(spacing: 14) {
-                                HomeCalendarCard()
-                                TodaysTasksList()
-                            }
-                        }
-                        .padding(.top, 22)
-
-                        HomeDashboardSection(title: "Nutrition", detail: "Log food", destination: FoodTrackingView()) {
-                            FoodSummaryWidget()
-                        }
-                        .padding(.top, 22)
-
-                        if let error = workoutStore.persistenceError {
-                            persistenceErrorCard(error)
-                                .padding(.top, 18)
-                        }
-                    }
-                    .padding(.horizontal, RepbaseDesign.pageInset)
-                    .padding(.top, 18)
-                    // The custom navigation bar is inset outside this tab's
-                    // navigation stack, so its height is not included in the
-                    // ScrollView's natural content boundary. Keep enough real
-                    // scrollable space for the final section to move fully
-                    // above both the bar and the home indicator.
-                    .padding(.bottom, RepbaseDesign.bottomBarClearance)
-                }
-                .scrollIndicators(.hidden)
-                .toolbar(.hidden, for: .navigationBar)
-                .overlay {
-                    if workoutStore.isLoading {
-                        loadingOverlay(timeOfDay: timeOfDay)
+                    if let error = workoutStore.persistenceError {
+                        HomePersistenceError(message: error)
                     }
                 }
-                .homeTimeScreen(timeOfDay)
+                .padding(.horizontal, 24)
+                .padding(.top, 12)
+                .padding(.bottom, RepbaseDesign.bottomBarClearance)
             }
-        }
-    }
-
-    private func persistenceErrorCard(_ error: String) -> some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(HomeTimeOfDay.day.accent)
-            VStack(alignment: .leading, spacing: 7) {
-                Text(error)
-                    .font(.footnote)
-                Button("Retry") { workoutStore.retryPersistence() }
-                    .font(.footnote.weight(.semibold))
-            }
-            Spacer()
-        }
-        .padding(14)
-        .background(HomeTimeOfDay.day.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius))
-    }
-
-    private func loadingOverlay(timeOfDay: HomeTimeOfDay) -> some View {
-        ZStack {
-            Color.black.opacity(0.12).ignoresSafeArea()
-            ProgressView("Loading workouts…")
-                .padding(18)
-                .foregroundStyle(timeOfDay.primaryText)
-                .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius))
-        }
-    }
-}
-
-private struct HomeModeStrip: View {
-    @Environment(\.homeTimeOfDay) private var timeOfDay
-
-    var body: some View {
-        HStack(spacing: 3) {
-            modeIcon("Overview", symbol: "square.grid.2x2.fill", selected: true)
-            NavigationLink { WorkoutsView() } label: {
-                modeIcon("Train", symbol: "dumbbell.fill", selected: false)
-            }
-            NavigationLink { FoodTrackingView() } label: {
-                modeIcon("Food", symbol: "fork.knife", selected: false)
-            }
-            NavigationLink { PlannerView() } label: {
-                modeIcon("Plan", symbol: "calendar", selected: false)
-            }
-        }
-        .padding(4)
-        .repbaseInsetSurface(cornerRadius: 13)
-        .buttonStyle(.plain)
-    }
-
-    private func modeIcon(_ title: String, symbol: String, selected: Bool) -> some View {
-        Image(systemName: symbol)
-            .font(.system(size: 13, weight: .semibold))
-            .foregroundStyle(selected ? RepbasePalette.cream : timeOfDay.secondaryText)
-            .frame(maxWidth: .infinity, minHeight: 38)
-            .background(selected ? RepbaseDesign.ink : Color.clear, in: RoundedRectangle(cornerRadius: 9))
-            .accessibilityLabel(title)
-            .accessibilityAddTraits(selected ? .isSelected : [])
-    }
-}
-
-private struct WeeklyTargetCard: View {
-    @Environment(WorkoutStore.self) private var store
-    @Environment(\.homeTimeOfDay) private var timeOfDay
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 13) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("WEEKLY TRAINING TARGET")
-                        .font(.system(size: 9, weight: .bold))
-                        .tracking(1.1)
-                        .foregroundStyle(timeOfDay.secondaryText)
-                    Text(planned == 0 ? "Build your first week" : "Keep the rhythm going")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundStyle(timeOfDay.primaryText)
-                }
-                Spacer()
-                Text("\(completed) / \(max(planned, 1))")
-                    .font(.system(size: 13, weight: .bold, design: .rounded))
-                    .foregroundStyle(timeOfDay.primaryText)
-            }
-
-            GeometryReader { proxy in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(Color.primary.opacity(0.08))
-                    Capsule().fill(RepbaseDesign.ink).frame(width: proxy.size.width * progress)
+            .scrollIndicators(.hidden)
+            .toolbar(.hidden, for: .navigationBar)
+            .overlay {
+                if workoutStore.isLoading {
+                    HomeLoadingOverlay(timeOfDay: timeOfDay)
                 }
             }
-            .frame(height: 18)
-        }
-        .padding(.vertical, 16)
-        .overlay(alignment: .bottom) { Divider() }
-    }
-
-    private var planned: Int { Weekday.allCases.reduce(0) { $0 + store.workouts(on: $1).count } }
-    private var completed: Int {
-        guard let week = Calendar.current.dateInterval(of: .weekOfYear, for: Date()) else { return 0 }
-        return store.completedSessions.filter { week.contains($0.endedAt) }.count
-    }
-    private var progress: CGFloat { min(CGFloat(completed) / CGFloat(max(planned, 1)), 1) }
-}
-
-private struct HomeDashboardSection<Destination: View, Content: View>: View {
-    @Environment(\.homeTimeOfDay) private var timeOfDay
-    let title: String
-    let detail: String
-    let destination: Destination
-    @ViewBuilder let content: Content
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            NavigationLink { destination } label: {
-                HStack {
-                    Text(title)
-                        .font(.system(size: 17, weight: .bold))
-                        .foregroundStyle(timeOfDay.canvasPrimaryText)
-                    Spacer()
-                    Text(detail)
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(timeOfDay.canvasSecondaryText)
-                    Image(systemName: "arrow.up.right")
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(timeOfDay.canvasSecondaryText)
-                }
-            }
-            .buttonStyle(.plain)
-            content
+            .homeTimeScreen(timeOfDay)
         }
     }
 }
 
-/// A clearly labelled doorway into one of the app's three jobs. The preview
-/// below the rule keeps Home useful, while the heading makes it immediately
-/// obvious where the full workflow lives.
-private struct HomeCategorySection<Destination: View, Content: View>: View {
-    @Environment(\.homeTimeOfDay) private var timeOfDay
+// MARK: - Header
 
-    let number: String
-    let eyebrow: String
-    let title: String
-    let detail: String
-    let symbol: String
-    let destination: Destination
-    @ViewBuilder let content: Content
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            NavigationLink {
-                destination
-            } label: {
-                VStack(spacing: 10) {
-                    HStack(alignment: .firstTextBaseline, spacing: 10) {
-                        Text(eyebrow)
-                            .font(.system(size: 10, weight: .bold))
-                            .tracking(1.35)
-                            .foregroundStyle(timeOfDay.accent)
-
-                        Spacer()
-
-                        Label("View", systemImage: "arrow.right")
-                            .labelStyle(.titleAndIcon)
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(timeOfDay.secondaryText)
-                    }
-
-                    Rectangle()
-                        .fill(timeOfDay.canvasBorder)
-                        .frame(height: 1)
-
-                    HStack(alignment: .top, spacing: 14) {
-                        Image(systemName: symbol)
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(timeOfDay.accent)
-                            .frame(width: 38, height: 38)
-                            .background(timeOfDay.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 10))
-
-                        VStack(alignment: .leading, spacing: 5) {
-                            Text(title)
-                                .font(.system(size: 22, weight: .bold))
-                                .tracking(-0.35)
-                                .foregroundStyle(timeOfDay.primaryText)
-                            Text(detail)
-                                .font(.system(size: 13, weight: .medium))
-                                .foregroundStyle(timeOfDay.secondaryText)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-
-                        Spacer(minLength: 0)
-                    }
-                }
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityHint("Opens the full \(title.lowercased()) section")
-
-            content
-        }
-    }
-}
-
-private struct HomeHeader: View {
+private struct HomeCommandHeader: View {
     @Environment(AuthenticationStore.self) private var authentication
     @Environment(WorkoutStore.self) private var workoutStore
     @Environment(\.homeTimeOfDay) private var timeOfDay
@@ -287,20 +55,22 @@ private struct HomeHeader: View {
 
     var body: some View {
         HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("WELCOME HOME  /  \(date.formatted(.dateTime.weekday(.wide)).uppercased())")
-                    .font(.system(size: 10, weight: .bold))
-                    .tracking(1.35)
-                    .foregroundStyle(timeOfDay.accent)
-                Text(headline)
-                    .font(.system(size: 30, weight: .bold))
-                    .tracking(-0.65)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("\(greeting.uppercased()), \(firstName.uppercased())")
+                    .font(.caption2.weight(.bold))
+                    .tracking(1)
+                    .foregroundStyle(timeOfDay.commandAccent)
+
+                Text("Your day.")
+                    .font(.largeTitle.weight(.bold))
+                    .tracking(-0.6)
                     .foregroundStyle(timeOfDay.canvasPrimaryText)
             }
 
             Spacer(minLength: 12)
             accountMenu
         }
+        .frame(minHeight: 54)
     }
 
     private var accountMenu: some View {
@@ -313,269 +83,256 @@ private struct HomeHeader: View {
             Button("Refresh Workouts", systemImage: "arrow.clockwise") {
                 workoutStore.retryPersistence()
             }
-            Button(
-                "Sign Out",
-                systemImage: "rectangle.portrait.and.arrow.right",
-                role: .destructive
-            ) {
+            Button("Sign Out", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) {
                 Task { await authentication.signOut() }
             }
         } label: {
-            Text(accountInitial)
-                .font(.system(size: 16, weight: .bold))
-                .foregroundStyle(timeOfDay.accent)
+            Text(initials)
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(timeOfDay.commandAccent)
                 .frame(width: 44, height: 44)
-                .repbaseDepthSurface(cornerRadius: 12)
+                .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(timeOfDay.commandAccent, lineWidth: 1)
+                }
         }
         .disabled(authentication.isWorking)
         .accessibilityLabel("Account")
     }
 
-    private var accountInitial: String {
+    private var firstName: String {
+        guard case .signedIn(let user) = authentication.phase else { return "there" }
+        return user.displayName.split(separator: " ").first.map(String.init) ?? user.displayName
+    }
+
+    private var initials: String {
         guard case .signedIn(let user) = authentication.phase else { return "R" }
-        return String(user.displayName.prefix(1)).uppercased()
+        let parts = user.displayName.split(separator: " ").prefix(2)
+        let value = parts.compactMap(\.first).map(String.init).joined()
+        return value.isEmpty ? String(user.username.prefix(2)).uppercased() : value.uppercased()
     }
 
-    private var headline: String {
-        guard case .signedIn(let user) = authentication.phase else { return "Hello" }
-        let firstName = user.displayName.split(separator: " ").first.map(String.init) ?? user.displayName
-        return firstName
+    private var greeting: String {
+        switch timeOfDay {
+        case .dawn: "Good morning"
+        case .day: "Good afternoon"
+        case .dusk, .night: "Good evening"
+        }
     }
 }
 
-private struct PlannedWorkoutItem: Identifiable {
-    let day: Weekday
-    let workout: Workout
-    var id: Workout.ID { workout.id }
-}
+// MARK: - Week
 
-private struct WeeklyPlanCard: View {
-    @Environment(WorkoutStore.self) private var store
+private struct HomeWeekStrip: View {
+    @Environment(PlannerStore.self) private var planner
+    @Environment(WorkoutStore.self) private var workouts
     @Environment(\.homeTimeOfDay) private var timeOfDay
-    @State private var scrollOffset: CGFloat = 0
 
-    private let listHeight: CGFloat = 103
-    private let scrollTrackHeight: CGFloat = 95
+    let date: Date
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            NavigationLink {
-                WorkoutsView()
-            } label: {
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(alignment: .center) {
-                        Text("PLAN WORKOUTS")
+        HStack(spacing: 0) {
+            ForEach(weekDates, id: \.self) { day in
+                NavigationLink {
+                    PlannerView()
+                } label: {
+                    VStack(spacing: 3) {
+                        Text(day.formatted(.dateTime.weekday(.abbreviated)).uppercased())
                             .font(.system(size: 9, weight: .semibold))
-                            .tracking(0.7)
-                        Spacer(minLength: 4)
-                        Text("\(items.count)")
-                            .font(.system(size: 15, weight: .bold, design: .rounded))
-                            .frame(width: 34, height: 34)
-                            .background(Color.primary.opacity(0.06), in: Circle())
+                        Text(day.formatted(.dateTime.day()))
+                            .font(.subheadline.weight(isToday(day) ? .bold : .semibold))
+
+                        Circle()
+                            .fill(dayHasContent(day) ? (isToday(day) ? Color.white : timeOfDay.commandAccent) : .clear)
+                            .frame(width: 3, height: 3)
                     }
-                    Text("Workouts")
-                        .font(.system(size: 23, weight: .bold, design: .rounded))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.9)
+                    .foregroundStyle(isToday(day) ? Color.white : timeOfDay.canvasPrimaryText)
+                    .frame(maxWidth: .infinity, minHeight: 58)
+                    .background {
+                        if isToday(day) {
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(timeOfDay.commandAccent)
+                        }
+                    }
                 }
+                .buttonStyle(.plain)
+                .accessibilityLabel(day.formatted(date: .complete, time: .omitted))
+            }
+        }
+        .frame(height: 64)
+    }
+
+    private var weekDates: [Date] {
+        let calendar = Calendar.current
+        guard let interval = calendar.dateInterval(of: .weekOfYear, for: date) else { return [date] }
+        return (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: interval.start) }
+    }
+
+    private func isToday(_ day: Date) -> Bool {
+        Calendar.current.isDate(day, inSameDayAs: date)
+    }
+
+    private func dayHasContent(_ day: Date) -> Bool {
+        let weekday = Weekday(calendarWeekday: Calendar.current.component(.weekday, from: day))
+        return planner.hasEntries(on: day) || weekday.map { !workouts.workouts(on: $0).isEmpty } == true
+    }
+}
+
+// MARK: - Up next
+
+private struct HomeUpNextSection: View {
+    @Environment(PlannerStore.self) private var planner
+    @Environment(\.homeTimeOfDay) private var timeOfDay
+
+    let date: Date
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HomeSectionHeader(title: "UP NEXT", action: "OPEN CALENDAR", destination: PlannerView())
+
+            if items.isEmpty {
+                HomeEmptyLine(symbol: "calendar", title: "Nothing scheduled next")
+                    .frame(height: 44)
+            } else {
+                ForEach(items.prefix(2)) { item in
+                    HStack(spacing: 8) {
+                        Text(item.displayTime ?? "—")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(timeOfDay.canvasSecondaryText)
+                            .frame(width: 40, alignment: .leading)
+
+                        Circle()
+                            .fill(item.category.tint)
+                            .frame(width: 6, height: 6)
+
+                        Text(item.title)
+                            .font(.subheadline.weight(item.isCompletable ? .semibold : .regular))
+                            .foregroundStyle(timeOfDay.canvasPrimaryText)
+                            .lineLimit(1)
+
+                        Spacer(minLength: 6)
+
+                        Text(status(for: item))
+                            .font(.system(size: 8, weight: .bold))
+                            .tracking(0.6)
+                            .foregroundStyle(isPastDue(item) ? timeOfDay.commandAccent : timeOfDay.canvasSecondaryText)
+                    }
+                    .frame(height: 22)
+                }
+            }
+
+            Rectangle()
+                .fill(timeOfDay.canvasBorder)
+                .frame(height: 1)
+                .padding(.top, 3)
+        }
+        .frame(minHeight: 72, alignment: .top)
+    }
+
+    private var items: [PlannerEntry] {
+        let overdue = planner.pastDue.filter { !$0.isComplete }
+        let today = planner.entries(on: date).filter { !$0.isComplete || !$0.isCompletable }
+        return unique(overdue + today).sorted {
+            if isPastDue($0) != isPastDue($1) { return isPastDue($0) }
+            return ($0.time ?? "99:99:99") < ($1.time ?? "99:99:99")
+        }
+    }
+
+    private func unique(_ entries: [PlannerEntry]) -> [PlannerEntry] {
+        var seenServerIDs: Set<Int> = []
+        var seenLocalIDs: Set<UUID> = []
+        return entries.filter { entry in
+            if let serverID = entry.serverID { return seenServerIDs.insert(serverID).inserted }
+            return seenLocalIDs.insert(entry.id).inserted
+        }
+    }
+
+    private func isPastDue(_ entry: PlannerEntry) -> Bool {
+        planner.pastDue.contains { $0.isSameEntry(as: entry) }
+    }
+
+    private func status(for entry: PlannerEntry) -> String {
+        if isPastDue(entry) { return "PAST DUE" }
+        return entry.kind == .event ? "EVENT" : entry.category.title.uppercased()
+    }
+}
+
+// MARK: - Training
+
+private struct HomeTrainingSection: View {
+    @Environment(WorkoutStore.self) private var store
+    @Environment(\.homeTimeOfDay) private var timeOfDay
+
+    let date: Date
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            HomeSectionHeader(title: "TRAINING  /  TODAY", action: "OPEN WORKOUTS", destination: WorkoutsView())
+
+            NavigationLink {
+                workoutDestination
+            } label: {
+                HStack(spacing: 16) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(title)
+                            .font(.title.weight(.bold))
+                            .tracking(-0.35)
+                            .foregroundStyle(timeOfDay.canvasPrimaryText)
+                            .lineLimit(1)
+                        Text(metadata)
+                            .font(.caption)
+                            .foregroundStyle(timeOfDay.canvasSecondaryText)
+                    }
+
+                    Spacer(minLength: 8)
+
+                    Image(systemName: workoutSymbol)
+                        .font(.system(size: 29, weight: .bold))
+                        .foregroundStyle(timeOfDay.commandAccent)
+                        .frame(width: 54, height: 54)
+                }
+                .frame(minHeight: 66)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityHint("Opens the weekly workout plan")
 
-            Spacer(minLength: 12)
-
-            ScrollView(.vertical) {
-                LazyVStack(spacing: 7) {
-                    ForEach(items) { item in
-                        planRow(item)
-                    }
-                    if items.isEmpty {
-                        emptyPlanRow
-                    }
+            NavigationLink {
+                workoutDestination
+            } label: {
+                HStack {
+                    Text(actionTitle)
+                        .font(.subheadline.weight(.semibold))
+                    Spacer()
+                    Image(systemName: store.activeSession == nil ? "play.fill" : "arrow.right")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 32, height: 32)
+                        .background(timeOfDay.commandAccent, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                 }
-                .padding(.trailing, showsScrollBar ? 8 : 0)
+                .foregroundStyle(RepbasePalette.cream)
+                .padding(.leading, 16)
+                .padding(.trailing, 6)
+                .frame(height: 44)
+                .background(timeOfDay.ink, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
             }
-            .scrollIndicators(.hidden)
-            .onScrollGeometryChange(for: CGFloat.self) { geometry in
-                geometry.contentOffset.y + geometry.contentInsets.top
-            } action: { _, newOffset in
-                scrollOffset = newOffset
-            }
-            .frame(height: listHeight)
-            .overlay(alignment: .trailing) {
-                if showsScrollBar {
-                    ZStack(alignment: .top) {
-                        Capsule()
-                            .fill(Color.primary.opacity(0.08))
-                        Capsule()
-                            .fill(RepbaseDesign.ink.opacity(0.72))
-                            .frame(height: scrollThumbHeight)
-                            .offset(y: scrollThumbOffset)
-                    }
-                    .frame(width: 3, height: scrollTrackHeight)
-                }
-            }
+            .buttonStyle(.plain)
+            .accessibilityHint("Opens today's workout")
+
+            Rectangle()
+                .fill(timeOfDay.canvasBorder)
+                .frame(height: 1)
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, minHeight: 214, maxHeight: 214, alignment: .topLeading)
-        .foregroundStyle(timeOfDay.primaryText)
-        .background {
-            RoundedRectangle(cornerRadius: RepbaseDesign.featureRadius)
-                .fill(timeOfDay.surfaceRaised)
-        }
-        .overlay(alignment: .top) {
-            RoundedRectangle(cornerRadius: RepbaseDesign.featureRadius)
-                .strokeBorder(Color.white.opacity(0.9), lineWidth: 1)
-        }
-        .shadow(color: timeOfDay.shadow, radius: 14, x: 0, y: 7)
-    }
-
-    private var items: [PlannedWorkoutItem] {
-        Weekday.allCases.flatMap { day in
-            store.workouts(on: day).map { PlannedWorkoutItem(day: day, workout: $0) }
-        }
-    }
-
-    private var listContentHeight: CGFloat {
-        let rowCount = max(items.count, 1)
-        return CGFloat(rowCount * 48 + max(rowCount - 1, 0) * 7)
-    }
-
-    private var showsScrollBar: Bool {
-        listContentHeight > listHeight
-    }
-
-    private var scrollThumbHeight: CGFloat {
-        max(26, scrollTrackHeight * listHeight / listContentHeight)
-    }
-
-    private var scrollThumbOffset: CGFloat {
-        let contentTravel = max(listContentHeight - listHeight, 1)
-        let progress = min(max(scrollOffset / contentTravel, 0), 1)
-        return (scrollTrackHeight - scrollThumbHeight) * progress
-    }
-
-    private func planRow(_ item: PlannedWorkoutItem) -> some View {
-        HStack(spacing: 8) {
-            planIcon(for: item)
-                .frame(width: 18, height: 18)
-                .background(Color.primary.opacity(0.08), in: Circle())
-            VStack(alignment: .leading, spacing: 1) {
-                Text(item.workout.name)
-                    .font(.system(size: 11, weight: .semibold))
-                    .lineLimit(1)
-                Text(item.day.shortName.uppercased())
-                    .font(.system(size: 8, weight: .medium))
-                    .opacity(0.68)
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, 10)
-        .frame(height: 48)
-        .background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: RepbaseDesign.controlRadius))
-    }
-
-    private var emptyPlanRow: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "plus").font(.caption.weight(.bold))
-            Text("Build your week").font(.system(size: 11, weight: .semibold))
-            Spacer()
-        }
-        .padding(.horizontal, 10)
-        .frame(height: 48)
-        .background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: RepbaseDesign.controlRadius))
+        .padding(.vertical, 6)
     }
 
     @ViewBuilder
-    private func planIcon(for item: PlannedWorkoutItem) -> some View {
-        if completed(item.day) {
-            Image(systemName: "checkmark")
-                .font(.system(size: 9, weight: .bold))
+    private var workoutDestination: some View {
+        if let day = store.today {
+            DayWorkoutView(day: day)
         } else {
-            ActivityIconArtwork(
-                kind: item.workout.type.activityIcon,
-                size: 12,
-                color: Color.primary
-            )
+            WorkoutsView()
         }
-    }
-
-    private func completed(_ day: Weekday) -> Bool {
-        store.completedSessions.contains { $0.session.day == day }
-        }
-    }
-
-private struct TodayWorkoutCard: View {
-    @Environment(WorkoutStore.self) private var store
-    @Environment(\.homeTimeOfDay) private var timeOfDay
-
-    var body: some View {
-        NavigationLink {
-            if let today = store.today {
-                DayWorkoutView(day: today)
-            } else {
-                WorkoutsView()
-            }
-        } label: {
-            VStack(alignment: .leading, spacing: 0) {
-                Text(Date().formatted(.dateTime.month(.abbreviated).day()))
-                    .font(.system(size: 9, weight: .semibold))
-                    .tracking(0.6)
-                    .foregroundStyle(Color(hex: 0xACA6A5))
-                Text(prompt)
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(Color(hex: 0xF7F7F8).opacity(0.72))
-                    .padding(.top, 9)
-                Text(title)
-                    .font(.system(size: 21, weight: .bold, design: .rounded))
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.75)
-                    .padding(.top, 2)
-
-                Spacer(minLength: 12)
-
-                Text(meta)
-                    .font(.system(size: 9, weight: .medium))
-                    .foregroundStyle(Color(hex: 0xACA6A5))
-                    .lineLimit(2)
-
-                HStack {
-                    Text(buttonTitle)
-                        .font(.system(size: 15, weight: .semibold))
-                    Spacer()
-                    Image(systemName: store.activeSession == nil ? "arrow.right" : "play.fill")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(Color(hex: 0xF7F7F8))
-                        .frame(width: 38, height: 38)
-                        .background(Color.white.opacity(0.16), in: RoundedRectangle(cornerRadius: 9))
-                }
-                .foregroundStyle(Color.white)
-                .padding(.leading, 18)
-                .padding(.trailing, 5)
-                .frame(height: 48)
-                .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: RepbaseDesign.controlRadius))
-                .padding(.top, 10)
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity, minHeight: 214, alignment: .topLeading)
-            .foregroundStyle(Color(hex: 0xF7F7F8))
-            .background {
-                LinearGradient(
-                    colors: [timeOfDay.ink, timeOfDay.heroEnd],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .clipShape(RoundedRectangle(cornerRadius: RepbaseDesign.featureRadius))
-            }
-            .overlay {
-                RoundedRectangle(cornerRadius: RepbaseDesign.featureRadius)
-                    .strokeBorder(Color.white.opacity(0.13), lineWidth: 1)
-            }
-            .shadow(color: timeOfDay.shadow, radius: 10, x: 2, y: 6)
-        }
-        .buttonStyle(.plain)
-        .accessibilityHint("Opens today's workout")
     }
 
     private var workout: Workout? {
@@ -583,27 +340,300 @@ private struct TodayWorkoutCard: View {
         return store.workout(on: today)
     }
 
-    private var title: String { store.activeSession?.workoutName ?? workout?.name ?? "Plan Today" }
-    private var prompt: String { store.activeSession == nil ? "Ready to train?" : "Workout in progress" }
-    private var buttonTitle: String { store.activeSession == nil ? (workout == nil ? "Plan" : "Start") : "Continue" }
+    private var title: String {
+        store.activeSession?.workoutName ?? workout?.name ?? "Plan today's workout"
+    }
 
-    private var meta: String {
+    private var actionTitle: String {
+        if store.activeSession != nil { return "Continue workout" }
+        return workout == nil ? "Plan workout" : "Start workout"
+    }
+
+    private var metadata: String {
         guard let workout else { return "No workout is scheduled yet" }
         if workout.tracksDistance { return workout.type.title }
-        let exerciseCount = workout.exercises.count
-        let exercises = exerciseCount == 1 ? "exercise" : "exercises"
-        let sets = workout.totalSets == 1 ? "set" : "sets"
-        return "\(exerciseCount) \(exercises) · \(workout.totalSets) \(sets)"
+        let exercises = workout.exercises.count
+        return "\(exercises) \(exercises == 1 ? "exercise" : "exercises")  ·  \(workout.totalSets) target sets"
+    }
+
+    private var workoutSymbol: String {
+        guard let workout else { return "plus" }
+        switch workout.type {
+        case .lifting: "dumbbell.fill"
+        case .running: "figure.run"
+        case .biking: "bicycle"
+        case .swimming: "figure.pool.swim"
+        }
+    }
+}
+
+// MARK: - Macros
+
+private struct HomeMacroSection: View {
+    @Environment(FoodTrackingStore.self) private var food
+    @Environment(\.homeTimeOfDay) private var timeOfDay
+
+    let date: Date
+
+    var body: some View {
+        let total = food.total(on: date)
+        let goals = food.goals
+
+        VStack(alignment: .leading, spacing: 7) {
+            HomeSectionHeader(title: "MACROS TODAY", action: "OPEN FOOD", destination: FoodTrackingView())
+
+            HStack(alignment: .firstTextBaseline) {
+                Text("\(total.calories.nutritionText) / \(goals.calories.nutritionText) kcal")
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(timeOfDay.canvasPrimaryText)
+                Spacer()
+                Text("\(remaining(total.calories, goal: goals.calories).nutritionText) left")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+            }
+
+            HomeProgressBar(value: ratio(total.calories, goals.calories), height: 5)
+
+            HStack(spacing: 18) {
+                macro("PROTEIN", total.proteinGrams, goals.proteinGrams)
+                macro("CARBS", total.carbohydrateGrams, goals.carbohydrateGrams)
+                macro("FAT", total.fatGrams, goals.fatGrams)
+            }
+        }
+        .frame(minHeight: 116, alignment: .top)
+    }
+
+    private func macro(_ label: String, _ value: Decimal, _ goal: Decimal) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label)
+                .font(.system(size: 8, weight: .bold))
+                .foregroundStyle(timeOfDay.canvasSecondaryText)
+            Text("\(value.nutritionText) / \(goal.nutritionText)g")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(timeOfDay.canvasPrimaryText)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+            HomeProgressBar(value: ratio(value, goal), height: 3)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func ratio(_ value: Decimal, _ goal: Decimal) -> Double {
+        guard goal > 0 else { return 0 }
+        return min(max(value.nutritionDouble / goal.nutritionDouble, 0), 1)
+    }
+
+    private func remaining(_ value: Decimal, goal: Decimal) -> Decimal {
+        max(goal - value, 0)
+    }
+}
+
+private struct HomeProgressBar: View {
+    @Environment(\.homeTimeOfDay) private var timeOfDay
+    let value: Double
+    let height: CGFloat
+
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .leading) {
+                Capsule().fill(timeOfDay.canvasBorder)
+                Capsule()
+                    .fill(timeOfDay.commandAccent)
+                    .frame(width: proxy.size.width * value)
+            }
+        }
+        .frame(height: height)
+        .accessibilityValue(Text(value, format: .percent.precision(.fractionLength(0))))
+    }
+}
+
+// MARK: - Tasks
+
+private struct HomeRemainingTasksSection: View {
+    @Environment(PlannerStore.self) private var planner
+    @Environment(\.homeTimeOfDay) private var timeOfDay
+
+    let date: Date
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HomeSectionHeader(
+                title: "STILL TO DO",
+                action: "\(tasks.count) REMAINING  ·  OPEN",
+                destination: PlannerView()
+            )
+            .frame(height: 24)
+
+            if tasks.isEmpty {
+                HomeEmptyLine(symbol: "checkmark", title: "Everything is done")
+                    .frame(height: 48)
+            } else {
+                ForEach(tasks.prefix(3)) { task in
+                    Button {
+                        planner.setComplete(task, true)
+                    } label: {
+                        HStack(spacing: 9) {
+                            RoundedRectangle(cornerRadius: 5, style: .continuous)
+                                .stroke(timeOfDay.canvasSecondaryText, lineWidth: 1.4)
+                                .frame(width: 17, height: 17)
+
+                            Text(task.displayTime ?? "—")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(timeOfDay.canvasSecondaryText)
+                                .frame(width: 40, alignment: .leading)
+
+                            Text(task.title)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(timeOfDay.canvasPrimaryText)
+                                .lineLimit(1)
+
+                            Spacer(minLength: 6)
+
+                            if isPastDue(task) {
+                                Text("PAST DUE")
+                                    .font(.system(size: 8, weight: .bold))
+                                    .tracking(0.5)
+                                    .foregroundStyle(timeOfDay.commandAccent)
+                            }
+                        }
+                        .frame(height: 36)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+
+                    if task.id != tasks.prefix(3).last?.id {
+                        Rectangle()
+                            .fill(timeOfDay.canvasBorder)
+                            .frame(height: 1)
+                    }
+                }
+            }
+        }
+        .frame(minHeight: 102, alignment: .top)
+    }
+
+    private var tasks: [PlannerEntry] {
+        let overdue = planner.pastDue.filter { $0.isCompletable && !$0.isComplete }
+        let today = planner.entries(on: date).filter { $0.isCompletable && !$0.isComplete }
+        var seenServerIDs: Set<Int> = []
+        var seenLocalIDs: Set<UUID> = []
+        return (overdue + today).filter { entry in
+            if let serverID = entry.serverID { return seenServerIDs.insert(serverID).inserted }
+            return seenLocalIDs.insert(entry.id).inserted
+        }
+    }
+
+    private func isPastDue(_ task: PlannerEntry) -> Bool {
+        planner.pastDue.contains { $0.isSameEntry(as: task) }
+    }
+}
+
+// MARK: - Shared home pieces
+
+private struct HomeSectionHeader<Destination: View>: View {
+    @Environment(\.homeTimeOfDay) private var timeOfDay
+
+    let title: String
+    let action: String
+    let destination: Destination
+
+    var body: some View {
+        HStack {
+            Text(title)
+                .font(.system(size: 9, weight: .bold))
+                .tracking(0.9)
+                .foregroundStyle(timeOfDay.commandAccent)
+
+            Spacer()
+
+            NavigationLink {
+                destination
+            } label: {
+                HStack(spacing: 4) {
+                    Text(action)
+                    Image(systemName: "arrow.up.right")
+                }
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundStyle(timeOfDay.canvasSecondaryText)
+            }
+            .buttonStyle(.plain)
+        }
+        .frame(height: 18)
+    }
+}
+
+private struct HomeEmptyLine: View {
+    @Environment(\.homeTimeOfDay) private var timeOfDay
+
+    let symbol: String
+    let title: String
+
+    var body: some View {
+        HStack(spacing: 9) {
+            Image(systemName: symbol)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(timeOfDay.commandAccent)
+            Text(title)
+                .font(.subheadline)
+                .foregroundStyle(timeOfDay.canvasSecondaryText)
+            Spacer()
+        }
+    }
+}
+
+private struct HomePersistenceError: View {
+    @Environment(WorkoutStore.self) private var store
+    @Environment(\.homeTimeOfDay) private var timeOfDay
+
+    let message: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(timeOfDay.commandAccent)
+            VStack(alignment: .leading, spacing: 7) {
+                Text(message).font(.footnote)
+                Button("Retry") { store.retryPersistence() }
+                    .font(.footnote.weight(.semibold))
+            }
+            Spacer()
+        }
+        .foregroundStyle(timeOfDay.canvasPrimaryText)
+        .padding(.vertical, 8)
+    }
+}
+
+private struct HomeLoadingOverlay: View {
+    let timeOfDay: HomeTimeOfDay
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.12).ignoresSafeArea()
+            ProgressView("Loading workouts…")
+                .padding(18)
+                .foregroundStyle(timeOfDay.primaryText)
+                .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 14))
+        }
+    }
+}
+
+private extension HomeTimeOfDay {
+    /// The approved command-center orange, softened after sunset so the
+    /// hierarchy stays legible without turning the night screen neon.
+    var commandAccent: Color {
+        switch self {
+        case .dawn, .day: Color(hex: 0xF86722)
+        case .dusk: Color(hex: 0xFF7540)
+        case .night: Color(hex: 0xFF966D)
+        }
     }
 }
 
 #Preview {
-    ContentView()
+    NavigationStack { ContentView() }
         .environment(WorkoutStore.preview)
-        .environment(PlannerStore())
+        .environment(PlannerStore.preview)
         .environment(FoodTrackingStore.preview)
         .environment(SocialProfileStore.preview)
-        .environment(
-            AuthenticationStore(configuration: .current)
-        )
+        .environment(AuthenticationStore(configuration: .current))
 }
