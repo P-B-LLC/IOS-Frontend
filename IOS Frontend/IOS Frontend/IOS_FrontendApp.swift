@@ -10,6 +10,9 @@ import SwiftUI
 
 @main
 struct IOS_FrontendApp: App {
+    @AppStorage(RepbaseAppearancePreference.storageKey)
+    private var appearanceRawValue = RepbaseAppearancePreference.light.rawValue
+
     @State private var authentication: AuthenticationStore
     @State private var workoutStore: WorkoutStore
     @State private var plannerStore: PlannerStore
@@ -82,7 +85,12 @@ struct IOS_FrontendApp: App {
                 .environment(activityStore)
                 .environment(gearStore)
                 .environment(cycleStore)
+                .preferredColorScheme(appearance.colorScheme)
         }
+    }
+
+    private var appearance: RepbaseAppearancePreference {
+        RepbaseAppearancePreference(rawValue: appearanceRawValue) ?? .light
     }
 }
 

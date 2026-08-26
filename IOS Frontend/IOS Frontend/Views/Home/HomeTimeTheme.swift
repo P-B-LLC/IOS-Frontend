@@ -7,6 +7,28 @@
 
 import SwiftUI
 
+/// The one appearance choice used by every Repbase screen.
+///
+/// Kept in `UserDefaults` through `AppStorage`: appearance is a device-level
+/// preference, not account data, and it must be available before sign-in so
+/// the launch and authentication screens do not flash the wrong theme.
+enum RepbaseAppearancePreference: String, CaseIterable, Identifiable {
+    static let storageKey = "repbase.appearance"
+
+    case light
+    case dark
+
+    var id: String { rawValue }
+    var title: String { rawValue.capitalized }
+    var symbol: String { self == .light ? "sun.max.fill" : "moon.fill" }
+    var colorScheme: ColorScheme { self == .light ? .light : .dark }
+
+    static var current: RepbaseAppearancePreference {
+        let raw = UserDefaults.standard.string(forKey: storageKey)
+        return RepbaseAppearancePreference(rawValue: raw ?? "") ?? .light
+    }
+}
+
 /// The warm end of the palette, kept from the soft luxury branch.
 ///
 /// The screens merged from that branch name these colours directly rather than
@@ -38,70 +60,51 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
     case night
 
     init(date: Date, calendar: Calendar = .current) {
-        switch calendar.component(.hour, from: date) {
-        case 5..<10: self = .dawn
-        case 10..<17: self = .day
-        case 17..<21: self = .dusk
-        default: self = .night
-        }
+        // Compatibility initializer for the views that already ask for a
+        // `HomeTimeOfDay`. The clock no longer chooses appearance; the saved
+        // user preference does. Keeping the type avoids a risky app-wide API
+        // migration while removing the old dawn/day/dusk/night behavior.
+        self = RepbaseAppearancePreference.current == .dark ? .night : .day
     }
 
-    var label: String { rawValue.uppercased() }
+    var label: String { usesDarkAppearance ? "DARK" : "LIGHT" }
 
-    var usesDarkAppearance: Bool { self == .night }
+    var usesDarkAppearance: Bool { RepbaseAppearancePreference.current == .dark }
 
     var canvasStart: Color {
-        switch self {
-        case .dawn, .day: Color.white
-        case .dusk: Color(hex: 0x896C5E)
-        case .night: Color(hex: 0x252220)
-        }
+        Color(uiColor: .systemBackground)
     }
 
     var canvasMiddle: Color {
-        switch self {
-        case .dawn, .day: Color.white
-        case .dusk: Color(hex: 0x6A5147)
-        case .night: Color(hex: 0x1D1B1A)
-        }
+        Color(uiColor: .systemBackground)
     }
 
     var canvasEnd: Color {
-        switch self {
-        case .dawn, .day: Color.white
-        case .dusk: Color(hex: 0x3F3430)
-        case .night: RepbasePalette.night
-        }
+        Color(uiColor: .systemBackground)
     }
 
     var primaryText: Color {
-        usesDarkAppearance ? RepbasePalette.cream : RepbasePalette.ink
+        Color.primary
     }
 
     var secondaryText: Color {
-        usesDarkAppearance ? Color(hex: 0xCDBFB5) : RepbasePalette.muted
+        Color.secondary
     }
 
     var surface: Color {
-        switch self {
-        case .night: Color(hex: 0x292624)
-        case .dawn, .day, .dusk: Color.white
-        }
+        Color(uiColor: .systemBackground)
     }
 
     var surfaceRaised: Color {
-        switch self {
-        case .night: Color(hex: 0x332F2C)
-        case .dawn, .day, .dusk: Color.white
-        }
+        usesDarkAppearance ? Color(hex: 0x252220) : Color.white
     }
 
     var selectorSurface: Color {
-        usesDarkAppearance ? Color(hex: 0x3B3633) : RepbasePalette.oatmeal
+        usesDarkAppearance ? Color(hex: 0x2C2927) : RepbasePalette.oatmeal
     }
 
     var emptyDaySurface: Color {
-        usesDarkAppearance ? Color(hex: 0x292624) : RepbasePalette.oatmeal
+        usesDarkAppearance ? Color(hex: 0x252220) : RepbasePalette.oatmeal
     }
 
     var plannedDaySurface: Color { RepbasePalette.espresso }
@@ -122,12 +125,7 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
     }
 
     var heroEnd: Color {
-        switch self {
-        case .dawn: Color(hex: 0x5D4A40)
-        case .day: RepbasePalette.espresso
-        case .dusk: Color(hex: 0x3A302D)
-        case .night: Color(hex: 0x4A3A33)
-        }
+        usesDarkAppearance ? Color(hex: 0x332F2C) : RepbasePalette.espresso
     }
 
     var border: Color {
@@ -146,18 +144,18 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
     // and near-black text disappears into it. These follow the canvas instead.
 
     /// Whether the canvas behind unraised content is dark at this hour.
-    var hasDarkCanvas: Bool { self == .dusk || self == .night }
+    var hasDarkCanvas: Bool { usesDarkAppearance }
 
     var canvasPrimaryText: Color {
-        hasDarkCanvas ? RepbasePalette.cream : RepbasePalette.ink
+        Color.primary
     }
 
     var canvasSecondaryText: Color {
-        hasDarkCanvas ? Color.white.opacity(0.72) : RepbasePalette.muted
+        Color.secondary
     }
 
     var canvasBorder: Color {
-        hasDarkCanvas ? Color.white.opacity(0.16) : RepbasePalette.espresso.opacity(0.12)
+        usesDarkAppearance ? Color.white.opacity(0.16) : RepbasePalette.espresso.opacity(0.12)
     }
 }
 
@@ -182,9 +180,8 @@ private struct HomeTimeScreenModifier: ViewModifier {
                 RepbaseAmbientBackdrop(timeOfDay: timeOfDay)
             }
             .environment(\.homeTimeOfDay, timeOfDay)
-            .environment(\.workoutVisualPhase, timeOfDay.usesDarkAppearance ? .focus : .prepare)
+            .environment(\.workoutVisualPhase, .prepare)
             .tint(timeOfDay.accent)
-            .preferredColorScheme(timeOfDay.usesDarkAppearance ? .dark : .light)
     }
 }
 
@@ -194,16 +191,7 @@ private struct RepbaseAmbientBackdrop: View {
     let timeOfDay: HomeTimeOfDay
 
     var body: some View {
-        LinearGradient(
-            gradient: Gradient(stops: [
-                .init(color: timeOfDay.canvasStart, location: 0),
-                .init(color: timeOfDay.canvasMiddle, location: 0.56),
-                .init(color: timeOfDay.canvasEnd, location: 1)
-            ]),
-            startPoint: .top,
-            endPoint: .bottom
-        )
-        .ignoresSafeArea()
+        Color(uiColor: .systemBackground).ignoresSafeArea()
     }
 }
 

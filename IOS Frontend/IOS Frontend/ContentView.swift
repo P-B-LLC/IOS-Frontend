@@ -145,10 +145,10 @@ private struct HomeCommandHeader: View {
     }
 
     private var greeting: String {
-        switch timeOfDay {
-        case .dawn: "Good morning"
-        case .day: "Good afternoon"
-        case .dusk, .night: "Good evening"
+        switch Calendar.current.component(.hour, from: date) {
+        case 5..<12: "Good morning"
+        case 12..<17: "Good afternoon"
+        default: "Good evening"
         }
     }
 }
@@ -364,62 +364,85 @@ private struct HomeTrainingSection: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            HomeSectionHeader(
-                title: isToday ? "Workout today" : "Workout on \(date.formatted(.dateTime.weekday(.wide)))",
-                action: "Workouts",
-                destination: WorkoutsView()
-            )
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Label(
+                    isToday ? "WORKOUT" : date.formatted(.dateTime.weekday(.wide)).uppercased(),
+                    systemImage: workoutSymbol
+                )
+                .font(.system(size: 10, weight: .bold))
+                .tracking(1.1)
+                .foregroundStyle(timeOfDay.commandAccent)
 
-            NavigationLink {
-                workoutDestination
-            } label: {
-                HStack(spacing: 14) {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(title)
-                            .font(.system(size: 22, weight: .bold))
-                            .tracking(-0.35)
-                            .foregroundStyle(timeOfDay.canvasPrimaryText)
-                            .lineLimit(1)
-                        Text(metadata)
-                            .font(.caption)
-                            .foregroundStyle(timeOfDay.canvasSecondaryText)
-                    }
+                Spacer()
 
-                    Spacer(minLength: 8)
-
-                    Image(systemName: workoutSymbol)
-                        .font(.system(size: 24, weight: .semibold))
+                NavigationLink {
+                    WorkoutsView()
+                } label: {
+                    Label("Workouts", systemImage: "arrow.up.right")
+                        .labelStyle(.titleAndIcon)
+                        .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(timeOfDay.commandAccent)
-                        .frame(width: 44, height: 44)
                 }
-                .frame(minHeight: 58)
-                .contentShape(Rectangle())
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
+
+            HStack(alignment: .center, spacing: 18) {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text(title)
+                        .font(.system(size: 24, weight: .bold))
+                        .tracking(-0.4)
+                        .foregroundStyle(timeOfDay.canvasPrimaryText)
+                        .lineLimit(2)
+
+                    Text(metadata)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+
+                    if let workout, !workout.exercises.isEmpty {
+                        VStack(alignment: .leading, spacing: 7) {
+                            ForEach(workout.exercises.prefix(2)) { exercise in
+                                HStack(spacing: 8) {
+                                    Text(exercise.name)
+                                        .foregroundStyle(timeOfDay.canvasPrimaryText)
+                                        .lineLimit(1)
+                                    Text("\(exercise.sets) sets")
+                                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                                }
+                                .font(.system(size: 13, weight: .medium))
+                            }
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                NavigationLink {
+                    workoutDestination
+                } label: {
+                    VStack(spacing: 7) {
+                        Image(systemName: activeSession == nil ? "play.fill" : "arrow.right")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundStyle(timeOfDay.commandAccent)
+                            .frame(width: 58, height: 58)
+                            .overlay {
+                                Circle().strokeBorder(timeOfDay.commandAccent, lineWidth: 2)
+                            }
+
+                        Text(activeSession == nil ? (workout == nil ? "Plan" : "Start") : "Continue")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(timeOfDay.commandAccent)
+                    }
+                    .frame(width: 76)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(actionTitle)
+                .accessibilityHint("Opens this workout")
+            }
 
             Rectangle()
                 .fill(timeOfDay.canvasBorder)
                 .frame(height: 1)
-
-            NavigationLink {
-                workoutDestination
-            } label: {
-                HStack(spacing: 7) {
-                    Image(systemName: activeSession == nil ? "play.fill" : "arrow.right")
-                        .font(.system(size: 11, weight: .bold))
-                    Text(actionTitle)
-                        .font(.system(size: 13, weight: .bold))
-                    Spacer(minLength: 0)
-                    Image(systemName: "arrow.up.right")
-                        .font(.system(size: 11, weight: .semibold))
-                }
-                .foregroundStyle(timeOfDay.commandAccent)
-                .frame(height: 32)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityHint("Opens today's workout")
         }
     }
 

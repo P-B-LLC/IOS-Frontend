@@ -32,7 +32,7 @@ struct WorkoutDayTile: View {
                     .fill(tileFill)
 
                 Capsule()
-                    .fill(Color.white.opacity(phase == .focus ? 0.12 : 0.42))
+                    .fill(Color.white.opacity(phase.usesDarkAppearance ? 0.12 : 0.42))
                     .frame(maxWidth: 28, maxHeight: 1.5)
                     .frame(maxHeight: .infinity, alignment: .top)
                     .padding(.top, 2)

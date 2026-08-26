@@ -12,110 +12,43 @@ enum WorkoutVisualPhase: Sendable, Equatable {
     case focus
     case recover
 
-    var canvasStart: Color {
-        switch self {
-        case .prepare: Color.white
-        case .focus: Color(hex: 0x252220)
-        case .recover: Color.white
-        }
-    }
+    /// Workout state still controls content, but no longer controls color.
+    /// Every token below follows the saved app appearance instead.
+    private var isDark: Bool { RepbaseAppearancePreference.current == .dark }
 
-    var canvasEnd: Color {
-        switch self {
-        case .prepare: Color.white
-        case .focus: RepbasePalette.night
-        case .recover: Color.white
-        }
-    }
+    var canvasStart: Color { Color(uiColor: .systemBackground) }
 
-    var canvasMiddle: Color {
-        switch self {
-        case .prepare: Color.white
-        case .focus: Color(hex: 0x1E1C1B)
-        case .recover: Color.white
-        }
-    }
+    var canvasEnd: Color { Color(uiColor: .systemBackground) }
 
-    var accent: Color {
-        switch self {
-        case .prepare: RepbasePalette.caramel
-        case .focus: RepbasePalette.caramel
-        case .recover: RepbasePalette.sage
-        }
-    }
+    var canvasMiddle: Color { Color(uiColor: .systemBackground) }
 
-    var primaryText: Color {
-        switch self {
-        case .prepare: RepbasePalette.ink
-        case .focus: RepbasePalette.cream
-        case .recover: Color(hex: 0x26312B)
-        }
-    }
+    var accent: Color { RepbasePalette.caramel }
 
-    var secondaryText: Color {
-        switch self {
-        case .prepare: RepbasePalette.muted
-        case .focus: Color(hex: 0xCDBFB5)
-        case .recover: Color(hex: 0x64746B)
-        }
-    }
+    var primaryText: Color { Color.primary }
 
-    var surfaceStart: Color {
-        switch self {
-        case .prepare: Color.white
-        case .focus: Color(hex: 0x312D2A)
-        case .recover: Color.white
-        }
-    }
+    var secondaryText: Color { Color.secondary }
 
-    var surfaceEnd: Color {
-        switch self {
-        case .prepare: Color.white
-        case .focus: Color(hex: 0x282522)
-        case .recover: Color.white
-        }
-    }
+    var surfaceStart: Color { isDark ? Color(hex: 0x252220) : Color.white }
 
-    var heroStart: Color {
-        switch self {
-        case .prepare: RepbasePalette.charcoal
-        case .focus: Color(hex: 0x302A27)
-        case .recover: Color(hex: 0x26312B)
-        }
-    }
+    var surfaceEnd: Color { isDark ? Color(hex: 0x252220) : Color.white }
 
-    var heroEnd: Color {
-        switch self {
-        case .prepare: RepbasePalette.espresso
-        case .focus: Color(hex: 0x59453B)
-        case .recover: Color(hex: 0x60796B)
-        }
-    }
+    var heroStart: Color { isDark ? Color(hex: 0x2C2927) : RepbasePalette.oatmeal }
 
-    var onAccent: Color {
-        switch self {
-        case .focus: RepbasePalette.charcoal
-        case .prepare, .recover: RepbasePalette.cream
-        }
-    }
+    var heroEnd: Color { isDark ? Color(hex: 0x252220) : Color.white }
+
+    var onAccent: Color { Color.white }
 
     var primaryActionSurface: Color {
-        usesDarkAppearance ? Color.white : RepbasePalette.charcoal
+        isDark ? Color.white : RepbasePalette.charcoal
     }
 
     var onPrimaryAction: Color {
-        usesDarkAppearance ? RepbasePalette.ink : Color.white
+        isDark ? RepbasePalette.ink : Color.white
     }
 
-    var shadow: Color {
-        switch self {
-        case .prepare: RepbasePalette.espresso.opacity(0.14)
-        case .focus: Color.black.opacity(0.26)
-        case .recover: Color(hex: 0x385246).opacity(0.14)
-        }
-    }
+    var shadow: Color { isDark ? Color.black.opacity(0.26) : RepbasePalette.espresso.opacity(0.14) }
 
-    var usesDarkAppearance: Bool { self == .focus }
+    var usesDarkAppearance: Bool { isDark }
 }
 
 private struct WorkoutVisualPhaseKey: EnvironmentKey {
@@ -176,7 +109,6 @@ private struct RepbaseScreenModifier: ViewModifier {
             .background { WorkoutPhaseBackground(phase: phase) }
             .workoutVisualPhase(phase)
             .tint(phase.accent)
-            .preferredColorScheme(phase.usesDarkAppearance ? .dark : .light)
     }
 }
 
@@ -193,8 +125,8 @@ private struct RepbaseCardModifier: ViewModifier {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .fill(phase.surfaceStart)
                     .shadow(
-                        color: phase.shadow.opacity(phase == .focus ? 0.58 : 0.32),
-                        radius: phase == .focus ? 9 : 5,
+                        color: phase.shadow.opacity(0.32),
+                        radius: 5,
                         x: 0,
                         y: 3
                     )
@@ -202,7 +134,7 @@ private struct RepbaseCardModifier: ViewModifier {
             .overlay {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .strokeBorder(
-                        phase == .focus ? Color.white.opacity(0.10) : RepbasePalette.espresso.opacity(0.12),
+                        phase.usesDarkAppearance ? Color.white.opacity(0.10) : RepbasePalette.espresso.opacity(0.12),
                         lineWidth: 1
                     )
             }
@@ -223,7 +155,7 @@ private struct RepbaseControlSurfaceModifier: ViewModifier {
             .overlay {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .strokeBorder(
-                        phase == .focus ? Color.white.opacity(0.09) : RepbasePalette.espresso.opacity(0.08),
+                        phase.usesDarkAppearance ? Color.white.opacity(0.09) : RepbasePalette.espresso.opacity(0.08),
                         lineWidth: 0.75
                     )
             }

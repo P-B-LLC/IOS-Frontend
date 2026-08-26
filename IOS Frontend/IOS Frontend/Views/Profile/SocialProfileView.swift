@@ -648,6 +648,8 @@ private struct ProfileSettingsView: View {
     @Environment(WorkoutStore.self) private var workoutStore
     @Environment(SocialProfileStore.self) private var store
     @Environment(\.openURL) private var openURL
+    @AppStorage(RepbaseAppearancePreference.storageKey)
+    private var appearanceRawValue = RepbaseAppearancePreference.light.rawValue
 
     let profile: SocialProfile
     @State private var editorDestination: ProfileEditorDestination?
@@ -729,6 +731,18 @@ private struct ProfileSettingsView: View {
                                 )
                             }
                             .buttonStyle(.plain)
+                        }
+
+                        settingsSection("APPEARANCE", timeOfDay: timeOfDay) {
+                            Picker("Appearance", selection: $appearanceRawValue) {
+                                ForEach(RepbaseAppearancePreference.allCases) { appearance in
+                                    Label(appearance.title, systemImage: appearance.symbol)
+                                        .tag(appearance.rawValue)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                            .padding(.vertical, 14)
+                            .accessibilityHint("Changes the appearance throughout Repbase")
                         }
 
                         settingsSection("PRIVACY & PERMISSIONS", timeOfDay: timeOfDay) {

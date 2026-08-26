@@ -159,12 +159,12 @@ struct RepbaseBottomNavigation: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 5)
-        .background(timeOfDay.ink, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                .strokeBorder(timeOfDay.border, lineWidth: 1)
         }
-        .shadow(color: Color.black.opacity(0.16), radius: 9, x: 0, y: 5)
+        .shadow(color: timeOfDay.shadow, radius: 9, x: 0, y: 5)
         .animation(.easeOut(duration: 0.18), value: tab)
     }
 
@@ -177,17 +177,17 @@ struct RepbaseBottomNavigation: View {
             Image(item.iconAsset)
                 .resizable()
                 .scaledToFit()
-                .foregroundStyle(isSelected ? Color.white : Color.white.opacity(0.42))
+                .foregroundStyle(isSelected ? timeOfDay.accent : timeOfDay.secondaryText)
                 .frame(width: 24, height: 24)
 
             // Kept, and now doing more work: with the labels gone this and the
             // colour are the only things saying which tab you are on.
             Capsule()
-                .fill(Color.white)
+                .fill(timeOfDay.accent)
                 .frame(width: 14, height: 2)
                 .opacity(isSelected ? 1 : 0)
         }
-        .foregroundStyle(isSelected ? Color.white : Color.white.opacity(0.42))
+        .foregroundStyle(isSelected ? timeOfDay.accent : timeOfDay.secondaryText)
         // 38 plus the bar's own padding puts the tap target back above Apple's
         // 44pt minimum, which the 34 that briefly replaced it was under.
         // Between the original height and the too-slim one.
