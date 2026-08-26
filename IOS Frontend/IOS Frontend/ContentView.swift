@@ -243,62 +243,71 @@ private struct HomeUpNextSection: View {
     private var isToday: Bool { Calendar.current.isDate(date, inSameDayAs: today) }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HomeSectionHeader(
-                title: isToday ? "Up next" : "On \(date.formatted(.dateTime.weekday(.wide)))",
-                action: "Calendar",
-                destination: PlannerView(showsBackButton: true)
-            )
+        Group {
+            if let item = items.first {
+                NavigationLink {
+                    PlannerView(showsBackButton: true)
+                } label: {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(eyebrow(for: item))
+                            .font(.system(size: 11, weight: .bold))
+                            .tracking(0.45)
+                            .foregroundStyle(timeOfDay.commandAccent)
 
-            if items.isEmpty {
-                HomeEmptyLine(
-                    symbol: "calendar",
-                    title: isToday ? "Nothing scheduled next" : "Nothing scheduled"
-                )
-                    .frame(height: 44)
-            } else {
-                ForEach(items.prefix(2)) { item in
-                    HStack(spacing: 8) {
-                        Text(item.displayTime ?? "—")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(timeOfDay.canvasSecondaryText)
-                            .frame(width: 40, alignment: .leading)
+                        HStack(alignment: .center, spacing: 14) {
+                            Text(item.title)
+                                .font(.system(size: 26, weight: .bold))
+                                .tracking(-0.5)
+                                .foregroundStyle(timeOfDay.canvasPrimaryText)
+                                .lineLimit(2)
+                                .fixedSize(horizontal: false, vertical: true)
 
-                        Circle()
-                            .fill(item.category.tint)
-                            .frame(width: 6, height: 6)
+                            Spacer(minLength: 8)
 
-                        // A glyph rather than more words: only two rows are
-                        // shown here, and the status slot on the right can
-                        // already be spoken for by PAST DUE.
-                        if item.priority.badge != nil {
-                            Image(systemName: "exclamationmark")
-                                .font(.system(size: 9, weight: .black))
-                                .foregroundStyle(item.priority.tint)
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 20, weight: .medium))
+                                .foregroundStyle(timeOfDay.canvasSecondaryText.opacity(0.7))
                         }
+                        .padding(.top, 7)
 
-                        Text(item.title)
-                            .font(.subheadline.weight(item.isCompletable ? .semibold : .regular))
-                            .foregroundStyle(timeOfDay.canvasPrimaryText)
-                            .lineLimit(1)
+                        Text(detail(for: item))
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(timeOfDay.canvasSecondaryText)
+                            .padding(.top, 3)
 
-                        Spacer(minLength: 6)
-
-                        Text(status(for: item))
-                            .font(.system(size: 8, weight: .bold))
-                            .tracking(0.6)
-                            .foregroundStyle(statusTint(for: item))
+                        Text(scheduleAction)
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(timeOfDay.commandAccent)
+                            .padding(.top, 13)
                     }
-                    .frame(height: 22)
+                    .frame(maxWidth: .infinity, minHeight: 126, alignment: .topLeading)
+                    .contentShape(Rectangle())
                 }
-            }
+                .buttonStyle(.plain)
+                .accessibilityHint("Opens the calendar for the selected day")
+            } else {
+                VStack(alignment: .leading, spacing: 7) {
+                    HomeSectionHeader(
+                        title: isToday ? "Up next" : "On \(date.formatted(.dateTime.weekday(.wide)))",
+                        action: "Calendar",
+                        destination: PlannerView(showsBackButton: true)
+                    )
 
+                    HomeEmptyLine(
+                        symbol: "calendar",
+                        title: isToday ? "Nothing scheduled next" : "Nothing scheduled"
+                    )
+                        .frame(height: 44)
+                }
+                .frame(minHeight: 72, alignment: .top)
+            }
+        }
+        .padding(.bottom, 16)
+        .overlay(alignment: .bottom) {
             Rectangle()
                 .fill(timeOfDay.canvasBorder)
                 .frame(height: 1)
-                .padding(.top, 6)
         }
-        .frame(minHeight: 72, alignment: .top)
     }
 
     private var items: [PlannerEntry] {
@@ -307,9 +316,8 @@ private struct HomeUpNextSection: View {
         let overdue = isToday ? planner.pastDue.filter { !$0.isComplete } : []
         let onDay = planner.entries(on: date).filter { !$0.isComplete || !$0.isCompletable }
         return unique(overdue + onDay).sorted {
-            // Priority outranks both of the old keys. Only two rows are ever
-            // shown, so a high-priority task that sorted third was a
-            // high-priority task nobody saw.
+            // Priority outranks both of the old keys. Home features one item,
+            // so the most important thing must be first.
             if $0.priority.rank != $1.priority.rank {
                 return $0.priority.rank < $1.priority.rank
             }
@@ -331,18 +339,36 @@ private struct HomeUpNextSection: View {
         planner.pastDue.contains { $0.isSameEntry(as: entry) }
     }
 
-    /// Past due first when both are true: the glyph beside the title has
-    /// already said "high priority", and being overdue is the newer news.
-    private func status(for entry: PlannerEntry) -> String {
-        if isPastDue(entry) { return "PAST DUE" }
-        if let badge = entry.priority.badge { return badge }
-        return entry.kind == .event ? "EVENT" : entry.category.title.uppercased()
+    private func eyebrow(for entry: PlannerEntry) -> String {
+        let context: String
+        if isPastDue(entry) {
+            context = "PAST DUE"
+        } else if isToday {
+            context = "UP NEXT"
+        } else {
+            context = date.formatted(.dateTime.weekday(.wide)).uppercased()
+        }
+
+        guard let time = entry.displayTime else { return context }
+        return "\(context) · \(time)"
     }
 
-    private func statusTint(for entry: PlannerEntry) -> Color {
-        if isPastDue(entry) { return timeOfDay.commandAccent }
-        if entry.priority.badge != nil { return entry.priority.tint }
-        return timeOfDay.canvasSecondaryText
+    private func detail(for entry: PlannerEntry) -> String {
+        let emphasis: String
+        if isPastDue(entry) {
+            emphasis = "Past due"
+        } else if entry.priority == .high {
+            emphasis = "High priority"
+        } else {
+            emphasis = entry.kind.title
+        }
+        return "\(emphasis) · \(entry.category.title)"
+    }
+
+    private var scheduleAction: String {
+        if isToday { return "See today's schedule →" }
+        let weekday = date.formatted(.dateTime.weekday(.wide))
+        return "See \(weekday)'s schedule →"
     }
 }
 
