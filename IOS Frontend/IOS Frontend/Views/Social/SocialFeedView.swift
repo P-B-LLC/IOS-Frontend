@@ -438,6 +438,8 @@ struct PostCard: View {
 
             author
 
+            postTitle
+
             if let imageURL = shown.imageURL {
                 photo(imageURL)
             }
@@ -597,11 +599,6 @@ struct PostCard: View {
                 symbol: workout.routeDistanceKm == nil ? "dumbbell.fill" : "figure.run"
             )
 
-            Text(workout.title)
-                .font(.system(size: 22, weight: .bold))
-                .tracking(-0.35)
-                .foregroundStyle(timeOfDay.primaryText)
-
             workoutStatistics(workout)
 
             if !workout.exercises.isEmpty {
@@ -650,6 +647,25 @@ struct PostCard: View {
         .overlay(alignment: .bottom) { Divider() }
     }
 
+    @ViewBuilder
+    private var postTitle: some View {
+        if let workout = shown.workout {
+            postTitleText(workout.title)
+        } else if let meal = shown.meal {
+            postTitleText(meal.name)
+        } else if let planner = shown.planner {
+            postTitleText(planner.title)
+        }
+    }
+
+    private func postTitleText(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 22, weight: .bold))
+            .tracking(-0.35)
+            .foregroundStyle(timeOfDay.primaryText)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
     /// Takes the workout into your own. Offered only on somebody else's post:
     /// your own is already in your workouts.
     @ViewBuilder
@@ -677,11 +693,6 @@ struct PostCard: View {
     private func mealBody(_ meal: PostMealSnapshot) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             shareHeader("Meal", symbol: "fork.knife")
-
-            Text(meal.name)
-                .font(.system(size: 22, weight: .bold))
-                .tracking(-0.35)
-                .foregroundStyle(timeOfDay.primaryText)
 
             HStack(alignment: .top, spacing: 0) {
                 statistic(meal.totalCalories.nutritionText, "kcal")
@@ -718,11 +729,6 @@ struct PostCard: View {
                 planner.kind == "event" ? "Event" : "Task",
                 symbol: planner.kind == "event" ? "calendar" : "checkmark.circle"
             )
-
-            Text(planner.title)
-                .font(.system(size: 22, weight: .bold))
-                .tracking(-0.35)
-                .foregroundStyle(timeOfDay.primaryText)
 
             VStack(alignment: .leading, spacing: 0) {
                 plannerLine("Date", value: planner.scheduledDate)
