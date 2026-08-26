@@ -397,6 +397,20 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /api/v1/me/prompts/`.
     /// - Remark: Generated from `#/paths//api/v1/me/prompts//put(me_prompts_update)`.
     func mePromptsUpdate(_ input: Operations.MePromptsUpdate.Input) async throws -> Operations.MePromptsUpdate.Output
+    /// The outbound accounts on the signed-in user profile.
+    ///
+    /// Only ever this user own: the route carries no id, and the profile is read
+    /// from the token. There is no shape of request that addresses somebody
+    /// else links, which is a stronger guarantee than a permission check on one.
+    ///
+    /// - Remark: HTTP `GET /api/v1/me/social-links/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/social-links//get(me_social_links_list)`.
+    func meSocialLinksList(_ input: Operations.MeSocialLinksList.Input) async throws -> Operations.MeSocialLinksList.Output
+    /// Replace every social link with the set sent. Each entry may carry a full https URL or a bare handle; a handle is turned into that platform canonical URL. Sending an empty list removes them all.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/me/social-links/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/social-links//put(me_social_links_update)`.
+    func meSocialLinksUpdate(_ input: Operations.MeSocialLinksUpdate.Input) async throws -> Operations.MeSocialLinksUpdate.Output
     /// Tasks and events on the planner.
     ///
     /// The date range is a filter rather than a required window so the same
@@ -1819,6 +1833,30 @@ extension APIProtocol {
         body: Operations.MePromptsUpdate.Input.Body
     ) async throws -> Operations.MePromptsUpdate.Output {
         try await mePromptsUpdate(Operations.MePromptsUpdate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// The outbound accounts on the signed-in user profile.
+    ///
+    /// Only ever this user own: the route carries no id, and the profile is read
+    /// from the token. There is no shape of request that addresses somebody
+    /// else links, which is a stronger guarantee than a permission check on one.
+    ///
+    /// - Remark: HTTP `GET /api/v1/me/social-links/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/social-links//get(me_social_links_list)`.
+    public func meSocialLinksList(headers: Operations.MeSocialLinksList.Input.Headers = .init()) async throws -> Operations.MeSocialLinksList.Output {
+        try await meSocialLinksList(Operations.MeSocialLinksList.Input(headers: headers))
+    }
+    /// Replace every social link with the set sent. Each entry may carry a full https URL or a bare handle; a handle is turned into that platform canonical URL. Sending an empty list removes them all.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/me/social-links/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/social-links//put(me_social_links_update)`.
+    public func meSocialLinksUpdate(
+        headers: Operations.MeSocialLinksUpdate.Input.Headers = .init(),
+        body: Operations.MeSocialLinksUpdate.Input.Body
+    ) async throws -> Operations.MeSocialLinksUpdate.Output {
+        try await meSocialLinksUpdate(Operations.MeSocialLinksUpdate.Input(
             headers: headers,
             body: body
         ))
@@ -6491,6 +6529,22 @@ public enum Components {
                 case end
             }
         }
+        /// * `instagram` - Instagram
+        /// * `snapchat` - Snapchat
+        /// * `tiktok` - TikTok
+        /// * `youtube` - YouTube
+        /// * `x` - X
+        /// * `website` - Website
+        ///
+        /// - Remark: Generated from `#/components/schemas/PlatformEnum`.
+        @frozen public enum PlatformEnum: String, Codable, Hashable, Sendable, CaseIterable {
+            case instagram = "instagram"
+            case snapchat = "snapchat"
+            case tiktok = "tiktok"
+            case youtube = "youtube"
+            case x = "x"
+            case website = "website"
+        }
         /// A post as anyone allowed to see it reads it.
         ///
         /// `workout`, `meal` and `planner` are three keys side by side with exactly one
@@ -7622,6 +7676,117 @@ public enum Components {
                 case prompts
             }
         }
+        /// One outbound account, as everybody else sees it.
+        ///
+        /// Two fields only. The handle is the app own bookkeeping and the position is
+        /// how the list was ordered, neither of which anybody reading a profile has
+        /// any use for -- and the fewer fields leave here, the less there is to keep
+        /// consistent between this and the public serialiser.
+        ///
+        /// - Remark: Generated from `#/components/schemas/ProfileSocialLink`.
+        public struct ProfileSocialLink: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ProfileSocialLink/platform`.
+            public var platform: Components.Schemas.PlatformEnum
+            /// - Remark: Generated from `#/components/schemas/ProfileSocialLink/url`.
+            public var url: Swift.String
+            /// Creates a new `ProfileSocialLink`.
+            ///
+            /// - Parameters:
+            ///   - platform:
+            ///   - url:
+            public init(
+                platform: Components.Schemas.PlatformEnum,
+                url: Swift.String
+            ) {
+                self.platform = platform
+                self.url = url
+            }
+            public enum CodingKeys: String, CodingKey {
+                case platform
+                case url
+            }
+        }
+        /// One outbound account, as everybody else sees it.
+        ///
+        /// Two fields only. The handle is the app own bookkeeping and the position is
+        /// how the list was ordered, neither of which anybody reading a profile has
+        /// any use for -- and the fewer fields leave here, the less there is to keep
+        /// consistent between this and the public serialiser.
+        ///
+        /// - Remark: Generated from `#/components/schemas/ProfileSocialLinkRequest`.
+        public struct ProfileSocialLinkRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ProfileSocialLinkRequest/platform`.
+            public var platform: Components.Schemas.PlatformEnum
+            /// - Remark: Generated from `#/components/schemas/ProfileSocialLinkRequest/url`.
+            public var url: Swift.String
+            /// Creates a new `ProfileSocialLinkRequest`.
+            ///
+            /// - Parameters:
+            ///   - platform:
+            ///   - url:
+            public init(
+                platform: Components.Schemas.PlatformEnum,
+                url: Swift.String
+            ) {
+                self.platform = platform
+                self.url = url
+            }
+            public enum CodingKeys: String, CodingKey {
+                case platform
+                case url
+            }
+        }
+        /// One link on the way in.
+        ///
+        /// ``url`` is a CharField rather than a URLField on purpose: it accepts a
+        /// handle as readily as an address, and the normaliser is what decides which
+        /// it got. A URLField here would refuse "@someone" before anything had a
+        /// chance to turn it into a URL.
+        ///
+        /// - Remark: Generated from `#/components/schemas/ProfileSocialLinkWriteRequest`.
+        public struct ProfileSocialLinkWriteRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ProfileSocialLinkWriteRequest/platform`.
+            public var platform: Components.Schemas.PlatformEnum
+            /// - Remark: Generated from `#/components/schemas/ProfileSocialLinkWriteRequest/url`.
+            public var url: Swift.String
+            /// Creates a new `ProfileSocialLinkWriteRequest`.
+            ///
+            /// - Parameters:
+            ///   - platform:
+            ///   - url:
+            public init(
+                platform: Components.Schemas.PlatformEnum,
+                url: Swift.String
+            ) {
+                self.platform = platform
+                self.url = url
+            }
+            public enum CodingKeys: String, CodingKey {
+                case platform
+                case url
+            }
+        }
+        /// The whole set at once, like the prompts next door.
+        ///
+        /// Replace rather than patch, for the same reason: the screen behind this
+        /// edits them together, and sending the set that should exist afterwards
+        /// cannot leave a seventh link behind that nobody can see to delete.
+        ///
+        /// - Remark: Generated from `#/components/schemas/ProfileSocialLinksRequestRequest`.
+        public struct ProfileSocialLinksRequestRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ProfileSocialLinksRequestRequest/social_links`.
+            public var socialLinks: [Components.Schemas.ProfileSocialLinkWriteRequest]
+            /// Creates a new `ProfileSocialLinksRequestRequest`.
+            ///
+            /// - Parameters:
+            ///   - socialLinks:
+            public init(socialLinks: [Components.Schemas.ProfileSocialLinkWriteRequest]) {
+                self.socialLinks = socialLinks
+            }
+            public enum CodingKeys: String, CodingKey {
+                case socialLinks = "social_links"
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser`.
         public struct PublicRepbaseUser: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/id`.
@@ -7640,6 +7805,8 @@ public enum Components {
             public var disciplines: [Swift.String]
             /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/prompts`.
             public var prompts: [Components.Schemas.ProfilePrompt]
+            /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/social_links`.
+            public var socialLinks: [Components.Schemas.ProfileSocialLink]
             /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/gym`.
             public var gym: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/gym_name`.
@@ -7671,6 +7838,7 @@ public enum Components {
             ///   - profilePhotoUrl:
             ///   - disciplines:
             ///   - prompts:
+            ///   - socialLinks:
             ///   - gym:
             ///   - gymName:
             ///   - gymCity:
@@ -7690,6 +7858,7 @@ public enum Components {
                 profilePhotoUrl: Swift.String? = nil,
                 disciplines: [Swift.String],
                 prompts: [Components.Schemas.ProfilePrompt],
+                socialLinks: [Components.Schemas.ProfileSocialLink],
                 gym: Swift.Int? = nil,
                 gymName: Swift.String? = nil,
                 gymCity: Swift.String? = nil,
@@ -7709,6 +7878,7 @@ public enum Components {
                 self.profilePhotoUrl = profilePhotoUrl
                 self.disciplines = disciplines
                 self.prompts = prompts
+                self.socialLinks = socialLinks
                 self.gym = gym
                 self.gymName = gymName
                 self.gymCity = gymCity
@@ -7729,6 +7899,7 @@ public enum Components {
                 case profilePhotoUrl = "profile_photo_url"
                 case disciplines
                 case prompts
+                case socialLinks = "social_links"
                 case gym
                 case gymName = "gym_name"
                 case gymCity = "gym_city"
@@ -7988,6 +8159,8 @@ public enum Components {
             public var showsWeight: Swift.Bool?
             /// - Remark: Generated from `#/components/schemas/RepbaseUser/shows_target_weight`.
             public var showsTargetWeight: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/RepbaseUser/social_links`.
+            public var socialLinks: [Components.Schemas.ProfileSocialLink]
             /// - Remark: Generated from `#/components/schemas/RepbaseUser/created_at`.
             public var createdAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/RepbaseUser/updated_at`.
@@ -8016,6 +8189,7 @@ public enum Components {
             ///   - showsHeight:
             ///   - showsWeight:
             ///   - showsTargetWeight:
+            ///   - socialLinks:
             ///   - createdAt:
             ///   - updatedAt:
             public init(
@@ -8040,6 +8214,7 @@ public enum Components {
                 showsHeight: Swift.Bool? = nil,
                 showsWeight: Swift.Bool? = nil,
                 showsTargetWeight: Swift.Bool? = nil,
+                socialLinks: [Components.Schemas.ProfileSocialLink],
                 createdAt: Foundation.Date,
                 updatedAt: Foundation.Date
             ) {
@@ -8064,6 +8239,7 @@ public enum Components {
                 self.showsHeight = showsHeight
                 self.showsWeight = showsWeight
                 self.showsTargetWeight = showsTargetWeight
+                self.socialLinks = socialLinks
                 self.createdAt = createdAt
                 self.updatedAt = updatedAt
             }
@@ -8089,6 +8265,7 @@ public enum Components {
                 case showsHeight = "shows_height"
                 case showsWeight = "shows_weight"
                 case showsTargetWeight = "shows_target_weight"
+                case socialLinks = "social_links"
                 case createdAt = "created_at"
                 case updatedAt = "updated_at"
             }
@@ -18644,6 +18821,241 @@ public enum Operations {
             /// - Throws: An error if `self` is not `.ok`.
             /// - SeeAlso: `.ok`.
             public var ok: Operations.MePromptsUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// The outbound accounts on the signed-in user profile.
+    ///
+    /// Only ever this user own: the route carries no id, and the profile is read
+    /// from the token. There is no shape of request that addresses somebody
+    /// else links, which is a stronger guarantee than a permission check on one.
+    ///
+    /// - Remark: HTTP `GET /api/v1/me/social-links/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/social-links//get(me_social_links_list)`.
+    public enum MeSocialLinksList {
+        public static let id: Swift.String = "me_social_links_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/me/social-links/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MeSocialLinksList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MeSocialLinksList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.MeSocialLinksList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            public init(headers: Operations.MeSocialLinksList.Input.Headers = .init()) {
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/me/social-links/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/me/social-links/GET/responses/200/content/application\/json`.
+                    case json([Components.Schemas.ProfileSocialLink])
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: [Components.Schemas.ProfileSocialLink] {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.MeSocialLinksList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.MeSocialLinksList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/me/social-links//get(me_social_links_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.MeSocialLinksList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.MeSocialLinksList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Replace every social link with the set sent. Each entry may carry a full https URL or a bare handle; a handle is turned into that platform canonical URL. Sending an empty list removes them all.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/me/social-links/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/social-links//put(me_social_links_update)`.
+    public enum MeSocialLinksUpdate {
+        public static let id: Swift.String = "me_social_links_update"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/me/social-links/PUT/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MeSocialLinksUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MeSocialLinksUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.MeSocialLinksUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/me/social-links/PUT/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/me/social-links/PUT/requestBody/content/application\/json`.
+                case json(Components.Schemas.ProfileSocialLinksRequestRequest)
+            }
+            public var body: Operations.MeSocialLinksUpdate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.MeSocialLinksUpdate.Input.Headers = .init(),
+                body: Operations.MeSocialLinksUpdate.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/me/social-links/PUT/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/me/social-links/PUT/responses/200/content/application\/json`.
+                    case json([Components.Schemas.ProfileSocialLink])
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: [Components.Schemas.ProfileSocialLink] {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.MeSocialLinksUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.MeSocialLinksUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/me/social-links//put(me_social_links_update)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.MeSocialLinksUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.MeSocialLinksUpdate.Output.Ok {
                 get throws {
                     switch self {
                     case let .ok(response):

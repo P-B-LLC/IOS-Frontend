@@ -777,6 +777,19 @@ private struct ProfileSettingsView: View {
 
                                 Rectangle().fill(timeOfDay.border).frame(height: 1)
 
+                                NavigationLink {
+                                    SocialLinksEditorView()
+                                } label: {
+                                    settingsRow(
+                                        "Social links",
+                                        detail: "The accounts shown on your profile",
+                                        symbol: "link"
+                                    )
+                                }
+                                .buttonStyle(.plain)
+
+                                Rectangle().fill(timeOfDay.border).frame(height: 1)
+
                                 Button { editorDestination = .goals } label: {
                                     settingsRow(
                                         "Body goals & privacy",

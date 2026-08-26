@@ -162,6 +162,19 @@ struct SocialProfile: Codable, Equatable {
     )
 }
 
+/// One row of the editor, on its way to the server.
+///
+/// `value` is whatever was typed -- a handle or a full address -- because
+/// which of the two it is, and what the canonical URL for it should be, is the
+/// server's decision. Deciding it here as well would be the same rule written
+/// twice, and the copy in the app is the one that would drift.
+struct ProfileSocialLinkDraft: Identifiable, Equatable, Sendable {
+    var platform: ProfileSocialLink.Platform
+    var value: String
+
+    var id: String { platform.rawValue }
+}
+
 struct ProfileSocialLink: Codable, Equatable, Identifiable {
     enum Platform: String, Codable, CaseIterable {
         case instagram
@@ -415,7 +428,8 @@ final class SocialProfileStore {
                 )
             },
             profileImageData: nil,
-            profilePhotoURL: remote.photoURL
+            profilePhotoURL: remote.photoURL,
+            socialLinks: remote.socialLinks
         )
     }
 
@@ -441,6 +455,34 @@ final class SocialProfileStore {
             let saved = try await repository.savePrompts(answers)
             guard connectionGeneration == generation else { return false }
             prompts = saved
+            return true
+        } catch {
+            guard connectionGeneration == generation else { return false }
+            errorMessage = error.userFacingMessage
+            return false
+        }
+    }
+
+    /// Saves the outbound accounts and adopts whatever the server stored.
+    ///
+    /// Adopted rather than assumed: a handle goes up and a canonical URL comes
+    /// back, so what the editor should show afterwards is the server's answer
+    /// and not the text somebody typed.
+    @discardableResult
+    func saveSocialLinks(_ links: [ProfileSocialLinkDraft]) async -> Bool {
+        guard let repository else {
+            errorMessage = "Connect to Repbase before editing your profile."
+            return false
+        }
+        let generation = connectionGeneration
+        isSaving = true
+        errorMessage = nil
+        defer { if connectionGeneration == generation { isSaving = false } }
+
+        do {
+            let saved = try await repository.saveSocialLinks(links)
+            guard connectionGeneration == generation else { return false }
+            profile?.socialLinks = saved
             return true
         } catch {
             guard connectionGeneration == generation else { return false }

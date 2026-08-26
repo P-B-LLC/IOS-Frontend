@@ -329,7 +329,9 @@ private struct AppRootView: View {
                     FoodTrackingView()
                 }
             } else if let profilePreview = ProcessInfo.processInfo.environment["REPBASE_PROFILE_PREVIEW"],
-                      profilePreview != "profile" && profilePreview != "public" {
+                      profilePreview != "profile",
+                      profilePreview != "public",
+                      profilePreview != "links" {
                 NavigationStack {
                     ProfileOnboardingView(
                         seed: SocialProfile(
@@ -357,9 +359,15 @@ private struct AppRootView: View {
                 NavigationStack {
                     SocialProfileView(profile: profile, isCurrentUser: false)
                 }
-            } else if ProcessInfo.processInfo.environment["REPBASE_PROFILE_PREVIEW"] != nil {
+            } else if let profilePreview = ProcessInfo.processInfo.environment["REPBASE_PROFILE_PREVIEW"] {
                 NavigationStack {
-                    ProfileDestinationView()
+                    // Settings -> Profile -> Social links is three taps deep,
+                    // and a script can press none of them.
+                    if profilePreview == "links" {
+                        SocialLinksEditorView()
+                    } else {
+                        ProfileDestinationView()
+                    }
                 }
             } else if ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"] == "home" {
                 // The shell, not the page: the bottom bar lives on the shell,

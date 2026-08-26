@@ -4605,6 +4605,139 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// The outbound accounts on the signed-in user profile.
+    ///
+    /// Only ever this user own: the route carries no id, and the profile is read
+    /// from the token. There is no shape of request that addresses somebody
+    /// else links, which is a stronger guarantee than a permission check on one.
+    ///
+    /// - Remark: HTTP `GET /api/v1/me/social-links/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/social-links//get(me_social_links_list)`.
+    public func meSocialLinksList(_ input: Operations.MeSocialLinksList.Input) async throws -> Operations.MeSocialLinksList.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.MeSocialLinksList.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/me/social-links/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .get
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.MeSocialLinksList.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            [Components.Schemas.ProfileSocialLink].self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Replace every social link with the set sent. Each entry may carry a full https URL or a bare handle; a handle is turned into that platform canonical URL. Sending an empty list removes them all.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/me/social-links/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/social-links//put(me_social_links_update)`.
+    public func meSocialLinksUpdate(_ input: Operations.MeSocialLinksUpdate.Input) async throws -> Operations.MeSocialLinksUpdate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.MeSocialLinksUpdate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/me/social-links/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .put
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                let body: OpenAPIRuntime.HTTPBody?
+                switch input.body {
+                case let .json(value):
+                    body = try converter.setRequiredRequestBodyAsJSON(
+                        value,
+                        headerFields: &request.headerFields,
+                        contentType: "application/json; charset=utf-8"
+                    )
+                }
+                return (request, body)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.MeSocialLinksUpdate.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            [Components.Schemas.ProfileSocialLink].self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
     /// Tasks and events on the planner.
     ///
     /// The date range is a filter rather than a required window so the same

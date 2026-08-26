@@ -1933,6 +1933,60 @@ paths:
                 items:
                   $ref: '#/components/schemas/ProfilePrompt'
           description: ''
+  /api/v1/me/social-links/:
+    get:
+      operationId: me_social_links_list
+      description: |-
+        The outbound accounts on the signed-in user profile.
+
+        Only ever this user own: the route carries no id, and the profile is read
+        from the token. There is no shape of request that addresses somebody
+        else links, which is a stronger guarantee than a permission check on one.
+      tags:
+      - me
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProfileSocialLink'
+          description: ''
+    put:
+      operationId: me_social_links_update
+      description: Replace every social link with the set sent. Each entry may carry
+        a full https URL or a bare handle; a handle is turned into that platform canonical
+        URL. Sending an empty list removes them all.
+      tags:
+      - me
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileSocialLinksRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProfileSocialLinksRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProfileSocialLinksRequestRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProfileSocialLink'
+          description: ''
   /api/v1/planner/:
     get:
       operationId: planner_list
@@ -6581,6 +6635,22 @@ components:
       required:
       - end
       - start
+    PlatformEnum:
+      enum:
+      - instagram
+      - snapchat
+      - tiktok
+      - youtube
+      - x
+      - website
+      type: string
+      description: |-
+        * `instagram` - Instagram
+        * `snapchat` - Snapchat
+        * `tiktok` - TikTok
+        * `youtube` - YouTube
+        * `x` - X
+        * `website` - Website
     Post:
       type: object
       description: |-
@@ -7327,6 +7397,80 @@ components:
           maxItems: 3
       required:
       - prompts
+    ProfileSocialLink:
+      type: object
+      description: |-
+        One outbound account, as everybody else sees it.
+
+        Two fields only. The handle is the app own bookkeeping and the position is
+        how the list was ordered, neither of which anybody reading a profile has
+        any use for -- and the fewer fields leave here, the less there is to keep
+        consistent between this and the public serialiser.
+      properties:
+        platform:
+          $ref: '#/components/schemas/PlatformEnum'
+        url:
+          type: string
+          format: uri
+          maxLength: 300
+      required:
+      - platform
+      - url
+    ProfileSocialLinkRequest:
+      type: object
+      description: |-
+        One outbound account, as everybody else sees it.
+
+        Two fields only. The handle is the app own bookkeeping and the position is
+        how the list was ordered, neither of which anybody reading a profile has
+        any use for -- and the fewer fields leave here, the less there is to keep
+        consistent between this and the public serialiser.
+      properties:
+        platform:
+          $ref: '#/components/schemas/PlatformEnum'
+        url:
+          type: string
+          format: uri
+          minLength: 1
+          maxLength: 300
+      required:
+      - platform
+      - url
+    ProfileSocialLinkWriteRequest:
+      type: object
+      description: |-
+        One link on the way in.
+
+        ``url`` is a CharField rather than a URLField on purpose: it accepts a
+        handle as readily as an address, and the normaliser is what decides which
+        it got. A URLField here would refuse "@someone" before anything had a
+        chance to turn it into a URL.
+      properties:
+        platform:
+          $ref: '#/components/schemas/PlatformEnum'
+        url:
+          type: string
+          minLength: 1
+          maxLength: 300
+      required:
+      - platform
+      - url
+    ProfileSocialLinksRequestRequest:
+      type: object
+      description: |-
+        The whole set at once, like the prompts next door.
+
+        Replace rather than patch, for the same reason: the screen behind this
+        edits them together, and sending the set that should exist afterwards
+        cannot leave a seventh link behind that nobody can see to delete.
+      properties:
+        social_links:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfileSocialLinkWriteRequest'
+          maxItems: 6
+      required:
+      - social_links
     PublicRepbaseUser:
       type: object
       properties:
@@ -7358,6 +7502,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProfilePrompt'
+          readOnly: true
+        social_links:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfileSocialLink'
           readOnly: true
         gym:
           type: integer
@@ -7407,6 +7556,7 @@ components:
       - last_name
       - profile_photo_url
       - prompts
+      - social_links
       - target_weight_kg
       - username
       - weight_kg
@@ -7634,6 +7784,11 @@ components:
           type: boolean
         shows_target_weight:
           type: boolean
+        social_links:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfileSocialLink'
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -7651,6 +7806,7 @@ components:
       - id
       - last_name
       - profile_photo_url
+      - social_links
       - updated_at
       - username
     RepbaseUserRequest:

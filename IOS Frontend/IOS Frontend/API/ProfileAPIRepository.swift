@@ -93,6 +93,9 @@ nonisolated struct RemoteProfile: Equatable, Sendable {
     /// Answered questions. Empty from `/me/`, which does not carry them;
     /// filled in when this is somebody else's public profile.
     var prompts: [ProfilePromptAnswer] = []
+    /// Outbound accounts, on both responses. Defaulted to empty so a profile
+    /// built without them is a profile with none, never a nil to unwrap.
+    var socialLinks: [ProfileSocialLink] = []
 }
 
 /// A gym as the server knows it, with the integer identity the API uses.
@@ -263,7 +266,8 @@ actor ProfileAPIRepository {
                         questionLabel: $0.questionLabel,
                         answer: $0.answer
                     )
-                }
+                },
+                socialLinks: Self.socialLinks(from: payload.socialLinks)
             )
         case .undocumented(let statusCode, _):
             throw APIServiceError.undocumentedStatus(statusCode)
@@ -285,6 +289,42 @@ actor ProfileAPIRepository {
         switch output {
         case .ok(let response):
             return Self.profile(from: try response.body.json)
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    // MARK: - Social links
+
+    /// Replaces every outbound account with the set given.
+    ///
+    /// One request rather than one per link, matching `me/prompts/`: the
+    /// editor behind this changes them together, and sending the set that
+    /// should exist afterwards cannot leave a link behind that its owner has
+    /// stopped seeing.
+    ///
+    /// Each entry may carry a full URL or a bare handle. Which it is, and what
+    /// the canonical URL for it should be, is the server's decision -- so what
+    /// comes back is what was stored, not what was sent.
+    @discardableResult
+    func saveSocialLinks(_ links: [ProfileSocialLinkDraft]) async throws -> [ProfileSocialLink] {
+        let output = try await client.meSocialLinksUpdate(
+            body: .json(
+                Components.Schemas.ProfileSocialLinksRequestRequest(
+                    socialLinks: links.map {
+                        Components.Schemas.ProfileSocialLinkWriteRequest(
+                            platform: Components.Schemas.PlatformEnum(
+                                rawValue: $0.platform.rawValue
+                            ) ?? .website,
+                            url: $0.value
+                        )
+                    }
+                )
+            )
+        )
+        switch output {
+        case .ok(let response):
+            return Self.socialLinks(from: try response.body.json)
         case .undocumented(let statusCode, _):
             throw APIServiceError.undocumentedStatus(statusCode)
         }
@@ -464,8 +504,23 @@ actor ProfileAPIRepository {
             gymID: payload.gym,
             gymName: payload.gymName,
             gymCity: payload.gymCity,
-            timeZone: payload.timeZone ?? "UTC"
+            timeZone: payload.timeZone ?? "UTC",
+            socialLinks: socialLinks(from: payload.socialLinks)
         )
+    }
+
+    /// Drops anything that will not make a URL rather than failing the whole
+    /// profile over one link. The server stores them already canonical, so a
+    /// value that does not parse here means the two ends disagree about what a
+    /// URL is -- which is worth losing one icon over, not somebody's profile.
+    private static func socialLinks(
+        from payload: [Components.Schemas.ProfileSocialLink]
+    ) -> [ProfileSocialLink] {
+        payload.compactMap { link in
+            guard let platform = ProfileSocialLink.Platform(rawValue: link.platform.rawValue),
+                  let url = URL(string: link.url) else { return nil }
+            return ProfileSocialLink(platform: platform, url: url)
+        }
     }
 
     private static func gym(from payload: Components.Schemas.Gym) -> RemoteGym {
