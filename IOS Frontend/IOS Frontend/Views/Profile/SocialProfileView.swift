@@ -499,7 +499,7 @@ struct SocialProfileView: View {
             if isAboutEmpty && myPrompts.isEmpty && myHighlights.isEmpty {
                 Text(
                     isCurrentUser
-                        ? "Nothing here yet. Answer a question or feature a lift so people know who they are following."
+                        ? "Nothing here yet. Add a prompt or feature a lift so people know who they are following."
                         : "This athlete hasn't shared anything about themselves yet."
                 )
                 .font(.subheadline)
@@ -517,8 +517,8 @@ struct SocialProfileView: View {
                         Image(systemName: "square.and.pencil")
                         Text(
                             myPrompts.isEmpty && myHighlights.isEmpty
-                                ? "Add questions and featured lifts"
-                                : "Edit questions and featured lifts"
+                                ? "Add prompts and featured lifts"
+                                : "Edit prompts and featured lifts"
                         )
                         Spacer(minLength: 0)
                         Image(systemName: "chevron.right").font(.caption2)

@@ -31,7 +31,7 @@ struct ProfileExpressionEditorView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 26) {
                     header(timeOfDay: timeOfDay)
-                    questionsSection(timeOfDay: timeOfDay)
+                    promptsSection(timeOfDay: timeOfDay)
                     liftsSection(timeOfDay: timeOfDay)
 
                     if let message = store.errorMessage {
@@ -98,11 +98,15 @@ struct ProfileExpressionEditorView: View {
         }
     }
 
-    // MARK: - Questions
+    // MARK: - Prompts
 
-    private func questionsSection(timeOfDay: HomeTimeOfDay) -> some View {
+    private func promptsSection(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            sectionTitle("Questions", detail: "Answer up to three.", timeOfDay: timeOfDay)
+            sectionTitle(
+                "Prompts",
+                detail: "Tell others about you. Up to three.",
+                timeOfDay: timeOfDay
+            )
 
             ForEach(store.prompts) { answer in
                 VStack(alignment: .leading, spacing: 3) {
@@ -122,7 +126,7 @@ struct ProfileExpressionEditorView: View {
                 showingPrompts = true
             } label: {
                 Label(
-                    store.prompts.isEmpty ? "Answer a question" : "Change your answers",
+                    store.prompts.isEmpty ? "Add prompts" : "Change your prompts",
                     systemImage: "text.bubble"
                 )
                 .font(.subheadline.weight(.semibold))

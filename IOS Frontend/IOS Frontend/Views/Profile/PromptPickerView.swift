@@ -44,7 +44,7 @@ struct PromptPickerView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
-                    Text("Answers show on your profile under About. Tap one to rewrite it, or swap it for a different question.")
+                    Text("Prompts show on your profile under About. Tap one to rewrite it, or swap it for a different prompt.")
                         .font(.caption)
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                         .fixedSize(horizontal: false, vertical: true)
@@ -90,11 +90,11 @@ struct PromptPickerView: View {
             .foregroundStyle(timeOfDay.canvasPrimaryText)
 
             VStack(alignment: .leading, spacing: 1) {
-                Text("QUESTIONS")
+                Text("PROMPTS")
                     .font(.system(size: 9, weight: .bold))
                     .tracking(1.3)
                     .foregroundStyle(timeOfDay.accent)
-                Text("\(store.prompts.count) of \(maxPrompts) answered")
+                Text("Tell others about you")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(timeOfDay.canvasPrimaryText)
             }
@@ -138,7 +138,7 @@ struct PromptPickerView: View {
                 }
                 .buttonStyle(.plain)
                 .contextMenu {
-                    Button("Choose a different question", systemImage: "arrow.triangle.2.circlepath") {
+                    Button("Choose a different prompt", systemImage: "arrow.triangle.2.circlepath") {
                         choosingForSlot = SlotIndex(value: index)
                     }
                     Button("Remove", systemImage: "trash", role: .destructive) {
@@ -153,7 +153,7 @@ struct PromptPickerView: View {
                         Image(systemName: "plus.circle.fill")
                             .font(.system(size: 19, weight: .semibold))
                             .foregroundStyle(timeOfDay.accent)
-                        Text("Select a question")
+                        Text("Select a prompt")
                             .font(.system(size: 17, weight: .semibold))
                             .foregroundStyle(timeOfDay.canvasSecondaryText)
                         Spacer(minLength: 0)
@@ -252,7 +252,7 @@ struct PromptLibraryView: View {
                     }
 
                     if PromptCategory.allCases.allSatisfy({ matching($0).isEmpty }) {
-                        Text("No question matches “\(search)”.")
+                        Text("No prompt matches “\(search)”.")
                             .font(.subheadline)
                             .foregroundStyle(timeOfDay.canvasSecondaryText)
                             .frame(maxWidth: .infinity)
@@ -264,8 +264,8 @@ struct PromptLibraryView: View {
                 .padding(.bottom, 40)
             }
             .scrollIndicators(.hidden)
-            .searchable(text: $search, prompt: "Search questions")
-            .navigationTitle("Choose a question")
+            .searchable(text: $search, prompt: "Search prompts")
+            .navigationTitle("Choose a prompt")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -299,7 +299,7 @@ struct PromptLibraryView: View {
                 }
                 Spacer(minLength: 8)
                 if isTaken {
-                    Text("ANSWERED")
+                    Text("ADDED")
                         .font(.system(size: 8, weight: .bold))
                         .tracking(0.6)
                         .foregroundStyle(timeOfDay.accent)
