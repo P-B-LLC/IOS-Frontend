@@ -3818,6 +3818,49 @@ paths:
               schema:
                 $ref: '#/components/schemas/Post'
           description: ''
+  /api/v1/social/posts/{id}/report/:
+    post:
+      operationId: social_posts_report_create
+      description: Report a post for a moderator to look at. The reason comes from
+        a fixed list so reports can be counted; detail is optional. Reporting a post
+        you have already reported succeeds with 200 rather than failing.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this post.
+        required: true
+      tags:
+      - social
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportPostRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReportPostRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReportPostRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostReportResult'
+          description: ''
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostReportResult'
+          description: ''
   /api/v1/social/posts/{id}/repost/:
     post:
       operationId: social_posts_repost_create
@@ -3863,6 +3906,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Post'
+          description: ''
+  /api/v1/social/posts/{id}/save-meal/:
+    post:
+      operationId: social_posts_save_meal_create
+      description: Copy a posted meal into your own saved meals. The foods and their
+        servings are taken whole, so applying it to a day later gives the same numbers
+        the post showed.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this post.
+        required: true
+      tags:
+      - social
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SavedMealResult'
           description: ''
   /api/v1/social/posts/{id}/save-workout/:
     post:
@@ -6900,6 +6968,24 @@ components:
       - post
       - updated_at
       - viewer_is_author
+    PostReportResult:
+      type: object
+      description: |-
+        What came of reporting.
+
+        ``already_reported`` rather than an error on a second press: reporting
+        twice is far more often someone unsure the first one worked than someone
+        with a second complaint, and an error would tell them off for it.
+      properties:
+        reason:
+          type: string
+          readOnly: true
+        already_reported:
+          type: boolean
+          readOnly: true
+      required:
+      - already_reported
+      - reason
     PostWorkout:
       type: object
       description: |-
@@ -7391,6 +7477,26 @@ components:
         * `training_partner` - Looking for a training partner who
         * `spot_me` - Ask me to spot you if
         * `partner_never` - A training partner should never
+    ReasonEnum:
+      enum:
+      - spam
+      - harassment
+      - hate
+      - violence
+      - nudity
+      - harm
+      - advice
+      - other
+      type: string
+      description: |-
+        * `spam` - Spam or misleading
+        * `harassment` - Harassment or bullying
+        * `hate` - Hate speech
+        * `violence` - Violence or threats
+        * `nudity` - Nudity or sexual content
+        * `harm` - Promotes self-harm or disordered eating
+        * `advice` - Dangerous or false advice
+        * `other` - Something else
     RecentFood:
       type: object
       description: A food the user has logged before, for the picker.
@@ -7616,6 +7722,23 @@ components:
       - first_name
       - last_name
       - username
+    ReportPostRequest:
+      type: object
+      description: |-
+        What a reporter sends.
+
+        ``reason`` is closed, because the whole point of the list is that reports
+        can be counted and triaged. ``detail`` is free text and optional, for the
+        case the list does not cover.
+      properties:
+        reason:
+          $ref: '#/components/schemas/ReasonEnum'
+        detail:
+          type: string
+          default: ''
+          maxLength: 500
+      required:
+      - reason
     RepostedPost:
       type: object
       description: |-
@@ -7790,6 +7913,32 @@ components:
       required:
       - ingredients
       - name
+    SavedMealResult:
+      type: object
+      description: |-
+        What saving somebody else's posted meal produced.
+
+        The same shape as `SavedWorkoutResultSerializer` and for the same reason:
+        saved meal names are unique per user, so the name it landed under is not
+        always the one on the post and the app has to be able to say so.
+      properties:
+        meal:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        item_count:
+          type: integer
+          readOnly: true
+        renamed:
+          type: boolean
+          readOnly: true
+      required:
+      - item_count
+      - meal
+      - name
+      - renamed
     SavedWorkoutResult:
       type: object
       description: |-

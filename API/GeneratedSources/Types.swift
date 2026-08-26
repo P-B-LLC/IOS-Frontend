@@ -810,6 +810,11 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/like/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/like//delete(social_posts_like_destroy)`.
     func socialPostsLikeDestroy(_ input: Operations.SocialPostsLikeDestroy.Input) async throws -> Operations.SocialPostsLikeDestroy.Output
+    /// Report a post for a moderator to look at. The reason comes from a fixed list so reports can be counted; detail is optional. Reporting a post you have already reported succeeds with 200 rather than failing.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/report/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/report//post(social_posts_report_create)`.
+    func socialPostsReportCreate(_ input: Operations.SocialPostsReportCreate.Input) async throws -> Operations.SocialPostsReportCreate.Output
     /// Pass this post on to your followers. Reposting a repost passes on the original, and the original is what comes back.
     ///
     /// - Remark: HTTP `POST /api/v1/social/posts/{id}/repost/`.
@@ -820,6 +825,11 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/repost/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/repost//delete(social_posts_repost_destroy)`.
     func socialPostsRepostDestroy(_ input: Operations.SocialPostsRepostDestroy.Input) async throws -> Operations.SocialPostsRepostDestroy.Output
+    /// Copy a posted meal into your own saved meals. The foods and their servings are taken whole, so applying it to a day later gives the same numbers the post showed.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/save-meal/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-meal//post(social_posts_save_meal_create)`.
+    func socialPostsSaveMealCreate(_ input: Operations.SocialPostsSaveMealCreate.Input) async throws -> Operations.SocialPostsSaveMealCreate.Output
     /// Copy a posted workout into your own workouts. The exercises and their set counts are taken; weights are not, because a workout you save is a plan to follow rather than a record of somebody else's session.
     ///
     /// - Remark: HTTP `POST /api/v1/social/posts/{id}/save-workout/`.
@@ -2700,6 +2710,21 @@ extension APIProtocol {
             headers: headers
         ))
     }
+    /// Report a post for a moderator to look at. The reason comes from a fixed list so reports can be counted; detail is optional. Reporting a post you have already reported succeeds with 200 rather than failing.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/report/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/report//post(social_posts_report_create)`.
+    public func socialPostsReportCreate(
+        path: Operations.SocialPostsReportCreate.Input.Path,
+        headers: Operations.SocialPostsReportCreate.Input.Headers = .init(),
+        body: Operations.SocialPostsReportCreate.Input.Body
+    ) async throws -> Operations.SocialPostsReportCreate.Output {
+        try await socialPostsReportCreate(Operations.SocialPostsReportCreate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
     /// Pass this post on to your followers. Reposting a repost passes on the original, and the original is what comes back.
     ///
     /// - Remark: HTTP `POST /api/v1/social/posts/{id}/repost/`.
@@ -2722,6 +2747,19 @@ extension APIProtocol {
         headers: Operations.SocialPostsRepostDestroy.Input.Headers = .init()
     ) async throws -> Operations.SocialPostsRepostDestroy.Output {
         try await socialPostsRepostDestroy(Operations.SocialPostsRepostDestroy.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Copy a posted meal into your own saved meals. The foods and their servings are taken whole, so applying it to a day later gives the same numbers the post showed.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/save-meal/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-meal//post(social_posts_save_meal_create)`.
+    public func socialPostsSaveMealCreate(
+        path: Operations.SocialPostsSaveMealCreate.Input.Path,
+        headers: Operations.SocialPostsSaveMealCreate.Input.Headers = .init()
+    ) async throws -> Operations.SocialPostsSaveMealCreate.Output {
+        try await socialPostsSaveMealCreate(Operations.SocialPostsSaveMealCreate.Input(
             path: path,
             headers: headers
         ))
@@ -7097,6 +7135,35 @@ public enum Components {
                 case updatedAt = "updated_at"
             }
         }
+        /// What came of reporting.
+        ///
+        /// ``already_reported`` rather than an error on a second press: reporting
+        /// twice is far more often someone unsure the first one worked than someone
+        /// with a second complaint, and an error would tell them off for it.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PostReportResult`.
+        public struct PostReportResult: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PostReportResult/reason`.
+            public var reason: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PostReportResult/already_reported`.
+            public var alreadyReported: Swift.Bool
+            /// Creates a new `PostReportResult`.
+            ///
+            /// - Parameters:
+            ///   - reason:
+            ///   - alreadyReported:
+            public init(
+                reason: Swift.String,
+                alreadyReported: Swift.Bool
+            ) {
+                self.reason = reason
+                self.alreadyReported = alreadyReported
+            }
+            public enum CodingKeys: String, CodingKey {
+                case reason
+                case alreadyReported = "already_reported"
+            }
+        }
         /// A posted workout, frozen at the moment it was posted.
         ///
         /// The three totals are summed from the exercises nested underneath rather
@@ -7767,6 +7834,26 @@ public enum Components {
             case spotMe = "spot_me"
             case partnerNever = "partner_never"
         }
+        /// * `spam` - Spam or misleading
+        /// * `harassment` - Harassment or bullying
+        /// * `hate` - Hate speech
+        /// * `violence` - Violence or threats
+        /// * `nudity` - Nudity or sexual content
+        /// * `harm` - Promotes self-harm or disordered eating
+        /// * `advice` - Dangerous or false advice
+        /// * `other` - Something else
+        ///
+        /// - Remark: Generated from `#/components/schemas/ReasonEnum`.
+        @frozen public enum ReasonEnum: String, Codable, Hashable, Sendable, CaseIterable {
+            case spam = "spam"
+            case harassment = "harassment"
+            case hate = "hate"
+            case violence = "violence"
+            case nudity = "nudity"
+            case harm = "harm"
+            case advice = "advice"
+            case other = "other"
+        }
         /// A food the user has logged before, for the picker.
         ///
         /// - Remark: Generated from `#/components/schemas/RecentFood`.
@@ -8119,6 +8206,35 @@ public enum Components {
                 case showsTargetWeight = "shows_target_weight"
             }
         }
+        /// What a reporter sends.
+        ///
+        /// ``reason`` is closed, because the whole point of the list is that reports
+        /// can be counted and triaged. ``detail`` is free text and optional, for the
+        /// case the list does not cover.
+        ///
+        /// - Remark: Generated from `#/components/schemas/ReportPostRequest`.
+        public struct ReportPostRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ReportPostRequest/reason`.
+            public var reason: Components.Schemas.ReasonEnum
+            /// - Remark: Generated from `#/components/schemas/ReportPostRequest/detail`.
+            public var detail: Swift.String?
+            /// Creates a new `ReportPostRequest`.
+            ///
+            /// - Parameters:
+            ///   - reason:
+            ///   - detail:
+            public init(
+                reason: Components.Schemas.ReasonEnum,
+                detail: Swift.String? = nil
+            ) {
+                self.reason = reason
+                self.detail = detail
+            }
+            public enum CodingKeys: String, CodingKey {
+                case reason
+                case detail
+            }
+        }
         /// The original, as it appears inside a repost.
         ///
         /// Deliberately not `PostSerializer`. That one carries `repost_of`, and a
@@ -8443,6 +8559,47 @@ public enum Components {
             public enum CodingKeys: String, CodingKey {
                 case name
                 case ingredients
+            }
+        }
+        /// What saving somebody else's posted meal produced.
+        ///
+        /// The same shape as `SavedWorkoutResultSerializer` and for the same reason:
+        /// saved meal names are unique per user, so the name it landed under is not
+        /// always the one on the post and the app has to be able to say so.
+        ///
+        /// - Remark: Generated from `#/components/schemas/SavedMealResult`.
+        public struct SavedMealResult: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SavedMealResult/meal`.
+            public var meal: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SavedMealResult/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SavedMealResult/item_count`.
+            public var itemCount: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/SavedMealResult/renamed`.
+            public var renamed: Swift.Bool
+            /// Creates a new `SavedMealResult`.
+            ///
+            /// - Parameters:
+            ///   - meal:
+            ///   - name:
+            ///   - itemCount:
+            ///   - renamed:
+            public init(
+                meal: Swift.String,
+                name: Swift.String,
+                itemCount: Swift.Int,
+                renamed: Swift.Bool
+            ) {
+                self.meal = meal
+                self.name = name
+                self.itemCount = itemCount
+                self.renamed = renamed
+            }
+            public enum CodingKeys: String, CodingKey {
+                case meal
+                case name
+                case itemCount = "item_count"
+                case renamed
             }
         }
         /// What saving somebody else's posted workout produced.
@@ -26380,6 +26537,196 @@ public enum Operations {
             }
         }
     }
+    /// Report a post for a moderator to look at. The reason comes from a fixed list so reports can be counted; detail is optional. Reporting a post you have already reported succeeds with 200 rather than failing.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/report/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/report//post(social_posts_report_create)`.
+    public enum SocialPostsReportCreate {
+        public static let id: Swift.String = "social_posts_report_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/report/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this post.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/report/POST/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this post.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialPostsReportCreate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/report/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsReportCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsReportCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialPostsReportCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/report/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/report/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.ReportPostRequest)
+            }
+            public var body: Operations.SocialPostsReportCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.SocialPostsReportCreate.Input.Path,
+                headers: Operations.SocialPostsReportCreate.Input.Headers = .init(),
+                body: Operations.SocialPostsReportCreate.Input.Body
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Created: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/report/POST/responses/201/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/report/POST/responses/201/content/application\/json`.
+                    case json(Components.Schemas.PostReportResult)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PostReportResult {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialPostsReportCreate.Output.Created.Body
+                /// Creates a new `Created`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialPostsReportCreate.Output.Created.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/report//post(social_posts_report_create)/responses/201`.
+            ///
+            /// HTTP response code: `201 created`.
+            case created(Operations.SocialPostsReportCreate.Output.Created)
+            /// The associated value of the enum case if `self` is `.created`.
+            ///
+            /// - Throws: An error if `self` is not `.created`.
+            /// - SeeAlso: `.created`.
+            public var created: Operations.SocialPostsReportCreate.Output.Created {
+                get throws {
+                    switch self {
+                    case let .created(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "created",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/report/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/report/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PostReportResult)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PostReportResult {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialPostsReportCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialPostsReportCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/report//post(social_posts_report_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialPostsReportCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialPostsReportCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
     /// Pass this post on to your followers. Reposting a repost passes on the original, and the original is what comes back.
     ///
     /// - Remark: HTTP `POST /api/v1/social/posts/{id}/repost/`.
@@ -26604,6 +26951,136 @@ public enum Operations {
                     default:
                         try throwUnexpectedResponseStatus(
                             expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Copy a posted meal into your own saved meals. The foods and their servings are taken whole, so applying it to a day later gives the same numbers the post showed.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/save-meal/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-meal//post(social_posts_save_meal_create)`.
+    public enum SocialPostsSaveMealCreate {
+        public static let id: Swift.String = "social_posts_save_meal_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-meal/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this post.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-meal/POST/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this post.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialPostsSaveMealCreate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-meal/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsSaveMealCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsSaveMealCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialPostsSaveMealCreate.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.SocialPostsSaveMealCreate.Input.Path,
+                headers: Operations.SocialPostsSaveMealCreate.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Created: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-meal/POST/responses/201/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-meal/POST/responses/201/content/application\/json`.
+                    case json(Components.Schemas.SavedMealResult)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.SavedMealResult {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialPostsSaveMealCreate.Output.Created.Body
+                /// Creates a new `Created`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialPostsSaveMealCreate.Output.Created.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-meal//post(social_posts_save_meal_create)/responses/201`.
+            ///
+            /// HTTP response code: `201 created`.
+            case created(Operations.SocialPostsSaveMealCreate.Output.Created)
+            /// The associated value of the enum case if `self` is `.created`.
+            ///
+            /// - Throws: An error if `self` is not `.created`.
+            /// - SeeAlso: `.created`.
+            public var created: Operations.SocialPostsSaveMealCreate.Output.Created {
+                get throws {
+                    switch self {
+                    case let .created(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "created",
                             response: self
                         )
                     }

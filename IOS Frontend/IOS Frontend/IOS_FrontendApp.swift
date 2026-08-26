@@ -181,6 +181,15 @@ private struct AppRootView: View {
                     switch ProcessInfo.processInfo.environment["REPBASE_SOCIAL_PREVIEW"] {
                     case "detail":
                         PostDetailView(postID: 1)
+                    case "report":
+                        // Behind the ... menu on somebody else's post, which
+                        // a script cannot open.
+                        PostReportSheet(
+                            post: SocialStore.preview.feed[0],
+                            timeOfDay: HomeTimeOfDay(date: Date())
+                        )
+                    case "blocked":
+                        BlockedAccountsView()
                     case "push":
                         // Arrives with the thread already pushed, which is the
                         // only way to check that a card leads anywhere.

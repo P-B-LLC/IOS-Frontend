@@ -219,6 +219,17 @@ nonisolated struct FeedPost: Identifiable, Equatable, Hashable, Sendable {
         return !(displayed.workout?.exercises.isEmpty ?? true)
     }
 
+    /// Whether this post offers a meal the reader could keep. Their own is
+    /// already theirs, and a meal with no food in it is nothing to save.
+    var offersMealToSave: Bool {
+        guard !viewerIsAuthor else { return false }
+        return !(displayed.meal?.entries.isEmpty ?? true)
+    }
+
+    /// Whether this post can be reported or its author blocked. Neither is
+    /// something to offer about yourself.
+    var offersModeration: Bool { !viewerIsAuthor }
+
     /// Whether this build knows how to draw the post at all.
     ///
     /// A repost is drawable when the post underneath it is: it has no snapshot
@@ -247,6 +258,70 @@ nonisolated struct FeedPost: Identifiable, Equatable, Hashable, Sendable {
             planner: planner
         )
     }
+}
+
+/// What saving somebody's posted meal produced.
+///
+/// Carries the name for the same reason the workout one does: saved meal
+/// names are unique per person, and everyone has a "Meal 1", so a copy very
+/// often lands under a different name and the app has to say which.
+nonisolated struct SavedMealOutcome: Equatable, Hashable, Sendable {
+    let name: String
+    let itemCount: Int
+    let wasRenamed: Bool
+
+    var message: String {
+        let items = itemCount == 1 ? "1 item" : "\(itemCount) items"
+        if wasRenamed {
+            return "Saved as \"\(name)\" — \(items). You already had one by its own name."
+        }
+        return "Saved \"\(name)\" to your meals — \(items)."
+    }
+}
+
+/// Somebody this reader has blocked.
+///
+/// `id` is the block's own id, not the person's: lifting a block is a delete
+/// of this row, and the person is carried alongside so a list of them is not
+/// a profile fetch each.
+nonisolated struct BlockedPerson: Identifiable, Equatable, Hashable, Sendable {
+    let id: Int
+    let person: PostAuthor
+}
+
+/// Why somebody is reporting a post.
+///
+/// A fixed list, matching the server's: reports exist to be triaged and
+/// counted, which free text does not allow. `detail` on the request is where
+/// anything this list does not cover goes.
+nonisolated enum PostReportReason: String, CaseIterable, Identifiable, Sendable {
+    case spam
+    case harassment
+    case hate
+    case violence
+    case nudity
+    case harm
+    case advice
+    case other
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .spam: return "Spam or misleading"
+        case .harassment: return "Harassment or bullying"
+        case .hate: return "Hate speech"
+        case .violence: return "Violence or threats"
+        case .nudity: return "Nudity or sexual content"
+        case .harm: return "Promotes self-harm or disordered eating"
+        case .advice: return "Dangerous or false advice"
+        case .other: return "Something else"
+        }
+    }
+
+    /// Only the open-ended one asks for more. Making everyone explain a plain
+    /// "spam" would be a form where a tap would do.
+    var invitesDetail: Bool { self == .other }
 }
 
 /// What saving somebody's posted workout produced.

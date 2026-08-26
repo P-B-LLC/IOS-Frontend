@@ -116,6 +116,27 @@ struct SocialFeedView: View {
                     .onTapGesture { store.lastSavedWorkout = nil }
                 }
 
+                if let saved = store.lastSavedMeal {
+                    notice(
+                        saved.message,
+                        symbol: "checkmark.circle.fill",
+                        timeOfDay: timeOfDay
+                    )
+                    .onTapGesture { store.lastSavedMeal = nil }
+                }
+
+                // Reporting and blocking both act out of sight -- one goes to
+                // a queue, the other quietly empties part of the feed -- so
+                // both say so here rather than leaving the tap unanswered.
+                if let message = store.lastModerationMessage {
+                    notice(
+                        message,
+                        symbol: "checkmark.circle.fill",
+                        timeOfDay: timeOfDay
+                    )
+                    .onTapGesture { store.lastModerationMessage = nil }
+                }
+
                 if isListLoading && displayedPosts.isEmpty {
                     ProgressView().padding(.top, 40)
                 } else if displayedPosts.isEmpty {
@@ -426,6 +447,9 @@ struct PostCard: View {
     /// where the profile being read is already theirs.
     var openAuthor: ((Int) -> Void)?
 
+    /// Set when Report was chosen, which raises the reasons.
+    @State private var reportingPost: FeedPost?
+
     /// What is drawn: the original when this is a repost, itself otherwise.
     /// The engagement figures always come from `post`.
     private var shown: RepostedPost { post.displayed }
@@ -469,6 +493,9 @@ struct PostCard: View {
         }
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .sheet(item: $reportingPost) { target in
+            PostReportSheet(post: target, timeOfDay: timeOfDay)
+        }
         // The only rule on a card, and it is between cards rather than inside
         // one. A post used to be ruled off internally -- above and below its
         // numbers, between every exercise or ingredient -- which chopped one
@@ -557,12 +584,31 @@ struct PostCard: View {
                         .font(.system(size: 9, weight: .semibold))
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                 }
-                if post.viewerIsAuthor {
+                if post.viewerIsAuthor || post.offersModeration {
                     Menu {
-                        Button(role: .destructive) {
-                            store.delete(post)
-                        } label: {
-                            Label("Delete post", systemImage: "trash")
+                        if post.viewerIsAuthor {
+                            Button(role: .destructive) {
+                                store.delete(post)
+                            } label: {
+                                Label("Delete post", systemImage: "trash")
+                            }
+                        } else {
+                            // Report asks a question, so it opens a sheet.
+                            // Block does not: it acts on the tap, the way
+                            // every destructive control in this app does.
+                            Button {
+                                reportingPost = post
+                            } label: {
+                                Label("Report post", systemImage: "flag")
+                            }
+                            Button(role: .destructive) {
+                                Task { await store.block(shown.author) }
+                            } label: {
+                                Label(
+                                    "Block \(shown.author.displayName)",
+                                    systemImage: "hand.raised"
+                                )
+                            }
                         }
                     } label: {
                         Image(systemName: "ellipsis")
@@ -784,7 +830,34 @@ struct PostCard: View {
             if post.offersWorkoutToSave {
                 saveWorkoutButton
             }
+            if post.offersMealToSave {
+                saveMealButton
+            }
         }
+    }
+
+    /// The meal equivalent of Save workout. A meal is worth keeping for the
+    /// same reason a workout is: you want to eat it again without typing it
+    /// back in food by food.
+    private var saveMealButton: some View {
+        let isSaving = store.isSavingMeal(from: post.id)
+        return Button {
+            Task { await store.saveMeal(from: post) }
+        } label: {
+            HStack(spacing: 6) {
+                if isSaving {
+                    ProgressView().controlSize(.mini)
+                } else {
+                    Image(systemName: "square.and.arrow.down")
+                        .font(.system(size: 12, weight: .semibold))
+                }
+                Text("Save meal")
+                    .font(.caption.weight(.semibold))
+            }
+            .foregroundStyle(timeOfDay.accent)
+        }
+        .buttonStyle(.plain)
+        .disabled(isSaving)
     }
 
     private func statistic(_ value: String, _ label: String) -> some View {

@@ -824,6 +824,22 @@ private struct ProfileSettingsView: View {
 
                         settingsSection("PRIVACY & PERMISSIONS", timeOfDay: timeOfDay) {
                             VStack(spacing: 0) {
+                                // Blocking acts on one tap from a post, with
+                                // nothing to confirm. This is the way back
+                                // from a tap that was not meant.
+                                NavigationLink {
+                                    BlockedAccountsView()
+                                } label: {
+                                    settingsRow(
+                                        "Blocked accounts",
+                                        detail: "People you cannot see, and who cannot see you",
+                                        symbol: "hand.raised"
+                                    )
+                                }
+                                .buttonStyle(.plain)
+
+                                Rectangle().fill(timeOfDay.border).frame(height: 1)
+
                                 NavigationLink {
                                     AppleHealthConnectionView()
                                 } label: {

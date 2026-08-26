@@ -85,6 +85,10 @@ final class SocialStore {
         loadingPostsFor = []
         isSendingComment = false
         lastSavedWorkout = nil
+        lastSavedMeal = nil
+        lastModerationMessage = nil
+        blockedPeople = []
+        savingMealFor = []
         savingWorkoutFor = []
     }
 
@@ -380,10 +384,126 @@ final class SocialStore {
 
     /// What the last save produced, for a message the reader can dismiss.
     var lastSavedWorkout: SavedWorkoutOutcome?
+    var lastSavedMeal: SavedMealOutcome?
+    /// What to say after reporting or blocking. Cleared on a tap, like the
+    /// save notices beside it.
+    var lastModerationMessage: String?
+    /// Everyone this reader has blocked, for the screen that lifts them.
+    private(set) var blockedPeople: [BlockedPerson] = []
+    private(set) var isLoadingBlocks = false
+    private var savingMealFor: Set<Int> = []
     private(set) var savingWorkoutFor: Set<Int> = []
 
     func isSavingWorkout(from postID: Int) -> Bool {
         savingWorkoutFor.contains(postID)
+    }
+
+    func isSavingMeal(from postID: Int) -> Bool {
+        savingMealFor.contains(postID)
+    }
+
+    /// Copies a posted meal into the reader's own saved meals.
+    ///
+    /// Not optimistic and not silent, for the same reason as the workout: the
+    /// name it lands under is not always the one on the post, and only the
+    /// server knows which.
+    func saveMeal(from post: FeedPost) async {
+        guard let repository, !savingMealFor.contains(post.id) else { return }
+        let generation = connectionGeneration
+        savingMealFor.insert(post.id)
+        defer {
+            if connectionGeneration == generation {
+                savingMealFor.remove(post.id)
+            }
+        }
+
+        do {
+            let outcome = try await repository.saveMeal(fromPost: post.id)
+            guard connectionGeneration == generation else { return }
+            lastSavedMeal = outcome
+        } catch {
+            guard connectionGeneration == generation else { return }
+            errorMessage = error.userFacingMessage
+        }
+    }
+
+    /// Reports a post.
+    ///
+    /// Says nearly the same thing whether or not it had already been reported:
+    /// someone who pressed it twice wants to know it worked, not to be told
+    /// they were early.
+    func report(
+        _ post: FeedPost,
+        reason: PostReportReason,
+        detail: String
+    ) async {
+        guard let repository else { return }
+        let generation = connectionGeneration
+        do {
+            let already = try await repository.report(
+                postID: post.id,
+                reason: reason,
+                detail: detail
+            )
+            guard connectionGeneration == generation else { return }
+            lastModerationMessage = already
+                ? "You had already reported this post. We are looking at it."
+                : "Thanks. We will take a look at this post."
+        } catch {
+            guard connectionGeneration == generation else { return }
+            errorMessage = error.userFacingMessage
+        }
+    }
+
+    /// Blocks somebody, and takes their posts off the screen on the spot.
+    ///
+    /// The server drops the follows. Dropping what is already loaded is what
+    /// stops the person just blocked sitting there until the next refresh.
+    func block(_ author: PostAuthor) async {
+        guard let repository else { return }
+        let generation = connectionGeneration
+        do {
+            try await repository.block(userID: author.id)
+            guard connectionGeneration == generation else { return }
+            feed.removeAll { $0.displayed.author.id == author.id }
+            discoverPosts.removeAll { $0.displayed.author.id == author.id }
+            people.removeAll { $0.id == author.id }
+            lastModerationMessage =
+                "Blocked \(author.displayName). You will not see each other's posts."
+        } catch {
+            guard connectionGeneration == generation else { return }
+            errorMessage = error.userFacingMessage
+        }
+    }
+
+    func loadBlocks() async {
+        guard let repository else { return }
+        let generation = connectionGeneration
+        isLoadingBlocks = true
+        defer { if connectionGeneration == generation { isLoadingBlocks = false } }
+        do {
+            let loaded = try await repository.blocks()
+            guard connectionGeneration == generation else { return }
+            blockedPeople = loaded
+        } catch {
+            guard connectionGeneration == generation else { return }
+            errorMessage = error.userFacingMessage
+        }
+    }
+
+    /// Lifts a block. The feed is not refilled here: what they posted while
+    /// blocked is not news, and it arrives on the next refresh anyway.
+    func unblock(_ blocked: BlockedPerson) async {
+        guard let repository else { return }
+        let generation = connectionGeneration
+        do {
+            try await repository.unblock(blockID: blocked.id)
+            guard connectionGeneration == generation else { return }
+            blockedPeople.removeAll { $0.id == blocked.id }
+        } catch {
+            guard connectionGeneration == generation else { return }
+            errorMessage = error.userFacingMessage
+        }
     }
 
     /// Copies a posted workout into the reader's own workouts.

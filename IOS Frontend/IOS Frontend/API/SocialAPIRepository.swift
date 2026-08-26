@@ -278,6 +278,112 @@ actor SocialAPIRepository {
         }
     }
 
+    /// Copies a posted meal into the reader's own saved meals.
+    ///
+    /// Returns the name for the same reason the workout call does: saved meal
+    /// names are unique per person and everyone has a "Meal 1", so the copy
+    /// very often lands under a different one.
+    func saveMeal(fromPost postID: Int) async throws -> SavedMealOutcome {
+        let output = try await client.socialPostsSaveMealCreate(
+            path: .init(id: postID)
+        )
+        switch output {
+        case .created(let response):
+            let result = try response.body.json
+            return SavedMealOutcome(
+                name: result.name,
+                itemCount: result.itemCount,
+                wasRenamed: result.renamed
+            )
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// Reports a post.
+    ///
+    /// Returns whether this reader had already reported it. The server answers
+    /// 200 rather than an error in that case, so both outcomes are successes
+    /// and the difference is only what the app says afterwards.
+    func report(
+        postID: Int,
+        reason: PostReportReason,
+        detail: String
+    ) async throws -> Bool {
+        let trimmed = detail.trimmingCharacters(in: .whitespacesAndNewlines)
+        let output = try await client.socialPostsReportCreate(
+            path: .init(id: postID),
+            body: .json(
+                Components.Schemas.ReportPostRequest(
+                    reason: Components.Schemas.ReasonEnum(rawValue: reason.rawValue)
+                        ?? .other,
+                    detail: trimmed.isEmpty ? nil : trimmed
+                )
+            )
+        )
+        switch output {
+        case .created:
+            return false
+        case .ok:
+            return true
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// Blocks somebody. The server drops any following in either direction.
+    func block(userID: Int) async throws {
+        let output = try await client.socialBlocksCreate(
+            body: .json(Components.Schemas.BlockRequest(blocked: userID))
+        )
+        switch output {
+        case .created:
+            return
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// Everyone this reader has blocked, so a block can be lifted again.
+    func blocks() async throws -> [BlockedPerson] {
+        var page: Int?
+        var visited: Set<Int> = []
+        var values: [BlockedPerson] = []
+        repeat {
+            let output = try await client.socialBlocksList(query: .init(page: page))
+            let response: Components.Schemas.PaginatedBlockList
+            switch output {
+            case .ok(let success):
+                response = try success.body.json
+            case .undocumented(let statusCode, _):
+                throw APIServiceError.undocumentedStatus(statusCode)
+            }
+            values.append(contentsOf: response.results.map(Self.blocked(from:)))
+            page = try nextPage(response.next, visited: &visited)
+        } while page != nil
+        return values
+    }
+
+    /// Lifts a block, by the id of the block itself rather than the person.
+    func unblock(blockID: Int) async throws {
+        let output = try await client.socialBlocksDestroy(path: .init(id: blockID))
+        switch output {
+        case .noContent:
+            return
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    private static func blocked(
+        from payload: Components.Schemas.Block
+    ) -> BlockedPerson {
+        BlockedPerson(
+            id: payload.id,
+            person: author(from: payload.blockedUser.value1)
+        )
+    }
+
     /// One post, for a page opened from somewhere the feed does not cover.
     func post(withID id: Int) async throws -> FeedPost {
         switch try await client.socialPostsRetrieve(path: .init(id: id)) {
