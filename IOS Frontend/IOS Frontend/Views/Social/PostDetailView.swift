@@ -24,8 +24,13 @@ struct PostDetailView: View {
     /// True until the first fetch has been attempted, so a post being loaded
     /// does not flash "this post is gone" on the way in.
     @State private var isFetching = true
-    /// Raised to put the cursor in the comment box.
-    @State private var focusRequest = 0
+    /// Whether the threads are raised over the post.
+    ///
+    /// Closed on arrival. The threads used to be the page, with the post
+    /// squeezed into a strip above them — so opening a post showed the
+    /// comment box and an empty-state before the reader had asked for
+    /// either, and the post's own action row sat half-hidden behind it.
+    @State private var showingComments = false
     /// The author's profile, when it has been opened from the card.
     @State private var visitingAuthor: Int?
 
@@ -59,42 +64,39 @@ struct PostDetailView: View {
             // profile, or from a card that has since paged out.
             await store.loadPost(id: postID)
             isFetching = false
-            await store.loadComments(for: postID)
 #if DEBUG
-            // Arrives mid-comment, keyboard up. The bar riding over the box
-            // is only visible in that state, and simctl cannot type.
+            // Arrives with the threads already raised. They open on a tap now,
+            // and simctl cannot tap.
             if ProcessInfo.processInfo.environment["REPBASE_SOCIAL_FOCUS"] != nil {
-                focusRequest += 1
+                showingComments = true
             }
 #endif
         }
     }
 
     private func loaded(_ post: FeedPost) -> some View {
-        PostCommentsView(
-            postID: postID,
-            timeOfDay: timeOfDay,
-            clearsBottomBar: true,
-            focusRequest: $focusRequest
-        )
-        // The post itself sits above the threads rather than scrolling with
-        // them: it is what the conversation is about, and losing it off the
-        // top while reading replies loses the subject.
-        .safeAreaInset(edge: .top, spacing: 0) {
-            ScrollView {
-                PostCard(
-                    post: post,
-                    timeOfDay: timeOfDay,
-                    // Already here, so the button puts the cursor in the box
-                    // rather than opening the page again.
-                    openComments: { focusRequest += 1 },
-                    openAuthor: { visitingAuthor = $0 }
-                )
-                .padding(.horizontal, RepbaseDesign.pageInset)
-            }
-            .scrollIndicators(.hidden)
-            .frame(maxHeight: 420)
-            .background(.thinMaterial)
+        // The post gets the page. It is what was tapped, so it is what should
+        // be on screen — whole, and scrolling as far as it needs rather than
+        // capped into a strip with the conversation pushing up underneath it.
+        ScrollView {
+            PostCard(
+                post: post,
+                timeOfDay: timeOfDay,
+                // The same sheet the feed raises, from the same button. Being
+                // on the post's own page is not a reason to have already
+                // opened its comments.
+                openComments: { showingComments = true },
+                openAuthor: { visitingAuthor = $0 }
+            )
+            .padding(.horizontal, RepbaseDesign.pageInset)
+            .padding(.top, 12)
+            // Clear of the floating tab bar, which is drawn over a pushed
+            // screen rather than inset out of it.
+            .padding(.bottom, RepbaseDesign.bottomBarClearance)
+        }
+        .scrollIndicators(.hidden)
+        .sheet(isPresented: $showingComments) {
+            PostCommentsSheet(postID: postID, timeOfDay: timeOfDay)
         }
     }
 }

@@ -4,10 +4,11 @@
 //
 //  The threads on a post and the box to add to them.
 //
-//  Shared by the post's own page and the sheet the feed raises, so the two
-//  cannot drift into behaving differently. What changes between them is only
-//  where the bottom of the screen is: pushed under the app's floating tab bar
-//  the composer has to clear it, and in a sheet there is no bar to clear.
+//  Always a sheet, raised by the comment button — on the feed and on a post's
+//  own page alike. It used to be the post page itself, with the post squeezed
+//  into a strip above it, which meant opening a post opened its comment box
+//  too. Being a sheet everywhere is also why nothing here worries about the
+//  floating tab bar: there is never one behind it.
 //
 
 import SwiftUI
@@ -15,9 +16,6 @@ import SwiftUI
 struct PostCommentsView: View {
     let postID: Int
     let timeOfDay: HomeTimeOfDay
-    /// True when this is pushed under the app's tab bar, which is drawn over
-    /// the screen rather than inset out of it.
-    var clearsBottomBar: Bool = false
     /// Raised by the parent to put the cursor in the box — what the comment
     /// button does once the thread is already on screen.
     @Binding var focusRequest: Int
@@ -61,10 +59,6 @@ struct PostCommentsView: View {
 
             composer
         }
-        // The bar rides up with the keyboard and lands on the box. Asked away
-        // only while writing, and only where there is a bar: in a sheet
-        // nothing is behind this view to hide.
-        .hidesBottomBar(clearsBottomBar && isWriting)
         // Both, deliberately. `onChange` alone never fired for the sheet,
         // which arrives with the request already set and so never changes it:
         // the box was there and the keyboard was not.
@@ -74,9 +68,8 @@ struct PostCommentsView: View {
         // Types a comment and sends it. simctl cannot type, so this is the
         // only way to see the round trip land and the keyboard go away.
         .task {
-            guard clearsBottomBar,
-                  let text = ProcessInfo.processInfo
-                      .environment["REPBASE_SOCIAL_SEND"] else { return }
+            guard let text = ProcessInfo.processInfo
+                .environment["REPBASE_SOCIAL_SEND"] else { return }
             draft.body = text
             try? await Task.sleep(for: .seconds(2))
             send()
@@ -193,16 +186,6 @@ struct PostCommentsView: View {
             }
             .padding(.horizontal, RepbaseDesign.pageInset)
             .padding(.vertical, 10)
-            // Clear of the floating tab bar, which is drawn over a pushed
-            // screen rather than inset out of it. Dropped once the keyboard
-            // is up, since the keyboard covers the bar anyway, and never
-            // applied in a sheet, where there is no bar.
-            .padding(
-                .bottom,
-                clearsBottomBar && !isWriting
-                    ? RepbaseDesign.bottomBarClearance - 10
-                    : 0
-            )
         }
         .background(.thinMaterial)
         .animation(.easeOut(duration: 0.2), value: isWriting)

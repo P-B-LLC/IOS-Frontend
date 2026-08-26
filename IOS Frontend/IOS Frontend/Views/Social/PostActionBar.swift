@@ -15,7 +15,8 @@ import SwiftUI
 struct PostActionBar: View {
     let post: FeedPost
     let timeOfDay: HomeTimeOfDay
-    /// Opens the thread. Nil on the detail page, which is already there.
+    /// Raises the threads. Set everywhere the bar is drawn — the post's
+    /// own page included, where they are a sheet like anywhere else.
     var openComments: (() -> Void)?
 
     @Environment(SocialStore.self) private var store
