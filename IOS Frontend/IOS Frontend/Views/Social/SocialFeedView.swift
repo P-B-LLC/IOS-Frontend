@@ -662,18 +662,24 @@ struct PostCard: View {
         }
     }
 
-    /// "Meal 1 – Chicken Bowl".
+    /// "Meal 1 · Chicken Bowl · 800 kcal".
     ///
-    /// A meal's own name is a slot – Meal 1, Meal 2 – which says when it
-    /// was eaten and nothing about what was in it. The food goes beside it,
-    /// where the reader is already looking, rather than only in the list
-    /// underneath.
+    /// A meal's own name is a slot · Meal 1, Meal 2 · which says when it
+    /// was eaten and nothing about what was in it. So the title says the whole
+    /// meal: what was in it and what it came to.
+    ///
+    /// Everything the card used to repeat underneath. The items were listed
+    /// again below, and the calories again beside the macros, which meant a
+    /// one-item meal stated itself three times.
     ///
     /// Every item, joined: the title wraps rather than truncating, so a long
     /// meal costs a second line instead of losing its ingredients.
     private func mealTitle(_ meal: PostMealSnapshot) -> String {
+        var parts = [meal.name]
         let eaten = meal.entries.map(\.name).joined(separator: ", ")
-        return eaten.isEmpty ? meal.name : "\(meal.name) – \(eaten)"
+        if !eaten.isEmpty { parts.append(eaten) }
+        parts.append("\(meal.totalCalories.nutritionText) kcal")
+        return parts.joined(separator: " · ")
     }
 
     private func postTitleText(_ text: String) -> some View {
@@ -712,29 +718,16 @@ struct PostCard: View {
         VStack(alignment: .leading, spacing: 12) {
             shareHeader("Meal", symbol: "fork.knife")
 
+            // The macros only. Calories moved to the title, and repeating
+            // them here was the same number twice on one card; the list of
+            // items that used to sit under this said nothing the title does
+            // not already say.
             HStack(alignment: .top, spacing: 0) {
-                statistic(meal.totalCalories.nutritionText, "kcal")
                 statistic("\(meal.totalProteinGrams.nutritionText)g", "protein")
                 statistic("\(meal.totalCarbohydrateGrams.nutritionText)g", "carbs")
                 statistic("\(meal.totalFatGrams.nutritionText)g", "fat")
             }
             .padding(.vertical, 10)
-
-            if !meal.entries.isEmpty {
-                VStack(alignment: .leading, spacing: 0) {
-                    ForEach(Array(meal.entries.enumerated()), id: \.element.id) { index, entry in
-                        HStack {
-                            Text(entry.name)
-                                .font(.system(size: 13, weight: .medium))
-                            Spacer(minLength: 8)
-                            Text("\(entry.totalCalories.nutritionText) kcal")
-                                .font(.system(size: 12).monospacedDigit())
-                                .foregroundStyle(timeOfDay.secondaryText)
-                        }
-                        .padding(.vertical, 7)
-                    }
-                }
-            }
         }
     }
 
