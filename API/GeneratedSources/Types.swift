@@ -7671,31 +7671,55 @@ public enum Components {
         }
         /// * `why_i_train` - Why I train
         /// * `current_goal` - What I am working towards
-        /// * `favourite_lift` - Favourite lift
-        /// * `hardest_part` - The hardest part for me
-        /// * `best_advice` - Best advice I have been given
         /// * `proudest` - Proudest moment in the gym
-        /// * `rest_day` - A rest day looks like
+        /// * `hardest_part` - The hardest part for me
+        /// * `started_because` - I started training because
+        /// * `training_changed` - Training changed this about me
+        /// * `favourite_lift` - Favourite lift
+        /// * `skipped_lift` - The lift I skip if I can
+        /// * `one_more_rep` - What gets me one more rep
+        /// * `best_advice` - Best advice I have been given
+        /// * `training_to` - What I train to
+        /// * `gym_pet_peeve` - My gym pet peeve
+        /// * `warm_up` - My warm-up is
         /// * `pre_workout` - What I eat before training
         /// * `post_workout` - What I eat after
-        /// * `training_to` - What I train to
-        /// * `one_more_rep` - What gets me one more rep
+        /// * `worth_it` - Worth every calorie
+        /// * `on_repeat` - The meal I make on repeat
+        /// * `rest_day` - A rest day looks like
+        /// * `outside_gym` - Outside the gym you will find me
+        /// * `recovery` - How I actually recover
+        /// * `sunday` - My Sunday in three words
         /// * `training_partner` - Looking for a training partner who
+        /// * `spot_me` - Ask me to spot you if
+        /// * `partner_never` - A training partner should never
         ///
         /// - Remark: Generated from `#/components/schemas/QuestionEnum`.
         @frozen public enum QuestionEnum: String, Codable, Hashable, Sendable, CaseIterable {
             case whyITrain = "why_i_train"
             case currentGoal = "current_goal"
-            case favouriteLift = "favourite_lift"
-            case hardestPart = "hardest_part"
-            case bestAdvice = "best_advice"
             case proudest = "proudest"
-            case restDay = "rest_day"
+            case hardestPart = "hardest_part"
+            case startedBecause = "started_because"
+            case trainingChanged = "training_changed"
+            case favouriteLift = "favourite_lift"
+            case skippedLift = "skipped_lift"
+            case oneMoreRep = "one_more_rep"
+            case bestAdvice = "best_advice"
+            case trainingTo = "training_to"
+            case gymPetPeeve = "gym_pet_peeve"
+            case warmUp = "warm_up"
             case preWorkout = "pre_workout"
             case postWorkout = "post_workout"
-            case trainingTo = "training_to"
-            case oneMoreRep = "one_more_rep"
+            case worthIt = "worth_it"
+            case onRepeat = "on_repeat"
+            case restDay = "rest_day"
+            case outsideGym = "outside_gym"
+            case recovery = "recovery"
+            case sunday = "sunday"
             case trainingPartner = "training_partner"
+            case spotMe = "spot_me"
+            case partnerNever = "partner_never"
         }
         /// A food the user has logged before, for the picker.
         ///

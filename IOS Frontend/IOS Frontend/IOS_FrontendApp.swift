@@ -148,11 +148,20 @@ private struct AppRootView: View {
                     }
                     .repbaseScreen(.prepare)
                 }
-            } else if ProcessInfo.processInfo.environment["REPBASE_PROMPT_PREVIEW"] != nil {
-                // Both of these sit behind Profile -> About -> a button, which
-                // no script can press.
-                NavigationStack { PromptPickerView() }
-                    .environment(SocialProfileStore.preview)
+            } else if let promptPreview = ProcessInfo.processInfo.environment["REPBASE_PROMPT_PREVIEW"] {
+                // These sit behind Profile -> About -> a button, and then
+                // behind another tap or two, which no script can press.
+                NavigationStack {
+                    switch promptPreview {
+                    case "library":
+                        PromptLibraryView(taken: ["why_i_train"], replacing: nil) { _ in }
+                    case "answer":
+                        PromptAnswerView(question: .proudest)
+                    default:
+                        PromptPickerView()
+                    }
+                }
+                .environment(SocialProfileStore.preview)
             } else if ProcessInfo.processInfo.environment["REPBASE_LIFTS_PREVIEW"] != nil {
                 NavigationStack { ProfileExpressionEditorView() }
                     .environment(SocialProfileStore.preview)
