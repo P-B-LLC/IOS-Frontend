@@ -644,8 +644,35 @@ extension SocialStore {
             // Somebody else's, so it offers its workout.
             showsWeights: true, viewerIsAuthor: false, repostOf: nil
         )
+        // A meal, so the meal card has any preview cover at all: it is a real
+        // post kind, and until now it could only be looked at with a signed-in
+        // account and a day's food behind it. Two items, because one would not
+        // show what a list of them reads like in the title or underneath it.
+        let lunch = PostMealSnapshot(
+            name: "Meal 1",
+            date: "2026-08-24",
+            totalCalories: 800,
+            totalProteinGrams: 50,
+            totalCarbohydrateGrams: 120,
+            totalFatGrams: 30,
+            entries: [
+                PostFoodLine(id: 1, name: "Chicken Bowl", servings: 1, totalCalories: 620),
+                PostFoodLine(id: 2, name: "Greek Yoghurt", servings: 1, totalCalories: 180),
+            ]
+        )
+
         store.feed = [
             original,
+            FeedPost(
+                id: 5, author: aaron, kind: .meal,
+                caption: "this my food",
+                imageURL: nil, visibility: .publicToAll,
+                createdAt: Date().addingTimeInterval(-60 * 60 * 26),
+                viewerFollowsAuthor: true, sourceID: nil,
+                workout: nil, meal: lunch, planner: nil,
+                likeCount: 4, commentCount: 0, repostCount: 0,
+                viewerHasLiked: false, viewerHasReposted: false, repostOf: nil
+            ),
             // Weights held back. The rows read "4 × 5" with no load, there is
             // no "kg lifted" figure, and the workout is still worth saving.
             FeedPost(

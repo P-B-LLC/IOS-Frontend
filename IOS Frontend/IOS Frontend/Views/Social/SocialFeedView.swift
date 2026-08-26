@@ -454,14 +454,18 @@ struct PostCard: View {
                 unsupportedBody
             }
 
-            PostActionBar(post: post, timeOfDay: timeOfDay, openComments: openComments)
-
+            // Above the buttons, not below them. The caption is the last
+            // thing the poster said about the post, so it belongs with the
+            // post; the action row is where the post stops and what a reader
+            // can do about it starts.
             if !shown.caption.isEmpty {
                 Text(shown.caption)
                     .font(.system(size: 14))
                     .foregroundStyle(timeOfDay.primaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
+
+            PostActionBar(post: post, timeOfDay: timeOfDay, openComments: openComments)
         }
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -652,10 +656,24 @@ struct PostCard: View {
         if let workout = shown.workout {
             postTitleText(workout.title)
         } else if let meal = shown.meal {
-            postTitleText(meal.name)
+            postTitleText(mealTitle(meal))
         } else if let planner = shown.planner {
             postTitleText(planner.title)
         }
+    }
+
+    /// "Meal 1 – Chicken Bowl".
+    ///
+    /// A meal's own name is a slot – Meal 1, Meal 2 – which says when it
+    /// was eaten and nothing about what was in it. The food goes beside it,
+    /// where the reader is already looking, rather than only in the list
+    /// underneath.
+    ///
+    /// Every item, joined: the title wraps rather than truncating, so a long
+    /// meal costs a second line instead of losing its ingredients.
+    private func mealTitle(_ meal: PostMealSnapshot) -> String {
+        let eaten = meal.entries.map(\.name).joined(separator: ", ")
+        return eaten.isEmpty ? meal.name : "\(meal.name) – \(eaten)"
     }
 
     private func postTitleText(_ text: String) -> some View {
