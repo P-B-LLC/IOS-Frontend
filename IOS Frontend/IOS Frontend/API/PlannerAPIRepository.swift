@@ -114,6 +114,7 @@ actor PlannerAPIRepository {
                     priority: Self.priorityPayload(draft.priority),
                     scheduledDate: draft.date,
                     scheduledTime: draft.time,
+                    durationMinutes: draft.durationMinutes,
                     isComplete: draft.isCompletable ? draft.isComplete : nil,
                     workout: draft.workoutID,
                     notes: draft.notes
@@ -134,16 +135,29 @@ actor PlannerAPIRepository {
             throw APIServiceError.missingServerIdentifier("Planner entry")
         }
 
-        let output = try await client.plannerPartialUpdate(
+        // PUT, not PATCH.
+        //
+        // A PATCH that omits a field means "leave that one alone", and the
+        // generated request omits any nil rather than sending null -- so
+        // through PATCH there was no way to take a time, or a length, back off
+        // once it had been set. Turning "Set a time" off saved silently and
+        // changed nothing.
+        //
+        // PUT replaces, which is what saving a whole editor full of fields
+        // actually means. The server clears the schedule fields this leaves
+        // out; `setComplete` below stays on PATCH, where omitting everything
+        // else is exactly the point.
+        let output = try await client.plannerUpdate(
             path: .init(id: serverID),
             body: .json(
-                Components.Schemas.PatchedPlannerEntryRequest(
-                    kind: Self.patchedKindPayload(entry.kind),
+                Components.Schemas.PlannerEntryRequest(
+                    kind: Self.kindPayload(entry.kind),
                     title: entry.title,
                     category: Self.categoryPayload(entry.category),
                     priority: Self.priorityPayload(entry.priority),
                     scheduledDate: entry.date,
                     scheduledTime: entry.time,
+                    durationMinutes: entry.durationMinutes,
                     isComplete: entry.isCompletable ? entry.isComplete : nil,
                     workout: entry.workoutID,
                     notes: entry.notes
@@ -211,6 +225,7 @@ actor PlannerAPIRepository {
                 .flatMap { PlannerPriority(rawValue: $0.rawValue) } ?? .normal,
             date: payload.scheduledDate,
             time: payload.scheduledTime,
+            durationMinutes: payload.durationMinutes,
             isComplete: payload.isComplete ?? false,
             workoutID: payload.workout,
             workoutName: payload.workoutName,
@@ -223,8 +238,8 @@ actor PlannerAPIRepository {
     /// rather than the enum itself. The default appeared when the planner
     /// gained its uniqueness constraint: the condition names `kind`, so DRF
     /// began describing that field's default in the schema.
-    /// Two of them, because the create and patch requests each generate their
-    /// own nested payload type around the same enum.
+    /// One of them now: only the create and full-update requests carry a
+    /// kind, and both use the same nested payload type.
     private static func kindEnum(
         _ kind: PlannerKind
     ) -> Components.Schemas.PlannerEntryKindEnum {
@@ -234,12 +249,6 @@ actor PlannerAPIRepository {
     private static func kindPayload(
         _ kind: PlannerKind
     ) -> Components.Schemas.PlannerEntryRequest.KindPayload {
-        .init(value1: kindEnum(kind))
-    }
-
-    private static func patchedKindPayload(
-        _ kind: PlannerKind
-    ) -> Components.Schemas.PatchedPlannerEntryRequest.KindPayload {
         .init(value1: kindEnum(kind))
     }
 

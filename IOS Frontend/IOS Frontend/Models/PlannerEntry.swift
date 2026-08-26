@@ -199,6 +199,41 @@ nonisolated enum PlannerPriority: String, CaseIterable, Identifiable, Hashable, 
     }
 }
 
+/// The lengths a planned item may run for.
+///
+/// A namespace rather than an enum of cases: the value on the wire is a plain
+/// count of minutes, and a closed set of cases would mean an entry saved on
+/// another client with 37 minutes on it had nowhere to live.
+nonisolated enum PlannerDuration {
+    /// Matches `MIN_PLANNER_DURATION_MINUTES` / `MAX…` on the server, which is
+    /// what actually refuses anything outside them.
+    static let minimumMinutes = 5
+    static let maximumMinutes = 1440
+
+    /// What the picker offers. Short steps where people plan in short steps,
+    /// coarser once a thing is long enough that ten minutes stops mattering.
+    static let offered: [Int] = [15, 30, 45, 60, 90, 120, 180, 240, 360, 480]
+
+    static func label(_ minutes: Int) -> String {
+        let hours = minutes / 60
+        let rest = minutes % 60
+        switch (hours, rest) {
+        case (0, let m): return "\(m) min"
+        case (let h, 0): return h == 1 ? "1 hour" : "\(h) hours"
+        case (let h, let m): return "\(h) hr \(m) min"
+        }
+    }
+
+    /// Minutes past midnight for a literal `HH:mm:ss`, or nil when there is
+    /// no time to read.
+    static func minutesPastMidnight(_ time: String?) -> Int? {
+        guard let time, time.count >= 5,
+              let hour = Int(time.prefix(2)),
+              let minute = Int(time.dropFirst(3).prefix(2)) else { return nil }
+        return hour * 60 + minute
+    }
+}
+
 /// One task or event on a day.
 nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
     let id: UUID
@@ -214,6 +249,10 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
     var date: String
     /// Literal OAS `HH:mm:ss`. Nil means the day is enough.
     var time: String?
+    /// How long it runs, in minutes. Nil is the ordinary case: a reminder has
+    /// a moment, not a length. Set, it is what the calendar blocks out.
+    /// Never set without a `time` — the server refuses the pair.
+    var durationMinutes: Int?
     var isComplete: Bool
     /// The workout this stands for, when the category is `workout`.
     var workoutID: Int?
@@ -229,6 +268,7 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
         priority: PlannerPriority = .normal,
         date: String,
         time: String? = nil,
+        durationMinutes: Int? = nil,
         isComplete: Bool = false,
         workoutID: Int? = nil,
         workoutName: String? = nil,
@@ -242,6 +282,7 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
         self.priority = priority
         self.date = date
         self.time = time
+        self.durationMinutes = durationMinutes
         self.isComplete = isComplete
         self.workoutID = workoutID
         self.workoutName = workoutName
@@ -267,6 +308,7 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
             priority: priority,
             date: date,
             time: time,
+            durationMinutes: durationMinutes,
             isComplete: isComplete,
             workoutID: workoutID,
             workoutName: workoutName,
@@ -300,5 +342,25 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
     var displayTime: String? {
         guard let time, time.count >= 5 else { return nil }
         return String(time.prefix(5))
+    }
+
+    /// When it finishes, as `HH:mm`. Nil when nothing said how long.
+    ///
+    /// Wraps past midnight rather than stopping at it: a party that starts at
+    /// 23:00 and runs two hours ends at 01:00, and saying 23:59 would be a lie
+    /// about something the person entered themselves.
+    var displayEndTime: String? {
+        guard let durationMinutes,
+              let start = PlannerDuration.minutesPastMidnight(time) else { return nil }
+        let end = (start + durationMinutes) % (24 * 60)
+        return String(format: "%02d:%02d", end / 60, end % 60)
+    }
+
+    /// "17:30 – 19:00" when a length is set, "17:30" when only a start is,
+    /// nil when the day is all anyone said.
+    var displayTimeRange: String? {
+        guard let displayTime else { return nil }
+        guard let displayEndTime else { return displayTime }
+        return "\(displayTime) – \(displayEndTime)"
     }
 }

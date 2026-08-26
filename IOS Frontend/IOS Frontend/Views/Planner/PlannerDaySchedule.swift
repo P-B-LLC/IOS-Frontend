@@ -35,11 +35,27 @@ struct PlannerDaySchedule: View {
         self.onOpenWorkout = onOpenWorkout
     }
 
-    /// The height of one hour. Blocks are a fixed height rather than sized to
-    /// a duration: an entry records when it starts and nothing about how long
-    /// it runs, and inventing a length would be inventing data.
+    /// The height of one hour.
+    ///
+    /// Blocks used to be a fixed hour tall, because an entry recorded when it
+    /// started and nothing about how long it ran — and inventing a length
+    /// would have been inventing data. An entry can now say, so a block is
+    /// drawn at the size of the time it actually takes.
     private let hourHeight: CGFloat = 58
     private let gutterWidth: CGFloat = 52
+
+    /// Room for both lines and the padding the design uses everywhere else.
+    /// A block of an hour or more gets this.
+    private static let roomyBlockHeight: CGFloat = 48
+
+    /// Room for both lines if the padding gives way. Three quarters of an hour
+    /// lands here, and losing the line that says when a meeting ends would be
+    /// a poor trade for four points of margin.
+    private static let snugBlockHeight: CGFloat = 34
+
+    /// The floor. A quarter of an hour is fourteen points at this scale, which
+    /// is a stripe, not something with a name on it.
+    private static let minimumBlockHeight: CGFloat = 26
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -96,17 +112,23 @@ struct PlannerDaySchedule: View {
     }
 
     private func block(_ entry: PlannerEntry) -> some View {
-        HStack(alignment: .top, spacing: 10) {
-            VStack(alignment: .leading, spacing: 2) {
+        let height = blockHeight(entry)
+        let isRoomy = height >= Self.roomyBlockHeight
+        let showsSubtitle = height >= Self.snugBlockHeight
+
+        return HStack(alignment: .top, spacing: 10) {
+            VStack(alignment: .leading, spacing: isRoomy ? 2 : 0) {
                 Text(entry.title)
                     .font(.system(size: 13, weight: .bold))
                     .foregroundStyle(timeOfDay.canvasPrimaryText)
                     .strikethrough(entry.isComplete, color: timeOfDay.canvasSecondaryText)
                     .lineLimit(1)
-                Text(subtitle(entry))
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(timeOfDay.canvasSecondaryText)
-                    .lineLimit(1)
+                if showsSubtitle {
+                    Text(subtitle(entry))
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                        .lineLimit(1)
+                }
             }
             Spacer(minLength: 0)
             if entry.isCompletable {
@@ -114,8 +136,8 @@ struct PlannerDaySchedule: View {
             }
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 9)
-        .frame(height: hourHeight - 8, alignment: .top)
+        .padding(.vertical, isRoomy ? 9 : 2)
+        .frame(height: height, alignment: .top)
         .frame(maxWidth: .infinity, alignment: .leading)
         // Heavier on a dark canvas, where a wash this faint disappears into
         // the gradient and takes the text with it.
@@ -223,7 +245,7 @@ struct PlannerDaySchedule: View {
         // Anytime list arrives in server order, which is already priority-first.
         if let badge = entry.priority.badge { parts.append(badge.capitalized) }
         parts.append(entry.category.title)
-        if let time = entry.displayTime { parts.append(time) }
+        if let when = entry.displayTimeRange { parts.append(when) }
         if entry.kind == .event { parts.append("Event") }
         return parts.joined(separator: " · ")
     }
@@ -235,10 +257,42 @@ struct PlannerDaySchedule: View {
 
     /// One row per hour, from an hour before the first entry to an hour after
     /// the last, so nothing sits flush against the edge.
+    ///
+    /// The far end is measured from where blocks *finish*, not where they
+    /// start: a two-hour block beginning in the last hour of the grid would
+    /// otherwise be drawn off the bottom of it.
     private var hours: [Int] {
-        let stamps = timed.compactMap { Self.hour(from: $0.time) }
-        guard let earliest = stamps.min(), let latest = stamps.max() else { return [] }
+        let starts = timed.compactMap { Self.hour(from: $0.time) }
+        let finishes = timed.compactMap { entry -> Int? in
+            guard let start = PlannerDuration.minutesPastMidnight(entry.time) else {
+                return nil
+            }
+            let end = start + (entry.durationMinutes ?? 60)
+            // The hour holding its last minute, so a block ending exactly on
+            // the hour does not claim the one after it.
+            return min(23, max(0, (end - 1) / 60))
+        }
+        guard let earliest = starts.min(), let latest = finishes.max() else { return [] }
         return Array(max(0, earliest - 1)...min(23, latest + 1))
+    }
+
+    /// How tall a block is drawn: the time it actually takes.
+    ///
+    /// An hour when nothing said how long, which is what every block used to
+    /// be. Clamped to the bottom of the grid, because a block running past
+    /// midnight has nowhere further to go on this day — the range in the
+    /// subtitle still tells the truth about when it ends.
+    private func blockHeight(_ entry: PlannerEntry) -> CGFloat {
+        let minutes = entry.durationMinutes ?? 60
+        var drawn = minutes
+        if let start = PlannerDuration.minutesPastMidnight(entry.time),
+           let first = hours.first {
+            drawn = min(minutes, (hours.count * 60) - (start - first * 60))
+        }
+        return max(
+            Self.minimumBlockHeight,
+            CGFloat(drawn) / 60 * hourHeight - 8
+        )
     }
 
     /// Where a block sits, from the top of the grid: whole hours plus the

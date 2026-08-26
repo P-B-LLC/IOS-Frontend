@@ -487,7 +487,8 @@ extension PlannerStore {
             ),
             PlannerEntry(
                 serverID: 2, kind: .event, title: "Zoom team meeting",
-                category: .meeting, date: day(0), time: "10:00:00"
+                category: .meeting, date: day(0), time: "10:00:00",
+                durationMinutes: 45
             ),
             PlannerEntry(
                 serverID: 10, kind: .event, title: "Sophie's birthday",
@@ -496,12 +497,13 @@ extension PlannerStore {
             PlannerEntry(
                 serverID: 3, kind: .task, title: "Push Day",
                 category: .workout, date: day(0), time: "17:30:00",
-                workoutID: 9, workoutName: "Push Day"
+                durationMinutes: 90, workoutID: 9, workoutName: "Push Day"
             ),
             PlannerEntry(
                 serverID: 4, kind: .task,
                 title: "Read a chapter of the statistics book",
-                category: .study, priority: .low, date: day(0), time: "21:00:00"
+                category: .study, priority: .low, date: day(0), time: "21:00:00",
+                durationMinutes: 30
             ),
             PlannerEntry(
                 serverID: 5, kind: .task, title: "Groceries",

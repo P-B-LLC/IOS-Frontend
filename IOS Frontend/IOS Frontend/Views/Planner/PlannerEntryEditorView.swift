@@ -302,6 +302,28 @@ struct PlannerEntryEditorView: View {
                             .labelsHidden()
                     }
                     .padding(.vertical, 13)
+                    .overlay(alignment: .bottom) { Divider() }
+
+                    // Only under a start time, because a length with nothing to
+                    // start from describes nothing — and the server refuses the
+                    // pair, so offering it here would only produce an error.
+                    HStack {
+                        Text("Length").font(.subheadline)
+                        Spacer()
+                        Menu {
+                            Button("No length") { draft.durationMinutes = nil }
+                            ForEach(PlannerDuration.offered, id: \.self) { minutes in
+                                Button(PlannerDuration.label(minutes)) {
+                                    draft.durationMinutes = minutes
+                                }
+                            }
+                        } label: {
+                            Text(lengthLabel)
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(timeOfDay.accent)
+                        }
+                    }
+                    .padding(.vertical, 13)
                 }
             }
         }
@@ -437,6 +459,29 @@ struct PlannerEntryEditorView: View {
 
     // MARK: - Saving
 
+    /// "No length", or "1 hour · ends 18:30".
+    ///
+    /// The end time is the thing actually being decided. Working it out from a
+    /// start and a length in your head is exactly the arithmetic a calendar
+    /// ought to be doing for you.
+    private var lengthLabel: String {
+        guard let minutes = draft.durationMinutes else { return "No length" }
+        let length = PlannerDuration.label(minutes)
+        guard let end = previewEndTime(after: minutes) else { return length }
+        return "\(length) · ends \(end)"
+    }
+
+    /// Read off the picker rather than the draft: the draft only learns the
+    /// time when Save assembles it.
+    private func previewEndTime(after minutes: Int) -> String? {
+        let calendar = Calendar.current
+        guard let end = calendar.date(byAdding: .minute, value: minutes, to: time) else {
+            return nil
+        }
+        let parts = calendar.dateComponents([.hour, .minute], from: end)
+        return String(format: "%02d:%02d", parts.hour ?? 0, parts.minute ?? 0)
+    }
+
     private var canSave: Bool {
         !draft.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
@@ -446,6 +491,10 @@ struct PlannerEntryEditorView: View {
         saved.title = draft.title.trimmingCharacters(in: .whitespacesAndNewlines)
         saved.date = PlannerStore.dateString(date)
         saved.time = hasTime ? Self.timeString(from: time) : nil
+        // A length with no start is a row the server refuses, so turning the
+        // time off has to take the length with it rather than leaving one
+        // behind for Save to be rejected over.
+        if !hasTime { saved.durationMinutes = nil }
         if saved.kind == .event { saved.isComplete = false }
         if !saved.category.suits(saved.kind) { saved.category = .other }
         if saved.category != .workout { saved.workoutID = nil }

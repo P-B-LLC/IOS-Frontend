@@ -458,7 +458,7 @@ struct PlannerEntryRow: View {
             parts.append(day.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()))
         }
         parts.append(entry.category.title)
-        if let time = entry.displayTime { parts.append(time) }
+        if let when = entry.displayTimeRange { parts.append(when) }
         if entry.kind == .event { parts.append("Event") }
         return parts.joined(separator: " · ")
     }

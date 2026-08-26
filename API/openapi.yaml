@@ -6059,6 +6059,11 @@ components:
           type: string
           format: time
           nullable: true
+        duration_minutes:
+          type: integer
+          maximum: 1440
+          minimum: 5
+          nullable: true
         is_complete:
           type: boolean
         workout:
@@ -6400,6 +6405,11 @@ components:
           type: string
           format: time
           nullable: true
+        duration_minutes:
+          type: integer
+          maximum: 1440
+          minimum: 5
+          nullable: true
         is_complete:
           type: boolean
         completed_at:
@@ -6469,6 +6479,11 @@ components:
         scheduled_time:
           type: string
           format: time
+          nullable: true
+        duration_minutes:
+          type: integer
+          maximum: 1440
+          minimum: 5
           nullable: true
         is_complete:
           type: boolean

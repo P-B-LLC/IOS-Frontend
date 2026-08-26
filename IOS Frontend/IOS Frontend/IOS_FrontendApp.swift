@@ -371,7 +371,12 @@ private struct AppRootView: View {
                             // priority looks like once it is set — and that an
                             // event can carry one, not only a task.
                             priority: .high,
-                            date: PlannerStore.dateString(Date())
+                            date: PlannerStore.dateString(Date()),
+                            // With a start and a length, so this route also
+                            // shows the Length row carrying a value and the
+                            // end time it works out from it.
+                            time: "18:00:00",
+                            durationMinutes: 120
                         )
                     )
                 )

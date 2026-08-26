@@ -5539,6 +5539,8 @@ public enum Components {
             public var scheduledDate: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/scheduled_time`.
             public var scheduledTime: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/duration_minutes`.
+            public var durationMinutes: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/is_complete`.
             public var isComplete: Swift.Bool?
             /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/workout`.
@@ -5554,6 +5556,7 @@ public enum Components {
             ///   - priority:
             ///   - scheduledDate:
             ///   - scheduledTime:
+            ///   - durationMinutes:
             ///   - isComplete:
             ///   - workout:
             ///   - notes:
@@ -5564,6 +5567,7 @@ public enum Components {
                 priority: Components.Schemas.PriorityEnum? = nil,
                 scheduledDate: Swift.String? = nil,
                 scheduledTime: Swift.String? = nil,
+                durationMinutes: Swift.Int? = nil,
                 isComplete: Swift.Bool? = nil,
                 workout: Swift.Int? = nil,
                 notes: Swift.String? = nil
@@ -5574,6 +5578,7 @@ public enum Components {
                 self.priority = priority
                 self.scheduledDate = scheduledDate
                 self.scheduledTime = scheduledTime
+                self.durationMinutes = durationMinutes
                 self.isComplete = isComplete
                 self.workout = workout
                 self.notes = notes
@@ -5585,6 +5590,7 @@ public enum Components {
                 case priority
                 case scheduledDate = "scheduled_date"
                 case scheduledTime = "scheduled_time"
+                case durationMinutes = "duration_minutes"
                 case isComplete = "is_complete"
                 case workout
                 case notes
@@ -6227,6 +6233,8 @@ public enum Components {
             public var scheduledDate: Swift.String
             /// - Remark: Generated from `#/components/schemas/PlannerEntry/scheduled_time`.
             public var scheduledTime: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/duration_minutes`.
+            public var durationMinutes: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/PlannerEntry/is_complete`.
             public var isComplete: Swift.Bool?
             /// - Remark: Generated from `#/components/schemas/PlannerEntry/completed_at`.
@@ -6252,6 +6260,7 @@ public enum Components {
             ///   - priority:
             ///   - scheduledDate:
             ///   - scheduledTime:
+            ///   - durationMinutes:
             ///   - isComplete:
             ///   - completedAt:
             ///   - workout:
@@ -6268,6 +6277,7 @@ public enum Components {
                 priority: Components.Schemas.PriorityEnum? = nil,
                 scheduledDate: Swift.String,
                 scheduledTime: Swift.String? = nil,
+                durationMinutes: Swift.Int? = nil,
                 isComplete: Swift.Bool? = nil,
                 completedAt: Foundation.Date? = nil,
                 workout: Swift.Int? = nil,
@@ -6284,6 +6294,7 @@ public enum Components {
                 self.priority = priority
                 self.scheduledDate = scheduledDate
                 self.scheduledTime = scheduledTime
+                self.durationMinutes = durationMinutes
                 self.isComplete = isComplete
                 self.completedAt = completedAt
                 self.workout = workout
@@ -6301,6 +6312,7 @@ public enum Components {
                 case priority
                 case scheduledDate = "scheduled_date"
                 case scheduledTime = "scheduled_time"
+                case durationMinutes = "duration_minutes"
                 case isComplete = "is_complete"
                 case completedAt = "completed_at"
                 case workout
@@ -6356,6 +6368,8 @@ public enum Components {
             public var scheduledDate: Swift.String
             /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/scheduled_time`.
             public var scheduledTime: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/duration_minutes`.
+            public var durationMinutes: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/is_complete`.
             public var isComplete: Swift.Bool?
             /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/workout`.
@@ -6371,6 +6385,7 @@ public enum Components {
             ///   - priority:
             ///   - scheduledDate:
             ///   - scheduledTime:
+            ///   - durationMinutes:
             ///   - isComplete:
             ///   - workout:
             ///   - notes:
@@ -6381,6 +6396,7 @@ public enum Components {
                 priority: Components.Schemas.PriorityEnum? = nil,
                 scheduledDate: Swift.String,
                 scheduledTime: Swift.String? = nil,
+                durationMinutes: Swift.Int? = nil,
                 isComplete: Swift.Bool? = nil,
                 workout: Swift.Int? = nil,
                 notes: Swift.String? = nil
@@ -6391,6 +6407,7 @@ public enum Components {
                 self.priority = priority
                 self.scheduledDate = scheduledDate
                 self.scheduledTime = scheduledTime
+                self.durationMinutes = durationMinutes
                 self.isComplete = isComplete
                 self.workout = workout
                 self.notes = notes
@@ -6402,6 +6419,7 @@ public enum Components {
                 case priority
                 case scheduledDate = "scheduled_date"
                 case scheduledTime = "scheduled_time"
+                case durationMinutes = "duration_minutes"
                 case isComplete = "is_complete"
                 case workout
                 case notes
