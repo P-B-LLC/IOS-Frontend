@@ -16,10 +16,6 @@ import SwiftUI
 struct PostCommentsView: View {
     let postID: Int
     let timeOfDay: HomeTimeOfDay
-    /// Raised by the parent to put the cursor in the box — what the comment
-    /// button does once the thread is already on screen.
-    @Binding var focusRequest: Int
-
     @Environment(SocialStore.self) private var store
 
     @State private var draft = CommentDraft()
@@ -59,11 +55,6 @@ struct PostCommentsView: View {
 
             composer
         }
-        // Both, deliberately. `onChange` alone never fired for the sheet,
-        // which arrives with the request already set and so never changes it:
-        // the box was there and the keyboard was not.
-        .task { if focusRequest > 0 { isWriting = true } }
-        .onChange(of: focusRequest) { isWriting = true }
 #if DEBUG
         // Types a comment and sends it. simctl cannot type, so this is the
         // only way to see the round trip land and the keyboard go away.
@@ -226,17 +217,15 @@ struct PostCommentsSheet: View {
 
     @Environment(SocialStore.self) private var store
     @Environment(\.dismiss) private var dismiss
-    /// Opens with the cursor already in the box: this sheet is raised by the
-    /// comment button, so writing one is what it was opened to do.
-    @State private var focusRequest = 1
 
     var body: some View {
         NavigationStack {
-            PostCommentsView(
-                postID: postID,
-                timeOfDay: timeOfDay,
-                focusRequest: $focusRequest
-            )
+            // Opens to be read, keyboard down. It used to arrive with the
+            // cursor in the box on the reasoning that the comment button
+            // means "write one" — but the keyboard then covered the half of
+            // the sheet holding what everyone had already said, which is
+            // usually what the button was pressed to see.
+            PostCommentsView(postID: postID, timeOfDay: timeOfDay)
             .navigationTitle("Comments")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
