@@ -5533,6 +5533,8 @@ public enum Components {
             public var title: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/category`.
             public var category: Components.Schemas.CategoryEnum?
+            /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/priority`.
+            public var priority: Components.Schemas.PriorityEnum?
             /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/scheduled_date`.
             public var scheduledDate: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/scheduled_time`.
@@ -5549,6 +5551,7 @@ public enum Components {
             ///   - kind:
             ///   - title:
             ///   - category:
+            ///   - priority:
             ///   - scheduledDate:
             ///   - scheduledTime:
             ///   - isComplete:
@@ -5558,6 +5561,7 @@ public enum Components {
                 kind: Components.Schemas.PatchedPlannerEntryRequest.KindPayload? = nil,
                 title: Swift.String? = nil,
                 category: Components.Schemas.CategoryEnum? = nil,
+                priority: Components.Schemas.PriorityEnum? = nil,
                 scheduledDate: Swift.String? = nil,
                 scheduledTime: Swift.String? = nil,
                 isComplete: Swift.Bool? = nil,
@@ -5567,6 +5571,7 @@ public enum Components {
                 self.kind = kind
                 self.title = title
                 self.category = category
+                self.priority = priority
                 self.scheduledDate = scheduledDate
                 self.scheduledTime = scheduledTime
                 self.isComplete = isComplete
@@ -5577,6 +5582,7 @@ public enum Components {
                 case kind
                 case title
                 case category
+                case priority
                 case scheduledDate = "scheduled_date"
                 case scheduledTime = "scheduled_time"
                 case isComplete = "is_complete"
@@ -6215,6 +6221,8 @@ public enum Components {
             public var title: Swift.String
             /// - Remark: Generated from `#/components/schemas/PlannerEntry/category`.
             public var category: Components.Schemas.CategoryEnum?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/priority`.
+            public var priority: Components.Schemas.PriorityEnum?
             /// - Remark: Generated from `#/components/schemas/PlannerEntry/scheduled_date`.
             public var scheduledDate: Swift.String
             /// - Remark: Generated from `#/components/schemas/PlannerEntry/scheduled_time`.
@@ -6241,6 +6249,7 @@ public enum Components {
             ///   - kind:
             ///   - title:
             ///   - category:
+            ///   - priority:
             ///   - scheduledDate:
             ///   - scheduledTime:
             ///   - isComplete:
@@ -6256,6 +6265,7 @@ public enum Components {
                 kind: Components.Schemas.PlannerEntry.KindPayload? = nil,
                 title: Swift.String,
                 category: Components.Schemas.CategoryEnum? = nil,
+                priority: Components.Schemas.PriorityEnum? = nil,
                 scheduledDate: Swift.String,
                 scheduledTime: Swift.String? = nil,
                 isComplete: Swift.Bool? = nil,
@@ -6271,6 +6281,7 @@ public enum Components {
                 self.kind = kind
                 self.title = title
                 self.category = category
+                self.priority = priority
                 self.scheduledDate = scheduledDate
                 self.scheduledTime = scheduledTime
                 self.isComplete = isComplete
@@ -6287,6 +6298,7 @@ public enum Components {
                 case kind
                 case title
                 case category
+                case priority
                 case scheduledDate = "scheduled_date"
                 case scheduledTime = "scheduled_time"
                 case isComplete = "is_complete"
@@ -6338,6 +6350,8 @@ public enum Components {
             public var title: Swift.String
             /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/category`.
             public var category: Components.Schemas.CategoryEnum?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/priority`.
+            public var priority: Components.Schemas.PriorityEnum?
             /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/scheduled_date`.
             public var scheduledDate: Swift.String
             /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/scheduled_time`.
@@ -6354,6 +6368,7 @@ public enum Components {
             ///   - kind:
             ///   - title:
             ///   - category:
+            ///   - priority:
             ///   - scheduledDate:
             ///   - scheduledTime:
             ///   - isComplete:
@@ -6363,6 +6378,7 @@ public enum Components {
                 kind: Components.Schemas.PlannerEntryRequest.KindPayload? = nil,
                 title: Swift.String,
                 category: Components.Schemas.CategoryEnum? = nil,
+                priority: Components.Schemas.PriorityEnum? = nil,
                 scheduledDate: Swift.String,
                 scheduledTime: Swift.String? = nil,
                 isComplete: Swift.Bool? = nil,
@@ -6372,6 +6388,7 @@ public enum Components {
                 self.kind = kind
                 self.title = title
                 self.category = category
+                self.priority = priority
                 self.scheduledDate = scheduledDate
                 self.scheduledTime = scheduledTime
                 self.isComplete = isComplete
@@ -6382,6 +6399,7 @@ public enum Components {
                 case kind
                 case title
                 case category
+                case priority
                 case scheduledDate = "scheduled_date"
                 case scheduledTime = "scheduled_time"
                 case isComplete = "is_complete"
@@ -7277,6 +7295,16 @@ public enum Components {
                 case reps
                 case performedAt = "performed_at"
             }
+        }
+        /// * `low` - Low
+        /// * `normal` - Normal
+        /// * `high` - High
+        ///
+        /// - Remark: Generated from `#/components/schemas/PriorityEnum`.
+        @frozen public enum PriorityEnum: String, Codable, Hashable, Sendable, CaseIterable {
+            case low = "low"
+            case normal = "normal"
+            case high = "high"
         }
         /// A featured lift and the set behind it.
         ///

@@ -367,6 +367,10 @@ private struct AppRootView: View {
                             kind: .event,
                             title: "Sophie's birthday",
                             category: .birthday,
+                            // High, so this route also shows what a raised
+                            // priority looks like once it is set — and that an
+                            // event can carry one, not only a task.
+                            priority: .high,
                             date: PlannerStore.dateString(Date())
                         )
                     )

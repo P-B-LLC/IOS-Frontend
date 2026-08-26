@@ -380,7 +380,12 @@ final class PlannerStore {
             )
             let (loadedOverdue, loadedAhead) = try await (overdue, ahead)
             guard connectionGeneration == generation else { return }
-            pastDue = loadedOverdue.sorted { $0.date < $1.date }
+            // High first, then oldest first. Something marked high has been
+            // waiting *and* matters, and sorting by age alone filed it behind
+            // whatever happened to be older.
+            pastDue = loadedOverdue.sorted {
+                ($0.priority.rank, $0.date) < ($1.priority.rank, $1.date)
+            }
             upcomingEvents = loadedAhead.sorted {
                 ($0.date, $0.time ?? "") < ($1.date, $1.time ?? "")
             }
@@ -496,11 +501,11 @@ extension PlannerStore {
             PlannerEntry(
                 serverID: 4, kind: .task,
                 title: "Read a chapter of the statistics book",
-                category: .study, date: day(0), time: "21:00:00"
+                category: .study, priority: .low, date: day(0), time: "21:00:00"
             ),
             PlannerEntry(
                 serverID: 5, kind: .task, title: "Groceries",
-                category: .errand, date: day(0)
+                category: .errand, priority: .high, date: day(0)
             ),
             PlannerEntry(
                 serverID: 6, kind: .task, title: "Lights out by eleven",
@@ -527,15 +532,21 @@ extension PlannerStore {
                 category: .travel, date: day(6), time: "06:40:00"
             ),
         ]
+        // Sorted the way the server sorts, so a preview cannot show an order
+        // the real thing would never produce: priority, then untimed before
+        // timed, then the clock.
         store.entriesByDate = Dictionary(grouping: samples, by: \.date)
+            .mapValues { day in
+                day.sorted { ($0.priority.rank, $0.time ?? "") < ($1.priority.rank, $1.time ?? "") }
+            }
         store.pastDue = [
+            PlannerEntry(
+                serverID: 21, kind: .task, title: "Book the physio",
+                category: .health, priority: .high, date: day(-2), time: "09:00:00"
+            ),
             PlannerEntry(
                 serverID: 20, kind: .task, title: "Renew gym membership",
                 category: .errand, date: day(-9)
-            ),
-            PlannerEntry(
-                serverID: 21, kind: .task, title: "Book the physio",
-                category: .health, date: day(-2), time: "09:00:00"
             ),
         ]
         store.upcomingEvents = [

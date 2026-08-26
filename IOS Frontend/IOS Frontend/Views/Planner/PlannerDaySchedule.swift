@@ -218,7 +218,11 @@ struct PlannerDaySchedule: View {
     }
 
     private func subtitle(_ entry: PlannerEntry) -> String {
-        var parts = [entry.category.title]
+        var parts: [String] = []
+        // First, because it is the reason this row sits where it does. The
+        // Anytime list arrives in server order, which is already priority-first.
+        if let badge = entry.priority.badge { parts.append(badge.capitalized) }
+        parts.append(entry.category.title)
         if let time = entry.displayTime { parts.append(time) }
         if entry.kind == .event { parts.append("Event") }
         return parts.joined(separator: " · ")

@@ -6050,6 +6050,8 @@ components:
           maxLength: 150
         category:
           $ref: '#/components/schemas/CategoryEnum'
+        priority:
+          $ref: '#/components/schemas/PriorityEnum'
         scheduled_date:
           type: string
           format: date
@@ -6389,6 +6391,8 @@ components:
           maxLength: 150
         category:
           $ref: '#/components/schemas/CategoryEnum'
+        priority:
+          $ref: '#/components/schemas/PriorityEnum'
         scheduled_date:
           type: string
           format: date
@@ -6457,6 +6461,8 @@ components:
           maxLength: 150
         category:
           $ref: '#/components/schemas/CategoryEnum'
+        priority:
+          $ref: '#/components/schemas/PriorityEnum'
         scheduled_date:
           type: string
           format: date
@@ -7054,6 +7060,16 @@ components:
       - reps
       - set_number
       - weight_kg
+    PriorityEnum:
+      enum:
+      - low
+      - normal
+      - high
+      type: string
+      description: |-
+        * `low` - Low
+        * `normal` - Normal
+        * `high` - High
     ProfileHighlight:
       type: object
       description: |-

@@ -222,6 +222,34 @@ struct PlannerEntryEditorView: View {
                 .padding(.vertical, 13)
                 .overlay(alignment: .bottom) { Divider() }
 
+                // Sits with Category rather than under Schedule: both describe
+                // the thing itself, where Date and Set a time describe when it
+                // happens. Offered for events too — a flight matters more than
+                // a coffee, and the request was tasks and events alike.
+                HStack {
+                    Text("Priority").font(.subheadline)
+                    Spacer()
+                    Menu {
+                        ForEach(PlannerPriority.offered) { priority in
+                            Button {
+                                draft.priority = priority
+                            } label: {
+                                Label(priority.title, systemImage: priority.symbolName)
+                            }
+                        }
+                    } label: {
+                        Label(draft.priority.title, systemImage: draft.priority.symbolName)
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(
+                                draft.priority == .high
+                                    ? draft.priority.tint
+                                    : timeOfDay.accent
+                            )
+                    }
+                }
+                .padding(.vertical, 13)
+                .overlay(alignment: .bottom) { Divider() }
+
                 if draft.category == .workout {
                     HStack {
                         Text("Workout").font(.subheadline)

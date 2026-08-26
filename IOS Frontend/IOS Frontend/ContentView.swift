@@ -268,6 +268,15 @@ private struct HomeUpNextSection: View {
                             .fill(item.category.tint)
                             .frame(width: 6, height: 6)
 
+                        // A glyph rather than more words: only two rows are
+                        // shown here, and the status slot on the right can
+                        // already be spoken for by PAST DUE.
+                        if item.priority.badge != nil {
+                            Image(systemName: "exclamationmark")
+                                .font(.system(size: 9, weight: .black))
+                                .foregroundStyle(item.priority.tint)
+                        }
+
                         Text(item.title)
                             .font(.subheadline.weight(item.isCompletable ? .semibold : .regular))
                             .foregroundStyle(timeOfDay.canvasPrimaryText)
@@ -278,7 +287,7 @@ private struct HomeUpNextSection: View {
                         Text(status(for: item))
                             .font(.system(size: 8, weight: .bold))
                             .tracking(0.6)
-                            .foregroundStyle(isPastDue(item) ? timeOfDay.commandAccent : timeOfDay.canvasSecondaryText)
+                            .foregroundStyle(statusTint(for: item))
                     }
                     .frame(height: 22)
                 }
@@ -298,6 +307,12 @@ private struct HomeUpNextSection: View {
         let overdue = isToday ? planner.pastDue.filter { !$0.isComplete } : []
         let onDay = planner.entries(on: date).filter { !$0.isComplete || !$0.isCompletable }
         return unique(overdue + onDay).sorted {
+            // Priority outranks both of the old keys. Only two rows are ever
+            // shown, so a high-priority task that sorted third was a
+            // high-priority task nobody saw.
+            if $0.priority.rank != $1.priority.rank {
+                return $0.priority.rank < $1.priority.rank
+            }
             if isPastDue($0) != isPastDue($1) { return isPastDue($0) }
             return ($0.time ?? "99:99:99") < ($1.time ?? "99:99:99")
         }
@@ -316,9 +331,18 @@ private struct HomeUpNextSection: View {
         planner.pastDue.contains { $0.isSameEntry(as: entry) }
     }
 
+    /// Past due first when both are true: the glyph beside the title has
+    /// already said "high priority", and being overdue is the newer news.
     private func status(for entry: PlannerEntry) -> String {
         if isPastDue(entry) { return "PAST DUE" }
+        if let badge = entry.priority.badge { return badge }
         return entry.kind == .event ? "EVENT" : entry.category.title.uppercased()
+    }
+
+    private func statusTint(for entry: PlannerEntry) -> Color {
+        if isPastDue(entry) { return timeOfDay.commandAccent }
+        if entry.priority.badge != nil { return entry.priority.tint }
+        return timeOfDay.canvasSecondaryText
     }
 }
 
@@ -582,6 +606,15 @@ private struct HomeRemainingTasksSection: View {
                                 .foregroundStyle(timeOfDay.canvasSecondaryText)
                                 .frame(width: 40, alignment: .leading)
 
+                            // The same glyph Up Next uses, for the same reason:
+                            // this list reorders for priority, and a row that
+                            // jumped the queue should say why it did.
+                            if task.priority.badge != nil {
+                                Image(systemName: "exclamationmark")
+                                    .font(.system(size: 9, weight: .black))
+                                    .foregroundStyle(task.priority.tint)
+                            }
+
                             Text(task.title)
                                 .font(.subheadline.weight(.semibold))
                                 .foregroundStyle(timeOfDay.canvasPrimaryText)
@@ -594,6 +627,11 @@ private struct HomeRemainingTasksSection: View {
                                     .font(.system(size: 8, weight: .bold))
                                     .tracking(0.5)
                                     .foregroundStyle(timeOfDay.commandAccent)
+                            } else if let badge = task.priority.badge {
+                                Text(badge)
+                                    .font(.system(size: 8, weight: .bold))
+                                    .tracking(0.5)
+                                    .foregroundStyle(task.priority.tint)
                             }
                         }
                         .frame(height: 36)
@@ -621,10 +659,20 @@ private struct HomeRemainingTasksSection: View {
         let onDay = planner.entries(on: date).filter { $0.isCompletable && !$0.isComplete }
         var seenServerIDs: Set<Int> = []
         var seenLocalIDs: Set<UUID> = []
-        return (overdue + onDay).filter { entry in
+        let merged = (overdue + onDay).filter { entry in
             if let serverID = entry.serverID { return seenServerIDs.insert(serverID).inserted }
             return seenLocalIDs.insert(entry.id).inserted
         }
+        // High first; everything else keeps the order it was merged in, which
+        // already reads right — overdue ahead of the day, then the order the
+        // server sent. Sorted through the index because Swift's sort is not
+        // stable, so equal ranks would otherwise shuffle between reads.
+        return merged.enumerated()
+            .sorted {
+                ($0.element.priority.rank, $0.offset)
+                    < ($1.element.priority.rank, $1.offset)
+            }
+            .map(\.element)
     }
 
     private func isPastDue(_ task: PlannerEntry) -> Bool {

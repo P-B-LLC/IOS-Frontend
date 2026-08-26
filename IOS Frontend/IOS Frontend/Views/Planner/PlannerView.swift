@@ -404,10 +404,22 @@ struct PlannerEntryRow: View {
                         }
                     }
                     .animation(.easeOut(duration: 0.28), value: entry.isComplete)
-                Text(subtitle)
-                    .font(.system(size: 9, weight: .medium))
-                    .foregroundStyle(timeOfDay.secondaryText)
-                    .lineLimit(1)
+                HStack(spacing: 5) {
+                    // Before the subtitle, not inside it: joined into that
+                    // dotted list it read as one more attribute, when the whole
+                    // point is that it outranks them.
+                    if let badge = entry.priority.badge {
+                        Text(badge)
+                            .font(.system(size: 8, weight: .bold))
+                            .tracking(0.5)
+                            .foregroundStyle(entry.priority.tint)
+                            .fixedSize()
+                    }
+                    Text(subtitle)
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundStyle(timeOfDay.secondaryText)
+                        .lineLimit(1)
+                }
             }
 
             Spacer(minLength: 0)

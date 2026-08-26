@@ -139,6 +139,66 @@ nonisolated enum PlannerKind: String, CaseIterable, Identifiable, Hashable, Coda
     }
 }
 
+/// How much a planned item matters, next to the rest of its day.
+///
+/// Three levels rather than a flag, because "not urgent" is a real answer and
+/// folding it into `normal` would make the two indistinguishable once a day
+/// fills up. `normal` is the default: a priority nobody chose should not push
+/// anything around.
+nonisolated enum PlannerPriority: String, CaseIterable, Identifiable, Hashable, Codable, Sendable {
+    case low
+    case normal
+    case high
+
+    var id: String { rawValue }
+
+    /// Offered strongest first. The picker exists to raise something; Normal is
+    /// already what an item is without touching it.
+    static let offered: [PlannerPriority] = [.high, .normal, .low]
+
+    var title: String {
+        switch self {
+        case .low: return "Low"
+        case .normal: return "Normal"
+        case .high: return "High"
+        }
+    }
+
+    /// The colour a called-out priority wears — the rose the app already uses
+    /// for past due, because both mean the same thing to a reader: this one.
+    var tint: Color { Color(hex: 0xD8557A) }
+
+    /// Where this sits when a day is put in order. Lower comes first.
+    ///
+    /// Mirrors `PRIORITY_RANK` on the server, which is what actually orders
+    /// the rows. Kept here because lists are merged and re-sorted on the
+    /// client — Up Next stitches overdue items onto the chosen day, and the
+    /// order the server sent does not survive that.
+    var rank: Int {
+        switch self {
+        case .high: return 0
+        case .normal: return 1
+        case .low: return 2
+        }
+    }
+
+    /// What a row says about its priority, if anything.
+    ///
+    /// Only `high` speaks. A day where every row wore a badge would be a day
+    /// with no emphasis in it, and `normal` is what most rows are.
+    var badge: String? {
+        self == .high ? "HIGH PRIORITY" : nil
+    }
+
+    var symbolName: String {
+        switch self {
+        case .low: return "arrow.down.circle"
+        case .normal: return "minus.circle"
+        case .high: return "exclamationmark.circle.fill"
+        }
+    }
+}
+
 /// One task or event on a day.
 nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
     let id: UUID
@@ -147,6 +207,9 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
     var kind: PlannerKind
     var title: String
     var category: PlannerCategory
+    /// How much this matters next to the rest of its day. Sorts the day
+    /// rather than decorating it.
+    var priority: PlannerPriority
     /// Literal OAS `YYYY-MM-DD`.
     var date: String
     /// Literal OAS `HH:mm:ss`. Nil means the day is enough.
@@ -163,6 +226,7 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
         kind: PlannerKind = .task,
         title: String,
         category: PlannerCategory = .other,
+        priority: PlannerPriority = .normal,
         date: String,
         time: String? = nil,
         isComplete: Bool = false,
@@ -175,6 +239,7 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
         self.kind = kind
         self.title = title
         self.category = category
+        self.priority = priority
         self.date = date
         self.time = time
         self.isComplete = isComplete
@@ -199,6 +264,7 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
             kind: kind,
             title: title,
             category: category,
+            priority: priority,
             date: date,
             time: time,
             isComplete: isComplete,

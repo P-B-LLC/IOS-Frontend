@@ -111,6 +111,7 @@ actor PlannerAPIRepository {
                     kind: Self.kindPayload(draft.kind),
                     title: draft.title,
                     category: Self.categoryPayload(draft.category),
+                    priority: Self.priorityPayload(draft.priority),
                     scheduledDate: draft.date,
                     scheduledTime: draft.time,
                     isComplete: draft.isCompletable ? draft.isComplete : nil,
@@ -140,6 +141,7 @@ actor PlannerAPIRepository {
                     kind: Self.patchedKindPayload(entry.kind),
                     title: entry.title,
                     category: Self.categoryPayload(entry.category),
+                    priority: Self.priorityPayload(entry.priority),
                     scheduledDate: entry.date,
                     scheduledTime: entry.time,
                     isComplete: entry.isCompletable ? entry.isComplete : nil,
@@ -203,6 +205,10 @@ actor PlannerAPIRepository {
             title: payload.title,
             category: payload.category
                 .flatMap { PlannerCategory(rawValue: $0.rawValue) } ?? .other,
+            // Absent means the row predates the field, which is exactly what
+            // "nobody chose one" looks like.
+            priority: payload.priority
+                .flatMap { PlannerPriority(rawValue: $0.rawValue) } ?? .normal,
             date: payload.scheduledDate,
             time: payload.scheduledTime,
             isComplete: payload.isComplete ?? false,
@@ -241,6 +247,15 @@ actor PlannerAPIRepository {
         _ category: PlannerCategory
     ) -> Components.Schemas.CategoryEnum {
         Components.Schemas.CategoryEnum(rawValue: category.rawValue) ?? .other
+    }
+
+    /// One type for both requests, unlike `kind`: `priority` carries a default
+    /// in the contract but no `allOf` around it, so the generator emitted the
+    /// enum itself rather than a payload per request.
+    private static func priorityPayload(
+        _ priority: PlannerPriority
+    ) -> Components.Schemas.PriorityEnum {
+        Components.Schemas.PriorityEnum(rawValue: priority.rawValue) ?? .normal
     }
 
     // MARK: - Pagination
