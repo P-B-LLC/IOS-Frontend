@@ -23,7 +23,7 @@ struct ContentView: View {
             let timeOfDay = HomeTimeOfDay(date: context.date)
 
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 14) {
+                LazyVStack(alignment: .leading, spacing: 22) {
                     HomeCommandHeader(date: context.date)
                     HomeWeekStrip(today: context.date, selection: $selectedDate)
                     HomeUpNextSection(date: selectedDate, today: context.date)
@@ -49,8 +49,8 @@ struct ContentView: View {
                         HomePersistenceError(message: error, retry: nil)
                     }
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 12)
+                .padding(.horizontal, RepbaseDesign.pageInset)
+                .padding(.top, 16)
                 .padding(.bottom, RepbaseDesign.bottomBarClearance)
             }
             .scrollIndicators(.hidden)
@@ -76,16 +76,20 @@ private struct HomeCommandHeader: View {
 
     var body: some View {
         HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text("\(greeting.uppercased()), \(firstName.uppercased())")
-                    .font(.caption2.weight(.bold))
-                    .tracking(1)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("HOME")
+                    .font(.system(size: 10, weight: .bold))
+                    .tracking(1.5)
                     .foregroundStyle(timeOfDay.commandAccent)
 
-                Text("Your day.")
-                    .font(.largeTitle.weight(.bold))
-                    .tracking(-0.6)
+                Text("\(greeting), \(firstName)")
+                    .font(.system(size: 30, weight: .bold))
+                    .tracking(-0.65)
                     .foregroundStyle(timeOfDay.canvasPrimaryText)
+
+                Text(date.formatted(.dateTime.weekday(.wide).month(.wide).day()))
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
             }
 
             Spacer(minLength: 12)
@@ -110,12 +114,11 @@ private struct HomeCommandHeader: View {
         } label: {
             Text(initials)
                 .font(.subheadline.weight(.bold))
-                .foregroundStyle(timeOfDay.commandAccent)
-                .frame(width: 44, height: 44)
-                .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .foregroundStyle(Color.white)
+                .frame(width: 40, height: 40)
+                .background(timeOfDay.commandAccent, in: Circle())
                 .overlay {
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .stroke(timeOfDay.commandAccent, lineWidth: 1)
+                    Circle().strokeBorder(Color.white.opacity(0.65), lineWidth: 1)
                 }
         }
         .disabled(authentication.isWorking)
@@ -181,23 +184,19 @@ private struct HomeWeekStrip: View {
                             .font(.subheadline.weight(isSelected(day) || isToday(day) ? .bold : .semibold))
 
                         Circle()
-                            .fill(dayHasContent(day) ? (isSelected(day) ? Color.white : timeOfDay.commandAccent) : .clear)
+                            .fill(dayHasContent(day) ? timeOfDay.commandAccent : .clear)
                             .frame(width: 3, height: 3)
                     }
-                    // The filled pill follows the selection; today keeps the
-                    // accent colour when it is not the day being read, so it
-                    // is still findable after tapping a different date.
                     .foregroundStyle(
                         isSelected(day)
-                            ? Color.white
+                            ? timeOfDay.commandAccent
                             : (isToday(day) ? timeOfDay.commandAccent : timeOfDay.canvasPrimaryText)
                     )
-                    .frame(maxWidth: .infinity, minHeight: 58)
-                    .background {
-                        if isSelected(day) {
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(timeOfDay.commandAccent)
-                        }
+                    .frame(maxWidth: .infinity, minHeight: 54)
+                    .overlay(alignment: .bottom) {
+                        Rectangle()
+                            .fill(isSelected(day) ? timeOfDay.commandAccent : Color.clear)
+                            .frame(height: 2)
                     }
                     .contentShape(Rectangle())
                 }
@@ -206,7 +205,8 @@ private struct HomeWeekStrip: View {
                 .accessibilityAddTraits(isSelected(day) ? [.isSelected] : [])
             }
         }
-        .frame(height: 64)
+        .frame(height: 58)
+        .overlay(alignment: .bottom) { Divider() }
         .animation(.easeOut(duration: 0.18), value: selection)
     }
 
@@ -245,8 +245,8 @@ private struct HomeUpNextSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HomeSectionHeader(
-                title: isToday ? "UP NEXT" : "ON \(date.formatted(.dateTime.weekday(.wide)).uppercased())",
-                action: "OPEN CALENDAR",
+                title: isToday ? "Up next" : "On \(date.formatted(.dateTime.weekday(.wide)))",
+                action: "Calendar",
                 destination: PlannerView(showsBackButton: true)
             )
 
@@ -296,7 +296,7 @@ private struct HomeUpNextSection: View {
             Rectangle()
                 .fill(timeOfDay.canvasBorder)
                 .frame(height: 1)
-                .padding(.top, 3)
+                .padding(.top, 6)
         }
         .frame(minHeight: 72, alignment: .top)
     }
@@ -366,18 +366,18 @@ private struct HomeTrainingSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
             HomeSectionHeader(
-                title: "TRAINING  /  \(isToday ? "TODAY" : date.formatted(.dateTime.weekday(.wide)).uppercased())",
-                action: "OPEN WORKOUTS",
+                title: isToday ? "Workout today" : "Workout on \(date.formatted(.dateTime.weekday(.wide)))",
+                action: "Workouts",
                 destination: WorkoutsView()
             )
 
             NavigationLink {
                 workoutDestination
             } label: {
-                HStack(spacing: 16) {
+                HStack(spacing: 14) {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(title)
-                            .font(.title.weight(.bold))
+                            .font(.system(size: 22, weight: .bold))
                             .tracking(-0.35)
                             .foregroundStyle(timeOfDay.canvasPrimaryText)
                             .lineLimit(1)
@@ -389,42 +389,38 @@ private struct HomeTrainingSection: View {
                     Spacer(minLength: 8)
 
                     Image(systemName: workoutSymbol)
-                        .font(.system(size: 29, weight: .bold))
+                        .font(.system(size: 24, weight: .semibold))
                         .foregroundStyle(timeOfDay.commandAccent)
-                        .frame(width: 54, height: 54)
+                        .frame(width: 44, height: 44)
                 }
-                .frame(minHeight: 66)
+                .frame(minHeight: 58)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
 
-            NavigationLink {
-                workoutDestination
-            } label: {
-                HStack {
-                    Text(actionTitle)
-                        .font(.subheadline.weight(.semibold))
-                    Spacer()
-                    Image(systemName: activeSession == nil ? "play.fill" : "arrow.right")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.white)
-                        .frame(width: 32, height: 32)
-                        .background(timeOfDay.commandAccent, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                }
-                .foregroundStyle(timeOfDay.onPrimaryAction)
-                .padding(.leading, 16)
-                .padding(.trailing, 6)
-                .frame(height: 44)
-                .background(timeOfDay.primaryActionSurface, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
-            }
-            .buttonStyle(.plain)
-            .accessibilityHint("Opens today's workout")
-
             Rectangle()
                 .fill(timeOfDay.canvasBorder)
                 .frame(height: 1)
+
+            NavigationLink {
+                workoutDestination
+            } label: {
+                HStack(spacing: 7) {
+                    Image(systemName: activeSession == nil ? "play.fill" : "arrow.right")
+                        .font(.system(size: 11, weight: .bold))
+                    Text(actionTitle)
+                        .font(.system(size: 13, weight: .bold))
+                    Spacer(minLength: 0)
+                    Image(systemName: "arrow.up.right")
+                        .font(.system(size: 11, weight: .semibold))
+                }
+                .foregroundStyle(timeOfDay.commandAccent)
+                .frame(height: 32)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("Opens today's workout")
         }
-        .padding(.vertical, 6)
     }
 
     @ViewBuilder
@@ -498,8 +494,8 @@ private struct HomeMacroSection: View {
 
         VStack(alignment: .leading, spacing: 7) {
             HomeSectionHeader(
-                title: isToday ? "MACROS TODAY" : "MACROS  /  \(date.formatted(.dateTime.weekday(.wide)).uppercased())",
-                action: "OPEN FOOD",
+                title: isToday ? "Food today" : "Food on \(date.formatted(.dateTime.weekday(.wide)))",
+                action: "Food",
                 destination: FoodTrackingView()
             )
 
@@ -582,8 +578,8 @@ private struct HomeRemainingTasksSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HomeSectionHeader(
-                title: "STILL TO DO",
-                action: "\(tasks.count) REMAINING  ·  OPEN",
+                title: "Still to do",
+                action: tasks.isEmpty ? "Planner" : "\(tasks.count) remaining",
                 destination: PlannerView(showsBackButton: true)
             )
             .frame(height: 24)
@@ -692,9 +688,8 @@ private struct HomeSectionHeader<Destination: View>: View {
     var body: some View {
         HStack {
             Text(title)
-                .font(.system(size: 9, weight: .bold))
-                .tracking(0.9)
-                .foregroundStyle(timeOfDay.commandAccent)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundStyle(timeOfDay.canvasPrimaryText)
 
             Spacer()
 
@@ -705,12 +700,12 @@ private struct HomeSectionHeader<Destination: View>: View {
                     Text(action)
                     Image(systemName: "arrow.up.right")
                 }
-                .font(.system(size: 9, weight: .semibold))
-                .foregroundStyle(timeOfDay.canvasSecondaryText)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(timeOfDay.commandAccent)
             }
             .buttonStyle(.plain)
         }
-        .frame(height: 18)
+        .frame(height: 24)
     }
 }
 
