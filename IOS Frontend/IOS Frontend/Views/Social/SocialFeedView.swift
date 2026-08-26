@@ -465,6 +465,11 @@ struct PostCard: View {
         }
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
+        // The only rule on a card, and it is between cards rather than inside
+        // one. A post used to be ruled off internally -- above and below its
+        // numbers, between every exercise or ingredient -- which chopped one
+        // thing into five and left nothing saying where the post itself
+        // ended. Spacing groups it now; the line only says "next post".
         .overlay(alignment: .bottom) { Divider() }
     }
 
@@ -614,9 +619,6 @@ struct PostCard: View {
                                 .foregroundStyle(timeOfDay.secondaryText)
                         }
                         .padding(.vertical, 8)
-                        if index < workout.exercises.count - 1 {
-                            Divider()
-                        }
                     }
                 }
                 .overlay(alignment: .leading) {
@@ -643,8 +645,6 @@ struct PostCard: View {
             }
         }
         .padding(.vertical, 10)
-        .overlay(alignment: .top) { Divider() }
-        .overlay(alignment: .bottom) { Divider() }
     }
 
     @ViewBuilder
@@ -701,8 +701,6 @@ struct PostCard: View {
                 statistic("\(meal.totalFatGrams.nutritionText)g", "fat")
             }
             .padding(.vertical, 10)
-            .overlay(alignment: .top) { Divider() }
-            .overlay(alignment: .bottom) { Divider() }
 
             if !meal.entries.isEmpty {
                 VStack(alignment: .leading, spacing: 0) {
@@ -716,7 +714,6 @@ struct PostCard: View {
                                 .foregroundStyle(timeOfDay.secondaryText)
                         }
                         .padding(.vertical, 7)
-                        if index < meal.entries.count - 1 { Divider() }
                     }
                 }
             }
@@ -733,10 +730,8 @@ struct PostCard: View {
             VStack(alignment: .leading, spacing: 0) {
                 plannerLine("Date", value: planner.scheduledDate)
                 if let time = planner.scheduledTime {
-                    Divider()
                     plannerLine("Time", value: time.hasSuffix(":00") ? String(time.dropLast(3)) : time)
                 }
-                Divider()
                 plannerLine("Category", value: planner.category)
             }
             .overlay(alignment: .leading) {
