@@ -177,10 +177,10 @@ struct SocialFeedView: View {
     }
 
     private func header(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .center, spacing: 12) {
             RepbaseScreenHeader(
                 eyebrow: "SOCIAL",
-                title: "Your community"
+                title: "Community"
             )
 
             Button {
@@ -192,20 +192,56 @@ struct SocialFeedView: View {
             .buttonBorderShape(.circle)
             .tint(timeOfDay.accent)
             .accessibilityLabel("Discover people and posts")
+
+            Button {
+                isComposing = true
+            } label: {
+                HStack(spacing: 7) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 13, weight: .bold))
+                    Text("Post")
+                        .font(.system(size: 13, weight: .bold))
+                }
+                .foregroundStyle(Color.white)
+                .padding(.horizontal, 14)
+                .frame(height: 40)
+                .background(timeOfDay.accent, in: Capsule())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Create post")
         }
         .padding(.bottom, 2)
     }
 
     private func modePicker(timeOfDay: HomeTimeOfDay) -> some View {
-        Picker("Feed", selection: $feedMode) {
+        HStack(spacing: 26) {
             ForEach(FeedMode.allCases) { mode in
-                Text(mode.rawValue).tag(mode)
+                Button {
+                    withAnimation(.easeOut(duration: 0.18)) {
+                        feedMode = mode
+                    }
+                } label: {
+                    Text(mode.rawValue)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(
+                            feedMode == mode
+                                ? timeOfDay.canvasPrimaryText
+                                : timeOfDay.canvasSecondaryText
+                        )
+                        .padding(.vertical, 10)
+                        .overlay(alignment: .bottom) {
+                            Rectangle()
+                                .fill(feedMode == mode ? timeOfDay.accent : Color.clear)
+                                .frame(height: 2)
+                        }
+                }
+                .buttonStyle(.plain)
             }
+            Spacer(minLength: 0)
         }
-        .pickerStyle(.segmented)
-        .padding(3)
-        .repbaseInsetSurface(cornerRadius: 16)
-        .tint(RepbaseDesign.ink)
+        .overlay(alignment: .bottom) {
+            Divider()
+        }
     }
 
     private func peopleSection(timeOfDay: HomeTimeOfDay) -> some View {
@@ -395,7 +431,7 @@ struct PostCard: View {
     private var shown: RepostedPost { post.displayed }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 11) {
+        VStack(alignment: .leading, spacing: 12) {
             if post.repostOf != nil {
                 repostHeader
             }
@@ -404,13 +440,6 @@ struct PostCard: View {
 
             if let imageURL = shown.imageURL {
                 photo(imageURL)
-            }
-
-            if !shown.caption.isEmpty {
-                Text(shown.caption)
-                    .font(.subheadline)
-                    .foregroundStyle(timeOfDay.primaryText)
-                    .fixedSize(horizontal: false, vertical: true)
             }
 
             if let workout = shown.workout {
@@ -424,8 +453,15 @@ struct PostCard: View {
             }
 
             PostActionBar(post: post, timeOfDay: timeOfDay, openComments: openComments)
+
+            if !shown.caption.isEmpty {
+                Text(shown.caption)
+                    .font(.system(size: 14))
+                    .foregroundStyle(timeOfDay.primaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
-        .padding(.vertical, 14)
+        .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .overlay(alignment: .bottom) { Divider() }
     }
@@ -440,7 +476,7 @@ struct PostCard: View {
                 .font(.caption.weight(.semibold))
                 .lineLimit(1)
         }
-        .foregroundStyle(timeOfDay.secondaryText)
+        .foregroundStyle(timeOfDay.canvasSecondaryText)
     }
 
     /// The author's photo, above the numbers it was posted with.
@@ -468,9 +504,9 @@ struct PostCard: View {
         }
         .scaledToFill()
         .frame(maxWidth: .infinity)
-        .frame(height: 200)
+        .frame(height: 168)
         .clipped()
-        .clipShape(RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius))
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
     /// Whoever made the post being shown. On a repost that is the original
@@ -483,11 +519,7 @@ struct PostCard: View {
             // Not a Button around the row: the row ends in the timestamp and
             // the card itself opens the post, so only the identity is theirs.
             HStack(spacing: 10) {
-                Text(shown.author.initials)
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(Color.white)
-                    .frame(width: 36, height: 36)
-                    .background(timeOfDay.accent, in: Circle())
+                authorAvatar
 
                 VStack(alignment: .leading, spacing: 1) {
                     Text(shown.author.displayName)
@@ -495,7 +527,7 @@ struct PostCard: View {
                         .foregroundStyle(timeOfDay.primaryText)
                     Text("@" + shown.author.username)
                         .font(.caption2)
-                        .foregroundStyle(timeOfDay.secondaryText)
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
                 }
             }
             .contentShape(Rectangle())
@@ -505,72 +537,117 @@ struct PostCard: View {
 
             Spacer()
 
-            VStack(alignment: .trailing, spacing: 2) {
+            HStack(spacing: 9) {
                 Text(shown.createdAt, format: .relative(presentation: .named))
                     .font(.caption2)
-                    .foregroundStyle(timeOfDay.secondaryText)
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
                 if post.visibility != .publicToAll {
                     Image(systemName: post.visibility.symbol)
                         .font(.system(size: 9, weight: .semibold))
-                        .foregroundStyle(timeOfDay.secondaryText)
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                }
+                if post.viewerIsAuthor {
+                    Menu {
+                        Button(role: .destructive) {
+                            store.delete(post)
+                        } label: {
+                            Label("Delete post", systemImage: "trash")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(timeOfDay.canvasSecondaryText)
+                            .frame(width: 28, height: 28)
+                            .contentShape(Rectangle())
+                    }
                 }
             }
         }
     }
 
+    @ViewBuilder
+    private var authorAvatar: some View {
+        if let photo = shown.author.photoURL, let url = URL(string: photo) {
+            AsyncImage(url: url) { image in
+                image.resizable().scaledToFill()
+            } placeholder: {
+                avatarInitials
+            }
+            .frame(width: 36, height: 36)
+            .clipShape(Circle())
+        } else {
+            avatarInitials
+        }
+    }
+
+    private var avatarInitials: some View {
+        Text(shown.author.initials)
+            .font(.system(size: 12, weight: .bold))
+            .foregroundStyle(Color.white)
+            .frame(width: 36, height: 36)
+            .background(timeOfDay.accent, in: Circle())
+    }
+
     // MARK: - Bodies
 
     private func workoutBody(_ workout: PostWorkoutSnapshot) -> some View {
-        VStack(alignment: .leading, spacing: 9) {
-            kindLabel("Workout", symbol: "dumbbell.fill")
+        VStack(alignment: .leading, spacing: 12) {
+            shareHeader(
+                workout.routeDistanceKm == nil ? "Workout" : "Run",
+                symbol: workout.routeDistanceKm == nil ? "dumbbell.fill" : "figure.run"
+            )
 
             Text(workout.title)
-                .font(.headline)
+                .font(.system(size: 22, weight: .bold))
+                .tracking(-0.35)
                 .foregroundStyle(timeOfDay.primaryText)
 
-            HStack(spacing: 16) {
-                statistic("\(workout.exerciseCount)", "exercises")
-                statistic("\(workout.totalSetCount)", "sets")
-                if let volume = workout.totalVolumeKg {
-                    statistic(volume.nutritionText, "kg lifted")
-                }
-                if let distance = workout.routeDistanceKm {
-                    statistic(
-                        String(
-                            format: "%.2f",
-                            ImperialUnits.miles(fromKilometers: distance.nutritionDouble)
-                        ),
-                        "mi"
-                    )
-                }
-            }
+            workoutStatistics(workout)
 
             if !workout.exercises.isEmpty {
-                VStack(alignment: .leading, spacing: 4) {
-                    ForEach(workout.exercises.prefix(4)) { line in
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(Array(workout.exercises.enumerated()), id: \.element.id) { index, line in
                         HStack(spacing: 6) {
                             Text(line.name)
-                                .font(.caption)
+                                .font(.system(size: 13, weight: .medium))
                                 .foregroundStyle(timeOfDay.primaryText)
                             Spacer(minLength: 6)
-                            Text(Self.setSummary(line))
-                                .font(.caption.monospacedDigit())
+                            Text(Self.setSummary(line, showsWeights: post.showsWeights))
+                                .font(.system(size: 12).monospacedDigit())
                                 .foregroundStyle(timeOfDay.secondaryText)
                         }
-                    }
-                    if workout.exercises.count > 4 {
-                        Text("+\(workout.exercises.count - 4) more")
-                            .font(.caption2)
-                            .foregroundStyle(timeOfDay.secondaryText)
+                        .padding(.vertical, 8)
+                        if index < workout.exercises.count - 1 {
+                            Divider()
+                        }
                     }
                 }
-                .padding(.top, 2)
-            }
-
-            if post.offersWorkoutToSave {
-                saveWorkoutButton
+                .overlay(alignment: .leading) {
+                    Rectangle()
+                        .fill(timeOfDay.accent)
+                        .frame(width: 2)
+                        .offset(x: -10)
+                }
             }
         }
+    }
+
+    private func workoutStatistics(_ workout: PostWorkoutSnapshot) -> some View {
+        HStack(alignment: .top, spacing: 0) {
+            if let distance = workout.routeDistanceKm {
+                let miles = ImperialUnits.miles(fromKilometers: distance.nutritionDouble)
+                statistic(String(format: "%.2f", miles), "mi")
+                statistic(Self.pace(duration: workout.durationSeconds, miles: miles), "pace")
+                statistic(Self.duration(workout.durationSeconds), "time")
+            } else {
+                statistic("\(workout.exerciseCount)", "exercises")
+                statistic("\(workout.totalSetCount)", "sets")
+                statistic(Self.duration(workout.durationSeconds), "time")
+            }
+        }
+        .padding(.vertical, 10)
+        .overlay(alignment: .top) { Divider() }
+        .overlay(alignment: .bottom) { Divider() }
     }
 
     /// Takes the workout into your own. Offered only on somebody else's post:
@@ -592,59 +669,82 @@ struct PostCard: View {
                     .font(.caption.weight(.semibold))
             }
             .foregroundStyle(timeOfDay.accent)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 7)
-            .background(timeOfDay.accent.opacity(0.12), in: Capsule())
         }
         .buttonStyle(.plain)
         .disabled(isSaving)
-        .padding(.top, 4)
     }
 
     private func mealBody(_ meal: PostMealSnapshot) -> some View {
-        VStack(alignment: .leading, spacing: 9) {
-            kindLabel("Meal", symbol: "fork.knife")
+        VStack(alignment: .leading, spacing: 12) {
+            shareHeader("Meal", symbol: "fork.knife")
 
             Text(meal.name)
-                .font(.headline)
+                .font(.system(size: 22, weight: .bold))
+                .tracking(-0.35)
                 .foregroundStyle(timeOfDay.primaryText)
 
-            HStack(spacing: 16) {
+            HStack(alignment: .top, spacing: 0) {
                 statistic(meal.totalCalories.nutritionText, "kcal")
                 statistic("\(meal.totalProteinGrams.nutritionText)g", "protein")
                 statistic("\(meal.totalCarbohydrateGrams.nutritionText)g", "carbs")
                 statistic("\(meal.totalFatGrams.nutritionText)g", "fat")
             }
+            .padding(.vertical, 10)
+            .overlay(alignment: .top) { Divider() }
+            .overlay(alignment: .bottom) { Divider() }
 
             if !meal.entries.isEmpty {
-                Text(meal.entries.map(\.name).joined(separator: " · "))
-                    .font(.caption)
-                    .foregroundStyle(timeOfDay.secondaryText)
-                    .fixedSize(horizontal: false, vertical: true)
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(Array(meal.entries.enumerated()), id: \.element.id) { index, entry in
+                        HStack {
+                            Text(entry.name)
+                                .font(.system(size: 13, weight: .medium))
+                            Spacer(minLength: 8)
+                            Text("\(entry.totalCalories.nutritionText) kcal")
+                                .font(.system(size: 12).monospacedDigit())
+                                .foregroundStyle(timeOfDay.secondaryText)
+                        }
+                        .padding(.vertical, 7)
+                        if index < meal.entries.count - 1 { Divider() }
+                    }
+                }
             }
         }
     }
 
     private func plannerBody(_ planner: PostPlannerSnapshot) -> some View {
-        VStack(alignment: .leading, spacing: 9) {
-            kindLabel(planner.kind == "event" ? "Event" : "Task", symbol: "checklist")
+        VStack(alignment: .leading, spacing: 12) {
+            shareHeader(
+                planner.kind == "event" ? "Event" : "Task",
+                symbol: planner.kind == "event" ? "calendar" : "checkmark.circle"
+            )
 
             Text(planner.title)
-                .font(.headline)
+                .font(.system(size: 22, weight: .bold))
+                .tracking(-0.35)
                 .foregroundStyle(timeOfDay.primaryText)
 
-            HStack(spacing: 8) {
-                Text(planner.scheduledDate)
+            VStack(alignment: .leading, spacing: 0) {
+                plannerLine("Date", value: planner.scheduledDate)
                 if let time = planner.scheduledTime {
-                    Text(time.hasSuffix(":00") ? String(time.dropLast(3)) : time)
+                    Divider()
+                    plannerLine("Time", value: time.hasSuffix(":00") ? String(time.dropLast(3)) : time)
                 }
-                if planner.isComplete {
-                    Label("Done", systemImage: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                }
+                Divider()
+                plannerLine("Category", value: planner.category)
             }
-            .font(.caption)
-            .foregroundStyle(timeOfDay.secondaryText)
+            .overlay(alignment: .leading) {
+                Rectangle()
+                    .fill(timeOfDay.accent)
+                    .frame(width: 2)
+                    .offset(x: -10)
+            }
+
+            if planner.isComplete {
+                Label("Completed", systemImage: "checkmark.circle.fill")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(RepbaseDesign.success)
+            }
         }
     }
 
@@ -662,31 +762,66 @@ struct PostCard: View {
 
     // MARK: - Pieces
 
-    private func kindLabel(_ title: String, symbol: String) -> some View {
-        Label(title.uppercased(), systemImage: symbol)
-            .font(.system(size: 9, weight: .bold))
-            .tracking(1.1)
-            .foregroundStyle(timeOfDay.accent)
+    private func shareHeader(_ title: String, symbol: String) -> some View {
+        HStack(spacing: 8) {
+            Label(title.uppercased(), systemImage: symbol)
+                .font(.system(size: 10, weight: .bold))
+                .tracking(1.15)
+                .foregroundStyle(timeOfDay.accent)
+            Spacer(minLength: 0)
+            if post.offersWorkoutToSave {
+                saveWorkoutButton
+            }
+        }
     }
 
     private func statistic(_ value: String, _ label: String) -> some View {
         VStack(alignment: .leading, spacing: 1) {
             Text(value)
-                .font(.system(size: 15, weight: .bold, design: .rounded))
+                .font(.system(size: 15, weight: .bold))
                 .foregroundStyle(timeOfDay.primaryText)
             Text(label)
                 .font(.system(size: 9, weight: .medium))
                 .foregroundStyle(timeOfDay.secondaryText)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func plannerLine(_ label: String, value: String) -> some View {
+        HStack {
+            Text(label)
+                .foregroundStyle(timeOfDay.secondaryText)
+            Spacer(minLength: 12)
+            Text(value)
+                .foregroundStyle(timeOfDay.primaryText)
+        }
+        .font(.system(size: 13, weight: .medium))
+        .padding(.vertical, 8)
+    }
+
+    private static func duration(_ seconds: Int?) -> String {
+        guard let seconds, seconds > 0 else { return "—" }
+        let minutes = seconds / 60
+        if minutes < 60 { return "\(minutes)m" }
+        return String(format: "%d:%02d", minutes / 60, minutes % 60)
+    }
+
+    private static func pace(duration: Int?, miles: Double) -> String {
+        guard let duration, duration > 0, miles > 0 else { return "—" }
+        let secondsPerMile = Int((Double(duration) / miles).rounded())
+        return String(format: "%d:%02d", secondsPerMile / 60, secondsPerMile % 60)
     }
 
     /// Reps without a load still say something, so they are printed on their
     /// own rather than collapsing to a bare set count. Which is the point of
     /// posting without weights: "4 × 5" is what was done, and it is the load
     /// people hold back, not the count.
-    private static func setSummary(_ line: PostExerciseLine) -> String {
+    private static func setSummary(
+        _ line: PostExerciseLine,
+        showsWeights: Bool
+    ) -> String {
         guard let reps = line.topSetReps else { return "\(line.setCount) sets" }
-        guard let weight = line.topSetWeightKg else {
+        guard showsWeights, let weight = line.topSetWeightKg else {
             return "\(line.setCount) × \(reps)"
         }
         return "\(line.setCount) × \(reps) @ \(weight.nutritionText) kg"
