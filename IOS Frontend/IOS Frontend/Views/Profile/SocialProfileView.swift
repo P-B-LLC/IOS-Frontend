@@ -49,6 +49,7 @@ private struct ProfileCommentTarget: Identifiable, Hashable {
 
 struct SocialProfileView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     @Environment(AuthenticationStore.self) private var authentication
     @Environment(WorkoutStore.self) private var workoutStore
     @Environment(SocialProfileStore.self) private var store
@@ -193,8 +194,8 @@ struct SocialProfileView: View {
                         .font(.system(size: 10, weight: .bold))
                         .tracking(1.5)
                         .foregroundStyle(timeOfDay.accent)
-                    Text(profile.displayName)
-                        .font(.system(size: 22, weight: .bold))
+                    Text("@\(profile.username)")
+                        .font(.title3.weight(.semibold))
                         .tracking(-0.4)
                         .foregroundStyle(timeOfDay.canvasPrimaryText)
                         .lineLimit(1)
@@ -240,24 +241,36 @@ struct SocialProfileView: View {
     }
 
     private func identityCard(timeOfDay: HomeTimeOfDay) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(alignment: .center, spacing: 22) {
-                ProfileAvatarView(profile: profile, size: 88, timeOfDay: timeOfDay)
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .center, spacing: 14) {
+                ProfileAvatarView(profile: profile, size: 78, timeOfDay: timeOfDay)
 
-                HStack(spacing: 18) {
-                    profileStat("\(myPostCount)", label: "Posts")
-                    profileStat("\(followerCount)", label: "Followers")
-                    profileStat("\(followingCount)", label: "Following")
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(profile.displayName)
+                        .font(.title2.weight(.bold))
+                        .foregroundStyle(timeOfDay.canvasPrimaryText)
+
+                    Text("@\(profile.username)")
+                        .font(.caption)
+                        .foregroundStyle(timeOfDay.secondaryText)
+
+                    HStack(spacing: 0) {
+                        profileStat("\(myPostCount)", label: "Posts")
+                        Spacer(minLength: 12)
+                        profileStat("\(followerCount)", label: "Followers")
+                        Spacer(minLength: 12)
+                        profileStat("\(followingCount)", label: "Following")
+                    }
+                    .frame(maxWidth: .infinity)
+
+                    if let discipline = primaryDiscipline {
+                        Text(discipline.uppercased())
+                            .font(.system(size: 9, weight: .bold))
+                            .tracking(1.1)
+                            .foregroundStyle(timeOfDay.accent)
+                    }
                 }
-                .frame(maxWidth: .infinity)
-            }
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text(profile.displayName)
-                    .font(.system(size: 22, weight: .bold))
-                Text("@\(profile.username)")
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(timeOfDay.secondaryText)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             if !profile.bio.isEmpty {
@@ -267,21 +280,58 @@ struct SocialProfileView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            // Discipline and gym live in About with everything else the public
-            // is shown. The header keeps only what identifies the person:
-            // their name, their handle, and what they wrote about themselves.
+            if !visibleSocialLinks.isEmpty {
+                socialLinksRow(timeOfDay: timeOfDay)
+            }
+
+            if let gym = profile.gym {
+                Label {
+                    Text(gym.city.isEmpty ? gym.name : "\(gym.name) · \(gym.city)")
+                        .lineLimit(1)
+                } icon: {
+                    Image(systemName: "building.2")
+                        .foregroundStyle(timeOfDay.accent)
+                }
+                .font(.footnote)
+                .foregroundStyle(timeOfDay.canvasPrimaryText)
+            }
 
             profileAction(timeOfDay: timeOfDay)
-                .padding(.vertical, 12)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 10)
+                .frame(maxWidth: .infinity, alignment: .trailing)
                 .overlay(alignment: .top) {
-                    Rectangle().fill(timeOfDay.border).frame(height: 1)
-                }
-                .overlay(alignment: .bottom) {
                     Rectangle().fill(timeOfDay.border).frame(height: 1)
                 }
         }
         .padding(.vertical, 8)
+    }
+
+    private var primaryDiscipline: String? {
+        profile.disciplines
+            .sorted { $0.rawValue < $1.rawValue }
+            .first?.rawValue
+    }
+
+    private var visibleSocialLinks: [ProfileSocialLink] {
+        profile.socialLinks ?? []
+    }
+
+    private func socialLinksRow(timeOfDay: HomeTimeOfDay) -> some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 18) {
+                ForEach(visibleSocialLinks) { link in
+                    Button {
+                        openURL(link.url)
+                    } label: {
+                        Label(link.platform.title, systemImage: link.platform.systemImage)
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(timeOfDay.accent)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint("Opens \(link.platform.title) outside Repbase")
+                }
+            }
+        }
     }
 
     private var myPostCount: Int {
@@ -335,23 +385,50 @@ struct SocialProfileView: View {
     }
 
     private func profileStat(_ value: String, label: String) -> some View {
-        VStack(spacing: 2) {
-            Text(value).font(.headline.weight(.bold))
-            Text(label).font(.caption2).foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 0) {
+            Text(value)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.primary)
+            Text(label.uppercased())
+                .font(.system(size: 9, weight: .semibold))
+                .tracking(0.3)
+                .foregroundStyle(.secondary)
         }
-        .frame(maxWidth: .infinity)
     }
 
     private func sectionPicker(timeOfDay: HomeTimeOfDay) -> some View {
-        Picker("Profile section", selection: $selectedSection) {
+        HStack(spacing: 0) {
             ForEach(ProfileSection.allCases) { section in
-                Text(section.rawValue).tag(section)
+                Button {
+                    withAnimation(.easeInOut(duration: 0.18)) {
+                        selectedSection = section
+                    }
+                } label: {
+                    VStack(spacing: 10) {
+                        Text(section.rawValue.uppercased())
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(
+                                selectedSection == section
+                                    ? timeOfDay.accent
+                                    : timeOfDay.secondaryText
+                            )
+
+                        Capsule()
+                            .fill(
+                                selectedSection == section
+                                    ? timeOfDay.accent
+                                    : .clear
+                            )
+                            .frame(width: 54, height: 2)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
             }
         }
-        .pickerStyle(.segmented)
-        .padding(3)
-        .repbaseInsetSurface(cornerRadius: 16)
-        .tint(RepbaseDesign.ink)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Profile section")
     }
 
     /// The user's own posts, drawn by the same card the feed uses.

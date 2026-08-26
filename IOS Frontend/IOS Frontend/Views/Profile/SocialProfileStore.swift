@@ -124,6 +124,10 @@ struct SocialProfile: Codable, Equatable {
     var gym: GymIdentity?
     var profileImageData: Data?
     var profilePhotoURL: String? = nil
+    /// Public outbound accounts rendered by the profile header. The backend
+    /// will become the source of truth for these; keeping the display shape in
+    /// the profile model lets the UI land independently of that API work.
+    var socialLinks: [ProfileSocialLink]? = nil
 
     var displayName: String {
         "\(firstName) \(lastName)".trimmingCharacters(in: .whitespacesAndNewlines)
@@ -156,6 +160,44 @@ struct SocialProfile: Codable, Equatable {
         gym: nil,
         profileImageData: nil
     )
+}
+
+struct ProfileSocialLink: Codable, Equatable, Identifiable {
+    enum Platform: String, Codable, CaseIterable {
+        case instagram
+        case snapchat
+        case tiktok
+        case youtube
+        case x
+        case website
+
+        var title: String {
+            switch self {
+            case .instagram: "Instagram"
+            case .snapchat: "Snapchat"
+            case .tiktok: "TikTok"
+            case .youtube: "YouTube"
+            case .x: "X"
+            case .website: "Website"
+            }
+        }
+
+        var systemImage: String {
+            switch self {
+            case .instagram: "camera.circle"
+            case .snapchat: "message.circle"
+            case .tiktok: "music.note"
+            case .youtube: "play.rectangle"
+            case .x: "at"
+            case .website: "link"
+            }
+        }
+    }
+
+    var platform: Platform
+    var url: URL
+
+    var id: String { "\(platform.rawValue):\(url.absoluteString)" }
 }
 
 struct SocialPost: Identifiable, Equatable {
@@ -527,7 +569,17 @@ final class SocialProfileStore {
                     country: "United States",
                     memberCount: 284
                 ),
-                profileImageData: nil
+                profileImageData: nil,
+                socialLinks: [
+                    ProfileSocialLink(
+                        platform: .instagram,
+                        url: URL(string: "https://www.instagram.com/repbase")!
+                    ),
+                    ProfileSocialLink(
+                        platform: .snapchat,
+                        url: URL(string: "https://www.snapchat.com/add/repbase")!
+                    )
+                ]
             )
         // Sample answers and lifts, so the About tab can be looked at before
         // anybody has filled one in. The lift figures are the shape the server
