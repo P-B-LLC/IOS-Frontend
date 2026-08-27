@@ -34,7 +34,7 @@ enum LegalDocuments {
 
     /// The date the current wording took effect. Update it whenever the text
     /// below changes in substance, not for typographical fixes.
-    static let effectiveDate = "26 August 2026"
+    static let effectiveDate = "27 August 2026"
 
     static let all: [LegalDocument] = [privacyPolicy, termsOfService, licence]
 
@@ -58,8 +58,15 @@ enum LegalDocuments {
 
         Repbase stores what you put into it so it can show it back to you. It \
         does not contain advertising, analytics, or tracking software, and it \
-        does not sell or share your data with anyone. There are no third party \
-        services receiving your information.
+        does not sell or share your data with anyone.
+
+        One outside service is involved, in one place. When you search for a \
+        food, the words you typed are sent to the United States Department of \
+        Agriculture's FoodData Central, which is where the nutrition figures \
+        come from. That request is made by our server rather than by your \
+        phone, and it carries no account, name, or device with it: they are \
+        told that somebody looked up "oats", and nothing about who. Searches \
+        are cached here, so a common one is often not sent at all.
 
         WHAT IS STORED
 
@@ -112,7 +119,9 @@ enum LegalDocuments {
 
         No advertising. No analytics or crash-tracking software that reports \
         your behaviour to a third party. No sale of data. No sharing with data \
-        brokers, advertisers, or partners. No profiling for marketing.
+        brokers, advertisers, or partners. No profiling for marketing. Nothing \
+        you log -- not a workout, a meal, a weight, or a post -- leaves \
+        Repbase.
 
         EMAIL
 

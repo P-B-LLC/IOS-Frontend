@@ -1355,6 +1355,32 @@ paths:
                 items:
                   $ref: '#/components/schemas/FoodMeal'
           description: ''
+  /api/v1/food/search/:
+    get:
+      operationId: food_search_list
+      description: Searches USDA FoodData Central and returns foods in the shape a
+        food entry is logged in. Results are cached for a week.
+      parameters:
+      - in: query
+        name: q
+        schema:
+          type: string
+        description: What to search for. Two characters or more.
+        required: true
+      tags:
+      - food
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FoodSearchResult'
+          description: ''
   /api/v1/gear/:
     get:
       operationId: gear_list
@@ -5275,6 +5301,49 @@ components:
       required:
       - date
       - name
+    FoodSearchResult:
+      type: object
+      description: |-
+        One food from the public catalogue, in the shape the app logs.
+
+        Deliberately the same four figures a FoodEntry holds, and nothing else the
+        app would have to learn. Nutrition is carried as a string for the same
+        reason every other nutrition figure here is: a calorie count that travels
+        as a JSON number comes back from some parsers as 232.99999999999997.
+      properties:
+        source_id:
+          type: string
+        name:
+          type: string
+        brand:
+          type: string
+        serving_description:
+          type: string
+        calories:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+        protein_grams:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+        carbohydrate_grams:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+        fat_grams:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+      required:
+      - brand
+      - calories
+      - carbohydrate_grams
+      - fat_grams
+      - name
+      - protein_grams
+      - serving_description
+      - source_id
     Gear:
       type: object
       properties:

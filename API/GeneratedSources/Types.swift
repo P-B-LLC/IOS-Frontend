@@ -258,6 +258,11 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /api/v1/food/saved-meals/{id}/apply/`.
     /// - Remark: Generated from `#/paths//api/v1/food/saved-meals/{id}/apply//post(food_saved_meals_apply_create)`.
     func foodSavedMealsApplyCreate(_ input: Operations.FoodSavedMealsApplyCreate.Input) async throws -> Operations.FoodSavedMealsApplyCreate.Output
+    /// Searches USDA FoodData Central and returns foods in the shape a food entry is logged in. Results are cached for a week.
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/search/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/search//get(food_search_list)`.
+    func foodSearchList(_ input: Operations.FoodSearchList.Input) async throws -> Operations.FoodSearchList.Output
     /// Shoes and bikes, and how far each has been.
     ///
     /// Mileage is summed here rather than counted on the device: it is a property
@@ -1566,6 +1571,19 @@ extension APIProtocol {
             path: path,
             headers: headers,
             body: body
+        ))
+    }
+    /// Searches USDA FoodData Central and returns foods in the shape a food entry is logged in. Results are cached for a week.
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/search/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/search//get(food_search_list)`.
+    public func foodSearchList(
+        query: Operations.FoodSearchList.Input.Query,
+        headers: Operations.FoodSearchList.Input.Headers = .init()
+    ) async throws -> Operations.FoodSearchList.Output {
+        try await foodSearchList(Operations.FoodSearchList.Input(
+            query: query,
+            headers: headers
         ))
     }
     /// Shoes and bikes, and how far each has been.
@@ -4116,6 +4134,72 @@ public enum Components {
                 case date
                 case name
                 case position
+            }
+        }
+        /// One food from the public catalogue, in the shape the app logs.
+        ///
+        /// Deliberately the same four figures a FoodEntry holds, and nothing else the
+        /// app would have to learn. Nutrition is carried as a string for the same
+        /// reason every other nutrition figure here is: a calorie count that travels
+        /// as a JSON number comes back from some parsers as 232.99999999999997.
+        ///
+        /// - Remark: Generated from `#/components/schemas/FoodSearchResult`.
+        public struct FoodSearchResult: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/FoodSearchResult/source_id`.
+            public var sourceId: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FoodSearchResult/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FoodSearchResult/brand`.
+            public var brand: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FoodSearchResult/serving_description`.
+            public var servingDescription: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FoodSearchResult/calories`.
+            public var calories: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FoodSearchResult/protein_grams`.
+            public var proteinGrams: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FoodSearchResult/carbohydrate_grams`.
+            public var carbohydrateGrams: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FoodSearchResult/fat_grams`.
+            public var fatGrams: Swift.String
+            /// Creates a new `FoodSearchResult`.
+            ///
+            /// - Parameters:
+            ///   - sourceId:
+            ///   - name:
+            ///   - brand:
+            ///   - servingDescription:
+            ///   - calories:
+            ///   - proteinGrams:
+            ///   - carbohydrateGrams:
+            ///   - fatGrams:
+            public init(
+                sourceId: Swift.String,
+                name: Swift.String,
+                brand: Swift.String,
+                servingDescription: Swift.String,
+                calories: Swift.String,
+                proteinGrams: Swift.String,
+                carbohydrateGrams: Swift.String,
+                fatGrams: Swift.String
+            ) {
+                self.sourceId = sourceId
+                self.name = name
+                self.brand = brand
+                self.servingDescription = servingDescription
+                self.calories = calories
+                self.proteinGrams = proteinGrams
+                self.carbohydrateGrams = carbohydrateGrams
+                self.fatGrams = fatGrams
+            }
+            public enum CodingKeys: String, CodingKey {
+                case sourceId = "source_id"
+                case name
+                case brand
+                case servingDescription = "serving_description"
+                case calories
+                case proteinGrams = "protein_grams"
+                case carbohydrateGrams = "carbohydrate_grams"
+                case fatGrams = "fat_grams"
             }
         }
         /// - Remark: Generated from `#/components/schemas/Gear`.
@@ -16338,6 +16422,136 @@ public enum Operations {
             /// - Throws: An error if `self` is not `.ok`.
             /// - SeeAlso: `.ok`.
             public var ok: Operations.FoodSavedMealsApplyCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Searches USDA FoodData Central and returns foods in the shape a food entry is logged in. Results are cached for a week.
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/search/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/search//get(food_search_list)`.
+    public enum FoodSearchList {
+        public static let id: Swift.String = "food_search_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/search/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// What to search for. Two characters or more.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/search/GET/query/q`.
+                public var q: Swift.String
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - q: What to search for. Two characters or more.
+                public init(q: Swift.String) {
+                    self.q = q
+                }
+            }
+            public var query: Operations.FoodSearchList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/food/search/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodSearchList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodSearchList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodSearchList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.FoodSearchList.Input.Query,
+                headers: Operations.FoodSearchList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/search/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/search/GET/responses/200/content/application\/json`.
+                    case json([Components.Schemas.FoodSearchResult])
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: [Components.Schemas.FoodSearchResult] {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodSearchList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodSearchList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/search//get(food_search_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.FoodSearchList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.FoodSearchList.Output.Ok {
                 get throws {
                     switch self {
                     case let .ok(response):

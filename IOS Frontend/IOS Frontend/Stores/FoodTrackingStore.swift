@@ -13,6 +13,10 @@ import Observation
 @Observable
 final class FoodTrackingStore {
     private var repository: FoodAPIRepository?
+    /// Built beside the food repository and from the same credentials. The
+    /// picker used to make its own and point it at a third party; a screen
+    /// holding its own API client is how that went unnoticed.
+    private var catalogue: FoodDatabaseRepository?
     private var connectionGeneration = UUID()
     /// Days a screen asked for before there was a server to ask.
     private var pendingDays: Set<String> = []
@@ -54,6 +58,10 @@ final class FoodTrackingStore {
         defer { if connectionGeneration == generation { isLoading = false } }
 
         do {
+            catalogue = try FoodDatabaseRepository(
+                configuration: configuration,
+                token: token
+            )
             let repository = try FoodAPIRepository(
                 configuration: configuration,
                 token: token
@@ -573,5 +581,15 @@ extension FoodTrackingStore {
         ]
         store.recentFoods = breakfast.entries + lunch.entries + snack.entries
         return store
+    }
+    /// Foods from the public catalogue, through Repbase.
+    ///
+    /// Returns nothing at all when there is no connection yet rather than
+    /// throwing: the picker is reachable before the first sync finishes, and
+    /// an empty catalogue with the recents still listed is a better answer
+    /// there than an error about a repository.
+    func searchCatalogue(_ query: String) async throws -> [FoodDatabaseResult] {
+        guard let catalogue else { return [] }
+        return try await catalogue.search(query)
     }
 }

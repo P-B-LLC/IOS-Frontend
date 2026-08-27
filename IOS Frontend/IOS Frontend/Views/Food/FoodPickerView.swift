@@ -16,10 +16,9 @@ struct FoodPickerView: View {
     let mealID: FoodMeal.ID
 
     @State private var searchText = ""
-    @State private var databaseResults: [FoodEntry] = []
+    @State private var databaseResults: [FoodDatabaseResult] = []
     @State private var isSearchingDatabase = false
     @State private var databaseError: String?
-    private let foodDatabase = FoodDatabaseRepository()
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
@@ -37,7 +36,7 @@ struct FoodPickerView: View {
                         Text("Find it quickly.")
                             .font(.community(size: 28, weight: .bold))
                             .tracking(-0.8)
-                        Text("Search foods you have logged or enter nutrition manually.")
+                        Text("Search the USDA food database, reuse something you have logged, or enter nutrition by hand.")
                             .font(.community(.subheadline))
                             .foregroundStyle(timeOfDay.canvasSecondaryText)
                     }
@@ -92,7 +91,7 @@ struct FoodPickerView: View {
                 Spacer()
                 if isSearchingDatabase { ProgressView().controlSize(.mini) }
                 else if searchText.trimmed.count >= 2 {
-                    Text("OPEN FOOD FACTS")
+                    Text("USDA FOODDATA CENTRAL")
                         .font(.community(.caption2, weight: .bold))
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                 }
@@ -112,9 +111,11 @@ struct FoodPickerView: View {
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
             } else {
                 VStack(spacing: 0) {
-                    ForEach(Array(databaseResults.enumerated()), id: \.element.id) { index, food in
-                        Button { add(food) } label: { RecentFoodRow(food: food).padding(.vertical, 12) }
-                            .buttonStyle(.plain)
+                    ForEach(Array(databaseResults.enumerated()), id: \.element.id) { index, result in
+                        Button { add(result.entry) } label: {
+                            DatabaseFoodRow(result: result).padding(.vertical, 12)
+                        }
+                        .buttonStyle(.plain)
                         if index < databaseResults.count - 1 { Divider() }
                     }
                 }
@@ -229,7 +230,7 @@ struct FoodPickerView: View {
         try? await Task.sleep(for: .milliseconds(350))
         guard !Task.isCancelled else { return }
         do {
-            let results = try await foodDatabase.search(query)
+            let results = try await store.searchCatalogue(query)
             guard !Task.isCancelled, query == searchText.trimmed else { return }
             databaseResults = results
         } catch is CancellationError {
@@ -245,6 +246,43 @@ struct FoodPickerView: View {
 
 private extension String {
     var trimmed: String { trimmingCharacters(in: .whitespacesAndNewlines) }
+}
+
+/// A catalogue row.
+///
+/// Says what the numbers are measured against, which the recents row has no
+/// need to: a food logged before carries the serving it was logged with, while
+/// nearly everything out of FoodData Central is per 100 g. Adding one without
+/// reading that is how a chicken breast gets logged as a third of itself.
+private struct DatabaseFoodRow: View {
+    let result: FoodDatabaseResult
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "magnifyingglass")
+                .font(.community(.subheadline))
+                .foregroundStyle(Color.orange)
+                .frame(width: 24, height: 34)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(result.entry.name)
+                    .font(.community(.headline))
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+                Text("Per \(result.servingDescription) · P \(result.entry.totalNutrition.proteinGrams.nutritionText) · C \(result.entry.totalNutrition.carbohydrateGrams.nutritionText) · F \(result.entry.totalNutrition.fatGrams.nutritionText)")
+                    .font(.community(.caption2))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+
+            Spacer(minLength: 0)
+
+            Text("\(result.entry.totalNutrition.calories.nutritionText) cal")
+                .font(.community(.subheadline, weight: .semibold))
+                .foregroundStyle(.primary)
+        }
+        .contentShape(Rectangle())
+    }
 }
 
 private struct RecentFoodRow: View {
