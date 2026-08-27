@@ -447,6 +447,13 @@ struct PostCard: View {
     /// Set when Report was chosen, which raises the reasons.
     @State private var reportingPost: FeedPost?
 
+    /// The shape the photo was posted at, once its bytes have arrived.
+    ///
+    /// Nil until then, and it cannot be otherwise: no dimensions travel with
+    /// a post, so the card reserves `PostPhotoRatio.unloaded` and settles
+    /// when the image lands.
+    @State private var photoRatio: CGFloat?
+
     /// What is drawn: the original when this is a repost, itself otherwise.
     /// The engagement figures always come from `post`.
     private var shown: RepostedPost { post.displayed }
@@ -459,48 +466,55 @@ struct PostCard: View {
                     .padding(.top, 10)
             }
 
-            HStack(alignment: .top, spacing: 12) {
-                authorAvatar
-                    .contentShape(Circle())
-                    .onTapGesture { openAuthor?(shown.author.id) }
-                    .accessibilityAddTraits(openAuthor == nil ? [] : .isButton)
+            // Who wrote it stays beside the avatar; what they posted does
+            // not. Everything used to sit in the column right of a 36pt
+            // avatar, so a photo had 64pt of margin on its left and 16pt on
+            // its right and read as shoved off-centre. The picture, the
+            // attachments and the actions now use the full width.
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .top, spacing: 12) {
+                    authorAvatar
+                        .contentShape(Circle())
+                        .onTapGesture { openAuthor?(shown.author.id) }
+                        .accessibilityAddTraits(openAuthor == nil ? [] : .isButton)
 
-                VStack(alignment: .leading, spacing: 10) {
-                    authorLine
+                    VStack(alignment: .leading, spacing: 10) {
+                        authorLine
 
-                    if !shown.caption.isEmpty {
-                        Text(shown.caption)
-                            .font(.community(.subheadline))
-                            .foregroundStyle(timeOfDay.primaryText)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-
-                    if let imageURL = shown.imageURL {
-                        photo(imageURL, meal: shown.meal)
-
-                        if let workout = shown.workout {
-                            compactWorkoutAttachment(workout, imageAttached: true)
-                        } else if post.offersMealToSave {
-                            HStack {
-                                Spacer(minLength: 0)
-                                saveMealButton
-                            }
-                        } else if let planner = shown.planner {
-                            compactPlannerAttachment(planner)
+                        if !shown.caption.isEmpty {
+                            Text(shown.caption)
+                                .font(.community(.subheadline))
+                                .foregroundStyle(timeOfDay.primaryText)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
-                    } else if let workout = shown.workout {
-                        compactWorkoutAttachment(workout, imageAttached: false)
-                    } else if let meal = shown.meal {
-                        compactMealAttachment(meal)
+                    }
+                }
+
+                if let imageURL = shown.imageURL {
+                    photo(imageURL, meal: shown.meal)
+
+                    if let workout = shown.workout {
+                        compactWorkoutAttachment(workout, imageAttached: true)
+                    } else if post.offersMealToSave {
+                        HStack {
+                            Spacer(minLength: 0)
+                            saveMealButton
+                        }
                     } else if let planner = shown.planner {
                         compactPlannerAttachment(planner)
-                    } else {
-                        unsupportedBody
                     }
-
-                    PostActionBar(post: post, timeOfDay: timeOfDay, openComments: openComments)
-                        .padding(.top, 2)
+                } else if let workout = shown.workout {
+                    compactWorkoutAttachment(workout, imageAttached: false)
+                } else if let meal = shown.meal {
+                    compactMealAttachment(meal)
+                } else if let planner = shown.planner {
+                    compactPlannerAttachment(planner)
+                } else {
+                    unsupportedBody
                 }
+
+                PostActionBar(post: post, timeOfDay: timeOfDay, openComments: openComments)
+                    .padding(.top, 2)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
@@ -531,28 +545,50 @@ struct PostCard: View {
     /// A failure draws nothing rather than a broken-image placeholder: the
     /// card's real content is the snapshot underneath, and it should still
     /// read cleanly when the picture cannot be fetched.
+    /// The photo, at the shape it was posted at.
+    ///
+    /// It used to be a fixed 176pt band with the image cropped to fill it,
+    /// which threw away what somebody framed: an upright plate of food
+    /// arrived as a strip through its middle. The box now follows the photo,
+    /// clamped by `PostPhotoRatio` so neither a panorama nor a screenshot
+    /// can take the layout over.
+    ///
+    /// A clear shape sets the box and the image fills it, rather than the
+    /// image sizing itself -- that keeps the placeholder, the failure mark
+    /// and the photo all one shape, so nothing resizes as it swaps between
+    /// them.
     private func photo(_ url: URL, meal: PostMealSnapshot?) -> some View {
-        RemoteImage(url: url, maxPixel: 1_200) {
-            // The card keeps its shape while the photo arrives, so the rows
-            // under it do not jump once it does.
-            RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius)
-                .fill(timeOfDay.primaryText.opacity(0.06))
-                .overlay { ProgressView() }
-        } failure: {
-            // Says the photo is missing rather than drawing nothing. Nothing
-            // is indistinguishable from a post that never had one.
-            RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius)
-                .fill(timeOfDay.primaryText.opacity(0.06))
-                .overlay {
-                    Image(systemName: "photo")
-                        .font(.community(.title3))
-                        .foregroundStyle(timeOfDay.secondaryText)
+        Color.clear
+            .aspectRatio(
+                PostPhotoRatio.clamped(photoRatio ?? PostPhotoRatio.unloaded),
+                contentMode: .fit
+            )
+            .overlay {
+                RemoteImage(
+                    url: url,
+                    maxPixel: 1_200,
+                    onNaturalSize: { size in
+                        photoRatio = PostPhotoRatio.clamped(size)
+                    }
+                ) {
+                    RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius)
+                        .fill(timeOfDay.primaryText.opacity(0.06))
+                        .overlay { ProgressView() }
+                } failure: {
+                    // Says the photo is missing rather than drawing nothing.
+                    // Nothing is indistinguishable from a post that never
+                    // had one.
+                    RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius)
+                        .fill(timeOfDay.primaryText.opacity(0.06))
+                        .overlay {
+                            Image(systemName: "photo")
+                                .font(.community(.title3))
+                                .foregroundStyle(timeOfDay.secondaryText)
+                        }
                 }
-        }
-        .scaledToFill()
-        .frame(maxWidth: .infinity)
-        .frame(height: 176)
-        .clipped()
+                .scaledToFill()
+            }
+            .clipped()
         .overlay(alignment: .bottom) {
             if let meal {
                 HStack(spacing: 6) {

@@ -374,16 +374,25 @@ struct PostComposerView: View {
         VStack(alignment: .leading, spacing: 11) {
             EditorialSectionTitle(
                 title: "Photo",
-                detail: "Optional. Shown above the card."
+                detail: "Optional. Kept at the shape you framed it."
             )
 
             if let photoData, let image = UIImage(data: photoData) {
                 VStack(alignment: .leading, spacing: 9) {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 190)
+                    // The same box the feed will draw. It was a fixed 190pt
+                    // against the card's 176pt, so the crop somebody
+                    // approved here was never the crop anybody else saw.
+                    Color.clear
+                        .aspectRatio(
+                            PostPhotoRatio.clamped(image.size),
+                            contentMode: .fit
+                        )
+                        .overlay {
+                            Image(uiImage: image)
+                                .resizable()
+                                .scaledToFill()
+                        }
+                        .clipped()
                         .clipShape(
                             RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius)
                         )

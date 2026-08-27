@@ -93,6 +93,12 @@ struct RemoteImage<Placeholder: View, Failure: View>: View {
     /// The largest edge, in pixels, the decoded image needs. Screen points
     /// times the screen scale.
     var maxPixel: CGFloat = 900
+    /// Called with the decoded size once there is one, cache hits included.
+    ///
+    /// Lets a caller draw the photo at the shape it was posted at. Nothing
+    /// else can: the contract carries no dimensions for an uploaded image,
+    /// so the only place the ratio is known is here, after the bytes land.
+    var onNaturalSize: ((CGSize) -> Void)?
 
     @ViewBuilder var placeholder: () -> Placeholder
     @ViewBuilder var failure: () -> Failure
@@ -119,6 +125,7 @@ struct RemoteImage<Placeholder: View, Failure: View>: View {
             if let hit = RemoteImageCache.shared.cached(url, maxPixel: maxPixel) {
                 image = hit
                 hasFinished = true
+                onNaturalSize?(hit.size)
                 return
             }
             image = nil
@@ -126,6 +133,7 @@ struct RemoteImage<Placeholder: View, Failure: View>: View {
             let loaded = await RemoteImageCache.shared.image(for: url, maxPixel: maxPixel)
             image = loaded
             hasFinished = true
+            if let loaded { onNaturalSize?(loaded.size) }
         }
     }
 }
