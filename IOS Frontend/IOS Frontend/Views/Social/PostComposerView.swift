@@ -911,14 +911,41 @@ struct PostComposerView: View {
             }
     }
 
+    /// What a row says about itself under its name.
+    ///
+    /// The date alone was not enough. Four Morning Runs recorded on one
+    /// evening drew as four identical rows -- same name, same "Aug 19", no way
+    /// to tell which was which or that none of them held anything. The reason
+    /// was that the two distinguishing details were both conditional: distance
+    /// only when above zero, duration only from a minute up. A session short
+    /// enough to be a mistake failed both tests and so said nothing at all,
+    /// which is precisely when saying something matters.
+    ///
+    /// The time is unconditional now, because it is the one thing two sessions
+    /// on the same day never share, and the duration prints however brief it
+    /// is. Eight seconds reads as eight seconds rather than as a blank.
     private static func sessionSubtitle(_ session: PostableSession) -> String {
         var parts = [PostDateText.label(for: session.performedAt)]
+        parts.append(session.performedAt.formatted(date: .omitted, time: .shortened))
+
         if let distance = session.routeDistanceKilometers, distance > 0 {
             parts.append(String(format: "%.1f km", distance))
-        } else if let seconds = session.durationSeconds, seconds >= 60 {
-            parts.append("\(Int(seconds / 60)) min")
+        }
+        if let seconds = session.durationSeconds, seconds > 0 {
+            parts.append(Self.durationText(seconds))
+        }
+        if session.loggedSetCount > 0 {
+            parts.append("\(session.loggedSetCount) set\(session.loggedSetCount == 1 ? "" : "s")")
         }
         return parts.joined(separator: " · ")
+    }
+
+    private static func durationText(_ seconds: Double) -> String {
+        let whole = Int(seconds.rounded())
+        if whole < 60 { return "\(whole) sec" }
+        let minutes = whole / 60
+        if minutes < 60 { return "\(minutes) min" }
+        return "\(minutes / 60)h \(minutes % 60)m"
     }
 
     private static func plannerSubtitle(
