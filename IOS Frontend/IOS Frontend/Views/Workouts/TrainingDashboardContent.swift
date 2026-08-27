@@ -44,6 +44,7 @@ struct TrainingDashboardContent: View {
             .padding(.top, 10)
             .padding(.bottom, RepbaseDesign.bottomBarClearance)
         }
+        .minimizesBottomBarOnScroll()
     }
 
     private var workoutPlanCard: some View {

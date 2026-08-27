@@ -177,6 +177,7 @@ struct SocialFeedView: View {
             .padding(.bottom, RepbaseDesign.bottomBarClearance)
         }
         .scrollIndicators(.hidden)
+        .minimizesBottomBarOnScroll()
         .refreshable { await store.refresh() }
         .toolbar(.hidden, for: .navigationBar)
         .homeTimeScreen(timeOfDay)

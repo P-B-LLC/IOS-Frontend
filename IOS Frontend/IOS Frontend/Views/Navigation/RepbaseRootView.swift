@@ -31,6 +31,71 @@ extension View {
     }
 }
 
+/// How much room the bottom bar is taking, shared by the shell and whichever
+/// screen is being scrolled.
+///
+/// An object rather than a preference. A preference reduces across every view
+/// that raises one, and TabView keeps all five tabs alive at once: scroll Home
+/// down, switch to Social, and Home would still be reporting "minimized" from
+/// off screen -- pinning the reduced value so Social's own scrolling could
+/// never change it again. A tab that is not being scrolled writes nothing
+/// here, which is the same guarantee without the bookkeeping.
+@Observable
+final class BottomBarChrome {
+    /// Smaller, not gone. Set by the screen being read, cleared by the shell
+    /// when the tab changes.
+    var isMinimized = false
+}
+
+extension View {
+    /// Shrinks the bottom bar while this scroll view is moving down the page,
+    /// and restores it on the way back up.
+    func minimizesBottomBarOnScroll() -> some View {
+        modifier(MinimizesBottomBarOnScroll())
+    }
+}
+
+private struct MinimizesBottomBarOnScroll: ViewModifier {
+    // Optional on purpose: previews and the launch-flag harnesses build these
+    // screens without the shell around them, and a missing object should cost
+    // the animation rather than the screen.
+    @Environment(BottomBarChrome.self) private var chrome: BottomBarChrome?
+    @State private var pivot: CGFloat = 0
+
+    func body(content: Content) -> some View {
+        content
+            .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                geometry.contentOffset.y + geometry.contentInsets.top
+            } action: { _, offset in
+                react(to: offset)
+            }
+    }
+
+    private func react(to offset: CGFloat) {
+
+        guard let chrome else { return }
+
+        // The top of the page always gets the full bar, whatever the last
+        // direction was. Arriving somewhere should not find the furniture
+        // already folded away.
+        guard offset > 40 else {
+            pivot = offset
+            chrome.isMinimized = false
+            return
+        }
+
+        let travel = offset - pivot
+        // Distance rather than direction alone: a finger resting on the glass
+        // reports a pixel each way forever, and a bar answering that would
+        // flicker rather than respond. Not resetting the pivot below the
+        // threshold is what makes it cumulative travel rather than one frame's
+        // worth, so a slow drag still counts.
+        guard abs(travel) > 12 else { return }
+        pivot = offset
+        chrome.isMinimized = travel > 0
+    }
+}
+
 nonisolated enum RepbaseTab: String, CaseIterable, Identifiable {
     case home
     /// Workouts and food together. They were a slot each, which is two of five
@@ -83,6 +148,13 @@ struct RepbaseRootView: View {
     @State private var tab: RepbaseTab
     /// Set while a screen is writing into something pinned to the bottom.
     @State private var isBarHidden = false
+    @State private var chrome = BottomBarChrome()
+#if DEBUG
+    // The minimized bar only appears mid-scroll, and simctl has no gesture
+    // to make one with. This is how it gets looked at.
+    private let forcesMinimizedBar =
+        ProcessInfo.processInfo.environment["REPBASE_BAR_MINIMIZED"] != nil
+#endif
 
     init(initialTab: RepbaseTab = .home) {
 #if DEBUG
@@ -95,6 +167,13 @@ struct RepbaseRootView: View {
         }
 #endif
         _tab = State(initialValue: initialTab)
+    }
+
+    private var showsMinimizedBar: Bool {
+#if DEBUG
+        if forcesMinimizedBar { return true }
+#endif
+        return chrome.isMinimized
     }
 
     var body: some View {
@@ -118,7 +197,10 @@ struct RepbaseRootView: View {
                 .toolbar(.hidden, for: .tabBar)
                 .tag(RepbaseTab.account)
         }
+        .environment(chrome)
         .onPreferenceChange(HidesBottomBarPreference.self) { isBarHidden = $0 }
+        // A new tab is a new page, and a new page starts at the top.
+        .onChange(of: tab) { chrome.isMinimized = false }
         .safeAreaInset(edge: .bottom, spacing: isBarHidden ? 0 : 8) {
             // The clock wraps only the bar. Wrapping the whole TabView in a
             // TimelineView collapsed it to an empty screen, and would have
@@ -126,15 +208,22 @@ struct RepbaseRootView: View {
             if !isBarHidden {
                 TimelineView(.periodic(from: .now, by: 60)) { context in
                     let timeOfDay = HomeTimeOfDay(date: context.date)
-                    RepbaseBottomNavigation(tab: $tab)
+                    RepbaseBottomNavigation(tab: $tab, isMinimized: showsMinimizedBar)
                         .environment(\.homeTimeOfDay, timeOfDay)
                         .tint(timeOfDay.accent)
-                        .padding(.horizontal, RepbaseDesign.pageInset)
+                        // Narrower as well as shorter. Height alone was the
+                        // honest change and almost invisible in motion -- and
+                        // buying more of it means taking it off the tap
+                        // targets, which are already only four points over the
+                        // minimum. Pulling the ends in reads as standing back
+                        // without costing anything a finger needs.
+                        .padding(.horizontal, showsMinimizedBar ? 58 : RepbaseDesign.pageInset)
                 }
                 .transition(.opacity)
             }
         }
         .animation(.easeOut(duration: 0.18), value: isBarHidden)
+        .animation(.easeOut(duration: 0.22), value: showsMinimizedBar)
     }
 }
 
@@ -143,6 +232,9 @@ struct RepbaseRootView: View {
 struct RepbaseBottomNavigation: View {
     @Environment(\.homeTimeOfDay) private var timeOfDay
     @Binding var tab: RepbaseTab
+    /// Smaller, not gone. Every tab stays where it was and stays pressable;
+    /// what changes is how much of the page the bar is standing on.
+    var isMinimized = false
 
     var body: some View {
         HStack(spacing: 2) {
@@ -158,7 +250,7 @@ struct RepbaseBottomNavigation: View {
             }
         }
         .padding(.horizontal, 8)
-        .padding(.vertical, 5)
+        .padding(.vertical, isMinimized ? 4 : 5)
         .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
@@ -173,12 +265,12 @@ struct RepbaseBottomNavigation: View {
     /// says it — dropping the text from the design should not drop it from
     /// the app.
     private func itemLabel(_ item: RepbaseTab, isSelected: Bool) -> some View {
-        VStack(spacing: 4) {
+        VStack(spacing: isMinimized ? 3 : 4) {
             Image(item.iconAsset)
                 .resizable()
                 .scaledToFit()
                 .foregroundStyle(isSelected ? timeOfDay.accent : timeOfDay.secondaryText)
-                .frame(width: 24, height: 24)
+                .frame(width: isMinimized ? 21 : 24, height: isMinimized ? 21 : 24)
 
             // Kept, and now doing more work: with the labels gone this and the
             // colour are the only things saying which tab you are on.
@@ -191,7 +283,13 @@ struct RepbaseBottomNavigation: View {
         // 38 plus the bar's own padding puts the tap target back above Apple's
         // 44pt minimum, which the 34 that briefly replaced it was under.
         // Between the original height and the too-slim one.
-        .frame(maxWidth: .infinity, minHeight: 38)
+        //
+        // Minimized trades a little of that back: 32 and 4 is 40, under the
+        // guideline by four points. Each item is still about seventy wide, the
+        // state only lasts while a finger is actively dragging the page away
+        // from the bar, and any scroll the other way returns it. A bar that
+        // stood down by becoming untappable would be the worse trade.
+        .frame(maxWidth: .infinity, minHeight: isMinimized ? 32 : 38)
         .contentShape(Rectangle())
     }
 

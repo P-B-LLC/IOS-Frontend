@@ -129,6 +129,7 @@ struct SocialProfileView: View {
                 .padding(.bottom, RepbaseDesign.bottomBarClearance)
             }
             .scrollIndicators(.hidden)
+            .minimizesBottomBarOnScroll()
             .toolbar(.hidden, for: .navigationBar)
             .homeTimeScreen(timeOfDay)
             .sheet(isPresented: $editingProfile) {
