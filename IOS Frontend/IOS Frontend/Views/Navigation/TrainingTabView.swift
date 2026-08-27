@@ -37,6 +37,19 @@ struct TrainingTabView: View {
 
     @State private var half: Half = .workouts
     @State private var quickAction: TrainingQuickAction?
+    @State private var isShowingQuickActions = false
+
+    init() {
+#if DEBUG
+        // Opens the row on launch. The tiles are two taps in, and the
+        // simulator cannot be tapped from a command line.
+        let flag = ProcessInfo.processInfo.environment["REPBASE_QUICK_ACTIONS"]
+        if let flag {
+            _isShowingQuickActions = State(initialValue: true)
+            if flag == "food" { _half = State(initialValue: .food) }
+        }
+#endif
+    }
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
@@ -45,13 +58,21 @@ struct TrainingTabView: View {
             VStack(spacing: 0) {
                 switcher(timeOfDay: timeOfDay)
 
+                if isShowingQuickActions {
+                    quickActionTiles(timeOfDay: timeOfDay)
+                }
+
                 switch half {
                 case .workouts: WorkoutsView()
                 case .food: FoodTrackingView()
                 }
             }
             .homeTimeScreen(timeOfDay)
+            .animation(.spring(response: 0.3, dampingFraction: 0.82), value: isShowingQuickActions)
         }
+        // The two halves offer different actions, so an open row would be
+        // showing the wrong ones the moment the switch moves.
+        .onChange(of: half) { isShowingQuickActions = false }
         .sheet(item: $quickAction) { action in
             quickActionDestination(action)
         }
@@ -95,23 +116,17 @@ struct TrainingTabView: View {
         .repbaseInsetSurface(cornerRadius: 13)
     }
 
-    /// The same actions, from a menu beside the switcher.
+    /// Opens the actions, beside the switcher.
     ///
     /// It used to be a button floating over the page, which meant it sat on
     /// top of whatever happened to scroll under it -- the weekly-goal row, on
     /// a phone -- and it was already as low as it could go, ten points above
     /// the bottom bar. Up here it covers nothing and is always in one place.
     private func quickActionButton(timeOfDay: HomeTimeOfDay) -> some View {
-        Menu {
-            ForEach(actions) { action in
-                Button {
-                    quickAction = action
-                } label: {
-                    Label(action.title, systemImage: action.symbol)
-                }
-            }
+        Button {
+            isShowingQuickActions.toggle()
         } label: {
-            Image(systemName: "plus")
+            Image(systemName: isShowingQuickActions ? "xmark" : "plus")
                 .font(.community(size: 16, weight: .bold))
                 .foregroundStyle(timeOfDay.onPrimaryAction)
                 // 48 square, comfortably over the 44pt minimum.
@@ -121,7 +136,47 @@ struct TrainingTabView: View {
                     in: RoundedRectangle(cornerRadius: 13, style: .continuous)
                 )
         }
-        .accessibilityLabel(half == .food ? "Food actions" : "Workout actions")
+        .buttonStyle(.plain)
+        .accessibilityLabel(
+            isShowingQuickActions
+                ? "Close quick actions"
+                : (half == .food ? "Food actions" : "Workout actions")
+        )
+    }
+
+    /// A tile per action rather than a menu.
+    ///
+    /// A system menu is the right control for a list of commands with names,
+    /// and these are two or three things with icons -- the menu spent a
+    /// full-width popover, a dimmed backdrop and an animation on saying what
+    /// three tiles say in place. The row is right-aligned so it opens
+    /// underneath the button that summoned it.
+    private func quickActionTiles(timeOfDay: HomeTimeOfDay) -> some View {
+        HStack(spacing: 8) {
+            Spacer(minLength: 0)
+
+            ForEach(actions) { action in
+                Button {
+                    quickAction = action
+                    isShowingQuickActions = false
+                } label: {
+                    Image(systemName: action.symbol)
+                        .font(.community(size: 17, weight: .semibold))
+                        .foregroundStyle(timeOfDay.accent)
+                        .frame(width: 48, height: 48)
+                        .repbaseDepthSurface(cornerRadius: 15)
+                        // The tile is the whole target; without this only the
+                        // glyph itself answers a tap.
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(action.title)
+                .accessibilityHint(action.detail)
+            }
+        }
+        .padding(.horizontal, RepbaseDesign.pageInset)
+        .padding(.bottom, 10)
+        .transition(.move(edge: .top).combined(with: .opacity))
     }
 
     private var actions: [TrainingQuickAction] {
