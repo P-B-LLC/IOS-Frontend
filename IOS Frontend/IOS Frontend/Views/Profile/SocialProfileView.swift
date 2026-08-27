@@ -62,6 +62,12 @@ struct SocialProfileView: View {
     @State private var selectedSection: ProfileSection = .posts
     @State private var editingProfile = false
     @State private var showingSettings = false
+#if DEBUG
+    // Settings is two taps in and simctl has no tap, which is why the
+    // appearance picker on it could not be checked from here.
+    private let opensSettingsOnLaunch =
+        ProcessInfo.processInfo.environment["REPBASE_SETTINGS"] != nil
+#endif
     @State private var isFollowing = false
     /// The post whose comments are raised over the profile, if any.
     @State private var commenting: ProfileCommentTarget?
@@ -149,6 +155,11 @@ struct SocialProfileView: View {
             .fullScreenCover(isPresented: $showingSettings) {
                 ProfileSettingsView(profile: profile)
             }
+#if DEBUG
+            .task {
+                if opensSettingsOnLaunch { showingSettings = true }
+            }
+#endif
             .fullScreenCover(isPresented: $editingExpression) {
                 NavigationStack {
                     ProfileExpressionEditorView()
@@ -1168,6 +1179,17 @@ private struct ProfileSettingsView: View {
         } message: {
             Text(securityMessage ?? "Your account security was updated.")
         }
+        // Settings is its own presentation, and a colour scheme reaches the
+        // nearest enclosing one and stops. Set on the app root it recoloured
+        // the profile behind this screen and left this screen alone -- so the
+        // picker moved, nothing else did, and the only way to see that the
+        // toggle had worked was to close Settings. Applied here it lands on
+        // the screen the toggle is on, which is the one place it has to.
+        .preferredColorScheme(appearance.colorScheme)
+    }
+
+    private var appearance: RepbaseAppearancePreference {
+        RepbaseAppearancePreference(rawValue: appearanceRawValue) ?? .light
     }
 
     private func settingsHeader(timeOfDay: HomeTimeOfDay) -> some View {
