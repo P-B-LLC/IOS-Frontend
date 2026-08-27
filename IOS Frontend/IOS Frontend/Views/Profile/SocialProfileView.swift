@@ -140,7 +140,7 @@ struct SocialProfileView: View {
             .minimizesBottomBarOnScroll()
             .toolbar(.hidden, for: .navigationBar)
             .homeTimeScreen(timeOfDay)
-            .sheet(isPresented: $editingProfile) {
+            .fullScreenCover(isPresented: $editingProfile) {
                 NavigationStack {
                     ProfileOnboardingView(seed: profile, isEditing: true)
                         .environment(store)
@@ -149,7 +149,7 @@ struct SocialProfileView: View {
             .fullScreenCover(isPresented: $showingSettings) {
                 ProfileSettingsView(profile: profile)
             }
-            .sheet(isPresented: $editingExpression) {
+            .fullScreenCover(isPresented: $editingExpression) {
                 NavigationStack {
                     ProfileExpressionEditorView()
                 }
@@ -1106,7 +1106,7 @@ private struct ProfileSettingsView: View {
                 .homeTimeScreen(timeOfDay)
             }
         }
-        .sheet(item: $editorDestination) { destination in
+        .fullScreenCover(item: $editorDestination) { destination in
             NavigationStack {
                 ProfileOnboardingView(
                     seed: profile,
@@ -1116,7 +1116,7 @@ private struct ProfileSettingsView: View {
                     .environment(store)
             }
         }
-        .sheet(item: $legalDocument) { document in
+        .fullScreenCover(item: $legalDocument) { document in
             NavigationStack {
                 LegalDocumentView(document: document)
             }

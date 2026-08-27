@@ -73,7 +73,7 @@ struct TrainingTabView: View {
         // The two halves offer different actions, so an open row would be
         // showing the wrong ones the moment the switch moves.
         .onChange(of: half) { isShowingQuickActions = false }
-        .sheet(item: $quickAction) { action in
+        .fullScreenCover(item: $quickAction) { action in
             quickActionDestination(action)
         }
     }

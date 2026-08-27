@@ -68,17 +68,17 @@ struct SavedMealsView: View {
                 }
             }
         }
-        .sheet(isPresented: $isCreatingMeal) {
+        .fullScreenCover(isPresented: $isCreatingMeal) {
             NavigationStack {
                 SavedMealEditorView()
             }
         }
-        .sheet(item: $mealToEdit) { savedMeal in
+        .fullScreenCover(item: $mealToEdit) { savedMeal in
             NavigationStack {
                 SavedMealEditorView(existing: savedMeal)
             }
         }
-        .sheet(item: $mealToApply) { savedMeal in
+        .fullScreenCover(item: $mealToApply) { savedMeal in
             NavigationStack {
                 ApplySavedMealView(savedMeal: savedMeal, referenceDate: referenceDate)
             }
@@ -262,14 +262,14 @@ private struct SavedMealEditorView: View {
             }
         }
         .repbaseScreen(phase)
-        .sheet(isPresented: $isAddingIngredient) {
+        .fullScreenCover(isPresented: $isAddingIngredient) {
             NavigationStack {
                 RecipeIngredientEditorView { ingredient in
                     draft.ingredients.append(ingredient)
                 }
             }
         }
-        .sheet(item: $ingredientToEdit) { ingredient in
+        .fullScreenCover(item: $ingredientToEdit) { ingredient in
             NavigationStack {
                 RecipeIngredientEditorView(existing: ingredient) { updated in
                     guard let index = draft.ingredients.firstIndex(where: { $0.id == updated.id }) else {

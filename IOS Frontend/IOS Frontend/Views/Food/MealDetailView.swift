@@ -58,20 +58,20 @@ struct MealDetailView: View {
                 )
             }
         }
-        .sheet(isPresented: $isAddingFood) {
+        .fullScreenCover(isPresented: $isAddingFood) {
             NavigationStack {
                 FoodPickerView(date: date, mealID: mealID)
             }
         }
-        .sheet(isPresented: $isEnteringFood) {
+        .fullScreenCover(isPresented: $isEnteringFood) {
             NavigationStack {
                 FoodEntryEditorView(date: date, mealID: mealID)
             }
         }
-        .sheet(isPresented: $isShowingSavedMeals) {
+        .fullScreenCover(isPresented: $isShowingSavedMeals) {
             NavigationStack { SavedMealsView(referenceDate: date) }
         }
-        .sheet(item: $editingFood) { food in
+        .fullScreenCover(item: $editingFood) { food in
             NavigationStack {
                 FoodEntryEditorView(date: date, mealID: mealID, existing: food)
             }

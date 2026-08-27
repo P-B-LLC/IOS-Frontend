@@ -120,7 +120,7 @@ struct GearView: View {
             }
             await store.refresh()
         }
-        .sheet(item: $editing) { mode in
+        .fullScreenCover(item: $editing) { mode in
             NavigationStack {
                 GearEditorView(mode: mode)
             }

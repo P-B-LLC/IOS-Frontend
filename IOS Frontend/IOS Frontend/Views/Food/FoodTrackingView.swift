@@ -23,18 +23,18 @@ struct FoodTrackingView: View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
             screen(timeOfDay: HomeTimeOfDay(date: context.date))
         }
-        .sheet(isPresented: $isEditingGoals) {
+        .fullScreenCover(isPresented: $isEditingGoals) {
             NutritionGoalsView()
         }
-        .sheet(isPresented: $isShowingSavedMeals) {
+        .fullScreenCover(isPresented: $isShowingSavedMeals) {
             NavigationStack {
                 SavedMealsView(referenceDate: selectedDate)
             }
         }
-        .sheet(isPresented: $isSharingMeal) {
+        .fullScreenCover(isPresented: $isSharingMeal) {
             PostComposerView(source: .meal)
         }
-        .sheet(isPresented: $isShowingMonth) {
+        .fullScreenCover(isPresented: $isShowingMonth) {
             NavigationStack {
                 FoodMonthView(selectedDate: $selectedDate)
             }

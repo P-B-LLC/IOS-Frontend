@@ -45,7 +45,7 @@ struct ProfileExpressionEditorView: View {
             .toolbar(.hidden, for: .navigationBar)
             .homeTimeScreen(timeOfDay)
         }
-        .sheet(isPresented: $showingPrompts) {
+        .fullScreenCover(isPresented: $showingPrompts) {
             NavigationStack { PromptPickerView() }
         }
         .task {

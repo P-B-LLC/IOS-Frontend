@@ -87,7 +87,7 @@ struct DayWorkoutView: View {
             }
             store.routeTracker.startTracking()
         }
-        .sheet(item: $editor) { mode in
+        .fullScreenCover(item: $editor) { mode in
             WorkoutEditorView(
                 mode: mode,
                 suggestions: store.knownWorkouts
@@ -95,7 +95,7 @@ struct DayWorkoutView: View {
                 store.saveWorkout(savedWorkout, on: day)
             }
         }
-        .sheet(item: $sharedWorkout) { shared in
+        .fullScreenCover(item: $sharedWorkout) { shared in
             NavigationStack {
                 PostComposerView(
                     kind: .workout,

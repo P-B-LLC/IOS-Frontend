@@ -181,7 +181,7 @@ struct SocialFeedView: View {
         .refreshable { await store.refresh() }
         .toolbar(.hidden, for: .navigationBar)
         .homeTimeScreen(timeOfDay)
-        .sheet(isPresented: $isComposing) {
+        .fullScreenCover(isPresented: $isComposing) {
             PostComposerView()
         }
         .sheet(item: $commenting) { target in

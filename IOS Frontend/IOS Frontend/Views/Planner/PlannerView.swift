@@ -100,7 +100,7 @@ struct PlannerView: View {
                 }
             }
         }
-        .sheet(item: $editor) { mode in
+        .fullScreenCover(item: $editor) { mode in
             PlannerEntryEditorView(
                 mode: mode,
                 workouts: workoutStore.knownWorkouts,

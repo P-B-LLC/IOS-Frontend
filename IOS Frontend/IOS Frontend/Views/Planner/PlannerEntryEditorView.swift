@@ -158,7 +158,7 @@ struct PlannerEntryEditorView: View {
                 .scrollIndicators(.hidden)
                 .toolbar(.hidden, for: .navigationBar)
                 .homeTimeScreen(timeOfDay)
-                .sheet(item: $sharedEntry) { shared in
+                .fullScreenCover(item: $sharedEntry) { shared in
                     NavigationStack {
                         PostComposerView(
                             kind: .planner,

@@ -90,7 +90,7 @@ private struct MinimizesBottomBarOnScroll: ViewModifier {
         // flicker rather than respond. Not resetting the pivot below the
         // threshold is what makes it cumulative travel rather than one frame's
         // worth, so a slow drag still counts.
-        guard abs(travel) > 12 else { return }
+        guard abs(travel) > 44 else { return }
         pivot = offset
         chrome.isMinimized = travel > 0
     }

@@ -53,7 +53,7 @@ struct CycleView: View {
         .repbaseScreen(.prepare)
         .navigationTitle("Rotation")
         .navigationBarTitleDisplayMode(.inline)
-        .sheet(item: $editing) { mode in
+        .fullScreenCover(item: $editing) { mode in
             NavigationStack {
                 CycleEditorView(mode: mode)
             }

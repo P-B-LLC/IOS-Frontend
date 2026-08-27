@@ -58,7 +58,7 @@ struct PromptPickerView: View {
             .toolbar(.hidden, for: .navigationBar)
             .homeTimeScreen(timeOfDay)
         }
-        .sheet(item: $choosingForSlot) { slot in
+        .fullScreenCover(item: $choosingForSlot) { slot in
             NavigationStack {
                 PromptLibraryView(
                     taken: Set(store.prompts.map(\.question)),
@@ -71,7 +71,7 @@ struct PromptPickerView: View {
                 }
             }
         }
-        .sheet(item: $writing) { question in
+        .fullScreenCover(item: $writing) { question in
             NavigationStack {
                 PromptAnswerView(question: question)
             }
