@@ -7,6 +7,7 @@
 
 import RepbaseAPI
 import SwiftUI
+import UIKit
 
 @main
 struct IOS_FrontendApp: App {
@@ -88,6 +89,35 @@ struct IOS_FrontendApp: App {
                 .environment(cycleStore)
                 .environment(\.font, .community(.body))
                 .preferredColorScheme(appearance.colorScheme)
+                // preferredColorScheme reaches the nearest enclosing
+                // presentation and stops. Settings is a fullScreenCover, which
+                // is a presentation of its own, so flipping the picker
+                // recoloured the page underneath while the screen actually
+                // being looked at kept the old scheme until it was dismissed.
+                // Overriding the window covers the root and every presentation
+                // over it at once, which is the only place that is true of.
+                .onChange(of: appearanceRawValue) { applyToWindows() }
+                .task { applyToWindows() }
+        }
+    }
+
+    /// Push the appearance down to the window itself.
+    ///
+    /// Every presented screen inherits its traits from the window, so this is
+    /// what makes the switch land on a sheet or a cover at the same instant it
+    /// lands on the page behind. Left alongside preferredColorScheme rather
+    /// than replacing it: that one is right from the first frame, before any
+    /// window exists to override.
+    @MainActor
+    private func applyToWindows() {
+        let style: UIUserInterfaceStyle =
+            appearance == .dark ? .dark : .light
+
+        for scene in UIApplication.shared.connectedScenes {
+            guard let windowScene = scene as? UIWindowScene else { continue }
+            for window in windowScene.windows where window.overrideUserInterfaceStyle != style {
+                window.overrideUserInterfaceStyle = style
+            }
         }
     }
 
