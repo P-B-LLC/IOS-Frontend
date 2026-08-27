@@ -222,19 +222,27 @@ private struct GuidedDayFlow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             flowHeader
+            sectionRule
             upNextSection
+            sectionRule
             trainingSection
+            sectionRule
             fuelSection
+            sectionRule
             finishSection
+            sectionRule
             momentumSection
         }
-        .background(timeOfDay.surfaceRaised)
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .strokeBorder(timeOfDay.border, lineWidth: 1)
-        }
-        .shadow(color: timeOfDay.shadow.opacity(0.85), radius: 22, x: 0, y: 10)
+    }
+
+    /// All that holds the stages apart now. A hairline reads as structure
+    /// without reading as a container, which is the difference being drawn
+    /// here: the day is still one sequence, it is just no longer a panel
+    /// sitting on the page.
+    private var sectionRule: some View {
+        Rectangle()
+            .fill(timeOfDay.canvasBorder)
+            .frame(height: 1)
     }
 
     private var flowHeader: some View {
@@ -254,12 +262,12 @@ private struct GuidedDayFlow: View {
                 .foregroundStyle(timeOfDay.secondaryText)
                 .textCase(.uppercase)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 13)
+        .padding(.bottom, 12)
     }
 
     @ViewBuilder
-    private var upNextSection: some View {
+    private var upNextSection
+: some View {
         if let entry = nextEntry {
             NavigationLink {
                 PlannerView(showsBackButton: true)
@@ -278,9 +286,7 @@ private struct GuidedDayFlow: View {
                     Spacer(minLength: 8)
                     actionLabel("Schedule")
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 11)
-                .background(upNextBackground)
+                .padding(.vertical, 12)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -302,9 +308,7 @@ private struct GuidedDayFlow: View {
                 }
                 .buttonStyle(.plain)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 11)
-            .background(upNextBackground)
+            .padding(.vertical, 12)
         }
     }
 
@@ -354,11 +358,7 @@ private struct GuidedDayFlow: View {
                 .foregroundStyle(timeOfDay.secondaryText)
                 .lineLimit(1)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .background(trainingBackground)
-        .overlay(alignment: .top) { Divider().opacity(0.45) }
-        .overlay(alignment: .bottom) { Divider().opacity(0.45) }
+        .padding(.vertical, 15)
     }
 
     private var fuelSection: some View {
@@ -407,9 +407,7 @@ private struct GuidedDayFlow: View {
                 )
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 13)
-        .background(fuelBackground)
+        .padding(.vertical, 14)
     }
 
     private var finishSection: some View {
@@ -430,8 +428,7 @@ private struct GuidedDayFlow: View {
                 Spacer(minLength: 8)
                 actionLabel("Open")
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 13)
+            .padding(.vertical, 14)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -454,28 +451,27 @@ private struct GuidedDayFlow: View {
                 label: "WEEKLY GOAL"
             )
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(RepbasePalette.night)
+        .padding(.vertical, 13)
     }
 
     private func momentumMetric(value: String, label: String) -> some View {
         VStack(spacing: 3) {
             Text(value)
                 .font(.community(.title3, weight: .bold))
+                .foregroundStyle(timeOfDay.canvasPrimaryText)
             Text(label)
                 .font(.community(size: 8, weight: .bold))
                 .tracking(0.25)
+                .foregroundStyle(timeOfDay.canvasSecondaryText)
         }
-        .foregroundStyle(Color.white)
         .frame(maxWidth: .infinity, minHeight: 52)
         .accessibilityElement(children: .combine)
     }
 
     private var momentumDivider: some View {
         Rectangle()
-            .fill(Color.white.opacity(0.18))
-            .frame(width: 1, height: 48)
+            .fill(timeOfDay.canvasBorder)
+            .frame(width: 1, height: 40)
     }
 
     private func stageLabel(_ text: String, color: Color) -> some View {
@@ -578,18 +574,6 @@ private struct GuidedDayFlow: View {
         let stats = workouts.trainingStats
         guard stats.weeklyGoal > 0 else { return 0 }
         return min(max(Double(stats.completedThisWeek) / Double(stats.weeklyGoal), 0), 1)
-    }
-
-    private var upNextBackground: Color {
-        timeOfDay.usesDarkAppearance ? Color(hex: 0x2E211D) : Color(hex: 0xFBEDE5)
-    }
-
-    private var trainingBackground: Color {
-        timeOfDay.usesDarkAppearance ? Color(hex: 0x241D1A) : Color(hex: 0xFFF9F4)
-    }
-
-    private var fuelBackground: Color {
-        timeOfDay.usesDarkAppearance ? Color(hex: 0x18241F) : Color(hex: 0xEDF6F1)
     }
 
     private var fuelAccent: Color {
