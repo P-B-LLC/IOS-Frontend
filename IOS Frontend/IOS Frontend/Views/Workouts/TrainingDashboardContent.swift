@@ -402,6 +402,18 @@ private struct WorkoutDashboardHero: View {
     var isDayComplete = false
 
     private var remaining: Int { max(goal - completed, 0) }
+
+    /// What the chip says.
+    ///
+    /// It said "Goal met" whenever nothing was outstanding, and having no
+    /// goal counts as nothing outstanding -- so an account that had never set
+    /// one was congratulated for a week it had not trained in. Nought
+    /// remaining against nought asked for is not an achievement.
+    private var goalSummary: String {
+        guard goal > 0 else { return "No weekly goal" }
+        return remaining == 0 ? "Goal met" : "\(remaining) to go"
+    }
+
     private var progress: Double { min(Double(completed) / Double(max(goal, 1)), 1) }
 
     var body: some View {
@@ -463,7 +475,7 @@ private struct WorkoutDashboardHero: View {
                             .foregroundStyle(RepbaseDesign.ink)
                     }
                     Spacer()
-                    Text(remaining == 0 ? "Goal met" : "\(remaining) to go")
+                    Text(goalSummary)
                         .font(.community(.caption, weight: .semibold))
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 11)
