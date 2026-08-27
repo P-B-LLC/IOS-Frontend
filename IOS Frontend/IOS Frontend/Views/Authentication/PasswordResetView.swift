@@ -123,8 +123,7 @@ struct PasswordResetView: View {
                 step = .enteringCode
                 focusedField = .code
             }
-            .font(.community(.subheadline))
-            .fontWeight(.semibold)
+            .font(.community(.subheadline, weight: .semibold))
             .foregroundStyle(timeOfDay.accent)
             .frame(maxWidth: .infinity)
         }
@@ -197,7 +196,7 @@ struct PasswordResetView: View {
                 Text("Did not get it?")
                     .foregroundStyle(timeOfDay.secondaryText)
                 Button("Send another") { sendCode() }
-                    .fontWeight(.semibold)
+                    .font(.community(.body, weight: .semibold))
                     .foregroundStyle(timeOfDay.accent)
                     .disabled(authentication.isResettingPassword)
             }

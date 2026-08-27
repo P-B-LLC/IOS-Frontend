@@ -71,7 +71,7 @@ struct AuthenticationView: View {
                                 authentication.clearError()
                                 isCreatingAccount = true
                             }
-                            .fontWeight(.semibold)
+                            .font(.community(.body, weight: .semibold))
                             .foregroundStyle(timeOfDay.accent)
                             .disabled(authentication.isWorking)
                         }

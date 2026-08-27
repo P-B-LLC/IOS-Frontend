@@ -63,7 +63,7 @@ struct CycleEditorView: View {
                 Stepper(value: lengthBinding, in: 2...31) {
                     LabeledContent("Cycle length") {
                         Text("\(draft.length) days")
-                            .fontWeight(.semibold)
+                            .font(.community(.body, weight: .semibold))
                             .foregroundStyle(timeOfDay.accent)
                     }
                 }

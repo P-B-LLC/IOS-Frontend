@@ -35,6 +35,7 @@ struct IOS_FrontendApp: App {
 #endif
 
     init() {
+        RepbaseTypography.configureUIKitAppearance()
         let configuration = APIConfiguration.current
         _authentication = State(
             initialValue: AuthenticationStore(configuration: configuration)

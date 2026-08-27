@@ -45,8 +45,7 @@ struct WorkoutDayTile: View {
                     }
 
                     Text(workout?.name ?? "Add")
-                        .font(.community(.caption2))
-                        .fontWeight(workout == nil ? .regular : .semibold)
+                        .font(.community(.caption2, weight: workout == nil ? .regular : .semibold))
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
                         .minimumScaleFactor(0.55)
@@ -74,8 +73,7 @@ struct WorkoutDayTile: View {
                 }
 
             Text(day.shortName)
-                .font(.community(.caption2))
-                .fontWeight(isToday ? .semibold : .regular)
+                .font(.community(.caption2, weight: isToday ? .semibold : .regular))
                 .foregroundStyle(
                     isToday ? WorkoutVisualPhase.prepare.accent : Color.secondary
                 )

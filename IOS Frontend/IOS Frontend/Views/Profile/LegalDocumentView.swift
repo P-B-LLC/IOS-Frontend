@@ -51,7 +51,7 @@ struct LegalDocumentView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
-                        .fontWeight(.semibold)
+                        .font(.community(.body, weight: .semibold))
                 }
             }
             .homeTimeScreen(timeOfDay)

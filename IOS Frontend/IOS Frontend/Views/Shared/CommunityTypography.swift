@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 enum RepbaseTypography {
     static let family = "Nunito Sans"
@@ -17,6 +18,41 @@ enum RepbaseTypography {
     fileprivate static let regularPostScriptName = "NunitoSans-Regular"
     fileprivate static let semiboldPostScriptName = "NunitoSans-SemiBold"
     fileprivate static let boldPostScriptName = "NunitoSans-Bold"
+
+    /// Extends Community Warmth to UIKit-owned text that does not inherit the
+    /// SwiftUI font environment, including navigation titles and bar controls.
+    static func configureUIKitAppearance() {
+        guard let regular = UIFont(name: regularPostScriptName, size: 17),
+              let semibold = UIFont(name: semiboldPostScriptName, size: 17),
+              let bold = UIFont(name: boldPostScriptName, size: 34) else {
+            assertionFailure("Community Warmth fonts are missing from the app bundle.")
+            return
+        }
+
+        let bodyFont = UIFontMetrics(forTextStyle: .body).scaledFont(for: regular)
+        let headlineFont = UIFontMetrics(forTextStyle: .headline).scaledFont(for: semibold)
+        let largeTitleFont = UIFontMetrics(forTextStyle: .largeTitle).scaledFont(for: bold)
+        let compactFont = UIFontMetrics(forTextStyle: .subheadline).scaledFont(
+            for: UIFont(name: semiboldPostScriptName, size: 15) ?? semibold
+        )
+
+        let navigationBar = UINavigationBar.appearance()
+        navigationBar.titleTextAttributes = [.font: headlineFont]
+        navigationBar.largeTitleTextAttributes = [.font: largeTitleFont]
+
+        let barButton = UIBarButtonItem.appearance()
+        for state in [UIControl.State.normal, .highlighted, .disabled, .selected] {
+            barButton.setTitleTextAttributes([.font: compactFont], for: state)
+        }
+
+        let tabItem = UITabBarItem.appearance()
+        tabItem.setTitleTextAttributes([.font: compactFont], for: .normal)
+        tabItem.setTitleTextAttributes([.font: compactFont], for: .selected)
+
+        let segmentedControl = UISegmentedControl.appearance()
+        segmentedControl.setTitleTextAttributes([.font: bodyFont], for: .normal)
+        segmentedControl.setTitleTextAttributes([.font: headlineFont], for: .selected)
+    }
 }
 
 extension Font {
