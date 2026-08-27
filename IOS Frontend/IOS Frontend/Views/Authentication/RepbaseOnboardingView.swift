@@ -226,11 +226,13 @@ struct RepbaseOnboardingView: View {
                 Text("What your dashboard counts against.").font(.community(.caption)).foregroundStyle(.secondary)
             }
             Spacer()
-            targetButton("minus", background: timeOfDay.selectorSurface, foreground: timeOfDay.primaryText) {
+            targetButton("minus", enabled: weeklyTarget > 1,
+                         background: timeOfDay.selectorSurface, foreground: timeOfDay.primaryText) {
                 weeklyTarget = max(1, weeklyTarget - 1)
             }
             Text("\(weeklyTarget)").font(.community(.title3, weight: .bold)).frame(width: 26)
-            targetButton("plus", background: RepbaseDesign.ink, foreground: RepbaseDesign.onInk) {
+            targetButton("plus", enabled: weeklyTarget < 7,
+                         background: RepbaseDesign.ink, foreground: RepbaseDesign.onInk) {
                 weeklyTarget = min(7, weeklyTarget + 1)
             }
         }
@@ -238,11 +240,27 @@ struct RepbaseOnboardingView: View {
         .overlay { RoundedRectangle(cornerRadius: 20).strokeBorder(timeOfDay.border) }
     }
 
-    private func targetButton(_ symbol: String, background: Color, foreground: Color,
+    /// A stepper button, tappable across the whole square it looks like.
+    ///
+    /// It was neither of those things. The background sat on the Button,
+    /// outside the label, so it could not take a tap, and an Image hit-tests
+    /// the glyph it draws rather than the frame around it -- leaving roughly
+    /// a 15pt target inside a 38pt button. The colours were fixed too, so at
+    /// the maximum the dead "plus" stayed black and the working "minus"
+    /// stayed pale: the control read as broken in exactly the state where it
+    /// was working normally.
+    private func targetButton(_ symbol: String, enabled: Bool, background: Color, foreground: Color,
                               action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: symbol).foregroundStyle(foreground).frame(width: 38, height: 38)
-        }.buttonStyle(.plain).background(background, in: RoundedRectangle(cornerRadius: 14))
+            Image(systemName: symbol)
+                .foregroundStyle(foreground)
+                .frame(width: 38, height: 38)
+                .background(background, in: RoundedRectangle(cornerRadius: 14))
+                .contentShape(RoundedRectangle(cornerRadius: 14))
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
+        .opacity(enabled ? 1 : 0.3)
     }
 
     private var emphasisPicker: some View {
