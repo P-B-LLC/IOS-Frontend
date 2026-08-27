@@ -220,29 +220,16 @@ private struct GuidedDayFlow: View {
     let today: Date
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            flowHeader
-            sectionRule
-            upNextSection
-            sectionRule
+        VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 0) {
+                flowHeader
+                upNextSection
+            }
             trainingSection
-            sectionRule
             fuelSection
-            sectionRule
             finishSection
-            sectionRule
             momentumSection
         }
-    }
-
-    /// All that holds the stages apart now. A hairline reads as structure
-    /// without reading as a container, which is the difference being drawn
-    /// here: the day is still one sequence, it is just no longer a panel
-    /// sitting on the page.
-    private var sectionRule: some View {
-        Rectangle()
-            .fill(timeOfDay.canvasBorder)
-            .frame(height: 1)
     }
 
     private var flowHeader: some View {
@@ -262,7 +249,9 @@ private struct GuidedDayFlow: View {
                 .foregroundStyle(timeOfDay.secondaryText)
                 .textCase(.uppercase)
         }
-        .padding(.bottom, 12)
+        .padding(.horizontal, 16)
+        .padding(.top, 12)
+        .padding(.bottom, 8)
     }
 
     @ViewBuilder
@@ -286,6 +275,7 @@ private struct GuidedDayFlow: View {
                     Spacer(minLength: 8)
                     actionLabel("Schedule")
                 }
+                .padding(.horizontal, 16)
                 .padding(.vertical, 12)
                 .contentShape(Rectangle())
             }
@@ -308,6 +298,7 @@ private struct GuidedDayFlow: View {
                 }
                 .buttonStyle(.plain)
             }
+            .padding(.horizontal, 16)
             .padding(.vertical, 12)
         }
     }
@@ -358,7 +349,12 @@ private struct GuidedDayFlow: View {
                 .foregroundStyle(timeOfDay.secondaryText)
                 .lineLimit(1)
         }
-        .padding(.vertical, 15)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 13)
+        .background(
+            trainingSurface,
+            in: RoundedRectangle(cornerRadius: 18, style: .continuous)
+        )
     }
 
     private var fuelSection: some View {
@@ -407,7 +403,12 @@ private struct GuidedDayFlow: View {
                 )
             }
         }
-        .padding(.vertical, 14)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(
+            fuelSurface,
+            in: RoundedRectangle(cornerRadius: 18, style: .continuous)
+        )
     }
 
     private var finishSection: some View {
@@ -428,6 +429,7 @@ private struct GuidedDayFlow: View {
                 Spacer(minLength: 8)
                 actionLabel("Open")
             }
+            .padding(.horizontal, 16)
             .padding(.vertical, 14)
             .contentShape(Rectangle())
         }
@@ -451,7 +453,12 @@ private struct GuidedDayFlow: View {
                 label: "WEEKLY GOAL"
             )
         }
+        .padding(.horizontal, 16)
         .padding(.vertical, 13)
+        .background(
+            momentumSurface,
+            in: RoundedRectangle(cornerRadius: 18, style: .continuous)
+        )
     }
 
     private func momentumMetric(value: String, label: String) -> some View {
@@ -578,6 +585,24 @@ private struct GuidedDayFlow: View {
 
     private var fuelAccent: Color {
         timeOfDay.usesDarkAppearance ? Color(hex: 0x84CFA9) : Color(hex: 0x5DAA86)
+    }
+
+    private var trainingSurface: Color {
+        timeOfDay.usesDarkAppearance
+            ? Color(hex: 0x322B28)
+            : Color(hex: 0xE6D9D3).opacity(0.78)
+    }
+
+    private var fuelSurface: Color {
+        timeOfDay.usesDarkAppearance
+            ? Color(hex: 0x203029)
+            : Color(hex: 0xF1F8F4)
+    }
+
+    private var momentumSurface: Color {
+        timeOfDay.usesDarkAppearance
+            ? Color(hex: 0x2C2927)
+            : Color(hex: 0xE6D9D3).opacity(0.66)
     }
 }
 

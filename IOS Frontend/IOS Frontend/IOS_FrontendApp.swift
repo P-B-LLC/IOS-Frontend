@@ -86,6 +86,7 @@ struct IOS_FrontendApp: App {
                 .environment(activityStore)
                 .environment(gearStore)
                 .environment(cycleStore)
+                .environment(\.font, .community(.body))
                 .preferredColorScheme(appearance.colorScheme)
         }
     }

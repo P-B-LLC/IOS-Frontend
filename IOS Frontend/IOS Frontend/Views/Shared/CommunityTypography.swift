@@ -8,6 +8,7 @@
 
 import SwiftUI
 import UIKit
+import CoreText
 
 enum RepbaseTypography {
     static let family = "Nunito Sans"
@@ -22,6 +23,8 @@ enum RepbaseTypography {
     /// Extends Community Warmth to UIKit-owned text that does not inherit the
     /// SwiftUI font environment, including navigation titles and bar controls.
     static func configureUIKitAppearance() {
+        registerBundledFonts()
+
         guard let regular = UIFont(name: regularPostScriptName, size: 17),
               let semibold = UIFont(name: semiboldPostScriptName, size: 17),
               let bold = UIFont(name: boldPostScriptName, size: 34) else {
@@ -52,6 +55,40 @@ enum RepbaseTypography {
         let segmentedControl = UISegmentedControl.appearance()
         segmentedControl.setTitleTextAttributes([.font: bodyFont], for: .normal)
         segmentedControl.setTitleTextAttributes([.font: headlineFont], for: .selected)
+    }
+
+    /// Xcode can flatten synchronized resource folders differently between
+    /// project versions. Registering the bundled files explicitly keeps the
+    /// app on Nunito Sans whether the fonts land at the bundle root or inside
+    /// the source folder hierarchy.
+    private static func registerBundledFonts() {
+        let resourceNames = [
+            regularPostScriptName,
+            semiboldPostScriptName,
+            boldPostScriptName
+        ]
+        let subdirectories: [String?] = [nil, "Fonts", "Resources/Fonts"]
+        var fontURLs = Set<URL>()
+
+        for name in resourceNames {
+            for subdirectory in subdirectories {
+                if let url = Bundle.main.url(
+                    forResource: name,
+                    withExtension: "ttf",
+                    subdirectory: subdirectory
+                ) {
+                    fontURLs.insert(url)
+                }
+            }
+        }
+
+        Bundle.main.urls(forResourcesWithExtension: "ttf", subdirectory: nil)?
+            .filter { resourceNames.contains($0.deletingPathExtension().lastPathComponent) }
+            .forEach { fontURLs.insert($0) }
+
+        for url in fontURLs {
+            CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
+        }
     }
 }
 
