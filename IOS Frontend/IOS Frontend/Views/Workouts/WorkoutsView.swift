@@ -17,7 +17,12 @@ struct WorkoutsView: View {
         TrainingDashboardContent()
         .repbaseScreen(phase)
         .toolbar(.hidden, for: .navigationBar)
-        .task {
+        // Keyed on the connection, not bare. Auth is restored
+        // asynchronously, so on a cold launch this screen appears first, asks
+        // a store with no repository, and gets nothing -- which is why the
+        // weekly goal and the momentum row have been reading zero whatever
+        // the server held.
+        .task(id: store.isConnected) {
             await store.loadDashboardSessions()
         }
     }

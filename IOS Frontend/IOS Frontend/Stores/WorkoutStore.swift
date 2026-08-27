@@ -11,6 +11,13 @@ import Observation
 @Observable
 final class WorkoutStore {
     private var repository: WorkoutAPIRepository?
+
+    /// Whether this store can reach the server yet.
+    ///
+    /// Read by the screens whose first load runs before the session has been
+    /// restored. Their .task fires on appear, finds no repository, and
+    /// returns -- and without something to key on, never runs again.
+    var isConnected: Bool { repository != nil }
     private var connectionGeneration = UUID()
 
     /// Current-week projection of concrete API WorkoutSchedule records. A date
