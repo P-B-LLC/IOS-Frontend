@@ -21,8 +21,10 @@ private struct VisitedPerson: Identifiable, Hashable {
 struct SocialFeedView: View {
     private enum FeedMode: String, CaseIterable, Identifiable {
         case following = "Following"
-        case discover = "Discover"
+        case discover = "For you"
         var id: String { rawValue }
+
+        static var allCases: [FeedMode] { [.discover, .following] }
     }
 
     @Environment(SocialStore.self) private var store
@@ -41,7 +43,7 @@ struct SocialFeedView: View {
     /// because `sheet(item:)` wants Identifiable and a bare Int is not —
     /// unlike `navigationDestination(item:)`, which only wants Hashable.
     @State private var commenting: CommentedPost?
-    @State private var feedMode: FeedMode = .following
+    @State private var feedMode: FeedMode = .discover
     @State private var searchText = ""
     /// Whose profile is open, if anyone's.
     @State private var visiting: VisitedPerson?
@@ -82,26 +84,14 @@ struct SocialFeedView: View {
 
     private func screen(timeOfDay: HomeTimeOfDay) -> some View {
         ScrollView {
-            LazyVStack(spacing: 14) {
+            LazyVStack(spacing: 0) {
+                socialHeader(timeOfDay: timeOfDay)
                 modePicker(timeOfDay: timeOfDay)
-
-                if feedMode == .discover {
-                    HStack(spacing: 10) {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundStyle(timeOfDay.accent)
-                        TextField("Search people or posts", text: $searchText)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
-                    }
-                    .padding(.horizontal, 16)
-                    .frame(height: 50)
-                    .repbaseDepthSurface(cornerRadius: 18)
-
-                    peopleSection(timeOfDay: timeOfDay)
-                }
 
                 if let message = store.errorMessage {
                     notice(message, symbol: "exclamationmark.triangle.fill", timeOfDay: timeOfDay)
+                        .padding(.horizontal, RepbaseDesign.pageInset)
+                        .padding(.vertical, 8)
                 }
 
                 // Said rather than assumed: the name a saved workout lands
@@ -112,6 +102,8 @@ struct SocialFeedView: View {
                         symbol: "checkmark.circle.fill",
                         timeOfDay: timeOfDay
                     )
+                    .padding(.horizontal, RepbaseDesign.pageInset)
+                    .padding(.vertical, 8)
                     .onTapGesture { store.lastSavedWorkout = nil }
                 }
 
@@ -121,6 +113,8 @@ struct SocialFeedView: View {
                         symbol: "checkmark.circle.fill",
                         timeOfDay: timeOfDay
                     )
+                    .padding(.horizontal, RepbaseDesign.pageInset)
+                    .padding(.vertical, 8)
                     .onTapGesture { store.lastSavedMeal = nil }
                 }
 
@@ -133,6 +127,8 @@ struct SocialFeedView: View {
                         symbol: "checkmark.circle.fill",
                         timeOfDay: timeOfDay
                     )
+                    .padding(.horizontal, RepbaseDesign.pageInset)
+                    .padding(.vertical, 8)
                     .onTapGesture { store.lastModerationMessage = nil }
                 }
 
@@ -172,8 +168,6 @@ struct SocialFeedView: View {
                     }
                 }
             }
-            .padding(.horizontal, RepbaseDesign.pageInset)
-            .padding(.top, 4)
             .padding(.bottom, RepbaseDesign.bottomBarClearance)
         }
         .scrollIndicators(.hidden)
@@ -197,8 +191,47 @@ struct SocialFeedView: View {
         }
     }
 
+    private func socialHeader(timeOfDay: HomeTimeOfDay) -> some View {
+        HStack {
+            Text(viewerInitials)
+                .font(.community(size: 11, weight: .bold))
+                .foregroundStyle(Color.white)
+                .frame(width: 34, height: 34)
+                .background(timeOfDay.accent, in: Circle())
+
+            Spacer()
+
+            Text("Social")
+                .font(.community(.headline, weight: .bold))
+                .foregroundStyle(timeOfDay.canvasPrimaryText)
+
+            Spacer()
+
+            Button {
+                isComposing = true
+            } label: {
+                Image(systemName: "plus")
+                    .font(.community(size: 17, weight: .semibold))
+                    .foregroundStyle(RepbaseDesign.onInk)
+                    .frame(width: 36, height: 36)
+                    .background(RepbaseDesign.ink, in: Circle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Create post")
+        }
+        .padding(.horizontal, RepbaseDesign.pageInset)
+        .padding(.top, 8)
+        .padding(.bottom, 10)
+    }
+
+    private var viewerInitials: String {
+        let initials = profileStore.profile?.initials
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return initials.isEmpty ? "ME" : initials
+    }
+
     private func modePicker(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack(spacing: 26) {
+        HStack(spacing: 0) {
             ForEach(FeedMode.allCases) { mode in
                 Button {
                     withAnimation(.easeOut(duration: 0.18)) {
@@ -212,40 +245,18 @@ struct SocialFeedView: View {
                                 ? timeOfDay.canvasPrimaryText
                                 : timeOfDay.canvasSecondaryText
                         )
-                        .padding(.vertical, 10)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
                         .overlay(alignment: .bottom) {
                             Rectangle()
                                 .fill(feedMode == mode ? timeOfDay.accent : Color.clear)
-                                .frame(height: 2)
+                                .frame(width: 72, height: 2)
                         }
                 }
                 .buttonStyle(.plain)
             }
-
-            Spacer(minLength: 0)
-
-            // The feed's own header used to carry this, above a SOCIAL eyebrow
-            // and a "Community" title that named the tab you had just pressed
-            // to get here. The tabs were already a row; the button fits on it.
-            Button {
-                isComposing = true
-            } label: {
-                HStack(spacing: 7) {
-                    Image(systemName: "plus")
-                        .font(.community(size: 13, weight: .bold))
-                    Text("Post")
-                        .font(.community(size: 13, weight: .bold))
-                }
-                .foregroundStyle(Color.white)
-                .padding(.horizontal, 14)
-                // Under the tabs' own height, so the row does not grow and
-                // push the underline off the divider it sits on.
-                .frame(height: 34)
-                .background(timeOfDay.accent, in: Capsule())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Create post")
         }
+        .overlay(alignment: .top) { Divider() }
         .overlay(alignment: .bottom) {
             Divider()
         }
@@ -441,53 +452,65 @@ struct PostCard: View {
     private var shown: RepostedPost { post.displayed }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(spacing: 0) {
             if post.repostOf != nil {
                 repostHeader
+                    .padding(.horizontal, 70)
+                    .padding(.top, 10)
             }
 
-            author
+            HStack(alignment: .top, spacing: 12) {
+                authorAvatar
+                    .contentShape(Circle())
+                    .onTapGesture { openAuthor?(shown.author.id) }
+                    .accessibilityAddTraits(openAuthor == nil ? [] : .isButton)
 
-            postTitle
+                VStack(alignment: .leading, spacing: 10) {
+                    authorLine
 
-            if let imageURL = shown.imageURL {
-                photo(imageURL)
+                    if !shown.caption.isEmpty {
+                        Text(shown.caption)
+                            .font(.community(.subheadline))
+                            .foregroundStyle(timeOfDay.primaryText)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    if let imageURL = shown.imageURL {
+                        photo(imageURL, meal: shown.meal)
+
+                        if let workout = shown.workout {
+                            compactWorkoutAttachment(workout, imageAttached: true)
+                        } else if post.offersMealToSave {
+                            HStack {
+                                Spacer(minLength: 0)
+                                saveMealButton
+                            }
+                        } else if let planner = shown.planner {
+                            compactPlannerAttachment(planner)
+                        }
+                    } else if let workout = shown.workout {
+                        compactWorkoutAttachment(workout, imageAttached: false)
+                    } else if let meal = shown.meal {
+                        compactMealAttachment(meal)
+                    } else if let planner = shown.planner {
+                        compactPlannerAttachment(planner)
+                    } else {
+                        unsupportedBody
+                    }
+
+                    PostActionBar(post: post, timeOfDay: timeOfDay, openComments: openComments)
+                        .padding(.top, 2)
+                }
             }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
 
-            if let workout = shown.workout {
-                workoutBody(workout)
-            } else if let meal = shown.meal {
-                mealBody(meal)
-            } else if let planner = shown.planner {
-                plannerBody(planner)
-            } else {
-                unsupportedBody
-            }
-
-            // Above the buttons, not below them. The caption is the last
-            // thing the poster said about the post, so it belongs with the
-            // post; the action row is where the post stops and what a reader
-            // can do about it starts.
-            if !shown.caption.isEmpty {
-                Text(shown.caption)
-                    .font(.community(size: 14))
-                    .foregroundStyle(timeOfDay.primaryText)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            PostActionBar(post: post, timeOfDay: timeOfDay, openComments: openComments)
+            Divider()
         }
-        .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .sheet(item: $reportingPost) { target in
             PostReportSheet(post: target, timeOfDay: timeOfDay)
         }
-        // The only rule on a card, and it is between cards rather than inside
-        // one. A post used to be ruled off internally -- above and below its
-        // numbers, between every exercise or ingredient -- which chopped one
-        // thing into five and left nothing saying where the post itself
-        // ended. Spacing groups it now; the line only says "next post".
-        .overlay(alignment: .bottom) { Divider() }
     }
 
     /// Who passed it on, above the post itself — so the name beside the
@@ -508,7 +531,7 @@ struct PostCard: View {
     /// A failure draws nothing rather than a broken-image placeholder: the
     /// card's real content is the snapshot underneath, and it should still
     /// read cleanly when the picture cannot be fetched.
-    private func photo(_ url: URL) -> some View {
+    private func photo(_ url: URL, meal: PostMealSnapshot?) -> some View {
         RemoteImage(url: url, maxPixel: 1_200) {
             // The card keeps its shape while the photo arrives, so the rows
             // under it do not jump once it does.
@@ -528,43 +551,63 @@ struct PostCard: View {
         }
         .scaledToFill()
         .frame(maxWidth: .infinity)
-        .frame(height: 168)
+        .frame(height: 176)
         .clipped()
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay(alignment: .bottom) {
+            if let meal {
+                HStack(spacing: 6) {
+                    Text(meal.name)
+                    Text("·")
+                    Text("\(meal.totalCalories.nutritionText) kcal")
+                    Spacer(minLength: 0)
+                }
+                .font(.community(.caption, weight: .bold))
+                .foregroundStyle(Color.white)
+                .padding(.horizontal, 12)
+                .frame(height: 34)
+                .background(Color.black.opacity(0.82))
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(timeOfDay.canvasBorder, lineWidth: 1)
+        }
     }
 
     /// Whoever made the post being shown. On a repost that is the original
     /// author, not the person passing it on — they are named in the line
     /// above, and putting a reposter's name over someone else's training
     /// would credit them with it.
-    private var author: some View {
-        HStack(spacing: 10) {
-            // The avatar and the name together are the way to the person.
-            // Not a Button around the row: the row ends in the timestamp and
-            // the card itself opens the post, so only the identity is theirs.
-            HStack(spacing: 10) {
-                authorAvatar
+    private var authorLine: some View {
+        HStack(spacing: 6) {
+            HStack(spacing: 6) {
+                Text(shown.author.displayName)
+                    .font(.community(.subheadline, weight: .bold))
+                    .foregroundStyle(timeOfDay.primaryText)
+                    .lineLimit(1)
 
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(shown.author.displayName)
-                        .font(.community(.subheadline, weight: .semibold))
-                        .foregroundStyle(timeOfDay.primaryText)
-                    Text("@" + shown.author.username)
-                        .font(.community(.caption2))
-                        .foregroundStyle(timeOfDay.canvasSecondaryText)
-                }
+                Text("@" + shown.author.username)
+                    .font(.community(.caption))
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+                    .lineLimit(1)
+
+                Text("·")
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+
+                Text(shown.createdAt, format: .relative(presentation: .numeric))
+                    .font(.community(.caption))
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+                    .lineLimit(1)
             }
             .contentShape(Rectangle())
             .onTapGesture { openAuthor?(shown.author.id) }
             .accessibilityAddTraits(openAuthor == nil ? [] : .isButton)
             .accessibilityHint(openAuthor == nil ? "" : "Opens this person's profile")
 
-            Spacer()
+            Spacer(minLength: 4)
 
-            HStack(spacing: 9) {
-                Text(shown.createdAt, format: .relative(presentation: .named))
-                    .font(.community(.caption2))
-                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+            HStack(spacing: 4) {
                 if post.visibility != .publicToAll {
                     Image(systemName: post.visibility.symbol)
                         .font(.community(size: 9, weight: .semibold))
@@ -600,7 +643,7 @@ struct PostCard: View {
                         Image(systemName: "ellipsis")
                             .font(.community(size: 14, weight: .semibold))
                             .foregroundStyle(timeOfDay.canvasSecondaryText)
-                            .frame(width: 28, height: 28)
+                            .frame(width: 24, height: 24)
                             .contentShape(Rectangle())
                     }
                 }
@@ -632,6 +675,139 @@ struct PostCard: View {
     }
 
     // MARK: - Bodies
+
+    private func compactWorkoutAttachment(
+        _ workout: PostWorkoutSnapshot,
+        imageAttached: Bool
+    ) -> some View {
+        VStack(alignment: .leading, spacing: imageAttached ? 0 : 8) {
+            HStack(spacing: 8) {
+                Text(workout.routeDistanceKm == nil ? "WORKOUT" : "RUN")
+                    .font(.community(size: 9, weight: .bold))
+                    .tracking(0.5)
+                    .foregroundStyle(timeOfDay.accent)
+
+                if !imageAttached {
+                    Text(workout.title)
+                        .font(.community(.subheadline, weight: .bold))
+                        .foregroundStyle(timeOfDay.primaryText)
+                        .lineLimit(1)
+                }
+
+                Spacer(minLength: 4)
+
+                if post.offersWorkoutToSave {
+                    saveWorkoutButton
+                } else {
+                    Image(systemName: "chevron.right")
+                        .font(.community(size: 10, weight: .bold))
+                        .foregroundStyle(timeOfDay.accent)
+                }
+            }
+
+            if imageAttached {
+                Text(workoutSummary(workout))
+                    .font(.community(.caption, weight: .semibold))
+                    .foregroundStyle(timeOfDay.secondaryText)
+                    .padding(.top, 5)
+            } else {
+                HStack(spacing: 6) {
+                    Text(workoutSummary(workout))
+                    if let duration = workout.durationSeconds, duration > 0 {
+                        Text("·")
+                        Text(Self.duration(duration))
+                    }
+                }
+                .font(.community(.caption))
+                .foregroundStyle(timeOfDay.secondaryText)
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, imageAttached ? 9 : 11)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(timeOfDay.accent.opacity(0.09), in: RoundedRectangle(cornerRadius: 11))
+        .overlay {
+            RoundedRectangle(cornerRadius: 11)
+                .strokeBorder(timeOfDay.canvasBorder, lineWidth: imageAttached ? 0 : 1)
+        }
+    }
+
+    private func compactMealAttachment(_ meal: PostMealSnapshot) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("MEAL")
+                        .font(.community(size: 9, weight: .bold))
+                        .tracking(0.5)
+                        .foregroundStyle(RepbaseDesign.success)
+                    Text(meal.name)
+                        .font(.community(.subheadline, weight: .bold))
+                        .foregroundStyle(timeOfDay.primaryText)
+                }
+                Spacer(minLength: 4)
+                Text("\(meal.totalCalories.nutritionText) kcal")
+                    .font(.community(.subheadline, weight: .bold))
+                    .foregroundStyle(timeOfDay.accent)
+            }
+
+            HStack(spacing: 14) {
+                macro("\(meal.totalProteinGrams.nutritionText)g", "protein", RepbasePalette.caramel)
+                macro("\(meal.totalCarbohydrateGrams.nutritionText)g", "carbs", Color(hex: 0x3F8C92))
+                macro("\(meal.totalFatGrams.nutritionText)g", "fat", Color(hex: 0x9D5A8F))
+                Spacer(minLength: 0)
+                if post.offersMealToSave { saveMealButton }
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RepbaseDesign.success.opacity(0.08), in: RoundedRectangle(cornerRadius: 16))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(RepbaseDesign.success.opacity(0.22), lineWidth: 1)
+        }
+    }
+
+    private func macro(_ value: String, _ label: String, _ color: Color) -> some View {
+        HStack(spacing: 3) {
+            Text(value).foregroundStyle(color)
+            Text(label).foregroundStyle(timeOfDay.secondaryText)
+        }
+        .font(.community(size: 10, weight: .bold))
+    }
+
+    private func compactPlannerAttachment(_ planner: PostPlannerSnapshot) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: planner.kind == "event" ? "calendar" : "checkmark.circle")
+                .font(.community(size: 15, weight: .semibold))
+                .foregroundStyle(timeOfDay.accent)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(planner.title)
+                    .font(.community(.subheadline, weight: .bold))
+                    .foregroundStyle(timeOfDay.primaryText)
+                Text([planner.scheduledDate, planner.scheduledTime].compactMap { $0 }.joined(separator: " · "))
+                    .font(.community(.caption))
+                    .foregroundStyle(timeOfDay.secondaryText)
+            }
+
+            Spacer(minLength: 0)
+
+            if planner.isComplete {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(RepbaseDesign.success)
+            }
+        }
+        .padding(12)
+        .background(timeOfDay.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
+    }
+
+    private func workoutSummary(_ workout: PostWorkoutSnapshot) -> String {
+        if let distance = workout.routeDistanceKm {
+            let miles = ImperialUnits.miles(fromKilometers: distance.nutritionDouble)
+            return "\(String(format: "%.2f", miles)) mi · \(Self.pace(duration: workout.durationSeconds, miles: miles)) pace"
+        }
+        return "\(workout.exerciseCount) exercises · \(workout.totalSetCount) sets"
+    }
 
     private func workoutBody(_ workout: PostWorkoutSnapshot) -> some View {
         VStack(alignment: .leading, spacing: 12) {

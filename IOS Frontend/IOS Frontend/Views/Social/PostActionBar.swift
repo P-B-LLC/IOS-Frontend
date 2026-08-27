@@ -24,15 +24,6 @@ struct PostActionBar: View {
     var body: some View {
         HStack(spacing: 0) {
             action(
-                symbol: post.viewerHasLiked ? "heart.fill" : "heart",
-                count: post.likeCount,
-                tint: post.viewerHasLiked ? Color(hex: 0xE0446B) : timeOfDay.secondaryText,
-                label: post.viewerHasLiked ? "Unlike" : "Like"
-            ) {
-                Task { await store.toggleLike(post) }
-            }
-
-            action(
                 symbol: "bubble.left",
                 count: post.commentCount,
                 tint: timeOfDay.secondaryText,
@@ -53,6 +44,15 @@ struct PostActionBar: View {
                 label: post.viewerHasReposted ? "Undo repost" : "Repost"
             ) {
                 Task { await store.toggleRepost(post) }
+            }
+
+            action(
+                symbol: post.viewerHasLiked ? "heart.fill" : "heart",
+                count: post.likeCount,
+                tint: post.viewerHasLiked ? Color(hex: 0xE0446B) : timeOfDay.secondaryText,
+                label: post.viewerHasLiked ? "Unlike" : "Like"
+            ) {
+                Task { await store.toggleLike(post) }
             }
 
             // Share is the system sheet, not something the server hears
