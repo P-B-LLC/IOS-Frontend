@@ -83,7 +83,6 @@ struct SocialFeedView: View {
     private func screen(timeOfDay: HomeTimeOfDay) -> some View {
         ScrollView {
             LazyVStack(spacing: 14) {
-                header(timeOfDay: timeOfDay)
                 modePicker(timeOfDay: timeOfDay)
 
                 if feedMode == .discover {
@@ -174,7 +173,7 @@ struct SocialFeedView: View {
                 }
             }
             .padding(.horizontal, RepbaseDesign.pageInset)
-            .padding(.top, 16)
+            .padding(.top, 4)
             .padding(.bottom, RepbaseDesign.bottomBarClearance)
         }
         .scrollIndicators(.hidden)
@@ -195,43 +194,6 @@ struct SocialFeedView: View {
                 await store.loadRelationships(for: viewerID)
             }
         }
-    }
-
-    private func header(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack(alignment: .center, spacing: 12) {
-            RepbaseScreenHeader(
-                eyebrow: "SOCIAL",
-                title: "Community"
-            )
-
-            Button {
-                feedMode = .discover
-            } label: {
-                Image(systemName: "magnifyingglass")
-            }
-            .buttonStyle(.bordered)
-            .buttonBorderShape(.circle)
-            .tint(timeOfDay.accent)
-            .accessibilityLabel("Discover people and posts")
-
-            Button {
-                isComposing = true
-            } label: {
-                HStack(spacing: 7) {
-                    Image(systemName: "plus")
-                        .font(.community(size: 13, weight: .bold))
-                    Text("Post")
-                        .font(.community(size: 13, weight: .bold))
-                }
-                .foregroundStyle(Color.white)
-                .padding(.horizontal, 14)
-                .frame(height: 40)
-                .background(timeOfDay.accent, in: Capsule())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Create post")
-        }
-        .padding(.bottom, 2)
     }
 
     private func modePicker(timeOfDay: HomeTimeOfDay) -> some View {
@@ -258,7 +220,30 @@ struct SocialFeedView: View {
                 }
                 .buttonStyle(.plain)
             }
+
             Spacer(minLength: 0)
+
+            // The feed's own header used to carry this, above a SOCIAL eyebrow
+            // and a "Community" title that named the tab you had just pressed
+            // to get here. The tabs were already a row; the button fits on it.
+            Button {
+                isComposing = true
+            } label: {
+                HStack(spacing: 7) {
+                    Image(systemName: "plus")
+                        .font(.community(size: 13, weight: .bold))
+                    Text("Post")
+                        .font(.community(size: 13, weight: .bold))
+                }
+                .foregroundStyle(Color.white)
+                .padding(.horizontal, 14)
+                // Under the tabs' own height, so the row does not grow and
+                // push the underline off the divider it sits on.
+                .frame(height: 34)
+                .background(timeOfDay.accent, in: Capsule())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Create post")
         }
         .overlay(alignment: .bottom) {
             Divider()
