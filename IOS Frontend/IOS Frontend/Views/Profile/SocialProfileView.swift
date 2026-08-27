@@ -125,7 +125,7 @@ struct SocialProfileView: View {
                     }
                 }
                 .padding(.horizontal, RepbaseDesign.pageInset)
-                .padding(.top, 16)
+                .padding(.top, 4)
                 .padding(.bottom, RepbaseDesign.bottomBarClearance)
             }
             .scrollIndicators(.hidden)
@@ -171,13 +171,14 @@ struct SocialProfileView: View {
     }
 
     /// Your own profile is a place in the app; somebody else's is somewhere you
-    /// navigated to. So one gets the section heading and the settings menu, and
-    /// the other gets their name and a way back.
+    /// navigated to. So only the second one gets a header, carrying the name
+    /// of whoever you are looking at and the way back to where you came from.
+    /// Your own needs neither.
     @ViewBuilder
     private func profileHeader(timeOfDay: HomeTimeOfDay) -> some View {
-        if isCurrentUser {
-            ownHeader(timeOfDay: timeOfDay)
-        } else {
+        // Nothing for your own profile: the settings button sits on the name's
+        // line now, and there is nothing else a header would have carried.
+        if !isCurrentUser {
             HStack(alignment: .center, spacing: 12) {
                 Button { dismiss() } label: {
                     Image(systemName: "chevron.left")
@@ -206,38 +207,30 @@ struct SocialProfileView: View {
         }
     }
 
-    private func ownHeader(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("ACCOUNT")
-                    .font(.community(size: 10, weight: .bold))
-                    .tracking(1.5)
-                    .foregroundStyle(timeOfDay.accent)
-                Text("Profile")
-                    .font(.community(size: 30, weight: .bold))
-                    .tracking(-0.65)
-                    .foregroundStyle(timeOfDay.canvasPrimaryText)
-            }
-
-            Spacer()
-
-            Button {
-                showingSettings = true
-            } label: {
-                Image(systemName: "line.3.horizontal")
-                    .font(.community(size: 18, weight: .semibold))
-                    .foregroundStyle(timeOfDay.accent)
-                    .frame(width: 44, height: 44)
-                    .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 12))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 12)
-                            .strokeBorder(timeOfDay.border, lineWidth: 1)
-                    }
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Profile and app settings")
+    /// The way into Settings, and all that is left of the old header.
+    ///
+    /// That header carried an ACCOUNT eyebrow over a 30pt "Profile" title,
+    /// which spent the top of the page announcing the name of the tab you had
+    /// just pressed to get here -- and pushed the person's own face a third of
+    /// the way down the screen to do it. The avatar and the name already say
+    /// whose page this is. With the title gone the row held one button, so the
+    /// button moved to the name's line and the row went too.
+    private func settingsButton(timeOfDay: HomeTimeOfDay) -> some View {
+        Button {
+            showingSettings = true
+        } label: {
+            Image(systemName: "line.3.horizontal")
+                .font(.community(size: 18, weight: .semibold))
+                .foregroundStyle(timeOfDay.accent)
+                .frame(width: 44, height: 44)
+                .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 12))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(timeOfDay.border, lineWidth: 1)
+                }
         }
-        .padding(.bottom, 8)
+        .buttonStyle(.plain)
+        .accessibilityLabel("Profile and app settings")
     }
 
     private func identityCard(timeOfDay: HomeTimeOfDay) -> some View {
@@ -246,9 +239,18 @@ struct SocialProfileView: View {
                 ProfileAvatarView(profile: profile, size: 78, timeOfDay: timeOfDay)
 
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(profile.displayName)
-                        .font(.community(.title2, weight: .bold))
-                        .foregroundStyle(timeOfDay.canvasPrimaryText)
+                    HStack(alignment: .center, spacing: 10) {
+                        Text(profile.displayName)
+                            .font(.community(.title2, weight: .bold))
+                            .foregroundStyle(timeOfDay.canvasPrimaryText)
+                            .lineLimit(1)
+
+                        Spacer(minLength: 0)
+
+                        if isCurrentUser {
+                            settingsButton(timeOfDay: timeOfDay)
+                        }
+                    }
 
                     Text("@\(profile.username)")
                         .font(.community(.caption))
