@@ -585,25 +585,25 @@ private struct GuidedDayFlow: View {
     }
 
     private var fuelAccent: Color {
-        timeOfDay.usesDarkAppearance ? Color(hex: 0x84CFA9) : Color(hex: 0x5DAA86)
+        .repbaseDynamic(light: Color(hex: 0x5DAA86), dark: Color(hex: 0x84CFA9))
     }
 
     private var trainingSurface: Color {
-        timeOfDay.usesDarkAppearance
-            ? Color(hex: 0x322B28)
-            : Color(hex: 0xE6D9D3).opacity(0.78)
+        .repbaseDynamic(
+            light: Color(hex: 0xE6D9D3).opacity(0.78),
+            dark: Color(hex: 0x322B28)
+        )
     }
 
     private var fuelSurface: Color {
-        timeOfDay.usesDarkAppearance
-            ? Color(hex: 0x203029)
-            : Color(hex: 0xF1F8F4)
+        .repbaseDynamic(light: Color(hex: 0xF1F8F4), dark: Color(hex: 0x203029))
     }
 
     private var momentumSurface: Color {
-        timeOfDay.usesDarkAppearance
-            ? Color(hex: 0x2C2927)
-            : Color(hex: 0xE6D9D3).opacity(0.66)
+        .repbaseDynamic(
+            light: Color(hex: 0xE6D9D3).opacity(0.66),
+            dark: Color(hex: 0x2C2927)
+        )
     }
 }
 

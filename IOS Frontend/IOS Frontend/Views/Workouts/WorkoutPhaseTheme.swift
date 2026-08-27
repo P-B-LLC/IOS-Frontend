@@ -12,9 +12,9 @@ enum WorkoutVisualPhase: Sendable, Equatable {
     case focus
     case recover
 
-    /// Workout state still controls content, but no longer controls color.
-    /// Every token below follows the saved app appearance instead.
-    private var isDark: Bool { RepbaseAppearancePreference.current == .dark }
+    // Workout state controls content, never colour. Every token below is a
+    // dynamic colour and resolves against the trait when it is drawn, so none
+    // of them consults which case this is.
 
     var canvasStart: Color { Color(uiColor: .systemBackground) }
 
@@ -70,7 +70,6 @@ enum WorkoutVisualPhase: Sendable, Equatable {
         )
     }
 
-    var usesDarkAppearance: Bool { isDark }
 }
 
 private struct WorkoutVisualPhaseKey: EnvironmentKey {

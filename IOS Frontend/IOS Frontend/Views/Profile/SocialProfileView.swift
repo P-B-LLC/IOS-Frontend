@@ -625,7 +625,11 @@ struct SocialProfileView: View {
                     .padding(.horizontal, 16)
                     .frame(maxWidth: .infinity, minHeight: 74)
                     .background(
-                        RepbasePalette.sage.opacity(timeOfDay.usesDarkAppearance ? 0.18 : 0.20),
+                        Color.repbaseDynamic(
+                            light: RepbasePalette.sage.opacity(0.20),
+                            dark: RepbasePalette.sage.opacity(0.18)
+                        ),
+
                         in: RoundedRectangle(cornerRadius: 18)
                     )
                 }
@@ -765,7 +769,11 @@ struct SocialProfileView: View {
         }
         .padding(16)
         .background(
-            timeOfDay.accent.opacity(timeOfDay.usesDarkAppearance ? 0.09 : 0.08),
+            Color.repbaseDynamic(
+                light: RepbasePalette.caramel.opacity(0.08),
+                dark: RepbasePalette.caramel.opacity(0.09)
+            ),
+
             in: RoundedRectangle(cornerRadius: 18)
         )
         .overlay {

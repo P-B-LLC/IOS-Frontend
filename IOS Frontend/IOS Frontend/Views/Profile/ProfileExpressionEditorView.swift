@@ -258,7 +258,11 @@ struct ProfileExpressionEditorView: View {
         }
         .padding(18)
         .background(
-            timeOfDay.accent.opacity(timeOfDay.usesDarkAppearance ? 0.09 : 0.07),
+            Color.repbaseDynamic(
+                light: RepbasePalette.caramel.opacity(0.07),
+                dark: RepbasePalette.caramel.opacity(0.09)
+            ),
+
             in: RoundedRectangle(cornerRadius: 18)
         )
         .overlay {

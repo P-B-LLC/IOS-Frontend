@@ -23,10 +23,6 @@ enum RepbaseAppearancePreference: String, CaseIterable, Identifiable {
     var symbol: String { self == .light ? "sun.max.fill" : "moon.fill" }
     var colorScheme: ColorScheme { self == .light ? .light : .dark }
 
-    static var current: RepbaseAppearancePreference {
-        let raw = UserDefaults.standard.string(forKey: storageKey)
-        return RepbaseAppearancePreference(rawValue: raw ?? "") ?? .light
-    }
 }
 
 /// The warm end of the palette, kept from the soft luxury branch.
@@ -64,16 +60,12 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
     case night
 
     init(date: Date, calendar: Calendar = .current) {
-        // Compatibility initializer for the views that already ask for a
-        // `HomeTimeOfDay`. The clock no longer chooses appearance; the saved
-        // user preference does. Keeping the type avoids a risky app-wide API
-        // migration while removing the old dawn/day/dusk/night behavior.
-        self = RepbaseAppearancePreference.current == .dark ? .night : .day
+        // Kept so the twenty-odd screens that ask for a HomeTimeOfDay still
+        // compile, but the case has stopped carrying meaning: appearance is a
+        // trait now, and every token below resolves against it when drawn.
+        // Nothing reads which case this is.
+        self = .day
     }
-
-    var label: String { usesDarkAppearance ? "DARK" : "LIGHT" }
-
-    var usesDarkAppearance: Bool { RepbaseAppearancePreference.current == .dark }
 
     var canvasStart: Color {
         Color(uiColor: .systemBackground)
@@ -152,9 +144,6 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
     // light at every hour, so `primaryText` follows the appearance. Content
     // drawn directly on the canvas cannot: from dusk the canvas itself is dark,
     // and near-black text disappears into it. These follow the canvas instead.
-
-    /// Whether the canvas behind unraised content is dark at this hour.
-    var hasDarkCanvas: Bool { usesDarkAppearance }
 
     var canvasPrimaryText: Color {
         Color.primary

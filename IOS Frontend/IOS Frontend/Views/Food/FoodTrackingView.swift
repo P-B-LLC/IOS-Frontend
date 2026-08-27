@@ -253,7 +253,11 @@ struct FoodTrackingView: View {
 
     private func mealsSection(timeOfDay: HomeTimeOfDay) -> some View {
         let meals = store.meals(on: selectedDate)
-        let visualPhase: WorkoutVisualPhase = timeOfDay.usesDarkAppearance ? .focus : .prepare
+        // Every WorkoutVisualPhase token ignores which case it is and follows
+        // the trait instead, so choosing .focus for dark stopped changing
+        // anything the moment the colours became dynamic.
+        let visualPhase: WorkoutVisualPhase = .prepare
+
 
         return VStack(alignment: .leading, spacing: 10) {
             HStack {

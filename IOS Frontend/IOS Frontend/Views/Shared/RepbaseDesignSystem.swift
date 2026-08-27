@@ -60,10 +60,12 @@ private struct RepbaseDepthSurfaceModifier: ViewModifier {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .fill(timeOfDay.surfaceRaised)
                     .shadow(
-                        color: timeOfDay.usesDarkAppearance
-                            ? Color.black.opacity(0.20)
-                            : RepbasePalette.espresso.opacity(0.07),
+                        color: Color.repbaseDynamic(
+                            light: RepbasePalette.espresso.opacity(0.07),
+                            dark: Color.black.opacity(0.20)
+                        ),
                         radius: 7,
+
                         x: 0,
                         y: 3
                     )
@@ -71,7 +73,15 @@ private struct RepbaseDepthSurfaceModifier: ViewModifier {
             .overlay {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .strokeBorder(
-                        timeOfDay.border.opacity(timeOfDay.usesDarkAppearance ? 0.42 : 0.72),
+                        // Spelled out rather than border.opacity(...): border is
+                        // itself dynamic now, and nesting one dynamic colour
+                        // inside another resolves the inner one early. These are
+                        // the two products, 0.10 x 0.72 and 0.12 x 0.42.
+                        Color.repbaseDynamic(
+                            light: RepbasePalette.espresso.opacity(0.072),
+                            dark: Color.white.opacity(0.050)
+                        ),
+
                         lineWidth: 1
                     )
             }
@@ -89,13 +99,27 @@ private struct RepbaseInsetSurfaceModifier: ViewModifier {
             .background(timeOfDay.selectorSurface, in: RoundedRectangle(cornerRadius: cornerRadius))
             .overlay {
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .strokeBorder(Color.black.opacity(timeOfDay.usesDarkAppearance ? 0.28 : 0.06), lineWidth: 1)
+                    .strokeBorder(
+                        Color.repbaseDynamic(
+                            light: Color.black.opacity(0.06),
+                            dark: Color.black.opacity(0.28)
+                        ),
+                        lineWidth: 1
+                    )
+
                     .shadow(color: Color.black.opacity(0.08), radius: 2, x: 0, y: 1)
                     .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
             }
             .overlay {
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .strokeBorder(Color.white.opacity(timeOfDay.usesDarkAppearance ? 0.05 : 0.86), lineWidth: 1)
+                    .strokeBorder(
+                        Color.repbaseDynamic(
+                            light: Color.white.opacity(0.86),
+                            dark: Color.white.opacity(0.05)
+                        ),
+                        lineWidth: 1
+                    )
+
                     .shadow(color: Color.white.opacity(0.45), radius: 1, x: 0, y: -1)
                     .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
             }

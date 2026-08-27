@@ -142,7 +142,8 @@ struct PlannerDaySchedule: View {
         // Heavier on a dark canvas, where a wash this faint disappears into
         // the gradient and takes the text with it.
         .background(
-            entry.category.tint.opacity(blockOpacity(entry)),
+            blockTint(entry),
+
             in: RoundedRectangle(cornerRadius: 13)
         )
         .overlay {
@@ -207,9 +208,16 @@ struct PlannerDaySchedule: View {
 
     // MARK: - Pieces
 
-    private func blockOpacity(_ entry: PlannerEntry) -> Double {
-        if entry.isComplete { return timeOfDay.hasDarkCanvas ? 0.18 : 0.10 }
-        return timeOfDay.hasDarkCanvas ? 0.38 : 0.22
+    /// The wash behind a planned block, at the weight its state calls for.
+    ///
+    /// Returns the colour rather than the opacity so the appearance decision
+    /// travels inside a dynamic colour instead of being made while this body
+    /// runs. The category tint is fixed, so it is safe to wrap.
+    private func blockTint(_ entry: PlannerEntry) -> Color {
+        let tint = entry.category.tint
+        return entry.isComplete
+            ? .repbaseDynamic(light: tint.opacity(0.10), dark: tint.opacity(0.18))
+            : .repbaseDynamic(light: tint.opacity(0.22), dark: tint.opacity(0.38))
     }
 
     /// `onCanvas` because the same control appears both on a block, drawn

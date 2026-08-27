@@ -80,7 +80,11 @@ struct WorkoutEditorView: View {
     }
 
     private func editorScreen(timeOfDay: HomeTimeOfDay) -> some View {
-        let visualPhase: WorkoutVisualPhase = timeOfDay.usesDarkAppearance ? .focus : .prepare
+        // Every WorkoutVisualPhase token ignores which case it is and follows
+        // the trait instead, so choosing .focus for dark stopped changing
+        // anything the moment the colours became dynamic.
+        let visualPhase: WorkoutVisualPhase = .prepare
+
 
         return NavigationStack {
             VStack(spacing: 0) {
