@@ -734,6 +734,7 @@ private struct ProfileSettingsView: View {
     @State private var showingDeleteConfirmation = false
     @State private var deleteError: String?
     @State private var securityMessage: String?
+    @State private var legalDocument: LegalDocument?
 
     private enum ProfileEditorDestination: Int, Identifiable {
         case basics = 1
@@ -983,11 +984,28 @@ private struct ProfileSettingsView: View {
                         }
 
                         settingsSection("ABOUT", timeOfDay: timeOfDay) {
-                            settingsValueRow(
-                                "Repbase version",
-                                value: versionLabel,
-                                symbol: "info.circle"
-                            )
+                            VStack(spacing: 0) {
+                                ForEach(LegalDocuments.all) { document in
+                                    Button {
+                                        legalDocument = document
+                                    } label: {
+                                        settingsRow(
+                                            document.title,
+                                            detail: document.summary,
+                                            symbol: document.symbol
+                                        )
+                                    }
+                                    .buttonStyle(.plain)
+
+                                    Rectangle().fill(timeOfDay.border).frame(height: 1)
+                                }
+
+                                settingsValueRow(
+                                    "Repbase version",
+                                    value: versionLabel,
+                                    symbol: "info.circle"
+                                )
+                            }
                         }
                     }
                     .padding(.horizontal, 22)
@@ -1007,6 +1025,11 @@ private struct ProfileSettingsView: View {
                     initialStep: destination.rawValue
                 )
                     .environment(store)
+            }
+        }
+        .sheet(item: $legalDocument) { document in
+            NavigationStack {
+                LegalDocumentView(document: document)
             }
         }
         .fullScreenCover(isPresented: $showingPersonalization) {

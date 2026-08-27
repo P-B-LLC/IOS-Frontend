@@ -7,6 +7,7 @@
 
 import Foundation
 import Observation
+import OpenAPIRuntime
 import RepbaseAPI
 
 struct AuthenticatedUser: Equatable, Sendable {
@@ -54,6 +55,14 @@ enum APIServiceError: LocalizedError {
     }
 }
 
+/// Too many reset codes asked for in too short a time.
+struct PasswordResetThrottled: LocalizedError {
+    var errorDescription: String? {
+        "Too many reset attempts. Wait an hour and try again -- and check your "
+            + "spam folder in the meantime."
+    }
+}
+
 @Observable
 final class AuthenticationStore {
     let configuration: APIConfiguration
@@ -62,6 +71,10 @@ final class AuthenticationStore {
     private(set) var phase: AuthenticationPhase = .checking
     private(set) var token: String?
     private(set) var isWorking = false
+    /// Kept apart from `isWorking`. The reset sheet sits over the sign-in
+    /// screen, and one spinner driving both buttons would grey out a screen
+    /// the user cannot see anyway.
+    private(set) var isResettingPassword = false
     private(set) var errorMessage: String?
     /// True only for the account created in this app session. Returning users
     /// should never be forced through first-run questions after every launch.
@@ -253,6 +266,84 @@ final class AuthenticationStore {
             errorMessage = error.localizedDescription
             throw error
         }
+    }
+
+    /// Asks the server to email a reset code.
+    ///
+    /// Succeeds whether or not the address belongs to an account: the server
+    /// deliberately answers the same way either way, so there is nothing here
+    /// to branch on and nothing to tell the caller.
+    func requestPasswordReset(email: String) async throws {
+        isResettingPassword = true
+        defer { isResettingPassword = false }
+
+        let client = try anonymousClient()
+        let output = try await client.authPasswordResetCreate(
+            body: .json(
+                Components.Schemas.PasswordResetRequestRequest(email: email)
+            )
+        )
+        switch output {
+        case .noContent:
+            return
+        case .undocumented(let statusCode, let payload):
+            throw await Self.resetError(statusCode: statusCode, payload: payload)
+        }
+    }
+
+    /// Spends a code on a new password and signs in with what comes back.
+    ///
+    /// The server issues a fresh token and invalidates every other one, so the
+    /// response is already a complete session. Sending the user back to type
+    /// the password they chose ten seconds ago would be busywork.
+    func confirmPasswordReset(
+        email: String,
+        code: String,
+        newPassword: String
+    ) async throws {
+        isResettingPassword = true
+        defer { isResettingPassword = false }
+
+        let client = try anonymousClient()
+        let output = try await client.authPasswordResetConfirmCreate(
+            body: .json(
+                Components.Schemas.PasswordResetConfirmRequest(
+                    email: email,
+                    code: code,
+                    newPassword: newPassword
+                )
+            )
+        )
+
+        let response: Components.Schemas.AuthResponse
+        switch output {
+        case .ok(let success):
+            response = try success.body.json
+        case .undocumented(let statusCode, let payload):
+            throw await Self.resetError(statusCode: statusCode, payload: payload)
+        }
+
+        try tokenStore.save(response.token)
+        token = response.token
+        needsOnboarding = false
+        errorMessage = nil
+        phase = .signedIn(Self.map(response.user.value1))
+    }
+
+    /// The shared decoder has no wording for 429, and the reset flow is where
+    /// somebody actually meets one -- asking again because the first email has
+    /// not arrived yet is the obvious thing to do.
+    private static func resetError(
+        statusCode: Int,
+        payload: UndocumentedPayload
+    ) async -> Error {
+        if statusCode == 429 {
+            return PasswordResetThrottled()
+        }
+        return await RepbaseAPIHTTPError.decode(
+            statusCode: statusCode,
+            payload: payload
+        )
     }
 
     func clearError() {

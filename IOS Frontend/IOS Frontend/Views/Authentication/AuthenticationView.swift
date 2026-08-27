@@ -20,6 +20,7 @@ struct AuthenticationView: View {
     @State private var password = ""
     @State private var isCreatingAccount = false
     @State private var hasEntered = false
+    @State private var showsPasswordReset = false
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
@@ -40,6 +41,15 @@ struct AuthenticationView: View {
                         VStack(spacing: 14) {
                             usernameField(timeOfDay: timeOfDay)
                             passwordField(timeOfDay: timeOfDay)
+
+                            Button("Forgot password?") {
+                                authentication.clearError()
+                                showsPasswordReset = true
+                            }
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(timeOfDay.accent)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                            .disabled(authentication.isWorking)
 
                             if let error = authentication.errorMessage {
                                 Label(error, systemImage: "exclamationmark.triangle.fill")
@@ -98,6 +108,20 @@ struct AuthenticationView: View {
                 AccountRegistrationView()
             }
         }
+        .fullScreenCover(isPresented: $showsPasswordReset) {
+            NavigationStack {
+                PasswordResetView()
+            }
+        }
+#if DEBUG
+        .task {
+            // Same launch flag, so the cover is already open on arrival.
+            if ProcessInfo.processInfo.environment["REPBASE_RESET_PREVIEW"] != nil {
+                hasEntered = true
+                showsPasswordReset = true
+            }
+        }
+#endif
     }
 
     private func welcome(timeOfDay: HomeTimeOfDay) -> some View {

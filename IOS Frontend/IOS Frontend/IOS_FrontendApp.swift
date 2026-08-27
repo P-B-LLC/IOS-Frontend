@@ -104,6 +104,8 @@ private struct AppRootView: View {
             || environment["REPBASE_PLANNER_PREVIEW"] != nil
             || environment["REPBASE_PROFILE_PREVIEW"] != nil
             || environment["REPBASE_AUTH_PREVIEW"] != nil
+            || environment["REPBASE_RESET_PREVIEW"] != nil
+            || environment["REPBASE_LEGAL_PREVIEW"] != nil
             || environment["REPBASE_KEYCHAIN_CHECK"] != nil
             || environment["REPBASE_HEALTH_CHECK"] != nil
             || environment["REPBASE_HEALTH_PREVIEW"] != nil
@@ -299,7 +301,15 @@ private struct AppRootView: View {
                     .font(.footnote.monospaced())
                     .multilineTextAlignment(.center)
                     .padding(24)
-            } else if ProcessInfo.processInfo.environment["REPBASE_AUTH_PREVIEW"] != nil {
+            } else if let name = ProcessInfo.processInfo.environment["REPBASE_LEGAL_PREVIEW"],
+                      let document = LegalDocuments.all.first(where: { $0.id == name }) {
+                NavigationStack {
+                    LegalDocumentView(document: document)
+                }
+            } else if ProcessInfo.processInfo.environment["REPBASE_AUTH_PREVIEW"] != nil
+                        || ProcessInfo.processInfo.environment["REPBASE_RESET_PREVIEW"] != nil {
+                // The reset flow is reached from this screen, and opens itself
+                // when the flag is set.
                 AuthenticationView()
             } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "home" {
                 NavigationStack {

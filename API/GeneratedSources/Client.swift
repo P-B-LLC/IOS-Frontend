@@ -139,6 +139,120 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// Emails a six digit reset code. Answers 204 whether or not the address belongs to an account.
+    ///
+    /// - Remark: HTTP `POST /api/v1/auth/password-reset/`.
+    /// - Remark: Generated from `#/paths//api/v1/auth/password-reset//post(auth_password_reset_create)`.
+    public func authPasswordResetCreate(_ input: Operations.AuthPasswordResetCreate.Input) async throws -> Operations.AuthPasswordResetCreate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.AuthPasswordResetCreate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/auth/password-reset/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .post
+                )
+                suppressMutabilityWarning(&request)
+                let body: OpenAPIRuntime.HTTPBody?
+                switch input.body {
+                case let .json(value):
+                    body = try converter.setRequiredRequestBodyAsJSON(
+                        value,
+                        headerFields: &request.headerFields,
+                        contentType: "application/json; charset=utf-8"
+                    )
+                }
+                return (request, body)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 204:
+                    return .noContent(.init())
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Sets a new password using the emailed code, signs every other session out, and returns a fresh token.
+    ///
+    /// - Remark: HTTP `POST /api/v1/auth/password-reset/confirm/`.
+    /// - Remark: Generated from `#/paths//api/v1/auth/password-reset/confirm//post(auth_password_reset_confirm_create)`.
+    public func authPasswordResetConfirmCreate(_ input: Operations.AuthPasswordResetConfirmCreate.Input) async throws -> Operations.AuthPasswordResetConfirmCreate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.AuthPasswordResetConfirmCreate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/auth/password-reset/confirm/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .post
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                let body: OpenAPIRuntime.HTTPBody?
+                switch input.body {
+                case let .json(value):
+                    body = try converter.setRequiredRequestBodyAsJSON(
+                        value,
+                        headerFields: &request.headerFields,
+                        contentType: "application/json; charset=utf-8"
+                    )
+                }
+                return (request, body)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.AuthPasswordResetConfirmCreate.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.AuthResponse.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
     /// - Remark: HTTP `POST /api/v1/auth/register/`.
     /// - Remark: Generated from `#/paths//api/v1/auth/register//post(auth_register_create)`.
     public func authRegisterCreate(_ input: Operations.AuthRegisterCreate.Input) async throws -> Operations.AuthRegisterCreate.Output {

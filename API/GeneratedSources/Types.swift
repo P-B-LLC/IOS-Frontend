@@ -17,6 +17,16 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /api/v1/auth/logout/`.
     /// - Remark: Generated from `#/paths//api/v1/auth/logout//post(auth_logout_create)`.
     func authLogoutCreate(_ input: Operations.AuthLogoutCreate.Input) async throws -> Operations.AuthLogoutCreate.Output
+    /// Emails a six digit reset code. Answers 204 whether or not the address belongs to an account.
+    ///
+    /// - Remark: HTTP `POST /api/v1/auth/password-reset/`.
+    /// - Remark: Generated from `#/paths//api/v1/auth/password-reset//post(auth_password_reset_create)`.
+    func authPasswordResetCreate(_ input: Operations.AuthPasswordResetCreate.Input) async throws -> Operations.AuthPasswordResetCreate.Output
+    /// Sets a new password using the emailed code, signs every other session out, and returns a fresh token.
+    ///
+    /// - Remark: HTTP `POST /api/v1/auth/password-reset/confirm/`.
+    /// - Remark: Generated from `#/paths//api/v1/auth/password-reset/confirm//post(auth_password_reset_confirm_create)`.
+    func authPasswordResetConfirmCreate(_ input: Operations.AuthPasswordResetConfirmCreate.Input) async throws -> Operations.AuthPasswordResetConfirmCreate.Output
     /// - Remark: HTTP `POST /api/v1/auth/register/`.
     /// - Remark: Generated from `#/paths//api/v1/auth/register//post(auth_register_create)`.
     func authRegisterCreate(_ input: Operations.AuthRegisterCreate.Input) async throws -> Operations.AuthRegisterCreate.Output
@@ -962,6 +972,26 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//api/v1/auth/logout//post(auth_logout_create)`.
     public func authLogoutCreate() async throws -> Operations.AuthLogoutCreate.Output {
         try await authLogoutCreate(Operations.AuthLogoutCreate.Input())
+    }
+    /// Emails a six digit reset code. Answers 204 whether or not the address belongs to an account.
+    ///
+    /// - Remark: HTTP `POST /api/v1/auth/password-reset/`.
+    /// - Remark: Generated from `#/paths//api/v1/auth/password-reset//post(auth_password_reset_create)`.
+    public func authPasswordResetCreate(body: Operations.AuthPasswordResetCreate.Input.Body) async throws -> Operations.AuthPasswordResetCreate.Output {
+        try await authPasswordResetCreate(Operations.AuthPasswordResetCreate.Input(body: body))
+    }
+    /// Sets a new password using the emailed code, signs every other session out, and returns a fresh token.
+    ///
+    /// - Remark: HTTP `POST /api/v1/auth/password-reset/confirm/`.
+    /// - Remark: Generated from `#/paths//api/v1/auth/password-reset/confirm//post(auth_password_reset_confirm_create)`.
+    public func authPasswordResetConfirmCreate(
+        headers: Operations.AuthPasswordResetConfirmCreate.Input.Headers = .init(),
+        body: Operations.AuthPasswordResetConfirmCreate.Input.Body
+    ) async throws -> Operations.AuthPasswordResetConfirmCreate.Output {
+        try await authPasswordResetConfirmCreate(Operations.AuthPasswordResetConfirmCreate.Input(
+            headers: headers,
+            body: body
+        ))
     }
     /// - Remark: HTTP `POST /api/v1/auth/register/`.
     /// - Remark: Generated from `#/paths//api/v1/auth/register//post(auth_register_create)`.
@@ -5304,6 +5334,62 @@ public enum Components {
                 case next
                 case previous
                 case results
+            }
+        }
+        /// Spending a code on a new password.
+        ///
+        /// The email comes back with it so the code is only ever checked against the
+        /// account it was issued for; a code good for whoever happens to present it
+        /// would be a six digit skeleton key.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PasswordResetConfirmRequest`.
+        public struct PasswordResetConfirmRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PasswordResetConfirmRequest/email`.
+            public var email: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PasswordResetConfirmRequest/code`.
+            public var code: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PasswordResetConfirmRequest/new_password`.
+            public var newPassword: Swift.String
+            /// Creates a new `PasswordResetConfirmRequest`.
+            ///
+            /// - Parameters:
+            ///   - email:
+            ///   - code:
+            ///   - newPassword:
+            public init(
+                email: Swift.String,
+                code: Swift.String,
+                newPassword: Swift.String
+            ) {
+                self.email = email
+                self.code = code
+                self.newPassword = newPassword
+            }
+            public enum CodingKeys: String, CodingKey {
+                case email
+                case code
+                case newPassword = "new_password"
+            }
+        }
+        /// Asking for a code.
+        ///
+        /// Takes an email and nothing else, and the view answers the same way
+        /// whether or not an account has it. Telling an unauthenticated caller which
+        /// addresses are registered turns this into a way to enumerate the userbase.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PasswordResetRequestRequest`.
+        public struct PasswordResetRequestRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PasswordResetRequestRequest/email`.
+            public var email: Swift.String
+            /// Creates a new `PasswordResetRequestRequest`.
+            ///
+            /// - Parameters:
+            ///   - email:
+            public init(email: Swift.String) {
+                self.email = email
+            }
+            public enum CodingKeys: String, CodingKey {
+                case email
             }
         }
         /// - Remark: Generated from `#/components/schemas/PatchedBodyWeightEntryRequest`.
@@ -10457,6 +10543,190 @@ public enum Operations {
             ///
             /// A response with a code that is not documented in the OpenAPI document.
             case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// Emails a six digit reset code. Answers 204 whether or not the address belongs to an account.
+    ///
+    /// - Remark: HTTP `POST /api/v1/auth/password-reset/`.
+    /// - Remark: Generated from `#/paths//api/v1/auth/password-reset//post(auth_password_reset_create)`.
+    public enum AuthPasswordResetCreate {
+        public static let id: Swift.String = "auth_password_reset_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/auth/password-reset/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/auth/password-reset/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.PasswordResetRequestRequest)
+            }
+            public var body: Operations.AuthPasswordResetCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - body:
+            public init(body: Operations.AuthPasswordResetCreate.Input.Body) {
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct NoContent: Sendable, Hashable {
+                /// Creates a new `NoContent`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/auth/password-reset//post(auth_password_reset_create)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            case noContent(Operations.AuthPasswordResetCreate.Output.NoContent)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/auth/password-reset//post(auth_password_reset_create)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            public static var noContent: Self {
+                .noContent(.init())
+            }
+            /// The associated value of the enum case if `self` is `.noContent`.
+            ///
+            /// - Throws: An error if `self` is not `.noContent`.
+            /// - SeeAlso: `.noContent`.
+            public var noContent: Operations.AuthPasswordResetCreate.Output.NoContent {
+                get throws {
+                    switch self {
+                    case let .noContent(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "noContent",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// Sets a new password using the emailed code, signs every other session out, and returns a fresh token.
+    ///
+    /// - Remark: HTTP `POST /api/v1/auth/password-reset/confirm/`.
+    /// - Remark: Generated from `#/paths//api/v1/auth/password-reset/confirm//post(auth_password_reset_confirm_create)`.
+    public enum AuthPasswordResetConfirmCreate {
+        public static let id: Swift.String = "auth_password_reset_confirm_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/auth/password-reset/confirm/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.AuthPasswordResetConfirmCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.AuthPasswordResetConfirmCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.AuthPasswordResetConfirmCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/auth/password-reset/confirm/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/auth/password-reset/confirm/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.PasswordResetConfirmRequest)
+            }
+            public var body: Operations.AuthPasswordResetConfirmCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.AuthPasswordResetConfirmCreate.Input.Headers = .init(),
+                body: Operations.AuthPasswordResetConfirmCreate.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/auth/password-reset/confirm/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/auth/password-reset/confirm/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.AuthResponse)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.AuthResponse {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.AuthPasswordResetConfirmCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.AuthPasswordResetConfirmCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/auth/password-reset/confirm//post(auth_password_reset_confirm_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.AuthPasswordResetConfirmCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.AuthPasswordResetConfirmCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
         }
     }
     /// - Remark: HTTP `POST /api/v1/auth/register/`.
