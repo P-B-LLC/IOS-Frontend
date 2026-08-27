@@ -121,7 +121,12 @@ struct CycleEditorView: View {
                 Button("Save") {
                     Task {
                         await save()
-                        dismiss()
+                        // Only when it worked. Dismissing either way is how a
+                        // refused rotation came to look like a saved one: the
+                        // server rejects a workout that already repeats
+                        // weekly, the store recorded why, and this sheet shut
+                        // over the top of the message before it could be read.
+                        if store.persistenceError == nil { dismiss() }
                     }
                 }
                 // Also while a day's workout is still being written: saving

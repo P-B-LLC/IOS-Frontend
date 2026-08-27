@@ -908,7 +908,7 @@ struct DayWorkoutView: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Label("SESSION IN PROGRESS", systemImage: "bolt.fill")
                             .font(.community(.caption, weight: .bold))
-                            .foregroundStyle(RepbasePalette.sand)
+                            .foregroundStyle(phase.onHeroSecondary)
                         Text(session.workoutName)
                             .font(.community(.largeTitle, weight: .bold))
                             .foregroundStyle(phase.primaryText)
@@ -935,7 +935,7 @@ struct DayWorkoutView: View {
                         : "\(session.loggedSetCount) of \(session.totalSetCount) sets logged"
                 )
                 .font(.community(.caption))
-                .foregroundStyle(RepbasePalette.sand)
+                .foregroundStyle(phase.onHeroSecondary)
             }
             .padding(18)
             .background {
@@ -974,10 +974,15 @@ struct DayWorkoutView: View {
                     Text("Log Your Sets")
                         .font(.community(.title3, weight: .bold))
                         .foregroundStyle(phase.primaryText)
+                    // Asked of this session's exercises, not of the whole
+                    // dictionary. It holds every exercise with history, so a
+                    // Pull day of two brand new movements still promised
+                    // "your last performance is already here" on the strength
+                    // of some Push Day the user was not looking at.
                     Text(
-                        store.previousSets.isEmpty
-                            ? "Enter reps and optional weight, then tap Log to save each set."
-                            : "Your last performance is already here. Enter today's values, then tap Log."
+                        hasPreviousSetsForThisSession
+                            ? "Your last performance is already here. Enter today's values, then tap Log."
+                            : "Enter reps and optional weight, then tap Log to save each set."
                     )
                         .font(.community(.subheadline))
                         .foregroundStyle(phase.secondaryText)
@@ -1084,19 +1089,19 @@ struct DayWorkoutView: View {
             VStack(alignment: .leading, spacing: 11) {
                 Text(session.workoutName.uppercased())
                     .font(.community(.caption2, weight: .bold))
-                    .foregroundStyle(Color(hex: 0xB7DCCB))
+                    .foregroundStyle(phase.onHeroSecondary)
 
                 HStack(alignment: .lastTextBaseline, spacing: 8) {
                     Text(elapsedTime(from: session.startedAt, to: completed.endedAt))
                         .font(.community(.largeTitle, weight: .bold))
                         .monospacedDigit()
-                        .foregroundStyle(Color.white)
+                        .foregroundStyle(phase.onHeroPrimary)
                     Text("WORKOUT TIME")
                         .font(.community(.subheadline, weight: .bold))
-                        .foregroundStyle(Color(hex: 0xB7DCCB))
+                        .foregroundStyle(phase.onHeroSecondary)
                 }
 
-                Divider().overlay(Color(hex: 0x648474))
+                Divider().overlay(phase.onHeroDivider)
 
                 HStack(spacing: 0) {
                     summaryDatum("START", session.startedAt.formatted(date: .omitted, time: .shortened))
@@ -1292,14 +1297,27 @@ struct DayWorkoutView: View {
         }
     }
 
+    /// Whether anything on screen actually has a number from last time.
+    private var hasPreviousSetsForThisSession: Bool {
+        guard let session = store.activeSession else { return false }
+        return session.exercises.contains { exercise in
+            store.previousSet(
+                exerciseServerID: exercise.exerciseServerID,
+                setNumber: 1
+            ) != nil
+        }
+    }
+
     private func summaryDatum(_ title: String, _ value: String) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
+        // The same phase its only caller draws under.
+        let phase = WorkoutVisualPhase.recover
+        return VStack(alignment: .leading, spacing: 5) {
             Text(title)
                 .font(.community(.caption2, weight: .bold))
-                .foregroundStyle(Color(hex: 0xB7DCCB))
+                .foregroundStyle(phase.onHeroSecondary)
             Text(value)
                 .font(.community(.caption, weight: .bold))
-                .foregroundStyle(Color.white)
+                .foregroundStyle(phase.onHeroPrimary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

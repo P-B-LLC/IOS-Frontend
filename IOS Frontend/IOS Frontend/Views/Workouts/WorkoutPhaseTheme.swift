@@ -38,6 +38,31 @@ enum WorkoutVisualPhase: Sendable, Equatable {
 
     var heroEnd: Color { .repbaseDynamic(light: Color.white, dark: Color(hex: 0x252220)) }
 
+    /// Text drawn on a hero card.
+    ///
+    /// The hero learned light mode -- oatmeal through white -- while what is
+    /// drawn on it kept the colours it had when the card was always dark:
+    /// #D1D1D1 sand, pale mint, and plain white. On a light hero those are
+    /// white on white, which is how a finished workout came to show a card
+    /// with nothing readable on it.
+    var onHeroPrimary: Color {
+        .repbaseDynamic(light: RepbasePalette.espresso, dark: Color.white)
+    }
+
+    var onHeroSecondary: Color {
+        .repbaseDynamic(
+            light: RepbasePalette.espresso.opacity(0.66),
+            dark: Color(hex: 0xB7DCCB)
+        )
+    }
+
+    var onHeroDivider: Color {
+        .repbaseDynamic(
+            light: RepbasePalette.espresso.opacity(0.18),
+            dark: Color(hex: 0x648474)
+        )
+    }
+
     /// The hairline on a card, and the one on a control.
     var cardBorder: Color {
         .repbaseDynamic(
