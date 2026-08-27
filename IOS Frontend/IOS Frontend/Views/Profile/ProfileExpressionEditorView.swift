@@ -7,20 +7,14 @@
 
 import SwiftUI
 
-/// The featured lifts, and the way through to the questions.
-///
-/// The questions live on their own page because answering one is a different
-/// kind of task from ticking a lift — it wants the whole screen and one
-/// question at a time. This page keeps what is left: which of the three lifts
-/// to show, and what each will say.
 struct ProfileExpressionEditorView: View {
     @Environment(SocialProfileStore.self) private var store
     @Environment(\.dismiss) private var dismiss
 
-    /// Working copies, keyed by lift. Nothing is sent until Save.
     @State private var featured: Set<FeaturedLift> = []
     @State private var poundsDraft: [FeaturedLift: String] = [:]
     @State private var repsDraft: [FeaturedLift: String] = [:]
+    @State private var focusedLift: FeaturedLift = .squat
     @State private var hasLoaded = false
     @State private var showingPrompts = false
 
@@ -29,7 +23,7 @@ struct ProfileExpressionEditorView: View {
             let timeOfDay = HomeTimeOfDay(date: context.date)
 
             ScrollView {
-                VStack(alignment: .leading, spacing: 26) {
+                VStack(alignment: .leading, spacing: 28) {
                     header(timeOfDay: timeOfDay)
                     promptsSection(timeOfDay: timeOfDay)
                     liftsSection(timeOfDay: timeOfDay)
@@ -55,8 +49,6 @@ struct ProfileExpressionEditorView: View {
             NavigationStack { PromptPickerView() }
         }
         .task {
-            // Seeded once, or typing would be thrown away every time the
-            // keyboard resigned.
             guard !hasLoaded else { return }
             for lift in store.highlights {
                 featured.insert(lift.lift)
@@ -65,162 +57,226 @@ struct ProfileExpressionEditorView: View {
                     repsDraft[lift.lift] = lift.reps.map(String.init) ?? ""
                 }
             }
+            if let first = store.highlights.first?.lift { focusedLift = first }
             hasLoaded = true
         }
     }
 
-    // MARK: - Header
-
     private func header(timeOfDay: HomeTimeOfDay) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Button { dismiss() } label: {
-                    Image(systemName: "xmark")
-                        .font(.community(size: 16, weight: .semibold))
-                        .frame(width: 40, height: 40)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(timeOfDay.canvasPrimaryText)
-                Spacer()
+        VStack(alignment: .leading, spacing: 16) {
+            Button { dismiss() } label: {
+                Image(systemName: "xmark")
+                    .font(.community(size: 16, weight: .bold))
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .foregroundStyle(timeOfDay.canvasPrimaryText)
+            .accessibilityLabel("Close")
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("YOUR PROFILE")
+                Text("PROFILE DETAILS")
                     .font(.community(size: 10, weight: .bold))
-                    .tracking(1.3)
+                    .tracking(1.4)
                     .foregroundStyle(timeOfDay.accent)
-                Text("What people learn about you")
-                    .font(.community(size: 28, weight: .bold))
+                Text("Choose what stands out.")
+                    .font(.community(size: 30, weight: .bold))
+                    .tracking(-0.6)
                     .foregroundStyle(timeOfDay.canvasPrimaryText)
-                    .fixedSize(horizontal: false, vertical: true)
+                Text("A few details make your profile feel like you.")
+                    .font(.community(.subheadline))
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
             }
         }
     }
 
-    // MARK: - Prompts
-
     private func promptsSection(timeOfDay: HomeTimeOfDay) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            sectionTitle(
-                "Prompts",
-                detail: "Tell others about you. Up to three.",
-                timeOfDay: timeOfDay
-            )
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .firstTextBaseline) {
+                sectionTitle("Prompts", detail: "Tell others about you. Up to three.", timeOfDay: timeOfDay)
+                Spacer()
+                Text("\(store.prompts.count) OF 3")
+                    .font(.community(size: 9, weight: .bold))
+                    .tracking(0.9)
+                    .foregroundStyle(timeOfDay.accent)
+            }
 
             ForEach(store.prompts) { answer in
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(answer.questionLabel.uppercased())
                         .font(.community(size: 9, weight: .bold))
                         .tracking(1.1)
                         .foregroundStyle(timeOfDay.accent)
                     Text(answer.answer)
-                        .font(.community(.subheadline))
+                        .font(.community(size: 17, weight: .semibold))
                         .foregroundStyle(timeOfDay.canvasPrimaryText)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.leading, 14)
+                .overlay(alignment: .leading) {
+                    Capsule().fill(timeOfDay.accent).frame(width: 3)
+                }
             }
 
-            Button {
-                showingPrompts = true
-            } label: {
-                Label(
-                    store.prompts.isEmpty ? "Add prompts" : "Change your prompts",
-                    systemImage: "text.bubble"
-                )
-                .font(.community(.subheadline, weight: .semibold))
-                .foregroundStyle(timeOfDay.accent)
+            Button { showingPrompts = true } label: {
+                HStack {
+                    Text(store.prompts.isEmpty ? "Add prompts" : "Edit prompts")
+                    Spacer()
+                    Text("→")
+                }
+                .font(.community(.subheadline, weight: .bold))
+                .foregroundStyle(timeOfDay.canvasPrimaryText)
+                .padding(.horizontal, 16)
+                .frame(maxWidth: .infinity, minHeight: 48)
+                .background(timeOfDay.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 14))
             }
             .buttonStyle(.plain)
         }
     }
-
-    // MARK: - Featured lifts
 
     private func liftsSection(timeOfDay: HomeTimeOfDay) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            sectionTitle(
-                "Featured lifts",
-                detail: "Bench, squat and deadlift. Each one shows your heaviest logged set, or the numbers you enter here.",
-                timeOfDay: timeOfDay
-            )
+        VStack(alignment: .leading, spacing: 14) {
+            sectionTitle("Featured lifts", detail: "Choose up to three.", timeOfDay: timeOfDay)
 
-            VStack(spacing: 0) {
+            HStack(spacing: 8) {
                 ForEach(FeaturedLift.allCases) { lift in
-                    liftRow(lift, timeOfDay: timeOfDay)
-                    if lift != FeaturedLift.allCases.last {
-                        Divider().opacity(0.3)
-                    }
+                    liftPill(lift, timeOfDay: timeOfDay)
                 }
             }
-            .padding(.horizontal, 14)
-            .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 16))
-            .overlay {
-                RoundedRectangle(cornerRadius: 16)
-                    .strokeBorder(timeOfDay.border, lineWidth: 1)
+
+            if featured.contains(focusedLift) {
+                liftEditorPanel(focusedLift, timeOfDay: timeOfDay)
+            } else {
+                Text("Choose a lift above to add it to your profile.")
+                    .font(.community(.caption))
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+                    .padding(.vertical, 4)
             }
         }
     }
 
-    private func liftRow(_ lift: FeaturedLift, timeOfDay: HomeTimeOfDay) -> some View {
-        let logged = store.highlights.first { $0.lift == lift && $0.source == .logged }
+    private func liftPill(_ lift: FeaturedLift, timeOfDay: HomeTimeOfDay) -> some View {
         let isOn = featured.contains(lift)
+        let isFocused = focusedLift == lift
 
-        return VStack(alignment: .leading, spacing: 9) {
-            Button {
-                if isOn { featured.remove(lift) } else { featured.insert(lift) }
-            } label: {
-                HStack(spacing: 12) {
-                    Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
-                        .foregroundStyle(isOn ? timeOfDay.accent : timeOfDay.secondaryText)
-                    Text(lift.label)
-                        .font(.community(.subheadline, weight: .semibold))
+        return Button {
+            focusedLift = lift
+            if !isOn { featured.insert(lift) }
+        } label: {
+            HStack(spacing: 6) {
+                if isOn {
+                    Image(systemName: "checkmark")
+                        .font(.community(size: 10, weight: .bold))
+                }
+                Text(lift.label.replacingOccurrences(of: " Press", with: ""))
+                    .lineLimit(1)
+            }
+            .font(.community(.caption, weight: .bold))
+            .foregroundStyle(
+                isFocused && isOn
+                    ? timeOfDay.onPrimaryAction
+                    : (isOn ? timeOfDay.accent : timeOfDay.canvasSecondaryText)
+            )
+            .frame(maxWidth: .infinity, minHeight: 42)
+            .background {
+                RoundedRectangle(cornerRadius: 13)
+                    .fill(
+                        isFocused && isOn
+                            ? timeOfDay.primaryActionSurface
+                            : (isOn ? timeOfDay.accent.opacity(0.11) : timeOfDay.selectorSurface)
+                    )
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: 13)
+                    .strokeBorder(isOn ? timeOfDay.accent.opacity(0.35) : timeOfDay.border, lineWidth: 1)
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityValue(isOn ? "Shown on profile" : "Not shown on profile")
+    }
+
+    private func liftEditorPanel(_ lift: FeaturedLift, timeOfDay: HomeTimeOfDay) -> some View {
+        let logged = store.highlights.first { $0.lift == lift && $0.source == .logged }
+
+        return VStack(alignment: .leading, spacing: 18) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("\(lift.label.uppercased()) · SHOWN ON PROFILE")
+                        .font(.community(size: 9, weight: .bold))
+                        .tracking(0.9)
+                        .foregroundStyle(timeOfDay.accent)
+                    Text(logged == nil ? "Manual" : "Best logged set")
+                        .font(.community(.caption))
+                        .foregroundStyle(timeOfDay.secondaryText)
+                }
+                Spacer()
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(timeOfDay.accent)
+            }
+
+            if let logged, let summary = logged.setSummary {
+                HStack(alignment: .lastTextBaseline) {
+                    Text(summary)
+                        .font(.community(size: 28, weight: .bold, design: .rounded))
                         .foregroundStyle(timeOfDay.primaryText)
-                    Spacer(minLength: 0)
-                    if let logged, let summary = logged.setSummary {
-                        Text(summary)
-                            .font(.community(.subheadline, weight: .bold))
-                            .foregroundStyle(timeOfDay.primaryText)
+                    Spacer()
+                    if let estimate = logged.estimatedOneRepMaxPounds {
+                        VStack(alignment: .trailing, spacing: 2) {
+                            Text("ESTIMATED 1RM")
+                                .font(.community(size: 8, weight: .bold))
+                                .tracking(0.8)
+                                .foregroundStyle(timeOfDay.secondaryText)
+                            Text("\(estimate) lb")
+                                .font(.community(.subheadline, weight: .bold))
+                                .foregroundStyle(timeOfDay.primaryText)
+                        }
                     }
                 }
-                .padding(.vertical, 13)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-
-            if isOn {
-                if let logged, let summary = logged.setSummary {
-                    // Nothing to type: the number is already better evidence
-                    // than anything that could be entered here, and it keeps
-                    // itself up to date.
-                    Label(
-                        "\(summary) from \(logged.exerciseName ?? "your log"). This updates itself as you train.",
-                        systemImage: "checkmark.seal"
-                    )
+                Text("This uses your best logged set and updates as you train.")
                     .font(.community(.caption))
                     .foregroundStyle(timeOfDay.secondaryText)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.bottom, 12)
-                } else {
-                    manualFields(lift, timeOfDay: timeOfDay)
-                }
+            } else {
+                manualFields(lift, timeOfDay: timeOfDay)
             }
+
+            HStack {
+                Label("Use your best logged set when available", systemImage: "arrow.triangle.2.circlepath")
+                    .font(.community(.caption2))
+                    .foregroundStyle(timeOfDay.secondaryText)
+                Spacer(minLength: 8)
+                Text(logged == nil ? "MANUAL" : "AUTO")
+                    .font(.community(size: 8, weight: .bold))
+                    .tracking(0.8)
+                    .foregroundStyle(timeOfDay.accent)
+            }
+
+            Button(role: .destructive) { featured.remove(lift) } label: {
+                Text("Remove from profile")
+                    .font(.community(.caption, weight: .semibold))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(18)
+        .background(
+            timeOfDay.accent.opacity(timeOfDay.usesDarkAppearance ? 0.09 : 0.07),
+            in: RoundedRectangle(cornerRadius: 18)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 18)
+                .strokeBorder(timeOfDay.border, lineWidth: 1)
         }
     }
 
     private func manualFields(_ lift: FeaturedLift, timeOfDay: HomeTimeOfDay) -> some View {
-        VStack(alignment: .leading, spacing: 7) {
+        VStack(alignment: .leading, spacing: 12) {
             Text("Nothing logged for this yet. Enter your best set.")
                 .font(.community(.caption))
                 .foregroundStyle(timeOfDay.secondaryText)
-
-            HStack(spacing: 10) {
+            HStack(spacing: 18) {
                 numberField("Weight", unit: "lb", text: poundsBinding(lift), timeOfDay: timeOfDay)
                 numberField("Reps", unit: "", text: repsBinding(lift), timeOfDay: timeOfDay)
             }
         }
-        .padding(.bottom, 12)
     }
 
     private func numberField(
@@ -229,27 +285,22 @@ struct ProfileExpressionEditorView: View {
         text: Binding<String>,
         timeOfDay: HomeTimeOfDay
     ) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: 5) {
             Text(title.uppercased())
                 .font(.community(size: 8, weight: .bold))
+                .tracking(0.7)
                 .foregroundStyle(timeOfDay.secondaryText)
             HStack(spacing: 4) {
                 TextField("0", text: text)
                     .keyboardType(.numberPad)
-                    .font(.community(.subheadline, weight: .semibold))
+                    .font(.community(.title3, weight: .bold))
                 if !unit.isEmpty {
                     Text(unit)
                         .font(.community(.caption))
                         .foregroundStyle(timeOfDay.secondaryText)
                 }
             }
-            .padding(.horizontal, 11)
-            .frame(height: 40)
-            .background(timeOfDay.selectorSurface, in: RoundedRectangle(cornerRadius: 11))
-            .overlay {
-                RoundedRectangle(cornerRadius: 11)
-                    .strokeBorder(timeOfDay.border, lineWidth: 1)
-            }
+            Rectangle().fill(timeOfDay.border).frame(height: 1)
         }
         .frame(maxWidth: .infinity)
     }
@@ -268,11 +319,6 @@ struct ProfileExpressionEditorView: View {
         )
     }
 
-    // MARK: - Saving
-
-    /// What will be sent. A lift with a logged set goes out bare, because the
-    /// server reads the set itself; one without goes out with whatever pair
-    /// was typed, and only if both halves are there.
     private var payload: [HighlightLift] {
         FeaturedLift.allCases.filter(featured.contains).map { lift in
             let logged = store.highlights.first { $0.lift == lift && $0.source == .logged }
@@ -301,8 +347,6 @@ struct ProfileExpressionEditorView: View {
         }
     }
 
-    /// A half-filled pair is the one thing the server will refuse, so it is
-    /// caught here where the empty box is on screen to point at.
     private var incompleteLift: FeaturedLift? {
         FeaturedLift.allCases.filter(featured.contains).first { lift in
             guard store.highlights.first(where: { $0.lift == lift && $0.source == .logged }) == nil
@@ -314,11 +358,15 @@ struct ProfileExpressionEditorView: View {
     }
 
     private func saveButton(timeOfDay: HomeTimeOfDay) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Your profile updates as soon as these changes are saved.")
+                .font(.community(.caption))
+                .foregroundStyle(timeOfDay.canvasSecondaryText)
+
             if let incomplete = incompleteLift {
                 Text("Give \(incomplete.label) both a weight and a rep count, or leave both empty.")
                     .font(.community(.caption))
-                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+                    .foregroundStyle(.red)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
@@ -328,13 +376,16 @@ struct ProfileExpressionEditorView: View {
                 }
             } label: {
                 HStack(spacing: 9) {
-                    if store.isSaving { ProgressView().tint(.white) }
-                    Text("Save")
+                    if store.isSaving { ProgressView().tint(timeOfDay.onPrimaryAction) }
+                    Text("Save changes")
+                    Spacer()
+                    Text("→")
                 }
                 .font(.community(.headline, weight: .bold))
-                .foregroundStyle(Color.white)
+                .foregroundStyle(timeOfDay.onPrimaryAction)
+                .padding(.horizontal, 18)
                 .frame(maxWidth: .infinity, minHeight: 54)
-                .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 17))
+                .background(timeOfDay.primaryActionSurface, in: RoundedRectangle(cornerRadius: 17))
             }
             .buttonStyle(.plain)
             .disabled(store.isSaving || incompleteLift != nil)
@@ -349,7 +400,7 @@ struct ProfileExpressionEditorView: View {
     ) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(title)
-                .font(.community(size: 19, weight: .bold))
+                .font(.community(size: 20, weight: .bold))
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
             Text(detail)
                 .font(.community(.caption))
