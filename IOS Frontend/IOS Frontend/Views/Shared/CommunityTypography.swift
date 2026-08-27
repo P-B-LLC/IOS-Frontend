@@ -89,7 +89,7 @@ extension Font {
         case .footnote: 13
         case .caption: 12
         case .caption2: 11
-        @unknown default: 17
+        default: 17
         }
     }
 
