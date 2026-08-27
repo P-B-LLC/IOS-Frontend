@@ -25,15 +25,15 @@ struct WorkoutsView: View {
     private var intro: some View {
         VStack(alignment: .leading, spacing: 7) {
             Text("TRAINING")
-                .font(.system(size: 10, weight: .bold))
+                .font(.community(size: 10, weight: .bold))
                 .tracking(1.5)
                 .foregroundStyle(phase.accent)
             Text("Your week")
-                .font(.system(size: 30, weight: .bold))
+                .font(.community(size: 30, weight: .bold))
                 .tracking(-0.65)
                 .foregroundStyle(phase.primaryText)
             Text("Choose any day to plan, customize, or log a workout.")
-                .font(.system(size: 14, weight: .medium))
+                .font(.community(size: 14, weight: .medium))
                 .foregroundStyle(phase.secondaryText)
         }
     }
@@ -42,10 +42,10 @@ struct WorkoutsView: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
                 Label("Workout Plan", systemImage: "calendar")
-                    .font(.headline)
+                    .font(.community(.headline))
                 Spacer()
                 Text("Tap a day")
-                    .font(.caption)
+                    .font(.community(.caption))
                     .foregroundStyle(phase.secondaryText)
             }
 
@@ -105,7 +105,7 @@ struct WorkoutsView: View {
 
         return VStack(alignment: .leading, spacing: 14) {
             Text("Week at a Glance")
-                .font(.headline)
+                .font(.community(.headline))
 
             HStack(spacing: 10) {
                 WeekStat(value: workouts.count, label: "Planned", icon: "calendar.badge.checkmark", accent: phase.accent)
@@ -119,12 +119,12 @@ struct WorkoutsView: View {
     private func persistenceErrorCard(_ message: String) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Label(message, systemImage: "exclamationmark.triangle.fill")
-                .font(.footnote)
+                .font(.community(.footnote))
                 .foregroundStyle(Color.orange)
             Button("Retry") {
                 store.retryPersistence()
             }
-            .font(.footnote.weight(.semibold))
+            .font(.community(.footnote, weight: .semibold))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
@@ -152,20 +152,20 @@ private struct WorkoutReferenceHero: View {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(eyebrow)
-                        .font(.system(size: 9, weight: .bold))
+                        .font(.community(size: 9, weight: .bold))
                         .tracking(1.25)
                         .foregroundStyle(isActive ? RepbaseDesign.accent : Color.secondary)
                     Text(title)
-                        .font(.system(size: 23, weight: .bold))
+                        .font(.community(size: 23, weight: .bold))
                         .tracking(-0.4)
                         .foregroundStyle(RepbaseDesign.ink)
                     Text(detail)
-                        .font(.caption.weight(.medium))
+                        .font(.community(.caption, weight: .medium))
                         .foregroundStyle(.secondary)
                 }
                 Spacer(minLength: 12)
                 Image(systemName: "arrow.up.right")
-                    .font(.caption.weight(.bold))
+                    .font(.community(.caption, weight: .bold))
                     .foregroundStyle(RepbaseDesign.onInk)
                     .frame(width: 34, height: 34)
                     .background(RepbaseDesign.ink, in: Circle())
@@ -201,7 +201,7 @@ private struct WorkoutReferenceHero: View {
 
     private func railButton(_ symbol: String, selected: Bool) -> some View {
         Image(systemName: symbol)
-            .font(.system(size: 11, weight: .bold))
+            .font(.community(size: 11, weight: .bold))
             .foregroundStyle(selected ? RepbaseDesign.onInk : RepbaseDesign.ink)
             .frame(width: 30, height: 30)
             .background(selected ? RepbaseDesign.ink : Color.clear, in: Circle())
@@ -264,12 +264,12 @@ private struct WeekStat: View {
     var body: some View {
         VStack(spacing: 6) {
             Image(systemName: icon)
-                .font(.subheadline)
+                .font(.community(.subheadline))
                 .foregroundStyle(accent)
             Text("\(value)")
-                .font(.title3.weight(.bold))
+                .font(.community(.title3, weight: .bold))
             Text(label)
-                .font(.caption2)
+                .font(.community(.caption2))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)

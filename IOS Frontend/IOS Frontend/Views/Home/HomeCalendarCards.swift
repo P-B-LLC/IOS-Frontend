@@ -42,21 +42,21 @@ struct HomeCalendarCard: View {
     private var eventsPane: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Today's")
-                .font(.system(size: 12, weight: .semibold))
+                .font(.community(size: 12, weight: .semibold))
                 .foregroundStyle(timeOfDay.secondaryText)
             Text("Events")
-                .font(.system(size: 19, weight: .bold, design: .rounded))
+                .font(.community(size: 19, weight: .bold, design: .rounded))
                 .foregroundStyle(timeOfDay.primaryText)
 
             Spacer(minLength: 6)
 
             if events.isEmpty {
                 Text("Nothing on")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.community(size: 11, weight: .medium))
                     .foregroundStyle(timeOfDay.secondaryText)
             } else {
                 Text("\(events.count)")
-                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                    .font(.community(size: 34, weight: .bold, design: .rounded))
                     .foregroundStyle(timeOfDay.primaryText)
                 VStack(alignment: .leading, spacing: 3) {
                     ForEach(events.prefix(2)) { event in
@@ -65,7 +65,7 @@ struct HomeCalendarCard: View {
                                 .fill(event.category.tint)
                                 .frame(width: 4, height: 4)
                             Text(event.title)
-                                .font(.system(size: 9, weight: .medium))
+                                .font(.community(size: 9, weight: .medium))
                                 .foregroundStyle(timeOfDay.secondaryText)
                                 .lineLimit(1)
                         }
@@ -89,7 +89,7 @@ struct HomeCalendarCard: View {
             monthSpine
             VStack(alignment: .leading, spacing: 0) {
                 Text(Date().formatted(.dateTime.year()))
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.community(size: 12, weight: .semibold))
                     .foregroundStyle(timeOfDay.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .trailing)
 
@@ -130,7 +130,7 @@ struct HomeCalendarCard: View {
                 .frame(width: 3)
 
             Text(Date().formatted(.dateTime.month(.wide)).uppercased())
-                .font(.system(size: 13, weight: .heavy))
+                .font(.community(size: 13, weight: .heavy))
                 .tracking(0.5)
                 .foregroundStyle(timeOfDay.primaryText)
                 .fixedSize()
@@ -150,10 +150,10 @@ struct HomeCalendarCard: View {
             ForEach(weekDays, id: \.timeIntervalSince1970) { date in
                 VStack(spacing: 3) {
                     Text(date.formatted(.dateTime.weekday(.narrow)))
-                        .font(.system(size: 8, weight: .semibold))
+                        .font(.community(size: 8, weight: .semibold))
                         .foregroundStyle(timeOfDay.secondaryText)
                     Text("\(calendar.component(.day, from: date))")
-                        .font(.system(size: 11, weight: calendar.isDateInToday(date) ? .bold : .medium))
+                        .font(.community(size: 11, weight: calendar.isDateInToday(date) ? .bold : .medium))
                         .foregroundStyle(
                             calendar.isDateInToday(date)
                                 ? Color(hex: 0xFFFFFF)
@@ -181,15 +181,15 @@ struct HomeCalendarCard: View {
                     .fill(entry.category.tint)
                     .frame(width: 4, height: 4)
                 Text(entry.displayTime.map { "Today, \($0)" } ?? "Today")
-                    .font(.system(size: 9, weight: .semibold))
+                    .font(.community(size: 9, weight: .semibold))
                     .foregroundStyle(timeOfDay.secondaryText)
                 Text(entry.title)
-                    .font(.system(size: 9, weight: .medium))
+                    .font(.community(size: 9, weight: .medium))
                     .foregroundStyle(timeOfDay.primaryText)
                     .lineLimit(1)
             } else {
                 Text("No events today")
-                    .font(.system(size: 9, weight: .medium))
+                    .font(.community(size: 9, weight: .medium))
                     .foregroundStyle(timeOfDay.secondaryText)
             }
             Spacer(minLength: 0)

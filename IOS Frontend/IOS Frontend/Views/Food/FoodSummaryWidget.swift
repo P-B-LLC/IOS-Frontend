@@ -19,12 +19,12 @@ struct FoodSummaryWidget: View {
                 VStack(alignment: .leading, spacing: 0) {
                     HStack(spacing: 8) {
                         Image(systemName: "fork.knife")
-                            .font(.system(size: 12, weight: .bold))
+                            .font(.community(size: 12, weight: .bold))
                             .foregroundStyle(timeOfDay.accent)
                             .frame(width: 28, height: 28)
                             .background(timeOfDay.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
                         Text("Food Today")
-                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            .font(.community(size: 16, weight: .semibold, design: .rounded))
                     }
 
                     Spacer(minLength: 10)
@@ -45,7 +45,7 @@ struct FoodSummaryWidget: View {
             }
             .overlay(alignment: .topTrailing) {
                 Image(systemName: "chevron.forward")
-                    .font(.system(size: 11, weight: .bold))
+                    .font(.community(size: 11, weight: .bold))
                     .foregroundStyle(timeOfDay.secondaryText)
                     .padding(.top, 4)
             }
@@ -95,9 +95,9 @@ private struct HomeCalorieArc: View {
 
             VStack(spacing: 1) {
                 Text(value.nutritionText)
-                    .font(.system(size: 22, weight: .semibold, design: .rounded))
+                    .font(.community(size: 22, weight: .semibold, design: .rounded))
                 Text("of \(goal.nutritionText) cal")
-                    .font(.system(size: 9, weight: .medium))
+                    .font(.community(size: 9, weight: .medium))
                     .foregroundStyle(timeOfDay.secondaryText)
             }
             .padding(.bottom, 5)
@@ -139,7 +139,7 @@ private struct HomeMacroMetric: View {
     var body: some View {
         HStack(spacing: 8) {
             Text(title)
-                .font(.system(size: 10, weight: .medium))
+                .font(.community(size: 10, weight: .medium))
                 .foregroundStyle(timeOfDay.secondaryText)
                 .frame(width: 44, alignment: .leading)
             GeometryReader { proxy in
@@ -150,7 +150,7 @@ private struct HomeMacroMetric: View {
             }
             .frame(height: 4)
             Text("\(value.nutritionText)g")
-                .font(.system(size: 11, weight: .semibold))
+                .font(.community(size: 11, weight: .semibold))
                 .frame(width: 36, alignment: .trailing)
         }
         .frame(maxWidth: .infinity)

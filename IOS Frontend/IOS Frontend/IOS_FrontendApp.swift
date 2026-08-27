@@ -143,14 +143,14 @@ private struct AppRootView: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 16) {
                             Text("With steps")
-                                .font(.caption.weight(.bold))
+                                .font(.community(.caption, weight: .bold))
                             StepsWidget(explainsWhenEmpty: true)
                             Text("Health not connected")
-                                .font(.caption.weight(.bold))
+                                .font(.community(.caption, weight: .bold))
                             StepsWidget(explainsWhenEmpty: true)
                                 .environment(ActivityStore(health: .previewNeverAsked()))
                             Text("Asked already, still nothing")
-                                .font(.caption.weight(.bold))
+                                .font(.community(.caption, weight: .bold))
                             StepsWidget(explainsWhenEmpty: true)
                                 .environment(ActivityStore(health: .previewAlreadyAsked()))
                         }
@@ -231,7 +231,7 @@ private struct AppRootView: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 16) {
                             Text("With shoes added")
-                                .font(.caption.weight(.bold))
+                                .font(.community(.caption, weight: .bold))
                             GearPickerRow(
                                 workoutType: .running,
                                 destination: .pending(.constant(nil)),
@@ -240,7 +240,7 @@ private struct AppRootView: View {
                                 accent: WorkoutVisualPhase.prepare.accent
                             )
                             Text("With none")
-                                .font(.caption.weight(.bold))
+                                .font(.community(.caption, weight: .bold))
                             // An empty store, not a sport without gear:
                             // swimming takes neither shoes nor a bike, so the
                             // row correctly drew nothing and told me nothing.
@@ -298,7 +298,7 @@ private struct AppRootView: View {
                 // whether this build can reach the Keychain, which no amount
                 // of reading the code settles.
                 Text(KeychainTokenStore.diagnose())
-                    .font(.footnote.monospaced())
+                    .font(.community(.footnote).monospaced())
                     .multilineTextAlignment(.center)
                     .padding(24)
             } else if let name = ProcessInfo.processInfo.environment["REPBASE_LEGAL_PREVIEW"],
@@ -426,6 +426,7 @@ private struct AppRootView: View {
             authenticatedContent
 #endif
         }
+        .font(.community(.body))
         .task {
 #if DEBUG
             // A preview run must not touch the network or the stores; without
@@ -502,7 +503,7 @@ private struct AppRootView: View {
                 VStack(spacing: 14) {
                     ProgressView()
                     Text("Connecting to Repbase...")
-                        .font(.subheadline)
+                        .font(.community(.subheadline))
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)

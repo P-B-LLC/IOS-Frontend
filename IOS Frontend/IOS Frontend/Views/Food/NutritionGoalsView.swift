@@ -43,14 +43,14 @@ struct NutritionGoalsView: View {
 
                     VStack(alignment: .leading, spacing: 6) {
                         Text("DAILY TARGETS")
-                            .font(.system(size: 10, weight: .bold))
+                            .font(.community(size: 10, weight: .bold))
                             .tracking(1.25)
                             .foregroundStyle(timeOfDay.accent)
                         Text("Set your baseline.")
-                            .font(.system(size: 34, weight: .bold, design: .rounded))
+                            .font(.community(size: 34, weight: .bold, design: .rounded))
                             .tracking(-0.8)
                         Text("These values power progress across Home and Food.")
-                            .font(.subheadline)
+                            .font(.community(.subheadline))
                             .foregroundStyle(timeOfDay.canvasSecondaryText)
                     }
 
@@ -58,7 +58,7 @@ struct NutritionGoalsView: View {
 
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Macro balance")
-                            .font(.headline)
+                            .font(.community(.headline))
 
                         HStack(alignment: .top, spacing: 18) {
                             macroTarget(
@@ -82,7 +82,7 @@ struct NutritionGoalsView: View {
                         }
 
                         Text("Tap any value to edit your daily target.")
-                            .font(.caption)
+                            .font(.community(.caption))
                             .foregroundStyle(timeOfDay.canvasSecondaryText)
                     }
 
@@ -102,18 +102,18 @@ struct NutritionGoalsView: View {
     private func calorieTarget(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("TOTAL CALORIES")
-                .font(.system(size: 10, weight: .bold))
+                .font(.community(size: 10, weight: .bold))
                 .tracking(1)
                 .foregroundStyle(timeOfDay.canvasSecondaryText)
 
             HStack(alignment: .firstTextBaseline) {
                 TextField("0", text: $calories)
                     .keyboardType(.decimalPad)
-                    .font(.system(size: 42, weight: .bold, design: .rounded))
+                    .font(.community(size: 42, weight: .bold, design: .rounded))
                     .minimumScaleFactor(0.7)
                 Spacer()
                 Text("kcal per day")
-                    .font(.subheadline.weight(.medium))
+                    .font(.community(.subheadline, weight: .medium))
                     .foregroundStyle(timeOfDay.accent)
             }
         }
@@ -129,17 +129,17 @@ struct NutritionGoalsView: View {
     ) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
-                .font(.system(size: 9, weight: .bold))
+                .font(.community(size: 9, weight: .bold))
                 .tracking(0.8)
                 .foregroundStyle(.secondary)
 
             HStack(alignment: .firstTextBaseline, spacing: 3) {
                 TextField("0", text: text)
                     .keyboardType(.decimalPad)
-                    .font(.title2.weight(.semibold))
+                    .font(.community(.title2, weight: .semibold))
                     .minimumScaleFactor(0.7)
                 Text("g")
-                    .font(.caption)
+                    .font(.community(.caption))
                     .foregroundStyle(.secondary)
             }
 

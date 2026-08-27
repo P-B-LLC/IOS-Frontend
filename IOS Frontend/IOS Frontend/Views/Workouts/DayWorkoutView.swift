@@ -170,12 +170,12 @@ struct DayWorkoutView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 Text("\(day.shortName.uppercased()) · \(store.dateLabel(for: day).uppercased())")
-                    .font(.caption.weight(.bold))
+                    .font(.community(.caption, weight: .bold))
                     .foregroundStyle(headerColor)
 
                 if store.today == day {
                     Text("TODAY")
-                        .font(.caption2.weight(.bold))
+                        .font(.community(.caption2, weight: .bold))
                         .foregroundStyle(headerColor)
                 }
             }
@@ -183,12 +183,12 @@ struct DayWorkoutView: View {
             HStack(alignment: .top, spacing: 12) {
                 VStack(alignment: .leading, spacing: 5) {
                     Text(headerTitle)
-                        .font(.title2.weight(.bold))
+                        .font(.community(.title2, weight: .bold))
                         .foregroundStyle(visualPhase.primaryText)
                         .fixedSize(horizontal: false, vertical: true)
 
                     Text(headerDescription)
-                        .font(.caption)
+                        .font(.community(.caption))
                         .foregroundStyle(visualPhase.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -242,9 +242,9 @@ struct DayWorkoutView: View {
         HStack(spacing: 5) {
             Text(title)
             Image(systemName: "arrow.up.right")
-                .font(.caption2.weight(.bold))
+                .font(.community(.caption2, weight: .bold))
         }
-        .font(.caption.weight(.semibold))
+        .font(.community(.caption, weight: .semibold))
         .foregroundStyle(visualPhase.surfaceStart)
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
@@ -258,13 +258,13 @@ struct DayWorkoutView: View {
         VStack(alignment: .leading, spacing: 22) {
             VStack(alignment: .leading, spacing: 5) {
                 Text("NO WORKOUT PLANNED")
-                    .font(.caption2.weight(.bold))
+                    .font(.community(.caption2, weight: .bold))
                     .tracking(1.1)
                     .foregroundStyle(WorkoutVisualPhase.prepare.accent)
                 Text("Choose how you want to train.")
-                    .font(.title2.weight(.bold))
+                    .font(.community(.title2, weight: .bold))
                 Text("Reuse a plan to keep its history, or start fresh.")
-                    .font(.subheadline)
+                    .font(.community(.subheadline))
                     .foregroundStyle(.secondary)
             }
 
@@ -278,7 +278,7 @@ struct DayWorkoutView: View {
                 editor = .build(setupDraft)
             } label: {
                 Label("Build Custom Workout", systemImage: "plus")
-                    .font(.headline)
+                    .font(.community(.headline))
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(WorkoutPrimaryButtonStyle(phase: .prepare))
@@ -286,7 +286,7 @@ struct DayWorkoutView: View {
 
             if !canSaveSetup && store.isEditingEnabled {
                 Text("Choose a previously used workout or give this one a name to continue.")
-                    .font(.caption)
+                    .font(.community(.caption))
                     .foregroundStyle(.secondary)
             }
 
@@ -296,12 +296,12 @@ struct DayWorkoutView: View {
                     Image(systemName: "exclamationmark.circle.fill")
                         .foregroundStyle(Color.orange)
                     Text(reason)
-                        .font(.caption)
+                        .font(.community(.caption))
                         .foregroundStyle(.secondary)
                     Spacer(minLength: 0)
                     if store.repositoryIsMissing {
                         Button("Retry") { store.retryPersistence() }
-                            .font(.caption.weight(.semibold))
+                            .font(.community(.caption, weight: .semibold))
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -356,15 +356,15 @@ struct DayWorkoutView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline, spacing: 9) {
                 Image(systemName: "circle.dashed")
-                    .font(.subheadline.weight(.bold))
+                    .font(.community(.subheadline, weight: .bold))
                     .foregroundStyle(phase.accent)
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Nothing logged yet")
-                        .font(.subheadline.weight(.semibold))
+                        .font(.community(.subheadline, weight: .semibold))
                         .foregroundStyle(phase.primaryText)
                     Text("Typing a weight or reps does not save the set. Tap Log at the end of a row to record it.")
-                        .font(.caption)
+                        .font(.community(.caption))
                         .foregroundStyle(phase.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -375,7 +375,7 @@ struct DayWorkoutView: View {
                     isConfirmingEmptyFinish = false
                     finishSession()
                 }
-                .font(.caption.weight(.bold))
+                .font(.community(.caption, weight: .bold))
                 .foregroundStyle(Color.red)
 
                 Button("Keep logging") {
@@ -383,7 +383,7 @@ struct DayWorkoutView: View {
                         isConfirmingEmptyFinish = false
                     }
                 }
-                .font(.caption.weight(.semibold))
+                .font(.community(.caption, weight: .semibold))
                 .foregroundStyle(phase.secondaryText)
 
                 Spacer(minLength: 0)
@@ -416,10 +416,10 @@ struct DayWorkoutView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 7) {
                 Image(systemName: "trophy.fill")
-                    .font(.caption)
+                    .font(.community(.caption))
                     .foregroundStyle(phase.accent)
                 Text("^[\(store.personalRecords.count) new personal record](inflect: true)")
-                    .font(.caption2.weight(.bold))
+                    .font(.community(.caption2, weight: .bold))
                     .foregroundStyle(phase.accent)
                 Spacer(minLength: 0)
             }
@@ -446,7 +446,7 @@ struct DayWorkoutView: View {
 
         return VStack(alignment: .leading, spacing: 12) {
             Text("ROUTE SUMMARY")
-                .font(.caption2.weight(.bold))
+                .font(.community(.caption2, weight: .bold))
                 .foregroundStyle(phase.secondaryText)
 
             HStack(spacing: 10) {
@@ -478,7 +478,7 @@ struct DayWorkoutView: View {
             if !summary.splits.isEmpty {
                 VStack(alignment: .leading, spacing: 7) {
                     Text("SPLITS")
-                        .font(.caption2.weight(.bold))
+                        .font(.community(.caption2, weight: .bold))
                         .foregroundStyle(phase.secondaryText)
 
                     ForEach(summary.splits) { split in
@@ -491,7 +491,7 @@ struct DayWorkoutView: View {
                     }
 
                     Text("Each bar is one mile — shorter is faster. Even bars mean an evenly paced effort.")
-                        .font(.caption2)
+                        .font(.community(.caption2))
                         .foregroundStyle(phase.secondaryText)
                 }
             }
@@ -508,22 +508,22 @@ struct DayWorkoutView: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Text("Workout Plan")
-                        .font(.headline)
+                        .font(.community(.headline))
                     Spacer()
                     Button("Edit") {
                         editor = .edit(workout)
                     }
-                    .font(.subheadline.weight(.semibold))
+                    .font(.community(.subheadline, weight: .semibold))
                     .disabled(!store.isEditingEnabled)
                 }
 
                 if workout.exercises.isEmpty {
                     VStack(spacing: 10) {
                         Image(systemName: "plus.circle")
-                            .font(.title2)
+                            .font(.community(.title2))
                             .foregroundStyle(WorkoutVisualPhase.prepare.accent)
                         Text("Add at least one exercise before starting.")
-                            .font(.subheadline)
+                            .font(.community(.subheadline))
                             .foregroundStyle(.secondary)
                         Button("Add Exercises") {
                             editor = .edit(workout)
@@ -548,22 +548,22 @@ struct DayWorkoutView: View {
             if let machine = workout.cardioMachine {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("AFTER YOUR LAST SET")
-                        .font(.caption2.weight(.bold))
+                        .font(.community(.caption2, weight: .bold))
                         .tracking(0.8)
                         .foregroundStyle(WorkoutVisualPhase.prepare.accent)
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Cardio finisher")
-                            .font(.caption.weight(.semibold))
+                            .font(.community(.caption, weight: .semibold))
                             .foregroundStyle(.secondary)
                         Text(machine.title)
-                            .font(.headline)
+                            .font(.community(.headline))
                         Text(
                             workout.cardioTargetMinutes
                                 .map { "\($0) min target · start it after your last set" }
                                 ?? "Start it after your last set"
                         )
-                        .font(.caption2)
+                        .font(.community(.caption2))
                         .foregroundStyle(.secondary)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -589,7 +589,7 @@ struct DayWorkoutView: View {
                 store.removeWorkout(workout, on: day)
             } label: {
                 Text("Remove \(workout.name)")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.community(.subheadline, weight: .semibold))
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.plain)
@@ -610,16 +610,16 @@ struct DayWorkoutView: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(workout.type.sessionTitle)
-                    .font(.title3.weight(.bold))
+                    .font(.community(.title3, weight: .bold))
                 Text(planDescription(for: workout))
-                    .font(.subheadline)
+                    .font(.community(.subheadline))
                     .foregroundStyle(.secondary)
             }
 
             Spacer(minLength: 8)
 
             Image(systemName: "arrow.up.right")
-                .font(.subheadline.weight(.semibold))
+                .font(.community(.subheadline, weight: .semibold))
                 .foregroundStyle(WorkoutVisualPhase.prepare.accent)
         }
         .padding(.vertical, 14)
@@ -648,13 +648,13 @@ struct DayWorkoutView: View {
         ) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Repeat every \(day.fullName)")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.community(.subheadline, weight: .semibold))
                 Text(
                     workout.repeatsWeekly
                         ? "Keep this workout on future \(day.fullName)s."
                         : "Planned for this \(day.fullName) only."
                 )
-                .font(.caption2)
+                .font(.community(.caption2))
                 .foregroundStyle(.secondary)
             }
         }
@@ -689,9 +689,9 @@ struct DayWorkoutView: View {
                 HStack(spacing: 8) {
                     Text("Add another workout")
                     Image(systemName: "arrow.right")
-                        .font(.caption.weight(.semibold))
+                        .font(.community(.caption, weight: .semibold))
                 }
-                .font(.subheadline.weight(.semibold))
+                .font(.community(.subheadline, weight: .semibold))
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.plain)
@@ -712,14 +712,14 @@ struct DayWorkoutView: View {
                 .foregroundStyle(WorkoutVisualPhase.prepare.accent)
             VStack(alignment: .leading, spacing: 1) {
                 Text("^[\(plannedWorkouts.count) workout](inflect: true) planned")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.community(.subheadline, weight: .semibold))
                 Text("Swipe to see the rest")
-                    .font(.caption2)
+                    .font(.community(.caption2))
                     .foregroundStyle(.secondary)
             }
             Spacer(minLength: 0)
             Image(systemName: "chevron.compact.left")
-                .font(.title3.weight(.semibold))
+                .font(.community(.title3, weight: .semibold))
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -738,7 +738,7 @@ struct DayWorkoutView: View {
                 ForEach(Array(plannedWorkouts.enumerated()), id: \.element.id) { index, planned in
                     VStack(alignment: .leading, spacing: 14) {
                         Text("WORKOUT \(index + 1) OF \(plannedWorkouts.count)")
-                            .font(.caption2.weight(.bold))
+                            .font(.community(.caption2, weight: .bold))
                             .foregroundStyle(.secondary)
                         plannedWorkout(planned)
                         Spacer(minLength: 0)
@@ -775,7 +775,7 @@ struct DayWorkoutView: View {
         if let otherSession = store.activeSession, otherSession.day != day {
             VStack(alignment: .leading, spacing: 10) {
                 Label("A workout is already active on \(otherSession.day.fullName).", systemImage: "bolt.fill")
-                    .font(.footnote)
+                    .font(.community(.footnote))
                     .foregroundStyle(Color.orange)
                 NavigationLink {
                     DayWorkoutView(day: otherSession.day)
@@ -783,9 +783,9 @@ struct DayWorkoutView: View {
                     HStack(spacing: 8) {
                         Text("Continue \(otherSession.workoutName)")
                         Image(systemName: "arrow.right")
-                            .font(.subheadline.weight(.semibold))
+                            .font(.community(.subheadline, weight: .semibold))
                     }
-                        .font(.headline)
+                        .font(.community(.headline))
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
@@ -824,9 +824,9 @@ struct DayWorkoutView: View {
                 HStack(spacing: 8) {
                     Text("Start session")
                     Image(systemName: "arrow.right")
-                        .font(.subheadline.weight(.semibold))
+                        .font(.community(.subheadline, weight: .semibold))
                 }
-                    .font(.headline)
+                    .font(.community(.headline))
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(WorkoutPrimaryButtonStyle(phase: .prepare))
@@ -841,17 +841,17 @@ struct DayWorkoutView: View {
                     Image(systemName: "exclamationmark.circle.fill")
                         .foregroundStyle(Color.orange)
                     Text(reason)
-                        .font(.caption)
+                        .font(.community(.caption))
                         .foregroundStyle(.secondary)
                     Spacer(minLength: 0)
                     if store.repositoryIsMissing {
                         Button("Retry") { store.retryPersistence() }
-                            .font(.caption.weight(.semibold))
+                            .font(.community(.caption, weight: .semibold))
                     }
                 }
             } else if !workout.tracksDistance && workout.exercises.isEmpty {
                 Text("Add at least one exercise to start this workout.")
-                    .font(.caption)
+                    .font(.community(.caption))
                     .foregroundStyle(.secondary)
             }
         }
@@ -866,7 +866,7 @@ struct DayWorkoutView: View {
                     Task { await store.discardSession(on: day) }
                 } label: {
                     Image(systemName: "xmark")
-                        .font(.subheadline.weight(.bold))
+                        .font(.community(.subheadline, weight: .bold))
                         .frame(width: 34, height: 34)
                 }
                 .buttonStyle(.bordered)
@@ -882,7 +882,7 @@ struct DayWorkoutView: View {
                             .fill(phase.onAccent)
                             .frame(width: 7, height: 7)
                         Text("LIVE  \(elapsedTime(from: session.startedAt, to: context.date))")
-                            .font(.caption2.weight(.bold).monospacedDigit())
+                            .font(.community(.caption2, weight: .bold).monospacedDigit())
                     }
                     .foregroundStyle(phase.onAccent)
                     .padding(.horizontal, 12)
@@ -896,7 +896,7 @@ struct DayWorkoutView: View {
                 Button("Finish") {
                     endSession()
                 }
-                .font(.caption.weight(.bold))
+                .font(.community(.caption, weight: .bold))
                 .buttonStyle(.borderedProminent)
                 .tint(phase.primaryText)
                 .foregroundStyle(phase.heroStart)
@@ -907,10 +907,10 @@ struct DayWorkoutView: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 3) {
                         Label("SESSION IN PROGRESS", systemImage: "bolt.fill")
-                            .font(.caption.weight(.bold))
+                            .font(.community(.caption, weight: .bold))
                             .foregroundStyle(RepbasePalette.sand)
                         Text(session.workoutName)
-                            .font(.largeTitle.weight(.bold))
+                            .font(.community(.largeTitle, weight: .bold))
                             .foregroundStyle(phase.primaryText)
                             .lineLimit(2)
                             .minimumScaleFactor(0.72)
@@ -918,7 +918,7 @@ struct DayWorkoutView: View {
                     Spacer()
                     TimelineView(.periodic(from: .now, by: 1)) { context in
                         Text(elapsedTime(from: session.startedAt, to: context.date))
-                            .font(.headline.monospacedDigit())
+                            .font(.community(.headline).monospacedDigit())
                             .foregroundStyle(phase.accent)
                     }
                 }
@@ -934,7 +934,7 @@ struct DayWorkoutView: View {
                         ? "Timing your \(session.workoutType.title.lowercased()) — end the session to save it."
                         : "\(session.loggedSetCount) of \(session.totalSetCount) sets logged"
                 )
-                .font(.caption)
+                .font(.community(.caption))
                 .foregroundStyle(RepbasePalette.sand)
             }
             .padding(18)
@@ -972,14 +972,14 @@ struct DayWorkoutView: View {
             if !session.tracksDistance {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Log Your Sets")
-                        .font(.title3.weight(.bold))
+                        .font(.community(.title3, weight: .bold))
                         .foregroundStyle(phase.primaryText)
                     Text(
                         store.previousSets.isEmpty
                             ? "Enter reps and optional weight, then tap Log to save each set."
                             : "Your last performance is already here. Enter today's values, then tap Log."
                     )
-                        .font(.subheadline)
+                        .font(.community(.subheadline))
                         .foregroundStyle(phase.secondaryText)
                 }
 
@@ -998,9 +998,9 @@ struct DayWorkoutView: View {
                 HStack(spacing: 8) {
                     Text("Finish workout")
                     Image(systemName: "arrow.right")
-                        .font(.subheadline.weight(.semibold))
+                        .font(.community(.subheadline, weight: .semibold))
                 }
-                .font(.headline)
+                .font(.community(.headline))
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(WorkoutPrimaryButtonStyle(phase: phase))
@@ -1010,7 +1010,7 @@ struct DayWorkoutView: View {
                 Task { await store.discardSession(on: day) }
             } label: {
                 Text("Discard session")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.community(.subheadline, weight: .semibold))
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.plain)
@@ -1032,7 +1032,7 @@ struct DayWorkoutView: View {
         return VStack(alignment: .leading, spacing: 18) {
             HStack {
                 Image(systemName: "checkmark")
-                    .font(.subheadline.weight(.bold))
+                    .font(.community(.subheadline, weight: .bold))
                     .foregroundStyle(phase.accent)
                     .frame(width: 40, height: 40)
                     .background(RepbasePalette.paper, in: Circle())
@@ -1044,7 +1044,7 @@ struct DayWorkoutView: View {
                         .fill(phase.accent)
                         .frame(width: 7, height: 7)
                     Text("COMPLETE")
-                        .font(.caption2.weight(.bold))
+                        .font(.community(.caption2, weight: .bold))
                 }
                 .foregroundStyle(phase.accent)
                 .padding(.horizontal, 18)
@@ -1064,35 +1064,35 @@ struct DayWorkoutView: View {
                     .accessibilityLabel("Share result")
 
                     Button("Done") { completedSession = nil }
-                        .font(.caption.weight(.bold))
+                        .font(.community(.caption, weight: .bold))
                         .buttonStyle(.plain)
                 }
             }
 
             VStack(alignment: .leading, spacing: 5) {
                 Text("WORKOUT COMPLETE")
-                    .font(.caption2.weight(.bold))
+                    .font(.community(.caption2, weight: .bold))
                     .tracking(1.0)
                     .foregroundStyle(phase.accent)
                 Text("You showed up.")
-                    .font(.largeTitle.weight(.bold))
+                    .font(.community(.largeTitle, weight: .bold))
                 Text("\(session.workoutName) · \(dayDate.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))")
-                    .font(.subheadline)
+                    .font(.community(.subheadline))
                     .foregroundStyle(phase.secondaryText)
             }
 
             VStack(alignment: .leading, spacing: 11) {
                 Text(session.workoutName.uppercased())
-                    .font(.caption2.weight(.bold))
+                    .font(.community(.caption2, weight: .bold))
                     .foregroundStyle(Color(hex: 0xB7DCCB))
 
                 HStack(alignment: .lastTextBaseline, spacing: 8) {
                     Text(elapsedTime(from: session.startedAt, to: completed.endedAt))
-                        .font(.system(.largeTitle, design: .default, weight: .bold))
+                        .font(.community(.largeTitle, weight: .bold))
                         .monospacedDigit()
                         .foregroundStyle(Color.white)
                     Text("WORKOUT TIME")
-                        .font(.subheadline.weight(.bold))
+                        .font(.community(.subheadline, weight: .bold))
                         .foregroundStyle(Color(hex: 0xB7DCCB))
                 }
 
@@ -1143,7 +1143,7 @@ struct DayWorkoutView: View {
 
             HStack {
                 Text("SESSION HIGHLIGHTS")
-                    .font(.caption2.weight(.bold))
+                    .font(.community(.caption2, weight: .bold))
                     .foregroundStyle(phase.secondaryText)
                 Spacer()
             }
@@ -1224,10 +1224,10 @@ struct DayWorkoutView: View {
             } label: {
                 HStack {
                     Text("Share result")
-                        .font(.subheadline.weight(.semibold))
+                        .font(.community(.subheadline, weight: .semibold))
                     Spacer()
                     Image(systemName: "chevron.right")
-                        .font(.caption.weight(.semibold))
+                        .font(.community(.caption, weight: .semibold))
                         .foregroundStyle(phase.secondaryText)
                 }
                 .padding(.vertical, 10)
@@ -1249,7 +1249,7 @@ struct DayWorkoutView: View {
             if !session.exercises.isEmpty {
                 VStack(alignment: .leading, spacing: 0) {
                     Text("WHAT YOU LOGGED")
-                        .font(.caption2.weight(.bold))
+                        .font(.community(.caption2, weight: .bold))
                         .tracking(1)
                         .foregroundStyle(RepbasePalette.caramel)
                         .padding(.bottom, 8)
@@ -1257,14 +1257,14 @@ struct DayWorkoutView: View {
                     ForEach(Array(session.exercises.enumerated()), id: \.element.id) { index, exercise in
                         HStack(spacing: 12) {
                             VStack(alignment: .leading, spacing: 3) {
-                                Text(exercise.name).font(.headline)
+                                Text(exercise.name).font(.community(.headline))
                                 Text(loggedSetSummary(exercise))
-                                    .font(.caption)
+                                    .font(.community(.caption))
                                     .foregroundStyle(phase.secondaryText)
                             }
                             Spacer()
                             Image(systemName: "checkmark")
-                                .font(.caption.weight(.bold))
+                                .font(.community(.caption, weight: .bold))
                                 .foregroundStyle(phase.accent)
                         }
                         .padding(.vertical, 13)
@@ -1295,10 +1295,10 @@ struct DayWorkoutView: View {
     private func summaryDatum(_ title: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(title)
-                .font(.caption2.weight(.bold))
+                .font(.community(.caption2, weight: .bold))
                 .foregroundStyle(Color(hex: 0xB7DCCB))
             Text(value)
-                .font(.caption.weight(.bold))
+                .font(.community(.caption, weight: .bold))
                 .foregroundStyle(Color.white)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -1338,20 +1338,20 @@ struct DayWorkoutView: View {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(dayDate.formatted(.dateTime.month(.wide).day()).uppercased())
-                        .font(.caption2.weight(.bold))
+                        .font(.community(.caption2, weight: .bold))
                         .tracking(1)
                         .foregroundStyle(RepbasePalette.caramel)
                     Text(workout.name)
-                        .font(.title.weight(.bold))
+                        .font(.community(.title, weight: .bold))
                     if let overview {
                         Text("Completed at \(overview.performedAt.formatted(date: .omitted, time: .shortened))")
-                            .font(.caption)
+                            .font(.community(.caption))
                             .foregroundStyle(.secondary)
                     }
                 }
                 Spacer()
                 Label("DONE", systemImage: "checkmark")
-                    .font(.caption2.weight(.bold))
+                    .font(.community(.caption2, weight: .bold))
                     .foregroundStyle(WorkoutVisualPhase.recover.accent)
                     .padding(.horizontal, 12)
                     .frame(height: 28)
@@ -1361,10 +1361,10 @@ struct DayWorkoutView: View {
             if let overview {
                 VStack(alignment: .leading, spacing: 14) {
                     Text("RECORDED SESSION")
-                        .font(.caption2.weight(.bold))
+                        .font(.community(.caption2, weight: .bold))
                         .foregroundStyle(Color(hex: 0xB7DCCB))
                     Text(workout.name)
-                        .font(.title2.weight(.bold))
+                        .font(.community(.title2, weight: .bold))
                         .foregroundStyle(Color.white)
                     Divider().overlay(Color(hex: 0x648474))
                     HStack(spacing: 0) {
@@ -1377,7 +1377,7 @@ struct DayWorkoutView: View {
                 .background(WorkoutVisualPhase.recover.accent, in: RoundedRectangle(cornerRadius: 25, style: .continuous))
 
                 Text("EXERCISES LOGGED")
-                    .font(.caption2.weight(.bold))
+                    .font(.community(.caption2, weight: .bold))
                     .tracking(1)
                     .foregroundStyle(WorkoutVisualPhase.recover.accent)
                 sessionOverviewLines(overview)
@@ -1398,7 +1398,7 @@ struct DayWorkoutView: View {
                     }
                 } label: {
                     Label("Repeat workout", systemImage: "arrow.counterclockwise")
-                        .font(.caption.weight(.bold))
+                        .font(.community(.caption, weight: .bold))
                 }
                 .buttonStyle(RepbasePrimaryButtonStyle())
                 .disabled(store.isSaving || !store.isEditingEnabled)
@@ -1411,7 +1411,7 @@ struct DayWorkoutView: View {
                         )
                     }
                 }
-                .font(.caption.weight(.bold))
+                .font(.community(.caption, weight: .bold))
                 .buttonStyle(.bordered)
                 .disabled(store.isSaving || !store.isEditingEnabled)
 
@@ -1427,12 +1427,12 @@ struct DayWorkoutView: View {
     private func historyMetric(_ value: String, _ title: String) -> some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(value)
-                .font(.headline.monospacedDigit())
+                .font(.community(.headline).monospacedDigit())
                 .foregroundStyle(Color.white)
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
             Text(title)
-                .font(.caption2.weight(.bold))
+                .font(.community(.caption2, weight: .bold))
                 .foregroundStyle(Color(hex: 0xB7DCCB))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -1454,14 +1454,14 @@ struct DayWorkoutView: View {
             ForEach(Array(overview.lines.enumerated()), id: \.element.id) { index, line in
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(String(format: "%02d", index + 1))
-                        .font(.caption.weight(.bold).monospacedDigit())
+                        .font(.community(.caption, weight: .bold).monospacedDigit())
                         .foregroundStyle(RepbasePalette.caramel)
                         .frame(width: 26, alignment: .leading)
                     Text(line.name)
-                        .font(.subheadline.weight(.semibold))
+                        .font(.community(.subheadline, weight: .semibold))
                     Spacer(minLength: 8)
                     Text(line.setsText)
-                        .font(.caption.monospacedDigit())
+                        .font(.community(.caption).monospacedDigit())
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.trailing)
                 }
@@ -1480,10 +1480,10 @@ struct DayWorkoutView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(exercise.name)
-                        .font(.headline)
+                        .font(.community(.headline))
                         .foregroundStyle(phase.primaryText)
                     Text("\(exercise.sets.filter(\.isLogged).count) of \(exercise.sets.count) logged")
-                        .font(.caption)
+                        .font(.community(.caption))
                         .foregroundStyle(phase.secondaryText)
                 }
                 Spacer()
@@ -1499,7 +1499,7 @@ struct DayWorkoutView: View {
                 Text("LOG")
                     .frame(width: 62)
             }
-            .font(.caption2.weight(.bold))
+            .font(.community(.caption2, weight: .bold))
             .foregroundStyle(phase.secondaryText)
 
             ForEach(exercise.sets) { set in
@@ -1518,7 +1518,7 @@ struct DayWorkoutView: View {
 
                 HStack(spacing: 8) {
                     Text("\(set.setNumber)")
-                        .font(.subheadline.weight(.semibold).monospacedDigit())
+                        .font(.community(.subheadline, weight: .semibold).monospacedDigit())
                         .foregroundStyle(phase.primaryText)
                         .frame(width: 34)
 
@@ -1582,7 +1582,7 @@ struct DayWorkoutView: View {
                                 Text("Log")
                             }
                         }
-                        .font(.caption2.weight(.bold))
+                        .font(.community(.caption2, weight: .bold))
                         .foregroundStyle(set.isLogged ? phase.onAccent : phase.primaryText)
                         .frame(width: 62, height: 38)
                         .background(
@@ -1632,7 +1632,7 @@ struct DayWorkoutView: View {
                         } == true
                 )
             }
-            .font(.subheadline.weight(.semibold))
+            .font(.community(.subheadline, weight: .semibold))
         }
         .padding(16)
         .background(
@@ -1705,10 +1705,10 @@ struct DayWorkoutView: View {
     private func persistenceErrorCard(_ message: String) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Label(message, systemImage: "exclamationmark.triangle.fill")
-                .font(.footnote)
+                .font(.community(.footnote))
                 .foregroundStyle(Color.orange)
             Button("Retry") { store.retryPersistence() }
-                .font(.footnote.weight(.semibold))
+                .font(.community(.footnote, weight: .semibold))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
@@ -1728,13 +1728,13 @@ private struct RecoveryMetricCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
             Text(title)
-                .font(.caption2.weight(.bold))
+                .font(.community(.caption2, weight: .bold))
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
             Text(value)
-                .font(.title3.weight(.bold).monospacedDigit())
+                .font(.community(.title3, weight: .bold).monospacedDigit())
             Text(detail)
-                .font(.caption2)
+                .font(.community(.caption2))
                 .lineLimit(1)
                 .minimumScaleFactor(0.65)
         }
@@ -1754,17 +1754,17 @@ private struct PersonalRecordRow: View {
     var body: some View {
         HStack(spacing: 11) {
             Image(systemName: record.isFirstEver ? "star.fill" : "arrow.up.right")
-                .font(.caption.weight(.bold))
+                .font(.community(.caption, weight: .bold))
                 .foregroundStyle(phase.accent)
                 .frame(width: 28, height: 28)
                 .background(phase.accent.opacity(0.16), in: Circle())
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(record.exerciseName)
-                    .font(.subheadline.weight(.semibold))
+                    .font(.community(.subheadline, weight: .semibold))
                     .lineLimit(1)
                 Text("\(record.kind.title) · \(record.detailText)")
-                    .font(.caption2)
+                    .font(.community(.caption2))
                     .foregroundStyle(phase.secondaryText)
                     .lineLimit(1)
             }
@@ -1773,10 +1773,10 @@ private struct PersonalRecordRow: View {
 
             VStack(alignment: .trailing, spacing: 2) {
                 Text(record.valueText)
-                    .font(.subheadline.weight(.bold).monospacedDigit())
+                    .font(.community(.subheadline, weight: .bold).monospacedDigit())
                 if let improvement = record.improvementText {
                     Text(improvement)
-                        .font(.caption2.weight(.bold))
+                        .font(.community(.caption2, weight: .bold))
                         .foregroundStyle(phase.accent)
                 }
             }
@@ -1799,7 +1799,7 @@ private struct SplitRow: View {
     var body: some View {
         HStack(spacing: 9) {
             Text(label)
-                .font(.caption2.weight(.semibold).monospacedDigit())
+                .font(.community(.caption2, weight: .semibold).monospacedDigit())
                 .foregroundStyle(secondary)
                 .frame(width: 54, alignment: .leading)
 
@@ -1814,7 +1814,7 @@ private struct SplitRow: View {
             .frame(height: 8)
 
             Text(SessionRouteSummary.durationText(split.seconds))
-                .font(.caption.weight(.bold).monospacedDigit())
+                .font(.community(.caption, weight: .bold).monospacedDigit())
                 .frame(width: 48, alignment: .trailing)
         }
         .accessibilityElement(children: .combine)
@@ -1850,14 +1850,14 @@ private struct RouteStat: View {
     var body: some View {
         HStack(spacing: 7) {
             Image(systemName: icon)
-                .font(.caption)
+                .font(.community(.caption))
                 .foregroundStyle(WorkoutVisualPhase.recover.accent)
             VStack(alignment: .leading, spacing: 1) {
                 Text(title)
-                    .font(.caption2)
+                    .font(.community(.caption2))
                     .foregroundStyle(.secondary)
                 Text(value)
-                    .font(.subheadline.weight(.bold).monospacedDigit())
+                    .font(.community(.subheadline, weight: .bold).monospacedDigit())
             }
         }
         .padding(.horizontal, 11)
@@ -1876,9 +1876,9 @@ private struct PlanStat: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text("\(value)")
-                .font(.title3.weight(.bold))
+                .font(.community(.title3, weight: .bold))
             Text(label)
-                .font(.caption)
+                .font(.community(.caption))
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -1894,15 +1894,15 @@ private struct PlannedExerciseRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Text("\(position)")
-                .font(.subheadline.weight(.bold).monospacedDigit())
+                .font(.community(.subheadline, weight: .bold).monospacedDigit())
                 .foregroundStyle(WorkoutVisualPhase.prepare.accent)
                 .frame(width: 34, height: 34)
                 .background(WorkoutVisualPhase.prepare.accent.opacity(0.12), in: Circle())
             Text(exercise.name)
-                .font(.body.weight(.medium))
+                .font(.community(.body, weight: .medium))
             Spacer()
             Text("\(exercise.sets) set\(exercise.sets == 1 ? "" : "s")")
-                .font(.subheadline)
+                .font(.community(.subheadline))
                 .foregroundStyle(.secondary)
         }
         .padding(.vertical, 8)

@@ -27,13 +27,13 @@ struct LegalDocumentView: View {
                         VStack(alignment: .leading, spacing: 9) {
                             if let heading = section.heading {
                                 Text(heading)
-                                    .font(.system(size: 11, weight: .bold))
+                                    .font(.community(size: 11, weight: .bold))
                                     .tracking(1.2)
                                     .foregroundStyle(timeOfDay.accent)
                             }
                             if !section.text.isEmpty {
                                 Text(section.text)
-                                    .font(.subheadline)
+                                    .font(.community(.subheadline))
                                     .foregroundStyle(timeOfDay.secondaryText)
                                     .fixedSize(horizontal: false, vertical: true)
                                     .lineSpacing(3)

@@ -207,7 +207,7 @@ struct RepbaseSculptedIconButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.body.weight(.semibold))
+            .font(.community(.body, weight: .semibold))
             .foregroundStyle(timeOfDay.primaryText)
             .frame(width: 44, height: 44)
             .repbaseDepthSurface(cornerRadius: 12)
@@ -225,7 +225,7 @@ struct RepbaseAccentCapsuleButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.subheadline.weight(.bold))
+            .font(.community(.subheadline, weight: .bold))
             .foregroundStyle(timeOfDay.onPrimaryAction)
             .padding(.horizontal, 15)
             .frame(height: 42)

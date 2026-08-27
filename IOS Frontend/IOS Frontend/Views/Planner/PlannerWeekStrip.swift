@@ -45,10 +45,10 @@ struct PlannerWeekStrip: View {
         } label: {
             HStack(spacing: 5) {
                 Text(store.selectedDate.formatted(.dateTime.month(.wide).year()))
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.community(size: 14, weight: .bold))
                     .foregroundStyle(timeOfDay.primaryText)
                 Image(systemName: isMonthShown ? "chevron.up" : "chevron.down")
-                    .font(.system(size: 10, weight: .bold))
+                    .font(.community(size: 10, weight: .bold))
                     .foregroundStyle(timeOfDay.secondaryText)
                 Spacer(minLength: 0)
             }
@@ -77,12 +77,12 @@ struct PlannerWeekStrip: View {
         } label: {
             VStack(spacing: 4) {
                 Text(date.formatted(.dateTime.weekday(.abbreviated)))
-                    .font(.system(size: 9, weight: .semibold))
+                    .font(.community(size: 9, weight: .semibold))
                     .foregroundStyle(
                         isSelected ? Color(hex: 0xFFFFFF).opacity(0.85) : timeOfDay.secondaryText
                     )
                 Text("\(calendar.component(.day, from: date))")
-                    .font(.system(size: 15, weight: .bold))
+                    .font(.community(size: 15, weight: .bold))
                     .foregroundStyle(isSelected ? Color(hex: 0xFFFFFF) : timeOfDay.primaryText)
                 marker(for: date, isSelected: isSelected)
             }
@@ -152,7 +152,7 @@ struct PlannerWeekStrip: View {
     ) -> some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 11, weight: .semibold))
+                .font(.community(size: 11, weight: .semibold))
                 .foregroundStyle(isSelected ? Color(hex: 0xFFFFFF) : timeOfDay.secondaryText)
                 .padding(.horizontal, 11)
                 .padding(.vertical, 6)
@@ -173,7 +173,7 @@ struct PlannerWeekStrip: View {
         return VStack(alignment: .leading, spacing: 5) {
             HStack {
                 Text("PROGRESS")
-                    .font(.system(size: 9, weight: .bold))
+                    .font(.community(size: 9, weight: .bold))
                     .foregroundStyle(timeOfDay.secondaryText)
                 Spacer()
                 Text(
@@ -181,7 +181,7 @@ struct PlannerWeekStrip: View {
                         ? "No tasks"
                         : "\(counts.done) of \(counts.total)"
                 )
-                .font(.system(size: 9, weight: .bold))
+                .font(.community(size: 9, weight: .bold))
                 .foregroundStyle(timeOfDay.secondaryText)
             }
 

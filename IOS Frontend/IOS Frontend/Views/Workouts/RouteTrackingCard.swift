@@ -22,13 +22,13 @@ private struct LiveStat: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(title)
-                .font(.caption2.weight(.bold))
+                .font(.community(.caption2, weight: .bold))
                 .foregroundStyle(secondary)
             HStack(alignment: .firstTextBaseline, spacing: 3) {
                 Text(value)
-                    .font(.title3.weight(.bold).monospacedDigit())
+                    .font(.community(.title3, weight: .bold).monospacedDigit())
                 Text(unit)
-                    .font(.caption2)
+                    .font(.community(.caption2))
                     .foregroundStyle(secondary)
             }
         }
@@ -60,7 +60,7 @@ struct RouteTrackingCard: View {
 
             if let error = tracker.trackingError {
                 Label(error, systemImage: "exclamationmark.triangle.fill")
-                    .font(.caption)
+                    .font(.community(.caption))
                     .foregroundStyle(Color.orange)
             }
         }
@@ -70,14 +70,14 @@ struct RouteTrackingCard: View {
     private var header: some View {
         HStack(spacing: 8) {
             Image(systemName: "location.fill")
-                .font(.subheadline)
+                .font(.community(.subheadline))
                 .foregroundStyle(tracker.isTracking ? phase.accent : phase.secondaryText)
             Text("Route")
-                .font(.subheadline.weight(.semibold))
+                .font(.community(.subheadline, weight: .semibold))
             Spacer()
             if tracker.isTracking {
                 Text("TRACKING")
-                    .font(.caption2.weight(.bold))
+                    .font(.community(.caption2, weight: .bold))
                     .foregroundStyle(phase.accent)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
@@ -90,15 +90,15 @@ struct RouteTrackingCard: View {
     private var permissionPrompt: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Track this \(workoutType.title.lowercased())?")
-                .font(.callout.weight(.semibold))
+                .font(.community(.callout, weight: .semibold))
             Text("Repbase can map your route and measure your distance and pace while this session runs. Location is only used during a session you start.")
-                .font(.caption)
+                .font(.community(.caption))
                 .foregroundStyle(.secondary)
             Button {
                 tracker.requestPermission()
             } label: {
                 Label("Allow Location Access", systemImage: "location")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.community(.subheadline, weight: .semibold))
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(WorkoutPrimaryButtonStyle(phase: phase))
@@ -112,15 +112,15 @@ struct RouteTrackingCard: View {
                     ? "Location access is restricted on this device."
                     : "Location access is off."
             )
-            .font(.callout.weight(.semibold))
+            .font(.community(.callout, weight: .semibold))
             Text("Your \(workoutType.title.lowercased()) is still timed and saved — it just won't have a map or a measured distance.")
-                .font(.caption)
+                .font(.community(.caption))
                 .foregroundStyle(.secondary)
             if tracker.permission == .denied,
                let settings = URL(string: UIApplication.openSettingsURLString) {
                 Link(destination: settings) {
                     Label("Open Settings", systemImage: "gear")
-                        .font(.subheadline.weight(.semibold))
+                        .font(.community(.subheadline, weight: .semibold))
                 }
             }
         }
@@ -188,7 +188,7 @@ struct RouteTrackingCard: View {
             HStack(spacing: 8) {
                 ProgressView()
                 Text("Waiting for a GPS fix…")
-                    .font(.caption)
+                    .font(.community(.caption))
                     .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -222,7 +222,7 @@ struct RouteTrackingCard: View {
             liveReadout
 
             Text("Live estimate · your distance, pace, climb and splits are measured from the full track when you end the session")
-                .font(.caption2)
+                .font(.community(.caption2))
                 .foregroundStyle(.secondary)
         }
     }

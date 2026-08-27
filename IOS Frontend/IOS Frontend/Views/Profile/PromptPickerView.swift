@@ -39,13 +39,13 @@ struct PromptPickerView: View {
 
                     if let error = store.errorMessage {
                         Label(error, systemImage: "exclamationmark.triangle.fill")
-                            .font(.footnote)
+                            .font(.community(.footnote))
                             .foregroundStyle(.red)
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
                     Text("Prompts show on your profile under About. Tap one to rewrite it, or swap it for a different prompt.")
-                        .font(.caption)
+                        .font(.community(.caption))
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.top, 4)
@@ -82,7 +82,7 @@ struct PromptPickerView: View {
         HStack(alignment: .center, spacing: 12) {
             Button { dismiss() } label: {
                 Image(systemName: "xmark")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.community(size: 16, weight: .semibold))
                     .frame(width: 40, height: 40)
                     .contentShape(Rectangle())
             }
@@ -91,11 +91,11 @@ struct PromptPickerView: View {
 
             VStack(alignment: .leading, spacing: 1) {
                 Text("PROMPTS")
-                    .font(.system(size: 9, weight: .bold))
+                    .font(.community(size: 9, weight: .bold))
                     .tracking(1.3)
                     .foregroundStyle(timeOfDay.accent)
                 Text("Tell others about you")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.community(.subheadline, weight: .semibold))
                     .foregroundStyle(timeOfDay.canvasPrimaryText)
             }
 
@@ -113,16 +113,16 @@ struct PromptPickerView: View {
                     VStack(alignment: .leading, spacing: 7) {
                         HStack {
                             Text(answered.questionLabel.uppercased())
-                                .font(.system(size: 9, weight: .bold))
+                                .font(.community(size: 9, weight: .bold))
                                 .tracking(1.1)
                                 .foregroundStyle(timeOfDay.accent)
                             Spacer(minLength: 8)
                             Image(systemName: "pencil")
-                                .font(.caption2.weight(.bold))
+                                .font(.community(.caption2, weight: .bold))
                                 .foregroundStyle(timeOfDay.secondaryText)
                         }
                         Text(answered.answer)
-                            .font(.system(size: 17, weight: .medium))
+                            .font(.community(size: 17, weight: .medium))
                             .foregroundStyle(timeOfDay.primaryText)
                             .multilineTextAlignment(.leading)
                             .fixedSize(horizontal: false, vertical: true)
@@ -151,10 +151,10 @@ struct PromptPickerView: View {
                 } label: {
                     HStack(spacing: 10) {
                         Image(systemName: "plus.circle.fill")
-                            .font(.system(size: 19, weight: .semibold))
+                            .font(.community(size: 19, weight: .semibold))
                             .foregroundStyle(timeOfDay.accent)
                         Text("Select a prompt")
-                            .font(.system(size: 17, weight: .semibold))
+                            .font(.community(size: 17, weight: .semibold))
                             .foregroundStyle(timeOfDay.canvasSecondaryText)
                         Spacer(minLength: 0)
                     }
@@ -239,10 +239,10 @@ struct PromptLibraryView: View {
                             } header: {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(category.rawValue)
-                                        .font(.system(size: 19, weight: .bold))
+                                        .font(.community(size: 19, weight: .bold))
                                         .foregroundStyle(timeOfDay.canvasPrimaryText)
                                     Text(category.blurb)
-                                        .font(.caption)
+                                        .font(.community(.caption))
                                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -253,7 +253,7 @@ struct PromptLibraryView: View {
 
                     if PromptCategory.allCases.allSatisfy({ matching($0).isEmpty }) {
                         Text("No prompt matches “\(search)”.")
-                            .font(.subheadline)
+                            .font(.community(.subheadline))
                             .foregroundStyle(timeOfDay.canvasSecondaryText)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 40)
@@ -289,23 +289,23 @@ struct PromptLibraryView: View {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(question.label)
-                        .font(.subheadline.weight(.semibold))
+                        .font(.community(.subheadline, weight: .semibold))
                         .foregroundStyle(timeOfDay.primaryText)
                         .multilineTextAlignment(.leading)
                     Text(question.hint)
-                        .font(.caption2)
+                        .font(.community(.caption2))
                         .foregroundStyle(timeOfDay.secondaryText)
                         .lineLimit(1)
                 }
                 Spacer(minLength: 8)
                 if isTaken {
                     Text("ADDED")
-                        .font(.system(size: 8, weight: .bold))
+                        .font(.community(size: 8, weight: .bold))
                         .tracking(0.6)
                         .foregroundStyle(timeOfDay.accent)
                 } else {
                     Image(systemName: "chevron.right")
-                        .font(.caption2.weight(.bold))
+                        .font(.community(.caption2, weight: .bold))
                         .foregroundStyle(timeOfDay.secondaryText)
                 }
             }
@@ -352,13 +352,13 @@ struct PromptAnswerView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     Text(question.label)
-                        .font(.system(size: 27, weight: .bold))
+                        .font(.community(size: 27, weight: .bold))
                         .foregroundStyle(timeOfDay.canvasPrimaryText)
                         .fixedSize(horizontal: false, vertical: true)
 
                     TextField(question.hint, text: $draft, axis: .vertical)
                         .focused($isWriting)
-                        .font(.system(size: 17))
+                        .font(.community(size: 17))
                         .lineLimit(4...10)
                         .padding(14)
                         .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 16))
@@ -372,7 +372,7 @@ struct PromptAnswerView: View {
 
                     HStack {
                         Text("\(draft.count)/\(limit)")
-                            .font(.caption2)
+                            .font(.community(.caption2))
                             .foregroundStyle(
                                 draft.count > limit ? .red : timeOfDay.canvasSecondaryText
                             )
@@ -381,13 +381,13 @@ struct PromptAnswerView: View {
                             Button("Remove from profile", role: .destructive) {
                                 remove()
                             }
-                            .font(.caption.weight(.semibold))
+                            .font(.community(.caption, weight: .semibold))
                         }
                     }
 
                     if let error = store.errorMessage {
                         Label(error, systemImage: "exclamationmark.triangle.fill")
-                            .font(.footnote)
+                            .font(.community(.footnote))
                             .foregroundStyle(.red)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -397,7 +397,7 @@ struct PromptAnswerView: View {
                             if store.isSaving { ProgressView().tint(.white) }
                             Text(existing == nil ? "Add to profile" : "Save answer")
                         }
-                        .font(.headline.weight(.bold))
+                        .font(.community(.headline, weight: .bold))
                         .foregroundStyle(Color.white)
                         .frame(maxWidth: .infinity, minHeight: 54)
                         .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 17))

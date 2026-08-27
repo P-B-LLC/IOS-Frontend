@@ -53,17 +53,17 @@ private struct GuidedHomeHeader: View {
         HStack(alignment: .center, spacing: 16) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(greeting.uppercased())
-                    .font(.caption2.weight(.bold))
+                    .font(.community(.caption2, weight: .bold))
                     .tracking(0.7)
                     .foregroundStyle(timeOfDay.accent)
 
                 Text(firstName)
-                    .font(.largeTitle.weight(.bold))
+                    .font(.community(.largeTitle, weight: .bold))
                     .tracking(-0.6)
                     .foregroundStyle(timeOfDay.canvasPrimaryText)
 
                 Text(date.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))
-                    .font(.footnote)
+                    .font(.community(.footnote))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
             }
 
@@ -71,11 +71,11 @@ private struct GuidedHomeHeader: View {
 
             VStack(alignment: .trailing, spacing: 4) {
                 Text(stepCount)
-                    .font(.title2.weight(.bold))
+                    .font(.community(.title2, weight: .bold))
                     .foregroundStyle(timeOfDay.canvasPrimaryText)
 
                 Text(stepCaption)
-                    .font(.caption2.weight(.bold))
+                    .font(.community(.caption2, weight: .bold))
                     .tracking(0.35)
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
 
@@ -151,9 +151,9 @@ private struct GuidedHomeWeekStrip: View {
                 } label: {
                     VStack(spacing: 2) {
                         Text(day.formatted(.dateTime.weekday(.narrow)).uppercased())
-                            .font(.caption2.weight(.bold))
+                            .font(.community(.caption2, weight: .bold))
                         Text(day.formatted(.dateTime.day()))
-                            .font(.subheadline.weight(.bold))
+                            .font(.community(.subheadline, weight: .bold))
 
                         Circle()
                             .fill(dayHasContent(day) ? dotColor(for: day) : .clear)
@@ -241,16 +241,16 @@ private struct GuidedDayFlow: View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 0) {
                 Text("YOUR DAY")
-                    .font(.caption2.weight(.bold))
+                    .font(.community(.caption2, weight: .bold))
                     .tracking(0.55)
                     .foregroundStyle(timeOfDay.accent)
                 Text("Follow what matters.")
-                    .font(.title3.weight(.bold))
+                    .font(.community(.title3, weight: .bold))
                     .foregroundStyle(timeOfDay.primaryText)
             }
             Spacer()
             Text(selectedDate.formatted(.dateTime.weekday(.abbreviated).day()))
-                .font(.caption.weight(.bold))
+                .font(.community(.caption, weight: .bold))
                 .foregroundStyle(timeOfDay.secondaryText)
                 .textCase(.uppercase)
         }
@@ -267,11 +267,11 @@ private struct GuidedDayFlow: View {
                 HStack(spacing: 12) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(nextEntryEyebrow(entry))
-                            .font(.caption2.weight(.bold))
+                            .font(.community(.caption2, weight: .bold))
                             .tracking(0.35)
                             .foregroundStyle(timeOfDay.accent)
                         Text(entry.title)
-                            .font(.headline)
+                            .font(.community(.headline))
                             .foregroundStyle(timeOfDay.primaryText)
                             .lineLimit(1)
                     }
@@ -288,10 +288,10 @@ private struct GuidedDayFlow: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("UP NEXT")
-                        .font(.caption2.weight(.bold))
+                        .font(.community(.caption2, weight: .bold))
                         .foregroundStyle(timeOfDay.accent)
                     Text("Your schedule is clear")
-                        .font(.headline)
+                        .font(.community(.headline))
                         .foregroundStyle(timeOfDay.primaryText)
                 }
                 Spacer()
@@ -314,18 +314,18 @@ private struct GuidedDayFlow: View {
                 stageLabel("01 · TRAINING", color: timeOfDay.accent)
                 Spacer()
                 Text(workout?.type.title.uppercased() ?? "WORKOUT")
-                    .font(.caption2.weight(.bold))
+                    .font(.community(.caption2, weight: .bold))
                     .foregroundStyle(timeOfDay.secondaryText)
             }
 
             HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(workout?.name ?? "Plan your workout")
-                        .font(.title2.weight(.bold))
+                        .font(.community(.title2, weight: .bold))
                         .foregroundStyle(timeOfDay.primaryText)
                         .lineLimit(1)
                     Text(workoutMetadata)
-                        .font(.footnote)
+                        .font(.community(.footnote))
                         .foregroundStyle(timeOfDay.secondaryText)
                 }
                 Spacer(minLength: 8)
@@ -337,7 +337,7 @@ private struct GuidedDayFlow: View {
                         Text(workout == nil ? "Plan" : (activeSession == nil ? "Start" : "Continue"))
                         Image(systemName: "arrow.right")
                     }
-                    .font(.subheadline.weight(.bold))
+                    .font(.community(.subheadline, weight: .bold))
                     .foregroundStyle(timeOfDay.onPrimaryAction)
                     .padding(.horizontal, 16)
                     .frame(minHeight: 44)
@@ -350,7 +350,7 @@ private struct GuidedDayFlow: View {
             }
 
             Text(workoutDetail)
-                .font(.caption)
+                .font(.community(.caption))
                 .foregroundStyle(timeOfDay.secondaryText)
                 .lineLimit(1)
         }
@@ -379,10 +379,10 @@ private struct GuidedDayFlow: View {
 
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text(total.calories.nutritionText)
-                    .font(.title2.weight(.bold))
+                    .font(.community(.title2, weight: .bold))
                     .foregroundStyle(timeOfDay.primaryText)
                 Text("of \(goals.calories.nutritionText) kcal")
-                    .font(.footnote)
+                    .font(.community(.footnote))
                     .foregroundStyle(timeOfDay.secondaryText)
             }
 
@@ -420,10 +420,10 @@ private struct GuidedDayFlow: View {
                 VStack(alignment: .leading, spacing: 3) {
                     stageLabel("03 · FINISH", color: timeOfDay.secondaryText)
                     Text(taskSummary)
-                        .font(.headline)
+                        .font(.community(.headline))
                         .foregroundStyle(timeOfDay.primaryText)
                     Text(taskDetail)
-                        .font(.caption)
+                        .font(.community(.caption))
                         .foregroundStyle(timeOfDay.secondaryText)
                         .lineLimit(1)
                 }
@@ -462,9 +462,9 @@ private struct GuidedDayFlow: View {
     private func momentumMetric(value: String, label: String) -> some View {
         VStack(spacing: 3) {
             Text(value)
-                .font(.title3.weight(.bold))
+                .font(.community(.title3, weight: .bold))
             Text(label)
-                .font(.system(size: 8, weight: .bold))
+                .font(.community(size: 8, weight: .bold))
                 .tracking(0.25)
         }
         .foregroundStyle(Color.white)
@@ -480,7 +480,7 @@ private struct GuidedDayFlow: View {
 
     private func stageLabel(_ text: String, color: Color) -> some View {
         Text(text)
-            .font(.caption2.weight(.bold))
+            .font(.community(.caption2, weight: .bold))
             .tracking(0.45)
             .foregroundStyle(color)
     }
@@ -490,7 +490,7 @@ private struct GuidedDayFlow: View {
             Text(text)
             Image(systemName: "arrow.right")
         }
-        .font(.caption.weight(.semibold))
+        .font(.community(.caption, weight: .semibold))
         .foregroundStyle(color ?? timeOfDay.accent)
     }
 
@@ -608,10 +608,10 @@ private struct GuidedMacroMetric: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label)
-                .font(.system(size: 8, weight: .bold))
+                .font(.community(size: 8, weight: .bold))
                 .foregroundStyle(timeOfDay.secondaryText)
             Text("\(value.nutritionText) / \(goal.nutritionText)g")
-                .font(.caption.weight(.semibold))
+                .font(.community(.caption, weight: .semibold))
                 .foregroundStyle(timeOfDay.primaryText)
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
@@ -665,12 +665,12 @@ private struct GuidedHomeErrors: View {
         HStack(spacing: 10) {
             Image(systemName: "exclamationmark.triangle")
             Text(message)
-                .font(.footnote)
+                .font(.community(.footnote))
                 .lineLimit(2)
             Spacer(minLength: 4)
             if let retry {
                 Button("Retry", action: retry)
-                    .font(.footnote.weight(.bold))
+                    .font(.community(.footnote, weight: .bold))
             }
         }
         .padding(12)

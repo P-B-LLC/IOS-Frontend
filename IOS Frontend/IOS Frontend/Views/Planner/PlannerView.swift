@@ -35,7 +35,7 @@ struct PlannerView: View {
                         if showsBackButton {
                             Button { dismiss() } label: {
                                 Image(systemName: "chevron.left")
-                                    .font(.system(size: 17, weight: .semibold))
+                                    .font(.community(size: 17, weight: .semibold))
                                     .frame(width: 40, height: 40)
                                     .contentShape(Rectangle())
                             }
@@ -47,11 +47,11 @@ struct PlannerView: View {
 
                         VStack(alignment: .leading, spacing: 8) {
                             Text("CALENDAR")
-                                .font(.system(size: 10, weight: .bold))
+                                .font(.community(size: 10, weight: .bold))
                                 .tracking(1.2)
                                 .foregroundStyle(timeOfDay.accent)
                             Text(store.visibleMonth.formatted(.dateTime.month(.wide).year()))
-                                .font(.system(size: 32, weight: .bold))
+                                .font(.community(size: 32, weight: .bold))
                                 .tracking(-0.7)
                                 .foregroundStyle(timeOfDay.canvasPrimaryText)
                         }
@@ -152,7 +152,7 @@ struct PlannerView: View {
             editor = .create(kind, store.selectedDate)
         } label: {
             Label(title, systemImage: systemImage)
-                .font(.system(size: 13, weight: .semibold))
+                .font(.community(size: 13, weight: .semibold))
                 .foregroundStyle(RepbasePalette.paper)
                 .frame(maxWidth: .infinity, minHeight: 44)
                 .background(
@@ -171,17 +171,17 @@ struct PlannerView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text(store.selectedDate.formatted(.dateTime.weekday(.wide)))
-                    .font(.title3.weight(.semibold))
+                    .font(.community(.title3, weight: .semibold))
                     .foregroundStyle(timeOfDay.canvasPrimaryText)
                 Text(store.selectedDate.formatted(.dateTime.month(.abbreviated).day()))
-                    .font(.footnote)
+                    .font(.community(.footnote))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
                 Spacer(minLength: 0)
             }
 
             if let reason = store.editingBlockedReason {
                 Text(reason)
-                    .font(.caption2)
+                    .font(.community(.caption2))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -224,9 +224,9 @@ struct PlannerView: View {
 
     private func dayMetric(_ value: String, _ label: String, tint: Color) -> some View {
         VStack(alignment: .leading, spacing: 3) {
-            Text(value).font(.subheadline.weight(.bold)).foregroundStyle(tint)
+            Text(value).font(.community(.subheadline, weight: .bold)).foregroundStyle(tint)
             Text(label)
-                .font(.system(size: 9, weight: .bold))
+                .font(.community(size: 9, weight: .bold))
                 .tracking(0.7)
                 .foregroundStyle(Color.secondary)
         }
@@ -243,7 +243,7 @@ struct PlannerView: View {
         VStack(spacing: 8) {
             if filtered.isEmpty {
                 Text("Nothing in this category today.")
-                    .font(.footnote)
+                    .font(.community(.footnote))
                     .foregroundStyle(timeOfDay.secondaryText)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 24)
@@ -313,7 +313,7 @@ struct PlannerView: View {
                 }
                 if store.upcomingEvents.count > 6 {
                     Text("+\(store.upcomingEvents.count - 6) more")
-                        .font(.caption2)
+                        .font(.community(.caption2))
                         .foregroundStyle(timeOfDay.secondaryText)
                         .padding(.leading, 4)
                 }
@@ -332,11 +332,11 @@ struct PlannerView: View {
                 .fill(tint)
                 .frame(width: 6, height: 6)
             Text(title)
-                .font(.system(size: 15, weight: .bold))
+                .font(.community(size: 15, weight: .bold))
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
             Spacer(minLength: 0)
             Text(detail)
-                .font(.system(size: 10, weight: .semibold))
+                .font(.community(size: 10, weight: .semibold))
                 .foregroundStyle(timeOfDay.canvasSecondaryText)
         }
         .padding(.top, 4)
@@ -348,10 +348,10 @@ struct PlannerView: View {
                 .foregroundStyle(timeOfDay.accent)
             VStack(alignment: .leading, spacing: 7) {
                 Text(message)
-                    .font(.footnote)
+                    .font(.community(.footnote))
                     .foregroundStyle(timeOfDay.primaryText)
                 Button("Retry") { store.retry() }
-                    .font(.footnote.weight(.semibold))
+                    .font(.community(.footnote, weight: .semibold))
             }
             Spacer(minLength: 0)
         }
@@ -385,7 +385,7 @@ struct PlannerEntryRow: View {
                 // in one frame, which a fade straight afterwards turns into a
                 // blink.
                 Text(entry.title)
-                    .font(.subheadline.weight(.semibold))
+                    .font(.community(.subheadline, weight: .semibold))
                     .foregroundStyle(timeOfDay.primaryText)
                     .lineLimit(1)
                     .overlay {
@@ -410,13 +410,13 @@ struct PlannerEntryRow: View {
                     // point is that it outranks them.
                     if let badge = entry.priority.badge {
                         Text(badge)
-                            .font(.system(size: 8, weight: .bold))
+                            .font(.community(size: 8, weight: .bold))
                             .tracking(0.5)
                             .foregroundStyle(entry.priority.tint)
                             .fixedSize()
                     }
                     Text(subtitle)
-                        .font(.system(size: 9, weight: .medium))
+                        .font(.community(size: 9, weight: .medium))
                         .foregroundStyle(timeOfDay.secondaryText)
                         .lineLimit(1)
                 }
@@ -465,7 +465,7 @@ struct PlannerEntryRow: View {
 
     private var categoryBadge: some View {
         Image(systemName: entry.category.symbolName)
-            .font(.system(size: 13, weight: .semibold))
+            .font(.community(size: 13, weight: .semibold))
             .foregroundStyle(entry.category.tint)
             .frame(width: 34, height: 34)
             .background(entry.category.tint.opacity(0.14), in: RoundedRectangle(cornerRadius: 11))
@@ -481,7 +481,7 @@ struct PlannerEntryRow: View {
             }
         } label: {
             Image(systemName: entry.isComplete ? "checkmark.circle.fill" : "circle")
-                .font(.title3)
+                .font(.community(.title3))
                 .foregroundStyle(
                     entry.isComplete
                         ? Color(hex: 0x3FAE6A)

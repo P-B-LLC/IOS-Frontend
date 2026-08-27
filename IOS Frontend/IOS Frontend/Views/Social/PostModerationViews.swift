@@ -29,12 +29,12 @@ struct PostReportSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     Text("What is wrong with this post?")
-                        .font(.system(size: 22, weight: .bold))
+                        .font(.community(size: 22, weight: .bold))
                         .foregroundStyle(timeOfDay.primaryText)
                         .fixedSize(horizontal: false, vertical: true)
 
                     Text("Only moderators see a report. \(post.displayed.author.displayName) is not told who sent it.")
-                        .font(.footnote)
+                        .font(.community(.footnote))
                         .foregroundStyle(timeOfDay.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
 
@@ -49,7 +49,7 @@ struct PostReportSheet: View {
                                             ? "largecircle.fill.circle"
                                             : "circle"
                                     )
-                                    .font(.system(size: 17))
+                                    .font(.community(size: 17))
                                     .foregroundStyle(
                                         reason == option
                                             ? timeOfDay.accent
@@ -57,7 +57,7 @@ struct PostReportSheet: View {
                                     )
 
                                     Text(option.title)
-                                        .font(.subheadline)
+                                        .font(.community(.subheadline))
                                         .foregroundStyle(timeOfDay.primaryText)
                                         .multilineTextAlignment(.leading)
                                         .fixedSize(horizontal: false, vertical: true)
@@ -76,7 +76,7 @@ struct PostReportSheet: View {
                     if reason?.invitesDetail == true {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("What happened?")
-                                .font(.caption.weight(.semibold))
+                                .font(.community(.caption, weight: .semibold))
                                 .foregroundStyle(timeOfDay.secondaryText)
                             TextField(
                                 "Anything that helps a moderator",
@@ -147,7 +147,7 @@ struct BlockedAccountsView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     Text("Blocked people cannot see your posts, and you cannot see theirs. Blocking also removes any following between you, which lifting a block does not put back.")
-                        .font(.footnote)
+                        .font(.community(.footnote))
                         .foregroundStyle(timeOfDay.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
 
@@ -169,11 +169,11 @@ struct BlockedAccountsView: View {
 
                                 VStack(alignment: .leading, spacing: 1) {
                                     Text(blocked.person.displayName)
-                                        .font(.subheadline.weight(.semibold))
+                                        .font(.community(.subheadline, weight: .semibold))
                                         .foregroundStyle(timeOfDay.primaryText)
                                         .lineLimit(1)
                                     Text("@\(blocked.person.username)")
-                                        .font(.caption2)
+                                        .font(.community(.caption2))
                                         .foregroundStyle(timeOfDay.secondaryText)
                                         .lineLimit(1)
                                 }
@@ -183,7 +183,7 @@ struct BlockedAccountsView: View {
                                 Button("Unblock") {
                                     Task { await store.unblock(blocked) }
                                 }
-                                .font(.caption.weight(.semibold))
+                                .font(.community(.caption, weight: .semibold))
                                 .buttonStyle(.plain)
                                 .foregroundStyle(timeOfDay.accent)
                             }
@@ -223,7 +223,7 @@ struct BlockedAccountsView: View {
         ZStack {
             Circle().fill(timeOfDay.accent.opacity(0.18))
             Text(person.initials)
-                .font(.system(size: 12, weight: .bold))
+                .font(.community(size: 12, weight: .bold))
                 .foregroundStyle(timeOfDay.accent)
         }
     }

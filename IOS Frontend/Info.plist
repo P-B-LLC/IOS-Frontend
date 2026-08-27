@@ -20,6 +20,12 @@
 	<array>
 		<string>location</string>
 	</array>
+	<key>UIAppFonts</key>
+	<array>
+		<string>NunitoSans-Regular.ttf</string>
+		<string>NunitoSans-SemiBold.ttf</string>
+		<string>NunitoSans-Bold.ttf</string>
+	</array>
 	<!--
 	  The barometric altimeter is read through CoreMotion, which requires
 	  this description. It measures height change far more precisely than

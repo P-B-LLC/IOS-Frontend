@@ -45,8 +45,8 @@ struct RepbaseOnboardingView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
                         VStack(alignment: .leading, spacing: 7) {
-                            Text(title).font(.title.weight(.bold)).tracking(-0.5)
-                            Text(subtitle).font(.subheadline).foregroundStyle(.secondary)
+                            Text(title).font(.community(.title, weight: .bold)).tracking(-0.5)
+                            Text(subtitle).font(.community(.subheadline)).foregroundStyle(.secondary)
                         }
                         .padding(.bottom, 30)
                         content(timeOfDay)
@@ -76,12 +76,12 @@ struct RepbaseOnboardingView: View {
                 .opacity(step == .intent ? 0 : 1)
                 Spacer()
                 Button("Skip", action: completion)
-                    .font(.caption.weight(.semibold))
+                    .font(.community(.caption, weight: .semibold))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
             }
             VStack(alignment: .leading, spacing: 13) {
                 Text("STEP \(step.rawValue + 1) OF 4")
-                    .font(.caption2.weight(.bold)).tracking(1.1)
+                    .font(.community(.caption2, weight: .bold)).tracking(1.1)
                     .foregroundStyle(RepbasePalette.caramel)
                 GeometryReader { proxy in
                     ZStack(alignment: .leading) {
@@ -105,7 +105,7 @@ struct RepbaseOnboardingView: View {
                 ForEach(Intent.allCases) { item in
                     intentRow(item, timeOfDay)
                 }
-                Text("\(intents.count) selected").font(.caption2).foregroundStyle(.secondary)
+                Text("\(intents.count) selected").font(.community(.caption2)).foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity).padding(.top, 4)
             }
         case .rhythm:
@@ -131,9 +131,9 @@ struct RepbaseOnboardingView: View {
                 section("YOUR REPBASE") { summaryGrid(timeOfDay) }
                 section("YOUR RHYTHM") {
                     VStack(alignment: .leading, spacing: 5) {
-                        Text("\(weeklyTarget) workouts each week").font(.headline)
+                        Text("\(weeklyTarget) workouts each week").font(.community(.headline))
                         Text("Realistic, repeatable, and adjustable anytime.")
-                            .font(.caption).foregroundStyle(.secondary)
+                            .font(.community(.caption)).foregroundStyle(.secondary)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading).padding(18)
                     .overlay { RoundedRectangle(cornerRadius: 20).strokeBorder(timeOfDay.border) }
@@ -168,12 +168,12 @@ struct RepbaseOnboardingView: View {
         return Button { toggle(item, in: &intents) } label: {
             HStack(spacing: 14) {
                 Image(systemName: selected ? "checkmark" : "plus")
-                    .font(.caption.weight(.bold)).frame(width: 26, height: 26)
+                    .font(.community(.caption, weight: .bold)).frame(width: 26, height: 26)
                     .background(selected ? Color.white.opacity(0.13) : timeOfDay.selectorSurface,
                                 in: RoundedRectangle(cornerRadius: 9))
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(item.rawValue).font(.headline)
-                    Text(item.detail).font(.caption2).opacity(0.76)
+                    Text(item.rawValue).font(.community(.headline))
+                    Text(item.detail).font(.community(.caption2)).opacity(0.76)
                 }
                 Spacer()
             }
@@ -225,8 +225,8 @@ struct RepbaseOnboardingView: View {
 
     private func compactLabel(_ title: String, _ selected: Bool, _ timeOfDay: HomeTimeOfDay) -> some View {
         HStack(spacing: 9) {
-            Image(systemName: selected ? "checkmark" : "plus").font(.caption2.weight(.bold))
-            Text(title).font(.caption.weight(.semibold)).lineLimit(2)
+            Image(systemName: selected ? "checkmark" : "plus").font(.community(.caption2, weight: .bold))
+            Text(title).font(.community(.caption, weight: .semibold)).lineLimit(2)
             Spacer(minLength: 0)
         }
         .foregroundStyle(selected ? Color.white : timeOfDay.canvasPrimaryText)
@@ -240,14 +240,14 @@ struct RepbaseOnboardingView: View {
     private func targetRow(_ timeOfDay: HomeTimeOfDay) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 5) {
-                Text("Workouts each week").font(.headline)
-                Text("Start realistic. Change it anytime.").font(.caption).foregroundStyle(.secondary)
+                Text("Workouts each week").font(.community(.headline))
+                Text("Start realistic. Change it anytime.").font(.community(.caption)).foregroundStyle(.secondary)
             }
             Spacer()
             targetButton("minus", background: timeOfDay.selectorSurface, foreground: timeOfDay.primaryText) {
                 weeklyTarget = max(1, weeklyTarget - 1)
             }
-            Text("\(weeklyTarget)").font(.title3.weight(.bold)).frame(width: 26)
+            Text("\(weeklyTarget)").font(.community(.title3, weight: .bold)).frame(width: 26)
             targetButton("plus", background: RepbaseDesign.ink, foreground: RepbaseDesign.onInk) {
                 weeklyTarget = min(7, weeklyTarget + 1)
             }
@@ -271,13 +271,13 @@ struct RepbaseOnboardingView: View {
 
     private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(title).font(.caption2.weight(.bold)).tracking(1).foregroundStyle(RepbasePalette.sage)
+            Text(title).font(.community(.caption2, weight: .bold)).tracking(1).foregroundStyle(RepbasePalette.sage)
             content()
         }
     }
 
     private func helper(_ text: String) -> some View {
-        Text(text).font(.caption).foregroundStyle(.secondary)
+        Text(text).font(.community(.caption)).foregroundStyle(.secondary)
     }
 
     private var title: String {

@@ -120,18 +120,18 @@ struct RepbaseScreenHeader: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
             Text(eyebrow.uppercased())
-                .font(.system(size: 10, weight: .bold))
+                .font(.community(size: 10, weight: .bold))
                 .tracking(1.5)
                 .foregroundStyle(timeOfDay.accent)
 
             Text(title)
-                .font(.system(size: 30, weight: .bold))
+                .font(.community(size: 30, weight: .bold))
                 .tracking(-0.65)
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
 
             if let detail {
                 Text(detail)
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.community(size: 14, weight: .medium))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -150,12 +150,12 @@ struct RepbaseSectionHeader: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 10) {
             Text(title)
-                .font(.system(size: 16, weight: .bold))
+                .font(.community(size: 16, weight: .bold))
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
             Spacer(minLength: 0)
             if let detail {
                 Text(detail)
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(.community(size: 11, weight: .semibold))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
             }
         }
@@ -168,7 +168,7 @@ struct RepbaseQuietButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.subheadline.weight(.semibold))
+            .font(.community(.subheadline, weight: .semibold))
             .foregroundStyle(timeOfDay.primaryText)
             .padding(.horizontal, 14)
             .frame(minHeight: 42)
@@ -187,7 +187,7 @@ struct RepbasePrimaryButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.subheadline.weight(.bold))
+            .font(.community(.subheadline, weight: .bold))
             .foregroundStyle(RepbaseDesign.onInk)
             .padding(.horizontal, 16)
             .frame(minHeight: 44)

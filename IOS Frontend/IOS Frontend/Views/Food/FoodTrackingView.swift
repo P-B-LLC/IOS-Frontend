@@ -82,18 +82,18 @@ struct FoodTrackingView: View {
         HStack(alignment: .bottom, spacing: 14) {
             VStack(alignment: .leading, spacing: 3) {
                 Text(Calendar.current.isDateInToday(selectedDate) ? "TODAY" : "NUTRITION")
-                    .font(.system(size: 9, weight: .bold))
+                    .font(.community(size: 9, weight: .bold))
                     .tracking(1.35)
                     .foregroundStyle(timeOfDay.accent)
                 Button { isShowingMonth = true } label: {
                     Text(selectedDate.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))
-                        .font(.title.weight(.bold))
+                        .font(.community(.title, weight: .bold))
                         .tracking(-0.5)
                         .foregroundStyle(timeOfDay.canvasPrimaryText)
                 }
                 .buttonStyle(.plain)
                 Text("Build the day one meal at a time.")
-                    .font(.subheadline)
+                    .font(.community(.subheadline))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
             }
 
@@ -104,7 +104,7 @@ struct FoodTrackingView: View {
             } label: {
                 Text("Goals")
             }
-            .font(.caption.weight(.semibold))
+            .font(.community(.caption, weight: .semibold))
             .buttonStyle(.plain)
             .foregroundStyle(timeOfDay.accent)
             .accessibilityHint("Change calorie and macronutrient targets")
@@ -120,10 +120,10 @@ struct FoodTrackingView: View {
                 } label: {
                     HStack(spacing: 4) {
                         Text(selectedDateTitle)
-                            .font(.subheadline.weight(.bold))
+                            .font(.community(.subheadline, weight: .bold))
                         if Calendar.current.isDateInToday(selectedDate) {
                             Image(systemName: "location.fill")
-                                .font(.caption2)
+                                .font(.community(.caption2))
                         }
                     }
                 }
@@ -146,9 +146,9 @@ struct FoodTrackingView: View {
                 } label: {
                     HStack(spacing: 4) {
                         Text(weekRangeTitle)
-                            .font(.subheadline.weight(.medium))
+                            .font(.community(.subheadline, weight: .medium))
                         Image(systemName: "calendar")
-                            .font(.caption2.weight(.bold))
+                            .font(.community(.caption2, weight: .bold))
                     }
                     .foregroundStyle(timeOfDay.secondaryText)
                     .frame(minWidth: 90)
@@ -173,11 +173,11 @@ struct FoodTrackingView: View {
                     } label: {
                         VStack(spacing: 6) {
                             Text(date.formatted(.dateTime.weekday(.narrow)))
-                                .font(.caption2.weight(.semibold))
+                                .font(.community(.caption2, weight: .semibold))
                                 .foregroundStyle(timeOfDay.secondaryText)
 
                             Text(date.formatted(.dateTime.day()))
-                                .font(.caption.weight(.bold).monospacedDigit())
+                                .font(.community(.caption, weight: .bold).monospacedDigit())
                                 .foregroundStyle(isSelected(date) ? RepbasePalette.cream : timeOfDay.primaryText)
                                 .frame(width: 30, height: 28)
                                 .background(
@@ -243,7 +243,7 @@ struct FoodTrackingView: View {
             Text(message)
             Spacer(minLength: 0)
         }
-        .font(.caption)
+        .font(.community(.caption))
         .foregroundStyle(timeOfDay.canvasSecondaryText)
         .padding(.horizontal, 12)
         .padding(.vertical, 9)
@@ -257,12 +257,12 @@ struct FoodTrackingView: View {
         return VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text("MEALS")
-                    .font(.caption2.weight(.bold))
+                    .font(.community(.caption2, weight: .bold))
                     .tracking(1)
                     .foregroundStyle(timeOfDay.canvasPrimaryText)
                 Spacer()
                 Text("\(meals.filter { !$0.entries.isEmpty }.count) of \(meals.count) logged")
-                    .font(.caption.weight(.semibold))
+                    .font(.community(.caption, weight: .semibold))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
             }
 
@@ -287,7 +287,7 @@ struct FoodTrackingView: View {
                     isShowingSavedMeals = true
                 } label: {
                     Label("Saved foods", systemImage: "bookmark")
-                        .font(.subheadline.weight(.semibold))
+                        .font(.community(.subheadline, weight: .semibold))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 11)
                 }
@@ -297,7 +297,7 @@ struct FoodTrackingView: View {
                     store.addMeal(on: selectedDate)
                 } label: {
                     Label("Add meal", systemImage: "plus.circle")
-                        .font(.subheadline.weight(.semibold))
+                        .font(.community(.subheadline, weight: .semibold))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 11)
                 }
@@ -325,7 +325,7 @@ struct FoodTrackingView: View {
                     isSharingMeal = true
                 } label: {
                     Label("Share a meal", systemImage: "square.and.arrow.up")
-                        .font(.subheadline.weight(.semibold))
+                        .font(.community(.subheadline, weight: .semibold))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 11)
                 }
@@ -348,13 +348,13 @@ struct FoodTrackingView: View {
         } label: {
             HStack(spacing: 11) {
                 Image(systemName: "chart.pie")
-                    .font(.title3)
+                    .font(.community(.title3))
                     .foregroundStyle(timeOfDay.accent)
                 Text("Nutrition breakdown")
-                    .font(.headline)
+                    .font(.community(.headline))
                 Spacer()
                 Image(systemName: "chevron.forward")
-                    .font(.caption.weight(.bold))
+                    .font(.community(.caption, weight: .bold))
                     .foregroundStyle(.secondary)
             }
             .repbaseCard(contentPadding: 14, cornerRadius: 17)
@@ -409,7 +409,7 @@ private struct CalorieGoalCard: View {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("DAILY NUTRITION")
-                        .font(.system(size: 9, weight: .bold))
+                        .font(.community(size: 9, weight: .bold))
                         .tracking(1.2)
                         .foregroundStyle(phase.secondaryText)
                 }
@@ -418,15 +418,15 @@ private struct CalorieGoalCard: View {
 
             HStack(alignment: .lastTextBaseline, spacing: 8) {
                 Text(value.nutritionText)
-                    .font(.system(size: 36, weight: .bold, design: .rounded))
+                    .font(.community(size: 36, weight: .bold, design: .rounded))
                     .contentTransition(.numericText())
                 Text("OF \(goal.nutritionText) KCAL")
-                    .font(.caption2.weight(.bold))
+                    .font(.community(.caption2, weight: .bold))
                     .foregroundStyle(phase.secondaryText)
             }
 
             Text("\(remaining.nutritionText) kcal remaining")
-                .font(.subheadline.weight(.semibold))
+                .font(.community(.subheadline, weight: .semibold))
                 .foregroundStyle(phase.accent)
 
             GeometryReader { proxy in
@@ -461,10 +461,10 @@ private struct MacroGoalCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
-                .font(.caption.weight(.medium))
+                .font(.community(.caption, weight: .medium))
                 .foregroundStyle(phase.secondaryText)
             Text("\(value.nutritionText) / \(goal.nutritionText)g")
-                .font(.subheadline.weight(.bold))
+                .font(.community(.subheadline, weight: .bold))
                 .lineLimit(1)
                 .minimumScaleFactor(0.65)
 
@@ -496,16 +496,16 @@ private struct MealRow: View {
     var body: some View {
         HStack(spacing: 11) {
             Image(systemName: mealSymbol)
-                .font(.subheadline.weight(.semibold))
+                .font(.community(.subheadline, weight: .semibold))
                 .foregroundStyle(phase.accent)
                 .frame(width: 38, height: 38)
                 .background(phase.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 12))
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(meal.name)
-                    .font(.subheadline.weight(.semibold))
+                    .font(.community(.subheadline, weight: .semibold))
                 Text(subtitle)
-                    .font(.caption)
+                    .font(.community(.caption))
                     .foregroundStyle(phase.secondaryText)
                     .lineLimit(1)
             }
@@ -513,7 +513,7 @@ private struct MealRow: View {
             Spacer(minLength: 8)
 
             Image(systemName: isLogged ? "checkmark" : "plus")
-                .font(.caption.weight(.bold))
+                .font(.community(.caption, weight: .bold))
                 .foregroundStyle(isLogged ? RepbasePalette.cream : phase.accent)
                 .frame(width: 29, height: 29)
                 .background(isLogged ? Color(hex: 0x5DAA86) : phase.accent.opacity(0.10), in: Circle())

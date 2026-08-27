@@ -28,7 +28,7 @@ struct EditorialFormHeader: View {
             Button(action: onDismiss) {
                 if leadingAction == .back {
                     Image(systemName: "chevron.left")
-                        .font(.body.weight(.semibold))
+                        .font(.community(.body, weight: .semibold))
                         .frame(width: 42, height: 42)
                         .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 14))
                         .overlay {
@@ -37,7 +37,7 @@ struct EditorialFormHeader: View {
                         }
                 } else {
                     Text("Cancel")
-                        .font(.subheadline.weight(.semibold))
+                        .font(.community(.subheadline, weight: .semibold))
                         .padding(.horizontal, 13)
                         .frame(height: 40)
                         .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 13))
@@ -48,7 +48,7 @@ struct EditorialFormHeader: View {
 
             Spacer()
             Text(title)
-                .font(.subheadline.weight(.bold))
+                .font(.community(.subheadline, weight: .bold))
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
             Spacer()
 
@@ -57,9 +57,9 @@ struct EditorialFormHeader: View {
                     HStack(spacing: 6) {
                         Text(saveTitle)
                         Image(systemName: "arrow.up.right")
-                            .font(.caption.weight(.bold))
+                            .font(.community(.caption, weight: .bold))
                     }
-                    .font(.subheadline.weight(.bold))
+                    .font(.community(.subheadline, weight: .bold))
                     .foregroundStyle(timeOfDay.onPrimaryAction)
                     .padding(.horizontal, 13)
                     .frame(height: 40)
@@ -85,11 +85,11 @@ struct EditorialSectionTitle: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(title)
-                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .font(.community(size: 20, weight: .bold, design: .rounded))
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
             if let detail {
                 Text(detail)
-                    .font(.caption)
+                    .font(.community(.caption))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
             }
         }
@@ -148,7 +148,7 @@ struct EditorialPrimaryButtonStyle: ButtonStyle {
             Spacer()
             Image(systemName: "arrow.right")
         }
-        .font(.headline.weight(.bold))
+        .font(.community(.headline, weight: .bold))
         .foregroundStyle(timeOfDay.onPrimaryAction)
         .padding(.horizontal, 18)
         .frame(height: 56)

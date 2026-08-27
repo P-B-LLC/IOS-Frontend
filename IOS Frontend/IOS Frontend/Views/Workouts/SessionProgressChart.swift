@@ -34,11 +34,11 @@ struct SessionProgressChart: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text("YOUR PROGRESS")
-                    .font(.caption2.weight(.bold))
+                    .font(.community(.caption2, weight: .bold))
                     .foregroundStyle(phase.secondaryText)
                 Spacer()
                 Text("^[last \(history.count) session](inflect: true)")
-                    .font(.caption2)
+                    .font(.community(.caption2))
                     .foregroundStyle(phase.secondaryText)
             }
 
@@ -54,7 +54,7 @@ struct SessionProgressChart: View {
 
             if let caption {
                 Text(caption)
-                    .font(.caption2)
+                    .font(.community(.caption2))
                     .foregroundStyle(phase.secondaryText)
             }
         }
@@ -101,7 +101,7 @@ struct SessionProgressChart: View {
                 AxisValueLabel {
                     if let raw = value.as(Double.self) {
                         Text(axisLabel(for: raw))
-                            .font(.caption2)
+                            .font(.community(.caption2))
                             .foregroundStyle(phase.secondaryText)
                     }
                 }
@@ -112,7 +112,7 @@ struct SessionProgressChart: View {
                 AxisValueLabel {
                     if let date = value.as(Date.self) {
                         Text(date, format: .dateTime.month(.abbreviated).day())
-                            .font(.caption2)
+                            .font(.community(.caption2))
                             .foregroundStyle(phase.secondaryText)
                     }
                 }

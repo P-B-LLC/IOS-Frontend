@@ -43,13 +43,13 @@ struct WeeklyScheduleWidget: View {
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: "calendar")
-                    .font(.subheadline)
+                    .font(.community(.subheadline))
                     .foregroundStyle(phase.accent)
                 Text("This Week")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.community(.subheadline, weight: .semibold))
                 Spacer()
                 Image(systemName: "chevron.forward")
-                    .font(.caption.weight(.semibold))
+                    .font(.community(.caption, weight: .semibold))
                     .foregroundStyle(.secondary)
             }
             .contentShape(Rectangle())

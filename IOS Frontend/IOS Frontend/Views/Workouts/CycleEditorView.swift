@@ -39,20 +39,20 @@ struct CycleEditorView: View {
             Section {
                 VStack(alignment: .leading, spacing: 7) {
                     Text("TRAINING ROTATION")
-                        .font(.caption2.weight(.bold))
+                        .font(.community(.caption2, weight: .bold))
                         .tracking(1.3)
                         .foregroundStyle(timeOfDay.accent)
                     Text(isEditing ? "Refine your rhythm." : "Build your rhythm.")
-                        .font(.largeTitle.weight(.bold))
+                        .font(.community(.largeTitle, weight: .bold))
                         .tracking(-0.8)
                     Text("Create a cycle that repeats around your schedule.")
-                        .font(.subheadline)
+                        .font(.community(.subheadline))
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                 }
                 .padding(.bottom, 8)
 
                 TextField("Name your rotation", text: $draft.name)
-                    .font(.title3.weight(.semibold))
+                    .font(.community(.title3, weight: .semibold))
                     .textInputAutocapitalization(.words)
                     .padding(.vertical, 8)
             } footer: {
@@ -83,12 +83,12 @@ struct CycleEditorView: View {
             } header: {
                 HStack(alignment: .firstTextBaseline) {
                     Text("Your cycle")
-                        .font(.title3.weight(.bold))
+                        .font(.community(.title3, weight: .bold))
                         .textCase(nil)
                         .foregroundStyle(timeOfDay.canvasPrimaryText)
                     Spacer()
                     Text("\(plannedSlotCount) of \(draft.length) planned")
-                        .font(.caption)
+                        .font(.community(.caption))
                         .textCase(nil)
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                 }
@@ -103,7 +103,7 @@ struct CycleEditorView: View {
             ForEach(errors, id: \.self) { error in
                 Section {
                     Text(error)
-                        .font(.footnote)
+                        .font(.community(.footnote))
                         .foregroundStyle(.red)
                 }
             }
@@ -191,7 +191,7 @@ struct CycleEditorView: View {
         } label: {
             HStack(spacing: 12) {
                 Text("\(slot.position)")
-                    .font(.caption.weight(.bold).monospacedDigit())
+                    .font(.community(.caption, weight: .bold).monospacedDigit())
                     .foregroundStyle(slot.isRest ? timeOfDay.accent : RepbasePalette.cream)
                     .frame(width: 30, height: 30)
                     .background(
@@ -201,17 +201,17 @@ struct CycleEditorView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(slot.isRest ? "Rest day" : slot.displayName)
-                        .font(.subheadline.weight(.semibold))
+                        .font(.community(.subheadline, weight: .semibold))
                         .foregroundStyle(timeOfDay.canvasPrimaryText)
                     Text(slot.isRest ? "Choose a workout or keep recovery" : "Workout planned")
-                        .font(.caption)
+                        .font(.community(.caption))
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                 }
 
                 Spacer()
 
                 Text(slot.isRest ? "Set" : "Edit")
-                    .font(.caption.weight(.semibold))
+                    .font(.community(.caption, weight: .semibold))
                     .foregroundStyle(timeOfDay.accent)
             }
             .padding(.vertical, 5)

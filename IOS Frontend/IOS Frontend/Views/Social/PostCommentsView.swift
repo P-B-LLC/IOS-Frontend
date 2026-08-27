@@ -100,7 +100,7 @@ struct PostCommentsView: View {
     private var header: some View {
         HStack {
             Text(countText)
-                .font(.subheadline.weight(.semibold))
+                .font(.community(.subheadline, weight: .semibold))
                 .foregroundStyle(timeOfDay.primaryText)
             Spacer()
             if store.isLoadingComments(for: postID) && !threads.isEmpty {
@@ -118,13 +118,13 @@ struct PostCommentsView: View {
     private var empty: some View {
         VStack(spacing: 6) {
             Image(systemName: "bubble.left")
-                .font(.title3)
+                .font(.community(.title3))
                 .foregroundStyle(timeOfDay.accent)
             Text("No comments yet.")
-                .font(.footnote)
+                .font(.community(.footnote))
                 .foregroundStyle(timeOfDay.secondaryText)
             Text("Be the first to say something.")
-                .font(.caption)
+                .font(.community(.caption))
                 .foregroundStyle(timeOfDay.secondaryText)
         }
         .frame(maxWidth: .infinity)
@@ -140,13 +140,13 @@ struct PostCommentsView: View {
             if let replyingTo = draft.replyingTo {
                 HStack(spacing: 6) {
                     Image(systemName: "arrowshape.turn.up.left.fill")
-                        .font(.caption2)
+                        .font(.community(.caption2))
                     Text("Replying to \(replyingTo.author.displayName)")
-                        .font(.caption)
+                        .font(.community(.caption))
                         .lineLimit(1)
                     Spacer(minLength: 0)
                     Button("Cancel") { draft.replyingTo = nil }
-                        .font(.caption.weight(.semibold))
+                        .font(.community(.caption, weight: .semibold))
                         .buttonStyle(.plain)
                 }
                 .foregroundStyle(timeOfDay.secondaryText)
@@ -174,7 +174,7 @@ struct PostCommentsView: View {
                     send()
                 } label: {
                     Image(systemName: "arrow.up.circle.fill")
-                        .font(.system(size: 27))
+                        .font(.community(size: 27))
                         .foregroundStyle(
                             draft.isSendable
                                 ? timeOfDay.accent

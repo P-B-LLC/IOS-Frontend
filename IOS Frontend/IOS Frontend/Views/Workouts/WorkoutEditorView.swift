@@ -90,14 +90,14 @@ struct WorkoutEditorView: View {
                     VStack(alignment: .leading, spacing: 18) {
                     VStack(alignment: .leading, spacing: 5) {
                         Text(draft.type == .lifting ? "LIFTING · \(draft.name.isEmpty ? "NEW WORKOUT" : draft.name.uppercased())" : draft.type.title.uppercased())
-                            .font(.caption2.weight(.bold))
+                            .font(.community(.caption2, weight: .bold))
                             .tracking(0.8)
                             .foregroundStyle(timeOfDay.accent)
                             .lineLimit(1)
                         Text(isCreate ? "Build your workout" : "Customize your plan")
-                            .font(.title2.weight(.bold))
+                            .font(.community(.title2, weight: .bold))
                         Text("Set the structure now. Log weight and reps when you train.")
-                            .font(.subheadline)
+                            .font(.community(.subheadline))
                             .foregroundStyle(timeOfDay.secondaryText)
                     }
 
@@ -129,7 +129,7 @@ struct WorkoutEditorView: View {
     private func workoutHeader(timeOfDay: HomeTimeOfDay) -> some View {
         HStack {
             Button("Cancel") { dismiss() }
-                .font(.subheadline.weight(.semibold))
+                .font(.community(.subheadline, weight: .semibold))
                 .foregroundStyle(timeOfDay.secondaryText)
                 .buttonStyle(.plain)
 
@@ -145,7 +145,7 @@ struct WorkoutEditorView: View {
         }
         .overlay {
             Text(navigationTitle)
-                .font(.headline)
+                .font(.community(.headline))
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
         }
         .padding(.horizontal, 16)

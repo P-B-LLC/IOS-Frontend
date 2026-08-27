@@ -47,7 +47,7 @@ struct SavedMealsView: View {
                         }
                         .overlay(alignment: .top) { Divider() }
                         Text("Saved meals sync with your Repbase account and are ready on every signed-in device.")
-                            .font(.caption)
+                            .font(.community(.caption))
                             .foregroundStyle(.secondary)
                     }
                     .padding(.horizontal, RepbaseDesign.pageInset)
@@ -94,13 +94,13 @@ struct SavedMealsView: View {
             )
             VStack(alignment: .leading, spacing: 8) {
                 Text("NO SAVED MEALS YET")
-                    .font(.caption2.weight(.bold))
+                    .font(.community(.caption2, weight: .bold))
                     .tracking(1.1)
                     .foregroundStyle(RepbasePalette.caramel)
                 Text("Your fastest meals will live here.")
-                    .font(.title2.weight(.bold))
+                    .font(.community(.title2, weight: .bold))
                 Text("Build a recipe with its real ingredients and nutrition. Repbase keeps the totals ready to reuse.")
-                    .font(.subheadline)
+                    .font(.community(.subheadline))
                     .foregroundStyle(.secondary)
             }
             .padding(.vertical, 20)
@@ -126,22 +126,22 @@ private struct SavedMealRow: View {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(savedMeal.name)
-                        .font(.headline)
+                        .font(.community(.headline))
                     Text(ingredientSummary)
-                        .font(.caption)
+                        .font(.community(.caption))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
                 Spacer()
                 Text("\(savedMeal.totalNutrition.calories.nutritionText) cal")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.community(.subheadline, weight: .semibold))
             }
 
             HStack(spacing: 18) {
                 Button("Add to days", systemImage: "calendar.badge.plus", action: onUse)
                 Button("Edit", systemImage: "pencil", action: onEdit)
             }
-            .font(.caption.weight(.semibold))
+            .font(.community(.caption, weight: .semibold))
             .foregroundStyle(RepbasePalette.caramel)
             .buttonStyle(.plain)
         }
@@ -174,23 +174,23 @@ private struct SavedMealEditorView: View {
             VStack(alignment: .leading, spacing: 28) {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("RECIPE NAME")
-                        .font(.system(size: 10, weight: .bold))
+                        .font(.community(size: 10, weight: .bold))
                         .tracking(1)
                         .foregroundStyle(phase.secondaryText)
                 TextField("Recipe or meal name", text: $draft.name)
                     .textContentType(.name)
-                    .font(.title2.weight(.semibold))
+                    .font(.community(.title2, weight: .semibold))
                     .padding(.vertical, 10)
                     .overlay(alignment: .bottom) { Divider() }
                 }
 
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Ingredients")
-                        .font(.title3.weight(.bold))
+                        .font(.community(.title3, weight: .bold))
 
                     if draft.ingredients.isEmpty {
                         Text("Add each ingredient using the nutrition shown for one serving.")
-                            .font(.subheadline)
+                            .font(.community(.subheadline))
                             .foregroundStyle(phase.secondaryText)
                             .padding(.vertical, 10)
                     } else {
@@ -220,7 +220,7 @@ private struct SavedMealEditorView: View {
                         isAddingIngredient = true
                     } label: {
                         Label("Add ingredient", systemImage: "plus")
-                            .font(.headline)
+                            .font(.community(.headline))
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.vertical, 14)
                     }
@@ -232,7 +232,7 @@ private struct SavedMealEditorView: View {
                 if !draft.ingredients.isEmpty {
                     VStack(alignment: .leading, spacing: 14) {
                         Text("Recipe total")
-                            .font(.title3.weight(.bold))
+                            .font(.community(.title3, weight: .bold))
                         NutritionTotalRow(amount: draft.totalNutrition)
                     }
                 }
@@ -241,7 +241,7 @@ private struct SavedMealEditorView: View {
                     "Saved recipes sync with your Repbase account.",
                     systemImage: "checkmark.icloud"
                 )
-                .font(.caption)
+                .font(.community(.caption))
                 .foregroundStyle(phase.secondaryText)
             }
             .padding(22)
@@ -296,15 +296,15 @@ private struct IngredientRow: View {
                 Text(ingredient.name)
                     .foregroundStyle(.primary)
                 Text("\(ingredient.servings.nutritionText) serving\(ingredient.servings == 1 ? "" : "s")")
-                    .font(.caption)
+                    .font(.community(.caption))
                     .foregroundStyle(.secondary)
             }
             Spacer()
             Text("\(ingredient.totalNutrition.calories.nutritionText) cal")
-                .font(.subheadline.weight(.semibold))
+                .font(.community(.subheadline, weight: .semibold))
                 .foregroundStyle(.primary)
             Image(systemName: "chevron.forward")
-                .font(.caption2.weight(.bold))
+                .font(.community(.caption2, weight: .bold))
                 .foregroundStyle(.tertiary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -327,11 +327,11 @@ private struct NutritionTotalRow: View {
     private func metric(_ label: String, _ value: Decimal, _ unit: String, tint: Color) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label)
-                .font(.system(size: 8, weight: .bold))
+                .font(.community(size: 8, weight: .bold))
                 .tracking(0.6)
                 .foregroundStyle(.secondary)
             Text("\(value.nutritionText) \(unit)")
-                .font(.subheadline.weight(.semibold))
+                .font(.community(.subheadline, weight: .semibold))
                 .lineLimit(1)
                 .minimumScaleFactor(0.65)
             Capsule().fill(tint).frame(height: 3)
@@ -370,21 +370,21 @@ private struct RecipeIngredientEditorView: View {
             VStack(alignment: .leading, spacing: 28) {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("INGREDIENT")
-                        .font(.system(size: 10, weight: .bold))
+                        .font(.community(size: 10, weight: .bold))
                         .tracking(1)
                         .foregroundStyle(phase.secondaryText)
                 TextField("Ingredient name", text: $name)
-                        .font(.title2.weight(.semibold))
+                        .font(.community(.title2, weight: .semibold))
                         .padding(.vertical, 10)
                         .overlay(alignment: .bottom) { Divider() }
 
                     HStack(alignment: .firstTextBaseline) {
-                        Text("Servings").font(.subheadline.weight(.medium))
+                        Text("Servings").font(.community(.subheadline, weight: .medium))
                         Spacer()
                         TextField("1", text: $servings)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
-                            .font(.title3.weight(.semibold))
+                            .font(.community(.title3, weight: .semibold))
                             .frame(width: 80)
                     }
                     .padding(.vertical, 10)
@@ -393,19 +393,19 @@ private struct RecipeIngredientEditorView: View {
 
                 VStack(alignment: .leading, spacing: 14) {
                     Text("Nutrition per serving")
-                        .font(.title3.weight(.bold))
+                        .font(.community(.title3, weight: .bold))
                     VStack(alignment: .leading, spacing: 7) {
                         Text("CALORIES")
-                            .font(.system(size: 10, weight: .bold))
+                            .font(.community(size: 10, weight: .bold))
                             .tracking(1)
                             .foregroundStyle(phase.secondaryText)
                         HStack(alignment: .firstTextBaseline) {
                             TextField("0", text: $calories)
                                 .keyboardType(.decimalPad)
-                                .font(.system(size: 38, weight: .bold, design: .rounded))
+                                .font(.community(size: 38, weight: .bold, design: .rounded))
                             Spacer()
                             Text("kcal")
-                                .font(.subheadline.weight(.medium))
+                                .font(.community(.subheadline, weight: .medium))
                                 .foregroundStyle(phase.accent)
                         }
                     }
@@ -438,14 +438,14 @@ private struct RecipeIngredientEditorView: View {
     private func ingredientMacro(_ title: String, text: Binding<String>, tint: Color) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
-                .font(.system(size: 9, weight: .bold))
+                .font(.community(size: 9, weight: .bold))
                 .tracking(0.7)
                 .foregroundStyle(.secondary)
             HStack(alignment: .firstTextBaseline, spacing: 3) {
                 TextField("0", text: text)
                     .keyboardType(.decimalPad)
-                    .font(.title2.weight(.semibold))
-                Text("g").font(.caption).foregroundStyle(.secondary)
+                    .font(.community(.title2, weight: .semibold))
+                Text("g").font(.community(.caption)).foregroundStyle(.secondary)
             }
             Capsule().fill(tint).frame(height: 4)
         }
@@ -524,14 +524,14 @@ private struct ApplySavedMealView: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(savedMeal.name)
-                            .font(.headline)
+                            .font(.community(.headline))
                         Text("\(savedMeal.ingredients.count) ingredients")
-                            .font(.caption)
+                            .font(.community(.caption))
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
                     Text("\(savedMeal.totalNutrition.calories.nutritionText) cal")
-                        .font(.subheadline.weight(.bold))
+                        .font(.community(.subheadline, weight: .bold))
                 }
             }
 
@@ -556,7 +556,7 @@ private struct ApplySavedMealView: View {
                         selectedDates = Set(weekDates)
                     }
                 }
-                .font(.subheadline.weight(.semibold))
+                .font(.community(.subheadline, weight: .semibold))
             } header: {
                 Text("Days")
             } footer: {
@@ -611,7 +611,7 @@ private struct WeekApplicationSelector: View {
                 } label: {
                     VStack(spacing: 6) {
                         Text(date.formatted(.dateTime.weekday(.narrow)))
-                            .font(.caption2.weight(.semibold))
+                            .font(.community(.caption2, weight: .semibold))
                             .foregroundStyle(.secondary)
                         ZStack {
                             Circle()
@@ -623,13 +623,13 @@ private struct WeekApplicationSelector: View {
                                 )
                             if selectedDates.contains(date) {
                                 Image(systemName: "checkmark")
-                                    .font(.system(size: 9, weight: .bold))
+                                    .font(.community(size: 9, weight: .bold))
                                     .foregroundStyle(.white)
                             }
                         }
                         .frame(width: 26, height: 26)
                         Text(date.formatted(.dateTime.day()))
-                            .font(.caption2)
+                            .font(.community(.caption2))
                             .foregroundStyle(.secondary)
                     }
                     .frame(maxWidth: .infinity)

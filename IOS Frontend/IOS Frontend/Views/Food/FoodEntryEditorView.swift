@@ -63,33 +63,33 @@ struct FoodEntryEditorView: View {
 
                     VStack(alignment: .leading, spacing: 6) {
                         Text("FOOD / MANUAL ENTRY")
-                            .font(.system(size: 10, weight: .bold))
+                            .font(.community(size: 10, weight: .bold))
                             .tracking(1.25)
                             .foregroundStyle(timeOfDay.accent)
                         Text(isEditing ? "Update this food." : "Log what you ate.")
-                            .font(.system(size: 34, weight: .bold, design: .rounded))
+                            .font(.community(size: 34, weight: .bold, design: .rounded))
                             .tracking(-0.8)
                         Text("Enter the values shown on the label for one serving.")
-                            .font(.subheadline)
+                            .font(.community(.subheadline))
                             .foregroundStyle(timeOfDay.canvasSecondaryText)
                     }
 
                     VStack(alignment: .leading, spacing: 13) {
                         EditorialSectionTitle(title: "Food")
                         TextField("Food name", text: $name)
-                            .font(.title2.weight(.semibold))
+                            .font(.community(.title2, weight: .semibold))
                             .textContentType(.name)
                             .padding(.vertical, 10)
                             .overlay(alignment: .bottom) { Divider() }
 
                         HStack(alignment: .firstTextBaseline) {
                             Text("Servings")
-                                .font(.subheadline.weight(.medium))
+                                .font(.community(.subheadline, weight: .medium))
                             Spacer()
                             TextField("1", text: $servings)
                                 .keyboardType(.decimalPad)
                                 .multilineTextAlignment(.trailing)
-                                .font(.title3.weight(.semibold))
+                                .font(.community(.title3, weight: .semibold))
                                 .frame(width: 80)
                         }
                         .padding(.vertical, 10)
@@ -100,16 +100,16 @@ struct FoodEntryEditorView: View {
                         EditorialSectionTitle(title: "Nutrition per serving")
                         VStack(alignment: .leading, spacing: 8) {
                             Text("CALORIES")
-                                .font(.system(size: 10, weight: .bold))
+                                .font(.community(size: 10, weight: .bold))
                                 .tracking(1)
                                 .foregroundStyle(timeOfDay.canvasSecondaryText)
                             HStack(alignment: .firstTextBaseline) {
                                 TextField("0", text: $calories)
                                     .keyboardType(.decimalPad)
-                                    .font(.system(size: 38, weight: .bold, design: .rounded))
+                                    .font(.community(size: 38, weight: .bold, design: .rounded))
                                 Spacer()
                                 Text("kcal")
-                                    .font(.subheadline.weight(.medium))
+                                    .font(.community(.subheadline, weight: .medium))
                                     .foregroundStyle(timeOfDay.accent)
                             }
                         }
@@ -134,7 +134,7 @@ struct FoodEntryEditorView: View {
                             dismiss()
                         } label: {
                             Label("Delete Food", systemImage: "trash")
-                                .font(.subheadline.weight(.semibold))
+                                .font(.community(.subheadline, weight: .semibold))
                         }
                         .buttonStyle(.plain)
                         .foregroundStyle(Color.red)
@@ -157,15 +157,15 @@ struct FoodEntryEditorView: View {
     ) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
-                .font(.system(size: 9, weight: .bold))
+                .font(.community(size: 9, weight: .bold))
                 .tracking(0.8)
                 .foregroundStyle(.secondary)
             HStack(alignment: .firstTextBaseline, spacing: 3) {
                 TextField("0", text: text)
-                    .font(.title2.weight(.semibold))
+                    .font(.community(.title2, weight: .semibold))
                     .keyboardType(.decimalPad)
                 Text("g")
-                    .font(.caption)
+                    .font(.community(.caption))
                     .foregroundStyle(.secondary)
             }
             Capsule()
@@ -244,7 +244,7 @@ struct FoodNutritionField: View {
                 .multilineTextAlignment(.trailing)
                 .frame(maxWidth: 110)
             Text(unit)
-                .font(.caption)
+                .font(.community(.caption))
                 .foregroundStyle(.secondary)
                 .frame(width: 25, alignment: .leading)
         }

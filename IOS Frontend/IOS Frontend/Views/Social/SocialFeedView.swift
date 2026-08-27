@@ -219,9 +219,9 @@ struct SocialFeedView: View {
             } label: {
                 HStack(spacing: 7) {
                     Image(systemName: "plus")
-                        .font(.system(size: 13, weight: .bold))
+                        .font(.community(size: 13, weight: .bold))
                     Text("Post")
-                        .font(.system(size: 13, weight: .bold))
+                        .font(.community(size: 13, weight: .bold))
                 }
                 .foregroundStyle(Color.white)
                 .padding(.horizontal, 14)
@@ -243,7 +243,7 @@ struct SocialFeedView: View {
                     }
                 } label: {
                     Text(mode.rawValue)
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.community(size: 14, weight: .semibold))
                         .foregroundStyle(
                             feedMode == mode
                                 ? timeOfDay.canvasPrimaryText
@@ -269,12 +269,12 @@ struct SocialFeedView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
                 Text("PEOPLE")
-                    .font(.caption2.weight(.bold))
+                    .font(.community(.caption2, weight: .bold))
                     .tracking(1.2)
                     .foregroundStyle(timeOfDay.accent)
                 Spacer()
                 Text("\(filteredPeople.count) found")
-                    .font(.caption2)
+                    .font(.community(.caption2))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
             }
             .padding(.bottom, 8)
@@ -286,13 +286,13 @@ struct SocialFeedView: View {
                         .frame(width: 38, height: 38)
                         .overlay {
                             Text(person.initials)
-                                .font(.caption.weight(.bold))
+                                .font(.community(.caption, weight: .bold))
                                 .foregroundStyle(timeOfDay.accent)
                         }
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(person.displayName).font(.subheadline.weight(.semibold))
+                        Text(person.displayName).font(.community(.subheadline, weight: .semibold))
                         Text("@\(person.username)")
-                            .font(.caption)
+                            .font(.community(.caption))
                             .foregroundStyle(timeOfDay.canvasSecondaryText)
                     }
                     Spacer()
@@ -309,7 +309,7 @@ struct SocialFeedView: View {
                                 )
                             }
                         }
-                        .font(.caption.weight(.bold))
+                        .font(.community(.caption, weight: .bold))
                         .buttonStyle(.bordered)
                         .buttonBorderShape(.capsule)
                         .disabled(store.changingFollowFor.contains(person.id))
@@ -376,7 +376,7 @@ struct SocialFeedView: View {
             isComposing = true
         } label: {
             Image(systemName: "square.and.pencil")
-                .font(.system(size: 16, weight: .semibold))
+                .font(.community(size: 16, weight: .semibold))
                 .foregroundStyle(timeOfDay.accent)
                 .frame(width: 44, height: 44)
                 .background(timeOfDay.accent.opacity(0.11), in: Circle())
@@ -391,13 +391,13 @@ struct SocialFeedView: View {
     private func emptyState(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(spacing: 10) {
             Image(systemName: "person.2")
-                .font(.system(size: 30, weight: .semibold))
+                .font(.community(size: 30, weight: .semibold))
                 .foregroundStyle(timeOfDay.accent)
             Text("Nothing here yet")
-                .font(.headline)
+                .font(.community(.headline))
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
             Text("Posts from people you follow show up here. Share a workout, a meal, or something off your calendar to start your own.")
-                .font(.subheadline)
+                .font(.community(.subheadline))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(timeOfDay.canvasSecondaryText)
                 .fixedSize(horizontal: false, vertical: true)
@@ -405,7 +405,7 @@ struct SocialFeedView: View {
             // Repeats the header's button where the eye already is. An empty
             // feed is exactly when the one in the corner goes unnoticed.
             Button("Write a post") { isComposing = true }
-                .font(.subheadline.weight(.semibold))
+                .font(.community(.subheadline, weight: .semibold))
                 .foregroundStyle(timeOfDay.accent)
                 .padding(.top, 2)
         }
@@ -424,7 +424,7 @@ struct SocialFeedView: View {
             Text(message)
             Spacer(minLength: 0)
         }
-        .font(.caption)
+        .font(.community(.caption))
         .foregroundStyle(timeOfDay.canvasSecondaryText)
         .padding(.horizontal, 12)
         .padding(.vertical, 9)
@@ -484,7 +484,7 @@ struct PostCard: View {
             // can do about it starts.
             if !shown.caption.isEmpty {
                 Text(shown.caption)
-                    .font(.system(size: 14))
+                    .font(.community(size: 14))
                     .foregroundStyle(timeOfDay.primaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -509,9 +509,9 @@ struct PostCard: View {
     private var repostHeader: some View {
         HStack(spacing: 6) {
             Image(systemName: "arrow.2.squarepath")
-                .font(.system(size: 11, weight: .semibold))
+                .font(.community(size: 11, weight: .semibold))
             Text("\(post.author.displayName) reposted")
-                .font(.caption.weight(.semibold))
+                .font(.community(.caption, weight: .semibold))
                 .lineLimit(1)
         }
         .foregroundStyle(timeOfDay.canvasSecondaryText)
@@ -536,7 +536,7 @@ struct PostCard: View {
                 .fill(timeOfDay.primaryText.opacity(0.06))
                 .overlay {
                     Image(systemName: "photo")
-                        .font(.title3)
+                        .font(.community(.title3))
                         .foregroundStyle(timeOfDay.secondaryText)
                 }
         }
@@ -561,10 +561,10 @@ struct PostCard: View {
 
                 VStack(alignment: .leading, spacing: 1) {
                     Text(shown.author.displayName)
-                        .font(.subheadline.weight(.semibold))
+                        .font(.community(.subheadline, weight: .semibold))
                         .foregroundStyle(timeOfDay.primaryText)
                     Text("@" + shown.author.username)
-                        .font(.caption2)
+                        .font(.community(.caption2))
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                 }
             }
@@ -577,11 +577,11 @@ struct PostCard: View {
 
             HStack(spacing: 9) {
                 Text(shown.createdAt, format: .relative(presentation: .named))
-                    .font(.caption2)
+                    .font(.community(.caption2))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
                 if post.visibility != .publicToAll {
                     Image(systemName: post.visibility.symbol)
-                        .font(.system(size: 9, weight: .semibold))
+                        .font(.community(size: 9, weight: .semibold))
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                 }
                 if post.viewerIsAuthor || post.offersModeration {
@@ -612,7 +612,7 @@ struct PostCard: View {
                         }
                     } label: {
                         Image(systemName: "ellipsis")
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.community(size: 14, weight: .semibold))
                             .foregroundStyle(timeOfDay.canvasSecondaryText)
                             .frame(width: 28, height: 28)
                             .contentShape(Rectangle())
@@ -639,7 +639,7 @@ struct PostCard: View {
 
     private var avatarInitials: some View {
         Text(shown.author.initials)
-            .font(.system(size: 12, weight: .bold))
+            .font(.community(size: 12, weight: .bold))
             .foregroundStyle(Color.white)
             .frame(width: 36, height: 36)
             .background(timeOfDay.accent, in: Circle())
@@ -661,11 +661,11 @@ struct PostCard: View {
                     ForEach(Array(workout.exercises.enumerated()), id: \.element.id) { index, line in
                         HStack(spacing: 6) {
                             Text(line.name)
-                                .font(.system(size: 13, weight: .medium))
+                                .font(.community(size: 13, weight: .medium))
                                 .foregroundStyle(timeOfDay.primaryText)
                             Spacer(minLength: 6)
                             Text(Self.setSummary(line, showsWeights: post.showsWeights))
-                                .font(.system(size: 12).monospacedDigit())
+                                .font(.community(size: 12).monospacedDigit())
                                 .foregroundStyle(timeOfDay.secondaryText)
                         }
                         .padding(.vertical, 8)
@@ -730,7 +730,7 @@ struct PostCard: View {
 
     private func postTitleText(_ text: String) -> some View {
         Text(text)
-            .font(.system(size: 22, weight: .bold))
+            .font(.community(size: 22, weight: .bold))
             .tracking(-0.35)
             .foregroundStyle(timeOfDay.primaryText)
             .fixedSize(horizontal: false, vertical: true)
@@ -749,10 +749,10 @@ struct PostCard: View {
                     ProgressView().controlSize(.mini)
                 } else {
                     Image(systemName: "square.and.arrow.down")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.community(size: 12, weight: .semibold))
                 }
                 Text("Save workout")
-                    .font(.caption.weight(.semibold))
+                    .font(.community(.caption, weight: .semibold))
             }
             .foregroundStyle(timeOfDay.accent)
         }
@@ -800,7 +800,7 @@ struct PostCard: View {
 
             if planner.isComplete {
                 Label("Completed", systemImage: "checkmark.circle.fill")
-                    .font(.caption.weight(.semibold))
+                    .font(.community(.caption, weight: .semibold))
                     .foregroundStyle(RepbaseDesign.success)
             }
         }
@@ -814,7 +814,7 @@ struct PostCard: View {
             Text("This post needs a newer version of Repbase.")
             Spacer(minLength: 0)
         }
-        .font(.caption)
+        .font(.community(.caption))
         .foregroundStyle(timeOfDay.secondaryText)
     }
 
@@ -823,7 +823,7 @@ struct PostCard: View {
     private func shareHeader(_ title: String, symbol: String) -> some View {
         HStack(spacing: 8) {
             Label(title.uppercased(), systemImage: symbol)
-                .font(.system(size: 10, weight: .bold))
+                .font(.community(size: 10, weight: .bold))
                 .tracking(1.15)
                 .foregroundStyle(timeOfDay.accent)
             Spacer(minLength: 0)
@@ -849,10 +849,10 @@ struct PostCard: View {
                     ProgressView().controlSize(.mini)
                 } else {
                     Image(systemName: "square.and.arrow.down")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.community(size: 12, weight: .semibold))
                 }
                 Text("Save meal")
-                    .font(.caption.weight(.semibold))
+                    .font(.community(.caption, weight: .semibold))
             }
             .foregroundStyle(timeOfDay.accent)
         }
@@ -863,10 +863,10 @@ struct PostCard: View {
     private func statistic(_ value: String, _ label: String) -> some View {
         VStack(alignment: .leading, spacing: 1) {
             Text(value)
-                .font(.system(size: 15, weight: .bold))
+                .font(.community(size: 15, weight: .bold))
                 .foregroundStyle(timeOfDay.primaryText)
             Text(label)
-                .font(.system(size: 9, weight: .medium))
+                .font(.community(size: 9, weight: .medium))
                 .foregroundStyle(timeOfDay.secondaryText)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -880,7 +880,7 @@ struct PostCard: View {
             Text(value)
                 .foregroundStyle(timeOfDay.primaryText)
         }
-        .font(.system(size: 13, weight: .medium))
+        .font(.community(size: 13, weight: .medium))
         .padding(.vertical, 8)
     }
 

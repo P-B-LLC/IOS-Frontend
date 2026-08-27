@@ -54,7 +54,7 @@ struct ActivityIconArtwork: View {
             // Matches the approved Figma Icon/Swimming component: a clear,
             // regular-weight pool swimmer scaled to fill its semantic frame.
             Image(systemName: "figure.pool.swim")
-                .font(.system(size: size * 0.84, weight: .regular))
+                .font(.community(size: size * 0.84, weight: .regular))
                 .symbolRenderingMode(.monochrome)
                 .foregroundStyle(color)
                 .frame(width: size, height: size)

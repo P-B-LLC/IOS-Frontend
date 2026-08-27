@@ -36,7 +36,7 @@ struct ProfileExpressionEditorView: View {
 
                     if let message = store.errorMessage {
                         Label(message, systemImage: "exclamationmark.triangle.fill")
-                            .font(.footnote)
+                            .font(.community(.footnote))
                             .foregroundStyle(.red)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -76,7 +76,7 @@ struct ProfileExpressionEditorView: View {
             HStack {
                 Button { dismiss() } label: {
                     Image(systemName: "xmark")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.community(size: 16, weight: .semibold))
                         .frame(width: 40, height: 40)
                         .contentShape(Rectangle())
                 }
@@ -87,11 +87,11 @@ struct ProfileExpressionEditorView: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 Text("YOUR PROFILE")
-                    .font(.system(size: 10, weight: .bold))
+                    .font(.community(size: 10, weight: .bold))
                     .tracking(1.3)
                     .foregroundStyle(timeOfDay.accent)
                 Text("What people learn about you")
-                    .font(.system(size: 28, weight: .bold))
+                    .font(.community(size: 28, weight: .bold))
                     .foregroundStyle(timeOfDay.canvasPrimaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -111,11 +111,11 @@ struct ProfileExpressionEditorView: View {
             ForEach(store.prompts) { answer in
                 VStack(alignment: .leading, spacing: 3) {
                     Text(answer.questionLabel.uppercased())
-                        .font(.system(size: 9, weight: .bold))
+                        .font(.community(size: 9, weight: .bold))
                         .tracking(1.1)
                         .foregroundStyle(timeOfDay.accent)
                     Text(answer.answer)
-                        .font(.subheadline)
+                        .font(.community(.subheadline))
                         .foregroundStyle(timeOfDay.canvasPrimaryText)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -129,7 +129,7 @@ struct ProfileExpressionEditorView: View {
                     store.prompts.isEmpty ? "Add prompts" : "Change your prompts",
                     systemImage: "text.bubble"
                 )
-                .font(.subheadline.weight(.semibold))
+                .font(.community(.subheadline, weight: .semibold))
                 .foregroundStyle(timeOfDay.accent)
             }
             .buttonStyle(.plain)
@@ -175,12 +175,12 @@ struct ProfileExpressionEditorView: View {
                     Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
                         .foregroundStyle(isOn ? timeOfDay.accent : timeOfDay.secondaryText)
                     Text(lift.label)
-                        .font(.subheadline.weight(.semibold))
+                        .font(.community(.subheadline, weight: .semibold))
                         .foregroundStyle(timeOfDay.primaryText)
                     Spacer(minLength: 0)
                     if let logged, let summary = logged.setSummary {
                         Text(summary)
-                            .font(.subheadline.weight(.bold))
+                            .font(.community(.subheadline, weight: .bold))
                             .foregroundStyle(timeOfDay.primaryText)
                     }
                 }
@@ -198,7 +198,7 @@ struct ProfileExpressionEditorView: View {
                         "\(summary) from \(logged.exerciseName ?? "your log"). This updates itself as you train.",
                         systemImage: "checkmark.seal"
                     )
-                    .font(.caption)
+                    .font(.community(.caption))
                     .foregroundStyle(timeOfDay.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.bottom, 12)
@@ -212,7 +212,7 @@ struct ProfileExpressionEditorView: View {
     private func manualFields(_ lift: FeaturedLift, timeOfDay: HomeTimeOfDay) -> some View {
         VStack(alignment: .leading, spacing: 7) {
             Text("Nothing logged for this yet. Enter your best set.")
-                .font(.caption)
+                .font(.community(.caption))
                 .foregroundStyle(timeOfDay.secondaryText)
 
             HStack(spacing: 10) {
@@ -231,15 +231,15 @@ struct ProfileExpressionEditorView: View {
     ) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(title.uppercased())
-                .font(.system(size: 8, weight: .bold))
+                .font(.community(size: 8, weight: .bold))
                 .foregroundStyle(timeOfDay.secondaryText)
             HStack(spacing: 4) {
                 TextField("0", text: text)
                     .keyboardType(.numberPad)
-                    .font(.subheadline.weight(.semibold))
+                    .font(.community(.subheadline, weight: .semibold))
                 if !unit.isEmpty {
                     Text(unit)
-                        .font(.caption)
+                        .font(.community(.caption))
                         .foregroundStyle(timeOfDay.secondaryText)
                 }
             }
@@ -317,7 +317,7 @@ struct ProfileExpressionEditorView: View {
         VStack(alignment: .leading, spacing: 8) {
             if let incomplete = incompleteLift {
                 Text("Give \(incomplete.label) both a weight and a rep count, or leave both empty.")
-                    .font(.caption)
+                    .font(.community(.caption))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -331,7 +331,7 @@ struct ProfileExpressionEditorView: View {
                     if store.isSaving { ProgressView().tint(.white) }
                     Text("Save")
                 }
-                .font(.headline.weight(.bold))
+                .font(.community(.headline, weight: .bold))
                 .foregroundStyle(Color.white)
                 .frame(maxWidth: .infinity, minHeight: 54)
                 .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 17))
@@ -349,10 +349,10 @@ struct ProfileExpressionEditorView: View {
     ) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(title)
-                .font(.system(size: 19, weight: .bold))
+                .font(.community(size: 19, weight: .bold))
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
             Text(detail)
-                .font(.caption)
+                .font(.community(.caption))
                 .foregroundStyle(timeOfDay.canvasSecondaryText)
                 .fixedSize(horizontal: false, vertical: true)
         }

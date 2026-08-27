@@ -172,11 +172,11 @@ struct PostComposerView: View {
     private func composerIntroduction(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(source == .meal ? "SHARE FOOD" : source == .workout ? "SHARE WORKOUT" : "SHARE YOUR DAY")
-                .font(.caption2.weight(.bold))
+                .font(.community(.caption2, weight: .bold))
                 .tracking(1.1)
                 .foregroundStyle(timeOfDay.accent)
             Text(source == .meal ? "Tell the story of this meal." : source == .workout ? "Share the work." : "Share the moment.")
-                .font(.title.weight(.bold))
+                .font(.community(.title, weight: .bold))
                 .tracking(-0.5)
             Text(
                 source == .meal
@@ -185,7 +185,7 @@ struct PostComposerView: View {
                         ? "Your session is ready. Decide what others can see."
                         : "The details come from your calendar. Add the context."
             )
-            .font(.subheadline)
+            .font(.community(.subheadline))
             .foregroundStyle(timeOfDay.canvasSecondaryText)
         }
     }
@@ -206,12 +206,12 @@ struct PostComposerView: View {
             EditorialRuleGroup {
                 EditorialRuleRow(showsDivider: false) {
                     Text(subject)
-                        .font(.subheadline.weight(.semibold))
+                        .font(.community(.subheadline, weight: .semibold))
                         .foregroundStyle(timeOfDay.canvasPrimaryText)
                         .fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 8)
                     Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 18))
+                        .font(.community(size: 18))
                         .foregroundStyle(timeOfDay.accent)
                 }
             }
@@ -242,9 +242,9 @@ struct PostComposerView: View {
         let isSelected = item == source
         return VStack(spacing: 5) {
             Image(systemName: item.symbol)
-                .font(.system(size: 15, weight: .semibold))
+                .font(.community(size: 15, weight: .semibold))
             Text(item.title)
-                .font(.system(size: 11, weight: .semibold))
+                .font(.community(size: 11, weight: .semibold))
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
         }
@@ -320,16 +320,16 @@ struct PostComposerView: View {
             EditorialRuleRow(showsDivider: !isLast) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(candidate.title)
-                        .font(.subheadline.weight(.semibold))
+                        .font(.community(.subheadline, weight: .semibold))
                         .foregroundStyle(timeOfDay.canvasPrimaryText)
                         .multilineTextAlignment(.leading)
                     Text(candidate.subtitle)
-                        .font(.caption)
+                        .font(.community(.caption))
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                 }
                 Spacer(minLength: 8)
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 18))
+                    .font(.community(size: 18))
                     .foregroundStyle(
                         isSelected
                             ? timeOfDay.accent
@@ -357,7 +357,7 @@ struct PostComposerView: View {
 
     private func emptyRow(timeOfDay: HomeTimeOfDay) -> some View {
         Text(dayIsEmptyMessage ?? source.emptyMessage)
-            .font(.subheadline)
+            .font(.community(.subheadline))
             .foregroundStyle(timeOfDay.canvasSecondaryText)
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -391,7 +391,7 @@ struct PostComposerView: View {
                     Button("Remove photo") {
                         clearPhoto()
                     }
-                    .font(.subheadline.weight(.semibold))
+                    .font(.community(.subheadline, weight: .semibold))
                     .foregroundStyle(.red)
                 }
             } else {
@@ -402,18 +402,18 @@ struct PostComposerView: View {
                 ) {
                     HStack(spacing: 12) {
                         Image(systemName: "photo.on.rectangle.angled")
-                            .font(.system(size: 17, weight: .medium))
+                            .font(.community(size: 17, weight: .medium))
                             .foregroundStyle(timeOfDay.accent)
                             .frame(width: 24)
 
                         Text("Add a photo")
-                            .font(.subheadline.weight(.semibold))
+                            .font(.community(.subheadline, weight: .semibold))
                             .foregroundStyle(timeOfDay.canvasPrimaryText)
 
                         Spacer()
 
                         Image(systemName: "plus")
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.community(size: 14, weight: .semibold))
                             .foregroundStyle(timeOfDay.canvasSecondaryText)
                     }
                     .padding(.vertical, 13)
@@ -426,7 +426,7 @@ struct PostComposerView: View {
 
             if let photoError {
                 Text(photoError)
-                    .font(.caption)
+                    .font(.community(.caption))
                     .foregroundStyle(.red)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -511,7 +511,7 @@ struct PostComposerView: View {
                 axis: .vertical
             )
             .lineLimit(2...6)
-            .font(.body)
+            .font(.community(.body))
             .foregroundStyle(timeOfDay.canvasPrimaryText)
             .textInputAutocapitalization(.sentences)
             .padding(.vertical, 12)
@@ -525,7 +525,7 @@ struct PostComposerView: View {
             }
 
             Text("\(caption.count)/\(Self.captionLimit)")
-                .font(.caption2.monospacedDigit())
+                .font(.community(.caption2).monospacedDigit())
                 .foregroundStyle(timeOfDay.canvasSecondaryText)
                 .frame(maxWidth: .infinity, alignment: .trailing)
         }
@@ -548,14 +548,14 @@ struct PostComposerView: View {
                 Toggle(isOn: $showsWeights) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Show the weights I lifted")
-                            .font(.subheadline.weight(.semibold))
+                            .font(.community(.subheadline, weight: .semibold))
                             .foregroundStyle(timeOfDay.primaryText)
                         Text(
                             showsWeights
                                 ? "Your top set and total volume go out with the workout."
                                 : "Exercises, sets and reps still go out. The load does not."
                         )
-                        .font(.caption)
+                        .font(.community(.caption))
                         .foregroundStyle(timeOfDay.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                     }
@@ -594,16 +594,16 @@ struct PostComposerView: View {
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: level.symbol)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.community(size: 14, weight: .semibold))
                     .foregroundStyle(timeOfDay.accent)
                     .frame(width: 22)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(level.title)
-                        .font(.subheadline.weight(.semibold))
+                        .font(.community(.subheadline, weight: .semibold))
                         .foregroundStyle(timeOfDay.canvasPrimaryText)
                     Text(level.explanation)
-                        .font(.caption)
+                        .font(.community(.caption))
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                         .multilineTextAlignment(.leading)
@@ -612,7 +612,7 @@ struct PostComposerView: View {
                 Spacer(minLength: 8)
 
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 18))
+                    .font(.community(size: 18))
                     .foregroundStyle(
                         isSelected
                             ? timeOfDay.accent
@@ -644,7 +644,7 @@ struct PostComposerView: View {
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }
-        .font(.caption)
+        .font(.community(.caption))
         .foregroundStyle(timeOfDay.canvasSecondaryText)
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
@@ -791,7 +791,7 @@ struct PostComposerView: View {
                 Spacer()
 
                 Text(selectedDay.formatted(.dateTime.month(.abbreviated).day().year()))
-                    .font(.subheadline.weight(.semibold))
+                    .font(.community(.subheadline, weight: .semibold))
 
                 Spacer()
 
@@ -812,10 +812,10 @@ struct PostComposerView: View {
                     } label: {
                         VStack(spacing: 5) {
                             Text(day.formatted(.dateTime.weekday(.narrow)))
-                                .font(.caption2.weight(.semibold))
+                                .font(.community(.caption2, weight: .semibold))
                                 .foregroundStyle(timeOfDay.secondaryText)
                             Text(day.formatted(.dateTime.day()))
-                                .font(.caption.weight(.bold).monospacedDigit())
+                                .font(.community(.caption, weight: .bold).monospacedDigit())
                                 .foregroundStyle(
                                     isSelected ? RepbasePalette.cream : timeOfDay.primaryText
                                 )

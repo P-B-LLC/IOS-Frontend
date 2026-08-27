@@ -35,7 +35,7 @@ struct PlannerMonthCalendar: View {
 
             if !isShowingCurrentMonth {
                 Button("Today") { store.showToday() }
-                    .font(.caption.weight(.semibold))
+                    .font(.community(.caption, weight: .semibold))
                     .buttonStyle(.bordered)
                     .buttonBorderShape(.capsule)
                     .tint(timeOfDay.accent)
@@ -44,7 +44,7 @@ struct PlannerMonthCalendar: View {
             stepper(systemImage: "chevron.left", label: "Previous month", months: -1)
             stepper(systemImage: "chevron.right", label: "Next month", months: 1)
 
-            if let onClose { Button("Week", action: onClose).font(.caption.weight(.semibold)) }
+            if let onClose { Button("Week", action: onClose).font(.community(.caption, weight: .semibold)) }
         }
     }
 
@@ -60,7 +60,7 @@ struct PlannerMonthCalendar: View {
     private func legendItem(_ title: String, color: Color) -> some View {
         HStack(spacing: 4) {
             Circle().fill(color).frame(width: 6, height: 6)
-            Text(title).font(.system(size: 9, weight: .medium)).foregroundStyle(timeOfDay.secondaryText)
+            Text(title).font(.community(size: 9, weight: .medium)).foregroundStyle(timeOfDay.secondaryText)
         }
     }
 
@@ -69,7 +69,7 @@ struct PlannerMonthCalendar: View {
             store.showMonth(offsetBy: months)
         } label: {
             Image(systemName: systemImage)
-                .font(.footnote.weight(.bold))
+                .font(.community(.footnote, weight: .bold))
                 .frame(width: 32, height: 32)
                 .contentShape(Rectangle())
         }
@@ -84,7 +84,7 @@ struct PlannerMonthCalendar: View {
         HStack(spacing: 0) {
             ForEach(Weekday.allCases) { day in
                 Text(day.shortName.uppercased())
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(.community(size: 10, weight: .semibold))
                     .foregroundStyle(timeOfDay.secondaryText)
                     .frame(maxWidth: .infinity)
             }
@@ -114,7 +114,7 @@ struct PlannerMonthCalendar: View {
         } label: {
             VStack(spacing: 3) {
                 Text("\(calendar.component(.day, from: date))")
-                    .font(.system(size: 14, weight: isSelected || isToday ? .bold : .regular))
+                    .font(.community(size: 14, weight: isSelected || isToday ? .bold : .regular))
                     .foregroundStyle(foreground(inMonth: inMonth, isSelected: isSelected))
                     .frame(width: 30, height: 30)
                     .background(background(isSelected: isSelected, isToday: isToday))

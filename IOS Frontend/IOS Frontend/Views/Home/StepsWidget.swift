@@ -58,16 +58,16 @@ struct StepsWidget: View {
             HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("TODAY'S MOVEMENT")
-                        .font(.system(size: 9, weight: .bold))
+                        .font(.community(size: 9, weight: .bold))
                         .tracking(0.5)
                         .foregroundStyle(RepbaseDesign.success)
 
                     HStack(alignment: .firstTextBaseline, spacing: 5) {
                         Text(steps.formatted(.number))
-                            .font(.title2.weight(.bold))
+                            .font(.community(.title2, weight: .bold))
                             .contentTransition(.numericText())
                         Text("steps today")
-                            .font(.caption2.weight(.medium))
+                            .font(.community(.caption2, weight: .medium))
                             .foregroundStyle(timeOfDay.secondaryText)
                     }
                 }
@@ -81,9 +81,9 @@ struct StepsWidget: View {
                     } label: {
                         HStack(spacing: 3) {
                             Text(Self.goalText(goal))
-                                .font(.system(size: 9, weight: .bold))
+                                .font(.community(size: 9, weight: .bold))
                             Image(systemName: "pencil")
-                                .font(.system(size: 7, weight: .bold))
+                                .font(.community(size: 7, weight: .bold))
                         }
                         .foregroundStyle(RepbaseDesign.success)
                         // A label this small is hard to hit, so the target is
@@ -97,7 +97,7 @@ struct StepsWidget: View {
                         "Change your daily step goal, currently \(goal.formatted(.number))"
                     )
                     Text(progress.formatted(.percent.precision(.fractionLength(0))))
-                        .font(.caption2.weight(.semibold))
+                        .font(.community(.caption2, weight: .semibold))
                         .foregroundStyle(timeOfDay.secondaryText)
                 }
             }
@@ -124,7 +124,7 @@ struct StepsWidget: View {
             .frame(height: 22)
 
             Text(remaining == 0 ? "Goal reached" : "\(remaining.formatted(.number)) to go")
-            .font(.system(size: 9, weight: .semibold))
+            .font(.community(size: 9, weight: .semibold))
             .foregroundStyle(RepbaseDesign.success)
         }
         .padding(.horizontal, 12)
@@ -144,9 +144,9 @@ struct StepsWidget: View {
 
     private func compactInsight(_ value: String, _ label: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(value).font(.caption.weight(.bold))
+            Text(value).font(.community(.caption, weight: .bold))
             Text(label)
-                .font(.system(size: 8, weight: .bold))
+                .font(.community(size: 8, weight: .bold))
                 .tracking(0.45)
                 .foregroundStyle(timeOfDay.secondaryText)
         }
@@ -186,7 +186,7 @@ struct StepsWidget: View {
     ) -> some View {
         HStack(spacing: 10) {
             Image(systemName: "figure.walk")
-                .font(.system(size: 12, weight: .bold))
+                .font(.community(size: 12, weight: .bold))
                 .foregroundStyle(timeOfDay.accent)
                 .frame(width: 28, height: 28)
                 .background(
@@ -195,7 +195,7 @@ struct StepsWidget: View {
                 )
 
             Text(message)
-                .font(.footnote)
+                .font(.community(.footnote))
                 .foregroundStyle(timeOfDay.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -205,7 +205,7 @@ struct StepsWidget: View {
                 ProgressView().controlSize(.small)
             } else if action != nil {
                 Image(systemName: "chevron.forward")
-                    .font(.caption.weight(.bold))
+                    .font(.community(.caption, weight: .bold))
                     .foregroundStyle(timeOfDay.accent)
             }
         }
@@ -256,7 +256,7 @@ struct StepsWidget: View {
     private var header: some View {
         HStack(spacing: 8) {
             Image(systemName: "figure.walk")
-                .font(.system(size: 12, weight: .bold))
+                .font(.community(size: 12, weight: .bold))
                 .foregroundStyle(timeOfDay.accent)
                 .frame(width: 28, height: 28)
                 .background(
@@ -264,7 +264,7 @@ struct StepsWidget: View {
                     in: RoundedRectangle(cornerRadius: 10)
                 )
             Text("Steps")
-                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                .font(.community(size: 16, weight: .semibold, design: .rounded))
             Spacer()
             if store.isSyncing {
                 ProgressView().controlSize(.small)
@@ -277,10 +277,10 @@ struct StepsWidget: View {
         if let steps = store.stepsToday {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text(steps.formatted(.number))
-                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                    .font(.community(size: 34, weight: .bold, design: .rounded))
                     .contentTransition(.numericText())
                 Text("today")
-                    .font(.footnote.weight(.medium))
+                    .font(.community(.footnote, weight: .medium))
                     .foregroundStyle(timeOfDay.secondaryText)
             }
         } else {
@@ -288,7 +288,7 @@ struct StepsWidget: View {
             // the user has not moved; they may simply not have carried their
             // phone yet today.
             Text("No steps recorded today yet")
-                .font(.footnote.weight(.medium))
+                .font(.community(.footnote, weight: .medium))
                 .foregroundStyle(timeOfDay.secondaryText)
         }
     }
@@ -312,7 +312,7 @@ struct StepsWidget: View {
                             )
                         )
                     Text(weekdayInitial(day))
-                        .font(.system(size: 10, weight: .semibold, design: .rounded))
+                        .font(.community(size: 10, weight: .semibold, design: .rounded))
                         .foregroundStyle(timeOfDay.secondaryText)
                 }
                 .frame(maxWidth: .infinity)
@@ -340,7 +340,7 @@ struct StepsWidget: View {
                     Text("\(summary.skippedOverlapping) \(workoutWord(summary.skippedOverlapping)) skipped, already recorded here")
                 }
             }
-            .font(.caption)
+            .font(.community(.caption))
             .foregroundStyle(timeOfDay.secondaryText)
             .fixedSize(horizontal: false, vertical: true)
         }
@@ -404,11 +404,11 @@ private struct StepGoalEditor: View {
             VStack(spacing: 26) {
                 VStack(spacing: 6) {
                     Text(goal.formatted(.number))
-                        .font(.system(size: 46, weight: .bold))
+                        .font(.community(size: 46, weight: .bold))
                         .contentTransition(.numericText())
                         .animation(.easeOut(duration: 0.15), value: goal)
                     Text("steps a day")
-                        .font(.subheadline)
+                        .font(.community(.subheadline))
                         .foregroundStyle(timeOfDay.secondaryText)
                 }
                 .padding(.top, 20)
@@ -419,7 +419,7 @@ private struct StepGoalEditor: View {
                     step: Self.step
                 ) {
                     Text("Adjust")
-                        .font(.subheadline.weight(.semibold))
+                        .font(.community(.subheadline, weight: .semibold))
                 }
                 .padding(.horizontal, RepbaseDesign.pageInset)
 
@@ -431,7 +431,7 @@ private struct StepGoalEditor: View {
                             goal = preset
                         } label: {
                             Text("\(preset / 1_000)K")
-                                .font(.footnote.weight(.semibold))
+                                .font(.community(.footnote, weight: .semibold))
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 9)
                                 .background(

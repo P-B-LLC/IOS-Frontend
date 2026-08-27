@@ -154,28 +154,28 @@ struct CommentRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
                     Text(comment.author.displayName)
-                        .font(.footnote.weight(.semibold))
+                        .font(.community(.footnote, weight: .semibold))
                         .foregroundStyle(timeOfDay.primaryText)
                         .lineLimit(1)
                     Text(comment.createdAt, format: .relative(presentation: .named))
-                        .font(.caption2)
+                        .font(.community(.caption2))
                         .foregroundStyle(timeOfDay.secondaryText)
                         .lineLimit(1)
                     Spacer(minLength: 0)
                 }
 
                 Text(comment.body)
-                    .font(.subheadline)
+                    .font(.community(.subheadline))
                     .foregroundStyle(timeOfDay.primaryText)
                     .fixedSize(horizontal: false, vertical: true)
 
                 HStack(spacing: 14) {
                     Button("Reply", action: onReply)
-                        .font(.caption.weight(.semibold))
+                        .font(.community(.caption, weight: .semibold))
                         .foregroundStyle(timeOfDay.secondaryText)
                     if comment.viewerIsAuthor {
                         Button("Delete", action: onDelete)
-                            .font(.caption.weight(.semibold))
+                            .font(.community(.caption, weight: .semibold))
                             .foregroundStyle(RepbaseDesign.danger)
                     }
                 }
@@ -205,7 +205,7 @@ struct CommentRow: View {
         ZStack {
             Circle().fill(timeOfDay.accent.opacity(0.18))
             Text(comment.author.initials)
-                .font(.system(size: 11, weight: .bold))
+                .font(.community(size: 11, weight: .bold))
                 .foregroundStyle(timeOfDay.accent)
         }
     }

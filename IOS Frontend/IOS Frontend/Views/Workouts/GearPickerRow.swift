@@ -61,7 +61,7 @@ struct GearPickerRow: View {
                     gearIcon(for: kind)
                         .frame(width: 34, height: 34)
                     Text("GEAR")
-                        .font(.system(size: 8, weight: .bold))
+                        .font(.community(size: 8, weight: .bold))
                         .foregroundStyle(accent)
                 }
                 .frame(width: 64)
@@ -73,10 +73,10 @@ struct GearPickerRow: View {
 
                 VStack(alignment: .leading, spacing: 5) {
                     Text(kind == .shoe ? "Shoes" : "Bike")
-                        .font(.headline)
+                        .font(.community(.headline))
                         .foregroundStyle(primaryText)
                     Text(selectionDetail(for: kind, choices: choices))
-                        .font(.caption)
+                        .font(.community(.caption))
                         .foregroundStyle(secondaryText)
                         .lineLimit(1)
                 }
@@ -84,11 +84,11 @@ struct GearPickerRow: View {
                 Spacer(minLength: 10)
 
                 Text(selectionAction(for: choices))
-                    .font(.subheadline.weight(.medium))
+                    .font(.community(.subheadline, weight: .medium))
                     .foregroundStyle(accent)
 
                 Image(systemName: "chevron.forward")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.community(.subheadline, weight: .semibold))
                     .foregroundStyle(accent)
                     .padding(.leading, 8)
             }

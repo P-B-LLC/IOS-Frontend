@@ -86,9 +86,9 @@ struct GearEditorView: View {
                     Toggle(isOn: $isDefault) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(mode.kind == .shoe ? "Use by default" : "Use for rides by default")
-                                .font(.headline)
+                                .font(.community(.headline))
                             Text("Automatically select this \(mode.kind == .shoe ? "pair for runs" : "bike for cycling sessions").")
-                                .font(.caption)
+                                .font(.community(.caption))
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -110,7 +110,7 @@ struct GearEditorView: View {
                             dismiss()
                         }
                     }
-                    .font(.subheadline.weight(.semibold))
+                    .font(.community(.subheadline, weight: .semibold))
                     .foregroundStyle(gear.isRetired ? RepbasePalette.sage : Color.red)
                     .frame(maxWidth: .infinity)
                 }
@@ -174,7 +174,7 @@ struct GearEditorView: View {
 
     private func sectionLabel(_ text: String) -> some View {
         Text(text)
-            .font(.caption2.weight(.bold))
+            .font(.community(.caption2, weight: .bold))
             .tracking(1.1)
             .foregroundStyle(RepbasePalette.sage)
     }
@@ -201,10 +201,10 @@ struct GearEditorView: View {
     ) -> some View {
         VStack(alignment: .leading, spacing: 7) {
             Text(label)
-                .font(.caption2.weight(.bold))
+                .font(.community(.caption2, weight: .bold))
                 .foregroundStyle(RepbasePalette.caramel)
             TextField(placeholder, text: text)
-                .font(.headline)
+                .font(.community(.headline))
         }
         .padding(18)
     }
@@ -217,13 +217,13 @@ struct GearEditorView: View {
     ) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline) {
-                Text(title).font(.headline)
+                Text(title).font(.community(.headline))
                 Spacer()
                 milesField(text, placeholder: placeholder)
                     .foregroundStyle(text.wrappedValue.isEmpty ? Color.secondary : RepbasePalette.caramel)
             }
             Text(detail)
-                .font(.caption)
+                .font(.community(.caption))
                 .foregroundStyle(.secondary)
         }
         .padding(18)

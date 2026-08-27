@@ -38,12 +38,12 @@ struct LiftProgressChart: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text("YOUR PROGRESS")
-                    .font(.caption2.weight(.bold))
+                    .font(.community(.caption2, weight: .bold))
                     .foregroundStyle(phase.secondaryText)
                 Spacer()
                 if let selected {
                     Text("^[\(selected.days.count) session](inflect: true)")
-                        .font(.caption2)
+                        .font(.community(.caption2))
                         .foregroundStyle(phase.secondaryText)
                 }
             }
@@ -59,7 +59,7 @@ struct LiftProgressChart: View {
                 .tint(phase.accent)
             } else if let selected {
                 Text(selected.exerciseName)
-                    .font(.subheadline.weight(.semibold))
+                    .font(.community(.subheadline, weight: .semibold))
             }
 
             Picker("Metric", selection: $metric) {
@@ -75,7 +75,7 @@ struct LiftProgressChart: View {
 
                 if let caption = caption(for: selected) {
                     Text(caption)
-                        .font(.caption2)
+                        .font(.community(.caption2))
                         .foregroundStyle(phase.secondaryText)
                 }
             }
@@ -132,7 +132,7 @@ struct LiftProgressChart: View {
                 AxisValueLabel {
                     if let raw = value.as(Double.self) {
                         Text(String(format: "%.0f", raw))
-                            .font(.caption2)
+                            .font(.community(.caption2))
                             .foregroundStyle(phase.secondaryText)
                     }
                 }
@@ -143,7 +143,7 @@ struct LiftProgressChart: View {
                 AxisValueLabel {
                     if let date = value.as(Date.self) {
                         Text(date, format: .dateTime.month(.abbreviated).day())
-                            .font(.caption2)
+                            .font(.community(.caption2))
                             .foregroundStyle(phase.secondaryText)
                     }
                 }

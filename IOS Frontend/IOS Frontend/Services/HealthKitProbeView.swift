@@ -25,7 +25,7 @@ struct HealthKitProbeView: View {
                 Text(line)
             }
         }
-        .font(.footnote.monospaced())
+        .font(.community(.footnote).monospaced())
         .padding(24)
         .task { await probe() }
     }

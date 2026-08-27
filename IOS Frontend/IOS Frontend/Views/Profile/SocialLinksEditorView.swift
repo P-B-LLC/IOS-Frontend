@@ -39,13 +39,13 @@ struct SocialLinksEditorView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     Text("Add the accounts you want on your profile. Paste a link, or just type your handle and we will work out the address.")
-                        .font(.footnote)
+                        .font(.community(.footnote))
                         .foregroundStyle(timeOfDay.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
 
                     if drafts.isEmpty {
                         Text("No links yet.")
-                            .font(.subheadline)
+                            .font(.community(.subheadline))
                             .foregroundStyle(timeOfDay.secondaryText)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.vertical, 18)
@@ -68,7 +68,7 @@ struct SocialLinksEditorView: View {
                             }
                         } label: {
                             Label("Add a platform", systemImage: "plus.circle")
-                                .font(.subheadline.weight(.semibold))
+                                .font(.community(.subheadline, weight: .semibold))
                                 .foregroundStyle(timeOfDay.accent)
                         }
                     }
@@ -78,7 +78,7 @@ struct SocialLinksEditorView: View {
                     // version of the same sentence.
                     if let errorMessage {
                         Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
-                            .font(.footnote)
+                            .font(.community(.footnote))
                             .foregroundStyle(RepbaseDesign.danger)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -128,7 +128,7 @@ struct SocialLinksEditorView: View {
                     draft.wrappedValue.platform.title,
                     systemImage: draft.wrappedValue.platform.systemImage
                 )
-                .font(.caption.weight(.bold))
+                .font(.community(.caption, weight: .bold))
                 .foregroundStyle(timeOfDay.accent)
 
                 Spacer(minLength: 0)
@@ -138,7 +138,7 @@ struct SocialLinksEditorView: View {
                 } label: {
                     Label("Remove", systemImage: "minus.circle")
                         .labelStyle(.iconOnly)
-                        .font(.system(size: 17))
+                        .font(.community(size: 17))
                         .foregroundStyle(RepbaseDesign.danger)
                 }
                 .buttonStyle(.plain)

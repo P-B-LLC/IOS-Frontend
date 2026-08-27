@@ -35,12 +35,12 @@ struct AppleHealthConnectionView: View {
 
                     if let summary = activity.lastImport {
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("LATEST IMPORT").font(.caption2.weight(.bold)).tracking(1)
+                            Text("LATEST IMPORT").font(.community(.caption2, weight: .bold)).tracking(1)
                                 .foregroundStyle(timeOfDay.accent)
                             Text("\(summary.imported) workouts added")
-                                .font(.title3.weight(.bold))
+                                .font(.community(.title3, weight: .bold))
                             Text("\(summary.alreadyImported) already synced · \(summary.skippedOverlapping) overlapping")
-                                .font(.caption).foregroundStyle(.secondary)
+                                .font(.community(.caption)).foregroundStyle(.secondary)
                         }
                     }
 
@@ -84,9 +84,9 @@ struct AppleHealthConnectionView: View {
 
     private func statusRow(_ title: String, value: String) -> some View {
         HStack {
-            Text(title).font(.body)
+            Text(title).font(.community(.body))
             Spacer()
-            Text(value).font(.subheadline.weight(.semibold)).foregroundStyle(.secondary)
+            Text(value).font(.community(.subheadline, weight: .semibold)).foregroundStyle(.secondary)
         }
         .padding(.vertical, 16)
     }
@@ -114,10 +114,10 @@ struct NotificationPreferencesView: View {
 
                     HStack {
                         VStack(alignment: .leading, spacing: 3) {
-                            Text("SYSTEM ACCESS").font(.caption2.weight(.bold)).tracking(1)
+                            Text("SYSTEM ACCESS").font(.community(.caption2, weight: .bold)).tracking(1)
                                 .foregroundStyle(timeOfDay.accent)
-                            Text(permissionLabel).font(.headline)
-                            Text(permissionDetail).font(.caption).foregroundStyle(.secondary)
+                            Text(permissionLabel).font(.community(.headline))
+                            Text(permissionDetail).font(.community(.caption)).foregroundStyle(.secondary)
                         }
                         Spacer()
                         if authorizationStatus == .notDetermined {
@@ -146,11 +146,11 @@ struct NotificationPreferencesView: View {
                     }
 
                     Text("System-level permission is controlled in iOS Settings. Repbase will honor both your system permission and these choices.")
-                        .font(.caption)
+                        .font(.community(.caption))
                         .foregroundStyle(timeOfDay.secondaryText)
 
                     if let notificationError {
-                        Text(notificationError).font(.caption).foregroundStyle(.orange)
+                        Text(notificationError).font(.community(.caption)).foregroundStyle(.orange)
                     }
                 }
                 .padding(RepbaseDesign.pageInset)
@@ -168,8 +168,8 @@ struct NotificationPreferencesView: View {
     private func preference(_ title: String, detail: String, value: Binding<Bool>) -> some View {
         Toggle(isOn: value) {
             VStack(alignment: .leading, spacing: 3) {
-                Text(title).font(.headline)
-                Text(detail).font(.caption).foregroundStyle(.secondary)
+                Text(title).font(.community(.headline))
+                Text(detail).font(.community(.caption)).foregroundStyle(.secondary)
             }
         }
         .padding(.vertical, 15)

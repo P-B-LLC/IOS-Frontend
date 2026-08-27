@@ -32,11 +32,11 @@ struct SavedWorkoutsView: View {
                 HStack(spacing: 12) {
                     VStack(alignment: .leading, spacing: 3) {
                         Text("PLAN FOR")
-                            .font(.system(size: 10, weight: .bold))
+                            .font(.community(size: 10, weight: .bold))
                             .tracking(1.2)
                             .foregroundStyle(RepbasePalette.caramel)
                         Text(date.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))
-                            .font(.headline)
+                            .font(.community(.headline))
                     }
                     Spacer()
                     DatePicker("Add to", selection: $date, displayedComponents: .date)
@@ -50,7 +50,7 @@ struct SavedWorkoutsView: View {
 
                 if let failureMessage {
                     Text(failureMessage)
-                        .font(.footnote)
+                        .font(.community(.footnote))
                         .foregroundStyle(.orange)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -83,9 +83,9 @@ struct SavedWorkoutsView: View {
     private var empty: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("No saved workouts yet")
-                .font(.subheadline.weight(.semibold))
+                .font(.community(.subheadline, weight: .semibold))
             Text("Build a workout on any day and it will be here to reuse.")
-                .font(.footnote)
+                .font(.community(.footnote))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -106,10 +106,10 @@ struct SavedWorkoutsView: View {
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(workout.name)
-                    .font(.subheadline.weight(.semibold))
+                    .font(.community(.subheadline, weight: .semibold))
                     .lineLimit(1)
                 Text(detail(workout))
-                    .font(.caption)
+                    .font(.community(.caption))
                     .foregroundStyle(.secondary)
             }
 
@@ -123,7 +123,7 @@ struct SavedWorkoutsView: View {
                         ProgressView().controlSize(.small)
                     } else {
                         Text("Add")
-                            .font(.footnote.weight(.semibold))
+                            .font(.community(.footnote, weight: .semibold))
                     }
                 }
                 .frame(minWidth: 52, minHeight: 44)

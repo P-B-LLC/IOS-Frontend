@@ -75,7 +75,7 @@ struct TrainingTabView: View {
                     half = item
                 } label: {
                     Label(item.title, systemImage: item.symbol)
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.community(size: 13, weight: .semibold))
                         .foregroundStyle(item == half ? timeOfDay.onPrimaryAction : timeOfDay.canvasSecondaryText)
                         .frame(maxWidth: .infinity, minHeight: 40)
                         .background {
@@ -112,7 +112,7 @@ struct TrainingTabView: View {
             }
         } label: {
             Image(systemName: "plus")
-                .font(.system(size: 16, weight: .bold))
+                .font(.community(size: 16, weight: .bold))
                 .foregroundStyle(timeOfDay.onPrimaryAction)
                 // 48 square, comfortably over the 44pt minimum.
                 .frame(width: 48, height: 48)

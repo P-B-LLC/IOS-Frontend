@@ -93,18 +93,18 @@ struct PlannerEntryEditorView: View {
 
                         VStack(alignment: .leading, spacing: 6) {
                             Text(draft.kind == .task ? "NEW TASK" : "NEW EVENT")
-                                .font(.system(size: 10, weight: .bold))
+                                .font(.community(size: 10, weight: .bold))
                                 .tracking(1.25)
                                 .foregroundStyle(timeOfDay.accent)
                             Text(draft.kind == .task ? "Add something to your day." : "Put time on the calendar.")
-                                .font(.system(size: 34, weight: .bold, design: .rounded))
+                                .font(.community(size: 34, weight: .bold, design: .rounded))
                                 .tracking(-0.8)
                             Text(
                                 draft.kind == .task
                                     ? "A quick reminder that lives beside your events."
                                     : "Plan a moment with a clear start and finish."
                             )
-                            .font(.subheadline)
+                            .font(.community(.subheadline))
                             .foregroundStyle(timeOfDay.canvasSecondaryText)
                         }
 
@@ -133,7 +133,7 @@ struct PlannerEntryEditorView: View {
                                         "Share to Feed",
                                         systemImage: "square.and.arrow.up"
                                     )
-                                    .font(.subheadline.weight(.semibold))
+                                    .font(.community(.subheadline, weight: .semibold))
                                 }
                                 .buttonStyle(.plain)
                                 .foregroundStyle(timeOfDay.accent)
@@ -145,7 +145,7 @@ struct PlannerEntryEditorView: View {
                                 dismiss()
                             } label: {
                                 Label("Delete \(draft.kind.title)", systemImage: "trash")
-                                    .font(.subheadline.weight(.semibold))
+                                    .font(.community(.subheadline, weight: .semibold))
                             }
                             .buttonStyle(.plain)
                             .foregroundStyle(Color.red)
@@ -179,7 +179,7 @@ struct PlannerEntryEditorView: View {
                 draft.kind == .task ? "What needs doing?" : "What is happening?",
                 text: $draft.title
             )
-            .font(.title2.weight(.semibold))
+            .font(.community(.title2, weight: .semibold))
             .foregroundStyle(timeOfDay.canvasPrimaryText)
             .textInputAutocapitalization(.sentences)
             .padding(.vertical, 10)
@@ -203,7 +203,7 @@ struct PlannerEntryEditorView: View {
             EditorialSectionTitle(title: "Schedule")
             VStack(spacing: 0) {
                 HStack {
-                    Text("Category").font(.subheadline)
+                    Text("Category").font(.community(.subheadline))
                     Spacer()
                     Menu {
                         ForEach(PlannerCategory.available(for: draft.kind)) { category in
@@ -215,7 +215,7 @@ struct PlannerEntryEditorView: View {
                         }
                     } label: {
                         Label(draft.category.title, systemImage: draft.category.symbolName)
-                            .font(.subheadline.weight(.bold))
+                            .font(.community(.subheadline, weight: .bold))
                             .foregroundStyle(timeOfDay.accent)
                     }
                 }
@@ -227,7 +227,7 @@ struct PlannerEntryEditorView: View {
                 // happens. Offered for events too — a flight matters more than
                 // a coffee, and the request was tasks and events alike.
                 HStack {
-                    Text("Priority").font(.subheadline)
+                    Text("Priority").font(.community(.subheadline))
                     Spacer()
                     Menu {
                         ForEach(PlannerPriority.offered) { priority in
@@ -239,7 +239,7 @@ struct PlannerEntryEditorView: View {
                         }
                     } label: {
                         Label(draft.priority.title, systemImage: draft.priority.symbolName)
-                            .font(.subheadline.weight(.bold))
+                            .font(.community(.subheadline, weight: .bold))
                             .foregroundStyle(
                                 draft.priority == .high
                                     ? draft.priority.tint
@@ -252,7 +252,7 @@ struct PlannerEntryEditorView: View {
 
                 if draft.category == .workout {
                     HStack {
-                        Text("Workout").font(.subheadline)
+                        Text("Workout").font(.community(.subheadline))
                         Spacer()
                         Picker("Workout", selection: $draft.workoutID) {
                             Text("None").tag(Int?.none)
@@ -273,7 +273,7 @@ struct PlannerEntryEditorView: View {
                 }
 
                 HStack {
-                    Text("Date").font(.subheadline)
+                    Text("Date").font(.community(.subheadline))
                     Spacer()
                     DatePicker("Date", selection: $date, displayedComponents: .date)
                         .labelsHidden()
@@ -283,7 +283,7 @@ struct PlannerEntryEditorView: View {
                 .overlay(alignment: .bottom) { Divider() }
 
                 HStack {
-                    Text("Set a time").font(.subheadline)
+                    Text("Set a time").font(.community(.subheadline))
                     Spacer()
                     Toggle("Set a time", isOn: $hasTime)
                         .labelsHidden()
@@ -296,7 +296,7 @@ struct PlannerEntryEditorView: View {
 
                 if hasTime {
                     HStack {
-                        Text(draft.kind == .task ? "Do it by" : "Starts").font(.subheadline)
+                        Text(draft.kind == .task ? "Do it by" : "Starts").font(.community(.subheadline))
                         Spacer()
                         DatePicker("Time", selection: $time, displayedComponents: .hourAndMinute)
                             .labelsHidden()
@@ -308,7 +308,7 @@ struct PlannerEntryEditorView: View {
                     // start from describes nothing — and the server refuses the
                     // pair, so offering it here would only produce an error.
                     HStack {
-                        Text("Length").font(.subheadline)
+                        Text("Length").font(.community(.subheadline))
                         Spacer()
                         Menu {
                             Button("No length") { draft.durationMinutes = nil }
@@ -319,7 +319,7 @@ struct PlannerEntryEditorView: View {
                             }
                         } label: {
                             Text(lengthLabel)
-                                .font(.subheadline.weight(.bold))
+                                .font(.community(.subheadline, weight: .bold))
                                 .foregroundStyle(timeOfDay.accent)
                         }
                     }

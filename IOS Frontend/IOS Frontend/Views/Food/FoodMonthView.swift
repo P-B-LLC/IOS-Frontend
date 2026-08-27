@@ -59,9 +59,9 @@ struct FoodMonthView: View {
 
             VStack(spacing: 2) {
                 Text(month.formatted(.dateTime.month(.wide).year()))
-                    .font(.headline)
+                    .font(.community(.headline))
                 Text(monthSummary)
-                    .font(.caption)
+                    .font(.community(.caption))
                     .foregroundStyle(timeOfDay.secondaryText)
             }
 
@@ -96,7 +96,7 @@ struct FoodMonthView: View {
         HStack(spacing: 4) {
             ForEach(Array(orderedWeekdaySymbols.enumerated()), id: \.offset) { _, symbol in
                 Text(symbol)
-                    .font(.caption2.weight(.bold))
+                    .font(.community(.caption2, weight: .bold))
                     .foregroundStyle(timeOfDay.secondaryText)
                     .frame(maxWidth: .infinity)
             }
@@ -134,7 +134,7 @@ struct FoodMonthView: View {
 
         return VStack(spacing: 2) {
             Text(day.formatted(.dateTime.day()))
-                .font(.caption.weight(.bold).monospacedDigit())
+                .font(.community(.caption, weight: .bold).monospacedDigit())
                 .foregroundStyle(
                     isSelected ? RepbasePalette.cream : timeOfDay.primaryText
                 )
@@ -143,7 +143,7 @@ struct FoodMonthView: View {
             // days, and "2,140" against "900" says something a dot cannot.
             if logged {
                 Text(calories.nutritionText)
-                    .font(.system(size: 9, weight: .semibold).monospacedDigit())
+                    .font(.community(size: 9, weight: .semibold).monospacedDigit())
                     .foregroundStyle(
                         isSelected ? RepbasePalette.cream : timeOfDay.secondaryText
                     )
@@ -151,7 +151,7 @@ struct FoodMonthView: View {
                     .minimumScaleFactor(0.7)
             } else {
                 Text("—")
-                    .font(.system(size: 9, weight: .semibold))
+                    .font(.community(size: 9, weight: .semibold))
                     .foregroundStyle(timeOfDay.secondaryText.opacity(0.5))
             }
         }
@@ -185,7 +185,7 @@ struct FoodMonthView: View {
 
     private var legend: some View {
         Text("Calories per day. Tap a day to open it.")
-            .font(.caption)
+            .font(.community(.caption))
             .foregroundStyle(timeOfDay.secondaryText)
             .frame(maxWidth: .infinity, alignment: .leading)
     }

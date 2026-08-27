@@ -48,7 +48,7 @@ struct CardioFinisherCard: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(store.recordedCardioSeconds == nil ? "CARDIO FINISHER" : "CARDIO COMPLETE")
-                .font(.caption2.weight(.bold))
+                .font(.community(.caption2, weight: .bold))
                 .tracking(0.8)
                 .foregroundStyle(phase.accent)
             Text(
@@ -56,7 +56,7 @@ struct CardioFinisherCard: View {
                     ? "Keep the momentum going."
                     : "Finisher saved."
             )
-            .font(.title3.weight(.bold))
+            .font(.community(.title3, weight: .bold))
         }
     }
 
@@ -73,7 +73,7 @@ struct CardioFinisherCard: View {
                             machine = option
                         } label: {
                             Text(option.title)
-                                .font(.subheadline.weight(machine == option ? .semibold : .regular))
+                                .font(.community(.subheadline, weight: machine == option ? .semibold : .regular))
                                 .padding(.vertical, 8)
                             .foregroundStyle(
                                 machine == option ? phase.primaryText : phase.secondaryText
@@ -98,9 +98,9 @@ struct CardioFinisherCard: View {
                 HStack(spacing: 8) {
                     Text("Start \(machine.title.lowercased())")
                     Image(systemName: "arrow.right")
-                        .font(.subheadline.weight(.semibold))
+                        .font(.community(.subheadline, weight: .semibold))
                 }
-                .font(.headline)
+                .font(.community(.headline))
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(WorkoutPrimaryButtonStyle(phase: phase))
@@ -118,13 +118,13 @@ struct CardioFinisherCard: View {
                         color: phase.primaryText
                     )
                     Text(machineInProgress.title)
-                        .font(.subheadline.weight(.semibold))
+                        .font(.community(.subheadline, weight: .semibold))
                 }
                 Spacer()
                 if let started = store.cardioStartedAt {
                     TimelineView(.periodic(from: .now, by: 1)) { context in
                         Text(elapsed(from: started, to: context.date))
-                            .font(.title2.weight(.bold).monospacedDigit())
+                            .font(.community(.title2, weight: .bold).monospacedDigit())
                             .foregroundStyle(phase.accent)
                     }
                 }
@@ -132,7 +132,7 @@ struct CardioFinisherCard: View {
 
             HStack(spacing: 8) {
                 Text("Distance")
-                    .font(.caption)
+                    .font(.community(.caption))
                     .foregroundStyle(phase.secondaryText)
                 TextField("Optional", text: $distanceText)
                     .keyboardType(.decimalPad)
@@ -144,12 +144,12 @@ struct CardioFinisherCard: View {
                         in: RoundedRectangle(cornerRadius: 9)
                     )
                 Text("mi")
-                    .font(.caption)
+                    .font(.community(.caption))
                     .foregroundStyle(phase.secondaryText)
             }
 
             Text("Read it off the machine if you want it recorded.")
-                .font(.caption2)
+                .font(.community(.caption2))
                 .foregroundStyle(phase.secondaryText)
 
             Button {
@@ -173,9 +173,9 @@ struct CardioFinisherCard: View {
                         HStack(spacing: 8) {
                             Text("Finish cardio")
                             Image(systemName: "arrow.right")
-                                .font(.subheadline.weight(.semibold))
+                                .font(.community(.subheadline, weight: .semibold))
                         }
-                            .font(.headline)
+                            .font(.community(.headline))
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -189,14 +189,14 @@ struct CardioFinisherCard: View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(machineInProgress.title)
-                    .font(.subheadline.weight(.semibold))
+                    .font(.community(.subheadline, weight: .semibold))
                 Text("Saved with your workout")
-                    .font(.caption2)
+                    .font(.community(.caption2))
                     .foregroundStyle(phase.secondaryText)
             }
             Spacer(minLength: 0)
             Text(durationText(seconds))
-                .font(.title3.weight(.bold).monospacedDigit())
+                .font(.community(.title3, weight: .bold).monospacedDigit())
         }
     }
 

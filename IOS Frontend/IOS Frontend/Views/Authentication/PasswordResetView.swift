@@ -69,13 +69,13 @@ struct PasswordResetView: View {
         HStack {
             Button { dismiss() } label: {
                 Image(systemName: "xmark")
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(.community(size: 17, weight: .semibold))
                     .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             Spacer()
-            Text("Reset Password").font(.headline.weight(.bold))
+            Text("Reset Password").font(.community(.headline, weight: .bold))
             Spacer()
             Color.clear.frame(width: 44, height: 44)
         }
@@ -123,7 +123,7 @@ struct PasswordResetView: View {
                 step = .enteringCode
                 focusedField = .code
             }
-            .font(.subheadline)
+            .font(.community(.subheadline))
             .fontWeight(.semibold)
             .foregroundStyle(timeOfDay.accent)
             .frame(maxWidth: .infinity)
@@ -178,7 +178,7 @@ struct PasswordResetView: View {
                 .resetField(timeOfDay: timeOfDay)
 
                 Text("Use at least 8 characters.")
-                    .font(.caption)
+                    .font(.community(.caption))
                     .foregroundStyle(timeOfDay.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -201,7 +201,7 @@ struct PasswordResetView: View {
                     .foregroundStyle(timeOfDay.accent)
                     .disabled(authentication.isResettingPassword)
             }
-            .font(.subheadline)
+            .font(.community(.subheadline))
             .frame(maxWidth: .infinity)
         }
     }
@@ -216,14 +216,14 @@ struct PasswordResetView: View {
     ) -> some View {
         VStack(alignment: .leading, spacing: 7) {
             Text(eyebrow)
-                .font(.system(size: 10, weight: .bold))
+                .font(.community(size: 10, weight: .bold))
                 .tracking(1.3)
                 .foregroundStyle(timeOfDay.accent)
             Text(headline)
-                .font(.system(size: 30, weight: .bold))
+                .font(.community(size: 30, weight: .bold))
                 .tracking(-0.65)
             Text(detail)
-                .font(.subheadline)
+                .font(.community(.subheadline))
                 .foregroundStyle(timeOfDay.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -233,7 +233,7 @@ struct PasswordResetView: View {
     private var problem: some View {
         if let errorMessage {
             Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
-                .font(.footnote)
+                .font(.community(.footnote))
                 .foregroundStyle(Color.red)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(12)
@@ -260,7 +260,7 @@ struct PasswordResetView: View {
                 Spacer()
                 Image(systemName: icon)
             }
-            .font(.headline.weight(.bold))
+            .font(.community(.headline, weight: .bold))
             .foregroundStyle(Color.white)
             .padding(.horizontal, 20)
             .frame(maxWidth: .infinity, minHeight: 56)

@@ -46,14 +46,14 @@ struct AuthenticationView: View {
                                 authentication.clearError()
                                 showsPasswordReset = true
                             }
-                            .font(.footnote.weight(.semibold))
+                            .font(.community(.footnote, weight: .semibold))
                             .foregroundStyle(timeOfDay.accent)
                             .frame(maxWidth: .infinity, alignment: .trailing)
                             .disabled(authentication.isWorking)
 
                             if let error = authentication.errorMessage {
                                 Label(error, systemImage: "exclamationmark.triangle.fill")
-                                    .font(.footnote)
+                                    .font(.community(.footnote))
                                     .foregroundStyle(Color.red)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .padding(12)
@@ -75,7 +75,7 @@ struct AuthenticationView: View {
                             .foregroundStyle(timeOfDay.accent)
                             .disabled(authentication.isWorking)
                         }
-                        .font(.subheadline)
+                        .font(.community(.subheadline))
                         .padding(.top, 24)
 
                         Spacer(minLength: 34)
@@ -85,7 +85,7 @@ struct AuthenticationView: View {
                             "Development · \(authentication.configuration.displayName)",
                             systemImage: "hammer"
                         )
-                        .font(.caption2)
+                        .font(.community(.caption2))
                         .foregroundStyle(timeOfDay.secondaryText.opacity(0.72))
 #endif
                     }
@@ -129,17 +129,17 @@ struct AuthenticationView: View {
             Spacer(minLength: 70)
 
             Text("REPBASE")
-                .font(.caption.weight(.bold))
+                .font(.community(.caption, weight: .bold))
                 .tracking(2.2)
                 .foregroundStyle(timeOfDay.accent)
 
             Text("Everything important,\nin one flow.")
-                .font(.system(size: 42, weight: .bold))
+                .font(.community(size: 42, weight: .bold))
                 .tracking(-1.2)
                 .padding(.top, 14)
 
             Text("Plan training, understand nutrition, and share progress without fighting the interface.")
-                .font(.body)
+                .font(.community(.body))
                 .foregroundStyle(timeOfDay.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, 18)
@@ -181,14 +181,14 @@ struct AuthenticationView: View {
 
             VStack(alignment: .leading, spacing: 3) {
                 Text("TRAINING, ORGANIZED")
-                    .font(.system(size: 9, weight: .bold))
+                    .font(.community(size: 9, weight: .bold))
                     .tracking(1.35)
                     .foregroundStyle(timeOfDay.accent)
                 Text("Repbase")
-                    .font(.system(size: 30, weight: .bold))
+                    .font(.community(size: 30, weight: .bold))
                     .tracking(-0.65)
                 Text("Welcome back")
-                    .font(.subheadline)
+                    .font(.community(.subheadline))
                     .foregroundStyle(timeOfDay.secondaryText)
             }
             Spacer(minLength: 0)
@@ -228,7 +228,7 @@ struct AuthenticationView: View {
                 Text("Sign In")
                 Image(systemName: "arrow.right")
             }
-            .font(.headline.weight(.bold))
+            .font(.community(.headline, weight: .bold))
             .foregroundStyle(Color.white)
             .frame(maxWidth: .infinity, minHeight: 54)
             .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 12))
@@ -274,27 +274,27 @@ private struct AccountRegistrationView: View {
                     HStack {
                         Button { dismiss() } label: {
                             Image(systemName: "xmark")
-                                .font(.system(size: 17, weight: .semibold))
+                                .font(.community(size: 17, weight: .semibold))
                                 .frame(width: 44, height: 44)
                                 .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
                         Spacer()
-                        Text("Create Account").font(.headline.weight(.bold))
+                        Text("Create Account").font(.community(.headline, weight: .bold))
                         Spacer()
                         Color.clear.frame(width: 44, height: 44)
                     }
 
                     VStack(alignment: .leading, spacing: 7) {
                         Text("JOIN REPBASE")
-                            .font(.system(size: 10, weight: .bold))
+                            .font(.community(size: 10, weight: .bold))
                             .tracking(1.3)
                             .foregroundStyle(timeOfDay.accent)
                         Text("Create your account.")
-                            .font(.system(size: 30, weight: .bold))
+                            .font(.community(size: 30, weight: .bold))
                             .tracking(-0.65)
                         Text("Goals, measurements, your photo, disciplines, and gym can be added later from Profile Settings.")
-                            .font(.subheadline)
+                            .font(.community(.subheadline))
                             .foregroundStyle(timeOfDay.secondaryText)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -313,14 +313,14 @@ private struct AccountRegistrationView: View {
                         .authenticationField(timeOfDay: timeOfDay)
 
                         Text("Use at least 8 characters.")
-                            .font(.caption)
+                            .font(.community(.caption))
                             .foregroundStyle(timeOfDay.secondaryText)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
 
                     if let error = authentication.errorMessage {
                         Label(error, systemImage: "exclamationmark.triangle.fill")
-                            .font(.footnote)
+                            .font(.community(.footnote))
                             .foregroundStyle(.red)
                     }
 
@@ -331,7 +331,7 @@ private struct AccountRegistrationView: View {
                             Spacer()
                             Image(systemName: "arrow.right")
                         }
-                        .font(.headline.weight(.bold))
+                        .font(.community(.headline, weight: .bold))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 20)
                         .frame(height: 56)

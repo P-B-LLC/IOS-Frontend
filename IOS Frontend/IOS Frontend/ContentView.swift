@@ -27,17 +27,17 @@ private struct HomeCommandHeader: View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("HOME")
-                    .font(.system(size: 10, weight: .bold))
+                    .font(.community(size: 10, weight: .bold))
                     .tracking(1.5)
                     .foregroundStyle(timeOfDay.commandAccent)
 
                 Text("\(greeting), \(firstName)")
-                    .font(.system(size: 30, weight: .bold))
+                    .font(.community(size: 30, weight: .bold))
                     .tracking(-0.65)
                     .foregroundStyle(timeOfDay.canvasPrimaryText)
 
                 Text(date.formatted(.dateTime.weekday(.wide).month(.wide).day()))
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.community(size: 13, weight: .medium))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
             }
 
@@ -62,7 +62,7 @@ private struct HomeCommandHeader: View {
             }
         } label: {
             Text(initials)
-                .font(.subheadline.weight(.bold))
+                .font(.community(.subheadline, weight: .bold))
                 .foregroundStyle(Color.white)
                 .frame(width: 40, height: 40)
                 .background(timeOfDay.commandAccent, in: Circle())
@@ -128,9 +128,9 @@ private struct HomeWeekStrip: View {
                 } label: {
                     VStack(spacing: 3) {
                         Text(day.formatted(.dateTime.weekday(.abbreviated)).uppercased())
-                            .font(.system(size: 9, weight: .semibold))
+                            .font(.community(size: 9, weight: .semibold))
                         Text(day.formatted(.dateTime.day()))
-                            .font(.subheadline.weight(isSelected(day) || isToday(day) ? .bold : .semibold))
+                            .font(.community(.subheadline, weight: isSelected(day) || isToday(day) ? .bold : .semibold))
 
                         Circle()
                             .fill(dayHasContent(day) ? timeOfDay.commandAccent : .clear)
@@ -199,13 +199,13 @@ private struct HomeUpNextSection: View {
                 } label: {
                     VStack(alignment: .leading, spacing: 0) {
                         Text(eyebrow(for: item))
-                            .font(.system(size: 11, weight: .bold))
+                            .font(.community(size: 11, weight: .bold))
                             .tracking(0.45)
                             .foregroundStyle(timeOfDay.commandAccent)
 
                         HStack(alignment: .center, spacing: 14) {
                             Text(item.title)
-                                .font(.system(size: 26, weight: .bold))
+                                .font(.community(size: 26, weight: .bold))
                                 .tracking(-0.5)
                                 .foregroundStyle(timeOfDay.canvasPrimaryText)
                                 .lineLimit(2)
@@ -214,18 +214,18 @@ private struct HomeUpNextSection: View {
                             Spacer(minLength: 8)
 
                             Image(systemName: "chevron.right")
-                                .font(.system(size: 20, weight: .medium))
+                                .font(.community(size: 20, weight: .medium))
                                 .foregroundStyle(timeOfDay.canvasSecondaryText.opacity(0.7))
                         }
                         .padding(.top, 7)
 
                         Text(detail(for: item))
-                            .font(.system(size: 13, weight: .medium))
+                            .font(.community(size: 13, weight: .medium))
                             .foregroundStyle(timeOfDay.canvasSecondaryText)
                             .padding(.top, 3)
 
                         Text(scheduleAction)
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.community(size: 12, weight: .semibold))
                             .foregroundStyle(timeOfDay.commandAccent)
                             .padding(.top, 13)
                     }
@@ -345,7 +345,7 @@ private struct HomeTrainingSection: View {
                     isToday ? "WORKOUT" : date.formatted(.dateTime.weekday(.wide)).uppercased(),
                     systemImage: workoutSymbol
                 )
-                .font(.system(size: 10, weight: .bold))
+                .font(.community(size: 10, weight: .bold))
                 .tracking(1.1)
                 .foregroundStyle(timeOfDay.commandAccent)
 
@@ -356,7 +356,7 @@ private struct HomeTrainingSection: View {
                 } label: {
                     Label("Workouts", systemImage: "arrow.up.right")
                         .labelStyle(.titleAndIcon)
-                        .font(.system(size: 11, weight: .semibold))
+                        .font(.community(size: 11, weight: .semibold))
                         .foregroundStyle(timeOfDay.commandAccent)
                 }
                 .buttonStyle(.plain)
@@ -365,13 +365,13 @@ private struct HomeTrainingSection: View {
             HStack(alignment: .center, spacing: 18) {
                 VStack(alignment: .leading, spacing: 10) {
                     Text(title)
-                        .font(.system(size: 24, weight: .bold))
+                        .font(.community(size: 24, weight: .bold))
                         .tracking(-0.4)
                         .foregroundStyle(timeOfDay.canvasPrimaryText)
                         .lineLimit(2)
 
                     Text(metadata)
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.community(size: 13, weight: .medium))
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
 
                     if let workout, !workout.exercises.isEmpty {
@@ -384,7 +384,7 @@ private struct HomeTrainingSection: View {
                                     Text("\(exercise.sets) sets")
                                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                                 }
-                                .font(.system(size: 13, weight: .medium))
+                                .font(.community(size: 13, weight: .medium))
                             }
                         }
                     }
@@ -396,7 +396,7 @@ private struct HomeTrainingSection: View {
                 } label: {
                     VStack(spacing: 7) {
                         Image(systemName: activeSession == nil ? "play.fill" : "arrow.right")
-                            .font(.system(size: 20, weight: .bold))
+                            .font(.community(size: 20, weight: .bold))
                             .foregroundStyle(timeOfDay.commandAccent)
                             .frame(width: 58, height: 58)
                             .overlay {
@@ -404,7 +404,7 @@ private struct HomeTrainingSection: View {
                             }
 
                         Text(activeSession == nil ? (workout == nil ? "Plan" : "Start") : "Continue")
-                            .font(.system(size: 13, weight: .bold))
+                            .font(.community(size: 13, weight: .bold))
                             .foregroundStyle(timeOfDay.commandAccent)
                     }
                     .frame(width: 76)
@@ -499,11 +499,11 @@ private struct HomeMacroSection: View {
 
             HStack(alignment: .firstTextBaseline) {
                 Text("\(total.calories.nutritionText) / \(goals.calories.nutritionText) kcal")
-                    .font(.headline.weight(.bold))
+                    .font(.community(.headline, weight: .bold))
                     .foregroundStyle(timeOfDay.canvasPrimaryText)
                 Spacer()
                 Text("\(remaining(total.calories, goal: goals.calories).nutritionText) left")
-                    .font(.caption.weight(.semibold))
+                    .font(.community(.caption, weight: .semibold))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
             }
 
@@ -521,10 +521,10 @@ private struct HomeMacroSection: View {
     private func macro(_ label: String, _ value: Decimal, _ goal: Decimal) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label)
-                .font(.system(size: 8, weight: .bold))
+                .font(.community(size: 8, weight: .bold))
                 .foregroundStyle(timeOfDay.canvasSecondaryText)
             Text("\(value.nutritionText) / \(goal.nutritionText)g")
-                .font(.subheadline.weight(.semibold))
+                .font(.community(.subheadline, weight: .semibold))
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
@@ -596,7 +596,7 @@ private struct HomeRemainingTasksSection: View {
                                 .frame(width: 17, height: 17)
 
                             Text(task.displayTime ?? "—")
-                                .font(.caption.weight(.semibold))
+                                .font(.community(.caption, weight: .semibold))
                                 .foregroundStyle(timeOfDay.canvasSecondaryText)
                                 .frame(width: 40, alignment: .leading)
 
@@ -605,12 +605,12 @@ private struct HomeRemainingTasksSection: View {
                             // jumped the queue should say why it did.
                             if task.priority.badge != nil {
                                 Image(systemName: "exclamationmark")
-                                    .font(.system(size: 9, weight: .black))
+                                    .font(.community(size: 9, weight: .black))
                                     .foregroundStyle(task.priority.tint)
                             }
 
                             Text(task.title)
-                                .font(.subheadline.weight(.semibold))
+                                .font(.community(.subheadline, weight: .semibold))
                                 .foregroundStyle(timeOfDay.canvasPrimaryText)
                                 .lineLimit(1)
 
@@ -618,12 +618,12 @@ private struct HomeRemainingTasksSection: View {
 
                             if isPastDue(task) {
                                 Text("PAST DUE")
-                                    .font(.system(size: 8, weight: .bold))
+                                    .font(.community(size: 8, weight: .bold))
                                     .tracking(0.5)
                                     .foregroundStyle(timeOfDay.commandAccent)
                             } else if let badge = task.priority.badge {
                                 Text(badge)
-                                    .font(.system(size: 8, weight: .bold))
+                                    .font(.community(size: 8, weight: .bold))
                                     .tracking(0.5)
                                     .foregroundStyle(task.priority.tint)
                             }
@@ -686,7 +686,7 @@ private struct HomeSectionHeader<Destination: View>: View {
     var body: some View {
         HStack {
             Text(title)
-                .font(.system(size: 16, weight: .bold))
+                .font(.community(size: 16, weight: .bold))
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
 
             Spacer()
@@ -698,7 +698,7 @@ private struct HomeSectionHeader<Destination: View>: View {
                     Text(action)
                     Image(systemName: "arrow.up.right")
                 }
-                .font(.system(size: 11, weight: .semibold))
+                .font(.community(size: 11, weight: .semibold))
                 .foregroundStyle(timeOfDay.commandAccent)
             }
             .buttonStyle(.plain)
@@ -716,10 +716,10 @@ private struct HomeEmptyLine: View {
     var body: some View {
         HStack(spacing: 9) {
             Image(systemName: symbol)
-                .font(.caption.weight(.semibold))
+                .font(.community(.caption, weight: .semibold))
                 .foregroundStyle(timeOfDay.commandAccent)
             Text(title)
-                .font(.subheadline)
+                .font(.community(.subheadline))
                 .foregroundStyle(timeOfDay.canvasSecondaryText)
             Spacer()
         }
@@ -744,10 +744,10 @@ private struct HomePersistenceError: View {
             Image(systemName: "exclamationmark.triangle.fill")
                 .foregroundStyle(timeOfDay.commandAccent)
             VStack(alignment: .leading, spacing: 7) {
-                Text(message).font(.footnote)
+                Text(message).font(.community(.footnote))
                 if let retry {
                     Button("Retry", action: retry)
-                        .font(.footnote.weight(.semibold))
+                        .font(.community(.footnote, weight: .semibold))
                 }
             }
             Spacer()

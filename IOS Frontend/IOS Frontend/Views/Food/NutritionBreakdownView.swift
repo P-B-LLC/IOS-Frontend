@@ -44,18 +44,18 @@ struct NutritionBreakdownView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text("Nutrition Breakdown")
-                .font(.headline)
+                .font(.community(.headline))
             Text(scope == .day
                  ? "See where this day's macros come from."
                  : "See where this meal's macros come from.")
-                .font(.caption2)
+                .font(.community(.caption2))
                 .foregroundStyle(.secondary)
         }
     }
 
     private var emptyCard: some View {
         Text("Log food to see how your macros break down.")
-            .font(.caption)
+            .font(.community(.caption))
             .foregroundStyle(.secondary)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, 18)
@@ -69,10 +69,10 @@ struct NutritionBreakdownView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text("Calorie Split")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.community(.subheadline, weight: .semibold))
                 Spacer()
                 Text("\(Int(macroCalories.rounded())) cal from macros")
-                    .font(.caption2)
+                    .font(.community(.caption2))
                     .foregroundStyle(.secondary)
             }
 
@@ -98,7 +98,7 @@ struct NutritionBreakdownView: View {
     private var sourcesCard: some View {
         VStack(alignment: .leading, spacing: 11) {
             Text("Where It's Coming From")
-                .font(.subheadline.weight(.semibold))
+                .font(.community(.subheadline, weight: .semibold))
 
             Picker("Macro", selection: $selectedMacro) {
                 ForEach(Macro.allCases) { macro in
@@ -110,7 +110,7 @@ struct NutritionBreakdownView: View {
             let sources = sources(for: selectedMacro)
             if sources.isEmpty {
                 Text("No \(selectedMacro.title.lowercased()) logged for this day yet.")
-                    .font(.caption)
+                    .font(.community(.caption))
                     .foregroundStyle(.secondary)
                     .padding(.vertical, 4)
             } else {
@@ -130,25 +130,25 @@ struct NutritionBreakdownView: View {
     private var perMealCard: some View {
         VStack(alignment: .leading, spacing: 11) {
             Text("By Meal")
-                .font(.subheadline.weight(.semibold))
+                .font(.community(.subheadline, weight: .semibold))
 
             VStack(spacing: 10) {
                 ForEach(mealsWithFood) { meal in
                     VStack(alignment: .leading, spacing: 5) {
                         HStack {
                             Text(meal.name)
-                                .font(.caption.weight(.semibold))
+                                .font(.community(.caption, weight: .semibold))
                                 .lineLimit(1)
                             Spacer()
                             Text("\(meal.totalNutrition.calories.nutritionText) cal")
-                                .font(.caption2.weight(.medium))
+                                .font(.community(.caption2, weight: .medium))
                                 .foregroundStyle(.secondary)
                         }
 
                         StackedMacroBar(shares: shares(for: meal.totalNutrition), height: 7)
 
                         Text(macroSummary(for: meal.totalNutrition))
-                            .font(.caption2)
+                            .font(.community(.caption2))
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -169,7 +169,7 @@ struct NutritionBreakdownView: View {
                 .foregroundStyle(.secondary)
             Spacer(minLength: 0)
         }
-        .font(.caption2)
+        .font(.community(.caption2))
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 11)
         .padding(.vertical, 9)
@@ -436,14 +436,14 @@ private struct MacroLegendItem: View {
                     .fill(macro.color)
                     .frame(width: 7, height: 7)
                 Text(macro.title)
-                    .font(.caption2)
+                    .font(.community(.caption2))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
             Text("\(gramsText(grams))g")
-                .font(.caption.weight(.semibold))
+                .font(.community(.caption, weight: .semibold))
             Text(percentText(share))
-                .font(.caption2)
+                .font(.community(.caption2))
                 .foregroundStyle(.tertiary)
         }
         .frame(maxWidth: .infinity)
@@ -460,14 +460,14 @@ private struct MacroSourceRow: View {
         VStack(alignment: .leading, spacing: 5) {
             HStack(spacing: 6) {
                 Text(source.name)
-                    .font(.caption.weight(.medium))
+                    .font(.community(.caption, weight: .medium))
                     .lineLimit(1)
 
                 // What the food mostly is, so "chicken" reads as a protein and
                 // "rice" as a carb regardless of which list it appears in.
                 if let primary = source.primary {
                     Text(primary.title)
-                        .font(.system(size: 9, weight: .semibold))
+                        .font(.community(size: 9, weight: .semibold))
                         .foregroundStyle(primary.color)
                         .padding(.horizontal, 5)
                         .padding(.vertical, 1.5)
@@ -477,9 +477,9 @@ private struct MacroSourceRow: View {
 
                 Spacer(minLength: 0)
                 Text("\(gramsText(source.grams))g")
-                    .font(.caption.weight(.semibold))
+                    .font(.community(.caption, weight: .semibold))
                 Text(percentText(source.share))
-                    .font(.caption2)
+                    .font(.community(.caption2))
                     .foregroundStyle(.secondary)
                     .frame(minWidth: 32, alignment: .trailing)
             }

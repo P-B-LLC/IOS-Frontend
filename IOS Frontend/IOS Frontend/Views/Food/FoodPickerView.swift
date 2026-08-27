@@ -31,14 +31,14 @@ struct FoodPickerView: View {
 
                     VStack(alignment: .leading, spacing: 6) {
                         Text("FOOD DATABASE")
-                            .font(.system(size: 10, weight: .bold))
+                            .font(.community(size: 10, weight: .bold))
                             .tracking(1.25)
                             .foregroundStyle(timeOfDay.accent)
                         Text("Find it quickly.")
-                            .font(.system(size: 28, weight: .bold))
+                            .font(.community(size: 28, weight: .bold))
                             .tracking(-0.8)
                         Text("Search foods you have logged or enter nutrition manually.")
-                            .font(.subheadline)
+                            .font(.community(.subheadline))
                             .foregroundStyle(timeOfDay.canvasSecondaryText)
                     }
 
@@ -71,10 +71,10 @@ struct FoodPickerView: View {
     private func pickerHeader(timeOfDay: HomeTimeOfDay) -> some View {
         HStack {
             Button("Cancel") { dismiss() }
-                .font(.subheadline.weight(.medium))
+                .font(.community(.subheadline, weight: .medium))
                 .buttonStyle(.plain)
             Spacer()
-            Text("Add Food").font(.subheadline.weight(.bold))
+            Text("Add Food").font(.community(.subheadline, weight: .bold))
             Spacer()
             Color.clear.frame(width: 46, height: 1)
         }
@@ -86,29 +86,29 @@ struct FoodPickerView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text("FOOD DATABASE")
-                    .font(.caption2.weight(.bold))
+                    .font(.community(.caption2, weight: .bold))
                     .tracking(1.2)
                     .foregroundStyle(timeOfDay.accent)
                 Spacer()
                 if isSearchingDatabase { ProgressView().controlSize(.mini) }
                 else if searchText.trimmed.count >= 2 {
                     Text("OPEN FOOD FACTS")
-                        .font(.caption2.weight(.bold))
+                        .font(.community(.caption2, weight: .bold))
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                 }
             }
 
             if let databaseError {
                 Text(databaseError)
-                    .font(.caption)
+                    .font(.community(.caption))
                     .foregroundStyle(.orange)
             } else if searchText.trimmed.count < 2 {
                 Text("Type at least two letters to search packaged foods worldwide.")
-                    .font(.caption)
+                    .font(.community(.caption))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
             } else if !isSearchingDatabase && databaseResults.isEmpty {
                 Text("No database foods match this search.")
-                    .font(.caption)
+                    .font(.community(.caption))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
             } else {
                 VStack(spacing: 0) {
@@ -128,16 +128,16 @@ struct FoodPickerView: View {
     private func recentEditorialSection(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("RECENTLY USED")
-                .font(.caption2.weight(.bold))
+                .font(.community(.caption2, weight: .bold))
                 .tracking(1.2)
                 .foregroundStyle(timeOfDay.accent)
             Text("Add again in one tap")
-                .font(.footnote)
+                .font(.community(.footnote))
                 .foregroundStyle(timeOfDay.canvasSecondaryText)
             VStack(spacing: 0) {
                 if filteredRecents.isEmpty {
                     Text(recentEmptyMessage)
-                        .font(.subheadline)
+                        .font(.community(.subheadline))
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.vertical, 22)
@@ -163,18 +163,18 @@ struct FoodPickerView: View {
         } label: {
             HStack(spacing: 14) {
                 Image(systemName: "square.and.pencil")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.community(.subheadline, weight: .semibold))
                     .foregroundStyle(timeOfDay.accent)
                     .frame(width: 28, height: 44)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Enter nutrition manually").font(.subheadline.weight(.semibold))
+                    Text("Enter nutrition manually").font(.community(.subheadline, weight: .semibold))
                     Text("Calories, protein, carbs, and fat")
-                        .font(.caption)
+                        .font(.community(.caption))
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                 }
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .font(.caption.weight(.bold))
+                    .font(.community(.caption, weight: .bold))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
             }
             .padding(.vertical, 14)
@@ -253,28 +253,28 @@ private struct RecentFoodRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: "clock.arrow.circlepath")
-                .font(.subheadline)
+                .font(.community(.subheadline))
                 .foregroundStyle(Color.orange)
                 .frame(width: 24, height: 34)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(food.name)
-                    .font(.headline)
+                    .font(.community(.headline))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                 Text("P \(food.totalNutrition.proteinGrams.nutritionText) · C \(food.totalNutrition.carbohydrateGrams.nutritionText) · F \(food.totalNutrition.fatGrams.nutritionText)")
-                    .font(.caption2)
+                    .font(.community(.caption2))
                     .foregroundStyle(.secondary)
             }
 
             Spacer(minLength: 0)
 
             Text("\(food.totalNutrition.calories.nutritionText) cal")
-                .font(.subheadline.weight(.semibold))
+                .font(.community(.subheadline, weight: .semibold))
                 .foregroundStyle(.primary)
 
             Image(systemName: "plus")
-                .font(.caption.weight(.bold))
+                .font(.community(.caption, weight: .bold))
                 .foregroundStyle(RepbaseDesign.onInk)
                 .frame(width: 30, height: 30)
                 .background(RepbaseDesign.ink, in: RoundedRectangle(cornerRadius: 9))

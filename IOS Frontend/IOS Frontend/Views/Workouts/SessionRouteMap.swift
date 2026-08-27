@@ -61,7 +61,7 @@ struct SessionRouteMap: View {
                 // question, and the answer is that nothing was recorded rather
                 // than that the run was lost.
                 Text("No route recorded")
-                    .font(.caption2.weight(.semibold))
+                    .font(.community(.caption2, weight: .semibold))
                     .foregroundStyle(.primary)
                     .padding(.horizontal, 9)
                     .padding(.vertical, 5)

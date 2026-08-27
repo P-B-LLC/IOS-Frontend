@@ -89,12 +89,12 @@ struct MealDetailView: View {
         VStack(alignment: .leading, spacing: 18) {
             HStack {
                 Text(meal.name.uppercased())
-                .font(.caption2.weight(.bold))
+                .font(.community(.caption2, weight: .bold))
                 .tracking(1.2)
                 .foregroundStyle(phase.accent)
                 Spacer()
                 Text("\(meal.totalNutrition.calories.nutritionText) KCAL")
-                    .font(.caption2.weight(.bold))
+                    .font(.community(.caption2, weight: .bold))
                     .foregroundStyle(RepbaseDesign.warning)
                     .padding(.horizontal, 13)
                     .frame(height: 30)
@@ -103,9 +103,9 @@ struct MealDetailView: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(meal.entries.isEmpty ? "Build your plate." : "Your plate, in balance.")
-                    .font(.title2.weight(.bold))
+                    .font(.community(.title2, weight: .bold))
                 Text(meal.entries.isEmpty ? "Add one food and the balance comes to life." : "A useful view of this meal—not a daily target.")
-                    .font(.caption)
+                    .font(.community(.caption))
                     .foregroundStyle(.secondary)
             }
 
@@ -133,13 +133,13 @@ struct MealDetailView: View {
     private var emptyMealActions: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("BUILD YOUR MEAL")
-                .font(.caption2.weight(.bold))
+                .font(.community(.caption2, weight: .bold))
                 .tracking(1.2)
                 .foregroundStyle(phase.accent)
             Text("Choose where to start")
-                .font(.title2.weight(.bold))
+                .font(.community(.title2, weight: .bold))
             Text("Add something new or reuse what already works.")
-                .font(.footnote)
+                .font(.community(.footnote))
                 .foregroundStyle(.secondary)
 
             VStack(spacing: 0) {
@@ -157,16 +157,16 @@ struct MealDetailView: View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Image(systemName: symbol)
-                    .font(.subheadline.weight(.semibold))
+                    .font(.community(.subheadline, weight: .semibold))
                     .foregroundStyle(phase.accent)
                     .frame(width: 36, height: 36)
                     .background(phase.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 11))
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(title).font(.subheadline.weight(.semibold))
-                    Text(detail).font(.caption2).foregroundStyle(.secondary)
+                    Text(title).font(.community(.subheadline, weight: .semibold))
+                    Text(detail).font(.community(.caption2)).foregroundStyle(.secondary)
                 }
                 Spacer()
-                Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(.secondary)
+                Image(systemName: "chevron.right").font(.community(.caption, weight: .bold)).foregroundStyle(.secondary)
             }
             .padding(.vertical, 7)
             .contentShape(Rectangle())
@@ -177,8 +177,8 @@ struct MealDetailView: View {
     private var mealGuidance: some View {
         Label {
             VStack(alignment: .leading, spacing: 3) {
-                Text("Macros update as you add foods").font(.subheadline.weight(.semibold))
-                Text("Review the totals before leaving this meal.").font(.caption).foregroundStyle(.secondary)
+                Text("Macros update as you add foods").font(.community(.subheadline, weight: .semibold))
+                Text("Review the totals before leaving this meal.").font(.community(.caption)).foregroundStyle(.secondary)
             }
         } icon: {
             Image(systemName: "chart.bar.fill")
@@ -192,7 +192,7 @@ struct MealDetailView: View {
     private func foodList(_ meal: FoodMeal) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Foods")
-                .font(.title3.weight(.bold))
+                .font(.community(.title3, weight: .bold))
 
             if meal.entries.isEmpty {
                 ContentUnavailableView(
@@ -225,7 +225,7 @@ struct MealDetailView: View {
             isAddingFood = true
         } label: {
             Label("Add food", systemImage: "plus")
-                .font(.headline)
+                .font(.community(.headline))
                 .frame(maxWidth: .infinity)
         }
         .buttonStyle(RepbasePrimaryButtonStyle())
@@ -267,13 +267,13 @@ private struct MealMacro: View {
         HStack(spacing: 9) {
             Circle().fill(color).frame(width: 8, height: 8)
             Text(title)
-                .font(.caption.weight(.medium))
+                .font(.community(.caption, weight: .medium))
                 .foregroundStyle(.secondary)
             Spacer()
             VStack(alignment: .trailing, spacing: 1) {
-                Text("\(value.nutritionText)g").font(.subheadline.weight(.bold))
+                Text("\(value.nutritionText)g").font(.community(.subheadline, weight: .bold))
                 Text(share.formatted(.percent.precision(.fractionLength(0))))
-                    .font(.system(size: 9, weight: .semibold))
+                    .font(.community(size: 9, weight: .semibold))
                     .foregroundStyle(color)
             }
         }
@@ -295,9 +295,9 @@ private struct MacroMixRing: View {
                     .rotationEffect(.degrees(-90 + nutrition.startAngle(for: macro)))
             }
             VStack(spacing: 2) {
-                Text("Meal mix").font(.subheadline.weight(.bold))
+                Text("Meal mix").font(.community(.subheadline, weight: .bold))
                 Text("BY ENERGY")
-                    .font(.system(size: 8, weight: .bold))
+                    .font(.community(size: 8, weight: .bold))
                     .tracking(0.8)
                     .foregroundStyle(.secondary)
             }
@@ -360,18 +360,18 @@ private struct FoodEntryRow: View {
                 .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 11))
             VStack(alignment: .leading, spacing: 4) {
                 Text(food.name)
-                    .font(.headline)
+                    .font(.community(.headline))
                     .foregroundStyle(.primary)
                 Text("\(food.servings.nutritionText) serving\(food.servings == 1 ? "" : "s")")
-                    .font(.caption)
+                    .font(.community(.caption))
                     .foregroundStyle(.secondary)
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 3) {
                 Text("\(food.totalNutrition.calories.nutritionText) cal")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.community(.subheadline, weight: .semibold))
                 Text("P \(food.totalNutrition.proteinGrams.nutritionText) · C \(food.totalNutrition.carbohydrateGrams.nutritionText) · F \(food.totalNutrition.fatGrams.nutritionText)")
-                    .font(.caption2)
+                    .font(.community(.caption2))
                     .foregroundStyle(.secondary)
             }
         }

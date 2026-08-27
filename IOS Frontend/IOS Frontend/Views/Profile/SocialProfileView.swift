@@ -181,7 +181,7 @@ struct SocialProfileView: View {
             HStack(alignment: .center, spacing: 12) {
                 Button { dismiss() } label: {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(.community(size: 17, weight: .semibold))
                         .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
                 }
@@ -191,11 +191,11 @@ struct SocialProfileView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("PROFILE")
-                        .font(.system(size: 10, weight: .bold))
+                        .font(.community(size: 10, weight: .bold))
                         .tracking(1.5)
                         .foregroundStyle(timeOfDay.accent)
                     Text("@\(profile.username)")
-                        .font(.title3.weight(.semibold))
+                        .font(.community(.title3, weight: .semibold))
                         .tracking(-0.4)
                         .foregroundStyle(timeOfDay.canvasPrimaryText)
                         .lineLimit(1)
@@ -210,11 +210,11 @@ struct SocialProfileView: View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("ACCOUNT")
-                    .font(.system(size: 10, weight: .bold))
+                    .font(.community(size: 10, weight: .bold))
                     .tracking(1.5)
                     .foregroundStyle(timeOfDay.accent)
                 Text("Profile")
-                    .font(.system(size: 30, weight: .bold))
+                    .font(.community(size: 30, weight: .bold))
                     .tracking(-0.65)
                     .foregroundStyle(timeOfDay.canvasPrimaryText)
             }
@@ -225,7 +225,7 @@ struct SocialProfileView: View {
                 showingSettings = true
             } label: {
                 Image(systemName: "line.3.horizontal")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.community(size: 18, weight: .semibold))
                     .foregroundStyle(timeOfDay.accent)
                     .frame(width: 44, height: 44)
                     .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 12))
@@ -247,11 +247,11 @@ struct SocialProfileView: View {
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(profile.displayName)
-                        .font(.title2.weight(.bold))
+                        .font(.community(.title2, weight: .bold))
                         .foregroundStyle(timeOfDay.canvasPrimaryText)
 
                     Text("@\(profile.username)")
-                        .font(.caption)
+                        .font(.community(.caption))
                         .foregroundStyle(timeOfDay.secondaryText)
 
                     HStack(spacing: 0) {
@@ -265,7 +265,7 @@ struct SocialProfileView: View {
 
                     if let discipline = primaryDiscipline {
                         Text(discipline.uppercased())
-                            .font(.system(size: 9, weight: .bold))
+                            .font(.community(size: 9, weight: .bold))
                             .tracking(1.1)
                             .foregroundStyle(timeOfDay.accent)
                     }
@@ -275,7 +275,7 @@ struct SocialProfileView: View {
 
             if !profile.bio.isEmpty {
                 Text(profile.bio)
-                    .font(.subheadline)
+                    .font(.community(.subheadline))
                     .foregroundStyle(timeOfDay.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -292,7 +292,7 @@ struct SocialProfileView: View {
                     Image(systemName: "building.2")
                         .foregroundStyle(timeOfDay.accent)
                 }
-                .font(.footnote)
+                .font(.community(.footnote))
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
             }
 
@@ -324,7 +324,7 @@ struct SocialProfileView: View {
                         openURL(link.url)
                     } label: {
                         Label(link.platform.title, systemImage: link.platform.systemImage)
-                            .font(.footnote.weight(.semibold))
+                            .font(.community(.footnote, weight: .semibold))
                             .foregroundStyle(timeOfDay.accent)
                     }
                     .buttonStyle(.plain)
@@ -351,7 +351,7 @@ struct SocialProfileView: View {
         if isCurrentUser {
             Button { editingProfile = true } label: {
                 Label("Edit profile", systemImage: "arrow.up.right")
-                    .font(.caption.weight(.bold))
+                    .font(.community(.caption, weight: .bold))
                     .textCase(.uppercase)
             }
             .buttonStyle(.plain)
@@ -376,7 +376,7 @@ struct SocialProfileView: View {
                     systemImage: viewerFollowsSubject ? "checkmark" : "plus"
                 )
             }
-            .font(.caption.weight(.bold))
+            .font(.community(.caption, weight: .bold))
             .textCase(.uppercase)
             .buttonStyle(.plain)
             .foregroundStyle(timeOfDay.accent)
@@ -387,10 +387,10 @@ struct SocialProfileView: View {
     private func profileStat(_ value: String, label: String) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(value)
-                .font(.subheadline.weight(.semibold))
+                .font(.community(.subheadline, weight: .semibold))
                 .foregroundStyle(.primary)
             Text(label.uppercased())
-                .font(.system(size: 9, weight: .semibold))
+                .font(.community(size: 9, weight: .semibold))
                 .tracking(0.3)
                 .foregroundStyle(.secondary)
         }
@@ -406,7 +406,7 @@ struct SocialProfileView: View {
                 } label: {
                     VStack(spacing: 10) {
                         Text(section.rawValue.uppercased())
-                            .font(.caption.weight(.semibold))
+                            .font(.community(.caption, weight: .semibold))
                             .foregroundStyle(
                                 selectedSection == section
                                     ? timeOfDay.accent
@@ -460,11 +460,11 @@ struct SocialProfileView: View {
             } else {
                 VStack(spacing: 12) {
                     Image(systemName: "square.and.pencil")
-                        .font(.system(size: 30, weight: .medium))
+                        .font(.community(size: 30, weight: .medium))
                         .foregroundStyle(timeOfDay.accent)
-                    Text("No posts yet").font(.headline)
+                    Text("No posts yet").font(.community(.headline))
                     Text("Completed workouts and shared milestones will appear here.")
-                        .font(.subheadline)
+                        .font(.community(.subheadline))
                         .foregroundStyle(timeOfDay.secondaryText)
                         .multilineTextAlignment(.center)
                 }
@@ -511,11 +511,11 @@ struct SocialProfileView: View {
                     ForEach(myPrompts) { prompt in
                         VStack(alignment: .leading, spacing: 4) {
                             Text(prompt.questionLabel.uppercased())
-                                .font(.system(size: 9, weight: .bold))
+                                .font(.community(size: 9, weight: .bold))
                                 .tracking(1.1)
                                 .foregroundStyle(timeOfDay.accent)
                             Text(prompt.answer)
-                                .font(.system(size: 17, weight: .medium))
+                                .font(.community(size: 17, weight: .medium))
                                 .foregroundStyle(timeOfDay.primaryText)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -531,7 +531,7 @@ struct SocialProfileView: View {
             if !myHighlights.isEmpty {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("FEATURED LIFTS")
-                        .font(.system(size: 9, weight: .bold))
+                        .font(.community(size: 9, weight: .bold))
                         .tracking(1.1)
                         .foregroundStyle(timeOfDay.accent)
 
@@ -579,7 +579,7 @@ struct SocialProfileView: View {
                         ? "Nothing here yet. Add a prompt or feature a lift so people know who they are following."
                         : "This athlete hasn't shared anything about themselves yet."
                 )
-                .font(.subheadline)
+                .font(.community(.subheadline))
                 .foregroundStyle(timeOfDay.secondaryText)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
@@ -598,9 +598,9 @@ struct SocialProfileView: View {
                                 : "Edit prompts and featured lifts"
                         )
                         Spacer(minLength: 0)
-                        Image(systemName: "chevron.right").font(.caption2)
+                        Image(systemName: "chevron.right").font(.community(.caption2))
                     }
-                    .font(.subheadline.weight(.semibold))
+                    .font(.community(.subheadline, weight: .semibold))
                     .foregroundStyle(timeOfDay.accent)
                     .padding(.vertical, 15)
                     .contentShape(Rectangle())
@@ -645,7 +645,7 @@ struct SocialProfileView: View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(lift.label)
-                    .font(.subheadline.weight(.semibold))
+                    .font(.community(.subheadline, weight: .semibold))
                     .foregroundStyle(timeOfDay.primaryText)
 
                 switch lift.source {
@@ -658,11 +658,11 @@ struct SocialProfileView: View {
                             Text("· \(name)").lineLimit(1)
                         }
                     }
-                    .font(.caption2)
+                    .font(.community(.caption2))
                     .foregroundStyle(timeOfDay.secondaryText)
                 case .manual:
                     Label("Entered by hand", systemImage: "pencil")
-                        .font(.caption2)
+                        .font(.community(.caption2))
                         .foregroundStyle(timeOfDay.secondaryText)
                 case .none:
                     EmptyView()
@@ -674,11 +674,11 @@ struct SocialProfileView: View {
             if let summary = lift.setSummary {
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(summary)
-                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                        .font(.community(size: 17, weight: .bold, design: .rounded))
                         .foregroundStyle(timeOfDay.primaryText)
                     if let estimate = lift.estimatedOneRepMaxPounds {
                         Text("est. 1RM \(estimate) lb")
-                            .font(.caption2)
+                            .font(.community(.caption2))
                             .foregroundStyle(timeOfDay.secondaryText)
                     }
                 }
@@ -686,7 +686,7 @@ struct SocialProfileView: View {
                 // Chosen but with nothing behind it. Said plainly rather than
                 // shown as a zero, which reads like a lift that failed.
                 Text("Nothing logged yet")
-                    .font(.caption.weight(.medium))
+                    .font(.community(.caption, weight: .medium))
                     .foregroundStyle(timeOfDay.secondaryText)
             }
         }
@@ -702,15 +702,15 @@ struct SocialProfileView: View {
     ) -> some View {
         HStack(spacing: 12) {
             Image(systemName: symbol).foregroundStyle(RepbasePalette.caramel).frame(width: 28)
-            Text(title).font(.subheadline)
+            Text(title).font(.community(.subheadline))
             Spacer()
             if let badge, let timeOfDay {
                 Text(badge)
-                    .font(.caption2.weight(.bold))
+                    .font(.community(.caption2, weight: .bold))
                     .foregroundStyle(timeOfDay.accent)
             }
             Text(value)
-                .font(.subheadline.weight(.bold))
+                .font(.community(.subheadline, weight: .bold))
                 .multilineTextAlignment(.trailing)
         }
         .padding(.vertical, 15)
@@ -754,13 +754,13 @@ private struct ProfileSettingsView: View {
 
                         VStack(alignment: .leading, spacing: 5) {
                             Text("APP SETTINGS")
-                                .font(.system(size: 10, weight: .bold))
+                                .font(.community(size: 10, weight: .bold))
                                 .tracking(1.3)
                                 .foregroundStyle(timeOfDay.accent)
                             Text("Everything in one place.")
-                                .font(.system(size: 34, weight: .bold))
+                                .font(.community(size: 34, weight: .bold))
                             Text("Manage your public identity, nutrition targets, workout data, and account.")
-                                .font(.subheadline)
+                                .font(.community(.subheadline))
                                 .foregroundStyle(timeOfDay.secondaryText)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -1076,11 +1076,11 @@ private struct ProfileSettingsView: View {
     private func settingsHeader(timeOfDay: HomeTimeOfDay) -> some View {
         HStack {
             Text("Settings")
-                .font(.headline.weight(.bold))
+                .font(.community(.headline, weight: .bold))
             Spacer()
             Button { dismiss() } label: {
                 Image(systemName: "xmark")
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(.community(size: 17, weight: .semibold))
                     .foregroundStyle(timeOfDay.primaryText)
                     .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
@@ -1097,7 +1097,7 @@ private struct ProfileSettingsView: View {
     ) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(title)
-                .font(.system(size: 10, weight: .bold))
+                .font(.community(size: 10, weight: .bold))
                 .tracking(1.25)
                 .foregroundStyle(timeOfDay.accent)
                 .padding(.bottom, 10)
@@ -1116,22 +1116,22 @@ private struct ProfileSettingsView: View {
     ) -> some View {
         HStack(spacing: 14) {
             Image(systemName: symbol)
-                .font(.system(size: 17, weight: .semibold))
+                .font(.community(size: 17, weight: .semibold))
                 .foregroundStyle(color ?? RepbasePalette.caramel)
                 .frame(width: 28)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
-                    .font(.headline)
+                    .font(.community(.headline))
                     .foregroundStyle(color ?? .primary)
                 Text(detail)
-                    .font(.caption)
+                    .font(.community(.caption))
                     .foregroundStyle(.secondary)
             }
 
             Spacer(minLength: 8)
             Image(systemName: "arrow.up.right")
-                .font(.caption.weight(.bold))
+                .font(.community(.caption, weight: .bold))
                 .foregroundStyle(color ?? .secondary)
         }
         .padding(.vertical, 16)
@@ -1152,13 +1152,13 @@ private struct ProfileSettingsView: View {
             .frame(width: 28)
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(title).font(.headline)
-                Text(detail).font(.caption).foregroundStyle(.secondary)
+                Text(title).font(.community(.headline))
+                Text(detail).font(.community(.caption)).foregroundStyle(.secondary)
             }
 
             Spacer(minLength: 8)
             Image(systemName: "arrow.up.right")
-                .font(.caption.weight(.bold))
+                .font(.community(.caption, weight: .bold))
                 .foregroundStyle(.secondary)
         }
         .padding(.vertical, 16)
@@ -1172,14 +1172,14 @@ private struct ProfileSettingsView: View {
     ) -> some View {
         HStack(spacing: 14) {
             Image(systemName: symbol)
-                .font(.system(size: 17, weight: .semibold))
+                .font(.community(size: 17, weight: .semibold))
                 .foregroundStyle(RepbasePalette.caramel)
                 .frame(width: 28)
             Text(title)
-                .font(.headline)
+                .font(.community(.headline))
             Spacer()
             Text(value)
-                .font(.subheadline.weight(.medium))
+                .font(.community(.subheadline, weight: .medium))
                 .foregroundStyle(.secondary)
         }
         .padding(.vertical, 16)
@@ -1211,13 +1211,13 @@ private struct PrivacyAndPermissionsView: View {
                 VStack(alignment: .leading, spacing: 28) {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("PRIVACY & PERMISSIONS")
-                            .font(.system(size: 10, weight: .bold))
+                            .font(.community(size: 10, weight: .bold))
                             .tracking(1.25)
                             .foregroundStyle(timeOfDay.accent)
                         Text("You stay in control.")
-                            .font(.system(size: 32, weight: .bold))
+                            .font(.community(size: 32, weight: .bold))
                         Text("Repbase asks for access only when a feature needs it. You can change access at any time in iOS Settings.")
-                            .font(.subheadline)
+                            .font(.community(.subheadline))
                             .foregroundStyle(timeOfDay.secondaryText)
                     }
 
@@ -1257,7 +1257,7 @@ private struct PrivacyAndPermissionsView: View {
                         openURL(url)
                     } label: {
                         Label("Open iOS Settings", systemImage: "arrow.up.right")
-                            .font(.headline)
+                            .font(.community(.headline))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 15)
                     }
@@ -1276,16 +1276,16 @@ private struct PrivacyAndPermissionsView: View {
     private func permissionExplanation(_ title: String, detail: String, symbol: String, status: String) -> some View {
         HStack(alignment: .top, spacing: 14) {
             Image(systemName: symbol)
-                .font(.system(size: 18, weight: .semibold))
+                .font(.community(size: 18, weight: .semibold))
                 .foregroundStyle(RepbasePalette.caramel)
                 .frame(width: 30)
             VStack(alignment: .leading, spacing: 5) {
                 HStack {
-                    Text(title).font(.headline)
+                    Text(title).font(.community(.headline))
                     Spacer()
-                    Text(status).font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
+                    Text(status).font(.community(.caption2, weight: .semibold)).foregroundStyle(.secondary)
                 }
-                Text(detail).font(.subheadline).foregroundStyle(.secondary)
+                Text(detail).font(.community(.subheadline)).foregroundStyle(.secondary)
             }
         }
     }
@@ -1355,7 +1355,7 @@ struct ProfileOnboardingView: View {
 
                         if let error = store.errorMessage {
                             Label(error, systemImage: "exclamationmark.triangle.fill")
-                                .font(.footnote)
+                                .font(.community(.footnote))
                                 .foregroundStyle(.red)
                         }
                     }
@@ -1405,10 +1405,10 @@ struct ProfileOnboardingView: View {
 
             Spacer()
             Text(isEditing ? "Edit Profile" : "Create Profile")
-                .font(.headline.weight(.bold))
+                .font(.community(.headline, weight: .bold))
             Spacer()
             Text("\(step - firstStep + 1)/\(stepCount)")
-                .font(.caption.weight(.bold))
+                .font(.community(.caption, weight: .bold))
                 .foregroundStyle(timeOfDay.secondaryText)
                 .frame(width: 44, height: 44)
         }
@@ -1447,8 +1447,8 @@ struct ProfileOnboardingView: View {
 
     private func heading(_ title: String, detail: String) -> some View {
         VStack(alignment: .leading, spacing: 7) {
-            Text(title).font(.system(size: 29, weight: .bold, design: .rounded))
-            Text(detail).font(.subheadline).foregroundStyle(.secondary)
+            Text(title).font(.community(size: 29, weight: .bold, design: .rounded))
+            Text(detail).font(.community(.subheadline)).foregroundStyle(.secondary)
         }
     }
 
@@ -1485,13 +1485,13 @@ struct ProfileOnboardingView: View {
                 .repbaseControlSurface(cornerRadius: 12)
 
             Text("Use at least 8 characters.")
-                .font(.caption)
+                .font(.community(.caption))
                 .foregroundStyle(timeOfDay.secondaryText)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             if let error = authentication.errorMessage {
                 Label(error, systemImage: "exclamationmark.triangle.fill")
-                    .font(.footnote)
+                    .font(.community(.footnote))
                     .foregroundStyle(Color.red)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(12)
@@ -1502,7 +1502,7 @@ struct ProfileOnboardingView: View {
                 "Signing in with Apple or Google is coming. Your account will link to one when it does.",
                 systemImage: "lock.fill"
             )
-            .font(.caption)
+            .font(.community(.caption))
             .foregroundStyle(timeOfDay.secondaryText)
             .padding(.top, 8)
         }
@@ -1517,8 +1517,8 @@ struct ProfileOnboardingView: View {
             draft.provider = provider
         } label: {
             HStack(spacing: 12) {
-                Image(systemName: symbol).font(.title3)
-                Text("Continue with \(provider.title)").font(.headline)
+                Image(systemName: symbol).font(.community(.title3))
+                Text("Continue with \(provider.title)").font(.community(.headline))
                 Spacer()
                 Image(systemName: draft.provider == provider ? "checkmark.circle.fill" : "circle")
                     .foregroundStyle(draft.provider == provider ? timeOfDay.accent : timeOfDay.secondaryText)
@@ -1540,9 +1540,9 @@ struct ProfileOnboardingView: View {
             profileField("Last name", text: $draft.lastName, contentType: .familyName, timeOfDay: timeOfDay)
 
             VStack(alignment: .leading, spacing: 7) {
-                Text("Username").font(.caption.weight(.semibold)).foregroundStyle(timeOfDay.secondaryText)
+                Text("Username").font(.community(.caption, weight: .semibold)).foregroundStyle(timeOfDay.secondaryText)
                 HStack(spacing: 4) {
-                    Text("@").foregroundStyle(timeOfDay.accent).font(.headline)
+                    Text("@").foregroundStyle(timeOfDay.accent).font(.community(.headline))
                     TextField("username", text: $draft.username)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
@@ -1554,7 +1554,7 @@ struct ProfileOnboardingView: View {
             }
 
             VStack(alignment: .leading, spacing: 7) {
-                Text("Bio (optional)").font(.caption.weight(.semibold)).foregroundStyle(timeOfDay.secondaryText)
+                Text("Bio (optional)").font(.community(.caption, weight: .semibold)).foregroundStyle(timeOfDay.secondaryText)
                 TextField("What are you training for?", text: $draft.bio, axis: .vertical)
                     .lineLimit(3...4)
                     .padding(15)
@@ -1570,7 +1570,7 @@ struct ProfileOnboardingView: View {
         timeOfDay: HomeTimeOfDay
     ) -> some View {
         VStack(alignment: .leading, spacing: 7) {
-            Text(title).font(.caption.weight(.semibold)).foregroundStyle(timeOfDay.secondaryText)
+            Text(title).font(.community(.caption, weight: .semibold)).foregroundStyle(timeOfDay.secondaryText)
             TextField(title, text: text)
                 .textContentType(contentType)
                 .padding(.horizontal, 15)
@@ -1603,7 +1603,7 @@ struct ProfileOnboardingView: View {
             }
 
             Label("Private measurements still support your personal goals and progress.", systemImage: "eye.slash.fill")
-                .font(.caption)
+                .font(.community(.caption))
                 .foregroundStyle(timeOfDay.secondaryText)
         }
     }
@@ -1617,13 +1617,13 @@ struct ProfileOnboardingView: View {
     ) -> some View {
         VStack(spacing: 14) {
             HStack {
-                Label(title, systemImage: symbol).font(.headline)
+                Label(title, systemImage: symbol).font(.community(.headline))
                 Spacer()
                 content()
             }
             Divider()
             privacy()
-                .font(.subheadline.weight(.medium))
+                .font(.community(.subheadline, weight: .medium))
         }
         .padding(17)
         .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 22))
@@ -1636,7 +1636,7 @@ struct ProfileOnboardingView: View {
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.trailing)
                 .frame(width: 42)
-            Text(unit).font(.caption).foregroundStyle(timeOfDay.secondaryText)
+            Text(unit).font(.community(.caption)).foregroundStyle(timeOfDay.secondaryText)
                 .fixedSize(horizontal: true, vertical: false)
         }
         .padding(.horizontal, 10)
@@ -1651,17 +1651,17 @@ struct ProfileOnboardingView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     PhotosPicker(selection: $selectedPhoto, matching: .images) {
                         Label("Choose photo", systemImage: "photo")
-                            .font(.subheadline.weight(.bold))
+                            .font(.community(.subheadline, weight: .bold))
                     }
                     Button("Set it later") { draft.profileImageData = nil }
-                        .font(.caption.weight(.semibold))
+                        .font(.community(.caption, weight: .semibold))
                         .foregroundStyle(timeOfDay.secondaryText)
                 }
             }
 
             VStack(alignment: .leading, spacing: 10) {
-                Text("How do you train?").font(.headline)
-                Text("Choose all that fit.").font(.caption).foregroundStyle(timeOfDay.secondaryText)
+                Text("How do you train?").font(.community(.headline))
+                Text("Choose all that fit.").font(.community(.caption)).foregroundStyle(timeOfDay.secondaryText)
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 135), spacing: 9)], spacing: 9) {
                     ForEach(AthleteDiscipline.allCases) { discipline in
                         disciplineButton(discipline, timeOfDay: timeOfDay)
@@ -1689,7 +1689,7 @@ struct ProfileOnboardingView: View {
                 Spacer(minLength: 0)
                 if selected { Image(systemName: "checkmark") }
             }
-            .font(.caption.weight(.semibold))
+            .font(.community(.caption, weight: .semibold))
             .foregroundStyle(selected ? Color.white : timeOfDay.primaryText)
             .padding(.horizontal, 11)
             .frame(height: 44)
@@ -1702,9 +1702,9 @@ struct ProfileOnboardingView: View {
         VStack(alignment: .leading, spacing: 11) {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Your gym").font(.headline)
+                    Text("Your gym").font(.community(.headline))
                     Text("Join a gym to find members who train there.")
-                        .font(.caption).foregroundStyle(timeOfDay.secondaryText)
+                        .font(.community(.caption)).foregroundStyle(timeOfDay.secondaryText)
                 }
                 Spacer()
                 Image(systemName: "building.2.fill").foregroundStyle(timeOfDay.accent)
@@ -1727,9 +1727,9 @@ struct ProfileOnboardingView: View {
                             .frame(width: 34, height: 34)
                             .background(timeOfDay.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(gym.name).font(.subheadline.weight(.semibold))
+                            Text(gym.name).font(.community(.subheadline, weight: .semibold))
                             Text("\(gym.location) · \(gym.memberCount) members")
-                                .font(.caption2).foregroundStyle(timeOfDay.secondaryText)
+                                .font(.community(.caption2)).foregroundStyle(timeOfDay.secondaryText)
                         }
                         Spacer()
                         Image(systemName: draft.gym?.id == gym.id ? "checkmark.circle.fill" : "plus.circle")
@@ -1744,7 +1744,7 @@ struct ProfileOnboardingView: View {
                 withAnimation(.easeOut(duration: 0.18)) { isCreatingGym.toggle() }
             } label: {
                 Label("Can’t find it? Create a gym", systemImage: "plus")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.community(.subheadline, weight: .semibold))
             }
 
             if isCreatingGym {
@@ -1764,7 +1764,7 @@ struct ProfileOnboardingView: View {
                             }
                         }
                     }
-                        .font(.subheadline.weight(.bold))
+                        .font(.community(.subheadline, weight: .bold))
                         .foregroundStyle(timeOfDay.accent)
                         .disabled(newGymName.isEmpty || newGymCity.isEmpty || newGymCountry.isEmpty)
                 }
@@ -1792,7 +1792,7 @@ struct ProfileOnboardingView: View {
                 Spacer()
                 Image(systemName: step == 3 ? "checkmark" : "arrow.right")
             }
-            .font(.headline.weight(.bold))
+            .font(.community(.headline, weight: .bold))
             .foregroundStyle(Color.white)
             .padding(.horizontal, 20)
             .frame(height: 56)
@@ -1904,7 +1904,7 @@ private struct ProfileAvatarView: View {
                 endPoint: .bottomTrailing
             )
             Text(profile.initials.isEmpty ? "R" : profile.initials)
-                .font(.system(size: size * 0.30, weight: .bold, design: .rounded))
+                .font(.community(size: size * 0.30, weight: .bold, design: .rounded))
                 .foregroundStyle(Color.white)
         }
     }

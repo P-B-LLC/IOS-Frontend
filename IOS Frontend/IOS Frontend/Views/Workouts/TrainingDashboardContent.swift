@@ -49,10 +49,10 @@ struct TrainingDashboardContent: View {
     private var workoutPlanCard: some View {
         VStack(alignment: .leading, spacing: 15) {
             HStack {
-                Text("Workout plan").font(.headline)
+                Text("Workout plan").font(.community(.headline))
                 Spacer()
                 Text("\(store.currentWeekWorkouts.count) planned")
-                    .font(.footnote)
+                    .font(.community(.footnote))
                     .foregroundStyle(phase.secondaryText)
             }
 
@@ -93,13 +93,13 @@ struct TrainingDashboardContent: View {
             HStack(spacing: 11) {
                 if let cycle = cycles.activeCycle {
                     Text("\(cycle.currentPosition)")
-                        .font(.footnote.weight(.bold))
+                        .font(.community(.footnote, weight: .bold))
                         .foregroundStyle(Color.white)
                         .frame(width: 26, height: 26)
                         .background(Circle().fill(phase.accent))
                 } else {
                     Image(systemName: "arrow.triangle.2.circlepath")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.community(size: 13, weight: .semibold))
                         .foregroundStyle(phase.secondaryText)
                         .frame(width: 26, height: 26)
                         .background(Circle().fill(RepbasePalette.oatmeal))
@@ -107,10 +107,10 @@ struct TrainingDashboardContent: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(cycles.activeCycle?.positionText ?? "Repeating split")
-                        .font(.subheadline.weight(.semibold))
+                        .font(.community(.subheadline, weight: .semibold))
                         .foregroundStyle(phase.primaryText)
                     Text(cycleDetail)
-                        .font(.caption)
+                        .font(.community(.caption))
                         .foregroundStyle(phase.secondaryText)
                         .lineLimit(1)
                 }
@@ -118,7 +118,7 @@ struct TrainingDashboardContent: View {
                 Spacer(minLength: 0)
 
                 Image(systemName: "chevron.right")
-                    .font(.caption.weight(.semibold))
+                    .font(.community(.caption, weight: .semibold))
                     .foregroundStyle(phase.secondaryText)
             }
             .contentShape(Rectangle())
@@ -175,9 +175,9 @@ struct TrainingDashboardContent: View {
     private var momentumSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             VStack(alignment: .leading, spacing: 3) {
-                Text("Momentum").font(.title2.weight(.bold))
+                Text("Momentum").font(.community(.title2, weight: .bold))
                 Text("Your consistency at a glance")
-                    .font(.footnote)
+                    .font(.community(.footnote))
                     .foregroundStyle(phase.secondaryText)
             }
 
@@ -187,7 +187,7 @@ struct TrainingDashboardContent: View {
 
             if store.isLoadingDashboardSessions && store.dashboardSessions.isEmpty {
                 ProgressView("Loading progress from Repbase...")
-                    .font(.footnote)
+                    .font(.community(.footnote))
                     .frame(maxWidth: .infinity)
             }
         }
@@ -219,15 +219,15 @@ struct TrainingDashboardContent: View {
     private func metric(eyebrow: String, value: String, detail: String, color: Color) -> some View {
         VStack(alignment: .leading, spacing: 7) {
             Text(eyebrow)
-                .font(.caption2.weight(.bold))
+                .font(.community(.caption2, weight: .bold))
                 .tracking(1.1)
                 .foregroundStyle(phase.secondaryText)
             Text(value)
-                .font(.title.weight(.bold))
+                .font(.community(.title, weight: .bold))
                 .lineLimit(1)
                 .minimumScaleFactor(0.65)
             Text(detail)
-                .font(.caption.weight(.semibold))
+                .font(.community(.caption, weight: .semibold))
                 .foregroundStyle(color)
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
@@ -242,19 +242,19 @@ struct TrainingDashboardContent: View {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("TRAINING VOLUME")
-                        .font(.caption2.weight(.bold))
+                        .font(.community(.caption2, weight: .bold))
                         .tracking(1.1)
                         .foregroundStyle(phase.secondaryText)
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text(metrics.trendPercentText).font(.title2.weight(.bold))
+                        Text(metrics.trendPercentText).font(.community(.title2, weight: .bold))
                         Text("vs last week")
-                            .font(.caption)
+                            .font(.community(.caption))
                             .foregroundStyle(phase.secondaryText)
                     }
                 }
                 Spacer()
                 Label(metrics.trendLabel, systemImage: metrics.trendSymbol)
-                    .font(.caption2.weight(.semibold))
+                    .font(.community(.caption2, weight: .semibold))
                     .foregroundStyle(phase.secondaryText)
             }
 
@@ -270,7 +270,7 @@ struct TrainingDashboardContent: View {
                                 .frame(height: metrics.barHeight(for: count))
                         }
                         Text(index == 5 ? "NOW" : "W\(index + 1)")
-                            .font(.system(size: 9, weight: .bold))
+                            .font(.community(size: 9, weight: .bold))
                             .foregroundStyle(index == 5 ? RepbaseDesign.warning : phase.secondaryText)
                     }
                     .frame(maxWidth: .infinity)
@@ -287,11 +287,11 @@ struct TrainingDashboardContent: View {
         HStack(spacing: 14) {
             VStack(alignment: .leading, spacing: 5) {
                 Text("NEXT MILESTONE")
-                    .font(.caption2.weight(.bold))
+                    .font(.community(.caption2, weight: .bold))
                     .tracking(1)
                     .foregroundStyle(phase.secondaryText)
                 Text(metrics.milestoneTitle)
-                    .font(.callout.weight(.semibold))
+                    .font(.community(.callout, weight: .semibold))
             }
             Spacer(minLength: 6)
             VStack(alignment: .trailing, spacing: 7) {
@@ -299,7 +299,7 @@ struct TrainingDashboardContent: View {
                     .tint(RepbaseDesign.ink)
                     .frame(width: 78)
                 Text("\(metrics.totalWorkouts) / \(metrics.nextMilestone)")
-                    .font(.caption2.weight(.semibold))
+                    .font(.community(.caption2, weight: .semibold))
                     .foregroundStyle(phase.secondaryText)
             }
         }
@@ -309,10 +309,10 @@ struct TrainingDashboardContent: View {
     private func errorCard(_ message: String) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Label(message, systemImage: "exclamationmark.triangle.fill")
-                .font(.footnote)
+                .font(.community(.footnote))
                 .foregroundStyle(Color.orange)
             Button("Retry") { store.retryPersistence() }
-                .font(.footnote.weight(.semibold))
+                .font(.community(.footnote, weight: .semibold))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
@@ -340,21 +340,21 @@ private struct DashboardDayItem: View {
     var body: some View {
         VStack(spacing: 6) {
             Text(day.shortName.uppercased())
-                .font(.system(size: 9, weight: isToday ? .bold : .semibold))
+                .font(.community(size: 9, weight: isToday ? .bold : .semibold))
                 .foregroundStyle(isToday ? RepbaseDesign.warning : Color.secondary)
 
             ZStack {
                 Circle()
                     .fill(isToday ? RepbaseDesign.warning : isPlanned ? RepbaseDesign.ink : RepbasePalette.oatmeal)
                 Image(systemName: isSessionActive ? "bolt.fill" : isPlanned ? "minus" : "plus")
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.community(size: 16, weight: .bold))
                     .foregroundStyle(isPlanned || isSessionActive ? RepbaseDesign.onInk : Color.secondary)
             }
             .frame(width: 34, height: 34)
             .overlay(alignment: .topTrailing) {
                 if workouts.count > 1 {
                     Text("\(workouts.count)")
-                        .font(.system(size: 8, weight: .bold))
+                        .font(.community(size: 8, weight: .bold))
                         .foregroundStyle(.white)
                         .frame(width: 14, height: 14)
                         .background(RepbaseDesign.warning, in: Circle())
@@ -363,7 +363,7 @@ private struct DashboardDayItem: View {
             }
 
             Text(workouts.first?.name ?? " ")
-                .font(.system(size: 10, weight: isToday ? .semibold : .regular))
+                .font(.community(size: 10, weight: isToday ? .semibold : .regular))
                 .foregroundStyle(isToday ? RepbaseDesign.warning : RepbaseDesign.ink)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
@@ -408,15 +408,15 @@ private struct WorkoutDashboardHero: View {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("\(eyebrow)  ·  \(workoutType.title.uppercased())")
-                        .font(.caption2.weight(.bold))
+                        .font(.community(.caption2, weight: .bold))
                         .tracking(1.4)
                         .foregroundStyle(Color.secondary)
                     Text(title)
-                        .font(.title2.weight(.bold))
+                        .font(.community(.title2, weight: .bold))
                         .tracking(-0.4)
                         .foregroundStyle(RepbaseDesign.ink)
                     Text(detail)
-                        .font(.footnote)
+                        .font(.community(.footnote))
                         .foregroundStyle(.secondary)
                 }
                 Spacer(minLength: 12)
@@ -424,7 +424,7 @@ private struct WorkoutDashboardHero: View {
                     isDayComplete ? "View" : "Start",
                     systemImage: isDayComplete ? "checkmark" : "play.fill"
                 )
-                    .font(.footnote.weight(.semibold))
+                    .font(.community(.footnote, weight: .semibold))
                     .foregroundStyle(RepbaseDesign.onInk)
                     .padding(.horizontal, 13)
                     .frame(height: 36)
@@ -437,14 +437,14 @@ private struct WorkoutDashboardHero: View {
 
                 VStack(alignment: .leading, spacing: 5) {
                     Text(workoutTypePrompt)
-                        .font(.subheadline.weight(.semibold))
+                        .font(.community(.subheadline, weight: .semibold))
                     Text(detail)
-                        .font(.caption)
+                        .font(.community(.caption))
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
                 Image(systemName: "arrow.up.right")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.community(.subheadline, weight: .semibold))
                     .foregroundStyle(RepbaseDesign.accent)
             }
             .padding(14)
@@ -454,16 +454,16 @@ private struct WorkoutDashboardHero: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("WEEKLY GOAL")
-                            .font(.caption2.weight(.bold))
+                            .font(.community(.caption2, weight: .bold))
                             .tracking(1.1)
                             .foregroundStyle(.secondary)
                         Text("\(completed) of \(goal) workouts")
-                            .font(.headline)
+                            .font(.community(.headline))
                             .foregroundStyle(RepbaseDesign.ink)
                     }
                     Spacer()
                     Text(remaining == 0 ? "Goal met" : "\(remaining) to go")
-                        .font(.caption.weight(.semibold))
+                        .font(.community(.caption, weight: .semibold))
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 11)
                         .padding(.vertical, 6)

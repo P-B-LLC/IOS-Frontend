@@ -169,7 +169,7 @@ struct WorkoutPrimaryButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.headline)
+            .font(.community(.headline))
             .foregroundStyle(phase.onPrimaryAction)
             .padding(.horizontal, 18)
             .padding(.vertical, 14)

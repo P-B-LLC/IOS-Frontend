@@ -51,7 +51,7 @@ struct GearView: View {
 
                 if let error = store.persistenceError {
                     Text(error)
-                        .font(.footnote)
+                        .font(.community(.footnote))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -86,7 +86,7 @@ struct GearView: View {
                         selection?.choose(nil)
                         dismiss()
                     }
-                    .font(.footnote.weight(.semibold))
+                    .font(.community(.footnote, weight: .semibold))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 10)
                 }
@@ -95,7 +95,7 @@ struct GearView: View {
                     editing = .create(kind)
                 } label: {
                     Label("Add \(kind.singular)", systemImage: "plus")
-                        .font(.subheadline.weight(.semibold))
+                        .font(.community(.subheadline, weight: .semibold))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
                 }
@@ -142,13 +142,13 @@ struct GearView: View {
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("No \(kind.title.lowercased()) yet")
-                .font(.subheadline.weight(.semibold))
+                .font(.community(.subheadline, weight: .semibold))
             Text(
                 kind == .shoe
                     ? "Add a pair and every run you tag with them adds to their mileage."
                     : "Add a bike and every ride you tag with it adds to its mileage."
             )
-            .font(.footnote)
+            .font(.community(.footnote))
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
         }
@@ -204,14 +204,14 @@ private struct GearCard: View {
     private func selectionControl(action: @escaping () -> Void) -> some View {
         if isSelected {
             Label("Selected for this session", systemImage: "checkmark.circle.fill")
-                .font(.footnote.weight(.semibold))
+                .font(.community(.footnote, weight: .semibold))
                 .foregroundStyle(timeOfDay.accent)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
                 .transition(.opacity.combined(with: .scale(scale: 0.98)))
         } else {
             Button("Choose this pair", action: action)
-                .font(.footnote.weight(.semibold))
+                .font(.community(.footnote, weight: .semibold))
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
                 .buttonStyle(.bordered)
@@ -229,12 +229,12 @@ private struct GearCard: View {
                         color: Color.secondary
                     )
                     Text(gear.displayName)
-                        .font(.headline)
+                        .font(.community(.headline))
                         .lineLimit(1)
                     Spacer(minLength: 6)
                     if isSelected {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.body.weight(.semibold))
+                            .font(.community(.body, weight: .semibold))
                             .foregroundStyle(timeOfDay.accent)
                             .accessibilityHidden(true)
                     }
@@ -254,13 +254,13 @@ private struct GearCard: View {
                         )
                         .replacingOccurrences(of: " mi", with: "")
                     )
-                    .font(.system(size: 30, weight: .bold, design: .rounded))
+                    .font(.community(size: 30, weight: .bold, design: .rounded))
                     Text("mi")
-                        .font(.subheadline.weight(.medium))
+                        .font(.community(.subheadline, weight: .medium))
                         .foregroundStyle(.secondary)
                     Spacer()
                     Text("^[\(gear.sessionCount) session](inflect: true)")
-                        .font(.caption)
+                        .font(.community(.caption))
                         .foregroundStyle(.secondary)
                 }
 
@@ -290,14 +290,14 @@ private struct GearCard: View {
             if let fraction = gear.wearFraction, let remaining = gear.remainingKilometers {
                 bar(fraction: fraction, colour: barColor(fraction))
                 Text(remainingText(remaining, fraction: fraction))
-                    .font(.caption)
+                    .font(.community(.caption))
                     .foregroundStyle(fraction >= 1 ? barColor(fraction) : .secondary)
             } else {
                 // Deliberately paler than a retirement bar. The two measure
                 // different things and should not look like the same gauge.
                 bar(fraction: relativeFraction, colour: RepbasePalette.caramel.opacity(0.5))
                 Text(relativeText)
-                    .font(.caption)
+                    .font(.community(.caption))
                     .foregroundStyle(.secondary)
             }
         }
@@ -361,7 +361,7 @@ private struct GearCard: View {
 
     private func tag(_ text: String) -> some View {
         Text(text)
-            .font(.caption2.weight(.bold))
+            .font(.community(.caption2, weight: .bold))
             .foregroundStyle(.secondary)
             .padding(.horizontal, 7)
             .padding(.vertical, 3)

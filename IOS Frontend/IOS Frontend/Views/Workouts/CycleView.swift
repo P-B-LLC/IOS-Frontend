@@ -24,7 +24,7 @@ struct CycleView: View {
             VStack(alignment: .leading, spacing: 18) {
                 if let error = store.persistenceError {
                     Text(error)
-                        .font(.footnote)
+                        .font(.community(.footnote))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -72,12 +72,12 @@ struct CycleView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("TODAY")
-                    .font(.caption2.weight(.bold))
+                    .font(.community(.caption2, weight: .bold))
                     .tracking(1.1)
                     .foregroundStyle(phase.secondaryText)
                 Spacer()
                 Text(cycle.positionText)
-                    .font(.caption.weight(.bold))
+                    .font(.community(.caption, weight: .bold))
                     .padding(.horizontal, 11)
                     .padding(.vertical, 6)
                     .background(phase.accent.opacity(0.16), in: Capsule())
@@ -85,19 +85,19 @@ struct CycleView: View {
             }
 
             Text(cycle.currentWorkoutName)
-                .font(.largeTitle.weight(.bold))
+                .font(.community(.largeTitle, weight: .bold))
                 .foregroundStyle(phase.primaryText)
                 .lineLimit(2)
                 .minimumScaleFactor(0.6)
 
             Text(nextLine(cycle))
-                .font(.subheadline)
+                .font(.community(.subheadline))
                 .foregroundStyle(phase.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
 
             if !cycle.name.isEmpty {
                 Text(cycle.name)
-                    .font(.footnote.weight(.semibold))
+                    .font(.community(.footnote, weight: .semibold))
                     .foregroundStyle(phase.secondaryText)
             }
         }
@@ -132,7 +132,7 @@ struct CycleView: View {
     private var offScheduleCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Off schedule?")
-                .font(.headline)
+                .font(.community(.headline))
                 .foregroundStyle(phase.primaryText)
 
             shiftButton(
@@ -166,17 +166,17 @@ struct CycleView: View {
         } label: {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: symbol)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.community(size: 15, weight: .semibold))
                     .foregroundStyle(phase.accent)
                     .frame(width: 26, height: 26)
                     .background(phase.accent.opacity(0.14), in: Circle())
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(title)
-                        .font(.subheadline.weight(.semibold))
+                        .font(.community(.subheadline, weight: .semibold))
                         .foregroundStyle(phase.primaryText)
                     Text(detail)
-                        .font(.caption)
+                        .font(.community(.caption))
                         .foregroundStyle(phase.secondaryText)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
@@ -200,10 +200,10 @@ struct CycleView: View {
                 .foregroundStyle(RepbaseDesign.success)
             VStack(alignment: .leading, spacing: 2) {
                 Text(receiptTitle(outcome))
-                    .font(.footnote.weight(.semibold))
+                    .font(.community(.footnote, weight: .semibold))
                     .foregroundStyle(phase.primaryText)
                 Text(receiptDetail(outcome))
-                    .font(.caption)
+                    .font(.community(.caption))
                     .foregroundStyle(phase.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -212,7 +212,7 @@ struct CycleView: View {
                 store.lastShift = nil
             } label: {
                 Image(systemName: "xmark")
-                    .font(.caption.weight(.bold))
+                    .font(.community(.caption, weight: .bold))
                     .foregroundStyle(phase.secondaryText)
             }
             .buttonStyle(.plain)
@@ -244,7 +244,7 @@ struct CycleView: View {
     private func rotationList(_ cycle: WorkoutCycle) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("THE ROTATION")
-                .font(.caption2.weight(.bold))
+                .font(.community(.caption2, weight: .bold))
                 .tracking(1.1)
                 .foregroundStyle(phase.secondaryText)
                 .padding(.horizontal, 16)
@@ -299,7 +299,7 @@ struct CycleView: View {
                 editing = .edit(cycle)
             } label: {
                 Label("Edit rotation", systemImage: "slider.horizontal.3")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.community(.subheadline, weight: .semibold))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
             }
@@ -309,7 +309,7 @@ struct CycleView: View {
                 isConfirmingEnd = true
             } label: {
                 Text("Stop using this rotation")
-                    .font(.footnote.weight(.semibold))
+                    .font(.community(.footnote, weight: .semibold))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 10)
             }
@@ -336,20 +336,20 @@ struct CycleView: View {
     private var explainer: some View {
         VStack(alignment: .leading, spacing: 13) {
             Image(systemName: "arrow.triangle.2.circlepath")
-                .font(.system(size: 26, weight: .semibold))
+                .font(.community(size: 26, weight: .semibold))
                 .foregroundStyle(phase.accent)
 
             Text("Train on a repeating cycle")
-                .font(.title3.weight(.bold))
+                .font(.community(.title3, weight: .bold))
                 .foregroundStyle(phase.primaryText)
 
             Text("A weekly plan puts the same workout on the same weekday. A rotation repeats every so many days instead — so a six-on, two-off split runs on an eight-day turn and drifts across the week, the way it is meant to.")
-                .font(.subheadline)
+                .font(.community(.subheadline))
                 .foregroundStyle(phase.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
 
             Text("Repbase keeps track of which day of the cycle you are on, and can push everything back if you take a rest day you had not planned.")
-                .font(.subheadline)
+                .font(.community(.subheadline))
                 .foregroundStyle(phase.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -363,7 +363,7 @@ struct CycleView: View {
             editing = .create
         } label: {
             Label("Set up a rotation", systemImage: "plus")
-                .font(.subheadline.weight(.semibold))
+                .font(.community(.subheadline, weight: .semibold))
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 13)
         }
@@ -383,7 +383,7 @@ private struct CycleSlotRow: View {
     var body: some View {
         HStack(spacing: 13) {
             Text("\(slot.position)")
-                .font(.footnote.weight(.bold))
+                .font(.community(.footnote, weight: .bold))
                 .foregroundStyle(isToday ? Color.white : phase.secondaryText)
                 .frame(width: 28, height: 28)
                 .background(
@@ -392,7 +392,7 @@ private struct CycleSlotRow: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(slot.displayName)
-                    .font(.subheadline.weight(slot.isRest ? .regular : .semibold))
+                    .font(.community(.subheadline, weight: slot.isRest ? .regular : .semibold))
                     .foregroundStyle(slot.isRest ? phase.secondaryText : phase.primaryText)
                 if let date {
                     Text(
@@ -400,7 +400,7 @@ private struct CycleSlotRow: View {
                             ? "Today"
                             : date.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
                     )
-                    .font(.caption2)
+                    .font(.community(.caption2))
                     .foregroundStyle(phase.secondaryText)
                 }
             }
@@ -409,7 +409,7 @@ private struct CycleSlotRow: View {
 
             if isToday {
                 Text("TODAY")
-                    .font(.caption2.weight(.bold))
+                    .font(.community(.caption2, weight: .bold))
                     .tracking(0.8)
                     .foregroundStyle(phase.accent)
             }

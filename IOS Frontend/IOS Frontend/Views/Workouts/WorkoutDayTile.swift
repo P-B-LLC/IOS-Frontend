@@ -40,12 +40,12 @@ struct WorkoutDayTile: View {
                 VStack(spacing: 3) {
                     if isSessionActive {
                         Image(systemName: "bolt.fill")
-                            .font(.caption2.weight(.bold))
+                            .font(.community(.caption2, weight: .bold))
                             .foregroundStyle(WorkoutVisualPhase.focus.accent)
                     }
 
                     Text(workout?.name ?? "Add")
-                        .font(.caption2)
+                        .font(.community(.caption2))
                         .fontWeight(workout == nil ? .regular : .semibold)
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
@@ -64,7 +64,7 @@ struct WorkoutDayTile: View {
                 .overlay(alignment: .topTrailing) {
                     if workoutCount > 1 {
                         Text("\(workoutCount)")
-                            .font(.system(size: 9, weight: .bold))
+                            .font(.community(size: 9, weight: .bold))
                             .foregroundStyle(.white)
                             .frame(width: 15, height: 15)
                             .background(WorkoutVisualPhase.prepare.accent, in: Circle())
@@ -74,7 +74,7 @@ struct WorkoutDayTile: View {
                 }
 
             Text(day.shortName)
-                .font(.caption2)
+                .font(.community(.caption2))
                 .fontWeight(isToday ? .semibold : .regular)
                 .foregroundStyle(
                     isToday ? WorkoutVisualPhase.prepare.accent : Color.secondary

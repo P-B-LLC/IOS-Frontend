@@ -96,7 +96,7 @@ struct PlannerDaySchedule: View {
             ForEach(hours, id: \.self) { hour in
                 HStack(alignment: .top, spacing: 8) {
                     Text(Self.label(for: hour))
-                        .font(.system(size: 11, weight: .medium))
+                        .font(.community(size: 11, weight: .medium))
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                         .frame(width: gutterWidth - 8, alignment: .leading)
                     VerticalDashedRule()
@@ -119,13 +119,13 @@ struct PlannerDaySchedule: View {
         return HStack(alignment: .top, spacing: 10) {
             VStack(alignment: .leading, spacing: isRoomy ? 2 : 0) {
                 Text(entry.title)
-                    .font(.system(size: 13, weight: .bold))
+                    .font(.community(size: 13, weight: .bold))
                     .foregroundStyle(timeOfDay.canvasPrimaryText)
                     .strikethrough(entry.isComplete, color: timeOfDay.canvasSecondaryText)
                     .lineLimit(1)
                 if showsSubtitle {
                     Text(subtitle(entry))
-                        .font(.system(size: 10, weight: .medium))
+                        .font(.community(size: 10, weight: .medium))
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                         .lineLimit(1)
                 }
@@ -158,7 +158,7 @@ struct PlannerDaySchedule: View {
     private var anytimeSection: some View {
         VStack(alignment: .leading, spacing: 7) {
             Text("ANYTIME")
-                .font(.system(size: 9, weight: .bold))
+                .font(.community(size: 9, weight: .bold))
                 .tracking(0.8)
                 .foregroundStyle(timeOfDay.canvasSecondaryText)
                 .padding(.leading, 2)
@@ -166,7 +166,7 @@ struct PlannerDaySchedule: View {
             ForEach(untimed) { entry in
                 HStack(spacing: 10) {
                     Image(systemName: entry.category.symbolName)
-                        .font(.system(size: 11, weight: .semibold))
+                        .font(.community(size: 11, weight: .semibold))
                         .foregroundStyle(entry.category.tint)
                         .frame(width: 28, height: 28)
                         .background(
@@ -175,12 +175,12 @@ struct PlannerDaySchedule: View {
                         )
                     VStack(alignment: .leading, spacing: 1) {
                         Text(entry.title)
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.community(size: 13, weight: .semibold))
                             .foregroundStyle(timeOfDay.primaryText)
                             .strikethrough(entry.isComplete, color: timeOfDay.secondaryText)
                             .lineLimit(1)
                         Text(subtitle(entry))
-                            .font(.system(size: 9, weight: .medium))
+                            .font(.community(size: 9, weight: .medium))
                             .foregroundStyle(timeOfDay.secondaryText)
                     }
                     Spacer(minLength: 0)
@@ -198,7 +198,7 @@ struct PlannerDaySchedule: View {
 
     private var emptyDay: some View {
         Text("Nothing planned for this day yet.")
-            .font(.footnote)
+            .font(.community(.footnote))
             .foregroundStyle(timeOfDay.secondaryText)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.top, 2)
@@ -227,7 +227,7 @@ struct PlannerDaySchedule: View {
             }
         } label: {
             Image(systemName: entry.isComplete ? "checkmark.circle.fill" : "circle")
-                .font(.system(size: 17, weight: .regular))
+                .font(.community(size: 17, weight: .regular))
                 .foregroundStyle(
                     entry.isComplete
                         ? Color(hex: 0x3FAE6A)

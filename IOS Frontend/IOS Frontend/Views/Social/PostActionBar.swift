@@ -106,10 +106,10 @@ struct PostActionBar: View {
     private func actionLabel(symbol: String, count: Int, tint: Color) -> some View {
         HStack(spacing: 5) {
             Image(systemName: symbol)
-                .font(.system(size: 14, weight: .medium))
+                .font(.community(size: 14, weight: .medium))
             if count > 0 {
                 Text(Self.compact(count))
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.community(size: 12, weight: .semibold))
                     .contentTransition(.numericText())
             }
         }

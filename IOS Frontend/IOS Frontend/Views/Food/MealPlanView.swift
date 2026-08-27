@@ -79,27 +79,27 @@ struct MealPlanView: View {
         return VStack(alignment: .leading, spacing: 14) {
             DatePicker("Apply to", selection: $date, displayedComponents: .date)
                 .datePickerStyle(.compact)
-                .font(.subheadline.weight(.semibold))
+                .font(.community(.subheadline, weight: .semibold))
                 .accessibilityHint("The day this plan will be written to")
 
             HStack(alignment: .bottom) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(plan.isEmpty ? "START WITH A SAVED MEAL" : "DAY IN PROGRESS")
-                        .font(.caption2.weight(.bold))
+                        .font(.community(.caption2, weight: .bold))
                         .tracking(1)
                         .foregroundStyle(RepbasePalette.caramel)
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
                         Text(total.calories.nutritionText)
-                            .font(.largeTitle.weight(.bold))
+                            .font(.community(.largeTitle, weight: .bold))
                             .contentTransition(.numericText())
                         Text("kcal")
-                            .font(.footnote.weight(.medium))
+                            .font(.community(.footnote, weight: .medium))
                             .foregroundStyle(.secondary)
                     }
                 }
                 Spacer()
                 Text("\(plan.count) \(plan.count == 1 ? "meal" : "meals")")
-                    .font(.caption.weight(.bold))
+                    .font(.community(.caption, weight: .bold))
                     .padding(.horizontal, 11)
                     .padding(.vertical, 7)
                     .background(RepbasePalette.oatmeal, in: Capsule())
@@ -114,7 +114,7 @@ struct MealPlanView: View {
             }
 
             Text("Nothing is saved until you apply this to the day.")
-                .font(.caption)
+                .font(.community(.caption))
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -126,10 +126,10 @@ struct MealPlanView: View {
     private func macro(_ title: String, _ value: Decimal, color: Color) -> some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(title)
-                .font(.caption2.weight(.semibold))
+                .font(.community(.caption2, weight: .semibold))
                 .foregroundStyle(.secondary)
             Text("\(value.nutritionText) g")
-                .font(.subheadline.weight(.bold).monospacedDigit())
+                .font(.community(.subheadline, weight: .bold).monospacedDigit())
             Capsule().fill(color).frame(height: 4)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -141,12 +141,12 @@ struct MealPlanView: View {
     private var plannedSection: some View {
         if plan.isEmpty {
             Text("Add saved meals below to build a day.")
-                .font(.footnote)
+                .font(.community(.footnote))
                 .foregroundStyle(.secondary)
         } else {
             VStack(alignment: .leading, spacing: 0) {
                 Text("PLANNED DAY")
-                    .font(.caption2.weight(.bold))
+                    .font(.community(.caption2, weight: .bold))
                     .tracking(1.2)
                     .foregroundStyle(RepbasePalette.caramel)
                     .padding(.bottom, 8)
@@ -154,15 +154,15 @@ struct MealPlanView: View {
                 ForEach(Array(plan.enumerated()), id: \.offset) { index, meal in
                     HStack(spacing: 10) {
                         Text("\(index + 1)")
-                            .font(.caption.weight(.bold).monospacedDigit())
+                            .font(.community(.caption, weight: .bold).monospacedDigit())
                             .frame(width: 22, height: 22)
                             .foregroundStyle(RepbasePalette.caramel)
                             .background(RepbasePalette.caramel.opacity(0.12), in: RoundedRectangle(cornerRadius: 7))
 
                         VStack(alignment: .leading, spacing: 1) {
-                            Text(meal.name).font(.subheadline.weight(.semibold))
+                            Text(meal.name).font(.community(.subheadline, weight: .semibold))
                             Text("\(meal.totalNutrition.calories.nutritionText) kcal")
-                                .font(.caption)
+                                .font(.community(.caption))
                                 .foregroundStyle(.secondary)
                         }
 
@@ -172,7 +172,7 @@ struct MealPlanView: View {
                             plan.remove(at: index)
                         } label: {
                             Image(systemName: "minus.circle.fill")
-                                .font(.body)
+                                .font(.community(.body))
                                 .foregroundStyle(.secondary)
                                 .frame(width: 44, height: 44)
                                 .contentShape(Rectangle())
@@ -193,13 +193,13 @@ struct MealPlanView: View {
     private var library: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("SAVED MEALS")
-                .font(.caption2.weight(.bold))
+                .font(.community(.caption2, weight: .bold))
                 .tracking(1.2)
                 .foregroundStyle(RepbasePalette.caramel)
 
             if store.savedMeals.isEmpty {
                 Text("No saved meals yet. Save a meal from a day to reuse it here.")
-                    .font(.footnote)
+                    .font(.community(.footnote))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             } else {
@@ -209,14 +209,14 @@ struct MealPlanView: View {
                     } label: {
                         HStack(spacing: 10) {
                             VStack(alignment: .leading, spacing: 1) {
-                                Text(meal.name).font(.subheadline.weight(.semibold))
+                                Text(meal.name).font(.community(.subheadline, weight: .semibold))
                                 Text("\(meal.totalNutrition.calories.nutritionText) kcal")
-                                    .font(.caption)
+                                    .font(.community(.caption))
                                     .foregroundStyle(.secondary)
                             }
                             Spacer(minLength: 0)
                             Image(systemName: "plus.circle.fill")
-                                .font(.body)
+                                .font(.community(.body))
                                 .foregroundStyle(RepbasePalette.caramel)
                         }
                         .padding(.vertical, 10)
@@ -239,22 +239,22 @@ struct MealPlanView: View {
         VStack(alignment: .leading, spacing: 4) {
             if outcome.isCompleteSuccess {
                 Text("Added \(outcome.applied.count) \(outcome.applied.count == 1 ? "meal" : "meals") to the day.")
-                    .font(.footnote.weight(.semibold))
+                    .font(.community(.footnote, weight: .semibold))
             } else {
                 // Names, not a count. "2 of 4 saved" leaves the user to work
                 // out which two, on a day they cannot see from here.
                 if !outcome.applied.isEmpty {
                     Text("Added: \(outcome.applied.joined(separator: ", "))")
-                        .font(.footnote)
+                        .font(.community(.footnote))
                 }
                 if !outcome.failed.isEmpty {
                     Text("Not added: \(outcome.failed.joined(separator: ", "))")
-                        .font(.footnote.weight(.semibold))
+                        .font(.community(.footnote, weight: .semibold))
                         .foregroundStyle(.orange)
                 }
                 if let message = outcome.errorMessage {
                     Text(message)
-                        .font(.caption)
+                        .font(.community(.caption))
                         .foregroundStyle(.secondary)
                 }
             }
