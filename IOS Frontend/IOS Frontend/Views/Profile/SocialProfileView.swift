@@ -847,6 +847,9 @@ private struct ProfileSettingsView: View {
     // The section editors are three taps in and simctl has no tap.
     private let editSectionOnLaunch = ProcessInfo.processInfo
         .environment["REPBASE_EDIT_SECTION"].flatMap(Int.init)
+    // As is the personalization flow, one screen further again.
+    private let opensPersonalizationOnLaunch =
+        ProcessInfo.processInfo.environment["REPBASE_PERSONALIZATION"] != nil
 #endif
 
     private enum ProfileEditorDestination: Int, Identifiable {
@@ -930,7 +933,7 @@ private struct ProfileSettingsView: View {
                             Button { showingPersonalization = true } label: {
                                 settingsRow(
                                     "Your Repbase",
-                                    detail: "Goals, training rhythm, experience, and home emphasis",
+                                    detail: "Training types, weekly goal, and what home leads with",
                                     symbol: "slider.horizontal.3"
                                 )
                             }
@@ -1135,6 +1138,7 @@ private struct ProfileSettingsView: View {
             if let step = editSectionOnLaunch {
                 editorDestination = ProfileEditorDestination(rawValue: step)
             }
+            if opensPersonalizationOnLaunch { showingPersonalization = true }
         }
 #endif
         .fullScreenCover(item: $editorDestination) { destination in

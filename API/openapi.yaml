@@ -6364,18 +6364,12 @@ components:
     PatchedPersonalizationRequest:
       type: object
       description: |-
-        The five answers, as the app already spells them.
+        The three answers, as the app already spells them.
 
-        The two lists are checked for shape but not for membership: they hold
-        whatever the app currently offers, and a choice retired from the app
-        should not turn an existing account into a validation error on read.
+        The list is checked for shape but not for membership: it holds whatever
+        the app currently offers, and a choice retired from the app should not turn
+        an existing account into a validation error on read.
       properties:
-        intents:
-          type: array
-          items:
-            type: string
-            minLength: 1
-            maxLength: 60
         training_types:
           type: array
           items:
@@ -6387,9 +6381,6 @@ components:
           maximum: 9223372036854775807
           minimum: 0
           format: int64
-        experience:
-          type: string
-          maxLength: 40
         emphasis:
           type: string
           maxLength: 40
@@ -6727,17 +6718,12 @@ components:
     Personalization:
       type: object
       description: |-
-        The five answers, as the app already spells them.
+        The three answers, as the app already spells them.
 
-        The two lists are checked for shape but not for membership: they hold
-        whatever the app currently offers, and a choice retired from the app
-        should not turn an existing account into a validation error on read.
+        The list is checked for shape but not for membership: it holds whatever
+        the app currently offers, and a choice retired from the app should not turn
+        an existing account into a validation error on read.
       properties:
-        intents:
-          type: array
-          items:
-            type: string
-            maxLength: 60
         training_types:
           type: array
           items:
@@ -6748,9 +6734,6 @@ components:
           maximum: 9223372036854775807
           minimum: 0
           format: int64
-        experience:
-          type: string
-          maxLength: 40
         emphasis:
           type: string
           maxLength: 40

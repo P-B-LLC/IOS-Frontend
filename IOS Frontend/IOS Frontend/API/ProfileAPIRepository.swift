@@ -558,10 +558,8 @@ actor ProfileAPIRepository {
         let output = try await client.mePersonalizationPartialUpdate(
             body: .json(
                 Components.Schemas.PatchedPersonalizationRequest(
-                    intents: values.intents,
                     trainingTypes: values.trainingTypes,
                     weeklyTarget: Int64(values.weeklyTarget),
-                    experience: values.experience,
                     emphasis: values.emphasis
                 )
             )
@@ -581,25 +579,25 @@ actor ProfileAPIRepository {
         from payload: Components.Schemas.Personalization
     ) -> Personalization {
         Personalization(
-            intents: payload.intents ?? [],
             trainingTypes: payload.trainingTypes ?? [],
             weeklyTarget: Int(payload.weeklyTarget ?? 3),
-            experience: payload.experience ?? "",
             emphasis: payload.emphasis ?? ""
         )
     }
 }
 
-/// The five answers the first-run flow asks for.
+/// The three answers the first-run flow asks for.
 ///
 /// Held as the strings the flow already uses rather than as its private
 /// enums, so retiring a choice from the app cannot fail to decode an account
 /// that picked it. The flow maps them back to its own cases and ignores
 /// anything it no longer offers.
+///
+/// There were five. The two that are gone were never read: one asked what
+/// another question had already asked, and the other was stored against a
+/// use that was never built.
 nonisolated struct Personalization: Equatable, Sendable {
-    var intents: [String] = []
     var trainingTypes: [String] = []
     var weeklyTarget: Int = 3
-    var experience: String = ""
     var emphasis: String = ""
 }

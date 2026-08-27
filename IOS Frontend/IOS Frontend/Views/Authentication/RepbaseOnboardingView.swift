@@ -1,27 +1,21 @@
 import SwiftUI
 
 struct RepbaseOnboardingView: View {
-    private enum Step: Int { case intent, rhythm, goals, ready }
-    private enum Intent: String, CaseIterable, Identifiable {
-        case consistency = "Consistency", strength = "Strength", endurance = "Endurance"
-        case nutrition = "Nutrition awareness", community = "Community"
-        var id: String { rawValue }
-        var detail: String {
-            switch self {
-            case .consistency: "Create a rhythm you can actually repeat."
-            case .strength: "Track progressive workouts and personal bests."
-            case .endurance: "Build running, cycling, or swimming capacity."
-            case .nutrition: "Understand your food without overcomplicating it."
-            case .community: "Share progress and follow people who inspire you."
-            }
-        }
-    }
+    /// Two questions and a look at the answers.
+    ///
+    /// There were four. Two of them asked what the other two had already
+    /// asked: "your goals" set the same field as "what brings you here", in
+    /// different words, and the weekly target and the emphasis each appeared
+    /// on two pages. Of what is left, the target drives the weekly goal and
+    /// the emphasis decides what home opens on, so both pages do something.
+    ///
+    /// Experience went with them. It was collected to "tune language and
+    /// suggested starting points", which was never built and is a content
+    /// project rather than a feature.
+    private enum Step: Int { case rhythm, ready }
+
     private enum TrainingType: String, CaseIterable, Identifiable {
         case strength = "Strength", running = "Running", cycling = "Cycling", swimming = "Swimming"
-        var id: String { rawValue }
-    }
-    private enum Experience: String, CaseIterable, Identifiable {
-        case new = "New", some = "Some", experienced = "Experienced"
         var id: String { rawValue }
     }
     private enum Emphasis: String, CaseIterable, Identifiable {
@@ -31,11 +25,17 @@ struct RepbaseOnboardingView: View {
 
     @Environment(SocialProfileStore.self) private var store
 
-    @State private var step: Step = .intent
-    @State private var intents: Set<Intent> = [.consistency, .strength, .nutrition]
+    @State private var step: Step = {
+#if DEBUG
+        // The summary is a screen and a tap in, and simctl has no tap.
+        if ProcessInfo.processInfo.environment["REPBASE_PERSONALIZATION"] == "ready" {
+            return .ready
+        }
+#endif
+        return .rhythm
+    }()
     @State private var trainingTypes: Set<TrainingType> = [.strength, .running]
     @State private var weeklyTarget = 3
-    @State private var experience: Experience = .some
     @State private var emphasis: Emphasis = .movement
     let completion: () -> Void
 
@@ -71,28 +71,28 @@ struct RepbaseOnboardingView: View {
             HStack {
                 Button {
                     guard step.rawValue > 0 else { return }
-                    withAnimation { step = Step(rawValue: step.rawValue - 1) ?? .intent }
+                    withAnimation { step = Step(rawValue: step.rawValue - 1) ?? .rhythm }
                 } label: {
                     Image(systemName: "chevron.left")
                         .frame(width: 40, height: 40)
                         .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 15))
                 }
                 .buttonStyle(.plain)
-                .opacity(step == .intent ? 0 : 1)
+                .opacity(step == .rhythm ? 0 : 1)
                 Spacer()
                 Button("Skip", action: completion)
                     .font(.community(.caption, weight: .semibold))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
             }
             VStack(alignment: .leading, spacing: 13) {
-                Text("STEP \(step.rawValue + 1) OF 4")
+                Text("STEP \(step.rawValue + 1) OF 2")
                     .font(.community(.caption2, weight: .bold)).tracking(1.1)
                     .foregroundStyle(RepbasePalette.caramel)
                 GeometryReader { proxy in
                     ZStack(alignment: .leading) {
                         Capsule().fill(timeOfDay.border)
                         Capsule().fill(RepbasePalette.sage)
-                            .frame(width: proxy.size.width * CGFloat(step.rawValue + 1) / 4)
+                            .frame(width: proxy.size.width * CGFloat(step.rawValue + 1) / 2)
                     }
                 }
                 .frame(height: 5)
@@ -105,45 +105,40 @@ struct RepbaseOnboardingView: View {
 
     @ViewBuilder private func content(_ timeOfDay: HomeTimeOfDay) -> some View {
         switch step {
-        case .intent:
-            VStack(spacing: 10) {
-                ForEach(Intent.allCases) { item in
-                    intentRow(item, timeOfDay)
-                }
-                Text("\(intents.count) selected").font(.community(.caption2)).foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity).padding(.top, 4)
-            }
         case .rhythm:
             VStack(alignment: .leading, spacing: 28) {
-                section("WORKOUT TYPES") { choiceGrid(timeOfDay, usesGoals: false) }
-                section("YOUR RHYTHM") { targetRow(timeOfDay) }
-                section("EXPERIENCE") {
-                    Picker("", selection: $experience) {
-                        ForEach(Experience.allCases) { Text($0.rawValue).tag($0) }
-                    }.pickerStyle(.segmented).labelsHidden()
-                }
-                helper("We use this only to tune language and suggested starting points.")
-            }
-        case .goals:
-            VStack(alignment: .leading, spacing: 28) {
-                section("YOUR GOALS") { choiceGrid(timeOfDay, usesGoals: true) }
-                section("WEEKLY TARGET") { targetRow(timeOfDay) }
-                section("WHAT SHOULD WE EMPHASIZE?") { emphasisPicker }
-                helper("This shapes your home screen and recommendations—not what you can access.")
+                section("WORKOUT TYPES") { choiceGrid(timeOfDay) }
+                section("WORKOUTS EACH WEEK") { targetRow(timeOfDay) }
+                helper("Start realistic. You can change it any time.")
+                section("WHAT SHOULD HOME LEAD WITH?") { emphasisPicker }
+                helper("Home opens on whichever of these you choose.")
             }
         case .ready:
+            // Read-only on purpose. This page carried live copies of the
+            // controls from the page before it, which is how a summary stops
+            // being a summary and becomes another chance to answer.
             VStack(alignment: .leading, spacing: 28) {
-                section("YOUR REPBASE") { summaryGrid(timeOfDay) }
                 section("YOUR RHYTHM") {
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("\(weeklyTarget) workouts each week").font(.community(.headline))
-                        Text("Realistic, repeatable, and adjustable anytime.")
-                            .font(.community(.caption)).foregroundStyle(.secondary)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading).padding(18)
-                    .overlay { RoundedRectangle(cornerRadius: 20).strokeBorder(timeOfDay.border) }
+                    summaryCard(
+                        "\(weeklyTarget) workouts each week",
+                        detail: "This is the goal your dashboard counts against.",
+                        timeOfDay
+                    )
                 }
-                section("HOME SCREEN EMPHASIS") { emphasisPicker }
+                section("YOUR TRAINING") {
+                    summaryCard(
+                        trainingSummary,
+                        detail: "Change it any time from Settings.",
+                        timeOfDay
+                    )
+                }
+                section("HOME OPENS ON") {
+                    summaryCard(
+                        emphasis.rawValue,
+                        detail: "The first thing you see each day.",
+                        timeOfDay
+                    )
+                }
                 helper("Nothing is locked in. Your plan learns and changes with you.")
             }
         }
@@ -170,89 +165,65 @@ struct RepbaseOnboardingView: View {
             }.frame(maxWidth: .infinity)
         }
         .buttonStyle(RepbasePrimaryButtonStyle())
-        .disabled(step == .intent && intents.isEmpty)
+        // Nothing on either page can be left blank in a way worth
+        // blocking on: a training type is optional, and the target and the
+        // emphasis both start on a real value.
+        .disabled(false)
         .padding(.horizontal, 20).padding(.vertical, 14)
     }
 
-    private func intentRow(_ item: Intent, _ timeOfDay: HomeTimeOfDay) -> some View {
-        let selected = intents.contains(item)
-        return Button { toggle(item, in: &intents) } label: {
-            HStack(spacing: 14) {
-                Image(systemName: selected ? "checkmark" : "plus")
-                    .font(.community(.caption, weight: .bold)).frame(width: 26, height: 26)
-                    .background(selected ? Color.white.opacity(0.13) : timeOfDay.selectorSurface,
-                                in: RoundedRectangle(cornerRadius: 9))
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(item.rawValue).font(.community(.headline))
-                    Text(item.detail).font(.community(.caption2)).opacity(0.76)
-                }
-                Spacer()
-            }
-            .foregroundStyle(selected ? Color.white : timeOfDay.canvasPrimaryText)
-            .padding(.horizontal, 18).frame(minHeight: 60)
-            .background(selected ? RepbasePalette.sage : timeOfDay.surfaceRaised,
-                        in: RoundedRectangle(cornerRadius: 19))
-            .overlay {
-                if !selected { RoundedRectangle(cornerRadius: 19).strokeBorder(timeOfDay.border) }
-            }
-        }.buttonStyle(.plain)
-    }
-
-    private func choiceGrid(_ timeOfDay: HomeTimeOfDay, usesGoals: Bool) -> some View {
+    private func choiceGrid(_ timeOfDay: HomeTimeOfDay) -> some View {
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
-            if usesGoals {
-                ForEach(Array(Intent.allCases.prefix(4))) { item in
-                    compactChoice(goalTitle(item), selected: intents.contains(item), timeOfDay) {
-                        toggle(item, in: &intents)
-                    }
-                }
-            } else {
-                ForEach(TrainingType.allCases) { item in
-                    compactChoice(item.rawValue, selected: trainingTypes.contains(item), timeOfDay) {
-                        toggle(item, in: &trainingTypes)
-                    }
+            ForEach(TrainingType.allCases) { item in
+                compactChoice(item.rawValue, selected: trainingTypes.contains(item), timeOfDay) {
+                    toggle(item, in: &trainingTypes)
                 }
             }
         }
     }
 
-    private func summaryGrid(_ timeOfDay: HomeTimeOfDay) -> some View {
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
-            compactSummary("Consistency first", intents.contains(.consistency), timeOfDay)
-            compactSummary(trainingSummary, true, timeOfDay)
-            compactSummary("Feel healthier", intents.contains(.nutrition), timeOfDay)
-            compactSummary("Balanced progress", emphasis == .movement, timeOfDay)
+    /// One fact and one line about it.
+    ///
+    /// The summary page used to carry live copies of the controls from the
+    /// page before it, which is how a summary stops being a summary and
+    /// becomes another chance to answer the same question.
+    private func summaryCard(
+        _ title: String,
+        detail: String,
+        _ timeOfDay: HomeTimeOfDay
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(title).font(.community(.headline))
+            Text(detail).font(.community(.caption)).foregroundStyle(.secondary)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(18)
+        .overlay { RoundedRectangle(cornerRadius: 20).strokeBorder(timeOfDay.border) }
     }
 
     private func compactChoice(_ title: String, selected: Bool, _ timeOfDay: HomeTimeOfDay,
                                action: @escaping () -> Void) -> some View {
-        Button(action: action) { compactLabel(title, selected, timeOfDay) }.buttonStyle(.plain)
-    }
-
-    private func compactSummary(_ title: String, _ selected: Bool, _ timeOfDay: HomeTimeOfDay) -> some View {
-        compactLabel(title, selected, timeOfDay)
-    }
-
-    private func compactLabel(_ title: String, _ selected: Bool, _ timeOfDay: HomeTimeOfDay) -> some View {
-        HStack(spacing: 9) {
-            Image(systemName: selected ? "checkmark" : "plus").font(.community(.caption2, weight: .bold))
-            Text(title).font(.community(.caption, weight: .semibold)).lineLimit(2)
-            Spacer(minLength: 0)
+        Button(action: action) {
+            HStack(spacing: 9) {
+                Image(systemName: selected ? "checkmark" : "plus").font(.community(.caption2, weight: .bold))
+                Text(title).font(.community(.caption, weight: .semibold)).lineLimit(2)
+                Spacer(minLength: 0)
+            }
+            .foregroundStyle(selected ? Color.white : timeOfDay.canvasPrimaryText)
+            .padding(.horizontal, 14).frame(maxWidth: .infinity, minHeight: 54)
+            .background(selected ? RepbasePalette.sage : timeOfDay.surfaceRaised,
+                        in: RoundedRectangle(cornerRadius: 17))
+            .overlay { RoundedRectangle(cornerRadius: 17)
+                .strokeBorder(selected ? Color.clear : timeOfDay.border) }
         }
-        .foregroundStyle(selected ? Color.white : timeOfDay.canvasPrimaryText)
-        .padding(.horizontal, 14).frame(maxWidth: .infinity, minHeight: 54)
-        .background(selected ? RepbasePalette.sage : timeOfDay.surfaceRaised,
-                    in: RoundedRectangle(cornerRadius: 17))
-        .overlay { RoundedRectangle(cornerRadius: 17)
-            .strokeBorder(selected ? Color.clear : timeOfDay.border) }
+        .buttonStyle(.plain)
     }
 
     private func targetRow(_ timeOfDay: HomeTimeOfDay) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 5) {
-                Text("Workouts each week").font(.community(.headline))
-                Text("Start realistic. Change it anytime.").font(.community(.caption)).foregroundStyle(.secondary)
+                Text("Your weekly goal").font(.community(.headline))
+                Text("What your dashboard counts against.").font(.community(.caption)).foregroundStyle(.secondary)
             }
             Spacer()
             targetButton("minus", background: timeOfDay.selectorSurface, foreground: timeOfDay.primaryText) {
@@ -293,32 +264,19 @@ struct RepbaseOnboardingView: View {
 
     private var title: String {
         switch step {
-        case .intent: "What are you building?"
         case .rhythm: "How do you like to move?"
-        case .goals: "What does progress look like?"
         case .ready: "Your starting plan is ready."
         }
     }
     private var subtitle: String {
         switch step {
-        case .intent: "Choose everything that matters. You can change this later."
-        case .rhythm: "Choose your usual training. You can always add another type."
-        case .goals: "Pick the outcomes that matter now. You can change them anytime."
+        case .rhythm: "Choose your usual training, how often, and what home should lead with."
         case .ready: "A simple rhythm built around what matters to you."
         }
     }
     private var trainingSummary: String {
         let values = TrainingType.allCases.filter(trainingTypes.contains).map { $0.rawValue.lowercased() }
         return values.isEmpty ? "Choose movement" : values.prefix(2).joined(separator: " + ").capitalized
-    }
-    private func goalTitle(_ item: Intent) -> String {
-        switch item {
-        case .consistency: "Build consistency"
-        case .strength: "Get stronger"
-        case .endurance: "Build endurance"
-        case .nutrition: "Feel healthier"
-        case .community: "Build community"
-        }
     }
     private func toggle<T: Hashable>(_ value: T, in set: inout Set<T>) {
         if set.contains(value) { set.remove(value) } else { set.insert(value) }
@@ -337,10 +295,8 @@ struct RepbaseOnboardingView: View {
     /// fails, the flow is reachable again from Settings.
     private func persistPreferences() {
         let values = Personalization(
-            intents: intents.map(\.rawValue).sorted(),
             trainingTypes: trainingTypes.map(\.rawValue).sorted(),
             weeklyTarget: weeklyTarget,
-            experience: experience.rawValue,
             emphasis: emphasis.rawValue
         )
         Task { try? await store.savePersonalization(values) }
@@ -353,16 +309,12 @@ struct RepbaseOnboardingView: View {
     /// a string with no case to map to. Falling back to the defaults for an
     /// account that has never answered is the same as never having asked.
     private func restorePreferences(_ values: Personalization) {
-        let restoredIntents = Set(values.intents.compactMap(Intent.init(rawValue:)))
-        if !restoredIntents.isEmpty { intents = restoredIntents }
-
         let restoredTypes = Set(
             values.trainingTypes.compactMap(TrainingType.init(rawValue:))
         )
         if !restoredTypes.isEmpty { trainingTypes = restoredTypes }
 
         if (0...7).contains(values.weeklyTarget) { weeklyTarget = values.weeklyTarget }
-        if let known = Experience(rawValue: values.experience) { experience = known }
         if let known = Emphasis(rawValue: values.emphasis) { emphasis = known }
     }
 }

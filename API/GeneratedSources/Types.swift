@@ -5785,50 +5785,38 @@ public enum Components {
                 case fatGrams = "fat_grams"
             }
         }
-        /// The five answers, as the app already spells them.
+        /// The three answers, as the app already spells them.
         ///
-        /// The two lists are checked for shape but not for membership: they hold
-        /// whatever the app currently offers, and a choice retired from the app
-        /// should not turn an existing account into a validation error on read.
+        /// The list is checked for shape but not for membership: it holds whatever
+        /// the app currently offers, and a choice retired from the app should not turn
+        /// an existing account into a validation error on read.
         ///
         /// - Remark: Generated from `#/components/schemas/PatchedPersonalizationRequest`.
         public struct PatchedPersonalizationRequest: Codable, Hashable, Sendable {
-            /// - Remark: Generated from `#/components/schemas/PatchedPersonalizationRequest/intents`.
-            public var intents: [Swift.String]?
             /// - Remark: Generated from `#/components/schemas/PatchedPersonalizationRequest/training_types`.
             public var trainingTypes: [Swift.String]?
             /// - Remark: Generated from `#/components/schemas/PatchedPersonalizationRequest/weekly_target`.
             public var weeklyTarget: Swift.Int64?
-            /// - Remark: Generated from `#/components/schemas/PatchedPersonalizationRequest/experience`.
-            public var experience: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PatchedPersonalizationRequest/emphasis`.
             public var emphasis: Swift.String?
             /// Creates a new `PatchedPersonalizationRequest`.
             ///
             /// - Parameters:
-            ///   - intents:
             ///   - trainingTypes:
             ///   - weeklyTarget:
-            ///   - experience:
             ///   - emphasis:
             public init(
-                intents: [Swift.String]? = nil,
                 trainingTypes: [Swift.String]? = nil,
                 weeklyTarget: Swift.Int64? = nil,
-                experience: Swift.String? = nil,
                 emphasis: Swift.String? = nil
             ) {
-                self.intents = intents
                 self.trainingTypes = trainingTypes
                 self.weeklyTarget = weeklyTarget
-                self.experience = experience
                 self.emphasis = emphasis
             }
             public enum CodingKeys: String, CodingKey {
-                case intents
                 case trainingTypes = "training_types"
                 case weeklyTarget = "weekly_target"
-                case experience
                 case emphasis
             }
         }
@@ -6503,50 +6491,38 @@ public enum Components {
             case heaviestWeight = "heaviest_weight"
             case bestEstimated1rm = "best_estimated_1rm"
         }
-        /// The five answers, as the app already spells them.
+        /// The three answers, as the app already spells them.
         ///
-        /// The two lists are checked for shape but not for membership: they hold
-        /// whatever the app currently offers, and a choice retired from the app
-        /// should not turn an existing account into a validation error on read.
+        /// The list is checked for shape but not for membership: it holds whatever
+        /// the app currently offers, and a choice retired from the app should not turn
+        /// an existing account into a validation error on read.
         ///
         /// - Remark: Generated from `#/components/schemas/Personalization`.
         public struct Personalization: Codable, Hashable, Sendable {
-            /// - Remark: Generated from `#/components/schemas/Personalization/intents`.
-            public var intents: [Swift.String]?
             /// - Remark: Generated from `#/components/schemas/Personalization/training_types`.
             public var trainingTypes: [Swift.String]?
             /// - Remark: Generated from `#/components/schemas/Personalization/weekly_target`.
             public var weeklyTarget: Swift.Int64?
-            /// - Remark: Generated from `#/components/schemas/Personalization/experience`.
-            public var experience: Swift.String?
             /// - Remark: Generated from `#/components/schemas/Personalization/emphasis`.
             public var emphasis: Swift.String?
             /// Creates a new `Personalization`.
             ///
             /// - Parameters:
-            ///   - intents:
             ///   - trainingTypes:
             ///   - weeklyTarget:
-            ///   - experience:
             ///   - emphasis:
             public init(
-                intents: [Swift.String]? = nil,
                 trainingTypes: [Swift.String]? = nil,
                 weeklyTarget: Swift.Int64? = nil,
-                experience: Swift.String? = nil,
                 emphasis: Swift.String? = nil
             ) {
-                self.intents = intents
                 self.trainingTypes = trainingTypes
                 self.weeklyTarget = weeklyTarget
-                self.experience = experience
                 self.emphasis = emphasis
             }
             public enum CodingKeys: String, CodingKey {
-                case intents
                 case trainingTypes = "training_types"
                 case weeklyTarget = "weekly_target"
-                case experience
                 case emphasis
             }
         }
