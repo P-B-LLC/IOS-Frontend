@@ -9,59 +9,8 @@
 import SwiftUI
 
 struct ContentView: View {
-    @Environment(WorkoutStore.self) private var workoutStore
-    @Environment(PlannerStore.self) private var plannerStore
-    @Environment(FoodTrackingStore.self) private var foodStore
-
-    /// The day the page is showing. Tapping the week strip moves it and every
-    /// section below reads from it, so Home can answer "what about Thursday?"
-    /// without leaving Home.
-    @State private var selectedDate = Calendar.current.startOfDay(for: Date())
-
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            let timeOfDay = HomeTimeOfDay(date: context.date)
-
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 22) {
-                    HomeCommandHeader(date: context.date)
-                    HomeWeekStrip(today: context.date, selection: $selectedDate)
-                    HomeUpNextSection(date: selectedDate, today: context.date)
-                    HomeTrainingSection(date: selectedDate, today: context.date)
-                    HomeMacroSection(date: selectedDate, today: context.date)
-                    HomeRemainingTasksSection(date: selectedDate, today: context.date)
-
-                    // Every store that Home reads from, not just workouts.
-                    // A task that failed to tick rolled back in silence, and a
-                    // food read that failed left the macros reading zero with
-                    // nothing to say why.
-                    if let error = workoutStore.persistenceError {
-                        HomePersistenceError(message: error) {
-                            workoutStore.retryPersistence()
-                        }
-                    }
-                    if let error = plannerStore.persistenceError {
-                        HomePersistenceError(message: error) {
-                            plannerStore.retry()
-                        }
-                    }
-                    if let error = foodStore.errorMessage {
-                        HomePersistenceError(message: error, retry: nil)
-                    }
-                }
-                .padding(.horizontal, RepbaseDesign.pageInset)
-                .padding(.top, 16)
-                .padding(.bottom, RepbaseDesign.bottomBarClearance)
-            }
-            .scrollIndicators(.hidden)
-            .toolbar(.hidden, for: .navigationBar)
-            .overlay {
-                if workoutStore.isLoading {
-                    HomeLoadingOverlay(timeOfDay: timeOfDay)
-                }
-            }
-            .homeTimeScreen(timeOfDay)
-        }
+        GuidedHomeView()
     }
 }
 
@@ -832,6 +781,7 @@ private extension HomeTimeOfDay {
         .environment(WorkoutStore.preview)
         .environment(PlannerStore.preview)
         .environment(FoodTrackingStore.preview)
+        .environment(ActivityStore())
         .environment(SocialProfileStore.preview)
         .environment(AuthenticationStore(configuration: .current))
 }
