@@ -1920,6 +1920,53 @@ paths:
                 items:
                   $ref: '#/components/schemas/ProfileHighlight'
           description: ''
+  /api/v1/me/personalization/:
+    get:
+      operationId: me_personalization_retrieve
+      description: |-
+        Read and update what somebody wants from Repbase.
+
+        Created on first read rather than at sign-up, so an account that has never
+        finished the flow answers with the defaults instead of a 404 the app would
+        have to special-case.
+      tags:
+      - me
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Personalization'
+          description: ''
+    patch:
+      operationId: me_personalization_partial_update
+      description: Updates only the answers included in the request.
+      tags:
+      - me
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPersonalizationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPersonalizationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPersonalizationRequest'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Personalization'
+          description: ''
   /api/v1/me/photo/:
     put:
       operationId: me_photo_update
@@ -6314,6 +6361,38 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+    PatchedPersonalizationRequest:
+      type: object
+      description: |-
+        The five answers, as the app already spells them.
+
+        The two lists are checked for shape but not for membership: they hold
+        whatever the app currently offers, and a choice retired from the app
+        should not turn an existing account into a validation error on read.
+      properties:
+        intents:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 60
+        training_types:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 60
+        weekly_target:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        experience:
+          type: string
+          maxLength: 40
+        emphasis:
+          type: string
+          maxLength: 40
     PatchedPlannerEntryRequest:
       type: object
       description: |-
@@ -6645,6 +6724,36 @@ components:
       description: |-
         * `heaviest_weight` - heaviest_weight
         * `best_estimated_1rm` - best_estimated_1rm
+    Personalization:
+      type: object
+      description: |-
+        The five answers, as the app already spells them.
+
+        The two lists are checked for shape but not for membership: they hold
+        whatever the app currently offers, and a choice retired from the app
+        should not turn an existing account into a validation error on read.
+      properties:
+        intents:
+          type: array
+          items:
+            type: string
+            maxLength: 60
+        training_types:
+          type: array
+          items:
+            type: string
+            maxLength: 60
+        weekly_target:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        experience:
+          type: string
+          maxLength: 40
+        emphasis:
+          type: string
+          maxLength: 40
     PlanWeekRequest:
       type: object
       description: Which week to fill in from the user's weekly repeats.

@@ -4528,6 +4528,141 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// Read and update what somebody wants from Repbase.
+    ///
+    /// Created on first read rather than at sign-up, so an account that has never
+    /// finished the flow answers with the defaults instead of a 404 the app would
+    /// have to special-case.
+    ///
+    /// - Remark: HTTP `GET /api/v1/me/personalization/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/personalization//get(me_personalization_retrieve)`.
+    public func mePersonalizationRetrieve(_ input: Operations.MePersonalizationRetrieve.Input) async throws -> Operations.MePersonalizationRetrieve.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.MePersonalizationRetrieve.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/me/personalization/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .get
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.MePersonalizationRetrieve.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.Personalization.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Updates only the answers included in the request.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/me/personalization/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/personalization//patch(me_personalization_partial_update)`.
+    public func mePersonalizationPartialUpdate(_ input: Operations.MePersonalizationPartialUpdate.Input) async throws -> Operations.MePersonalizationPartialUpdate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.MePersonalizationPartialUpdate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/me/personalization/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .patch
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                let body: OpenAPIRuntime.HTTPBody?
+                switch input.body {
+                case .none:
+                    body = nil
+                case let .json(value):
+                    body = try converter.setOptionalRequestBodyAsJSON(
+                        value,
+                        headerFields: &request.headerFields,
+                        contentType: "application/json; charset=utf-8"
+                    )
+                }
+                return (request, body)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.MePersonalizationPartialUpdate.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.Personalization.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
     /// Replace the profile photo. Any previous file is deleted.
     ///
     /// - Remark: HTTP `PUT /api/v1/me/photo/`.

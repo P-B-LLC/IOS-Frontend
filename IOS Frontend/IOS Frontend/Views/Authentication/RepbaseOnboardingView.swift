@@ -29,6 +29,8 @@ struct RepbaseOnboardingView: View {
         var id: String { rawValue }
     }
 
+    @Environment(SocialProfileStore.self) private var store
+
     @State private var step: Step = .intent
     @State private var intents: Set<Intent> = [.consistency, .strength, .nutrition]
     @State private var trainingTypes: Set<TrainingType> = [.strength, .running]
@@ -59,6 +61,9 @@ struct RepbaseOnboardingView: View {
             }
             .homeTimeScreen(timeOfDay)
         }
+        // Outside the TimelineView, which rebuilds every minute and would ask
+        // the server again each time it did.
+        .task { await loadPreferences() }
     }
 
     private func header(_ timeOfDay: HomeTimeOfDay) -> some View {
@@ -142,6 +147,12 @@ struct RepbaseOnboardingView: View {
                 helper("Nothing is locked in. Your plan learns and changes with you.")
             }
         }
+    }
+
+    /// Loaded once, when the flow opens.
+    private func loadPreferences() async {
+        guard let values = try? await store.personalization() else { return }
+        restorePreferences(values)
     }
 
     private var nextButton: some View {
@@ -312,12 +323,46 @@ struct RepbaseOnboardingView: View {
     private func toggle<T: Hashable>(_ value: T, in set: inout Set<T>) {
         if set.contains(value) { set.remove(value) } else { set.insert(value) }
     }
+    /// Send the answers to the account they belong to.
+    ///
+    /// These went to UserDefaults before, which meant they belonged to a
+    /// phone: gone on reinstall, absent on a second device, and never seen by
+    /// the server that was meant to act on them. Asking somebody five
+    /// questions and then keeping the answers where nothing can read them is
+    /// worse than not asking.
+    ///
+    /// Not awaited before the flow closes. The answers shape what Repbase
+    /// emphasises later, not what happens next, so holding somebody on a
+    /// finished screen while a request completes buys nothing -- and if it
+    /// fails, the flow is reachable again from Settings.
     private func persistPreferences() {
-        let defaults = UserDefaults.standard
-        defaults.set(intents.map(\.rawValue), forKey: "repbase.onboarding.intents")
-        defaults.set(trainingTypes.map(\.rawValue), forKey: "repbase.onboarding.trainingTypes")
-        defaults.set(weeklyTarget, forKey: "repbase.onboarding.weeklyTarget")
-        defaults.set(experience.rawValue, forKey: "repbase.onboarding.experience")
-        defaults.set(emphasis.rawValue, forKey: "repbase.onboarding.emphasis")
+        let values = Personalization(
+            intents: intents.map(\.rawValue).sorted(),
+            trainingTypes: trainingTypes.map(\.rawValue).sorted(),
+            weeklyTarget: weeklyTarget,
+            experience: experience.rawValue,
+            emphasis: emphasis.rawValue
+        )
+        Task { try? await store.savePersonalization(values) }
+    }
+
+    /// Start on whatever this account said last time.
+    ///
+    /// Anything the app no longer offers is dropped rather than resisted: the
+    /// server stores the strings the flow used, and a choice retired since is
+    /// a string with no case to map to. Falling back to the defaults for an
+    /// account that has never answered is the same as never having asked.
+    private func restorePreferences(_ values: Personalization) {
+        let restoredIntents = Set(values.intents.compactMap(Intent.init(rawValue:)))
+        if !restoredIntents.isEmpty { intents = restoredIntents }
+
+        let restoredTypes = Set(
+            values.trainingTypes.compactMap(TrainingType.init(rawValue:))
+        )
+        if !restoredTypes.isEmpty { trainingTypes = restoredTypes }
+
+        if (0...7).contains(values.weeklyTarget) { weeklyTarget = values.weeklyTarget }
+        if let known = Experience(rawValue: values.experience) { experience = known }
+        if let known = Emphasis(rawValue: values.emphasis) { emphasis = known }
     }
 }

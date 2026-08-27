@@ -392,6 +392,20 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /api/v1/me/highlights/`.
     /// - Remark: Generated from `#/paths//api/v1/me/highlights//put(me_highlights_update)`.
     func meHighlightsUpdate(_ input: Operations.MeHighlightsUpdate.Input) async throws -> Operations.MeHighlightsUpdate.Output
+    /// Read and update what somebody wants from Repbase.
+    ///
+    /// Created on first read rather than at sign-up, so an account that has never
+    /// finished the flow answers with the defaults instead of a 404 the app would
+    /// have to special-case.
+    ///
+    /// - Remark: HTTP `GET /api/v1/me/personalization/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/personalization//get(me_personalization_retrieve)`.
+    func mePersonalizationRetrieve(_ input: Operations.MePersonalizationRetrieve.Input) async throws -> Operations.MePersonalizationRetrieve.Output
+    /// Updates only the answers included in the request.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/me/personalization/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/personalization//patch(me_personalization_partial_update)`.
+    func mePersonalizationPartialUpdate(_ input: Operations.MePersonalizationPartialUpdate.Input) async throws -> Operations.MePersonalizationPartialUpdate.Output
     /// Replace the profile photo. Any previous file is deleted.
     ///
     /// - Remark: HTTP `PUT /api/v1/me/photo/`.
@@ -1841,6 +1855,30 @@ extension APIProtocol {
         body: Operations.MeHighlightsUpdate.Input.Body
     ) async throws -> Operations.MeHighlightsUpdate.Output {
         try await meHighlightsUpdate(Operations.MeHighlightsUpdate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Read and update what somebody wants from Repbase.
+    ///
+    /// Created on first read rather than at sign-up, so an account that has never
+    /// finished the flow answers with the defaults instead of a 404 the app would
+    /// have to special-case.
+    ///
+    /// - Remark: HTTP `GET /api/v1/me/personalization/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/personalization//get(me_personalization_retrieve)`.
+    public func mePersonalizationRetrieve(headers: Operations.MePersonalizationRetrieve.Input.Headers = .init()) async throws -> Operations.MePersonalizationRetrieve.Output {
+        try await mePersonalizationRetrieve(Operations.MePersonalizationRetrieve.Input(headers: headers))
+    }
+    /// Updates only the answers included in the request.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/me/personalization/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/personalization//patch(me_personalization_partial_update)`.
+    public func mePersonalizationPartialUpdate(
+        headers: Operations.MePersonalizationPartialUpdate.Input.Headers = .init(),
+        body: Operations.MePersonalizationPartialUpdate.Input.Body? = nil
+    ) async throws -> Operations.MePersonalizationPartialUpdate.Output {
+        try await mePersonalizationPartialUpdate(Operations.MePersonalizationPartialUpdate.Input(
             headers: headers,
             body: body
         ))
@@ -5747,6 +5785,53 @@ public enum Components {
                 case fatGrams = "fat_grams"
             }
         }
+        /// The five answers, as the app already spells them.
+        ///
+        /// The two lists are checked for shape but not for membership: they hold
+        /// whatever the app currently offers, and a choice retired from the app
+        /// should not turn an existing account into a validation error on read.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PatchedPersonalizationRequest`.
+        public struct PatchedPersonalizationRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PatchedPersonalizationRequest/intents`.
+            public var intents: [Swift.String]?
+            /// - Remark: Generated from `#/components/schemas/PatchedPersonalizationRequest/training_types`.
+            public var trainingTypes: [Swift.String]?
+            /// - Remark: Generated from `#/components/schemas/PatchedPersonalizationRequest/weekly_target`.
+            public var weeklyTarget: Swift.Int64?
+            /// - Remark: Generated from `#/components/schemas/PatchedPersonalizationRequest/experience`.
+            public var experience: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedPersonalizationRequest/emphasis`.
+            public var emphasis: Swift.String?
+            /// Creates a new `PatchedPersonalizationRequest`.
+            ///
+            /// - Parameters:
+            ///   - intents:
+            ///   - trainingTypes:
+            ///   - weeklyTarget:
+            ///   - experience:
+            ///   - emphasis:
+            public init(
+                intents: [Swift.String]? = nil,
+                trainingTypes: [Swift.String]? = nil,
+                weeklyTarget: Swift.Int64? = nil,
+                experience: Swift.String? = nil,
+                emphasis: Swift.String? = nil
+            ) {
+                self.intents = intents
+                self.trainingTypes = trainingTypes
+                self.weeklyTarget = weeklyTarget
+                self.experience = experience
+                self.emphasis = emphasis
+            }
+            public enum CodingKeys: String, CodingKey {
+                case intents
+                case trainingTypes = "training_types"
+                case weeklyTarget = "weekly_target"
+                case experience
+                case emphasis
+            }
+        }
         /// A task or event on the planner.
         ///
         /// ``is_complete`` is what the client writes; ``completed_at`` is the record
@@ -6417,6 +6502,53 @@ public enum Components {
         @frozen public enum PersonalRecordKindEnum: String, Codable, Hashable, Sendable, CaseIterable {
             case heaviestWeight = "heaviest_weight"
             case bestEstimated1rm = "best_estimated_1rm"
+        }
+        /// The five answers, as the app already spells them.
+        ///
+        /// The two lists are checked for shape but not for membership: they hold
+        /// whatever the app currently offers, and a choice retired from the app
+        /// should not turn an existing account into a validation error on read.
+        ///
+        /// - Remark: Generated from `#/components/schemas/Personalization`.
+        public struct Personalization: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/Personalization/intents`.
+            public var intents: [Swift.String]?
+            /// - Remark: Generated from `#/components/schemas/Personalization/training_types`.
+            public var trainingTypes: [Swift.String]?
+            /// - Remark: Generated from `#/components/schemas/Personalization/weekly_target`.
+            public var weeklyTarget: Swift.Int64?
+            /// - Remark: Generated from `#/components/schemas/Personalization/experience`.
+            public var experience: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Personalization/emphasis`.
+            public var emphasis: Swift.String?
+            /// Creates a new `Personalization`.
+            ///
+            /// - Parameters:
+            ///   - intents:
+            ///   - trainingTypes:
+            ///   - weeklyTarget:
+            ///   - experience:
+            ///   - emphasis:
+            public init(
+                intents: [Swift.String]? = nil,
+                trainingTypes: [Swift.String]? = nil,
+                weeklyTarget: Swift.Int64? = nil,
+                experience: Swift.String? = nil,
+                emphasis: Swift.String? = nil
+            ) {
+                self.intents = intents
+                self.trainingTypes = trainingTypes
+                self.weeklyTarget = weeklyTarget
+                self.experience = experience
+                self.emphasis = emphasis
+            }
+            public enum CodingKeys: String, CodingKey {
+                case intents
+                case trainingTypes = "training_types"
+                case weeklyTarget = "weekly_target"
+                case experience
+                case emphasis
+            }
         }
         /// Which week to fill in from the user's weekly repeats.
         ///
@@ -18843,6 +18975,241 @@ public enum Operations {
             /// - Throws: An error if `self` is not `.ok`.
             /// - SeeAlso: `.ok`.
             public var ok: Operations.MeHighlightsUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Read and update what somebody wants from Repbase.
+    ///
+    /// Created on first read rather than at sign-up, so an account that has never
+    /// finished the flow answers with the defaults instead of a 404 the app would
+    /// have to special-case.
+    ///
+    /// - Remark: HTTP `GET /api/v1/me/personalization/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/personalization//get(me_personalization_retrieve)`.
+    public enum MePersonalizationRetrieve {
+        public static let id: Swift.String = "me_personalization_retrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/me/personalization/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MePersonalizationRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MePersonalizationRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.MePersonalizationRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            public init(headers: Operations.MePersonalizationRetrieve.Input.Headers = .init()) {
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/me/personalization/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/me/personalization/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Personalization)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Personalization {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.MePersonalizationRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.MePersonalizationRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/me/personalization//get(me_personalization_retrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.MePersonalizationRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.MePersonalizationRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Updates only the answers included in the request.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/me/personalization/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/personalization//patch(me_personalization_partial_update)`.
+    public enum MePersonalizationPartialUpdate {
+        public static let id: Swift.String = "me_personalization_partial_update"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/me/personalization/PATCH/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MePersonalizationPartialUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MePersonalizationPartialUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.MePersonalizationPartialUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/me/personalization/PATCH/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/me/personalization/PATCH/requestBody/content/application\/json`.
+                case json(Components.Schemas.PatchedPersonalizationRequest)
+            }
+            public var body: Operations.MePersonalizationPartialUpdate.Input.Body?
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.MePersonalizationPartialUpdate.Input.Headers = .init(),
+                body: Operations.MePersonalizationPartialUpdate.Input.Body? = nil
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/me/personalization/PATCH/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/me/personalization/PATCH/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Personalization)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Personalization {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.MePersonalizationPartialUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.MePersonalizationPartialUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/me/personalization//patch(me_personalization_partial_update)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.MePersonalizationPartialUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.MePersonalizationPartialUpdate.Output.Ok {
                 get throws {
                     switch self {
                     case let .ok(response):

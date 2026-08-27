@@ -704,4 +704,22 @@ final class SocialProfileStore {
         ]
         return store
     }
+
+    // MARK: - Personalization
+
+    /// What this account said it wanted from Repbase.
+    ///
+    /// Read on demand rather than held: the flow that needs it opens rarely,
+    /// and a copy kept here would be one more thing to keep in step with the
+    /// server for no benefit.
+    func personalization() async throws -> Personalization {
+        guard let repository else { return Personalization() }
+        return try await repository.personalization()
+    }
+
+    @discardableResult
+    func savePersonalization(_ values: Personalization) async throws -> Personalization {
+        guard let repository else { return values }
+        return try await repository.savePersonalization(values)
+    }
 }

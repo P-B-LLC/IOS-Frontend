@@ -532,4 +532,74 @@ actor ProfileAPIRepository {
             memberCount: payload.memberCount
         )
     }
+
+    // MARK: - Personalization
+
+    /// What this account said it wanted from Repbase.
+    ///
+    /// Never absent: the server creates the record on first read, so an
+    /// account that has not finished the flow answers with the defaults
+    /// rather than a 404 the caller would have to treat as a special case.
+    func personalization() async throws -> Personalization {
+        let output = try await client.mePersonalizationRetrieve()
+        switch output {
+        case .ok(let response):
+            return Self.personalization(from: try response.body.json)
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(
+                statusCode: statusCode,
+                payload: payload
+            )
+        }
+    }
+
+    @discardableResult
+    func savePersonalization(_ values: Personalization) async throws -> Personalization {
+        let output = try await client.mePersonalizationPartialUpdate(
+            body: .json(
+                Components.Schemas.PatchedPersonalizationRequest(
+                    intents: values.intents,
+                    trainingTypes: values.trainingTypes,
+                    weeklyTarget: Int64(values.weeklyTarget),
+                    experience: values.experience,
+                    emphasis: values.emphasis
+                )
+            )
+        )
+        switch output {
+        case .ok(let response):
+            return Self.personalization(from: try response.body.json)
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(
+                statusCode: statusCode,
+                payload: payload
+            )
+        }
+    }
+
+    private static func personalization(
+        from payload: Components.Schemas.Personalization
+    ) -> Personalization {
+        Personalization(
+            intents: payload.intents ?? [],
+            trainingTypes: payload.trainingTypes ?? [],
+            weeklyTarget: Int(payload.weeklyTarget ?? 3),
+            experience: payload.experience ?? "",
+            emphasis: payload.emphasis ?? ""
+        )
+    }
+}
+
+/// The five answers the first-run flow asks for.
+///
+/// Held as the strings the flow already uses rather than as its private
+/// enums, so retiring a choice from the app cannot fail to decode an account
+/// that picked it. The flow maps them back to its own cases and ignores
+/// anything it no longer offers.
+nonisolated struct Personalization: Equatable, Sendable {
+    var intents: [String] = []
+    var trainingTypes: [String] = []
+    var weeklyTarget: Int = 3
+    var experience: String = ""
+    var emphasis: String = ""
 }
