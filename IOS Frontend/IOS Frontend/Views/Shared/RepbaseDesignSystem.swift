@@ -14,7 +14,7 @@ enum RepbaseDesign {
     /// surfaces continue to use `HomeTimeOfDay.ink`.
     static let ink = Color.primary
     static let onInk = Color(uiColor: .systemBackground)
-    static let canvas = RepbasePalette.cream
+    static let canvas = Color.repbaseDynamic(light: Color.white, dark: Color(hex: 0x1A1817))
     static let inset = RepbasePalette.oatmeal
     static let success = RepbasePalette.sage
     static let warning = Color(hex: 0xC46A16)
@@ -38,7 +38,10 @@ enum RepbaseDesign {
     // first icons-only pass cut both too far, so both came back part way.
     static let bottomBarClearance: CGFloat = 108
     static let deepShadow = RepbasePalette.espresso.opacity(0.12)
-    static let softHighlight = RepbasePalette.paper.opacity(0.82)
+    static let softHighlight = Color.repbaseDynamic(
+        light: Color.white.opacity(0.82),
+        dark: Color.white.opacity(0.08)
+    )
 }
 
 /// A quiet bounded surface for a true interactive module.

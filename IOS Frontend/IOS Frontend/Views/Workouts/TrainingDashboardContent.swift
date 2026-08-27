@@ -468,7 +468,10 @@ private struct WorkoutDashboardHero: View {
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 11)
                         .padding(.vertical, 6)
-                        .background(RepbasePalette.paper, in: Capsule())
+                        .background(
+                            Color.repbaseDynamic(light: Color.white, dark: Color(hex: 0x3A3634)),
+                            in: Capsule()
+                        )
                 }
                 ProgressView(value: progress).tint(RepbaseDesign.warning)
             }
@@ -529,12 +532,31 @@ private struct DashboardDumbbell: View {
 
 
 private extension View {
+    /// The dashboard's own card.
+    ///
+    /// It was RepbasePalette.paper at 94%, with a white hairline over it --
+    /// and paper is Color.white, flatly, at every appearance. In dark mode
+    /// that drew a white card on a black page and then wrote Color.primary on
+    /// it, which is white after dark: the card was legible only by its edges,
+    /// and everything printed on it disappeared.
     func dashboardSurface(radius: CGFloat) -> some View {
-        background(RepbasePalette.paper.opacity(0.94), in: RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.78), lineWidth: 1)
-            }
-            .shadow(color: RepbaseDesign.deepShadow, radius: 22, x: 0, y: 10)
+        background(
+            Color.repbaseDynamic(
+                light: Color.white.opacity(0.94),
+                dark: Color(hex: 0x252220)
+            ),
+            in: RoundedRectangle(cornerRadius: radius, style: .continuous)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: radius, style: .continuous)
+                .strokeBorder(
+                    Color.repbaseDynamic(
+                        light: Color.white.opacity(0.78),
+                        dark: Color.white.opacity(0.10)
+                    ),
+                    lineWidth: 1
+                )
+        }
+        .shadow(color: RepbaseDesign.deepShadow, radius: 22, x: 0, y: 10)
     }
 }

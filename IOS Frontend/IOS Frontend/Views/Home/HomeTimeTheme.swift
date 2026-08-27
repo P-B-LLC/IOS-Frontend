@@ -41,7 +41,11 @@ enum RepbasePalette {
     /// appearance checks throughout the view hierarchy.
     static let cream = Color.white
     static let paper = Color.white
-    static let oatmeal = Color(hex: 0xF2F2F2)
+    /// A surface in every one of its uses -- fills, backgrounds and one
+    /// progress-ring track -- so it follows the trait. Its neighbours cream and
+    /// sand are foregrounds and stay fixed: turning those dynamic would put
+    /// dark text on the dark surfaces they are drawn against.
+    static let oatmeal = Color.repbaseDynamic(light: Color(hex: 0xF2F2F2), dark: Color(hex: 0x2C2927))
     static let sand = Color(hex: 0xD1D1D1)
     static let caramel = Color(hex: 0xF86722)
     static let cocoa = Color(hex: 0x6F5548)
@@ -96,15 +100,15 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
     }
 
     var surfaceRaised: Color {
-        usesDarkAppearance ? Color(hex: 0x252220) : Color.white
+        .repbaseDynamic(light: Color.white, dark: Color(hex: 0x252220))
     }
 
     var selectorSurface: Color {
-        usesDarkAppearance ? Color(hex: 0x2C2927) : RepbasePalette.oatmeal
+        .repbaseDynamic(light: RepbasePalette.oatmeal, dark: Color(hex: 0x2C2927))
     }
 
     var emptyDaySurface: Color {
-        usesDarkAppearance ? Color(hex: 0x252220) : RepbasePalette.oatmeal
+        .repbaseDynamic(light: RepbasePalette.oatmeal, dark: Color(hex: 0x252220))
     }
 
     var plannedDaySurface: Color { RepbasePalette.espresso }
@@ -117,23 +121,29 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
     /// visible control on the page. Persistent navigation continues to use
     /// `ink`; these tokens are reserved for actionable controls.
     var primaryActionSurface: Color {
-        hasDarkCanvas ? Color.white : RepbasePalette.charcoal
+        .repbaseDynamic(light: RepbasePalette.charcoal, dark: Color.white)
     }
 
     var onPrimaryAction: Color {
-        hasDarkCanvas ? RepbasePalette.ink : Color.white
+        .repbaseDynamic(light: Color.white, dark: RepbasePalette.ink)
     }
 
     var heroEnd: Color {
-        usesDarkAppearance ? Color(hex: 0x332F2C) : RepbasePalette.espresso
+        .repbaseDynamic(light: RepbasePalette.espresso, dark: Color(hex: 0x332F2C))
     }
 
     var border: Color {
-        usesDarkAppearance ? Color.white.opacity(0.12) : RepbasePalette.espresso.opacity(0.10)
+        .repbaseDynamic(
+            light: RepbasePalette.espresso.opacity(0.10),
+            dark: Color.white.opacity(0.12)
+        )
     }
 
     var shadow: Color {
-        usesDarkAppearance ? Color.black.opacity(0.26) : RepbasePalette.espresso.opacity(0.14)
+        .repbaseDynamic(
+            light: RepbasePalette.espresso.opacity(0.14),
+            dark: Color.black.opacity(0.26)
+        )
     }
 
     // MARK: - Drawn straight on the canvas
@@ -155,7 +165,10 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
     }
 
     var canvasBorder: Color {
-        usesDarkAppearance ? Color.white.opacity(0.16) : RepbasePalette.espresso.opacity(0.12)
+        .repbaseDynamic(
+            light: RepbasePalette.espresso.opacity(0.12),
+            dark: Color.white.opacity(0.16)
+        )
     }
 }
 

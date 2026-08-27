@@ -92,7 +92,15 @@ struct IOS_FrontendApp: App {
     }
 
     private var appearance: RepbaseAppearancePreference {
-        RepbaseAppearancePreference(rawValue: appearanceRawValue) ?? .light
+#if DEBUG
+        // Dark mode is two taps into Settings and simctl cannot tap. This is
+        // how the dark palette gets looked at.
+        if let forced = ProcessInfo.processInfo.environment["REPBASE_APPEARANCE"],
+           let named = RepbaseAppearancePreference(rawValue: forced) {
+            return named
+        }
+#endif
+        return RepbaseAppearancePreference(rawValue: appearanceRawValue) ?? .light
     }
 }
 

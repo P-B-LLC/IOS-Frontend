@@ -28,25 +28,47 @@ enum WorkoutVisualPhase: Sendable, Equatable {
 
     var secondaryText: Color { Color.secondary }
 
-    var surfaceStart: Color { isDark ? Color(hex: 0x252220) : Color.white }
+    var surfaceStart: Color { .repbaseDynamic(light: Color.white, dark: Color(hex: 0x252220)) }
 
-    var surfaceEnd: Color { isDark ? Color(hex: 0x252220) : Color.white }
+    var surfaceEnd: Color { .repbaseDynamic(light: Color.white, dark: Color(hex: 0x252220)) }
 
-    var heroStart: Color { isDark ? Color(hex: 0x2C2927) : RepbasePalette.oatmeal }
+    var heroStart: Color {
+        .repbaseDynamic(light: RepbasePalette.oatmeal, dark: Color(hex: 0x2C2927))
+    }
 
-    var heroEnd: Color { isDark ? Color(hex: 0x252220) : Color.white }
+    var heroEnd: Color { .repbaseDynamic(light: Color.white, dark: Color(hex: 0x252220)) }
+
+    /// The hairline on a card, and the one on a control.
+    var cardBorder: Color {
+        .repbaseDynamic(
+            light: RepbasePalette.espresso.opacity(0.12),
+            dark: Color.white.opacity(0.10)
+        )
+    }
+
+    var controlBorder: Color {
+        .repbaseDynamic(
+            light: RepbasePalette.espresso.opacity(0.08),
+            dark: Color.white.opacity(0.09)
+        )
+    }
 
     var onAccent: Color { Color.white }
 
     var primaryActionSurface: Color {
-        isDark ? Color.white : RepbasePalette.charcoal
+        .repbaseDynamic(light: RepbasePalette.charcoal, dark: Color.white)
     }
 
     var onPrimaryAction: Color {
-        isDark ? RepbasePalette.ink : Color.white
+        .repbaseDynamic(light: Color.white, dark: RepbasePalette.ink)
     }
 
-    var shadow: Color { isDark ? Color.black.opacity(0.26) : RepbasePalette.espresso.opacity(0.14) }
+    var shadow: Color {
+        .repbaseDynamic(
+            light: RepbasePalette.espresso.opacity(0.14),
+            dark: Color.black.opacity(0.26)
+        )
+    }
 
     var usesDarkAppearance: Bool { isDark }
 }
@@ -133,10 +155,8 @@ private struct RepbaseCardModifier: ViewModifier {
             }
             .overlay {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .strokeBorder(
-                        phase.usesDarkAppearance ? Color.white.opacity(0.10) : RepbasePalette.espresso.opacity(0.12),
-                        lineWidth: 1
-                    )
+                    .strokeBorder(phase.cardBorder, lineWidth: 1)
+
             }
     }
 }
@@ -154,10 +174,8 @@ private struct RepbaseControlSurfaceModifier: ViewModifier {
             }
             .overlay {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .strokeBorder(
-                        phase.usesDarkAppearance ? Color.white.opacity(0.09) : RepbasePalette.espresso.opacity(0.08),
-                        lineWidth: 0.75
-                    )
+                    .strokeBorder(phase.controlBorder, lineWidth: 0.75)
+
             }
     }
 }
@@ -217,7 +235,37 @@ extension View {
 }
 
 extension Color {
+    /// A colour that resolves when it is drawn rather than when the body that
+    /// mentions it is evaluated.
+    ///
+    /// This is the difference between the system colours following the app's
+    /// appearance switch and ours not. `Color.primary` is backed by a dynamic
+    /// UIColor, so flipping the trait repaints it with no view having to
+    /// re-render. A token written as `isDark ? .black : .white` picks its side
+    /// once, while a body happens to be running, and then keeps that answer
+    /// until something re-runs the body -- which nothing does, because nothing
+    /// declares a dependency on a preference read out of UserDefaults through
+    /// a static. That is why the canvas turned black on switching and the
+    /// cards on it stayed white, taking their white text with them.
+    ///
+    /// Written this way a token is simply correct at every moment, and no
+    /// invalidation has to be arranged for it.
+    static func repbaseDynamic(light: Color, dark: Color) -> Color {
+        Color(
+            uiColor: UIColor { traits in
+                traits.userInterfaceStyle == .dark
+                    ? UIColor(dark)
+                    : UIColor(light)
+            }
+        )
+    }
+
+    static func repbaseDynamic(light: UInt32, dark: UInt32) -> Color {
+        repbaseDynamic(light: Color(hex: light), dark: Color(hex: dark))
+    }
+
     init(hex: UInt32, alpha: Double = 1) {
+
         self.init(
             .sRGB,
             red: Double((hex >> 16) & 0xFF) / 255,
