@@ -297,11 +297,14 @@ struct SocialProfileView: View {
             }
 
             profileAction(timeOfDay: timeOfDay)
-                .padding(.vertical, 10)
-                .frame(maxWidth: .infinity, alignment: .trailing)
-                .overlay(alignment: .top) {
-                    Rectangle().fill(timeOfDay.border).frame(height: 1)
-                }
+                .padding(.top, 4)
+
+            // Now a separator between the identity and the sections below,
+            // rather than a lid the action was tucked under.
+            Rectangle()
+                .fill(timeOfDay.border)
+                .frame(height: 1)
+                .padding(.top, 4)
         }
         .padding(.vertical, 8)
     }
@@ -346,16 +349,27 @@ struct SocialProfileView: View {
         subjectID.flatMap { social.followingByUser[$0]?.count } ?? 0
     }
 
+    /// The one thing to do with this profile, as a control rather than a link.
+    ///
+    /// It was an uppercase caption with an arrow, right-aligned in ten points
+    /// of air above and below a rule -- which read as a stranded label rather
+    /// than as something to press, and left a gap in the middle of the page
+    /// doing nothing. Full width closes the gap and gives the tap target an
+    /// edge to be pressed against.
     @ViewBuilder
     private func profileAction(timeOfDay: HomeTimeOfDay) -> some View {
         if isCurrentUser {
             Button { editingProfile = true } label: {
-                Label("Edit profile", systemImage: "arrow.up.right")
-                    .font(.community(.caption, weight: .bold))
-                    .textCase(.uppercase)
+                profileActionPill(
+                    "Edit profile",
+                    symbol: "pencil",
+                    // Quiet: on your own profile this is the only thing to do,
+                    // so it does not have to compete for attention.
+                    filled: false,
+                    timeOfDay: timeOfDay
+                )
             }
             .buttonStyle(.plain)
-            .foregroundStyle(timeOfDay.accent)
         } else {
             // Read from the relationships the store holds and written through
             // it, the same way Discover does. It used to toggle a local flag:
@@ -371,17 +385,51 @@ struct SocialProfileView: View {
                     )
                 }
             } label: {
-                Label(
+                profileActionPill(
                     viewerFollowsSubject ? "Following" : "Follow",
-                    systemImage: viewerFollowsSubject ? "checkmark" : "plus"
+                    symbol: viewerFollowsSubject ? "checkmark" : "plus",
+                    // Following is a state, so it goes quiet once it is true.
+                    // Follow is the reason somebody opened a stranger's page.
+                    filled: !viewerFollowsSubject,
+                    timeOfDay: timeOfDay
                 )
             }
-            .font(.community(.caption, weight: .bold))
-            .textCase(.uppercase)
             .buttonStyle(.plain)
-            .foregroundStyle(timeOfDay.accent)
             .disabled(subjectAsAuthor.map { social.changingFollowFor.contains($0.id) } ?? true)
         }
+    }
+
+    private func profileActionPill(
+        _ title: String,
+        symbol: String,
+        filled: Bool,
+        timeOfDay: HomeTimeOfDay
+    ) -> some View {
+        let shape = RoundedRectangle(
+            cornerRadius: RepbaseDesign.controlRadius,
+            style: .continuous
+        )
+
+        return HStack(spacing: 7) {
+            Image(systemName: symbol)
+                .font(.community(size: 13, weight: .bold))
+            Text(title)
+                .font(.community(.subheadline, weight: .bold))
+        }
+        .foregroundStyle(filled ? timeOfDay.onPrimaryAction : timeOfDay.accent)
+        .frame(maxWidth: .infinity, minHeight: 44)
+        .background(
+            filled ? timeOfDay.primaryActionSurface : timeOfDay.accent.opacity(0.10),
+            in: shape
+        )
+        .overlay {
+            // The tint alone is faint enough to read as a panel; the outline
+            // is what says button.
+            if !filled {
+                shape.strokeBorder(timeOfDay.accent.opacity(0.30), lineWidth: 1)
+            }
+        }
+        .contentShape(shape)
     }
 
     private func profileStat(_ value: String, label: String) -> some View {
@@ -404,23 +452,35 @@ struct SocialProfileView: View {
                         selectedSection = section
                     }
                 } label: {
-                    VStack(spacing: 10) {
+                    VStack(spacing: 9) {
                         Text(section.rawValue.uppercased())
-                            .font(.community(.caption, weight: .semibold))
+                            .font(
+                                .community(
+                                    .caption,
+                                    weight: selectedSection == section ? .bold : .semibold
+                                )
+                            )
+                            .tracking(0.6)
                             .foregroundStyle(
                                 selectedSection == section
                                     ? timeOfDay.accent
                                     : timeOfDay.secondaryText
                             )
 
+                        // A rail under every tab, not a bar under one. The bar
+                        // alone said which section was open; it said nothing
+                        // about the other one being openable. Running the line
+                        // under both makes it a track the accent moves along,
+                        // which is the whole hint -- no chrome, no chevron.
                         Capsule()
                             .fill(
                                 selectedSection == section
                                     ? timeOfDay.accent
-                                    : .clear
+                                    : timeOfDay.border
                             )
-                            .frame(width: 54, height: 2)
+                            .frame(height: 2)
                     }
+                    .padding(.top, 2)
                     .frame(maxWidth: .infinity)
                     .contentShape(Rectangle())
                 }
