@@ -2,9 +2,9 @@ import SwiftUI
 
 /// The centralized semantic activity icon set.
 ///
-/// Artwork is extracted from the approved reference sheet committed under
-/// `DesignReferences/activity-icon-reference.png`. Keeping semantic names here
-/// prevents individual features from drifting back to unrelated SF Symbols.
+/// The approved activity system uses native SF Symbols so every mark stays
+/// crisp at compact, card, and hero sizes while inheriting the surrounding
+/// light- or dark-mode color.
 enum ActivityIconKind: String, CaseIterable, Sendable {
     case lifting
     case running
@@ -22,23 +22,36 @@ enum ActivityIconKind: String, CaseIterable, Sendable {
     case runningShoe
     case bikeGear
 
-    var assetName: String {
+    var systemName: String {
         switch self {
-        case .lifting: "ActivityLifting"
-        case .running: "ActivityRunning"
-        case .biking: "ActivityBiking"
-        case .swimming: "ActivitySwimming"
-        case .treadmill: "ActivityTreadmill"
-        case .stationaryBike: "ActivityStationaryBike"
-        case .stairMaster: "ActivityStairMaster"
-        case .elliptical: "ActivityElliptical"
-        case .rower: "ActivityRower"
-        case .assaultBike: "ActivityAssaultBike"
-        case .skiErg: "ActivitySkiErg"
-        case .otherCardio: "ActivityOtherCardio"
-        case .cardio: "ActivityCardio"
-        case .runningShoe: "RepbaseSpeedSole"
-        case .bikeGear: "ActivityBikeGear"
+        case .lifting: "figure.strengthtraining.traditional"
+        case .running: "figure.run"
+        case .biking: "figure.outdoor.cycle"
+        case .swimming: "figure.pool.swim"
+        case .treadmill: "figure.run.treadmill"
+        case .stationaryBike: "figure.indoor.cycle"
+        case .stairMaster: "figure.stair.stepper"
+        case .elliptical: "figure.elliptical"
+        case .rower: "figure.indoor.rowing"
+        case .assaultBike: "figure.highintensity.intervaltraining"
+        case .skiErg: "figure.skiing.crosscountry"
+        case .otherCardio: "figure.mixed.cardio"
+        case .cardio: "waveform.path.ecg"
+        case .runningShoe: "shoe.2.fill"
+        case .bikeGear: "bicycle"
+        }
+    }
+
+    /// Figure symbols carry different visual bounds. These small optical
+    /// corrections make them feel like one family without raster scaling.
+    func pointSize(in frameSize: CGFloat) -> CGFloat {
+        switch self {
+        case .runningShoe, .bikeGear:
+            frameSize * 0.72
+        case .swimming, .rower, .cardio:
+            frameSize * 0.78
+        default:
+            frameSize * 0.84
         }
     }
 }
@@ -48,30 +61,13 @@ struct ActivityIconArtwork: View {
     var size: CGFloat = 24
     var color: Color = RepbaseDesign.ink
 
-    @ViewBuilder
     var body: some View {
-        if kind == .swimming {
-            // Matches the approved Figma Icon/Swimming component: a clear,
-            // regular-weight pool swimmer scaled to fill its semantic frame.
-            Image(systemName: "figure.pool.swim")
-                .font(.community(size: size * 0.84, weight: .regular))
-                .symbolRenderingMode(.monochrome)
-                .foregroundStyle(color)
-                .frame(width: size, height: size)
-                .accessibilityHidden(true)
-        } else {
-            Image(kind.assetName)
-                .resizable()
-                .renderingMode(.template)
-                .scaledToFit()
-                .foregroundStyle(color)
-                .frame(width: size, height: size)
-                // The reference-sheet exports contain generous transparent
-                // margins. Compensate visually while retaining the original
-                // layout frame and tap target.
-                .scaleEffect(1.65)
-                .accessibilityHidden(true)
-        }
+        Image(systemName: kind.systemName)
+            .font(.system(size: kind.pointSize(in: size), weight: .regular))
+            .symbolRenderingMode(.monochrome)
+            .foregroundStyle(color)
+            .frame(width: size, height: size)
+            .accessibilityHidden(true)
     }
 }
 

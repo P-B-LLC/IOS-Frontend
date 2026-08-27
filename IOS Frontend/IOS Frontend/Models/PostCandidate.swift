@@ -74,7 +74,7 @@ nonisolated enum PostSource: String, CaseIterable, Identifiable, Sendable {
 
     var symbol: String {
         switch self {
-        case .workout: "dumbbell.fill"
+        case .workout: ActivityIconKind.lifting.systemName
         case .meal: "fork.knife"
         case .planner: "calendar"
         }

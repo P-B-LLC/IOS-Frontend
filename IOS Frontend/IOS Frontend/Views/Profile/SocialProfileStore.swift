@@ -680,7 +680,7 @@ final class SocialProfileStore {
             SocialPost(
                 title: "Upper Day",
                 detail: "5 exercises · 18 working sets",
-                symbol: "dumbbell.fill",
+                symbol: ActivityIconKind.lifting.systemName,
                 timestamp: "Today",
                 likes: 42,
                 comments: 8
@@ -688,7 +688,7 @@ final class SocialProfileStore {
             SocialPost(
                 title: "Morning Run",
                 detail: "5.2 km · 28 min",
-                symbol: "figure.run",
+                symbol: ActivityIconKind.running.systemName,
                 timestamp: "Yesterday",
                 likes: 31,
                 comments: 4

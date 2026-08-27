@@ -813,7 +813,9 @@ struct PostCard: View {
         VStack(alignment: .leading, spacing: 12) {
             shareHeader(
                 workout.routeDistanceKm == nil ? "Workout" : "Run",
-                symbol: workout.routeDistanceKm == nil ? "dumbbell.fill" : "figure.run"
+                symbol: workout.routeDistanceKm == nil
+                    ? ActivityIconKind.lifting.systemName
+                    : ActivityIconKind.running.systemName
             )
 
             workoutStatistics(workout)

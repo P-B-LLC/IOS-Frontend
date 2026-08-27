@@ -464,14 +464,7 @@ private struct HomeTrainingSection: View {
 
     private var workoutSymbol: String {
         guard let workout else { return "plus" }
-        // `return` is required: a switch is only an expression when it is the
-        // whole body, and the guard above makes this a statement.
-        return switch workout.type {
-        case .lifting: "dumbbell.fill"
-        case .running: "figure.run"
-        case .biking: "bicycle"
-        case .swimming: "figure.pool.swim"
-        }
+        return workout.type.activityIcon.systemName
     }
 }
 

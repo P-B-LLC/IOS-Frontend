@@ -29,7 +29,7 @@ struct TrainingTabView: View {
 
         var symbol: String {
             switch self {
-            case .workouts: "dumbbell.fill"
+            case .workouts: ActivityIconKind.lifting.systemName
             case .food: "fork.knife"
             }
         }

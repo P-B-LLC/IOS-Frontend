@@ -80,7 +80,7 @@ nonisolated enum PlannerCategory: String, CaseIterable, Identifiable, Hashable, 
     var symbolName: String {
         switch self {
         case .habit: return "repeat"
-        case .workout: return "dumbbell.fill"
+        case .workout: return ActivityIconKind.lifting.systemName
         case .errand: return "bag.fill"
         case .study: return "book.fill"
         case .sleep: return "moon.fill"
