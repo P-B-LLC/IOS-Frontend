@@ -843,6 +843,11 @@ private struct ProfileSettingsView: View {
     @State private var deleteError: String?
     @State private var securityMessage: String?
     @State private var legalDocument: LegalDocument?
+#if DEBUG
+    // The section editors are three taps in and simctl has no tap.
+    private let editSectionOnLaunch = ProcessInfo.processInfo
+        .environment["REPBASE_EDIT_SECTION"].flatMap(Int.init)
+#endif
 
     private enum ProfileEditorDestination: Int, Identifiable {
         case basics = 1
@@ -1125,6 +1130,13 @@ private struct ProfileSettingsView: View {
                 .homeTimeScreen(timeOfDay)
             }
         }
+#if DEBUG
+        .task {
+            if let step = editSectionOnLaunch {
+                editorDestination = ProfileEditorDestination(rawValue: step)
+            }
+        }
+#endif
         .fullScreenCover(item: $editorDestination) { destination in
             NavigationStack {
                 ProfileOnboardingView(
@@ -1453,8 +1465,21 @@ struct ProfileOnboardingView: View {
     @State private var newGymCity = ""
     @State private var newGymCountry = ""
 
+    /// Editing one section rather than walking the whole profile.
+    ///
+    /// Settings offers the sections as separate rows, which is a promise that
+    /// picking one of them changes that one thing. It did not keep it: every
+    /// row opened the same three-step flow at a different page and then made
+    /// you press Continue through the rest to reach a Save. Changing a
+    /// username meant being asked again about your target weight.
+    ///
+    /// Passing a step means that step and nothing else. Creating an account
+    /// passes none, and still walks all four.
+    private let editsOneSection: Bool
+
     init(seed: SocialProfile, isEditing: Bool = false, initialStep: Int? = nil) {
         self.isEditing = isEditing
+        self.editsOneSection = isEditing && initialStep != nil
         _draft = State(initialValue: seed)
         _step = State(initialValue: initialStep ?? (isEditing ? 1 : 0))
     }
@@ -1512,43 +1537,75 @@ struct ProfileOnboardingView: View {
     private func onboardingHeader(timeOfDay: HomeTimeOfDay) -> some View {
         HStack {
             Button {
-                if step > (isEditing ? 1 : 0) {
+                if !editsOneSection, step > (isEditing ? 1 : 0) {
                     withAnimation(.easeOut(duration: 0.2)) { step -= 1 }
                 } else {
                     dismiss()
                 }
             } label: {
-                Image(systemName: step > (isEditing ? 1 : 0) ? "chevron.left" : "xmark")
+                Image(systemName: canGoBack ? "chevron.left" : "xmark")
             }
             .buttonStyle(RepbaseSculptedIconButtonStyle(timeOfDay: timeOfDay))
 
             Spacer()
-            Text(isEditing ? "Edit Profile" : "Create Profile")
+            Text(sectionTitle)
                 .font(.community(.headline, weight: .bold))
+                .lineLimit(1)
             Spacer()
-            Text("\(step - firstStep + 1)/\(stepCount)")
-                .font(.community(.caption, weight: .bold))
-                .foregroundStyle(timeOfDay.secondaryText)
-                .frame(width: 44, height: 44)
+            // A count of one is not worth printing, and neither is the page
+            // number of a page you did not arrive at by turning.
+            if editsOneSection {
+                Color.clear.frame(width: 44, height: 44)
+            } else {
+                Text("\(step - firstStep + 1)/\(stepCount)")
+                    .font(.community(.caption, weight: .bold))
+                    .foregroundStyle(timeOfDay.secondaryText)
+                    .frame(width: 44, height: 44)
+            }
         }
         .padding(.horizontal, 20)
         .padding(.top, 8)
     }
 
+    @ViewBuilder
     private func stepProgress(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack(spacing: 6) {
-            ForEach(firstStep..<4, id: \.self) { index in
-                Capsule()
-                    .fill(index <= step ? timeOfDay.accent : timeOfDay.surfaceRaised)
-                    .frame(height: 5)
+        if !editsOneSection {
+            HStack(spacing: 6) {
+                ForEach(firstStep..<4, id: \.self) { index in
+                    Capsule()
+                        .fill(index <= step ? timeOfDay.accent : timeOfDay.surfaceRaised)
+                        .frame(height: 5)
+                }
             }
+            .padding(.horizontal, 22)
+            .padding(.top, 15)
         }
-        .padding(.horizontal, 22)
-        .padding(.top, 15)
     }
 
     private var firstStep: Int { isEditing ? 1 : 0 }
     private var stepCount: Int { 4 - firstStep }
+
+    /// The back arrow means a page to go back to. On a single section there
+    /// is none, so it is a close.
+    private var canGoBack: Bool {
+        !editsOneSection && step > (isEditing ? 1 : 0)
+    }
+
+    /// What this screen is for, said at the top.
+    ///
+    /// "Edit Profile" is right for a walk through all of it and wrong for one
+    /// section: somebody who tapped Body goals should see that they are in
+    /// body goals.
+    private var sectionTitle: String {
+        guard editsOneSection else {
+            return isEditing ? "Edit Profile" : "Create Profile"
+        }
+        switch step {
+        case 1: return "Profile Details"
+        case 2: return "Body Goals"
+        default: return "Training Identity"
+        }
+    }
 
     @ViewBuilder
     private var stepHeading: some View {
@@ -1897,7 +1954,7 @@ struct ProfileOnboardingView: View {
 
     private func bottomAction(timeOfDay: HomeTimeOfDay) -> some View {
         Button {
-            if step < 3 {
+            if !editsOneSection, step < 3 {
                 withAnimation(.easeOut(duration: 0.2)) { step += 1 }
             } else {
                 finish()
@@ -1907,9 +1964,9 @@ struct ProfileOnboardingView: View {
                 if authentication.isWorking || store.isSaving {
                     ProgressView().tint(Color.white)
                 }
-                Text(step == 3 ? (isEditing ? "Save Profile" : "Create Profile") : "Continue")
+                Text(isSaveStep ? (isEditing ? "Save Changes" : "Create Profile") : "Continue")
                 Spacer()
-                Image(systemName: step == 3 ? "checkmark" : "arrow.right")
+                Image(systemName: isSaveStep ? "checkmark" : "arrow.right")
             }
             .font(.community(.headline, weight: .bold))
             .foregroundStyle(Color.white)
@@ -1961,7 +2018,11 @@ struct ProfileOnboardingView: View {
         }
     }
 
+    /// Whether pressing the button finishes rather than turns the page.
+    private var isSaveStep: Bool { editsOneSection || step == 3 }
+
     private var canContinue: Bool {
+
         switch step {
         case 0:
             // Editing already has an account; creating needs one that the
