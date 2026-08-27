@@ -8,8 +8,28 @@
 
 import SwiftUI
 
+/// What home leads with.
+///
+/// The personalization flow asks this outright and calls it "home screen
+/// emphasis", so the honest reading is that it decides the order of the day.
+nonisolated enum HomeEmphasis: String {
+    case training = "Training"
+    case movement = "Movement"
+    case nutrition = "Nutrition"
+}
+
 struct GuidedHomeView: View {
+    @Environment(SocialProfileStore.self) private var profileStore
+
     @State private var selectedDate = Calendar.current.startOfDay(for: Date())
+    @State private var emphasis = HomeEmphasis.training
+#if DEBUG
+    // The emphasis is set four taps into a settings flow, and simctl has no
+    // tap, so the three orderings cannot otherwise be looked at.
+    private let forcedEmphasis = ProcessInfo.processInfo
+        .environment["REPBASE_EMPHASIS"].flatMap(HomeEmphasis.init(rawValue:))
+#endif
+
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
@@ -17,15 +37,24 @@ struct GuidedHomeView: View {
 
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 14) {
-                    GuidedHomeHeader(date: context.date)
+                    GuidedHomeHeader(
+                        date: context.date,
+                        // Steps become a chapter of their own when movement
+                        // leads, and two readings of the same number on one
+                        // page is one too many.
+                        showsSteps: emphasis != .movement
+                    )
+
                     GuidedHomeWeekStrip(
                         today: context.date,
                         selection: $selectedDate
                     )
                     GuidedDayFlow(
                         selectedDate: selectedDate,
-                        today: context.date
+                        today: context.date,
+                        emphasis: emphasis
                     )
+
 
                     GuidedHomeErrors()
                 }
@@ -36,6 +65,22 @@ struct GuidedHomeView: View {
             .scrollIndicators(.hidden)
             .minimizesBottomBarOnScroll()
             .toolbar(.hidden, for: .navigationBar)
+            // Keyed on the connection: home appears before the session is
+            // restored, and a bare .task would ask a store with nothing to
+            // answer from and never ask again.
+            .task(id: profileStore.isConnected) {
+#if DEBUG
+                if let forcedEmphasis {
+                    emphasis = forcedEmphasis
+                    return
+                }
+#endif
+                guard let values = try? await profileStore.personalization() else {
+                    return
+                }
+                emphasis = HomeEmphasis(rawValue: values.emphasis) ?? .training
+            }
+
             .homeTimeScreen(timeOfDay)
         }
     }
@@ -49,9 +94,11 @@ private struct GuidedHomeHeader: View {
     @Environment(\.homeTimeOfDay) private var timeOfDay
 
     let date: Date
+    var showsSteps = true
 
     var body: some View {
         HStack(alignment: .center, spacing: 16) {
+
             VStack(alignment: .leading, spacing: 2) {
                 Text(greeting.uppercased())
                     .font(.community(.caption2, weight: .bold))
@@ -70,6 +117,7 @@ private struct GuidedHomeHeader: View {
 
             Spacer(minLength: 8)
 
+            if showsSteps {
             VStack(alignment: .trailing, spacing: 4) {
                 Text(stepCount)
                     .font(.community(.title2, weight: .bold))
@@ -93,6 +141,7 @@ private struct GuidedHomeHeader: View {
             }
             .accessibilityElement(children: .combine)
             .accessibilityLabel(stepAccessibilityLabel)
+            }
         }
         .frame(minHeight: 82)
     }
@@ -219,6 +268,33 @@ private struct GuidedDayFlow: View {
 
     let selectedDate: Date
     let today: Date
+    var emphasis = HomeEmphasis.training
+
+    /// The stages of the day, in the order this person asked for.
+    ///
+    /// Up Next and the momentum figures stay where they are: one is what is
+    /// happening next regardless of what matters most, and the other is a
+    /// footer. What moves is which of the three chapters leads.
+    private enum Chapter: String {
+        case movement = "MOVEMENT"
+        case training = "TRAINING"
+        case fuel = "FUEL"
+        case finish = "FINISH"
+    }
+
+    private var chapters: [Chapter] {
+        switch emphasis {
+        case .training:
+            [.training, .fuel, .finish]
+        case .nutrition:
+            [.fuel, .training, .finish]
+        case .movement:
+            // Movement is the one emphasis with no chapter of its own, so it
+            // gets one rather than quietly behaving like Training. Steps move
+            // out of the header and lead the day.
+            [.movement, .training, .fuel, .finish]
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -226,11 +302,42 @@ private struct GuidedDayFlow: View {
                 flowHeader
                 upNextSection
             }
-            trainingSection
-            fuelSection
-            finishSection
+            ForEach(Array(chapters.enumerated()), id: \.element) { index, chapter in
+                chapterView(chapter, number: index + 1)
+            }
             momentumSection
         }
+    }
+
+    @ViewBuilder
+    private func chapterView(_ chapter: Chapter, number: Int) -> some View {
+        switch chapter {
+        case .movement: movementSection(number: number)
+        case .training: trainingSection(number: number)
+        case .fuel: fuelSection(number: number)
+        case .finish: finishSection(number: number)
+        }
+    }
+
+    /// "01 · TRAINING", but the number follows where the chapter landed.
+    ///
+    /// Numbering them in place is the point: a page that opens on "02 · FUEL"
+    /// reads as though something is missing above it.
+    private func stageNumber(_ number: Int, _ chapter: Chapter) -> String {
+        String(format: "%02d · %@", number, chapter.rawValue)
+    }
+
+    private func movementSection(number: Int) -> some View {
+        VStack(alignment: .leading, spacing: 9) {
+            stageLabel(stageNumber(number, .movement), color: timeOfDay.accent)
+            // Explains itself when empty, which home does not normally do. The
+            // reason it stays quiet elsewhere is that a card about Health is
+            // noise on a page nobody opened to think about Health -- and that
+            // stops being true the moment somebody asks for movement to lead.
+            // A chapter with a heading and nothing under it is worse.
+            StepsWidget(explainsWhenEmpty: true)
+        }
+        .padding(.vertical, 14)
     }
 
     private var flowHeader: some View {
@@ -304,10 +411,10 @@ private struct GuidedDayFlow: View {
         }
     }
 
-    private var trainingSection: some View {
+    private func trainingSection(number: Int) -> some View {
         VStack(alignment: .leading, spacing: 9) {
             HStack {
-                stageLabel("01 · TRAINING", color: timeOfDay.accent)
+                stageLabel(stageNumber(number, .training), color: timeOfDay.accent)
                 Spacer()
                 Text(workout?.type.title.uppercased() ?? "WORKOUT")
                     .font(.community(.caption2, weight: .bold))
@@ -358,13 +465,13 @@ private struct GuidedDayFlow: View {
         )
     }
 
-    private var fuelSection: some View {
+    private func fuelSection(number: Int) -> some View {
         let total = food.total(on: selectedDate)
         let goals = food.goals
 
         return VStack(alignment: .leading, spacing: 9) {
             HStack {
-                stageLabel("02 · FUEL", color: fuelAccent)
+                stageLabel(stageNumber(number, .fuel), color: fuelAccent)
                 Spacer()
                 NavigationLink {
                     FoodTrackingView()
@@ -412,13 +519,13 @@ private struct GuidedDayFlow: View {
         )
     }
 
-    private var finishSection: some View {
+    private func finishSection(number: Int) -> some View {
         NavigationLink {
             PlannerView(showsBackButton: true)
         } label: {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
-                    stageLabel("03 · FINISH", color: timeOfDay.secondaryText)
+                    stageLabel(stageNumber(number, .finish), color: timeOfDay.secondaryText)
                     Text(taskSummary)
                         .font(.community(.headline))
                         .foregroundStyle(timeOfDay.primaryText)

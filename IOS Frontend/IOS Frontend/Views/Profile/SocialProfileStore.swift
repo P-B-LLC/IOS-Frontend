@@ -250,6 +250,13 @@ final class SocialProfileStore {
     private(set) var profile: SocialProfile?
     /// The signed-in user's server id, so their posts can be asked for.
     private(set) var viewerID: Int?
+
+    /// Whether this store can reach the server yet.
+    ///
+    /// Screens whose first load runs before the session is restored key their
+    /// .task on this, so it runs again once there is something to ask.
+    var isConnected: Bool { viewerID != nil }
+
     private(set) var posts: [SocialPost] = []
     private(set) var isLoading = false
     private(set) var hasLoadedProfile = false
