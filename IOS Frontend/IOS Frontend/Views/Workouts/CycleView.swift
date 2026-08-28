@@ -266,7 +266,7 @@ struct CycleView: View {
             .padding(.bottom, 4)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .cycleSurface(radius: 20)
+        .cycleSurface(radius: 20, phase: phase)
     }
 
     /// One turn of the rotation, starting from today rather than from day one.
@@ -368,7 +368,7 @@ struct CycleView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(18)
-        .cycleSurface(radius: 22)
+        .cycleSurface(radius: 22, phase: phase)
     }
 
     private var startButton: some View {
@@ -400,7 +400,12 @@ private struct CycleSlotRow: View {
                 .foregroundStyle(isToday ? Color.white : phase.secondaryText)
                 .frame(width: 28, height: 28)
                 .background(
-                    Circle().fill(isToday ? phase.accent : RepbasePalette.oatmeal)
+                    // Derived from the text colour rather than a fixed
+                    // oatmeal, for the same reason the card is: a light disc
+                    // under theme-coloured digits disappears in dark mode.
+                    Circle().fill(
+                        isToday ? phase.accent : phase.primaryText.opacity(0.10)
+                    )
                 )
 
             VStack(alignment: .leading, spacing: 2) {
@@ -434,16 +439,26 @@ private struct CycleSlotRow: View {
 }
 
 extension View {
-    /// The paper-on-cream card the training screens use.
-    func cycleSurface(radius: CGFloat) -> some View {
+    /// The card the training screens use.
+    ///
+    /// Takes the phase because it has to: the surface used to be a fixed
+    /// light paper while the text on it came from the theme, so in dark mode
+    /// the card stayed pale and the words on it went pale with the rest of the
+    /// app -- white on near-white, and the rotation was unreadable. Surface,
+    /// border and shadow all come from the same theme as the text now, which
+    /// is the only way the two can be relied on to contrast.
+    func cycleSurface(
+        radius: CGFloat,
+        phase: WorkoutVisualPhase
+    ) -> some View {
         background(
-            RepbasePalette.paper.opacity(0.94),
+            phase.surfaceStart,
             in: RoundedRectangle(cornerRadius: radius, style: .continuous)
         )
         .overlay {
             RoundedRectangle(cornerRadius: radius, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.78), lineWidth: 1)
+                .strokeBorder(phase.cardBorder, lineWidth: 1)
         }
-        .shadow(color: RepbaseDesign.deepShadow, radius: 18, x: 0, y: 8)
+        .shadow(color: phase.shadow, radius: 18, x: 0, y: 8)
     }
 }
