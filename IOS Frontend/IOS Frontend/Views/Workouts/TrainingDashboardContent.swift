@@ -12,6 +12,8 @@ struct TrainingDashboardContent: View {
     @Environment(WorkoutStore.self) private var store
     @Environment(CycleStore.self) private var cycles
 
+    @State private var isConfirmingClear = false
+
     private var phase: WorkoutVisualPhase {
         store.activeSession == nil ? .prepare : .focus
     }
@@ -73,11 +75,42 @@ struct TrainingDashboardContent: View {
                 }
             }
 
+            // Without a rotation, the week is whatever was put there by hand,
+            // and changing your mind about all of it should not mean opening
+            // seven days and emptying each. With one, the rotation is what
+            // fills the week and the way to change it is to change the
+            // rotation -- the server refuses this then, for the same reason.
+            if cycles.activeCycle == nil, store.hasAnythingScheduled {
+                Button {
+                    isConfirmingClear = true
+                } label: {
+                    Label("Clear this schedule", systemImage: "calendar.badge.minus")
+                        .font(.community(.caption, weight: .semibold))
+                        .foregroundStyle(phase.secondaryText)
+                }
+                .buttonStyle(.plain)
+                .disabled(store.isSaving)
+            }
+
             Divider()
             cycleRow
         }
         .padding(16)
         .dashboardSurface(radius: 22)
+        // Asked about, unlike the per-day controls: this empties the whole
+        // week at once and there is nothing to undo it with.
+        .confirmationDialog(
+            "Clear every planned workout?",
+            isPresented: $isConfirmingClear,
+            titleVisibility: .visible
+        ) {
+            Button("Clear the schedule", role: .destructive) {
+                Task { await store.clearSchedule() }
+            }
+            Button("Keep it", role: .cancel) {}
+        } message: {
+            Text("Every workout planned from today onward is removed, so you can start again. Workouts you have already done stay in your history.")
+        }
     }
 
     /// The way into rotations, and the only place the current day of one is
