@@ -48,6 +48,24 @@ final class WorkoutStore {
     /// Workouts the user has already created, offered when naming a new one so
     /// a workout's history is not split across two spellings.
     private(set) var knownWorkouts: [WorkoutSummary] = []
+
+    /// The names of these workouts that already come back every week.
+    ///
+    /// A rotation and a weekly repeat both write the same dates, so the server
+    /// refuses a rotation containing one. Asking here rather than finding out
+    /// from the refusal is what lets the editor offer to stop them instead of
+    /// reporting an error somebody then has to go and act on themselves.
+    func weeklyRepeatNames(among workoutIDs: Set<Int>) -> [String] {
+        var found: [Int: String] = [:]
+        for workouts in schedule.values {
+            for workout in workouts where workout.repeatsWeekly {
+                guard let serverID = workout.serverID,
+                      workoutIDs.contains(serverID) else { continue }
+                found[serverID] = workout.name
+            }
+        }
+        return found.values.sorted()
+    }
     /// Finished sessions the composer can offer. Read on demand rather than at
     /// connection: only that one screen needs them, and every other screen
     /// would pay for the pages on sign-in.

@@ -11,6 +11,7 @@ import SwiftUI
 struct PlannerView: View {
     @Environment(PlannerStore.self) private var store
     @Environment(WorkoutStore.self) private var workoutStore
+    @Environment(CycleStore.self) private var cycleStore
     @Environment(\.dismiss) private var dismiss
 
     /// Set when this was pushed rather than opened as its own tab. The page
@@ -76,6 +77,7 @@ struct PlannerView: View {
                     }
 
                     addButtons(timeOfDay: timeOfDay)
+                    rotationStrip(timeOfDay: timeOfDay)
                     daySection(timeOfDay: timeOfDay)
                     pastDueSection(timeOfDay: timeOfDay)
                     upcomingSection(timeOfDay: timeOfDay)
@@ -168,6 +170,50 @@ struct PlannerView: View {
 
     // MARK: - The day
 
+    /// Where the rotation is, above the day it is describing.
+    ///
+    /// Only while one is running and only on days it covers: a strip counting
+    /// "day 3 of 6" over a date the rotation has nothing to say about would be
+    /// answering a question nobody asked of that day.
+    @ViewBuilder
+    private func rotationStrip(timeOfDay: HomeTimeOfDay) -> some View {
+        if let cycle = cycleStore.activeCycle,
+           let position = cycle.position(on: store.selectedDate) {
+            VStack(alignment: .leading, spacing: 7) {
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.community(size: 10, weight: .bold))
+                    Text(cycle.displayName.uppercased())
+                        .font(.community(size: 10, weight: .bold))
+                        .tracking(1.1)
+                        .lineLimit(1)
+                    Spacer(minLength: 8)
+                    Text("day \(position) of \(cycle.length)")
+                        .font(.community(.caption2))
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                }
+                .foregroundStyle(timeOfDay.accent)
+
+                // One dot per day of the turn, filled up to where this date
+                // sits. A six-day block is a shape you can take in at a
+                // glance; "day 3 of 6" is a sentence you have to read.
+                HStack(spacing: 5) {
+                    ForEach(1...max(cycle.length, 1), id: \.self) { day in
+                        Circle()
+                            .fill(
+                                day <= position
+                                    ? timeOfDay.accent
+                                    : timeOfDay.canvasBorder
+                            )
+                            .frame(width: 5, height: 5)
+                    }
+                    Spacer(minLength: 0)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
     private func daySection(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
@@ -178,6 +224,22 @@ struct PlannerView: View {
                     .font(.community(.footnote))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
                 Spacer(minLength: 0)
+            }
+
+            // What the rotation puts here, named. The strip above says where
+            // you are in the block; this says why this particular day has the
+            // workout it has, and that changing the rotation changes it.
+            if let cycle = cycleStore.activeCycle,
+               let position = cycle.position(on: store.selectedDate),
+               let slot = cycle.slot(on: store.selectedDate) {
+                HStack(spacing: 5) {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.community(size: 9, weight: .bold))
+                    Text("\(slot.displayName) · \(cycle.displayName) · day \(position)")
+                        .font(.community(.caption2))
+                        .lineLimit(1)
+                }
+                .foregroundStyle(timeOfDay.canvasSecondaryText)
             }
 
             if let reason = store.editingBlockedReason {

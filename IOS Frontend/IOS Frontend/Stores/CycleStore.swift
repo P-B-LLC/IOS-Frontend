@@ -37,6 +37,12 @@ final class CycleStore {
 
     var hasCycle: Bool { activeCycle != nil }
 
+    /// The rotations that are not the one running, newest first. What a
+    /// "switch to" list is made of.
+    var otherCycles: [WorkoutCycle] {
+        cycles.filter { !$0.isActive }
+    }
+
     // MARK: - Connection
 
     func connect(configuration: APIConfiguration, token: String) async {
@@ -102,9 +108,14 @@ final class CycleStore {
     /// Planning ahead is part of creating: a rotation that exists but has put
     /// nothing on any day would look, from the training screens, like nothing
     /// had been set up at all.
-    func create(_ draft: WorkoutCycleDraft) async {
+    func create(
+        _ draft: WorkoutCycleDraft,
+        stoppingWeeklyRepeats: Bool = false
+    ) async {
         await save { repository in
-            let created = try await repository.create(draft)
+            let created = try await repository.create(
+                draft, stoppingWeeklyRepeats: stoppingWeeklyRepeats
+            )
             try await repository.planAhead(
                 created,
                 through: Self.planningHorizon(from: draft.anchorDate)
@@ -112,14 +123,28 @@ final class CycleStore {
         }
     }
 
-    func update(_ cycle: WorkoutCycle) async {
+    func update(
+        _ cycle: WorkoutCycle,
+        stoppingWeeklyRepeats: Bool = false
+    ) async {
         await save { repository in
-            let updated = try await repository.update(cycle)
+            let updated = try await repository.update(
+                cycle, stoppingWeeklyRepeats: stoppingWeeklyRepeats
+            )
             try await repository.planAhead(
                 updated,
                 through: Self.planningHorizon(from: Date())
             )
         }
+    }
+
+    /// Makes this the rotation you are on, from the date given.
+    ///
+    /// Nil starts it today. A date in the future is a handover: the rotation
+    /// running now keeps its days right up to it, so the weeks in between stay
+    /// planned rather than emptying the moment the switch is made.
+    func activate(_ cycle: WorkoutCycle, startOn: Date?) async {
+        await save { try await $0.activate(cycle, startOn: startOn) }
     }
 
     /// Stops the rotation. Days already trained keep their record; days it had

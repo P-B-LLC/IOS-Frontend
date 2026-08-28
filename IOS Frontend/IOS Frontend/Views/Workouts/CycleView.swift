@@ -305,6 +305,19 @@ struct CycleView: View {
             }
             .buttonStyle(.bordered)
 
+            // Only worth offering once there is something to switch to.
+            if !store.otherCycles.isEmpty {
+                NavigationLink {
+                    RotationPickerView()
+                } label: {
+                    Label("Switch rotation", systemImage: "arrow.triangle.2.circlepath")
+                        .font(.community(.subheadline, weight: .semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                }
+                .buttonStyle(.bordered)
+            }
+
             Button(role: .destructive) {
                 isConfirmingEnd = true
             } label: {

@@ -81,6 +81,11 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/cycles/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/cycles/{id}//delete(cycles_destroy)`.
     func cyclesDestroy(_ input: Operations.CyclesDestroy.Input) async throws -> Operations.CyclesDestroy.Output
+    /// Make this the rotation you are on, from `start_on` -- today if it is left out. Whatever is running keeps its days right up to that date and is closed there; this one begins at day 1 on it, and the calendar is written forward from there.
+    ///
+    /// - Remark: HTTP `POST /api/v1/cycles/{id}/activate/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}/activate//post(cycles_activate_create)`.
+    func cyclesActivateCreate(_ input: Operations.CyclesActivateCreate.Input) async throws -> Operations.CyclesActivateCreate.Output
     /// Writes schedule rows for the rotation up to a date.
     ///
     /// - Remark: HTTP `POST /api/v1/cycles/{id}/plan-ahead/`.
@@ -1167,6 +1172,21 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//api/v1/cycles/{id}//delete(cycles_destroy)`.
     public func cyclesDestroy(path: Operations.CyclesDestroy.Input.Path) async throws -> Operations.CyclesDestroy.Output {
         try await cyclesDestroy(Operations.CyclesDestroy.Input(path: path))
+    }
+    /// Make this the rotation you are on, from `start_on` -- today if it is left out. Whatever is running keeps its days right up to that date and is closed there; this one begins at day 1 on it, and the calendar is written forward from there.
+    ///
+    /// - Remark: HTTP `POST /api/v1/cycles/{id}/activate/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}/activate//post(cycles_activate_create)`.
+    public func cyclesActivateCreate(
+        path: Operations.CyclesActivateCreate.Input.Path,
+        headers: Operations.CyclesActivateCreate.Input.Headers = .init(),
+        body: Operations.CyclesActivateCreate.Input.Body? = nil
+    ) async throws -> Operations.CyclesActivateCreate.Output {
+        try await cyclesActivateCreate(Operations.CyclesActivateCreate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
     }
     /// Writes schedule rows for the rotation up to a date.
     ///
@@ -3568,6 +3588,28 @@ public enum Components {
                 case visibility
                 case contentType = "content_type"
                 case imageBase64 = "image_base64"
+            }
+        }
+        /// When the new rotation takes over.
+        ///
+        /// Optional, and today when it is left out. A date in the future is the point
+        /// of it: the rotation you are on keeps running right up to that day, so
+        /// switching is something you plan rather than something that happens to next
+        /// week the moment you tap.
+        ///
+        /// - Remark: Generated from `#/components/schemas/CycleActivateRequest`.
+        public struct CycleActivateRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CycleActivateRequest/start_on`.
+            public var startOn: Swift.String?
+            /// Creates a new `CycleActivateRequest`.
+            ///
+            /// - Parameters:
+            ///   - startOn:
+            public init(startOn: Swift.String? = nil) {
+                self.startOn = startOn
+            }
+            public enum CodingKeys: String, CodingKey {
+                case startOn = "start_on"
             }
         }
         /// How far forward to write schedule rows.
@@ -6208,6 +6250,8 @@ public enum Components {
             public var length: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/PatchedWorkoutCycleRequest/anchor_date`.
             public var anchorDate: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedWorkoutCycleRequest/stop_conflicting_repeats`.
+            public var stopConflictingRepeats: Swift.Bool?
             /// - Remark: Generated from `#/components/schemas/PatchedWorkoutCycleRequest/slots`.
             public var slots: [Components.Schemas.WorkoutCycleSlotRequest]?
             /// Creates a new `PatchedWorkoutCycleRequest`.
@@ -6216,22 +6260,26 @@ public enum Components {
             ///   - name:
             ///   - length:
             ///   - anchorDate:
+            ///   - stopConflictingRepeats:
             ///   - slots:
             public init(
                 name: Swift.String? = nil,
                 length: Swift.Int? = nil,
                 anchorDate: Swift.String? = nil,
+                stopConflictingRepeats: Swift.Bool? = nil,
                 slots: [Components.Schemas.WorkoutCycleSlotRequest]? = nil
             ) {
                 self.name = name
                 self.length = length
                 self.anchorDate = anchorDate
+                self.stopConflictingRepeats = stopConflictingRepeats
                 self.slots = slots
             }
             public enum CodingKeys: String, CodingKey {
                 case name
                 case length
                 case anchorDate = "anchor_date"
+                case stopConflictingRepeats = "stop_conflicting_repeats"
                 case slots
             }
         }
@@ -9677,6 +9725,8 @@ public enum Components {
             public var length: Swift.Int
             /// - Remark: Generated from `#/components/schemas/WorkoutCycleRequest/anchor_date`.
             public var anchorDate: Swift.String
+            /// - Remark: Generated from `#/components/schemas/WorkoutCycleRequest/stop_conflicting_repeats`.
+            public var stopConflictingRepeats: Swift.Bool?
             /// - Remark: Generated from `#/components/schemas/WorkoutCycleRequest/slots`.
             public var slots: [Components.Schemas.WorkoutCycleSlotRequest]
             /// Creates a new `WorkoutCycleRequest`.
@@ -9685,22 +9735,26 @@ public enum Components {
             ///   - name:
             ///   - length:
             ///   - anchorDate:
+            ///   - stopConflictingRepeats:
             ///   - slots:
             public init(
                 name: Swift.String? = nil,
                 length: Swift.Int,
                 anchorDate: Swift.String,
+                stopConflictingRepeats: Swift.Bool? = nil,
                 slots: [Components.Schemas.WorkoutCycleSlotRequest]
             ) {
                 self.name = name
                 self.length = length
                 self.anchorDate = anchorDate
+                self.stopConflictingRepeats = stopConflictingRepeats
                 self.slots = slots
             }
             public enum CodingKeys: String, CodingKey {
                 case name
                 case length
                 case anchorDate = "anchor_date"
+                case stopConflictingRepeats = "stop_conflicting_repeats"
                 case slots
             }
         }
@@ -11876,6 +11930,10 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/api/v1/cycles/GET/query`.
             public struct Query: Sendable, Hashable {
+                /// Include rotations that have been closed. Off by default, because most screens want the one you are on -- but a list you choose from needs the ones you are not.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/cycles/GET/query/include_ended`.
+                public var includeEnded: Swift.Bool?
                 /// A page number within the paginated result set.
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/cycles/GET/query/page`.
@@ -11883,8 +11941,13 @@ public enum Operations {
                 /// Creates a new `Query`.
                 ///
                 /// - Parameters:
+                ///   - includeEnded: Include rotations that have been closed. Off by default, because most screens want the one you are on -- but a list you choose from needs the ones you are not.
                 ///   - page: A page number within the paginated result set.
-                public init(page: Swift.Int? = nil) {
+                public init(
+                    includeEnded: Swift.Bool? = nil,
+                    page: Swift.Int? = nil
+                ) {
+                    self.includeEnded = includeEnded
                     self.page = page
                 }
             }
@@ -12596,6 +12659,145 @@ public enum Operations {
             ///
             /// A response with a code that is not documented in the OpenAPI document.
             case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// Make this the rotation you are on, from `start_on` -- today if it is left out. Whatever is running keeps its days right up to that date and is closed there; this one begins at day 1 on it, and the calendar is written forward from there.
+    ///
+    /// - Remark: HTTP `POST /api/v1/cycles/{id}/activate/`.
+    /// - Remark: Generated from `#/paths//api/v1/cycles/{id}/activate//post(cycles_activate_create)`.
+    public enum CyclesActivateCreate {
+        public static let id: Swift.String = "cycles_activate_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/activate/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this workout cycle.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/activate/POST/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this workout cycle.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.CyclesActivateCreate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/activate/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CyclesActivateCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CyclesActivateCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CyclesActivateCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/activate/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/activate/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.CycleActivateRequest)
+            }
+            public var body: Operations.CyclesActivateCreate.Input.Body?
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.CyclesActivateCreate.Input.Path,
+                headers: Operations.CyclesActivateCreate.Input.Headers = .init(),
+                body: Operations.CyclesActivateCreate.Input.Body? = nil
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/activate/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/cycles/{id}/activate/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.WorkoutCycle)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.WorkoutCycle {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CyclesActivateCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CyclesActivateCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/cycles/{id}/activate//post(cycles_activate_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CyclesActivateCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CyclesActivateCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
         }
     }
     /// Writes schedule rows for the rotation up to a date.

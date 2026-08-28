@@ -33,6 +33,9 @@ struct CycleEditorView: View {
 
     @State private var draft = WorkoutCycleDraft()
     @State private var didLoad = false
+    /// The workouts in this rotation that already come back every week, held
+    /// while the question about them is on screen.
+    @State private var clashingRepeats: [String] = []
 
     var body: some View {
         List {
@@ -119,6 +122,17 @@ struct CycleEditorView: View {
             }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {
+                    // Asked before saving rather than after being refused. The
+                    // app knows which workouts already repeat weekly, so there
+                    // is no reason to send a rotation that cannot be stored and
+                    // then explain the error.
+                    let clashing = workoutStore.weeklyRepeatNames(
+                        among: Set(draft.slots.compactMap(\.workoutID))
+                    )
+                    if !clashing.isEmpty {
+                        clashingRepeats = clashing
+                        return
+                    }
                     Task {
                         await save()
                         // Only when it worked. Dismissing either way is how a
@@ -144,6 +158,38 @@ struct CycleEditorView: View {
             }
         }
         .homeTimeScreen(timeOfDay)
+        // A rotation and a weekly repeat both write the same days, so one of
+        // them has to go. Offering to stop the repeat is the answer somebody
+        // wanted anyway -- they have just put the workout in a rotation.
+        .confirmationDialog(
+            clashingRepeats.count == 1
+                ? "\(clashingRepeats[0]) already repeats weekly"
+                : "Some of these already repeat weekly",
+            isPresented: Binding(
+                get: { !clashingRepeats.isEmpty },
+                set: { if !$0 { clashingRepeats = [] } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("Stop the weekly repeat and save") {
+                clashingRepeats = []
+                Task {
+                    await save(stoppingWeeklyRepeats: true)
+                    guard store.persistenceError == nil else { return }
+                    // The repeat is gone on the server, so the week the
+                    // workout screens are holding is now wrong about it.
+                    workoutStore.retryPersistence()
+                    dismiss()
+                }
+            }
+            Button("Cancel", role: .cancel) { clashingRepeats = [] }
+        } message: {
+            Text(
+                clashingRepeats.count == 1
+                    ? "A workout cannot be on a weekly repeat and in a rotation at once. The rotation will take over from here; weeks already planned stay as they are."
+                    : "\(clashingRepeats.joined(separator: ", ")) cannot be on a weekly repeat and in a rotation at once. The rotation will take over from here; weeks already planned stay as they are."
+            )
+        }
     }
 
     private var isEditing: Bool {
@@ -249,17 +295,17 @@ struct CycleEditorView: View {
         draft.slots[index].workoutName = nil
     }
 
-    private func save() async {
+    private func save(stoppingWeeklyRepeats: Bool = false) async {
         switch mode {
         case .create:
-            await store.create(draft)
+            await store.create(draft, stoppingWeeklyRepeats: stoppingWeeklyRepeats)
         case .edit(let cycle):
             var updated = cycle
             updated.name = draft.name
             updated.length = draft.length
             updated.anchorDate = draft.anchorDate
             updated.slots = draft.slots
-            await store.update(updated)
+            await store.update(updated, stoppingWeeklyRepeats: stoppingWeeklyRepeats)
         }
     }
 }

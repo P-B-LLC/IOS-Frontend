@@ -54,8 +54,46 @@ nonisolated struct WorkoutCycle: Identifiable, Hashable, Sendable {
 
     var isActive: Bool { endedOn == nil }
 
+    /// What to call it in a list. The name is optional on the server, and a
+    /// blank row in a list of rotations tells nobody which one it is, so an
+    /// unnamed rotation is described by its length instead.
+    var displayName: String {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? "\(length)-day rotation" : trimmed
+    }
+
     /// "Day 3 of 8", the thing an eight-day split makes hard to keep track of.
     var positionText: String { "Day \(currentPosition) of \(length)" }
+
+    /// Which day of the rotation a date falls on, counting from one, or nil
+    /// when the rotation was not running then.
+    ///
+    /// Worked out here, unlike "what day is it today", which is deliberately
+    /// left to the server. The difference is what the answer depends on: the
+    /// anchor and the length both came from the server, and the position of an
+    /// explicit date follows from them alone. It is only *today* that depends
+    /// on this device's clock, which is the disagreement `currentPosition`
+    /// exists to avoid.
+    func position(on date: Date) -> Int? {
+        let calendar = Calendar.current
+        let start = calendar.startOfDay(for: anchorDate)
+        let day = calendar.startOfDay(for: date)
+        guard day >= start else { return nil }
+        if let endedOn, day >= calendar.startOfDay(for: endedOn) { return nil }
+        guard length > 0,
+              let elapsed = calendar.dateComponents(
+                  [.day], from: start, to: day
+              ).day else { return nil }
+        return (elapsed % length) + 1
+    }
+
+    /// What the rotation puts on a date, or nil when it is a rest day or the
+    /// rotation was not running.
+    func slot(on date: Date) -> WorkoutCycleSlot? {
+        guard let position = position(on: date) else { return nil }
+        let slot = orderedSlots.first { $0.position == position }
+        return slot?.isRest == false ? slot : nil
+    }
 
     /// The slots in order, filling any the server has no row for. A rotation
     /// with a gap in its positions is still a rotation of `length` days.

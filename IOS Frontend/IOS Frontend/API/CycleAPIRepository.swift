@@ -29,12 +29,19 @@ actor CycleAPIRepository {
 
     /// Rotations in force. Closed ones are left out: they exist so the past
     /// still resolves, not so they can be listed.
+    /// Every rotation, closed ones included.
+    ///
+    /// Closed ones are asked for because a rotation you are not on is exactly
+    /// what a list you choose from is made of. `isActive` still says which one
+    /// is running.
     func cycles() async throws -> [WorkoutCycle] {
         var page: Int?
         var visited: Set<Int> = []
         var values: [WorkoutCycle] = []
         repeat {
-            let output = try await client.cyclesList(query: .init(page: page))
+            let output = try await client.cyclesList(
+                query: .init(includeEnded: true, page: page)
+            )
             let response: Components.Schemas.PaginatedWorkoutCycleList
             switch output {
             case .ok(let success):
@@ -51,13 +58,23 @@ actor CycleAPIRepository {
     // MARK: - Writing
 
     @discardableResult
-    func create(_ draft: WorkoutCycleDraft) async throws -> WorkoutCycle {
+    /// Creates a rotation, which also makes it the one you are on.
+    ///
+    /// `stoppingWeeklyRepeats` says the user has been asked about the workouts
+    /// that already repeat weekly and agreed to stop them. The server closes
+    /// them inside the same transaction, so a rotation that fails to save has
+    /// not ended anybody's repeat on the way past.
+    func create(
+        _ draft: WorkoutCycleDraft,
+        stoppingWeeklyRepeats: Bool = false
+    ) async throws -> WorkoutCycle {
         let output = try await client.cyclesCreate(
             body: .json(
                 Components.Schemas.WorkoutCycleRequest(
                     name: draft.name,
                     length: draft.length,
                     anchorDate: Self.dayString(draft.anchorDate),
+                    stopConflictingRepeats: stoppingWeeklyRepeats,
                     slots: draft.slots.map(Self.slotPayload)
                 )
             )
@@ -74,7 +91,10 @@ actor CycleAPIRepository {
     }
 
     @discardableResult
-    func update(_ cycle: WorkoutCycle) async throws -> WorkoutCycle {
+    func update(
+        _ cycle: WorkoutCycle,
+        stoppingWeeklyRepeats: Bool = false
+    ) async throws -> WorkoutCycle {
         let output = try await client.cyclesPartialUpdate(
             path: .init(id: cycle.id),
             body: .json(
@@ -82,7 +102,35 @@ actor CycleAPIRepository {
                     name: cycle.name,
                     length: cycle.length,
                     anchorDate: Self.dayString(cycle.anchorDate),
+                    stopConflictingRepeats: stoppingWeeklyRepeats,
                     slots: cycle.orderedSlots.map(Self.slotPayload)
+                )
+            )
+        )
+        switch output {
+        case .ok(let response):
+            guard let updated = Self.cycle(from: try response.body.json) else {
+                throw APIServiceError.malformedResponse
+            }
+            return updated
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// Makes this the rotation you are on, from `startOn`.
+    ///
+    /// The rotation currently running keeps its days right up to that date, so
+    /// switching next month leaves the weeks in between planned. Nil means
+    /// today, which the server decides rather than the app, so a phone whose
+    /// clock disagrees cannot start a rotation yesterday.
+    @discardableResult
+    func activate(_ cycle: WorkoutCycle, startOn: Date?) async throws -> WorkoutCycle {
+        let output = try await client.cyclesActivateCreate(
+            path: .init(id: cycle.id),
+            body: .json(
+                Components.Schemas.CycleActivateRequest(
+                    startOn: startOn.map(Self.dayString)
                 )
             )
         )

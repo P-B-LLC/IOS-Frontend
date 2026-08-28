@@ -28,6 +28,10 @@ struct IOS_FrontendApp: App {
         .environment["REPBASE_CYCLE_PREVIEW"] == "empty"
         ? CycleStore.previewEmpty
         : (ProcessInfo.processInfo.environment["REPBASE_CYCLE_PREVIEW"] != nil
+            // The planner draws the rotation it is on, so previewing the
+            // planner needs one -- the same reason the home preview seeds the
+            // workout store.
+            || ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"] != nil
             ? CycleStore.preview
             : CycleStore())
 #else
