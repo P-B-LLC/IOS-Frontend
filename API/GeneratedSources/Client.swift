@@ -6270,7 +6270,7 @@ public struct Client: APIProtocol {
             }
         )
     }
-    /// Remove every planned workout from today onward. Days already trained are untouched. Refused while a rotation is running, because a rotation owns the calendar it fills.
+    /// Remove every planned workout, past days included. Workouts already logged are untouched -- training is recorded separately from the plan. Refused while a rotation is running, because a rotation owns the calendar it fills.
     ///
     /// - Remark: HTTP `POST /api/v1/schedules/clear/`.
     /// - Remark: Generated from `#/paths//api/v1/schedules/clear//post(schedules_clear_create)`.

@@ -566,7 +566,7 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/schedules/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/schedules/{id}//delete(schedules_destroy)`.
     func schedulesDestroy(_ input: Operations.SchedulesDestroy.Input) async throws -> Operations.SchedulesDestroy.Output
-    /// Remove every planned workout from today onward. Days already trained are untouched. Refused while a rotation is running, because a rotation owns the calendar it fills.
+    /// Remove every planned workout, past days included. Workouts already logged are untouched -- training is recorded separately from the plan. Refused while a rotation is running, because a rotation owns the calendar it fills.
     ///
     /// - Remark: HTTP `POST /api/v1/schedules/clear/`.
     /// - Remark: Generated from `#/paths//api/v1/schedules/clear//post(schedules_clear_create)`.
@@ -2221,7 +2221,7 @@ extension APIProtocol {
     public func schedulesDestroy(path: Operations.SchedulesDestroy.Input.Path) async throws -> Operations.SchedulesDestroy.Output {
         try await schedulesDestroy(Operations.SchedulesDestroy.Input(path: path))
     }
-    /// Remove every planned workout from today onward. Days already trained are untouched. Refused while a rotation is running, because a rotation owns the calendar it fills.
+    /// Remove every planned workout, past days included. Workouts already logged are untouched -- training is recorded separately from the plan. Refused while a rotation is running, because a rotation owns the calendar it fills.
     ///
     /// - Remark: HTTP `POST /api/v1/schedules/clear/`.
     /// - Remark: Generated from `#/paths//api/v1/schedules/clear//post(schedules_clear_create)`.
@@ -3504,23 +3504,15 @@ public enum Components {
         public struct ClearScheduleResult: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/ClearScheduleResult/cleared`.
             public var cleared: Swift.Int
-            /// - Remark: Generated from `#/components/schemas/ClearScheduleResult/from_date`.
-            public var fromDate: Swift.String
             /// Creates a new `ClearScheduleResult`.
             ///
             /// - Parameters:
             ///   - cleared:
-            ///   - fromDate:
-            public init(
-                cleared: Swift.Int,
-                fromDate: Swift.String
-            ) {
+            public init(cleared: Swift.Int) {
                 self.cleared = cleared
-                self.fromDate = fromDate
             }
             public enum CodingKeys: String, CodingKey {
                 case cleared
-                case fromDate = "from_date"
             }
         }
         /// * `image/heic` - image/heic
@@ -22322,7 +22314,7 @@ public enum Operations {
             case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
         }
     }
-    /// Remove every planned workout from today onward. Days already trained are untouched. Refused while a rotation is running, because a rotation owns the calendar it fills.
+    /// Remove every planned workout, past days included. Workouts already logged are untouched -- training is recorded separately from the plan. Refused while a rotation is running, because a rotation owns the calendar it fills.
     ///
     /// - Remark: HTTP `POST /api/v1/schedules/clear/`.
     /// - Remark: Generated from `#/paths//api/v1/schedules/clear//post(schedules_clear_create)`.

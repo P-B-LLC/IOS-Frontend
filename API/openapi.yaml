@@ -2697,9 +2697,9 @@ paths:
   /api/v1/schedules/clear/:
     post:
       operationId: schedules_clear_create
-      description: Remove every planned workout from today onward. Days already trained
-        are untouched. Refused while a rotation is running, because a rotation owns
-        the calendar it fills.
+      description: Remove every planned workout, past days included. Workouts already
+        logged are untouched -- training is recorded separately from the plan. Refused
+        while a rotation is running, because a rotation owns the calendar it fills.
       tags:
       - schedules
       security:
@@ -4956,13 +4956,8 @@ components:
         cleared:
           type: integer
           readOnly: true
-        from_date:
-          type: string
-          format: date
-          readOnly: true
       required:
       - cleared
-      - from_date
     ContentTypeEnum:
       enum:
       - image/heic

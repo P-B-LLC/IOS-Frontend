@@ -98,7 +98,7 @@ struct TrainingDashboardContent: View {
         .padding(16)
         .dashboardSurface(radius: 22)
         // Asked about, unlike the per-day controls: this empties the whole
-        // week at once and there is nothing to undo it with.
+        // calendar at once and there is nothing to undo it with.
         .confirmationDialog(
             "Clear every planned workout?",
             isPresented: $isConfirmingClear,
@@ -109,7 +109,7 @@ struct TrainingDashboardContent: View {
             }
             Button("Keep it", role: .cancel) {}
         } message: {
-            Text("Every workout planned from today onward is removed, so you can start again. Workouts you have already done stay in your history.")
+            Text("Every workout you have planned is removed, past days included, so you can start again. Workouts you have already done stay in your history.")
         }
     }
 

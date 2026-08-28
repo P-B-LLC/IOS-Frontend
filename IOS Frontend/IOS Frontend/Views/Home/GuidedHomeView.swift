@@ -495,7 +495,7 @@ private struct GuidedDayFlow: View {
             }
             Button("Keep it", role: .cancel) {}
         } message: {
-            Text("Every workout planned from today onward is removed, so you can plan again from scratch. Workouts you have already done stay in your history.")
+            Text("Every workout you have planned is removed, past days included, so you can plan again from scratch. Workouts you have already done stay in your history.")
         }
     }
 
