@@ -6270,6 +6270,66 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// Remove every planned workout from today onward. Days already trained are untouched. Refused while a rotation is running, because a rotation owns the calendar it fills.
+    ///
+    /// - Remark: HTTP `POST /api/v1/schedules/clear/`.
+    /// - Remark: Generated from `#/paths//api/v1/schedules/clear//post(schedules_clear_create)`.
+    public func schedulesClearCreate(_ input: Operations.SchedulesClearCreate.Input) async throws -> Operations.SchedulesClearCreate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SchedulesClearCreate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/schedules/clear/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .post
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SchedulesClearCreate.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.ClearScheduleResult.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
     /// Fill a week in from the user's weekly repeats and return everything scheduled in it. Safe to call on every load: it only adds days a repeat still owes, and it refuses to plan a week that has already finished, since a past week records what was trained.
     ///
     /// - Remark: HTTP `POST /api/v1/schedules/plan-week/`.

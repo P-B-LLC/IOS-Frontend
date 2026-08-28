@@ -566,6 +566,11 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/schedules/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/schedules/{id}//delete(schedules_destroy)`.
     func schedulesDestroy(_ input: Operations.SchedulesDestroy.Input) async throws -> Operations.SchedulesDestroy.Output
+    /// Remove every planned workout from today onward. Days already trained are untouched. Refused while a rotation is running, because a rotation owns the calendar it fills.
+    ///
+    /// - Remark: HTTP `POST /api/v1/schedules/clear/`.
+    /// - Remark: Generated from `#/paths//api/v1/schedules/clear//post(schedules_clear_create)`.
+    func schedulesClearCreate(_ input: Operations.SchedulesClearCreate.Input) async throws -> Operations.SchedulesClearCreate.Output
     /// Fill a week in from the user's weekly repeats and return everything scheduled in it. Safe to call on every load: it only adds days a repeat still owes, and it refuses to plan a week that has already finished, since a past week records what was trained.
     ///
     /// - Remark: HTTP `POST /api/v1/schedules/plan-week/`.
@@ -2216,6 +2221,13 @@ extension APIProtocol {
     public func schedulesDestroy(path: Operations.SchedulesDestroy.Input.Path) async throws -> Operations.SchedulesDestroy.Output {
         try await schedulesDestroy(Operations.SchedulesDestroy.Input(path: path))
     }
+    /// Remove every planned workout from today onward. Days already trained are untouched. Refused while a rotation is running, because a rotation owns the calendar it fills.
+    ///
+    /// - Remark: HTTP `POST /api/v1/schedules/clear/`.
+    /// - Remark: Generated from `#/paths//api/v1/schedules/clear//post(schedules_clear_create)`.
+    public func schedulesClearCreate(headers: Operations.SchedulesClearCreate.Input.Headers = .init()) async throws -> Operations.SchedulesClearCreate.Output {
+        try await schedulesClearCreate(Operations.SchedulesClearCreate.Input(headers: headers))
+    }
     /// Fill a week in from the user's weekly repeats and return everything scheduled in it. Safe to call on every load: it only adds days a repeat still owes, and it refuses to plan a week that has already finished, since a past week records what was trained.
     ///
     /// - Remark: HTTP `POST /api/v1/schedules/plan-week/`.
@@ -3485,6 +3497,31 @@ public enum Components {
             case travel = "travel"
             case social = "social"
             case other = "other"
+        }
+        /// How many planned days were cleared.
+        ///
+        /// - Remark: Generated from `#/components/schemas/ClearScheduleResult`.
+        public struct ClearScheduleResult: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ClearScheduleResult/cleared`.
+            public var cleared: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/ClearScheduleResult/from_date`.
+            public var fromDate: Swift.String
+            /// Creates a new `ClearScheduleResult`.
+            ///
+            /// - Parameters:
+            ///   - cleared:
+            ///   - fromDate:
+            public init(
+                cleared: Swift.Int,
+                fromDate: Swift.String
+            ) {
+                self.cleared = cleared
+                self.fromDate = fromDate
+            }
+            public enum CodingKeys: String, CodingKey {
+                case cleared
+                case fromDate = "from_date"
+            }
         }
         /// * `image/heic` - image/heic
         /// * `image/jpeg` - image/jpeg
@@ -22283,6 +22320,116 @@ public enum Operations {
             ///
             /// A response with a code that is not documented in the OpenAPI document.
             case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// Remove every planned workout from today onward. Days already trained are untouched. Refused while a rotation is running, because a rotation owns the calendar it fills.
+    ///
+    /// - Remark: HTTP `POST /api/v1/schedules/clear/`.
+    /// - Remark: Generated from `#/paths//api/v1/schedules/clear//post(schedules_clear_create)`.
+    public enum SchedulesClearCreate {
+        public static let id: Swift.String = "schedules_clear_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/schedules/clear/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SchedulesClearCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SchedulesClearCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SchedulesClearCreate.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            public init(headers: Operations.SchedulesClearCreate.Input.Headers = .init()) {
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/schedules/clear/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/schedules/clear/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.ClearScheduleResult)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.ClearScheduleResult {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SchedulesClearCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SchedulesClearCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/schedules/clear//post(schedules_clear_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SchedulesClearCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SchedulesClearCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
         }
     }
     /// Fill a week in from the user's weekly repeats and return everything scheduled in it. Safe to call on every load: it only adds days a repeat still owes, and it refuses to plan a week that has already finished, since a past week records what was trained.

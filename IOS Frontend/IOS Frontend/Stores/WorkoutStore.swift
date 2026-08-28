@@ -939,6 +939,37 @@ final class WorkoutStore {
 
     /// Reconnects and reloads. Callable whenever a repository exists, so a
     /// failed load can always be retried.
+    /// Empties the schedule from today and reads the week back.
+    ///
+    /// Reloaded rather than emptied in place: the server decides what "from
+    /// today" means in the user's own zone, and guessing here is how a day
+    /// disappears on screen that is still booked on the server.
+    func clearSchedule() async {
+        guard let repository, !isSaving else { return }
+        let generation = connectionGeneration
+        isSaving = true
+        defer { if connectionGeneration == generation { isSaving = false } }
+
+        do {
+            try await repository.clearSchedule()
+            guard connectionGeneration == generation else { return }
+            await reloadWeek(
+                using: repository,
+                generation: generation,
+                showsLoadingState: false
+            )
+        } catch {
+            guard connectionGeneration == generation else { return }
+            persistenceError = error.userFacingMessage
+        }
+    }
+
+    /// Whether there is anything planned to clear. Offering the button over an
+    /// empty calendar would be offering to do nothing.
+    var hasAnythingScheduled: Bool {
+        schedule.values.contains { !$0.isEmpty }
+    }
+
     func retryPersistence() {
         guard let repository, !isSaving else { return }
         let generation = connectionGeneration

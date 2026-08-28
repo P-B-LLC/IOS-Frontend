@@ -230,6 +230,22 @@ actor WorkoutAPIRepository {
         try await scheduleWorkout(templateID: templateID, scheduledDate: date)
     }
 
+    /// Empties the schedule from today, so somebody can plan again.
+    ///
+    /// Returns how many days were cleared. Refused by the server while a
+    /// rotation is running, since a rotation would write the days straight
+    /// back -- the app only offers this when there is not one.
+    @discardableResult
+    func clearSchedule() async throws -> Int {
+        let output = try await client.schedulesClearCreate()
+        switch output {
+        case .ok(let response):
+            return try response.body.json.cleared
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
     func removeSchedule(_ workout: Workout) async throws {
         guard let scheduleID = workout.scheduleID else {
             throw APIServiceError.missingServerIdentifier("Workout schedule")

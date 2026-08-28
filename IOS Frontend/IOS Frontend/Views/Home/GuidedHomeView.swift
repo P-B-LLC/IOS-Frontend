@@ -264,7 +264,10 @@ private struct GuidedDayFlow: View {
     @Environment(WorkoutStore.self) private var workouts
     @Environment(PlannerStore.self) private var planner
     @Environment(FoodTrackingStore.self) private var food
+    @Environment(CycleStore.self) private var cycles
     @Environment(\.homeTimeOfDay) private var timeOfDay
+
+    @State private var isConfirmingClear = false
 
     let selectedDate: Date
     let today: Date
@@ -456,6 +459,23 @@ private struct GuidedDayFlow: View {
                 .font(.community(.caption))
                 .foregroundStyle(timeOfDay.secondaryText)
                 .lineLimit(1)
+
+            // Only without a rotation. With one running the rotation is what
+            // fills the calendar, so clearing would delete days it writes
+            // straight back -- the server refuses it for that reason, and a
+            // button that cannot work is worse than no button.
+            if cycles.activeCycle == nil, workouts.hasAnythingScheduled {
+                Button {
+                    isConfirmingClear = true
+                } label: {
+                    Label("Clear my schedule", systemImage: "calendar.badge.minus")
+                        .font(.community(.caption, weight: .semibold))
+                        .foregroundStyle(timeOfDay.secondaryText)
+                }
+                .buttonStyle(.plain)
+                .disabled(workouts.isSaving)
+                .padding(.top, 3)
+            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 13)
@@ -463,6 +483,20 @@ private struct GuidedDayFlow: View {
             trainingSurface,
             in: RoundedRectangle(cornerRadius: 18, style: .continuous)
         )
+        // Asked about, unlike the destructive controls here that act on a tap:
+        // this empties weeks of planning at once and cannot be undone.
+        .confirmationDialog(
+            "Clear everything you have planned?",
+            isPresented: $isConfirmingClear,
+            titleVisibility: .visible
+        ) {
+            Button("Clear my schedule", role: .destructive) {
+                Task { await workouts.clearSchedule() }
+            }
+            Button("Keep it", role: .cancel) {}
+        } message: {
+            Text("Every workout planned from today onward is removed, so you can plan again from scratch. Workouts you have already done stay in your history.")
+        }
     }
 
     private func fuelSection(number: Int) -> some View {

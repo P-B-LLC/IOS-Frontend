@@ -2694,6 +2694,24 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/schedules/clear/:
+    post:
+      operationId: schedules_clear_create
+      description: Remove every planned workout from today onward. Days already trained
+        are untouched. Refused while a rotation is running, because a rotation owns
+        the calendar it fills.
+      tags:
+      - schedules
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClearScheduleResult'
+          description: ''
   /api/v1/schedules/plan-week/:
     post:
       operationId: schedules_plan_week_create
@@ -4931,6 +4949,20 @@ components:
         * `travel` - Travel
         * `social` - Social
         * `other` - Other
+    ClearScheduleResult:
+      type: object
+      description: How many planned days were cleared.
+      properties:
+        cleared:
+          type: integer
+          readOnly: true
+        from_date:
+          type: string
+          format: date
+          readOnly: true
+      required:
+      - cleared
+      - from_date
     ContentTypeEnum:
       enum:
       - image/heic
