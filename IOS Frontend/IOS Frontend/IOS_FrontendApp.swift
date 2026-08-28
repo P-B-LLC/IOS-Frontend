@@ -524,6 +524,12 @@ private struct AppRootView: View {
                 configuration: authentication.configuration,
                 token: token
             )
+            // Starting or switching a rotation plans days on the server. The
+            // week on screen belongs to the workout store, so it has to be
+            // told to read them, or the rotation looks like it did nothing.
+            cycleStore.onCalendarChanged = { [workoutStore] in
+                await workoutStore.reloadSchedule()
+            }
             await cycleStore.connect(
                 configuration: authentication.configuration,
                 token: token

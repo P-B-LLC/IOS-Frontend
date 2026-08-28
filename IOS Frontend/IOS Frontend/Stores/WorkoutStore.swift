@@ -970,6 +970,21 @@ final class WorkoutStore {
         schedule.values.contains { !$0.isEmpty }
     }
 
+    /// Reads the visible week back from the server.
+    ///
+    /// For changes made somewhere other than this store. A rotation plans days
+    /// by writing them on the server, and until they are read back the week on
+    /// screen is the one from before it was started -- which reads as the
+    /// rotation having quietly done nothing.
+    func reloadSchedule() async {
+        guard let repository else { return }
+        await reloadWeek(
+            using: repository,
+            generation: connectionGeneration,
+            showsLoadingState: false
+        )
+    }
+
     func retryPersistence() {
         guard let repository, !isSaving else { return }
         let generation = connectionGeneration

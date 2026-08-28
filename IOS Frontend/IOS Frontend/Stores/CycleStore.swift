@@ -25,6 +25,14 @@ final class CycleStore {
     /// What the last shift did, for a message the user can read and dismiss.
     var lastShift: CycleShiftOutcome?
 
+    /// Called after a rotation has rewritten the calendar on the server.
+    ///
+    /// The days a rotation plans are workout schedule rows, which this store
+    /// neither holds nor knows how to read. Rather than reach into another
+    /// store, it says that the calendar moved and lets whoever owns the week
+    /// go and read it -- which is what the app wires this to.
+    var onCalendarChanged: (@MainActor () async -> Void)?
+
     init() {}
 
     var isConnected: Bool { repository != nil }
@@ -180,6 +188,7 @@ final class CycleStore {
             guard connectionGeneration == generation else { return }
             lastShift = outcome
             await reload(generation: generation, showsLoadingState: false)
+            await onCalendarChanged?()
         } catch {
             guard connectionGeneration == generation else { return }
             persistenceError = error.userFacingMessage
@@ -212,6 +221,7 @@ final class CycleStore {
             // A shift replaces the rotation rather than editing it, so the new
             // one has to be read back rather than patched in place.
             await reload(generation: generation, showsLoadingState: false)
+            await onCalendarChanged?()
         } catch {
             guard connectionGeneration == generation else { return }
             persistenceError = error.userFacingMessage
