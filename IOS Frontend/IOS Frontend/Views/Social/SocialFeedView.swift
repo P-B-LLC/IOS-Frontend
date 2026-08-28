@@ -210,11 +210,12 @@ struct SocialFeedView: View {
             Button {
                 isComposing = true
             } label: {
-                Image(systemName: "plus")
-                    .font(.community(size: 17, weight: .semibold))
+                Label("Post", systemImage: "plus")
+                    .font(.community(size: 13, weight: .semibold))
                     .foregroundStyle(RepbaseDesign.onInk)
-                    .frame(width: 36, height: 36)
-                    .background(RepbaseDesign.ink, in: Circle())
+                    .padding(.horizontal, 12)
+                    .frame(height: 36)
+                    .background(RepbaseDesign.ink, in: Capsule())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Create post")

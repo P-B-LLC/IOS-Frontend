@@ -393,12 +393,12 @@ struct SocialProfileView: View {
 
             ShareLink(item: "Meet \(profile.displayName) (@\(profile.username)) on Repbase.") {
                 Text("Share")
-                    .font(.community(.subheadline, weight: .bold))
+                    .font(.community(.footnote, weight: .bold))
                     .foregroundStyle(timeOfDay.accent)
-                    .frame(minWidth: 84, minHeight: 44)
-                    .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 14))
+                    .frame(minWidth: 68, minHeight: 36)
+                    .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 11))
                     .overlay {
-                        RoundedRectangle(cornerRadius: 14)
+                        RoundedRectangle(cornerRadius: 11)
                             .strokeBorder(timeOfDay.border, lineWidth: 1)
                     }
             }
@@ -412,14 +412,14 @@ struct SocialProfileView: View {
     ) -> some View {
         HStack(spacing: 8) {
             Text(title)
-                .font(.community(.subheadline, weight: .bold))
+                .font(.community(.footnote, weight: .bold))
             Text("→")
-                .font(.community(.body, weight: .bold))
+                .font(.community(.subheadline, weight: .bold))
         }
         .foregroundStyle(timeOfDay.onPrimaryAction)
-        .frame(maxWidth: .infinity, minHeight: 44)
-        .background(timeOfDay.primaryActionSurface, in: RoundedRectangle(cornerRadius: 14))
-        .contentShape(RoundedRectangle(cornerRadius: 14))
+        .frame(minWidth: 132, minHeight: 36)
+        .background(timeOfDay.primaryActionSurface, in: RoundedRectangle(cornerRadius: 11))
+        .contentShape(RoundedRectangle(cornerRadius: 11))
     }
 
     private func profileStat(_ value: String, label: String) -> some View {
