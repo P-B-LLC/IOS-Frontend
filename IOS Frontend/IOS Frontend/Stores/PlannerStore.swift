@@ -49,6 +49,24 @@ final class PlannerStore {
     /// its own day; it just stops being nagged about.
     static let pastDueHorizonDays = 30
 
+    /// How far back a missed *workout* keeps asking, as against a task
+    /// somebody wrote for themselves.
+    ///
+    /// A missed workout is not a debt. "Study" left undone on Tuesday is
+    /// still worth doing on Friday; Tuesday's push day is not, because the
+    /// rotation has moved on and already put another one in front of you.
+    /// Holding both for thirty days meant a rotation running five days a
+    /// week could stack twenty dead sessions above the one task somebody
+    /// actually meant to keep, and the list stopped being read at all.
+    ///
+    /// Three days is long enough to pick up a session skipped over a
+    /// weekend and short enough that the list stays worth looking at.
+    ///
+    /// Nothing is deleted. These stay in the database and on their own day,
+    /// where the calendar still shows them; they just stop being counted as
+    /// outstanding.
+    static let missedWorkoutGraceDays = 3
+
     var isConnected: Bool { repository != nil }
 
     /// Why editing is off, or nil when it is available. Shown rather than
@@ -396,9 +414,25 @@ final class PlannerStore {
             // High first, then oldest first. Something marked high has been
             // waiting *and* matters, and sorting by age alone filed it behind
             // whatever happened to be older.
-            pastDue = loadedOverdue.sorted {
-                ($0.priority.rank, $0.date) < ($1.priority.rank, $1.date)
-            }
+            // ISO-8601 day strings, so a lexical comparison is a date
+            // comparison and nothing has to be parsed back.
+            let oldestWorkoutStillAsking = calendar.date(
+                byAdding: .day,
+                value: -Self.missedWorkoutGraceDays,
+                to: today
+            ).map(Self.dateString)
+            pastDue = loadedOverdue
+                .filter { entry in
+                    // A hand-written task keeps the full horizon; only
+                    // workouts age out early.
+                    guard entry.category == .workout, entry.workoutID != nil,
+                          let cutoff = oldestWorkoutStillAsking
+                    else { return true }
+                    return entry.date >= cutoff
+                }
+                .sorted {
+                    ($0.priority.rank, $0.date) < ($1.priority.rank, $1.date)
+                }
             upcomingEvents = loadedAhead.sorted {
                 ($0.date, $0.time ?? "") < ($1.date, $1.time ?? "")
             }
