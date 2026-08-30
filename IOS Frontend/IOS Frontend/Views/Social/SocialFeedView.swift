@@ -801,6 +801,32 @@ struct PostCard: View {
                     .foregroundStyle(timeOfDay.accent)
             }
 
+            // What is in it, which is the part worth copying. The card gave
+            // a name and three macro totals, so deciding whether to save
+            // somebody's meal meant saving it first and reading it after.
+            if !meal.entries.isEmpty {
+                VStack(spacing: 4) {
+                    ForEach(meal.entries) { line in
+                        HStack(spacing: 8) {
+                            Text(line.name)
+                                .font(.community(size: 11, weight: .semibold))
+                                .foregroundStyle(timeOfDay.primaryText)
+                                .lineLimit(1)
+                            Text(servingsText(line.servings))
+                                .font(.community(size: 10))
+                                .foregroundStyle(timeOfDay.secondaryText)
+                                .layoutPriority(1)
+                            Spacer(minLength: 4)
+                            Text("\(line.totalCalories.nutritionText) kcal")
+                                .font(.community(size: 10, weight: .semibold))
+                                .foregroundStyle(timeOfDay.secondaryText)
+                                .layoutPriority(1)
+                        }
+                    }
+                }
+                .padding(.top, 2)
+            }
+
             HStack(spacing: 14) {
                 macro("\(meal.totalProteinGrams.nutritionText)g", "protein", RepbasePalette.caramel)
                 macro("\(meal.totalCarbohydrateGrams.nutritionText)g", "carbs", Color(hex: 0x3F8C92))
@@ -955,24 +981,12 @@ struct PostCard: View {
     /// your own is already in your workouts.
     @ViewBuilder
     private var saveWorkoutButton: some View {
-        let isSaving = store.isSavingWorkout(from: post.id)
-        Button {
-            Task { await store.saveWorkout(from: post) }
-        } label: {
-            HStack(spacing: 6) {
-                if isSaving {
-                    ProgressView().controlSize(.mini)
-                } else {
-                    Image(systemName: "square.and.arrow.down")
-                        .font(.community(size: 12, weight: .semibold))
-                }
-                Text("Save workout")
-                    .font(.community(.caption, weight: .semibold))
-            }
-            .foregroundStyle(timeOfDay.accent)
+        saveChip(
+            isSaving: store.isSavingWorkout(from: post.id),
+            tint: timeOfDay.accent
+        ) {
+            await store.saveWorkout(from: post)
         }
-        .buttonStyle(.plain)
-        .disabled(isSaving)
     }
 
     private func mealBody(_ meal: PostMealSnapshot) -> some View {
@@ -1055,24 +1069,55 @@ struct PostCard: View {
     /// same reason a workout is: you want to eat it again without typing it
     /// back in food by food.
     private var saveMealButton: some View {
-        let isSaving = store.isSavingMeal(from: post.id)
-        return Button {
-            Task { await store.saveMeal(from: post) }
+        saveChip(
+            isSaving: store.isSavingMeal(from: post.id),
+            tint: RepbaseDesign.success
+        ) {
+            await store.saveMeal(from: post)
+        }
+    }
+
+    /// "Save", as a chip rather than a line of text with a glyph in front.
+    ///
+    /// It sits inside a card that already says MEAL or WORKOUT, so the noun
+    /// was being read twice and the button was the longest thing on its row.
+    /// A filled capsule also gives it an edge to aim at: bare label text
+    /// hit-tests the glyphs, which is a smaller target than it looks.
+    ///
+    /// Tinted to the card it sits in, so the one green thing on a green card
+    /// is the only control on it.
+    private func saveChip(
+        isSaving: Bool,
+        tint: Color,
+        action: @escaping () async -> Void
+    ) -> some View {
+        Button {
+            Task { await action() }
         } label: {
-            HStack(spacing: 6) {
+            HStack(spacing: 5) {
                 if isSaving {
                     ProgressView().controlSize(.mini)
                 } else {
-                    Image(systemName: "square.and.arrow.down")
-                        .font(.community(size: 12, weight: .semibold))
+                    Image(systemName: "plus")
+                        .font(.community(size: 10, weight: .bold))
                 }
-                Text("Save meal")
-                    .font(.community(.caption, weight: .semibold))
+                Text(isSaving ? "Saving" : "Save")
+                    .font(.community(size: 11, weight: .bold))
             }
-            .foregroundStyle(timeOfDay.accent)
+            .foregroundStyle(tint)
+            .padding(.horizontal, 11)
+            .frame(height: 28)
+            .background(Capsule().fill(tint.opacity(0.15)))
+            .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .disabled(isSaving)
+    }
+
+    /// "1 serving", "2 servings" -- the amount, not just the food.
+    private func servingsText(_ value: Decimal) -> String {
+        let text = value.nutritionText
+        return text == "1" ? "1 serving" : "\(text) servings"
     }
 
     private func statistic(_ value: String, _ label: String) -> some View {

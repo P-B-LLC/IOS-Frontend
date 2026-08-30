@@ -9102,7 +9102,7 @@ public enum Components {
         /// - Remark: Generated from `#/components/schemas/SavedMealResult`.
         public struct SavedMealResult: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/SavedMealResult/meal`.
-            public var meal: Swift.String
+            public var meal: Swift.Int
             /// - Remark: Generated from `#/components/schemas/SavedMealResult/name`.
             public var name: Swift.String
             /// - Remark: Generated from `#/components/schemas/SavedMealResult/item_count`.
@@ -9117,7 +9117,7 @@ public enum Components {
             ///   - itemCount:
             ///   - renamed:
             public init(
-                meal: Swift.String,
+                meal: Swift.Int,
                 name: Swift.String,
                 itemCount: Swift.Int,
                 renamed: Swift.Bool
@@ -9143,7 +9143,7 @@ public enum Components {
         /// - Remark: Generated from `#/components/schemas/SavedWorkoutResult`.
         public struct SavedWorkoutResult: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/SavedWorkoutResult/workout`.
-            public var workout: Swift.String
+            public var workout: Swift.Int
             /// - Remark: Generated from `#/components/schemas/SavedWorkoutResult/name`.
             public var name: Swift.String
             /// - Remark: Generated from `#/components/schemas/SavedWorkoutResult/exercise_count`.
@@ -9158,7 +9158,7 @@ public enum Components {
             ///   - exerciseCount:
             ///   - renamed:
             public init(
-                workout: Swift.String,
+                workout: Swift.Int,
                 name: Swift.String,
                 exerciseCount: Swift.Int,
                 renamed: Swift.Bool
