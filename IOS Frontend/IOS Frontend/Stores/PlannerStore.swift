@@ -338,6 +338,19 @@ final class PlannerStore {
         }
 
         do {
+            // Give this month's scheduled workouts their planner tasks before
+            // reading it back.
+            //
+            // A rotation materialises months of schedule rows, but a row is
+            // not a task: the planner and the calendar read PlannerEntry, and
+            // the only sync ran over the current week. So a rotation set today
+            // showed nothing beyond Sunday -- the days existed, the tasks they
+            // imply did not, and the calendar looked like the rotation had not
+            // taken. Asking per month means it also holds when you page ahead.
+            //
+            // Not fatal: the server is the one that remembers having asked, so
+            // a failure here costs a month of tasks, not the month itself.
+            try? await repository.syncScheduledWorkouts(from: range.start, to: range.end)
             let loaded = try await repository.entries(from: range.start, to: range.end)
             guard connectionGeneration == generation else { return }
             entriesByDate = Dictionary(grouping: loaded, by: \.date)
