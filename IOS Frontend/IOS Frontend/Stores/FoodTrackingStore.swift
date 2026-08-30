@@ -241,7 +241,12 @@ final class FoodTrackingStore {
 
     // MARK: - Foods
 
-    func saveFood(_ food: FoodEntry, in mealID: FoodMeal.ID, on date: Date) {
+    func saveFood(
+        _ food: FoodEntry,
+        in mealID: FoodMeal.ID,
+        on date: Date,
+        celebrates: Bool = true
+    ) {
         guard let serverID = mealServerID(mealID, on: date) else { return }
         perform(on: date) { repository in
             let saved = try await repository.saveFood(food, inMeal: serverID)
@@ -254,6 +259,10 @@ final class FoodTrackingStore {
                 meals[index].entries[existing] = result.0
             } else {
                 meals[index].entries.append(result.0)
+            }
+        } onSuccess: {
+            if celebrates {
+                RepbaseCelebrations.show(.mealLogged)
             }
         }
         refreshRecentFoods()
@@ -382,6 +391,9 @@ final class FoodTrackingStore {
         // Read the day back rather than assuming what landed. Some slots may
         // have been written and some not, and the server knows which.
         openDay(key, using: repository)
+        if !outcome.applied.isEmpty {
+            RepbaseCelebrations.show(.mealLogged)
+        }
         return outcome
     }
 
@@ -416,6 +428,7 @@ final class FoodTrackingStore {
                     days[key] = meals
                 }
                 refreshRecentFoods()
+                RepbaseCelebrations.show(.mealLogged)
             } catch {
                 report(error, generation: generation)
             }
@@ -463,7 +476,8 @@ final class FoodTrackingStore {
     private func perform<Result>(
         on date: Date,
         _ send: @escaping (FoodAPIRepository) async throws -> Result,
-        merge: @escaping (inout [FoodMeal], Result) -> Void
+        merge: @escaping (inout [FoodMeal], Result) -> Void,
+        onSuccess: (() -> Void)? = nil
     ) {
         guard let repository else { return }
         let key = dateKey(for: date)
@@ -477,6 +491,7 @@ final class FoodTrackingStore {
                 var meals = days[key] ?? []
                 merge(&meals, result)
                 days[key] = meals
+                onSuccess?()
             } catch {
                 report(error, generation: generation)
             }

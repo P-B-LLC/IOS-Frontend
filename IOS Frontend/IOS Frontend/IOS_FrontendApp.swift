@@ -471,6 +471,7 @@ private struct AppRootView: View {
 #endif
         }
         .font(.community(.body))
+        .repbaseCelebrationOverlay()
         .task {
 #if DEBUG
             // A preview run must not touch the network or the stores; without

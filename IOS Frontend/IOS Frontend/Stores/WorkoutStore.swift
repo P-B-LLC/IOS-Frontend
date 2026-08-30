@@ -904,6 +904,7 @@ final class WorkoutStore {
                 liftProgress = progress
             }
 
+            await RepbaseCelebrations.show(.workoutLogged)
             return session.loggedSetCount
         } catch {
             persistenceError = error.userFacingMessage

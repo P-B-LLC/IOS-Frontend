@@ -19,6 +19,20 @@ private struct VisitedPerson: Identifiable, Hashable {
 }
 
 struct SocialFeedView: View {
+    /// What a discover load depends on: which tab is showing, and whether
+    /// there is a connection to load it through.
+    ///
+    /// Keyed on both because keying on the tab alone lost the first load
+    /// every time. Restoring the session is asynchronous, so the task fires
+    /// once with no repository behind the store, returns at its own guard,
+    /// and -- the tab never having changed -- is never asked again. The feed
+    /// then sits on "Nothing here yet" while the server has posts to give
+    /// it, which reads as an empty account rather than a dropped request.
+    private struct DiscoverLoad: Equatable {
+        let mode: FeedMode
+        let isConnected: Bool
+    }
+
     private enum FeedMode: String, CaseIterable, Identifiable {
         case following = "Following"
         case discover = "For you"
@@ -181,8 +195,8 @@ struct SocialFeedView: View {
         .sheet(item: $commenting) { target in
             PostCommentsSheet(postID: target.id, timeOfDay: timeOfDay)
         }
-        .task(id: feedMode) {
-            guard feedMode == .discover else { return }
+        .task(id: DiscoverLoad(mode: feedMode, isConnected: store.isConnected)) {
+            guard feedMode == .discover, store.isConnected else { return }
             await store.loadDiscover()
             await store.loadPeople()
             if let viewerID = profileStore.viewerID {

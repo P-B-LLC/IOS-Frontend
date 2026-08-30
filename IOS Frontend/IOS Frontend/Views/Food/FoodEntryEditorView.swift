@@ -206,7 +206,8 @@ struct FoodEntryEditorView: View {
                 )
             ),
             in: mealID,
-            on: date
+            on: date,
+            celebrates: !isEditing
         )
         if let onSaved {
             onSaved()
