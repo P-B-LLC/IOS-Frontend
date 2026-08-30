@@ -146,6 +146,12 @@ nonisolated enum RepbaseTab: String, CaseIterable, Identifiable {
 /// coming back to one returns to where it was left.
 struct RepbaseRootView: View {
     @State private var tab: RepbaseTab
+    /// Which half of the Training tab is showing, and how deep into it we
+    /// are. Both live here because Home sends people there: opening Food or
+    /// a particular day has to select the tab as well as the page, or the
+    /// bottom bar goes on describing the tab somebody started from.
+    @State private var trainingHalf: TrainingTabView.Half = .workouts
+    @State private var trainingPath = NavigationPath()
     /// Set while a screen is writing into something pinned to the bottom.
     @State private var isBarHidden = false
     @State private var chrome = BottomBarChrome()
@@ -184,9 +190,17 @@ struct RepbaseRootView: View {
             NavigationStack { ContentView() }
                 .toolbar(.hidden, for: .tabBar)
                 .tag(RepbaseTab.home)
-            NavigationStack { TrainingTabView() }
-                .toolbar(.hidden, for: .tabBar)
-                .tag(RepbaseTab.training)
+            NavigationStack(path: $trainingPath) {
+                TrainingTabView(half: $trainingHalf)
+                    // A day opened from Home is pushed onto this tab rather
+                    // than Home's, so the bar reads Training and the chevron
+                    // goes back to the week rather than out to the summary.
+                    .navigationDestination(for: Weekday.self) { day in
+                        DayWorkoutView(day: day)
+                    }
+            }
+            .toolbar(.hidden, for: .tabBar)
+            .tag(RepbaseTab.training)
             NavigationStack { PlannerView() }
                 .toolbar(.hidden, for: .tabBar)
                 .tag(RepbaseTab.planner)
@@ -198,6 +212,32 @@ struct RepbaseRootView: View {
                 .tag(RepbaseTab.account)
         }
         .environment(chrome)
+        .environment(\.repbaseNavigate, RepbaseNavigateAction { destination in
+            switch destination {
+            case .workouts:
+                trainingHalf = .workouts
+                trainingPath = NavigationPath()
+                tab = .training
+            case .workoutDay(let day):
+                trainingHalf = .workouts
+                // Replaced rather than appended: arriving from Home is a
+                // fresh trip, not a step deeper into wherever the tab was
+                // left three days ago.
+                trainingPath = NavigationPath()
+                trainingPath.append(day)
+                tab = .training
+            case .food:
+                trainingHalf = .food
+                trainingPath = NavigationPath()
+                tab = .training
+            case .planner:
+                tab = .planner
+            case .social:
+                tab = .social
+            case .account:
+                tab = .account
+            }
+        })
         .onPreferenceChange(HidesBottomBarPreference.self) { isBarHidden = $0 }
         // A new tab is a new page, and a new page starts at the top.
         .onChange(of: tab) { chrome.isMinimized = false }

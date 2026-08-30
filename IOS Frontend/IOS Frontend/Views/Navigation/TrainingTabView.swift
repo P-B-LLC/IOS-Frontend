@@ -35,18 +35,24 @@ struct TrainingTabView: View {
         }
     }
 
-    @State private var half: Half = .workouts
+    /// Which half is showing.
+    ///
+    /// Held by the root rather than here, so Home can open this tab straight
+    /// onto Food. Logging food from Home used to push the food page onto
+    /// Home's own stack, which left the bottom bar lit on Home while you
+    /// read it.
+    @Binding var half: Half
+
     @State private var quickAction: TrainingQuickAction?
     @State private var isShowingQuickActions = false
 
-    init() {
+    init(half: Binding<Half>) {
+        _half = half
 #if DEBUG
         // Opens the row on launch. The tiles are two taps in, and the
         // simulator cannot be tapped from a command line.
-        let flag = ProcessInfo.processInfo.environment["REPBASE_QUICK_ACTIONS"]
-        if let flag {
+        if ProcessInfo.processInfo.environment["REPBASE_QUICK_ACTIONS"] != nil {
             _isShowingQuickActions = State(initialValue: true)
-            if flag == "food" { _half = State(initialValue: .food) }
         }
 #endif
     }
@@ -73,6 +79,15 @@ struct TrainingTabView: View {
         // The two halves offer different actions, so an open row would be
         // showing the wrong ones the moment the switch moves.
         .onChange(of: half) { isShowingQuickActions = false }
+#if DEBUG
+        // `half` belongs to the root now, so the launch flag sets it here
+        // rather than in init.
+        .task {
+            if ProcessInfo.processInfo.environment["REPBASE_QUICK_ACTIONS"] == "food" {
+                half = .food
+            }
+        }
+#endif
         .fullScreenCover(item: $quickAction) { action in
             quickActionDestination(action)
         }

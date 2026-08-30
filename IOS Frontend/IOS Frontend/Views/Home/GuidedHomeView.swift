@@ -278,6 +278,13 @@ private struct GuidedDayFlow: View {
     @Environment(CycleStore.self) private var cycles
     @Environment(\.homeTimeOfDay) private var timeOfDay
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// Sends the app to another tab rather than pushing that tab's page onto
+    /// this one.
+    ///
+    /// Home summarises four other areas and offers to open each. Pushing
+    /// them left the bottom bar lit on Home while you read a workout, so the
+    /// bar described where you started rather than where you were.
+    @Environment(\.repbaseNavigate) private var navigate
 
     @State private var isConfirmingClear = false
     @State private var displayedFoodTotal: NutritionAmount?
@@ -431,8 +438,8 @@ private struct GuidedDayFlow: View {
                         .lineLimit(1)
                 }
                 Spacer(minLength: 8)
-                NavigationLink {
-                    PlannerView(showsBackButton: true)
+                Button {
+                    navigate(.planner)
                 } label: {
                     RepbaseTonalActionLabel(
                         title: "Schedule",
@@ -454,8 +461,8 @@ private struct GuidedDayFlow: View {
                         .foregroundStyle(timeOfDay.primaryText)
                 }
                 Spacer()
-                NavigationLink {
-                    PlannerView(showsBackButton: true)
+                Button {
+                    navigate(.planner)
                 } label: {
                     RepbaseTonalActionLabel(
                         title: "Plan",
@@ -491,8 +498,8 @@ private struct GuidedDayFlow: View {
                 }
                 Spacer(minLength: 8)
 
-                NavigationLink {
-                    workoutDestination
+                Button {
+                    navigate(workoutRoute)
                 } label: {
                     RepbaseTonalActionLabel(
                         title: workout == nil ? "Plan" : (activeSession == nil ? "Start" : "Continue"),
@@ -555,8 +562,8 @@ private struct GuidedDayFlow: View {
             HStack {
                 stageLabel(stageNumber(number, .fuel), color: fuelAccent)
                 Spacer()
-                NavigationLink {
-                    FoodTrackingView(showsBackButton: true)
+                Button {
+                    navigate(.food)
                 } label: {
                     RepbaseTonalActionLabel(
                         title: "Log food",
@@ -637,8 +644,8 @@ private struct GuidedDayFlow: View {
                     .lineLimit(1)
             }
             Spacer(minLength: 8)
-            NavigationLink {
-                PlannerView(showsBackButton: true)
+            Button {
+                navigate(.planner)
             } label: {
                 RepbaseTonalActionLabel(
                     title: "Open",
@@ -703,13 +710,13 @@ private struct GuidedDayFlow: View {
             .foregroundStyle(color)
     }
 
-    @ViewBuilder
-    private var workoutDestination: some View {
-        if let weekday {
-            DayWorkoutView(day: weekday)
-        } else {
-            WorkoutsView()
-        }
+    /// Where the training card sends you.
+    ///
+    /// A day when the card is about one, the week when it is not. Both land
+    /// on the Training tab; the day is pushed onto it, so the bar reads
+    /// Training either way and back goes to the week rather than to Home.
+    private var workoutRoute: RepbaseDestination {
+        if let weekday { .workoutDay(weekday) } else { .workouts }
     }
 
     private var isToday: Bool {
