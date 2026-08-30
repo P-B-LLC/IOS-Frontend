@@ -12,6 +12,15 @@ import Observation
 @MainActor
 @Observable
 final class FoodTrackingStore {
+    nonisolated struct MealLogEvent: Equatable, Sendable {
+        let id: UUID
+        let date: Date
+        let before: NutritionAmount
+        let after: NutritionAmount
+        let beforeMealCount: Int
+        let afterMealCount: Int
+    }
+
     private var repository: FoodAPIRepository?
     /// Built beside the food repository and from the same credentials. The
     /// picker used to make its own and point it at a third party; a screen
@@ -29,6 +38,10 @@ final class FoodTrackingStore {
     private(set) var isLoading = false
     private(set) var isSaving = false
     private(set) var errorMessage: String?
+    /// A successful server write Home can consume once when it becomes visible.
+    /// The snapshots let Home animate from the last confirmed value even when
+    /// Food dismissed before the request itself finished.
+    private(set) var latestMealLogEvent: MealLogEvent?
 
     var isConnected: Bool { repository != nil }
 
@@ -42,6 +55,19 @@ final class FoodTrackingStore {
 
     func total(on date: Date) -> NutritionAmount {
         meals(on: date).reduce(.zero) { $0 + $1.totalNutrition }
+    }
+
+    func loggedMealCount(on date: Date) -> Int {
+        meals(on: date).filter { !$0.entries.isEmpty }.count
+    }
+
+    func consumeLatestMealLog(on date: Date) -> MealLogEvent? {
+        guard let event = latestMealLogEvent,
+              Calendar.current.isDate(event.date, inSameDayAs: date) else {
+            return nil
+        }
+        latestMealLogEvent = nil
+        return event
     }
 
     func hasLoggedFood(on date: Date) -> Bool {
@@ -128,6 +154,7 @@ final class FoodTrackingStore {
         isLoading = false
         isSaving = false
         errorMessage = nil
+        latestMealLogEvent = nil
     }
 
     /// Signing out. Named `reset` because that is what the app calls it.
@@ -248,6 +275,8 @@ final class FoodTrackingStore {
         celebrates: Bool = true
     ) {
         guard let serverID = mealServerID(mealID, on: date) else { return }
+        let before = total(on: date)
+        let beforeMealCount = loggedMealCount(on: date)
         perform(on: date) { repository in
             let saved = try await repository.saveFood(food, inMeal: serverID)
             return (saved, serverID)
@@ -261,6 +290,14 @@ final class FoodTrackingStore {
                 meals[index].entries.append(result.0)
             }
         } onSuccess: {
+            self.latestMealLogEvent = MealLogEvent(
+                id: UUID(),
+                date: Calendar.current.startOfDay(for: date),
+                before: before,
+                after: self.total(on: date),
+                beforeMealCount: beforeMealCount,
+                afterMealCount: self.loggedMealCount(on: date)
+            )
             if celebrates {
                 RepbaseCelebrations.show(.mealLogged)
             }

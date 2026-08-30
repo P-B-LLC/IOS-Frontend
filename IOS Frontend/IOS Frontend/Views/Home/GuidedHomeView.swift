@@ -64,6 +64,17 @@ struct GuidedHomeView: View {
             }
             .scrollIndicators(.hidden)
             .minimizesBottomBarOnScroll()
+            .background {
+                LinearGradient(
+                    colors: [
+                        .repbaseDynamic(light: Color(hex: 0xFAF3ED), dark: Color(hex: 0x070806)),
+                        .repbaseDynamic(light: Color(hex: 0xF3E7DE), dark: Color(hex: 0x090A08))
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
+            }
             .toolbar(.hidden, for: .navigationBar)
             // Keyed on the connection: home appears before the session is
             // restored, and a bare .task would ask a store with nothing to
@@ -266,8 +277,14 @@ private struct GuidedDayFlow: View {
     @Environment(FoodTrackingStore.self) private var food
     @Environment(CycleStore.self) private var cycles
     @Environment(\.homeTimeOfDay) private var timeOfDay
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var isConfirmingClear = false
+    @State private var displayedFoodTotal: NutritionAmount?
+    @State private var displayedMealCount: Int?
+    @State private var isHomeVisible = false
+    @State private var foodProgressPulse = false
+    @State private var foodProgressTask: Task<Void, Never>?
 
     let selectedDate: Date
     let today: Date
@@ -309,6 +326,32 @@ private struct GuidedDayFlow: View {
                 chapterView(chapter, number: index + 1)
             }
             momentumSection
+        }
+        .onAppear {
+            isHomeVisible = true
+            if displayedFoodTotal == nil {
+                synchronizeFoodProgress()
+            }
+            presentLatestMealLogIfNeeded()
+        }
+        .onDisappear {
+            isHomeVisible = false
+            foodProgressTask?.cancel()
+        }
+        .onChange(of: selectedDate) { _, _ in
+            foodProgressTask?.cancel()
+            foodProgressPulse = false
+            synchronizeFoodProgress()
+            presentLatestMealLogIfNeeded()
+        }
+        .onChange(of: food.total(on: selectedDate)) { _, newTotal in
+            guard isHomeVisible, food.latestMealLogEvent == nil else { return }
+            displayedFoodTotal = newTotal
+            displayedMealCount = food.loggedMealCount(on: selectedDate)
+        }
+        .onChange(of: food.latestMealLogEvent?.id) { _, _ in
+            guard isHomeVisible else { return }
+            presentLatestMealLogIfNeeded()
         }
     }
 
@@ -497,8 +540,9 @@ private struct GuidedDayFlow: View {
     }
 
     private func fuelSection(number: Int) -> some View {
-        let total = food.total(on: selectedDate)
+        let total = displayedFoodTotal ?? food.total(on: selectedDate)
         let goals = food.goals
+        let mealCount = displayedMealCount ?? food.loggedMealCount(on: selectedDate)
 
         return VStack(alignment: .leading, spacing: 9) {
             HStack {
@@ -519,9 +563,22 @@ private struct GuidedDayFlow: View {
                 Text(total.calories.nutritionText)
                     .font(.community(.title2, weight: .bold))
                     .foregroundStyle(timeOfDay.primaryText)
+                    .contentTransition(.numericText(value: total.calories.nutritionDouble))
                 Text("of \(goals.calories.nutritionText) kcal")
                     .font(.community(.footnote))
                     .foregroundStyle(timeOfDay.secondaryText)
+
+                Spacer(minLength: 8)
+
+                HStack(spacing: 5) {
+                    Circle()
+                        .fill(foodWarmAccent)
+                        .frame(width: 5, height: 5)
+                    Text(mealCount == 0 ? "No meals yet" : "\(mealCount) meal\(mealCount == 1 ? "" : "s") logged")
+                        .font(.community(size: 9, weight: .semibold))
+                        .foregroundStyle(timeOfDay.secondaryText)
+                        .contentTransition(.numericText(value: Double(mealCount)))
+                }
             }
 
             HStack(spacing: 10) {
@@ -529,28 +586,35 @@ private struct GuidedDayFlow: View {
                     label: "PROTEIN",
                     value: total.proteinGrams,
                     goal: goals.proteinGrams,
-                    color: Color(hex: 0xF56B33)
+                    color: Color(hex: 0xF08B67),
+                    animationDelay: 0.04
                 )
                 GuidedMacroMetric(
                     label: "CARBS",
                     value: total.carbohydrateGrams,
                     goal: goals.carbohydrateGrams,
-                    color: Color(hex: 0x29B8BA)
+                    color: Color(hex: 0x5FB8AC),
+                    animationDelay: 0.12
                 )
                 GuidedMacroMetric(
                     label: "FAT",
                     value: total.fatGrams,
                     goal: goals.fatGrams,
-                    color: Color(hex: 0xB847AD)
+                    color: Color(hex: 0xB879A7),
+                    animationDelay: 0.20
                 )
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(
-            fuelSurface,
-            in: RoundedRectangle(cornerRadius: 18, style: .continuous)
-        )
+        .background {
+            GuidedFoodLivingSurface(
+                mealCount: mealCount,
+                isPulsing: foodProgressPulse
+            )
+        }
+        .scaleEffect(foodProgressPulse && !reduceMotion ? 1.008 : 1)
+        .offset(y: foodProgressPulse && !reduceMotion ? -2 : 0)
     }
 
     private func finishSection(number: Int) -> some View {
@@ -722,32 +786,71 @@ private struct GuidedDayFlow: View {
         .repbaseDynamic(light: Color(hex: 0x5DAA86), dark: Color(hex: 0x84CFA9))
     }
 
-    private var trainingSurface: Color {
-        .repbaseDynamic(
-            light: Color(hex: 0xE6D9D3).opacity(0.78),
-            dark: Color(hex: 0x322B28)
-        )
+    private var foodWarmAccent: Color {
+        .repbaseDynamic(light: Color(hex: 0xC77756), dark: Color(hex: 0xEF946D))
     }
 
-    private var fuelSurface: Color {
-        .repbaseDynamic(light: Color(hex: 0xF1F8F4), dark: Color(hex: 0x203029))
+    private var trainingSurface: Color {
+        .repbaseDynamic(
+            light: Color(hex: 0xE9E7DB),
+            dark: Color(hex: 0x24251D)
+        )
     }
 
     private var momentumSurface: Color {
         .repbaseDynamic(
-            light: Color(hex: 0xE6D9D3).opacity(0.66),
-            dark: Color(hex: 0x2C2927)
+            light: Color.white.opacity(0.72),
+            dark: Color(hex: 0x1C1A17)
         )
+    }
+
+    private func synchronizeFoodProgress() {
+        displayedFoodTotal = food.total(on: selectedDate)
+        displayedMealCount = food.loggedMealCount(on: selectedDate)
+    }
+
+    private func presentLatestMealLogIfNeeded() {
+        guard let event = food.consumeLatestMealLog(on: selectedDate) else {
+            return
+        }
+
+        foodProgressTask?.cancel()
+        displayedFoodTotal = event.before
+        displayedMealCount = event.beforeMealCount
+        foodProgressPulse = false
+
+        foodProgressTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(reduceMotion ? 30 : 150))
+            guard !Task.isCancelled else { return }
+
+            withAnimation(
+                reduceMotion
+                    ? .easeOut(duration: 0.18)
+                    : .spring(response: 0.72, dampingFraction: 0.86)
+            ) {
+                displayedFoodTotal = event.after
+                displayedMealCount = event.afterMealCount
+                foodProgressPulse = true
+            }
+
+            try? await Task.sleep(for: .milliseconds(reduceMotion ? 180 : 760))
+            guard !Task.isCancelled else { return }
+            withAnimation(.easeOut(duration: 0.24)) {
+                foodProgressPulse = false
+            }
+        }
     }
 }
 
 private struct GuidedMacroMetric: View {
     @Environment(\.homeTimeOfDay) private var timeOfDay
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     let label: String
     let value: Decimal
     let goal: Decimal
     let color: Color
+    let animationDelay: Double
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -766,6 +869,13 @@ private struct GuidedMacroMetric: View {
                     Capsule()
                         .fill(color)
                         .frame(width: proxy.size.width * progress)
+                        .animation(
+                            reduceMotion
+                                ? .easeOut(duration: 0.18)
+                                : .spring(response: 0.72, dampingFraction: 0.86)
+                                    .delay(animationDelay),
+                            value: progress
+                        )
                 }
             }
             .frame(height: 4)
@@ -777,6 +887,93 @@ private struct GuidedMacroMetric: View {
     private var progress: Double {
         guard goal > 0 else { return 0 }
         return min(max(value.nutritionDouble / goal.nutritionDouble, 0), 1)
+    }
+}
+
+private struct GuidedFoodLivingSurface: View {
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    let mealCount: Int
+    let isPulsing: Bool
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: 18, style: .continuous)
+            .fill(
+                LinearGradient(
+                    colors: [surfaceStart, surfaceEnd],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .overlay(alignment: .topTrailing) {
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [warmHalo.opacity(haloOpacity), .clear],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 68
+                        )
+                    )
+                    .frame(width: 136, height: 136)
+                    .offset(x: 54, y: -58)
+                    .scaleEffect(isPulsing && !reduceMotion ? 1.14 : 1)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .strokeBorder(borderColor, lineWidth: 1)
+            }
+            .shadow(color: shadowColor, radius: 12, x: 0, y: 6)
+            .animation(.easeInOut(duration: 0.68), value: stage)
+            .animation(.easeOut(duration: 0.72), value: isPulsing)
+    }
+
+    private var stage: Int { min(max(mealCount, 0), 3) }
+
+    private var surfaceStart: Color {
+        if colorScheme == .dark {
+            return [
+                Color(hex: 0x171B18), Color(hex: 0x18201C),
+                Color(hex: 0x19231F), Color(hex: 0x1A2722)
+            ][stage]
+        }
+        return [
+            Color(hex: 0xE7EEE9), Color(hex: 0xE3EEE7),
+            Color(hex: 0xDFEBE5), Color(hex: 0xDCE9E2)
+        ][stage]
+    }
+
+    private var surfaceEnd: Color {
+        if colorScheme == .dark {
+            return [
+                Color(hex: 0x1C1D1A), Color(hex: 0x23211C),
+                Color(hex: 0x29231D), Color(hex: 0x30261E)
+            ][stage]
+        }
+        return [
+            Color(hex: 0xEEE8DF), Color(hex: 0xF0E6DC),
+            Color(hex: 0xEFE1D4), Color(hex: 0xEDDACB)
+        ][stage]
+    }
+
+    private var warmHalo: Color {
+        colorScheme == .dark ? Color(hex: 0xEF946D) : Color(hex: 0xD58562)
+    }
+
+    private var haloOpacity: Double {
+        [0.0, 0.08, 0.12, 0.16][stage]
+    }
+
+    private var borderColor: Color {
+        colorScheme == .dark ? Color.white.opacity(0.04) : Color.white.opacity(0.68)
+    }
+
+    private var shadowColor: Color {
+        colorScheme == .dark
+            ? Color.black.opacity(0.16)
+            : Color(hex: 0x594435).opacity(0.07)
     }
 }
 
