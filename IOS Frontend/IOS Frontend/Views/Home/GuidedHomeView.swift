@@ -322,8 +322,15 @@ private struct GuidedDayFlow: View {
                 flowHeader
                 upNextSection
             }
-            ForEach(Array(chapters.enumerated()), id: \.element) { index, chapter in
-                chapterView(chapter, number: index + 1)
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(Array(chapters.enumerated()), id: \.element) { index, chapter in
+                    chapterView(chapter, number: index + 1)
+                }
+            }
+            .overlay(alignment: .leading) {
+                GuidedHomeFlowRail(progress: flowRailProgress)
+                    .padding(.vertical, 8)
+                    .offset(x: -10)
             }
             momentumSection
         }
@@ -782,6 +789,21 @@ private struct GuidedDayFlow: View {
         return min(max(Double(stats.completedThisWeek) / Double(stats.weeklyGoal), 0), 1)
     }
 
+    private var flowRailProgress: Double {
+        let mealCount = displayedMealCount ?? food.loggedMealCount(on: selectedDate)
+        if mealCount > 0,
+           let fuelIndex = chapters.firstIndex(of: .fuel),
+           chapters.count > 1 {
+            return Double(fuelIndex) / Double(chapters.count - 1)
+        }
+        if activeSession != nil,
+           let trainingIndex = chapters.firstIndex(of: .training),
+           chapters.count > 1 {
+            return Double(trainingIndex) / Double(chapters.count - 1)
+        }
+        return 0
+    }
+
     private var fuelAccent: Color {
         .repbaseDynamic(light: Color(hex: 0x5DAA86), dark: Color(hex: 0x84CFA9))
     }
@@ -839,6 +861,56 @@ private struct GuidedDayFlow: View {
                 foodProgressPulse = false
             }
         }
+    }
+}
+
+private struct GuidedHomeFlowRail: View {
+    @Environment(\.homeTimeOfDay) private var timeOfDay
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    let progress: Double
+
+    var body: some View {
+        GeometryReader { proxy in
+            let segmentHeight = max(58, proxy.size.height * 0.28)
+            let availableTravel = max(proxy.size.height - segmentHeight, 0)
+
+            ZStack(alignment: .top) {
+                Capsule()
+                    .fill(timeOfDay.canvasBorder.opacity(0.72))
+
+                Capsule()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                timeOfDay.accent,
+                                .repbaseDynamic(
+                                    light: Color(hex: 0x5DAA86),
+                                    dark: Color(hex: 0x84CFA9)
+                                )
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .frame(height: segmentHeight)
+                    .offset(y: availableTravel * min(max(progress, 0), 1))
+                    .shadow(
+                        color: timeOfDay.accent.opacity(0.18),
+                        radius: 5,
+                        x: 0,
+                        y: 0
+                    )
+            }
+        }
+        .frame(width: 3)
+        .animation(
+            reduceMotion
+                ? .easeOut(duration: 0.18)
+                : .spring(response: 0.72, dampingFraction: 0.86),
+            value: progress
+        )
+        .accessibilityHidden(true)
     }
 }
 
