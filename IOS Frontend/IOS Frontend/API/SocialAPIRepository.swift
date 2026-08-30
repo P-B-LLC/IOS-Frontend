@@ -273,6 +273,16 @@ actor SocialAPIRepository {
                 exerciseCount: result.exerciseCount,
                 wasRenamed: result.renamed
             )
+        // 200 rather than 201: this post had been saved before and the
+        // server handed back the copy instead of making a second one.
+        case .ok(let response):
+            let result = try response.body.json
+            return SavedWorkoutOutcome(
+                name: result.name,
+                exerciseCount: result.exerciseCount,
+                wasRenamed: result.renamed,
+                wasAlreadySaved: true
+            )
         case .undocumented(let statusCode, _):
             throw APIServiceError.undocumentedStatus(statusCode)
         }
@@ -294,6 +304,15 @@ actor SocialAPIRepository {
                 name: result.name,
                 itemCount: result.itemCount,
                 wasRenamed: result.renamed
+            )
+        // See saveWorkout: 200 means it was already there.
+        case .ok(let response):
+            let result = try response.body.json
+            return SavedMealOutcome(
+                name: result.name,
+                itemCount: result.itemCount,
+                wasRenamed: result.renamed,
+                wasAlreadySaved: true
             )
         case .undocumented(let statusCode, _):
             throw APIServiceError.undocumentedStatus(statusCode)

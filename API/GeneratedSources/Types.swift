@@ -880,10 +880,14 @@ public protocol APIProtocol: Sendable {
     func socialPostsRepostDestroy(_ input: Operations.SocialPostsRepostDestroy.Input) async throws -> Operations.SocialPostsRepostDestroy.Output
     /// Copy a posted meal into your own saved meals. The foods and their servings are taken whole, so applying it to a day later gives the same numbers the post showed.
     ///
+    /// Saving the same post again does not make a second copy: the one already saved is returned with already_saved true, and a 200 rather than a 201, because nothing was created.
+    ///
     /// - Remark: HTTP `POST /api/v1/social/posts/{id}/save-meal/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-meal//post(social_posts_save_meal_create)`.
     func socialPostsSaveMealCreate(_ input: Operations.SocialPostsSaveMealCreate.Input) async throws -> Operations.SocialPostsSaveMealCreate.Output
     /// Copy a posted workout into your own workouts. The exercises and their set counts are taken; weights are not, because a workout you save is a plan to follow rather than a record of somebody else's session.
+    ///
+    /// Saving the same post again does not make a second copy: the one already saved is returned with already_saved true, and a 200 rather than a 201, because nothing was created.
     ///
     /// - Remark: HTTP `POST /api/v1/social/posts/{id}/save-workout/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-workout//post(social_posts_save_workout_create)`.
@@ -2909,6 +2913,8 @@ extension APIProtocol {
     }
     /// Copy a posted meal into your own saved meals. The foods and their servings are taken whole, so applying it to a day later gives the same numbers the post showed.
     ///
+    /// Saving the same post again does not make a second copy: the one already saved is returned with already_saved true, and a 200 rather than a 201, because nothing was created.
+    ///
     /// - Remark: HTTP `POST /api/v1/social/posts/{id}/save-meal/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-meal//post(social_posts_save_meal_create)`.
     public func socialPostsSaveMealCreate(
@@ -2921,6 +2927,8 @@ extension APIProtocol {
         ))
     }
     /// Copy a posted workout into your own workouts. The exercises and their set counts are taken; weights are not, because a workout you save is a plan to follow rather than a record of somebody else's session.
+    ///
+    /// Saving the same post again does not make a second copy: the one already saved is returned with already_saved true, and a 200 rather than a 201, because nothing was created.
     ///
     /// - Remark: HTTP `POST /api/v1/social/posts/{id}/save-workout/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-workout//post(social_posts_save_workout_create)`.
@@ -9109,6 +9117,8 @@ public enum Components {
             public var itemCount: Swift.Int
             /// - Remark: Generated from `#/components/schemas/SavedMealResult/renamed`.
             public var renamed: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/SavedMealResult/already_saved`.
+            public var alreadySaved: Swift.Bool
             /// Creates a new `SavedMealResult`.
             ///
             /// - Parameters:
@@ -9116,22 +9126,26 @@ public enum Components {
             ///   - name:
             ///   - itemCount:
             ///   - renamed:
+            ///   - alreadySaved:
             public init(
                 meal: Swift.Int,
                 name: Swift.String,
                 itemCount: Swift.Int,
-                renamed: Swift.Bool
+                renamed: Swift.Bool,
+                alreadySaved: Swift.Bool
             ) {
                 self.meal = meal
                 self.name = name
                 self.itemCount = itemCount
                 self.renamed = renamed
+                self.alreadySaved = alreadySaved
             }
             public enum CodingKeys: String, CodingKey {
                 case meal
                 case name
                 case itemCount = "item_count"
                 case renamed
+                case alreadySaved = "already_saved"
             }
         }
         /// What saving somebody else's posted workout produced.
@@ -9150,6 +9164,8 @@ public enum Components {
             public var exerciseCount: Swift.Int
             /// - Remark: Generated from `#/components/schemas/SavedWorkoutResult/renamed`.
             public var renamed: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/SavedWorkoutResult/already_saved`.
+            public var alreadySaved: Swift.Bool
             /// Creates a new `SavedWorkoutResult`.
             ///
             /// - Parameters:
@@ -9157,22 +9173,26 @@ public enum Components {
             ///   - name:
             ///   - exerciseCount:
             ///   - renamed:
+            ///   - alreadySaved:
             public init(
                 workout: Swift.Int,
                 name: Swift.String,
                 exerciseCount: Swift.Int,
-                renamed: Swift.Bool
+                renamed: Swift.Bool,
+                alreadySaved: Swift.Bool
             ) {
                 self.workout = workout
                 self.name = name
                 self.exerciseCount = exerciseCount
                 self.renamed = renamed
+                self.alreadySaved = alreadySaved
             }
             public enum CodingKeys: String, CodingKey {
                 case workout
                 case name
                 case exerciseCount = "exercise_count"
                 case renamed
+                case alreadySaved = "already_saved"
             }
         }
         /// A cardio finisher performed after a session's exercises.
@@ -28569,6 +28589,8 @@ public enum Operations {
     }
     /// Copy a posted meal into your own saved meals. The foods and their servings are taken whole, so applying it to a day later gives the same numbers the post showed.
     ///
+    /// Saving the same post again does not make a second copy: the one already saved is returned with already_saved true, and a 200 rather than a 201, because nothing was created.
+    ///
     /// - Remark: HTTP `POST /api/v1/social/posts/{id}/save-meal/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-meal//post(social_posts_save_meal_create)`.
     public enum SocialPostsSaveMealCreate {
@@ -28615,6 +28637,57 @@ public enum Operations {
             }
         }
         @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-meal/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-meal/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.SavedMealResult)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.SavedMealResult {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialPostsSaveMealCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialPostsSaveMealCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-meal//post(social_posts_save_meal_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialPostsSaveMealCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialPostsSaveMealCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
             public struct Created: Sendable, Hashable {
                 /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-meal/POST/responses/201/content`.
                 @frozen public enum Body: Sendable, Hashable {
@@ -28699,6 +28772,8 @@ public enum Operations {
     }
     /// Copy a posted workout into your own workouts. The exercises and their set counts are taken; weights are not, because a workout you save is a plan to follow rather than a record of somebody else's session.
     ///
+    /// Saving the same post again does not make a second copy: the one already saved is returned with already_saved true, and a 200 rather than a 201, because nothing was created.
+    ///
     /// - Remark: HTTP `POST /api/v1/social/posts/{id}/save-workout/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-workout//post(social_posts_save_workout_create)`.
     public enum SocialPostsSaveWorkoutCreate {
@@ -28745,6 +28820,57 @@ public enum Operations {
             }
         }
         @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-workout/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-workout/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.SavedWorkoutResult)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.SavedWorkoutResult {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialPostsSaveWorkoutCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialPostsSaveWorkoutCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-workout//post(social_posts_save_workout_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialPostsSaveWorkoutCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialPostsSaveWorkoutCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
             public struct Created: Sendable, Hashable {
                 /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-workout/POST/responses/201/content`.
                 @frozen public enum Body: Sendable, Hashable {

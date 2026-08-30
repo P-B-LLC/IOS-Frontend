@@ -269,9 +269,16 @@ nonisolated struct SavedMealOutcome: Equatable, Hashable, Sendable {
     let name: String
     let itemCount: Int
     let wasRenamed: Bool
+    /// True when this was already saved and the server made nothing new.
+    var wasAlreadySaved = false
 
     var message: String {
         let items = itemCount == 1 ? "1 item" : "\(itemCount) items"
+        // See SavedWorkoutOutcome: saying "Saved!" again for a tap that
+        // saved nothing is what got somebody to tap a third time.
+        if wasAlreadySaved {
+            return "\"\(name)\" is already in your saved meals."
+        }
         if wasRenamed {
             return "Saved as \"\(name)\" — \(items). You already had one by its own name."
         }
@@ -334,9 +341,17 @@ nonisolated struct SavedWorkoutOutcome: Equatable, Hashable, Sendable {
     let name: String
     let exerciseCount: Int
     let wasRenamed: Bool
+    /// True when this was already saved and the server made nothing new.
+    var wasAlreadySaved = false
 
     var message: String {
         let exercises = exerciseCount == 1 ? "1 exercise" : "\(exerciseCount) exercises"
+        // Said plainly rather than as another "Saved!". Repeating the
+        // success of the first tap is how somebody ends up tapping a third
+        // time looking for the copy they think did not arrive.
+        if wasAlreadySaved {
+            return "\"\(name)\" is already in your workouts."
+        }
         if wasRenamed {
             return "Saved as \"\(name)\" — \(exercises). You already had one by its own name."
         }
