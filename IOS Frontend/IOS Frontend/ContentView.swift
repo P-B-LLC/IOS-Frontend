@@ -487,7 +487,7 @@ private struct HomeMacroSection: View {
             HomeSectionHeader(
                 title: isToday ? "Food today" : "Food on \(date.formatted(.dateTime.weekday(.wide)))",
                 action: "Food",
-                destination: FoodTrackingView()
+                destination: FoodTrackingView(showsBackButton: true)
             )
 
             HStack(alignment: .firstTextBaseline) {

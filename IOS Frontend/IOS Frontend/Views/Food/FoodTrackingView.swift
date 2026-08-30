@@ -8,6 +8,17 @@
 import SwiftUI
 
 struct FoodTrackingView: View {
+    /// Drawn when this was pushed onto somebody else's stack rather than
+    /// opened as its own tab.
+    ///
+    /// This page hides the navigation bar, which is right when it is the
+    /// root of the Food tab and wrong the moment it is pushed: Home links
+    /// straight here to log food, and with no bar, no back button and a tab
+    /// bar still pointing at Home -- correctly, since that is the stack you
+    /// are on -- there was no way back out of it. Same flag and same reason
+    /// as PlannerView, which Home also links to.
+    var showsBackButton = false
+
     @Environment(FoodTrackingStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     @State private var selectedDate = Date()
@@ -81,6 +92,23 @@ struct FoodTrackingView: View {
 
     private func foodHeader(timeOfDay: HomeTimeOfDay) -> some View {
         HStack(alignment: .bottom, spacing: 14) {
+            if showsBackButton {
+                Button { dismiss() } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.community(size: 17, weight: .semibold))
+                        .frame(width: 40, height: 40)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(timeOfDay.canvasPrimaryText)
+                .accessibilityLabel("Back")
+                .padding(.trailing, 2)
+                // The header aligns on its bottom edge, which would put the
+                // chevron level with the third line of text rather than where
+                // a back control is looked for.
+                .frame(maxHeight: .infinity, alignment: .top)
+            }
+
             VStack(alignment: .leading, spacing: 3) {
                 Text(Calendar.current.isDateInToday(selectedDate) ? "TODAY" : "NUTRITION")
                     .font(.community(size: 9, weight: .bold))

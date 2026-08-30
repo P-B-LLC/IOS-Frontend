@@ -380,7 +380,13 @@ private struct AppRootView: View {
                 }
             } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] != nil {
                 NavigationStack {
-                    FoodTrackingView()
+                    // "pushed" draws it the way Home links to it: onto another
+                    // tab's stack, where it needs a back button of its own
+                    // because the tab bar still points at where you came from.
+                    FoodTrackingView(
+                        showsBackButton: ProcessInfo.processInfo
+                            .environment["REPBASE_FOOD_PREVIEW"] == "pushed"
+                    )
                 }
             } else if let profilePreview = ProcessInfo.processInfo.environment["REPBASE_PROFILE_PREVIEW"],
                       profilePreview != "profile",

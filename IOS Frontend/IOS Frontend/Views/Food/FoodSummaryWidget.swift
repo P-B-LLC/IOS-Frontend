@@ -13,7 +13,7 @@ struct FoodSummaryWidget: View {
 
     var body: some View {
         NavigationLink {
-            FoodTrackingView()
+            FoodTrackingView(showsBackButton: true)
         } label: {
             HStack(alignment: .center, spacing: 16) {
                 VStack(alignment: .leading, spacing: 0) {

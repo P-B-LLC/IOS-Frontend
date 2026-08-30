@@ -549,7 +549,7 @@ private struct GuidedDayFlow: View {
                 stageLabel(stageNumber(number, .fuel), color: fuelAccent)
                 Spacer()
                 NavigationLink {
-                    FoodTrackingView()
+                    FoodTrackingView(showsBackButton: true)
                 } label: {
                     RepbaseTonalActionLabel(
                         title: "Log food",
