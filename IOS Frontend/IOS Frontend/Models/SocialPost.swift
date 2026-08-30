@@ -201,6 +201,12 @@ nonisolated struct FeedPost: Identifiable, Equatable, Hashable, Sendable {
     /// drawn in the right state on first paint.
     var viewerHasLiked: Bool = false
     var viewerHasReposted: Bool = false
+    /// Whether the reader already took a copy of this post.
+    ///
+    /// From the server, not from what this run remembers: something saved
+    /// last week has to still read as saved on the next launch, or the
+    /// button invites a tap that can only answer "already saved".
+    var viewerHasSaved: Bool = false
     /// Whether the author showed what they lifted. False means the numbers
     /// were held back — which is a different thing from a bodyweight session,
     /// where there were none to show.

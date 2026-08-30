@@ -7033,6 +7033,8 @@ public enum Components {
             public var viewerHasLiked: Swift.Bool
             /// - Remark: Generated from `#/components/schemas/Post/viewer_has_reposted`.
             public var viewerHasReposted: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/Post/viewer_saved`.
+            public var viewerSaved: Swift.Bool
             /// - Remark: Generated from `#/components/schemas/Post/repost_of`.
             public struct RepostOfPayload: Codable, Hashable, Sendable {
                 /// - Remark: Generated from `#/components/schemas/Post/repost_of/value1`.
@@ -7078,6 +7080,7 @@ public enum Components {
             ///   - repostCount:
             ///   - viewerHasLiked:
             ///   - viewerHasReposted:
+            ///   - viewerSaved:
             ///   - repostOf:
             ///   - createdAt:
             ///   - updatedAt:
@@ -7100,6 +7103,7 @@ public enum Components {
                 repostCount: Swift.Int,
                 viewerHasLiked: Swift.Bool,
                 viewerHasReposted: Swift.Bool,
+                viewerSaved: Swift.Bool,
                 repostOf: Components.Schemas.Post.RepostOfPayload? = nil,
                 createdAt: Foundation.Date,
                 updatedAt: Foundation.Date
@@ -7122,6 +7126,7 @@ public enum Components {
                 self.repostCount = repostCount
                 self.viewerHasLiked = viewerHasLiked
                 self.viewerHasReposted = viewerHasReposted
+                self.viewerSaved = viewerSaved
                 self.repostOf = repostOf
                 self.createdAt = createdAt
                 self.updatedAt = updatedAt
@@ -7145,6 +7150,7 @@ public enum Components {
                 case repostCount = "repost_count"
                 case viewerHasLiked = "viewer_has_liked"
                 case viewerHasReposted = "viewer_has_reposted"
+                case viewerSaved = "viewer_saved"
                 case repostOf = "repost_of"
                 case createdAt = "created_at"
                 case updatedAt = "updated_at"

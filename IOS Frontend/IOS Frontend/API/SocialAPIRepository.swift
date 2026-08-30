@@ -570,6 +570,7 @@ actor SocialAPIRepository {
             repostCount: payload.repostCount,
             viewerHasLiked: payload.viewerHasLiked,
             viewerHasReposted: payload.viewerHasReposted,
+            viewerHasSaved: payload.viewerSaved,
             showsWeights: payload.showsWeights,
             viewerIsAuthor: payload.viewerIsAuthor,
             repostOf: payload.repostOf.map { reposted(from: $0.value1) }

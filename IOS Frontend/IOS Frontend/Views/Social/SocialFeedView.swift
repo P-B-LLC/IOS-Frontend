@@ -980,6 +980,7 @@ struct PostCard: View {
     private var saveWorkoutButton: some View {
         saveChip(
             isSaving: store.isSavingWorkout(from: post.id),
+            isSaved: post.viewerHasSaved,
             tint: timeOfDay.accent
         ) {
             await store.saveWorkout(from: post)
@@ -1068,6 +1069,7 @@ struct PostCard: View {
     private var saveMealButton: some View {
         saveChip(
             isSaving: store.isSavingMeal(from: post.id),
+            isSaved: post.viewerHasSaved,
             tint: RepbaseDesign.success
         ) {
             await store.saveMeal(from: post)
@@ -1085,30 +1087,40 @@ struct PostCard: View {
     /// is the only control on it.
     private func saveChip(
         isSaving: Bool,
+        isSaved: Bool,
         tint: Color,
         action: @escaping () async -> Void
     ) -> some View {
-        Button {
+        // Done, and drawn as done: a tick, the word, and the tint dropped to
+        // the muted grey every other finished thing in the app uses. The
+        // filled accent capsule reads as "press me", and pressing it again
+        // could only ever answer that there was nothing to do.
+        let done = isSaved && !isSaving
+        let colour = done ? timeOfDay.secondaryText : tint
+
+        return Button {
             Task { await action() }
         } label: {
             HStack(spacing: 5) {
                 if isSaving {
                     ProgressView().controlSize(.mini)
                 } else {
-                    Image(systemName: "plus")
+                    Image(systemName: done ? "checkmark" : "plus")
                         .font(.community(size: 10, weight: .bold))
                 }
-                Text(isSaving ? "Saving" : "Save")
+                Text(isSaving ? "Saving" : (done ? "Saved" : "Save"))
                     .font(.community(size: 11, weight: .bold))
             }
-            .foregroundStyle(tint)
+            .foregroundStyle(colour)
             .padding(.horizontal, 11)
             .frame(height: 28)
-            .background(Capsule().fill(tint.opacity(0.15)))
+            .background(Capsule().fill(colour.opacity(done ? 0.10 : 0.15)))
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
-        .disabled(isSaving)
+        .disabled(isSaving || done)
+        // Says why it cannot be pressed, rather than only looking unpressable.
+        .accessibilityHint(done ? "Already saved to your library" : "")
     }
 
     /// "1 serving", "2 servings" -- the amount, not just the food.
