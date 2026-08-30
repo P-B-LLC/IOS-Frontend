@@ -508,7 +508,27 @@ final class FoodTrackingStore {
         meals[index] = meal
     }
 
+    /// Re-read the saved meals, without the four other requests connect makes.
+    ///
+    /// Saving somebody else's meal from a post adds a row this store holds
+    /// but did not write, so there has to be something to call that is not
+    /// the whole first-load.
+    func reloadSavedMeals() async {
+        guard let repository else { return }
+        let generation = connectionGeneration
+        do {
+            let loaded = try await repository.savedMeals()
+            guard connectionGeneration == generation else { return }
+            savedMeals = loaded
+        } catch {
+            // Left quiet on purpose. This runs behind a save that already
+            // succeeded and said so; failing to refresh a list is not worth
+            // replacing that confirmation with an error.
+        }
+    }
+
     private func refreshRecentFoods() {
+
         guard let repository else { return }
         let generation = connectionGeneration
         Task {

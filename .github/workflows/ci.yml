@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      # The deployment target is iOS 26.5, so the default Xcode on the runner
+      # image is not always new enough. Pinned rather than left to drift,
+      # because a runner image bump silently changing the compiler is the
+      # kind of failure that looks like the code broke.
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_26.app
+
+      - name: Show versions
+        run: |
+          xcodebuild -version
+          swift --version
+
+      # A simulator build needs no signing, and asking for it on a runner
+      # with no certificates fails for a reason that has nothing to do with
+      # the code.
+      - name: Build
+        run: |
+          xcodebuild \
+            -project "IOS Frontend/IOS Frontend.xcodeproj" \
+            -scheme "IOS Frontend" \
+            -destination "generic/platform=iOS Simulator" \
+            -derivedDataPath .build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      # API/GeneratedSources is committed, and the client is generated from
+      # API/openapi.yaml. A contract updated without regenerating leaves the
+      # app talking to a server it no longer matches -- which is how a saved
+      # meal came back as a number the client had been told was a string.
+      - name: Generated client matches the contract
+        run: |
+          bash Scripts/generate-api-client.sh
+          if ! git diff --quiet -- API/GeneratedSources; then
+            echo "API/GeneratedSources is stale. Regenerate and commit:"
+            echo "  bash Scripts/generate-api-client.sh"
+            git diff --stat -- API/GeneratedSources
+            exit 1
+          fi

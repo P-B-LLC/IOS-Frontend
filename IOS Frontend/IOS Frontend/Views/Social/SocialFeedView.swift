@@ -108,29 +108,8 @@ struct SocialFeedView: View {
                         .padding(.vertical, 8)
                 }
 
-                // Said rather than assumed: the name a saved workout lands
-                // under is not always the one on the post.
-                if let saved = store.lastSavedWorkout {
-                    notice(
-                        saved.message,
-                        symbol: "checkmark.circle.fill",
-                        timeOfDay: timeOfDay
-                    )
-                    .padding(.horizontal, RepbaseDesign.pageInset)
-                    .padding(.vertical, 8)
-                    .onTapGesture { store.lastSavedWorkout = nil }
-                }
-
-                if let saved = store.lastSavedMeal {
-                    notice(
-                        saved.message,
-                        symbol: "checkmark.circle.fill",
-                        timeOfDay: timeOfDay
-                    )
-                    .padding(.horizontal, RepbaseDesign.pageInset)
-                    .padding(.vertical, 8)
-                    .onTapGesture { store.lastSavedMeal = nil }
-                }
+                // Saves are confirmed by a toast over the page rather than a
+                // notice inserted into it. See saveConfirmation below.
 
                 // Reporting and blocking both act out of sight -- one goes to
                 // a queue, the other quietly empties part of the feed -- so
@@ -189,6 +168,7 @@ struct SocialFeedView: View {
         .refreshable { await store.refresh() }
         .toolbar(.hidden, for: .navigationBar)
         .homeTimeScreen(timeOfDay)
+        .repbaseToast(saveConfirmation)
         .fullScreenCover(isPresented: $isComposing) {
             PostComposerView()
         }
@@ -424,6 +404,23 @@ struct SocialFeedView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 44)
         .padding(.horizontal, 22)
+    }
+
+    /// What to say over the page after a save, and how to stop saying it.
+    ///
+    /// One binding over two outcomes, because they cannot both be new: a tap
+    /// saves a workout or a meal, never both, and whichever landed last is
+    /// the one worth reading. Clearing it clears both, so nothing is left
+    /// behind to reappear the next time the other one fires.
+    private var saveConfirmation: Binding<String?> {
+        Binding(
+            get: { store.lastSavedWorkout?.message ?? store.lastSavedMeal?.message },
+            set: { updated in
+                guard updated == nil else { return }
+                store.lastSavedWorkout = nil
+                store.lastSavedMeal = nil
+            }
+        )
     }
 
     private func notice(

@@ -513,6 +513,16 @@ private struct AppRootView: View {
                 configuration: authentication.configuration,
                 token: token
             )
+            // Saving somebody else's workout or meal writes a row into a list
+            // this store does not hold. Without these the copy sat on the
+            // server and stayed missing from Saved workouts until the next
+            // launch, which reads as the save having quietly failed.
+            socialStore.onSavedWorkoutsChanged = { [workoutStore] in
+                await workoutStore.reloadSchedule()
+            }
+            socialStore.onSavedMealsChanged = { [foodTrackingStore] in
+                await foodTrackingStore.reloadSavedMeals()
+            }
             await socialStore.connect(
                 configuration: authentication.configuration,
                 token: token

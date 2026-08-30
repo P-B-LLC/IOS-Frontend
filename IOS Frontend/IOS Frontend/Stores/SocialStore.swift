@@ -385,6 +385,21 @@ final class SocialStore {
     /// What the last save produced, for a message the reader can dismiss.
     var lastSavedWorkout: SavedWorkoutOutcome?
     var lastSavedMeal: SavedMealOutcome?
+
+    /// Called after a post's workout or meal has been copied into the
+    /// reader's own.
+    ///
+    /// The copy lands in a list this store does not hold: workouts belong to
+    /// the workout store, saved meals to the food store. Neither was told,
+    /// so a workout saved from a post was on the server and absent from
+    /// Saved workouts until the app was next launched -- which reads as the
+    /// save having silently failed.
+    ///
+    /// Says what changed and lets whoever owns the list go and read it,
+    /// rather than reaching across into another store. Same shape as
+    /// CycleStore.onCalendarChanged.
+    var onSavedWorkoutsChanged: (@MainActor () async -> Void)?
+    var onSavedMealsChanged: (@MainActor () async -> Void)?
     /// What to say after reporting or blocking. Cleared on a tap, like the
     /// save notices beside it.
     var lastModerationMessage: String?
@@ -421,6 +436,7 @@ final class SocialStore {
             let outcome = try await repository.saveMeal(fromPost: post.id)
             guard connectionGeneration == generation else { return }
             lastSavedMeal = outcome
+            await onSavedMealsChanged?()
         } catch {
             guard connectionGeneration == generation else { return }
             errorMessage = error.userFacingMessage
@@ -525,6 +541,7 @@ final class SocialStore {
             let outcome = try await repository.saveWorkout(fromPost: post.id)
             guard connectionGeneration == generation else { return }
             lastSavedWorkout = outcome
+            await onSavedWorkoutsChanged?()
         } catch {
             guard connectionGeneration == generation else { return }
             errorMessage = error.userFacingMessage
