@@ -854,6 +854,9 @@ private struct GuidedDayFlow: View {
                 displayedMealCount = event.afterMealCount
                 foodProgressPulse = true
             }
+            if event.shouldCelebrate {
+                RepbaseCelebrations.show(.mealLogged)
+            }
 
             try? await Task.sleep(for: .milliseconds(reduceMotion ? 180 : 760))
             guard !Task.isCancelled else { return }

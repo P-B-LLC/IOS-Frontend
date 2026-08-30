@@ -19,6 +19,7 @@ final class FoodTrackingStore {
         let after: NutritionAmount
         let beforeMealCount: Int
         let afterMealCount: Int
+        let shouldCelebrate: Bool
     }
 
     private var repository: FoodAPIRepository?
@@ -296,11 +297,9 @@ final class FoodTrackingStore {
                 before: before,
                 after: self.total(on: date),
                 beforeMealCount: beforeMealCount,
-                afterMealCount: self.loggedMealCount(on: date)
+                afterMealCount: self.loggedMealCount(on: date),
+                shouldCelebrate: celebrates
             )
-            if celebrates {
-                RepbaseCelebrations.show(.mealLogged)
-            }
         }
         refreshRecentFoods()
     }
