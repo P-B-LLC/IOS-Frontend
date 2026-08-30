@@ -890,7 +890,7 @@ private struct ProfileSettingsView: View {
                                         symbol: "person.crop.circle"
                                     )
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(RepbaseSettingsRowButtonStyle())
 
                                 Rectangle().fill(timeOfDay.border).frame(height: 1)
 
@@ -903,7 +903,7 @@ private struct ProfileSettingsView: View {
                                         symbol: "link"
                                     )
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(RepbaseSettingsRowButtonStyle())
 
                                 Rectangle().fill(timeOfDay.border).frame(height: 1)
 
@@ -914,7 +914,7 @@ private struct ProfileSettingsView: View {
                                         symbol: "scope"
                                     )
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(RepbaseSettingsRowButtonStyle())
 
                                 Rectangle().fill(timeOfDay.border).frame(height: 1)
 
@@ -925,7 +925,7 @@ private struct ProfileSettingsView: View {
                                         icon: .lifting
                                     )
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(RepbaseSettingsRowButtonStyle())
                             }
                         }
 
@@ -937,7 +937,7 @@ private struct ProfileSettingsView: View {
                                     symbol: "slider.horizontal.3"
                                 )
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(RepbaseSettingsRowButtonStyle())
                         }
 
                         settingsSection("APPEARANCE", timeOfDay: timeOfDay) {
@@ -966,7 +966,7 @@ private struct ProfileSettingsView: View {
                                         symbol: "hand.raised"
                                     )
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(RepbaseSettingsRowButtonStyle())
 
                                 Rectangle().fill(timeOfDay.border).frame(height: 1)
 
@@ -979,7 +979,7 @@ private struct ProfileSettingsView: View {
                                         symbol: "heart.text.square"
                                     )
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(RepbaseSettingsRowButtonStyle())
 
                                 Rectangle().fill(timeOfDay.border).frame(height: 1)
 
@@ -992,7 +992,7 @@ private struct ProfileSettingsView: View {
                                         symbol: "bell"
                                     )
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(RepbaseSettingsRowButtonStyle())
 
                                 Rectangle().fill(timeOfDay.border).frame(height: 1)
 
@@ -1005,7 +1005,7 @@ private struct ProfileSettingsView: View {
                                         symbol: "hand.raised"
                                     )
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(RepbaseSettingsRowButtonStyle())
 
                                 Rectangle().fill(timeOfDay.border).frame(height: 1)
 
@@ -1019,7 +1019,7 @@ private struct ProfileSettingsView: View {
                                         symbol: "gearshape"
                                     )
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(RepbaseSettingsRowButtonStyle())
                             }
                         }
 
@@ -1033,7 +1033,7 @@ private struct ProfileSettingsView: View {
                                     symbol: "fork.knife"
                                 )
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(RepbaseSettingsRowButtonStyle())
                         }
 
                         settingsSection("WORKOUTS", timeOfDay: timeOfDay) {
@@ -1044,7 +1044,7 @@ private struct ProfileSettingsView: View {
                                     symbol: "arrow.clockwise"
                                 )
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(RepbaseSettingsRowButtonStyle())
                         }
 
                         settingsSection("ACCOUNT", timeOfDay: timeOfDay) {
@@ -1066,7 +1066,7 @@ private struct ProfileSettingsView: View {
                                         color: timeOfDay.accent
                                     )
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(RepbaseSettingsRowButtonStyle())
 
                                 Rectangle().fill(timeOfDay.border).frame(height: 1)
 
@@ -1080,7 +1080,7 @@ private struct ProfileSettingsView: View {
                                         color: .red
                                     )
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(RepbaseSettingsRowButtonStyle())
 
                                 Rectangle().fill(timeOfDay.border).frame(height: 1)
 
@@ -1094,7 +1094,7 @@ private struct ProfileSettingsView: View {
                                         color: .red
                                     )
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(RepbaseSettingsRowButtonStyle())
                             }
                             .disabled(authentication.isWorking)
                         }
@@ -1111,7 +1111,7 @@ private struct ProfileSettingsView: View {
                                             symbol: document.symbol
                                         )
                                     }
-                                    .buttonStyle(.plain)
+                                    .buttonStyle(RepbaseSettingsRowButtonStyle())
 
                                     Rectangle().fill(timeOfDay.border).frame(height: 1)
                                 }
@@ -1230,16 +1230,31 @@ private struct ProfileSettingsView: View {
         timeOfDay: HomeTimeOfDay,
         @ViewBuilder content: () -> Content
     ) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 10) {
             Text(title)
                 .font(.community(size: 10, weight: .bold))
                 .tracking(1.25)
                 .foregroundStyle(timeOfDay.accent)
-                .padding(.bottom, 10)
 
-            Rectangle().fill(timeOfDay.border).frame(height: 1)
             content()
-            Rectangle().fill(timeOfDay.border).frame(height: 1)
+                .padding(.horizontal, 14)
+                .background(
+                    Color.repbaseDynamic(
+                        light: Color.white,
+                        dark: Color(hex: 0x131011)
+                    ),
+                    in: RoundedRectangle(cornerRadius: 22, style: .continuous)
+                )
+                .overlay {
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .strokeBorder(
+                            Color.repbaseDynamic(
+                                light: RepbasePalette.espresso.opacity(0.10),
+                                dark: Color(hex: 0x3B2E2B)
+                            ),
+                            lineWidth: 1
+                        )
+                }
         }
     }
 
@@ -1253,7 +1268,14 @@ private struct ProfileSettingsView: View {
             Image(systemName: symbol)
                 .font(.community(size: 17, weight: .semibold))
                 .foregroundStyle(color ?? RepbasePalette.caramel)
-                .frame(width: 28)
+                .frame(width: 42, height: 42)
+                .background(
+                    Color.repbaseDynamic(
+                        light: RepbasePalette.caramel.opacity(0.09),
+                        dark: Color(hex: 0x241B18)
+                    ),
+                    in: RoundedRectangle(cornerRadius: 13, style: .continuous)
+                )
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
@@ -1263,13 +1285,9 @@ private struct ProfileSettingsView: View {
                     .font(.community(.caption))
                     .foregroundStyle(.secondary)
             }
-
             Spacer(minLength: 8)
-            Image(systemName: "arrow.up.right")
-                .font(.community(.caption, weight: .bold))
-                .foregroundStyle(color ?? .secondary)
         }
-        .padding(.vertical, 16)
+        .padding(.vertical, 14)
         .contentShape(Rectangle())
     }
 
@@ -1284,19 +1302,22 @@ private struct ProfileSettingsView: View {
                 size: 21,
                 color: RepbasePalette.caramel
             )
-            .frame(width: 28)
+            .frame(width: 42, height: 42)
+            .background(
+                Color.repbaseDynamic(
+                    light: RepbasePalette.caramel.opacity(0.09),
+                    dark: Color(hex: 0x241B18)
+                ),
+                in: RoundedRectangle(cornerRadius: 13, style: .continuous)
+            )
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(title).font(.community(.headline))
                 Text(detail).font(.community(.caption)).foregroundStyle(.secondary)
             }
-
             Spacer(minLength: 8)
-            Image(systemName: "arrow.up.right")
-                .font(.community(.caption, weight: .bold))
-                .foregroundStyle(.secondary)
         }
-        .padding(.vertical, 16)
+        .padding(.vertical, 14)
         .contentShape(Rectangle())
     }
 

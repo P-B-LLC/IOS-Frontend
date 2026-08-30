@@ -369,28 +369,30 @@ private struct GuidedDayFlow: View {
     private var upNextSection
 : some View {
         if let entry = nextEntry {
-            NavigationLink {
-                PlannerView(showsBackButton: true)
-            } label: {
-                HStack(spacing: 12) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(nextEntryEyebrow(entry))
-                            .font(.community(.caption2, weight: .bold))
-                            .tracking(0.35)
-                            .foregroundStyle(timeOfDay.accent)
-                        Text(entry.title)
-                            .font(.community(.headline))
-                            .foregroundStyle(timeOfDay.primaryText)
-                            .lineLimit(1)
-                    }
-                    Spacer(minLength: 8)
-                    actionLabel("Schedule")
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(nextEntryEyebrow(entry))
+                        .font(.community(.caption2, weight: .bold))
+                        .tracking(0.35)
+                        .foregroundStyle(timeOfDay.accent)
+                    Text(entry.title)
+                        .font(.community(.headline))
+                        .foregroundStyle(timeOfDay.primaryText)
+                        .lineLimit(1)
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-                .contentShape(Rectangle())
+                Spacer(minLength: 8)
+                NavigationLink {
+                    PlannerView(showsBackButton: true)
+                } label: {
+                    RepbaseTonalActionLabel(
+                        title: "Schedule",
+                        systemImage: "calendar.badge.plus"
+                    )
+                }
+                .buttonStyle(RepbaseTonalButtonStyle(tone: .warm))
             }
-            .buttonStyle(.plain)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
         } else {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
@@ -405,9 +407,12 @@ private struct GuidedDayFlow: View {
                 NavigationLink {
                     PlannerView(showsBackButton: true)
                 } label: {
-                    actionLabel("Plan")
+                    RepbaseTonalActionLabel(
+                        title: "Plan",
+                        systemImage: "calendar.badge.plus"
+                    )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(RepbaseTonalButtonStyle(tone: .warm))
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
@@ -439,20 +444,12 @@ private struct GuidedDayFlow: View {
                 NavigationLink {
                     workoutDestination
                 } label: {
-                    HStack(spacing: 7) {
-                        Text(workout == nil ? "Plan" : (activeSession == nil ? "Start" : "Continue"))
-                        Image(systemName: "arrow.right")
-                    }
-                    .font(.community(.subheadline, weight: .bold))
-                    .foregroundStyle(timeOfDay.onPrimaryAction)
-                    .padding(.horizontal, 16)
-                    .frame(minHeight: 44)
-                    .background(
-                        timeOfDay.primaryActionSurface,
-                        in: Capsule()
+                    RepbaseTonalActionLabel(
+                        title: workout == nil ? "Plan" : (activeSession == nil ? "Start" : "Continue"),
+                        systemImage: workout == nil ? "calendar.badge.plus" : "play.fill"
                     )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(RepbaseTonalButtonStyle(tone: .primary))
             }
 
             Text(workoutDetail)
@@ -510,9 +507,12 @@ private struct GuidedDayFlow: View {
                 NavigationLink {
                     FoodTrackingView()
                 } label: {
-                    actionLabel("Log food", color: fuelAccent)
+                    RepbaseTonalActionLabel(
+                        title: "Log food",
+                        systemImage: "fork.knife"
+                    )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(RepbaseTonalButtonStyle(tone: .sage))
             }
 
             HStack(alignment: .firstTextBaseline, spacing: 6) {
@@ -554,28 +554,30 @@ private struct GuidedDayFlow: View {
     }
 
     private func finishSection(number: Int) -> some View {
-        NavigationLink {
-            PlannerView(showsBackButton: true)
-        } label: {
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 3) {
-                    stageLabel(stageNumber(number, .finish), color: timeOfDay.secondaryText)
-                    Text(taskSummary)
-                        .font(.community(.headline))
-                        .foregroundStyle(timeOfDay.primaryText)
-                    Text(taskDetail)
-                        .font(.community(.caption))
-                        .foregroundStyle(timeOfDay.secondaryText)
-                        .lineLimit(1)
-                }
-                Spacer(minLength: 8)
-                actionLabel("Open")
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                stageLabel(stageNumber(number, .finish), color: timeOfDay.secondaryText)
+                Text(taskSummary)
+                    .font(.community(.headline))
+                    .foregroundStyle(timeOfDay.primaryText)
+                Text(taskDetail)
+                    .font(.community(.caption))
+                    .foregroundStyle(timeOfDay.secondaryText)
+                    .lineLimit(1)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-            .contentShape(Rectangle())
+            Spacer(minLength: 8)
+            NavigationLink {
+                PlannerView(showsBackButton: true)
+            } label: {
+                RepbaseTonalActionLabel(
+                    title: "Open",
+                    systemImage: "list.bullet.rectangle"
+                )
+            }
+            .buttonStyle(RepbaseTonalButtonStyle(tone: .outline))
         }
-        .buttonStyle(.plain)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
     }
 
     private var momentumSection: some View {
@@ -628,15 +630,6 @@ private struct GuidedDayFlow: View {
             .font(.community(.caption2, weight: .bold))
             .tracking(0.45)
             .foregroundStyle(color)
-    }
-
-    private func actionLabel(_ text: String, color: Color? = nil) -> some View {
-        HStack(spacing: 4) {
-            Text(text)
-            Image(systemName: "arrow.right")
-        }
-        .font(.community(.caption, weight: .semibold))
-        .foregroundStyle(color ?? timeOfDay.accent)
     }
 
     @ViewBuilder

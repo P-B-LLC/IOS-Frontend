@@ -225,3 +225,126 @@ struct RepbasePrimaryButtonStyle: ButtonStyle {
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
 }
+
+/// Compact actions that explain their destination with color and a leading
+/// symbol instead of a generic arrow. These are intentionally small enough to
+/// sit inside information-heavy rows without turning the whole row into a
+/// floating card.
+enum RepbaseTonalActionTone {
+    case warm
+    case primary
+    case sage
+    case outline
+
+    func background(timeOfDay: HomeTimeOfDay) -> Color {
+        switch self {
+        case .warm:
+            return .repbaseDynamic(
+                light: Color(hex: 0xF0D6C4),
+                dark: Color(hex: 0x3B2B25)
+            )
+        case .primary:
+            return timeOfDay.primaryActionSurface
+        case .sage:
+            return .repbaseDynamic(
+                light: Color(hex: 0xD6E8DE),
+                dark: Color(hex: 0x22352D)
+            )
+        case .outline:
+            return timeOfDay.surfaceRaised
+        }
+    }
+
+    func foreground(timeOfDay: HomeTimeOfDay) -> Color {
+        switch self {
+        case .warm, .outline:
+            return .repbaseDynamic(
+                light: Color(hex: 0x9E4F33),
+                dark: Color(hex: 0xF0AF8C)
+            )
+        case .primary:
+            return timeOfDay.onPrimaryAction
+        case .sage:
+            return .repbaseDynamic(
+                light: Color(hex: 0x386E59),
+                dark: Color(hex: 0xA8D9C2)
+            )
+        }
+    }
+
+    func border(timeOfDay: HomeTimeOfDay) -> Color {
+        switch self {
+        case .outline:
+            return .repbaseDynamic(
+                light: Color(hex: 0xE3D6D1),
+                dark: Color.white.opacity(0.14)
+            )
+        default:
+            return .clear
+        }
+    }
+}
+
+struct RepbaseTonalActionLabel: View {
+    let title: String
+    let systemImage: String
+
+    var body: some View {
+        Label(title, systemImage: systemImage)
+            .labelStyle(.titleAndIcon)
+    }
+}
+
+/// Mirrors the approved Figma press: 0.955 scale and a two-point depression,
+/// followed by a light spring overshoot on release. Reduce Motion keeps the
+/// tonal state change while removing movement.
+struct RepbaseTonalButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.homeTimeOfDay) private var timeOfDay
+
+    let tone: RepbaseTonalActionTone
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.community(.caption, weight: .bold))
+            .foregroundStyle(tone.foreground(timeOfDay: timeOfDay))
+            .padding(.horizontal, 14)
+            .frame(minHeight: 44)
+            .background(
+                tone.background(timeOfDay: timeOfDay),
+                in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(tone.border(timeOfDay: timeOfDay), lineWidth: 1)
+            }
+            .opacity(isEnabled ? 1 : 0.42)
+            .scaleEffect(reduceMotion ? 1 : (configuration.isPressed ? 0.955 : 1))
+            .offset(y: reduceMotion ? 0 : (configuration.isPressed ? 2 : 0))
+            .animation(
+                reduceMotion
+                    ? .linear(duration: 0.01)
+                    : .interpolatingSpring(mass: 0.55, stiffness: 330, damping: 18, initialVelocity: 0),
+                value: configuration.isPressed
+            )
+    }
+}
+
+/// Arrow-free settings rows still need unmistakable touch feedback. The
+/// three-point nudge and opacity dip are the approved Figma interaction.
+struct RepbaseSettingsRowButtonStyle: ButtonStyle {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .opacity(configuration.isPressed ? 0.76 : 1)
+            .offset(x: reduceMotion ? 0 : (configuration.isPressed ? 3 : 0))
+            .animation(
+                reduceMotion
+                    ? .linear(duration: 0.01)
+                    : .interpolatingSpring(mass: 0.62, stiffness: 300, damping: 22, initialVelocity: 0),
+                value: configuration.isPressed
+            )
+    }
+}
