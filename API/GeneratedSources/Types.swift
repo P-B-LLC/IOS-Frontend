@@ -3865,7 +3865,7 @@ public enum Components {
             /// - Remark: Generated from `#/components/schemas/Exercise/muscle_group`.
             public var muscleGroup: Swift.String?
             /// - Remark: Generated from `#/components/schemas/Exercise/created_by`.
-            public var createdBy: Swift.Int
+            public var createdBy: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/Exercise/created_at`.
             public var createdAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/Exercise/updated_at`.
@@ -3883,7 +3883,7 @@ public enum Components {
                 id: Swift.Int,
                 name: Swift.String,
                 muscleGroup: Swift.String? = nil,
-                createdBy: Swift.Int,
+                createdBy: Swift.Int? = nil,
                 createdAt: Foundation.Date,
                 updatedAt: Foundation.Date
             ) {
@@ -4500,7 +4500,7 @@ public enum Components {
             /// - Remark: Generated from `#/components/schemas/Gym/member_count`.
             public var memberCount: Swift.Int
             /// - Remark: Generated from `#/components/schemas/Gym/created_by`.
-            public var createdBy: Swift.Int
+            public var createdBy: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/Gym/created_at`.
             public var createdAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/Gym/updated_at`.
@@ -4522,7 +4522,7 @@ public enum Components {
                 city: Swift.String? = nil,
                 country: Swift.String? = nil,
                 memberCount: Swift.Int,
-                createdBy: Swift.Int,
+                createdBy: Swift.Int? = nil,
                 createdAt: Foundation.Date,
                 updatedAt: Foundation.Date
             ) {

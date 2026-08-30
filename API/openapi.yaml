@@ -5180,6 +5180,7 @@ components:
         created_by:
           type: integer
           readOnly: true
+          nullable: true
         created_at:
           type: string
           format: date-time
@@ -5607,6 +5608,7 @@ components:
         created_by:
           type: integer
           readOnly: true
+          nullable: true
         created_at:
           type: string
           format: date-time
