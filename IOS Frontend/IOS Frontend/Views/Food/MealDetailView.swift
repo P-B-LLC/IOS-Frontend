@@ -15,6 +15,17 @@ struct MealDetailView: View {
     let date: Date
     let mealID: FoodMeal.ID
 
+    /// Which slot this is, counting from one, as the header labels it.
+    ///
+    /// Positional: a meal has no number of its own, it is the third thing in
+    /// the day. Nil if the day has not loaded yet, which only leaves the
+    /// saved-meal library asking the way it used to.
+    private var mealNumber: Int? {
+        store.meals(on: date)
+            .firstIndex { $0.id == mealID }
+            .map { $0 + 1 }
+    }
+
     @State private var isAddingFood = false
     @State private var isEnteringFood = false
     @State private var isShowingSavedMeals = false
@@ -69,7 +80,17 @@ struct MealDetailView: View {
             }
         }
         .fullScreenCover(isPresented: $isShowingSavedMeals) {
-            NavigationStack { SavedMealsView(referenceDate: date) }
+            NavigationStack {
+                // The day and the slot are both already settled by being
+                // here, so the library applies straight into them rather
+                // than asking again.
+                SavedMealsView(
+                    referenceDate: date,
+                    destination: mealNumber.map {
+                        SavedMealsView.Destination(date: date, mealNumber: $0)
+                    }
+                )
+            }
         }
         .fullScreenCover(item: $editingFood) { food in
             NavigationStack {

@@ -14,9 +14,43 @@ struct SavedMealsView: View {
 
     let referenceDate: Date
 
+    /// The day and meal a choice goes to, when the caller already knows.
+    ///
+    /// Opened from one meal on one day -- Meal 5, today -- the picker has
+    /// nothing left to ask: both of its questions were answered by the two
+    /// screens still open behind it. Choosing the meal is the whole
+    /// instruction, so it is carried out rather than confirmed.
+    ///
+    /// Nil when the library is opened on its own, from the food page or the
+    /// quick actions, where the day and the slot really are unknown.
+    var destination: Destination?
+
+    nonisolated struct Destination: Equatable {
+        let date: Date
+        /// One-based, matching the "Meal 3" the slot is labelled with.
+        let mealNumber: Int
+    }
+
     @State private var isCreatingMeal = false
     @State private var mealToEdit: SavedFoodMeal?
     @State private var mealToApply: SavedFoodMeal?
+
+    /// Put `savedMeal` where the caller said, or ask when nobody said.
+    private func apply(_ savedMeal: SavedFoodMeal) {
+        guard let destination else {
+            mealToApply = savedMeal
+            return
+        }
+        store.applyReusableMeal(
+            savedMeal,
+            to: [destination.date],
+            mealNumber: destination.mealNumber
+        )
+        // Straight back to the meal, which is where the food now is. That
+        // arrival is the confirmation; a sheet saying it happened would be
+        // one more thing to dismiss on the way to seeing it.
+        dismiss()
+    }
 
     var body: some View {
         Group {
@@ -32,8 +66,13 @@ struct SavedMealsView: View {
                         )
                         VStack(spacing: 0) {
                             ForEach(Array(store.savedMeals.enumerated()), id: \.element.id) { index, savedMeal in
-                            SavedMealRow(savedMeal: savedMeal) {
-                                mealToApply = savedMeal
+                            SavedMealRow(
+                                savedMeal: savedMeal,
+                                applyTitle: destination == nil
+                                    ? "Add to days"
+                                    : "Add to this meal"
+                            ) {
+                                apply(savedMeal)
                             } onEdit: {
                                 mealToEdit = savedMeal
                             }
@@ -118,6 +157,9 @@ struct SavedMealsView: View {
 
 private struct SavedMealRow: View {
     let savedMeal: SavedFoodMeal
+    /// "Add to days" when the day is still a question, "Add to this meal"
+    /// when the caller already answered it.
+    var applyTitle = "Add to days"
     let onUse: () -> Void
     let onEdit: () -> Void
 
@@ -138,7 +180,7 @@ private struct SavedMealRow: View {
             }
 
             HStack(spacing: 18) {
-                Button("Add to days", systemImage: "calendar.badge.plus", action: onUse)
+                Button(applyTitle, systemImage: "calendar.badge.plus", action: onUse)
                 Button("Edit", systemImage: "pencil", action: onEdit)
             }
             .font(.community(.caption, weight: .semibold))
