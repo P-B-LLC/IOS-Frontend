@@ -75,6 +75,10 @@ actor WorkoutAPIRepository {
                 }
                 .map { relation in
                     Exercise(
+                        // The row joining this exercise into this workout.
+                        // Two sets of the same movement are two rows sharing
+                        // one exercise id, so that id cannot tell them apart.
+                        id: .stable(forServerID: relation.id),
                         serverID: relation.exercise,
                         workoutExerciseID: relation.id,
                         serverName: relation.exerciseName,
@@ -85,6 +89,10 @@ actor WorkoutAPIRepository {
 
             result[day, default: []].append(
                 Workout(
+                    // The schedule row, not the template: the same workout
+                    // planned on Monday and Wednesday is two of these, and
+                    // keying on the template would make them one.
+                    id: .stable(forServerID: schedule.id),
                     serverID: template.id,
                     scheduleID: schedule.id,
                     scheduledDate: schedule.scheduledDate,
@@ -127,7 +135,11 @@ actor WorkoutAPIRepository {
                 .sorted { ($0.order ?? 1, $0.id) < ($1.order ?? 1, $1.id) }
                 .map { relation in
                     Exercise(
+                        id: .stable(forServerID: relation.id),
                         serverID: relation.exercise,
+                        // Was not carried here, which left this copy unable
+                        // to say which row of the workout it is.
+                        workoutExerciseID: relation.id,
                         serverName: relation.exerciseName,
                         name: relation.exerciseName,
                         sets: safeSetCount(relation.targetSets)
@@ -596,7 +608,7 @@ actor WorkoutAPIRepository {
         }
 
         return ActiveWorkoutSession(
-            id: UUID(),
+            id: .stable(forServerID: started.id),
             serverID: started.id,
             day: day,
             workoutID: workout.id,

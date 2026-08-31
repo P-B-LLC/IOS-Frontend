@@ -382,6 +382,9 @@ actor FoodAPIRepository {
 
     private static func entry(from payload: Components.Schemas.FoodEntry) -> FoodEntry {
         FoodEntry(
+            // Held by the food editor as a sheet item: a new id mid-edit
+            // closes the sheet out from under whoever is typing in it.
+            id: .stable(forServerID: payload.id),
             serverID: payload.id,
             name: payload.name,
             servings: FoodDecimal.value(payload.servings),
@@ -406,6 +409,9 @@ actor FoodAPIRepository {
             name: payload.name,
             ingredients: payload.ingredients.map { ingredient in
                 FoodEntry(
+                    // The saved-meal ingredient row, so editing a recipe
+                    // does not renumber the lines under the cursor.
+                    id: .stable(forServerID: ingredient.id),
                     serverID: ingredient.id,
                     name: ingredient.name,
                     servings: FoodDecimal.value(ingredient.servings),

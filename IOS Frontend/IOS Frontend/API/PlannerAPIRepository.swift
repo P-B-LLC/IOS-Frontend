@@ -214,6 +214,7 @@ actor PlannerAPIRepository {
         from payload: Components.Schemas.PlannerEntry
     ) -> PlannerEntry {
         PlannerEntry(
+            id: .stable(forServerID: payload.id),
             serverID: payload.id,
             kind: payload.kind.flatMap { PlannerKind(rawValue: $0.value1.rawValue) } ?? .task,
             title: payload.title,

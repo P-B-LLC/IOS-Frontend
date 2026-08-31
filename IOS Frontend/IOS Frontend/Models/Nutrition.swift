@@ -83,34 +83,6 @@ nonisolated struct FoodEntry: Identifiable, Equatable, Hashable, Codable, Sendab
     }
 }
 
-extension UUID {
-    /// The same id every time for a given server row.
-    ///
-    /// Rows decoded from the server used to mint a fresh UUID on each read,
-    /// so refetching a day renamed every meal in it. Anything holding an id
-    /// across that refetch lost what it was pointing at -- the open meal
-    /// page most of all, which drew "Meal Not Found" over a meal that was
-    /// still sitting there. Applying a saved meal refetches the day, which
-    /// is how a successful action ended on an error screen.
-    ///
-    /// Derived rather than random: the same server id has to produce the
-    /// same UUID on this launch and the next. The value is only ever
-    /// compared, never parsed, so packing the integer into the low eight
-    /// bytes is enough.
-    static func stable(forServerID serverID: Int) -> UUID {
-        var bytes = [UInt8](repeating: 0, count: 16)
-        withUnsafeBytes(of: UInt64(bitPattern: Int64(serverID)).bigEndian) { raw in
-            bytes.replaceSubrange(8..<16, with: raw)
-        }
-        return UUID(uuid: (
-            bytes[0], bytes[1], bytes[2], bytes[3],
-            bytes[4], bytes[5], bytes[6], bytes[7],
-            bytes[8], bytes[9], bytes[10], bytes[11],
-            bytes[12], bytes[13], bytes[14], bytes[15]
-        ))
-    }
-}
-
 nonisolated struct FoodMeal: Identifiable, Equatable, Hashable, Codable, Sendable {
     let id: UUID
     /// The backend identifier. A meal only ever comes into being on the
