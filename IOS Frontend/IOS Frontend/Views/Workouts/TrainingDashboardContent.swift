@@ -11,8 +11,15 @@ import SwiftUI
 struct TrainingDashboardContent: View {
     @Environment(WorkoutStore.self) private var store
     @Environment(CycleStore.self) private var cycles
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var isConfirmingClear = false
+    @State private var displayedCompletedThisWeek: Int?
+    @State private var displayedTotalWorkouts: Int?
+    @State private var hiddenCompletedDay: Weekday?
+    @State private var rewardIsVisible = false
+    @State private var rewardToast: String?
+    @State private var rewardTask: Task<Void, Never>?
 
     private var phase: WorkoutVisualPhase {
         store.activeSession == nil ? .prepare : .focus
@@ -22,6 +29,12 @@ struct TrainingDashboardContent: View {
     /// the account had ever recorded, which is why the dashboard paged the
     /// whole history each time it appeared.
     private var metrics: TrainingStats { store.trainingStats }
+    private var completedThisWeek: Int {
+        displayedCompletedThisWeek ?? metrics.completedThisWeek
+    }
+    private var totalWorkouts: Int {
+        displayedTotalWorkouts ?? metrics.totalWorkouts
+    }
 
     var body: some View {
         ScrollView {
@@ -47,6 +60,24 @@ struct TrainingDashboardContent: View {
             .padding(.bottom, RepbaseDesign.bottomBarClearance)
         }
         .minimizesBottomBarOnScroll()
+        .overlay(alignment: .bottom) {
+            if let rewardToast {
+                TrainingRewardToast(message: rewardToast)
+                    .padding(.horizontal, RepbaseDesign.pageInset)
+                    .padding(.bottom, 14)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .onAppear(perform: playPendingReward)
+        .onDisappear {
+            rewardTask?.cancel()
+            rewardTask = nil
+            rewardToast = nil
+            rewardIsVisible = false
+            displayedCompletedThisWeek = nil
+            displayedTotalWorkouts = nil
+            hiddenCompletedDay = nil
+        }
     }
 
     private var workoutPlanCard: some View {
@@ -68,7 +99,8 @@ struct TrainingDashboardContent: View {
                             day: day,
                             workouts: store.workouts(on: day),
                             isToday: store.today == day,
-                            isSessionActive: store.activeSession?.day == day
+                            isSessionActive: store.activeSession?.day == day,
+                            isCompleted: isCompleted(day) && hiddenCompletedDay != day
                         )
                     }
                     .buttonStyle(.plain)
@@ -191,15 +223,16 @@ struct TrainingDashboardContent: View {
                     eyebrow: "TODAY",
                     title: store.workout(on: day)?.name ?? "Plan today’s workout",
                     detail: focusDescription(for: day),
-                    completed: metrics.completedThisWeek,
+                    completed: completedThisWeek,
                     goal: metrics.weeklyGoal,
                     workoutType: store.workout(on: day)?.type ?? .lifting,
-                    isDayComplete: store.workout(on: day).map {
+                    isDayComplete: hiddenCompletedDay != day && store.workout(on: day).map {
                         store.isCompleted(
                             workoutName: $0.name,
                             on: store.workoutDate(for: day)
                         )
-                    } ?? false
+                    } ?? false,
+                    celebratesCompletion: rewardIsVisible
                 )
             }
             .buttonStyle(.plain)
@@ -209,8 +242,10 @@ struct TrainingDashboardContent: View {
     private var momentumSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             VStack(alignment: .leading, spacing: 3) {
-                Text("Momentum").font(.community(.title2, weight: .bold))
-                Text("Your consistency at a glance")
+                Text(rewardIsVisible ? "Momentum gained." : "Momentum")
+                    .font(.community(.title2, weight: .bold))
+                    .contentTransition(.opacity)
+                Text(rewardIsVisible ? "That session moved the whole week forward." : "Your consistency at a glance")
                     .font(.community(.footnote))
                     .foregroundStyle(phase.secondaryText)
             }
@@ -231,7 +266,7 @@ struct TrainingDashboardContent: View {
         HStack(spacing: 0) {
             metric(
                 eyebrow: "TOTAL WORKOUTS",
-                value: "\(metrics.totalWorkouts)",
+                value: "\(totalWorkouts)",
                 detail: metrics.monthDetail,
                 color: RepbaseDesign.warning
             )
@@ -340,6 +375,50 @@ struct TrainingDashboardContent: View {
         .padding(.vertical, 14)
     }
 
+    private func isCompleted(_ day: Weekday) -> Bool {
+        guard let workout = store.workout(on: day) else { return false }
+        return store.isCompleted(
+            workoutName: workout.name,
+            on: store.workoutDate(for: day)
+        )
+    }
+
+    private func playPendingReward() {
+        guard rewardTask == nil,
+              let reward = store.consumeTrainingDashboardReward() else { return }
+
+        displayedCompletedThisWeek = reward.previousCompletedThisWeek
+        displayedTotalWorkouts = reward.previousTotalWorkouts
+        hiddenCompletedDay = reward.day
+        rewardIsVisible = false
+
+        rewardTask = Task { @MainActor in
+            if !reduceMotion {
+                try? await Task.sleep(for: .milliseconds(260))
+            }
+            guard !Task.isCancelled else { return }
+
+            withAnimation(reduceMotion ? .easeOut(duration: 0.2) : .spring(response: 0.62, dampingFraction: 0.78)) {
+                displayedCompletedThisWeek = reward.completedThisWeek
+                displayedTotalWorkouts = reward.totalWorkouts
+                hiddenCompletedDay = nil
+                rewardIsVisible = true
+                rewardToast = "\(reward.workoutName) complete · goal moved forward"
+            }
+            RepbaseCelebrations.show(.workoutLogged)
+
+            try? await Task.sleep(for: .seconds(2.8))
+            guard !Task.isCancelled else { return }
+            withAnimation(.easeOut(duration: 0.24)) {
+                rewardToast = nil
+                rewardIsVisible = false
+            }
+            displayedCompletedThisWeek = nil
+            displayedTotalWorkouts = nil
+            rewardTask = nil
+        }
+    }
+
     private func errorCard(_ message: String) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Label(message, systemImage: "exclamationmark.triangle.fill")
@@ -368,6 +447,7 @@ private struct DashboardDayItem: View {
     let workouts: [Workout]
     let isToday: Bool
     let isSessionActive: Bool
+    let isCompleted: Bool
 
     private var isPlanned: Bool { !workouts.isEmpty }
 
@@ -379,12 +459,15 @@ private struct DashboardDayItem: View {
 
             ZStack {
                 Circle()
-                    .fill(isToday ? RepbaseDesign.warning : isPlanned ? RepbaseDesign.ink : RepbasePalette.oatmeal)
-                Image(systemName: isSessionActive ? "bolt.fill" : isPlanned ? "minus" : "plus")
+                    .fill(dayMarkerColor)
+                Image(systemName: dayMarkerSymbol)
                     .font(.community(size: 16, weight: .bold))
-                    .foregroundStyle(isPlanned || isSessionActive ? RepbaseDesign.onInk : Color.secondary)
+                    .foregroundStyle(isPlanned || isSessionActive || isCompleted ? RepbaseDesign.onInk : Color.secondary)
+                    .contentTransition(.symbolEffect(.replace))
             }
             .frame(width: 34, height: 34)
+            .scaleEffect(isCompleted ? 1.06 : 1)
+            .animation(.spring(response: 0.48, dampingFraction: 0.68), value: isCompleted)
             .overlay(alignment: .topTrailing) {
                 if workouts.count > 1 {
                     Text("\(workouts.count)")
@@ -419,7 +502,22 @@ private struct DashboardDayItem: View {
 
     private var accessibilityLabel: String {
         guard isPlanned else { return "\(day.fullName), add workout" }
-        return "\(day.fullName), \(workouts.map(\.name).joined(separator: ", "))"
+        let completion = isCompleted ? ", completed" : ""
+        return "\(day.fullName), \(workouts.map(\.name).joined(separator: ", "))\(completion)"
+    }
+
+    private var dayMarkerSymbol: String {
+        if isCompleted { return "checkmark" }
+        if isSessionActive { return "bolt.fill" }
+        return isPlanned ? "minus" : "plus"
+    }
+
+    private var dayMarkerColor: Color {
+        if isCompleted {
+            return .repbaseDynamic(light: Color(hex: 0x5F806F), dark: Color(hex: 0x7BA890))
+        }
+        if isToday { return RepbaseDesign.warning }
+        return isPlanned ? RepbaseDesign.ink : RepbasePalette.oatmeal
     }
 }
 
@@ -433,6 +531,10 @@ private struct WorkoutDashboardHero: View {
     /// Whether the day this card points at has already been trained, so the
     /// pill can say what tapping it does rather than always saying Start.
     var isDayComplete = false
+    var celebratesCompletion = false
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var sheenTravel: CGFloat = -1.2
 
     private var remaining: Int { max(goal - completed, 0) }
 
@@ -479,7 +581,18 @@ private struct WorkoutDashboardHero: View {
             }
 
             HStack(spacing: 14) {
-                WorkoutInkArtwork(type: workoutType, size: 68)
+                Image(systemName: "dumbbell.fill")
+                    .font(.system(size: 30, weight: .medium))
+                    .symbolRenderingMode(.monochrome)
+                    .foregroundStyle(RepbaseDesign.accent)
+                    .frame(width: 68, height: 68)
+                    .background(
+                        Color.repbaseDynamic(
+                            light: Color.white.opacity(0.78),
+                            dark: Color.white.opacity(0.08)
+                        ),
+                        in: RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    )
 
                 VStack(alignment: .leading, spacing: 5) {
                     Text(workoutTypePrompt)
@@ -494,7 +607,35 @@ private struct WorkoutDashboardHero: View {
                     .foregroundStyle(RepbaseDesign.accent)
             }
             .padding(14)
-            .background(RepbaseDesign.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 20))
+            .background(
+                LinearGradient(
+                    colors: celebratesCompletion
+                        ? [
+                            Color.repbaseDynamic(light: Color(hex: 0xE5F1EA), dark: Color(hex: 0x213128)),
+                            Color.repbaseDynamic(light: Color(hex: 0xF4E5DA), dark: Color(hex: 0x38251F))
+                        ]
+                        : [RepbaseDesign.accent.opacity(0.10), RepbaseDesign.accent.opacity(0.10)],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                ),
+                in: RoundedRectangle(cornerRadius: 20, style: .continuous)
+            )
+            .overlay {
+                if celebratesCompletion && !reduceMotion {
+                    GeometryReader { geometry in
+                        LinearGradient(
+                            colors: [.clear, Color.white.opacity(0.40), .clear],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                        .frame(width: geometry.size.width * 0.42)
+                        .rotationEffect(.degrees(-14))
+                        .offset(x: geometry.size.width * sheenTravel)
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    .allowsHitTesting(false)
+                }
+            }
 
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
@@ -518,17 +659,62 @@ private struct WorkoutDashboardHero: View {
                             in: Capsule()
                         )
                 }
-                ProgressView(value: progress).tint(RepbaseDesign.warning)
+                ProgressView(value: progress)
+                    .tint(celebratesCompletion ? RepbasePalette.sage : RepbaseDesign.warning)
+                    .animation(.spring(response: 0.72, dampingFraction: 0.82), value: progress)
             }
             .padding(14)
             .background(RepbasePalette.oatmeal, in: RoundedRectangle(cornerRadius: 17, style: .continuous))
         }
         .padding(18)
         .dashboardSurface(radius: 24)
+        .scaleEffect(celebratesCompletion && !reduceMotion ? 1.008 : 1)
+        .animation(.spring(response: 0.55, dampingFraction: 0.76), value: celebratesCompletion)
+        .onChange(of: celebratesCompletion) { _, isCelebrating in
+            guard isCelebrating, !reduceMotion else { return }
+            sheenTravel = -1.2
+            withAnimation(.easeInOut(duration: 0.72)) {
+                sheenTravel = 2.5
+            }
+        }
     }
 
     private var workoutTypePrompt: String {
         workoutType.sessionTitle
+    }
+}
+
+private struct TrainingRewardToast: View {
+    let message: String
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "checkmark.seal.fill")
+                .foregroundStyle(
+                    Color.repbaseDynamic(light: Color(hex: 0x4E7461), dark: Color(hex: 0x9AC4AB))
+                )
+            Text(message)
+                .font(.community(.footnote, weight: .semibold))
+                .foregroundStyle(
+                    Color.repbaseDynamic(light: RepbasePalette.espresso, dark: Color.white)
+                )
+                .lineLimit(2)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 15)
+        .frame(minHeight: 48)
+        .background(
+            Color.repbaseDynamic(light: Color.white, dark: Color(hex: 0x252220)),
+            in: Capsule()
+        )
+        .overlay {
+            Capsule().strokeBorder(
+                Color.repbaseDynamic(light: Color.black.opacity(0.08), dark: Color.white.opacity(0.13)),
+                lineWidth: 1
+            )
+        }
+        .shadow(color: Color.black.opacity(0.18), radius: 18, x: 0, y: 8)
+        .accessibilityAddTraits(.isStaticText)
     }
 }
 

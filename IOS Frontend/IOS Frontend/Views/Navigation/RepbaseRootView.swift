@@ -306,9 +306,17 @@ struct RepbaseBottomNavigation: View {
     /// the app.
     private func itemLabel(_ item: RepbaseTab, isSelected: Bool) -> some View {
         VStack(spacing: isMinimized ? 3 : 4) {
-            Image(item.iconAsset)
-                .resizable()
-                .scaledToFit()
+            Group {
+                if item == .training {
+                    Image(systemName: "dumbbell.fill")
+                        .font(.system(size: isMinimized ? 18 : 20, weight: .medium))
+                        .symbolRenderingMode(.monochrome)
+                } else {
+                    Image(item.iconAsset)
+                        .resizable()
+                        .scaledToFit()
+                }
+            }
                 .foregroundStyle(isSelected ? timeOfDay.accent : timeOfDay.secondaryText)
                 .frame(width: isMinimized ? 21 : 24, height: isMinimized ? 21 : 24)
 

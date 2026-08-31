@@ -8,6 +8,19 @@
 import Foundation
 import Observation
 
+/// The small amount of before/after state the Training dashboard needs to
+/// replay a finished workout as a visible accomplishment when the user comes
+/// back to it. The server still owns every number; this only preserves the
+/// previous values long enough to animate to the refreshed response.
+struct TrainingDashboardReward {
+    let workoutName: String
+    let day: Weekday
+    let previousCompletedThisWeek: Int
+    let completedThisWeek: Int
+    let previousTotalWorkouts: Int
+    let totalWorkouts: Int
+}
+
 @Observable
 final class WorkoutStore {
     private var repository: WorkoutAPIRepository?
@@ -85,6 +98,7 @@ final class WorkoutStore {
     /// is why the history was paged in full on every visit to the dashboard.
     private(set) var trainingStats = TrainingStats.empty
     private(set) var isLoadingDashboardSessions = false
+    private(set) var pendingTrainingDashboardReward: TrainingDashboardReward?
 
     // MARK: - Cardio finisher
     //
@@ -153,6 +167,7 @@ final class WorkoutStore {
         isLoadingPostableSessions = false
         dashboardSessions = []
         isLoadingDashboardSessions = false
+        pendingTrainingDashboardReward = nil
         cardioStartedAt = nil
         cardioMachine = nil
         cardioSessionID = nil
@@ -839,6 +854,7 @@ final class WorkoutStore {
         persistenceError = nil
         defer { isSaving = false }
         do {
+            let statsBeforeCompletion = trainingStats
             // Upload the track before ending so the session's distance and
             // pace are already computed when the completion summary appears.
             let recorded = routeTracker.stopTracking()
@@ -879,6 +895,17 @@ final class WorkoutStore {
                 dashboardSessions = refreshed
             }
 
+            if session.loggedSetCount > 0 {
+                pendingTrainingDashboardReward = TrainingDashboardReward(
+                    workoutName: session.workoutName,
+                    day: session.day,
+                    previousCompletedThisWeek: statsBeforeCompletion.completedThisWeek,
+                    completedThisWeek: trainingStats.completedThisWeek,
+                    previousTotalWorkouts: statsBeforeCompletion.totalWorkouts,
+                    totalWorkouts: trainingStats.totalWorkouts
+                )
+            }
+
             // Load what the summary needs. A failure here costs only the
             // chart or the record list, so the finished workout is still
             // reported as saved either way.
@@ -904,12 +931,19 @@ final class WorkoutStore {
                 liftProgress = progress
             }
 
-            await RepbaseCelebrations.show(.workoutLogged)
             return session.loggedSetCount
         } catch {
             persistenceError = error.userFacingMessage
             return nil
         }
+    }
+
+    /// Hands a completion reward to Training exactly once. Waiting for the
+    /// dashboard to consume it prevents confetti and progress motion from
+    /// playing underneath the completion screen where nobody can see them.
+    func consumeTrainingDashboardReward() -> TrainingDashboardReward? {
+        defer { pendingTrainingDashboardReward = nil }
+        return pendingTrainingDashboardReward
     }
 
     func discardSession(on day: Weekday) async {
