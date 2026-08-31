@@ -49,3 +49,11 @@ jobs:
             git diff --stat -- API/GeneratedSources
             exit 1
           fi
+
+      # Models carrying a client-side UUID must be given one when decoded,
+      # not handed a fresh one. A refetch otherwise renames every row in a
+      # collection, and whatever was holding an id loses what it pointed at.
+      # That shipped as "Meal Not Found" over a meal that was still there,
+      # and as flicker everywhere else it happened.
+      - name: Decoded models have stable ids
+        run: python3 Scripts/check-stable-ids.py
