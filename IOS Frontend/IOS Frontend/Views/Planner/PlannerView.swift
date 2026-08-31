@@ -13,6 +13,7 @@ struct PlannerView: View {
     @Environment(WorkoutStore.self) private var workoutStore
     @Environment(CycleStore.self) private var cycleStore
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// Set when this was pushed rather than opened as its own tab. The page
     /// hides the navigation bar, which on a pushed copy removed the only way
@@ -25,6 +26,12 @@ struct PlannerView: View {
     /// tap away when the user wants a tighter planning view.
     @State private var isMonthShown = true
     @State private var openingDay: Weekday?
+    @State private var handledCompletionID: UUID?
+    @State private var completedEntryID: PlannerEntry.ID?
+    @State private var clearedDate: String?
+    @State private var completionPulse = false
+    @State private var completionMessage: String?
+    @State private var feedbackTask: Task<Void, Never>?
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
@@ -60,7 +67,10 @@ struct PlannerView: View {
                     }
 
                     if isMonthShown {
-                        PlannerMonthCalendar {
+                        PlannerMonthCalendar(
+                            clearedDate: clearedDate,
+                            completionPulse: completionPulse
+                        ) {
                             withAnimation(.easeOut(duration: 0.2)) { isMonthShown = false }
                         }
                         .transition(.opacity.combined(with: .move(edge: .top)))
@@ -94,6 +104,13 @@ struct PlannerView: View {
             .minimizesBottomBarOnScroll()
             .toolbar(.hidden, for: .navigationBar)
             .homeTimeScreen(timeOfDay)
+            .overlay(alignment: .top) {
+                if let completionMessage {
+                    completionToast(completionMessage, timeOfDay: timeOfDay)
+                        .padding(.top, 12)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
+            }
             .overlay {
                 if store.isLoading {
                     ProgressView()
@@ -116,6 +133,10 @@ struct PlannerView: View {
         // Selecting another day can only narrow what is on screen; a filter
         // left over from yesterday would read as an empty day.
         .onChange(of: store.selectedDate) { categoryFilter = nil }
+        .onChange(of: store.latestCompletionEvent) { _, event in
+            handleCompletion(event)
+        }
+        .onDisappear { feedbackTask?.cancel() }
     }
 
     // MARK: - Adding
@@ -254,7 +275,9 @@ struct PlannerView: View {
             if categoryFilter == nil {
                 PlannerDaySchedule(
                     onSelect: { editor = .edit($0) },
-                    onOpenWorkout: { openingDay = $0 }
+                    onOpenWorkout: { openingDay = $0 },
+                    recentlyCompletedEntryID: completedEntryID,
+                    dayIsCleared: clearedDate == PlannerStore.dateString(store.selectedDate)
                 )
             } else {
                 filteredList(timeOfDay: timeOfDay)
@@ -283,6 +306,79 @@ struct PlannerView: View {
         .padding(.vertical, 12)
         .overlay(alignment: .top) { Divider() }
         .overlay(alignment: .bottom) { Divider() }
+        .contentTransition(.numericText())
+        .animation(.snappy(duration: 0.38), value: counts.done)
+        .overlay(alignment: .bottomLeading) {
+            if clearedDate == PlannerStore.dateString(store.selectedDate) {
+                HStack(spacing: 6) {
+                    Image(systemName: "checkmark.seal.fill")
+                    Text("DAY CLEARED")
+                }
+                .font(.community(size: 9, weight: .bold))
+                .tracking(0.8)
+                .foregroundStyle(RepbasePalette.sage)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(
+                    RepbasePalette.sage.opacity(0.12),
+                    in: Capsule()
+                )
+                .offset(y: 11)
+                .transition(.scale.combined(with: .opacity))
+            }
+        }
+    }
+
+    private func handleCompletion(_ event: PlannerCompletionEvent?) {
+        guard let event,
+              handledCompletionID != event.id,
+              store.entries(on: store.selectedDate).contains(where: { $0.id == event.entryID })
+        else { return }
+
+        handledCompletionID = event.id
+        feedbackTask?.cancel()
+        withAnimation(reduceMotion ? .easeOut(duration: 0.18) : .spring(response: 0.42, dampingFraction: 0.72)) {
+            completedEntryID = event.entryID
+            completionMessage = event.clearedDay
+                ? "You cleared \(store.selectedDate.formatted(.dateTime.weekday(.wide))). Everything planned is done."
+                : "\(event.title) complete · \(event.completedTasks) of \(event.totalTasks)"
+            if event.clearedDay {
+                clearedDate = event.date
+                completionPulse.toggle()
+            }
+        }
+
+        if event.clearedDay {
+            RepbaseCelebrations.show(.dayCleared)
+        }
+
+        feedbackTask = Task {
+            try? await Task.sleep(for: .seconds(event.clearedDay ? 3.0 : 1.8))
+            guard !Task.isCancelled else { return }
+            await MainActor.run {
+                withAnimation(.easeOut(duration: 0.22)) {
+                    completionMessage = nil
+                    completedEntryID = nil
+                }
+            }
+        }
+    }
+
+    private func completionToast(_ message: String, timeOfDay: HomeTimeOfDay) -> some View {
+        HStack(spacing: 9) {
+            Image(systemName: "checkmark.seal.fill")
+                .foregroundStyle(RepbasePalette.sage)
+            Text(message)
+                .font(.community(size: 13, weight: .semibold))
+                .foregroundStyle(timeOfDay.primaryText)
+                .lineLimit(2)
+        }
+        .padding(.horizontal, 15)
+        .padding(.vertical, 11)
+        .background(.regularMaterial, in: Capsule())
+        .shadow(color: Color.black.opacity(0.12), radius: 18, y: 8)
+        .padding(.horizontal, RepbaseDesign.pageInset)
+        .accessibilityElement(children: .combine)
     }
 
     private func dayMetric(_ value: String, _ label: String, tint: Color) -> some View {

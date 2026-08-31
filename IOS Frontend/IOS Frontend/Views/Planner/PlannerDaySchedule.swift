@@ -16,11 +16,14 @@ struct PlannerDaySchedule: View {
     @Environment(PlannerStore.self) private var store
     @Environment(WorkoutStore.self) private var workouts
     @Environment(\.homeTimeOfDay) private var timeOfDay
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     let onSelect: (PlannerEntry) -> Void
     /// Where to send someone who says they have not trained yet. Nil leaves
     /// the tick as a plain tick, with no offer to open anything.
     var onOpenWorkout: ((Weekday) -> Void)?
+    var recentlyCompletedEntryID: PlannerEntry.ID?
+    var dayIsCleared = false
 
     /// The workout tick waiting on an answer, if one is.
     @State private var confirming: PlannerEntry?
@@ -29,10 +32,14 @@ struct PlannerDaySchedule: View {
     /// stored property takes out of reach of the other file that builds this.
     init(
         onSelect: @escaping (PlannerEntry) -> Void,
-        onOpenWorkout: ((Weekday) -> Void)? = nil
+        onOpenWorkout: ((Weekday) -> Void)? = nil,
+        recentlyCompletedEntryID: PlannerEntry.ID? = nil,
+        dayIsCleared: Bool = false
     ) {
         self.onSelect = onSelect
         self.onOpenWorkout = onOpenWorkout
+        self.recentlyCompletedEntryID = recentlyCompletedEntryID
+        self.dayIsCleared = dayIsCleared
     }
 
     /// The height of one hour.
@@ -59,6 +66,21 @@ struct PlannerDaySchedule: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            if dayIsCleared {
+                HStack(spacing: 8) {
+                    Image(systemName: "checkmark.seal.fill")
+                        .foregroundStyle(RepbasePalette.sage)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Day cleared")
+                            .font(.community(size: 13, weight: .bold))
+                        Text("Everything you planned is complete.")
+                            .font(.community(size: 10, weight: .medium))
+                            .foregroundStyle(timeOfDay.secondaryText)
+                    }
+                }
+                .foregroundStyle(timeOfDay.primaryText)
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
             if !timed.isEmpty {
                 grid
             }
@@ -191,6 +213,18 @@ struct PlannerDaySchedule: View {
                 }
                 .padding(.vertical, 2)
                 .repbaseCard(contentPadding: 11, cornerRadius: 15)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 15)
+                        .fill(RepbasePalette.sage.opacity(entry.id == recentlyCompletedEntryID ? 0.16 : 0))
+                        .allowsHitTesting(false)
+                }
+                .scaleEffect(entry.id == recentlyCompletedEntryID ? 1.015 : 1)
+                .animation(
+                    reduceMotion
+                        ? .easeOut(duration: 0.12)
+                        : .spring(response: 0.36, dampingFraction: 0.74),
+                    value: recentlyCompletedEntryID
+                )
                 .contentShape(Rectangle())
                 .onTapGesture { onSelect(entry) }
             }

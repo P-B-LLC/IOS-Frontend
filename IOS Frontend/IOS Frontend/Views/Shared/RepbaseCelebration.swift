@@ -11,6 +11,7 @@ import SwiftUI
 enum RepbaseCelebrationKind: String {
     case mealLogged
     case workoutLogged
+    case dayCleared
 
     var colors: [Color] {
         switch self {
@@ -27,6 +28,13 @@ enum RepbaseCelebrationKind: String {
                 RepbasePalette.sage,
                 Color(hex: 0xF3C66F),
                 Color(hex: 0xD6E8DE)
+            ]
+        case .dayCleared:
+            return [
+                RepbasePalette.sage,
+                Color(hex: 0xFF4F1F),
+                Color(hex: 0x29B8BA),
+                Color(hex: 0xF3C66F)
             ]
         }
     }

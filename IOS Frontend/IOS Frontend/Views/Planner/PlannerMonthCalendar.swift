@@ -10,10 +10,23 @@ import SwiftUI
 struct PlannerMonthCalendar: View {
     @Environment(PlannerStore.self) private var store
     @Environment(\.homeTimeOfDay) private var timeOfDay
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// Closes the month, leaving the week strip. Absent when the calendar is
     /// not something the user opened.
     var onClose: (() -> Void)?
+    var clearedDate: String?
+    var completionPulse = false
+
+    init(
+        clearedDate: String? = nil,
+        completionPulse: Bool = false,
+        onClose: (() -> Void)? = nil
+    ) {
+        self.clearedDate = clearedDate
+        self.completionPulse = completionPulse
+        self.onClose = onClose
+    }
 
     private let calendar = Calendar.current
 
@@ -25,6 +38,26 @@ struct PlannerMonthCalendar: View {
             legend
         }
         .repbaseCard(contentPadding: 18, cornerRadius: 24)
+        .background {
+            if clearedDate != nil {
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(
+                        LinearGradient(
+                            colors: [RepbasePalette.sage.opacity(0.13), Color.clear],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .scaleEffect(completionPulse ? 1.01 : 1)
+                    .allowsHitTesting(false)
+            }
+        }
+        .animation(
+            reduceMotion
+                ? .easeOut(duration: 0.12)
+                : .spring(response: 0.48, dampingFraction: 0.72),
+            value: completionPulse
+        )
     }
 
     // MARK: - Header
@@ -108,6 +141,7 @@ struct PlannerMonthCalendar: View {
         let inMonth = PlannerStore.isSameMonth(date, store.visibleMonth)
         let isSelected = calendar.isDate(date, inSameDayAs: store.selectedDate)
         let isToday = calendar.isDateInToday(date)
+        let isCleared = clearedDate == PlannerStore.dateString(date)
 
         return Button {
             store.select(date)
@@ -115,9 +149,18 @@ struct PlannerMonthCalendar: View {
             VStack(spacing: 3) {
                 Text("\(calendar.component(.day, from: date))")
                     .font(.community(size: 14, weight: isSelected || isToday ? .bold : .regular))
-                    .foregroundStyle(foreground(inMonth: inMonth, isSelected: isSelected))
+                    .foregroundStyle(foreground(inMonth: inMonth, isSelected: isSelected || isCleared))
                     .frame(width: 30, height: 30)
-                    .background(background(isSelected: isSelected, isToday: isToday))
+                    .background(background(isSelected: isSelected, isToday: isToday, isCleared: isCleared))
+                    .overlay {
+                        if isCleared {
+                            Circle()
+                                .stroke(RepbasePalette.sage.opacity(0.28), lineWidth: 7)
+                                .scaleEffect(!reduceMotion && completionPulse ? 1.18 : 0.92)
+                                .opacity(!reduceMotion && completionPulse ? 0 : 1)
+                        }
+                    }
+                    .scaleEffect(isCleared && completionPulse && !reduceMotion ? 1.08 : 1)
                 markers(for: date, inMonth: inMonth)
             }
             .frame(maxWidth: .infinity)
@@ -144,8 +187,10 @@ struct PlannerMonthCalendar: View {
     }
 
     @ViewBuilder
-    private func background(isSelected: Bool, isToday: Bool) -> some View {
-        if isSelected {
+    private func background(isSelected: Bool, isToday: Bool, isCleared: Bool) -> some View {
+        if isCleared {
+            Circle().fill(RepbasePalette.sage)
+        } else if isSelected {
             Circle().fill(timeOfDay.accent)
         } else if isToday {
             Circle().strokeBorder(timeOfDay.accent, lineWidth: 1.5)

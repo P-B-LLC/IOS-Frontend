@@ -11,6 +11,16 @@ import Observation
 // and the timing belongs beside the state change that drives it.
 import SwiftUI
 
+struct PlannerCompletionEvent: Identifiable, Equatable {
+    let id = UUID()
+    let entryID: PlannerEntry.ID
+    let date: String
+    let title: String
+    let completedTasks: Int
+    let totalTasks: Int
+    let clearedDay: Bool
+}
+
 @Observable
 @MainActor
 final class PlannerStore {
@@ -34,6 +44,10 @@ final class PlannerStore {
     private(set) var isLoading = false
     private(set) var isSaving = false
     private(set) var persistenceError: String?
+    /// A server-confirmed task completion. Views use this transient handoff to
+    /// reward the action without celebrating an optimistic change that later
+    /// rolls back.
+    private(set) var latestCompletionEvent: PlannerCompletionEvent?
     private var isSyncingScheduledWorkouts = false
 
     /// How far ahead "upcoming" looks. Stated rather than assumed, so the list
@@ -114,6 +128,7 @@ final class PlannerStore {
         pastDue = []
         upcomingEvents = []
         persistenceError = nil
+        latestCompletionEvent = nil
         isLoading = false
         isSaving = false
         isSyncingScheduledWorkouts = false
@@ -283,6 +298,12 @@ final class PlannerStore {
         guard let repository, entry.isCompletable else { return }
         let generation = connectionGeneration
         let previous = entry.isComplete
+        let tasksBefore = entriesByDate[entry.date, default: []].filter(\.isCompletable)
+        let completedBefore = tasksBefore.filter(\.isComplete).count
+        let completedAfter = max(
+            0,
+            min(tasksBefore.count, completedBefore + (isComplete && !previous ? 1 : 0))
+        )
         withAnimation(.easeOut(duration: 0.25)) {
             apply(to: entry) { $0.isComplete = isComplete }
         }
@@ -298,6 +319,16 @@ final class PlannerStore {
                 // is why a ticked-off overdue task stayed on screen.
                 apply(to: entry) { $0 = saved.identified(as: entry.id) }
                 if saved.isComplete {
+                    if !previous {
+                        latestCompletionEvent = PlannerCompletionEvent(
+                            entryID: entry.id,
+                            date: entry.date,
+                            title: saved.title,
+                            completedTasks: completedAfter,
+                            totalTasks: tasksBefore.count,
+                            clearedDay: !tasksBefore.isEmpty && completedAfter == tasksBefore.count
+                        )
+                    }
                     retirePastDue(entry.id, generation: generation)
                 }
             } catch {
