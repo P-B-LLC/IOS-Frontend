@@ -371,6 +371,9 @@ actor FoodAPIRepository {
 
     private static func meal(from payload: Components.Schemas.FoodMeal) -> FoodMeal {
         FoodMeal(
+            // Keyed off the server row, so reading the day again hands back
+            // the same meal rather than a new one wearing its name.
+            id: .stable(forServerID: payload.id),
             serverID: payload.id,
             name: payload.name,
             entries: payload.entries.map(Self.entry(from:))
@@ -395,6 +398,10 @@ actor FoodAPIRepository {
         from payload: Components.Schemas.SavedFoodMeal
     ) -> SavedFoodMeal {
         SavedFoodMeal(
+            // Same reason as FoodMeal: re-reading the library must not
+            // rename what is in it, or the tick on a row just applied lands
+            // on an id nothing recognises any more.
+            id: .stable(forServerID: payload.id),
             serverID: payload.id,
             name: payload.name,
             ingredients: payload.ingredients.map { ingredient in
