@@ -2159,23 +2159,31 @@ private struct LiveSetSparkBurst: View {
     var body: some View {
         GeometryReader { geometry in
             ForEach(0..<14, id: \.self) { index in
+                // Every value worked out before the chain rather than inside
+                // it. Ternaries mixing CGFloat and Double across eight
+                // modifiers took the type checker past its own time limit,
+                // and it gave up on the whole expression: "unable to
+                // type-check this expression in reasonable time". Annotating
+                // each one leaves it nothing to infer.
                 let angle = Double(index) * 0.86
                 let distance = CGFloat(38 + (index % 4) * 14)
+                let width: CGFloat = index.isMultiple(of: 3) ? 5 : 7
+                let offsetX: CGFloat = burst ? CGFloat(cos(angle)) * distance : 0
+                let offsetY: CGFloat = burst ? CGFloat(sin(angle)) * distance + 20 : 0
+                let spin: Double = burst ? Double(index * 47) : 0
+                let scale: CGFloat = burst ? 0.45 : 1
+                let fade: Double = burst ? 0 : 1
+                let delay: Double = Double(index % 4) * 0.025
+
                 RoundedRectangle(cornerRadius: 2, style: .continuous)
                     .fill(colors[index % colors.count])
-                    .frame(width: index.isMultiple(of: 3) ? 5 : 7, height: 8)
+                    .frame(width: width, height: 8)
                     .position(x: geometry.size.width * 0.78, y: 34)
-                    .offset(
-                        x: burst ? CGFloat(cos(angle)) * distance : 0,
-                        y: burst ? CGFloat(sin(angle)) * distance + 20 : 0
-                    )
-                    .rotationEffect(.degrees(burst ? Double(index * 47) : 0))
-                    .scaleEffect(burst ? 0.45 : 1)
-                    .opacity(burst ? 0 : 1)
-                    .animation(
-                        .easeOut(duration: 0.72).delay(Double(index % 4) * 0.025),
-                        value: burst
-                    )
+                    .offset(x: offsetX, y: offsetY)
+                    .rotationEffect(.degrees(spin))
+                    .scaleEffect(scale)
+                    .opacity(fade)
+                    .animation(.easeOut(duration: 0.72).delay(delay), value: burst)
             }
         }
         .accessibilityHidden(true)
