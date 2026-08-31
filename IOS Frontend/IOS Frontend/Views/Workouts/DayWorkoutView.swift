@@ -5,6 +5,7 @@
 //  Planning and live logging workspace for one selected day.
 //
 
+import Foundation
 import SwiftUI
 
 struct DayWorkoutView: View {
@@ -12,6 +13,7 @@ struct DayWorkoutView: View {
 
     @Environment(WorkoutStore.self) private var store
     @Environment(GearStore.self) private var gearStore
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var setupDraft = Workout(name: "", exercises: [])
     @State private var editor: WorkoutEditorView.Mode?
     /// The workout awaiting a delete confirmation, if any.
@@ -24,6 +26,15 @@ struct DayWorkoutView: View {
     @State private var isConfirmingEmptyFinish = false
     /// Gear chosen before the session exists, applied once it does.
     @State private var pendingGearID: Int?
+    /// One-shot live-session feedback. The API-backed session remains the
+    /// source of truth; these IDs only identify which successful mutation
+    /// should receive the settling and completion motion.
+    @State private var knownLoggedSetIDs: Set<WorkoutSetDraft.ID> = []
+    @State private var recentlyLoggedSetID: WorkoutSetDraft.ID?
+    @State private var recentlyCompletedExerciseID: Exercise.ID?
+    @State private var showSessionReadyMoment = false
+    @State private var setSuccessMessage: String?
+    @State private var setFeedbackTask: Task<Void, Never>?
 
     private var workout: Workout? {
         store.workout(on: day)
@@ -54,7 +65,8 @@ struct DayWorkoutView: View {
                 await store.loadDashboardSessions()
             }
         }
-        .onChange(of: activeSession?.loggedSetCount ?? 0) { _, logged in
+        .onAppear(perform: synchronizeLoggedSetIDs)
+        .onChange(of: activeSession?.loggedSetCount ?? 0) { previous, logged in
             // Logging a set answers the notice, so it stops being true and
             // goes. Leaving it up would have the page insisting nothing is
             // logged directly above a row that plainly is.
@@ -63,8 +75,10 @@ struct DayWorkoutView: View {
                     isConfirmingEmptyFinish = false
                 }
             }
+            respondToSetProgress(from: previous, to: logged)
         }
         .onChange(of: activeSession?.serverID) { _, started in
+            synchronizeLoggedSetIDs()
             // The session those shoes were picked for has just been created,
             // so the choice made before Start can finally be attached to it.
             guard let started, let chosen = pendingGearID else { return }
@@ -117,6 +131,18 @@ struct DayWorkoutView: View {
                         )
                 }
             }
+        }
+        .overlay(alignment: .bottom) {
+            if let setSuccessMessage {
+                LiveSetSuccessToast(message: setSuccessMessage)
+                    .padding(.horizontal, RepbaseDesign.pageInset)
+                    .padding(.bottom, RepbaseDesign.bottomBarClearance - 26)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .sensoryFeedback(.success, trigger: recentlyLoggedSetID)
+        .onDisappear {
+            setFeedbackTask?.cancel()
         }
     }
 
@@ -311,6 +337,64 @@ struct DayWorkoutView: View {
 
     private var canSaveSetup: Bool {
         !setupDraft.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private func synchronizeLoggedSetIDs() {
+        knownLoggedSetIDs = Set(
+            activeSession?.exercises
+                .flatMap(\.sets)
+                .filter(\.isLogged)
+                .map(\.id) ?? []
+        )
+    }
+
+    /// Turns a successful server log into a compact sequence: the row settles,
+    /// the exercise acknowledges completion, and a fully logged session makes
+    /// the header and Finish action feel ready. Unlogging a set quietly resets
+    /// the state rather than celebrating a reversal.
+    private func respondToSetProgress(from previous: Int, to logged: Int) {
+        guard let session = activeSession else {
+            knownLoggedSetIDs = []
+            return
+        }
+
+        let currentIDs = Set(
+            session.exercises.flatMap(\.sets).filter(\.isLogged).map(\.id)
+        )
+        defer { knownLoggedSetIDs = currentIDs }
+
+        guard logged > previous,
+              let loggedSetID = currentIDs.subtracting(knownLoggedSetIDs).first else {
+            if logged < session.totalSetCount {
+                showSessionReadyMoment = false
+            }
+            return
+        }
+
+        setFeedbackTask?.cancel()
+        recentlyLoggedSetID = loggedSetID
+
+        let completedExercise = session.exercises.first { exercise in
+            exercise.sets.contains(where: { $0.id == loggedSetID })
+                && !exercise.sets.isEmpty
+                && exercise.sets.allSatisfy(\.isLogged)
+        }
+        recentlyCompletedExerciseID = completedExercise?.id
+        showSessionReadyMoment = logged == session.totalSetCount && session.totalSetCount > 0
+        setSuccessMessage = showSessionReadyMoment
+            ? "Every set is in. Finish strong."
+            : completedExercise.map { "\($0.name) complete" }
+
+        setFeedbackTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(showSessionReadyMoment ? 2.4 : 1.45))
+            guard !Task.isCancelled else { return }
+            withAnimation(.easeOut(duration: 0.22)) {
+                recentlyLoggedSetID = nil
+                recentlyCompletedExerciseID = nil
+                setSuccessMessage = nil
+            }
+            setFeedbackTask = nil
+        }
     }
 
     /// Finishes the session, asking first only when it recorded nothing.
@@ -859,6 +943,8 @@ struct DayWorkoutView: View {
 
     private func activeSessionWorkspace(_ session: ActiveWorkoutSession) -> some View {
         let phase = WorkoutVisualPhase.focus
+        let isFullyLogged = session.totalSetCount > 0
+            && session.loggedSetCount == session.totalSetCount
 
         return VStack(alignment: .leading, spacing: 18) {
             HStack {
@@ -927,7 +1013,13 @@ struct DayWorkoutView: View {
                     value: Double(session.loggedSetCount),
                     total: Double(max(session.totalSetCount, 1))
                 )
-                .tint(phase.accent)
+                .tint(isFullyLogged ? RepbaseDesign.success : phase.accent)
+                .animation(
+                    reduceMotion
+                        ? .easeOut(duration: 0.18)
+                        : .spring(response: 0.72, dampingFraction: 0.80),
+                    value: session.loggedSetCount
+                )
 
                 Text(
                     session.tracksDistance
@@ -936,6 +1028,7 @@ struct DayWorkoutView: View {
                 )
                 .font(.community(.caption))
                 .foregroundStyle(phase.onHeroSecondary)
+                .contentTransition(.numericText())
             }
             .padding(18)
             .background {
@@ -945,8 +1038,25 @@ struct DayWorkoutView: View {
             }
             .overlay {
                 RoundedRectangle(cornerRadius: 26, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.14), lineWidth: 1)
+                    .strokeBorder(
+                        isFullyLogged
+                            ? RepbaseDesign.success.opacity(0.60)
+                            : Color.white.opacity(0.14),
+                        lineWidth: isFullyLogged ? 1.5 : 1
+                    )
             }
+            .shadow(
+                color: showSessionReadyMoment
+                    ? RepbaseDesign.success.opacity(0.22)
+                    : Color.clear,
+                radius: 18,
+                y: 8
+            )
+            .scaleEffect(showSessionReadyMoment && !reduceMotion ? 1.008 : 1)
+            .animation(
+                .spring(response: 0.56, dampingFraction: 0.76),
+                value: showSessionReadyMoment
+            )
 
             if session.tracksDistance {
                 // Above the map, because it is a decision to make now: the
@@ -1002,13 +1112,26 @@ struct DayWorkoutView: View {
             } label: {
                 HStack(spacing: 8) {
                     Text("Finish workout")
-                    Image(systemName: "arrow.right")
+                    Image(systemName: isFullyLogged ? "flag.checkered" : "arrow.right")
                         .font(.community(.subheadline, weight: .semibold))
+                        .contentTransition(.symbolEffect(.replace))
                 }
                 .font(.community(.headline))
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(WorkoutPrimaryButtonStyle(phase: phase))
+            .scaleEffect(showSessionReadyMoment && !reduceMotion ? 1.018 : 1)
+            .shadow(
+                color: showSessionReadyMoment
+                    ? RepbaseDesign.success.opacity(0.24)
+                    : Color.clear,
+                radius: 16,
+                y: 7
+            )
+            .animation(
+                .spring(response: 0.55, dampingFraction: 0.70),
+                value: showSessionReadyMoment
+            )
             .disabled(store.isSaving || store.hasPendingSetChanges)
 
             Button(role: .destructive) {
@@ -1491,6 +1614,9 @@ struct DayWorkoutView: View {
 
     private func sessionExerciseCard(_ exercise: SessionExerciseDraft) -> some View {
         let phase = WorkoutVisualPhase.focus
+        let isExerciseComplete = !exercise.sets.isEmpty
+            && exercise.sets.allSatisfy(\.isLogged)
+        let isCelebratingExercise = recentlyCompletedExerciseID == exercise.id
 
         // Spelled out: a body with a statement before the view is no longer a
         // single expression, so Swift stops inferring the return.
@@ -1505,7 +1631,27 @@ struct DayWorkoutView: View {
                         .foregroundStyle(phase.secondaryText)
                 }
                 Spacer()
+                if isExerciseComplete {
+                    Image(systemName: "checkmark")
+                        .font(.community(.caption, weight: .bold))
+                        .foregroundStyle(
+                            Color.repbaseDynamic(
+                                light: Color.white,
+                                dark: Color(hex: 0x17241D)
+                            )
+                        )
+                        .frame(width: 27, height: 27)
+                        .background(RepbaseDesign.success, in: Circle())
+                        .transition(.scale.combined(with: .opacity))
+                        .accessibilityHidden(true)
+                }
             }
+            .animation(
+                reduceMotion
+                    ? .easeOut(duration: 0.16)
+                    : .spring(response: 0.46, dampingFraction: 0.66),
+                value: isExerciseComplete
+            )
 
             HStack(spacing: 8) {
                 Text("SET")
@@ -1594,26 +1740,39 @@ struct DayWorkoutView: View {
                         Group {
                             if store.isSetPending(set.id) {
                                 ProgressView()
+                                    .frame(width: 34, height: 34)
                             } else if set.isLogged {
-                                Label("Logged", systemImage: "checkmark")
+                                Image(systemName: "checkmark")
+                                    .font(.community(.caption, weight: .bold))
+                                    .frame(width: 34, height: 34)
+                                    .background(
+                                        RepbaseDesign.success.opacity(0.24),
+                                        in: Circle()
+                                    )
+                                    .contentTransition(.symbolEffect(.replace))
                             } else {
                                 Text("Log")
+                                    .frame(width: 62, height: 38)
+                                    .background(
+                                        Color.white.opacity(0.08),
+                                        in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    )
+                                    .overlay {
+                                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                            .strokeBorder(phase.secondaryText.opacity(0.3), lineWidth: 1)
+                                    }
                             }
                         }
                         .font(.community(.caption2, weight: .bold))
-                        .foregroundStyle(set.isLogged ? phase.onAccent : phase.primaryText)
-                        .frame(width: 62, height: 38)
-                        .background(
-                            set.isLogged ? RepbaseDesign.success : Color.white.opacity(0.08),
-                            in: RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        )
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .strokeBorder(
-                                    set.isLogged ? Color.clear : phase.secondaryText.opacity(0.3),
-                                    lineWidth: 1
+                        .foregroundStyle(
+                            set.isLogged
+                                ? Color.repbaseDynamic(
+                                    light: Color(hex: 0x3F6D55),
+                                    dark: Color(hex: 0xCFE8D8)
                                 )
-                        }
+                                : phase.primaryText
+                        )
+                        .frame(width: 62, height: 38)
                     }
                     .buttonStyle(.plain)
                     .disabled(
@@ -1622,6 +1781,28 @@ struct DayWorkoutView: View {
                     )
                     .accessibilityLabel(set.isLogged ? "Mark set \(set.setNumber) incomplete" : "Log set \(set.setNumber)")
                 }
+                .scaleEffect(
+                    recentlyLoggedSetID == set.id && !reduceMotion ? 1.018 : 1
+                )
+                .animation(
+                    .spring(response: 0.42, dampingFraction: 0.64),
+                    value: recentlyLoggedSetID == set.id
+                )
+            }
+
+            if isCelebratingExercise {
+                HStack(spacing: 7) {
+                    Image(systemName: "sparkles")
+                    Text("Exercise complete")
+                }
+                .font(.community(.caption, weight: .bold))
+                .foregroundStyle(
+                    Color.repbaseDynamic(
+                        light: Color(hex: 0x4D765F),
+                        dark: Color(hex: 0x9AC4AB)
+                    )
+                )
+                .transition(.move(edge: .top).combined(with: .opacity))
             }
 
             Divider()
@@ -1655,7 +1836,12 @@ struct DayWorkoutView: View {
         .padding(16)
         .background(
             LinearGradient(
-                colors: [phase.surfaceStart, phase.surfaceEnd],
+                colors: isExerciseComplete
+                    ? [
+                        Color.repbaseDynamic(light: Color(hex: 0xF1F7F3), dark: Color(hex: 0x17241D)),
+                        Color.repbaseDynamic(light: Color(hex: 0xFBF6F1), dark: Color(hex: 0x20211F))
+                    ]
+                    : [phase.surfaceStart, phase.surfaceEnd],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             ),
@@ -1663,9 +1849,33 @@ struct DayWorkoutView: View {
         )
         .overlay {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.10), lineWidth: 1)
+                .strokeBorder(
+                    isExerciseComplete
+                        ? RepbaseDesign.success.opacity(0.30)
+                        : Color.white.opacity(0.10),
+                    lineWidth: 1
+                )
         }
-        .shadow(color: phase.shadow.opacity(0.32), radius: 8, x: 0, y: 4)
+        .overlay {
+            if isCelebratingExercise && !reduceMotion {
+                LiveSetSparkBurst()
+                    .allowsHitTesting(false)
+                    .transition(.opacity)
+            }
+        }
+        .shadow(
+            color: isCelebratingExercise
+                ? RepbaseDesign.success.opacity(0.18)
+                : phase.shadow.opacity(0.32),
+            radius: isCelebratingExercise ? 14 : 8,
+            x: 0,
+            y: isCelebratingExercise ? 7 : 4
+        )
+        .offset(y: isCelebratingExercise && !reduceMotion ? -2 : 0)
+        .animation(
+            .spring(response: 0.52, dampingFraction: 0.72),
+            value: isCelebratingExercise
+        )
     }
 
     private var headerTitle: String {
@@ -1884,6 +2094,94 @@ private struct RouteStat: View {
             WorkoutVisualPhase.recover.accent.opacity(0.12),
             in: RoundedRectangle(cornerRadius: 10)
         )
+    }
+}
+
+private struct LiveSetSuccessToast: View {
+    let message: String
+
+    var body: some View {
+        HStack(spacing: 9) {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(
+                    Color.repbaseDynamic(
+                        light: Color(hex: 0x4E7461),
+                        dark: Color(hex: 0x9AC4AB)
+                    )
+                )
+            Text(message)
+                .font(.community(.footnote, weight: .semibold))
+                .foregroundStyle(
+                    Color.repbaseDynamic(
+                        light: RepbasePalette.espresso,
+                        dark: Color.white
+                    )
+                )
+                .lineLimit(2)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 15)
+        .frame(minHeight: 48)
+        .background(
+            Color.repbaseDynamic(
+                light: Color(hex: 0xF1F8F3),
+                dark: Color(hex: 0x1D3126)
+            ),
+            in: Capsule()
+        )
+        .overlay {
+            Capsule().strokeBorder(
+                Color.repbaseDynamic(
+                    light: Color(hex: 0x4E7461).opacity(0.15),
+                    dark: Color(hex: 0x9AC4AB).opacity(0.18)
+                ),
+                lineWidth: 1
+            )
+        }
+        .shadow(color: Color.black.opacity(0.18), radius: 18, x: 0, y: 8)
+        .accessibilityAddTraits(.isStaticText)
+    }
+}
+
+/// A deliberately small burst contained inside the exercise card. It marks
+/// the exercise boundary without turning every logged set into full-screen
+/// confetti; the larger celebration remains reserved for finishing a workout.
+private struct LiveSetSparkBurst: View {
+    @State private var burst = false
+
+    private let colors: [Color] = [
+        RepbasePalette.caramel,
+        RepbasePalette.sage,
+        Color(hex: 0xF0C66F),
+        Color.repbaseDynamic(light: Color(hex: 0x7A5A49), dark: Color.white)
+    ]
+
+    var body: some View {
+        GeometryReader { geometry in
+            ForEach(0..<14, id: \.self) { index in
+                let angle = Double(index) * 0.86
+                let distance = CGFloat(38 + (index % 4) * 14)
+                RoundedRectangle(cornerRadius: 2, style: .continuous)
+                    .fill(colors[index % colors.count])
+                    .frame(width: index.isMultiple(of: 3) ? 5 : 7, height: 8)
+                    .position(x: geometry.size.width * 0.78, y: 34)
+                    .offset(
+                        x: burst ? CGFloat(cos(angle)) * distance : 0,
+                        y: burst ? CGFloat(sin(angle)) * distance + 20 : 0
+                    )
+                    .rotationEffect(.degrees(burst ? Double(index * 47) : 0))
+                    .scaleEffect(burst ? 0.45 : 1)
+                    .opacity(burst ? 0 : 1)
+                    .animation(
+                        .easeOut(duration: 0.72).delay(Double(index % 4) * 0.025),
+                        value: burst
+                    )
+            }
+        }
+        .accessibilityHidden(true)
+        .onAppear {
+            burst = true
+        }
     }
 }
 
