@@ -74,9 +74,7 @@ struct WorkoutEditorView: View {
     }
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            editorScreen(timeOfDay: HomeTimeOfDay(date: context.date))
-        }
+        editorScreen(timeOfDay: HomeTimeOfDay.current)
     }
 
     private func editorScreen(timeOfDay: HomeTimeOfDay) -> some View {

@@ -40,27 +40,25 @@ struct RepbaseOnboardingView: View {
     let completion: () -> Void
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            let timeOfDay = HomeTimeOfDay(date: context.date)
-            VStack(spacing: 0) {
-                header(timeOfDay)
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 0) {
-                        VStack(alignment: .leading, spacing: 7) {
-                            Text(title).font(.community(.title, weight: .bold)).tracking(-0.5)
-                            Text(subtitle).font(.community(.subheadline)).foregroundStyle(.secondary)
-                        }
-                        .padding(.bottom, 30)
-                        content(timeOfDay)
+        let timeOfDay = HomeTimeOfDay.current
+        VStack(spacing: 0) {
+            header(timeOfDay)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    VStack(alignment: .leading, spacing: 7) {
+                        Text(title).font(.community(.title, weight: .bold)).tracking(-0.5)
+                        Text(subtitle).font(.community(.subheadline)).foregroundStyle(.secondary)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 24)
+                    .padding(.bottom, 30)
+                    content(timeOfDay)
                 }
-                .scrollIndicators(.hidden)
-                nextButton
+                .padding(.horizontal, 20)
+                .padding(.bottom, 24)
             }
-            .homeTimeScreen(timeOfDay)
+            .scrollIndicators(.hidden)
+            nextButton
         }
+        .homeTimeScreen(timeOfDay)
         // Outside the TimelineView, which rebuilds every minute and would ask
         // the server again each time it did.
         .task { await loadPreferences() }

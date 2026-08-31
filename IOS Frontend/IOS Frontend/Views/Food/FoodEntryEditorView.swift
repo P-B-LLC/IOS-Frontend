@@ -46,108 +46,106 @@ struct FoodEntryEditorView: View {
     }
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            let timeOfDay = HomeTimeOfDay(date: context.date)
+        let timeOfDay = HomeTimeOfDay.current
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
-                    EditorialFormHeader(
-                        title: name.isEmpty ? "Add Food" : name,
-                        leadingAction: .back,
-                        saveTitle: "Save",
-                        canSave: isValid,
-                        onDismiss: { dismiss() },
-                        onSave: save,
-                        showsSaveAction: false
-                    )
+        ScrollView {
+            VStack(alignment: .leading, spacing: 22) {
+                EditorialFormHeader(
+                    title: name.isEmpty ? "Add Food" : name,
+                    leadingAction: .back,
+                    saveTitle: "Save",
+                    canSave: isValid,
+                    onDismiss: { dismiss() },
+                    onSave: save,
+                    showsSaveAction: false
+                )
 
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("FOOD / MANUAL ENTRY")
-                            .font(.community(size: 10, weight: .bold))
-                            .tracking(1.25)
-                            .foregroundStyle(timeOfDay.accent)
-                        Text(isEditing ? "Update this food." : "Log what you ate.")
-                            .font(.community(size: 34, weight: .bold, design: .rounded))
-                            .tracking(-0.8)
-                        Text("Enter the values shown on the label for one serving.")
-                            .font(.community(.subheadline))
-                            .foregroundStyle(timeOfDay.canvasSecondaryText)
-                    }
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("FOOD / MANUAL ENTRY")
+                        .font(.community(size: 10, weight: .bold))
+                        .tracking(1.25)
+                        .foregroundStyle(timeOfDay.accent)
+                    Text(isEditing ? "Update this food." : "Log what you ate.")
+                        .font(.community(size: 34, weight: .bold, design: .rounded))
+                        .tracking(-0.8)
+                    Text("Enter the values shown on the label for one serving.")
+                        .font(.community(.subheadline))
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                }
 
-                    VStack(alignment: .leading, spacing: 13) {
-                        EditorialSectionTitle(title: "Food")
-                        TextField("Food name", text: $name)
-                            .font(.community(.title2, weight: .semibold))
-                            .textContentType(.name)
-                            .padding(.vertical, 10)
-                            .overlay(alignment: .bottom) { Divider() }
-
-                        HStack(alignment: .firstTextBaseline) {
-                            Text("Servings")
-                                .font(.community(.subheadline, weight: .medium))
-                            Spacer()
-                            TextField("1", text: $servings)
-                                .keyboardType(.decimalPad)
-                                .multilineTextAlignment(.trailing)
-                                .font(.community(.title3, weight: .semibold))
-                                .frame(width: 80)
-                        }
+                VStack(alignment: .leading, spacing: 13) {
+                    EditorialSectionTitle(title: "Food")
+                    TextField("Food name", text: $name)
+                        .font(.community(.title2, weight: .semibold))
+                        .textContentType(.name)
                         .padding(.vertical, 10)
                         .overlay(alignment: .bottom) { Divider() }
+
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("Servings")
+                            .font(.community(.subheadline, weight: .medium))
+                        Spacer()
+                        TextField("1", text: $servings)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                            .font(.community(.title3, weight: .semibold))
+                            .frame(width: 80)
                     }
-
-                    VStack(alignment: .leading, spacing: 13) {
-                        EditorialSectionTitle(title: "Nutrition per serving")
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("CALORIES")
-                                .font(.community(size: 10, weight: .bold))
-                                .tracking(1)
-                                .foregroundStyle(timeOfDay.canvasSecondaryText)
-                            HStack(alignment: .firstTextBaseline) {
-                                TextField("0", text: $calories)
-                                    .keyboardType(.decimalPad)
-                                    .font(.community(size: 38, weight: .bold, design: .rounded))
-                                Spacer()
-                                Text("kcal")
-                                    .font(.community(.subheadline, weight: .medium))
-                                    .foregroundStyle(timeOfDay.accent)
-                            }
-                        }
-                        .padding(.vertical, 8)
-                        .overlay(alignment: .bottom) { Divider() }
-
-                        HStack(alignment: .top, spacing: 18) {
-                            macroField("PROTEIN", text: $protein, tint: Color(hex: 0xD9824B))
-                            macroField("CARBS", text: $carbohydrates, tint: Color(hex: 0x4AAFB3))
-                            macroField("FAT", text: $fat, tint: Color(hex: 0xB76AA5))
-                        }
-                        .padding(.top, 8)
-                    }
-
-                    Button(isEditing ? "Save changes" : "Add food") { save() }
-                        .buttonStyle(EditorialPrimaryButtonStyle())
-                        .disabled(!isValid)
-
-                    if isEditing {
-                        Button(role: .destructive) {
-                            store.removeFood(id: existingID, from: mealID, on: date)
-                            dismiss()
-                        } label: {
-                            Label("Delete Food", systemImage: "trash")
-                                .font(.community(.subheadline, weight: .semibold))
-                        }
-                        .buttonStyle(.plain)
-                        .foregroundStyle(Color.red)
-                        .frame(maxWidth: .infinity)
-                    }
+                    .padding(.vertical, 10)
+                    .overlay(alignment: .bottom) { Divider() }
                 }
-                .padding(.horizontal, 24)
-                .padding(.bottom, 28)
+
+                VStack(alignment: .leading, spacing: 13) {
+                    EditorialSectionTitle(title: "Nutrition per serving")
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("CALORIES")
+                            .font(.community(size: 10, weight: .bold))
+                            .tracking(1)
+                            .foregroundStyle(timeOfDay.canvasSecondaryText)
+                        HStack(alignment: .firstTextBaseline) {
+                            TextField("0", text: $calories)
+                                .keyboardType(.decimalPad)
+                                .font(.community(size: 38, weight: .bold, design: .rounded))
+                            Spacer()
+                            Text("kcal")
+                                .font(.community(.subheadline, weight: .medium))
+                                .foregroundStyle(timeOfDay.accent)
+                        }
+                    }
+                    .padding(.vertical, 8)
+                    .overlay(alignment: .bottom) { Divider() }
+
+                    HStack(alignment: .top, spacing: 18) {
+                        macroField("PROTEIN", text: $protein, tint: Color(hex: 0xD9824B))
+                        macroField("CARBS", text: $carbohydrates, tint: Color(hex: 0x4AAFB3))
+                        macroField("FAT", text: $fat, tint: Color(hex: 0xB76AA5))
+                    }
+                    .padding(.top, 8)
+                }
+
+                Button(isEditing ? "Save changes" : "Add food") { save() }
+                    .buttonStyle(EditorialPrimaryButtonStyle())
+                    .disabled(!isValid)
+
+                if isEditing {
+                    Button(role: .destructive) {
+                        store.removeFood(id: existingID, from: mealID, on: date)
+                        dismiss()
+                    } label: {
+                        Label("Delete Food", systemImage: "trash")
+                            .font(.community(.subheadline, weight: .semibold))
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(Color.red)
+                    .frame(maxWidth: .infinity)
+                }
             }
-            .scrollIndicators(.hidden)
-            .toolbar(.hidden, for: .navigationBar)
-            .homeTimeScreen(timeOfDay)
+            .padding(.horizontal, 24)
+            .padding(.bottom, 28)
         }
+        .scrollIndicators(.hidden)
+        .toolbar(.hidden, for: .navigationBar)
+        .homeTimeScreen(timeOfDay)
     }
 
     private func macroField(

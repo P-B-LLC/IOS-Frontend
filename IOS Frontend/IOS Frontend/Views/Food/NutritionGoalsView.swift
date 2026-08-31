@@ -17,9 +17,7 @@ struct NutritionGoalsView: View {
     @State private var fat = ""
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            goalsScreen(timeOfDay: HomeTimeOfDay(date: context.date))
-        }
+        goalsScreen(timeOfDay: HomeTimeOfDay.current)
         .onAppear {
             calories = store.goals.calories.nutritionText
             protein = store.goals.proteinGrams.nutritionText

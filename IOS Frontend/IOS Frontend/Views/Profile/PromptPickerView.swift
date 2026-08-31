@@ -26,38 +26,36 @@ struct PromptPickerView: View {
     private var maxPrompts: Int { 3 }
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            let timeOfDay = HomeTimeOfDay(date: context.date)
+        let timeOfDay = HomeTimeOfDay.current
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
-                    header(timeOfDay: timeOfDay)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                header(timeOfDay: timeOfDay)
 
-                    ForEach(0..<maxPrompts, id: \.self) { index in
-                        slot(index, timeOfDay: timeOfDay)
-                    }
-
-                    if let error = store.errorMessage {
-                        Label(error, systemImage: "exclamationmark.triangle.fill")
-                            .font(.community(.footnote))
-                            .foregroundStyle(.red)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-
-                    Text("Prompts show on your profile under About. Tap one to rewrite it, or swap it for a different prompt.")
-                        .font(.community(.caption))
-                        .foregroundStyle(timeOfDay.canvasSecondaryText)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.top, 4)
+                ForEach(0..<maxPrompts, id: \.self) { index in
+                    slot(index, timeOfDay: timeOfDay)
                 }
-                .padding(.horizontal, RepbaseDesign.pageInset)
-                .padding(.top, 12)
-                .padding(.bottom, 40)
+
+                if let error = store.errorMessage {
+                    Label(error, systemImage: "exclamationmark.triangle.fill")
+                        .font(.community(.footnote))
+                        .foregroundStyle(.red)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Text("Prompts show on your profile under About. Tap one to rewrite it, or swap it for a different prompt.")
+                    .font(.community(.caption))
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 4)
             }
-            .scrollIndicators(.hidden)
-            .toolbar(.hidden, for: .navigationBar)
-            .homeTimeScreen(timeOfDay)
+            .padding(.horizontal, RepbaseDesign.pageInset)
+            .padding(.top, 12)
+            .padding(.bottom, 40)
         }
+        .scrollIndicators(.hidden)
+        .toolbar(.hidden, for: .navigationBar)
+        .homeTimeScreen(timeOfDay)
         .fullScreenCover(item: $choosingForSlot) { slot in
             NavigationStack {
                 PromptLibraryView(
@@ -214,66 +212,64 @@ struct PromptLibraryView: View {
     @State private var search = ""
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            let timeOfDay = HomeTimeOfDay(date: context.date)
+        let timeOfDay = HomeTimeOfDay.current
 
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 22, pinnedViews: [.sectionHeaders]) {
-                    ForEach(PromptCategory.allCases) { category in
-                        let questions = matching(category)
-                        if !questions.isEmpty {
-                            Section {
-                                VStack(spacing: 0) {
-                                    ForEach(questions) { question in
-                                        row(question, timeOfDay: timeOfDay)
-                                        if question != questions.last {
-                                            Divider().opacity(0.25).padding(.leading, 16)
-                                        }
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 22, pinnedViews: [.sectionHeaders]) {
+                ForEach(PromptCategory.allCases) { category in
+                    let questions = matching(category)
+                    if !questions.isEmpty {
+                        Section {
+                            VStack(spacing: 0) {
+                                ForEach(questions) { question in
+                                    row(question, timeOfDay: timeOfDay)
+                                    if question != questions.last {
+                                        Divider().opacity(0.25).padding(.leading, 16)
                                     }
                                 }
-                                .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 16))
-                                .overlay {
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .strokeBorder(timeOfDay.border, lineWidth: 1)
-                                }
-                            } header: {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(category.rawValue)
-                                        .font(.community(size: 19, weight: .bold))
-                                        .foregroundStyle(timeOfDay.canvasPrimaryText)
-                                    Text(category.blurb)
-                                        .font(.community(.caption))
-                                        .foregroundStyle(timeOfDay.canvasSecondaryText)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.bottom, 6)
                             }
+                            .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 16))
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 16)
+                                    .strokeBorder(timeOfDay.border, lineWidth: 1)
+                            }
+                        } header: {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(category.rawValue)
+                                    .font(.community(size: 19, weight: .bold))
+                                    .foregroundStyle(timeOfDay.canvasPrimaryText)
+                                Text(category.blurb)
+                                    .font(.community(.caption))
+                                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.bottom, 6)
                         }
                     }
+                }
 
-                    if PromptCategory.allCases.allSatisfy({ matching($0).isEmpty }) {
-                        Text("No prompt matches “\(search)”.")
-                            .font(.community(.subheadline))
-                            .foregroundStyle(timeOfDay.canvasSecondaryText)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 40)
-                    }
-                }
-                .padding(.horizontal, RepbaseDesign.pageInset)
-                .padding(.top, 8)
-                .padding(.bottom, 40)
-            }
-            .scrollIndicators(.hidden)
-            .searchable(text: $search, prompt: "Search prompts")
-            .navigationTitle("Choose a prompt")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
+                if PromptCategory.allCases.allSatisfy({ matching($0).isEmpty }) {
+                    Text("No prompt matches “\(search)”.")
+                        .font(.community(.subheadline))
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 40)
                 }
             }
-            .homeTimeScreen(timeOfDay)
+            .padding(.horizontal, RepbaseDesign.pageInset)
+            .padding(.top, 8)
+            .padding(.bottom, 40)
         }
+        .scrollIndicators(.hidden)
+        .searchable(text: $search, prompt: "Search prompts")
+        .navigationTitle("Choose a prompt")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button("Cancel") { dismiss() }
+            }
+        }
+        .homeTimeScreen(timeOfDay)
     }
 
     private func matching(_ category: PromptCategory) -> [PromptQuestion] {
@@ -346,80 +342,78 @@ struct PromptAnswerView: View {
     }
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            let timeOfDay = HomeTimeOfDay(date: context.date)
+        let timeOfDay = HomeTimeOfDay.current
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
-                    Text(question.label)
-                        .font(.community(size: 27, weight: .bold))
-                        .foregroundStyle(timeOfDay.canvasPrimaryText)
-                        .fixedSize(horizontal: false, vertical: true)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                Text(question.label)
+                    .font(.community(size: 27, weight: .bold))
+                    .foregroundStyle(timeOfDay.canvasPrimaryText)
+                    .fixedSize(horizontal: false, vertical: true)
 
-                    TextField(question.hint, text: $draft, axis: .vertical)
-                        .focused($isWriting)
-                        .font(.community(size: 17))
-                        .lineLimit(4...10)
-                        .padding(14)
-                        .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 16))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 16)
-                                .strokeBorder(
-                                    isWriting ? timeOfDay.accent : timeOfDay.border,
-                                    lineWidth: 1
-                                )
-                        }
-
-                    HStack {
-                        Text("\(draft.count)/\(limit)")
-                            .font(.community(.caption2))
-                            .foregroundStyle(
-                                draft.count > limit ? .red : timeOfDay.canvasSecondaryText
+                TextField(question.hint, text: $draft, axis: .vertical)
+                    .focused($isWriting)
+                    .font(.community(size: 17))
+                    .lineLimit(4...10)
+                    .padding(14)
+                    .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 16))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 16)
+                            .strokeBorder(
+                                isWriting ? timeOfDay.accent : timeOfDay.border,
+                                lineWidth: 1
                             )
-                        Spacer()
-                        if existing != nil {
-                            Button("Remove from profile", role: .destructive) {
-                                remove()
-                            }
-                            .font(.community(.caption, weight: .semibold))
-                        }
                     }
 
-                    if let error = store.errorMessage {
-                        Label(error, systemImage: "exclamationmark.triangle.fill")
-                            .font(.community(.footnote))
-                            .foregroundStyle(.red)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-
-                    Button { save() } label: {
-                        HStack(spacing: 9) {
-                            if store.isSaving { ProgressView().tint(.white) }
-                            Text(existing == nil ? "Add to profile" : "Save answer")
+                HStack {
+                    Text("\(draft.count)/\(limit)")
+                        .font(.community(.caption2))
+                        .foregroundStyle(
+                            draft.count > limit ? .red : timeOfDay.canvasSecondaryText
+                        )
+                    Spacer()
+                    if existing != nil {
+                        Button("Remove from profile", role: .destructive) {
+                            remove()
                         }
-                        .font(.community(.headline, weight: .bold))
-                        .foregroundStyle(Color.white)
-                        .frame(maxWidth: .infinity, minHeight: 54)
-                        .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 17))
+                        .font(.community(.caption, weight: .semibold))
                     }
-                    .buttonStyle(.plain)
-                    .disabled(!canSave)
-                    .opacity(canSave ? 1 : 0.42)
                 }
-                .padding(.horizontal, RepbaseDesign.pageInset)
-                .padding(.top, 10)
-                .padding(.bottom, 40)
-            }
-            .scrollDismissesKeyboard(.interactively)
-            .navigationTitle(existing == nil ? "Your answer" : "Edit answer")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
+
+                if let error = store.errorMessage {
+                    Label(error, systemImage: "exclamationmark.triangle.fill")
+                        .font(.community(.footnote))
+                        .foregroundStyle(.red)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
+
+                Button { save() } label: {
+                    HStack(spacing: 9) {
+                        if store.isSaving { ProgressView().tint(.white) }
+                        Text(existing == nil ? "Add to profile" : "Save answer")
+                    }
+                    .font(.community(.headline, weight: .bold))
+                    .foregroundStyle(Color.white)
+                    .frame(maxWidth: .infinity, minHeight: 54)
+                    .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 17))
+                }
+                .buttonStyle(.plain)
+                .disabled(!canSave)
+                .opacity(canSave ? 1 : 0.42)
             }
-            .homeTimeScreen(timeOfDay)
+            .padding(.horizontal, RepbaseDesign.pageInset)
+            .padding(.top, 10)
+            .padding(.bottom, 40)
         }
+        .scrollDismissesKeyboard(.interactively)
+        .navigationTitle(existing == nil ? "Your answer" : "Edit answer")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button("Cancel") { dismiss() }
+            }
+        }
+        .homeTimeScreen(timeOfDay)
         .task {
             guard !hasSeeded else { return }
             draft = existing?.answer ?? ""

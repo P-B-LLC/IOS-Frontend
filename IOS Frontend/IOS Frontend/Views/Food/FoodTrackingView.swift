@@ -41,9 +41,7 @@ struct FoodTrackingView: View {
     @State private var isFoodVisible = false
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            screen(timeOfDay: HomeTimeOfDay(date: context.date))
-        }
+        screen(timeOfDay: HomeTimeOfDay.current)
         .fullScreenCover(isPresented: $isEditingGoals) {
             NutritionGoalsView()
         }

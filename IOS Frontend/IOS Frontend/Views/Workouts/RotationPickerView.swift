@@ -21,54 +21,52 @@ struct RotationPickerView: View {
     @State private var startOn = Calendar.current.startOfDay(for: Date())
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            let timeOfDay = HomeTimeOfDay(date: context.date)
+        let timeOfDay = HomeTimeOfDay.current
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    Text("You train one rotation at a time. Pick another and it takes over on the day you choose — everything up to then stays as planned.")
-                        .font(.community(.footnote))
-                        .foregroundStyle(timeOfDay.secondaryText)
-                        .fixedSize(horizontal: false, vertical: true)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                Text("You train one rotation at a time. Pick another and it takes over on the day you choose — everything up to then stays as planned.")
+                    .font(.community(.footnote))
+                    .foregroundStyle(timeOfDay.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
 
-                    if let active = store.activeCycle {
-                        section("ON NOW", timeOfDay: timeOfDay) {
-                            row(active, isActive: true, timeOfDay: timeOfDay)
-                        }
-                    }
-
-                    if store.otherCycles.isEmpty {
-                        Text("No other rotations yet. Build one and it will appear here to switch to.")
-                            .font(.community(.subheadline))
-                            .foregroundStyle(timeOfDay.secondaryText)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .padding(.vertical, 10)
-                    } else {
-                        section("SWITCH TO", timeOfDay: timeOfDay) {
-                            ForEach(store.otherCycles) { cycle in
-                                row(cycle, isActive: false, timeOfDay: timeOfDay)
-                            }
-                        }
-                    }
-
-                    if let error = store.persistenceError {
-                        Label(error, systemImage: "exclamationmark.triangle.fill")
-                            .font(.community(.footnote))
-                            .foregroundStyle(RepbaseDesign.danger)
-                            .fixedSize(horizontal: false, vertical: true)
+                if let active = store.activeCycle {
+                    section("ON NOW", timeOfDay: timeOfDay) {
+                        row(active, isActive: true, timeOfDay: timeOfDay)
                     }
                 }
-                .padding(.horizontal, RepbaseDesign.pageInset)
-                .padding(.top, 16)
-                .padding(.bottom, RepbaseDesign.bottomBarClearance)
+
+                if store.otherCycles.isEmpty {
+                    Text("No other rotations yet. Build one and it will appear here to switch to.")
+                        .font(.community(.subheadline))
+                        .foregroundStyle(timeOfDay.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.vertical, 10)
+                } else {
+                    section("SWITCH TO", timeOfDay: timeOfDay) {
+                        ForEach(store.otherCycles) { cycle in
+                            row(cycle, isActive: false, timeOfDay: timeOfDay)
+                        }
+                    }
+                }
+
+                if let error = store.persistenceError {
+                    Label(error, systemImage: "exclamationmark.triangle.fill")
+                        .font(.community(.footnote))
+                        .foregroundStyle(RepbaseDesign.danger)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
-            .scrollIndicators(.hidden)
-            .navigationTitle("Rotations")
-            .navigationBarTitleDisplayMode(.inline)
-            .homeTimeScreen(timeOfDay)
-            .sheet(item: $choosing) { cycle in
-                startSheet(cycle, timeOfDay: timeOfDay)
-            }
+            .padding(.horizontal, RepbaseDesign.pageInset)
+            .padding(.top, 16)
+            .padding(.bottom, RepbaseDesign.bottomBarClearance)
+        }
+        .scrollIndicators(.hidden)
+        .navigationTitle("Rotations")
+        .navigationBarTitleDisplayMode(.inline)
+        .homeTimeScreen(timeOfDay)
+        .sheet(item: $choosing) { cycle in
+            startSheet(cycle, timeOfDay: timeOfDay)
         }
     }
 

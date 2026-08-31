@@ -123,47 +123,45 @@ struct SocialProfileView: View {
     }
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            let timeOfDay = HomeTimeOfDay(date: context.date)
+        let timeOfDay = HomeTimeOfDay.current
 
-            ScrollView {
-                VStack(spacing: 16) {
-                    profileHeader(timeOfDay: timeOfDay)
-                    identityCard(timeOfDay: timeOfDay)
-                    sectionPicker(timeOfDay: timeOfDay)
+        ScrollView {
+            VStack(spacing: 16) {
+                profileHeader(timeOfDay: timeOfDay)
+                identityCard(timeOfDay: timeOfDay)
+                sectionPicker(timeOfDay: timeOfDay)
 
-                    if selectedSection == .posts {
-                        postsSection(timeOfDay: timeOfDay)
-                    } else {
-                        aboutSection(timeOfDay: timeOfDay)
-                    }
-                }
-                .padding(.horizontal, RepbaseDesign.pageInset)
-                .padding(.top, 4)
-                .padding(.bottom, RepbaseDesign.bottomBarClearance)
-            }
-            .scrollIndicators(.hidden)
-            .minimizesBottomBarOnScroll()
-            .toolbar(.hidden, for: .navigationBar)
-            .homeTimeScreen(timeOfDay)
-            .fullScreenCover(isPresented: $editingProfile) {
-                NavigationStack {
-                    ProfileOnboardingView(seed: profile, isEditing: true)
-                        .environment(store)
+                if selectedSection == .posts {
+                    postsSection(timeOfDay: timeOfDay)
+                } else {
+                    aboutSection(timeOfDay: timeOfDay)
                 }
             }
-            .fullScreenCover(isPresented: $showingSettings) {
-                ProfileSettingsView(profile: profile)
+            .padding(.horizontal, RepbaseDesign.pageInset)
+            .padding(.top, 4)
+            .padding(.bottom, RepbaseDesign.bottomBarClearance)
+        }
+        .scrollIndicators(.hidden)
+        .minimizesBottomBarOnScroll()
+        .toolbar(.hidden, for: .navigationBar)
+        .homeTimeScreen(timeOfDay)
+        .fullScreenCover(isPresented: $editingProfile) {
+            NavigationStack {
+                ProfileOnboardingView(seed: profile, isEditing: true)
+                    .environment(store)
             }
+        }
+        .fullScreenCover(isPresented: $showingSettings) {
+            ProfileSettingsView(profile: profile)
+        }
 #if DEBUG
-            .task {
-                if opensSettingsOnLaunch { showingSettings = true }
-            }
+        .task {
+            if opensSettingsOnLaunch { showingSettings = true }
+        }
 #endif
-            .fullScreenCover(isPresented: $editingExpression) {
-                NavigationStack {
-                    ProfileExpressionEditorView()
-                }
+        .fullScreenCover(isPresented: $editingExpression) {
+            NavigationStack {
+                ProfileExpressionEditorView()
             }
         }
         // Out here, not inside the TimelineView, which tears its contents down
@@ -861,277 +859,275 @@ private struct ProfileSettingsView: View {
 
     var body: some View {
         NavigationStack {
-            TimelineView(.periodic(from: .now, by: 60)) { context in
-                let timeOfDay = HomeTimeOfDay(date: context.date)
+            let timeOfDay = HomeTimeOfDay.current
 
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 30) {
-                        settingsHeader(timeOfDay: timeOfDay)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 30) {
+                    settingsHeader(timeOfDay: timeOfDay)
 
-                        VStack(alignment: .leading, spacing: 5) {
-                            Text("APP SETTINGS")
-                                .font(.community(size: 10, weight: .bold))
-                                .tracking(1.3)
-                                .foregroundStyle(timeOfDay.accent)
-                            Text("Everything in one place.")
-                                .font(.community(size: 34, weight: .bold))
-                            Text("Manage your public identity, nutrition targets, workout data, and account.")
-                                .font(.community(.subheadline))
-                                .foregroundStyle(timeOfDay.secondaryText)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("APP SETTINGS")
+                            .font(.community(size: 10, weight: .bold))
+                            .tracking(1.3)
+                            .foregroundStyle(timeOfDay.accent)
+                        Text("Everything in one place.")
+                            .font(.community(size: 34, weight: .bold))
+                        Text("Manage your public identity, nutrition targets, workout data, and account.")
+                            .font(.community(.subheadline))
+                            .foregroundStyle(timeOfDay.secondaryText)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
 
-                        settingsSection("PROFILE", timeOfDay: timeOfDay) {
-                            VStack(spacing: 0) {
-                                Button { editorDestination = .basics } label: {
-                                    settingsRow(
-                                        "Profile details",
-                                        detail: "Name, username, and bio",
-                                        symbol: "person.crop.circle"
-                                    )
-                                }
-                                .buttonStyle(RepbaseSettingsRowButtonStyle())
-
-                                Rectangle().fill(timeOfDay.border).frame(height: 1)
-
-                                NavigationLink {
-                                    SocialLinksEditorView()
-                                } label: {
-                                    settingsRow(
-                                        "Social links",
-                                        detail: "The accounts shown on your profile",
-                                        symbol: "link"
-                                    )
-                                }
-                                .buttonStyle(RepbaseSettingsRowButtonStyle())
-
-                                Rectangle().fill(timeOfDay.border).frame(height: 1)
-
-                                Button { editorDestination = .goals } label: {
-                                    settingsRow(
-                                        "Body goals & privacy",
-                                        detail: "Height, weight, target weight, and visibility",
-                                        symbol: "scope"
-                                    )
-                                }
-                                .buttonStyle(RepbaseSettingsRowButtonStyle())
-
-                                Rectangle().fill(timeOfDay.border).frame(height: 1)
-
-                                Button { editorDestination = .identity } label: {
-                                    settingsActivityRow(
-                                        "Training identity",
-                                        detail: "Photo, disciplines, and gym",
-                                        icon: .lifting
-                                    )
-                                }
-                                .buttonStyle(RepbaseSettingsRowButtonStyle())
-                            }
-                        }
-
-                        settingsSection("PERSONALIZATION", timeOfDay: timeOfDay) {
-                            Button { showingPersonalization = true } label: {
+                    settingsSection("PROFILE", timeOfDay: timeOfDay) {
+                        VStack(spacing: 0) {
+                            Button { editorDestination = .basics } label: {
                                 settingsRow(
-                                    "Your Repbase",
-                                    detail: "Training types, weekly goal, and what home leads with",
-                                    symbol: "slider.horizontal.3"
+                                    "Profile details",
+                                    detail: "Name, username, and bio",
+                                    symbol: "person.crop.circle"
                                 )
                             }
                             .buttonStyle(RepbaseSettingsRowButtonStyle())
-                        }
 
-                        settingsSection("APPEARANCE", timeOfDay: timeOfDay) {
-                            Picker("Appearance", selection: $appearanceRawValue) {
-                                ForEach(RepbaseAppearancePreference.allCases) { appearance in
-                                    Label(appearance.title, systemImage: appearance.symbol)
-                                        .tag(appearance.rawValue)
-                                }
-                            }
-                            .pickerStyle(.segmented)
-                            .padding(.vertical, 14)
-                            .accessibilityHint("Changes the appearance throughout Repbase")
-                        }
+                            Rectangle().fill(timeOfDay.border).frame(height: 1)
 
-                        settingsSection("PRIVACY & PERMISSIONS", timeOfDay: timeOfDay) {
-                            VStack(spacing: 0) {
-                                // Blocking acts on one tap from a post, with
-                                // nothing to confirm. This is the way back
-                                // from a tap that was not meant.
-                                NavigationLink {
-                                    BlockedAccountsView()
-                                } label: {
-                                    settingsRow(
-                                        "Blocked accounts",
-                                        detail: "People you cannot see, and who cannot see you",
-                                        symbol: "hand.raised"
-                                    )
-                                }
-                                .buttonStyle(RepbaseSettingsRowButtonStyle())
-
-                                Rectangle().fill(timeOfDay.border).frame(height: 1)
-
-                                NavigationLink {
-                                    AppleHealthConnectionView()
-                                } label: {
-                                    settingsRow(
-                                        "Apple Health",
-                                        detail: "Steps and completed workout imports",
-                                        symbol: "heart.text.square"
-                                    )
-                                }
-                                .buttonStyle(RepbaseSettingsRowButtonStyle())
-
-                                Rectangle().fill(timeOfDay.border).frame(height: 1)
-
-                                NavigationLink {
-                                    NotificationPreferencesView()
-                                } label: {
-                                    settingsRow(
-                                        "Notifications",
-                                        detail: "Training, nutrition, and community updates",
-                                        symbol: "bell"
-                                    )
-                                }
-                                .buttonStyle(RepbaseSettingsRowButtonStyle())
-
-                                Rectangle().fill(timeOfDay.border).frame(height: 1)
-
-                                NavigationLink {
-                                    PrivacyAndPermissionsView()
-                                } label: {
-                                    settingsRow(
-                                        "Privacy & permissions",
-                                        detail: "Location, photos, and how Repbase uses data",
-                                        symbol: "hand.raised"
-                                    )
-                                }
-                                .buttonStyle(RepbaseSettingsRowButtonStyle())
-
-                                Rectangle().fill(timeOfDay.border).frame(height: 1)
-
-                                Button {
-                                    guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
-                                    openURL(url)
-                                } label: {
-                                    settingsRow(
-                                        "Open iOS settings",
-                                        detail: "Change Repbase system permissions",
-                                        symbol: "gearshape"
-                                    )
-                                }
-                                .buttonStyle(RepbaseSettingsRowButtonStyle())
-                            }
-                        }
-
-                        settingsSection("FOOD", timeOfDay: timeOfDay) {
                             NavigationLink {
-                                NutritionGoalsView()
+                                SocialLinksEditorView()
                             } label: {
                                 settingsRow(
-                                    "Nutrition goals",
-                                    detail: "Calories, protein, carbohydrates, and fat",
-                                    symbol: "fork.knife"
+                                    "Social links",
+                                    detail: "The accounts shown on your profile",
+                                    symbol: "link"
                                 )
                             }
                             .buttonStyle(RepbaseSettingsRowButtonStyle())
-                        }
 
-                        settingsSection("WORKOUTS", timeOfDay: timeOfDay) {
-                            Button { workoutStore.retryPersistence() } label: {
+                            Rectangle().fill(timeOfDay.border).frame(height: 1)
+
+                            Button { editorDestination = .goals } label: {
                                 settingsRow(
-                                    "Refresh workout data",
-                                    detail: "Sync the latest plans and sessions",
-                                    symbol: "arrow.clockwise"
+                                    "Body goals & privacy",
+                                    detail: "Height, weight, target weight, and visibility",
+                                    symbol: "scope"
                                 )
                             }
                             .buttonStyle(RepbaseSettingsRowButtonStyle())
-                        }
 
-                        settingsSection("ACCOUNT", timeOfDay: timeOfDay) {
-                            VStack(spacing: 0) {
-                                Button {
-                                    Task {
-                                        do {
-                                            try await authentication.rotateSessionToken()
-                                            securityMessage = "Your saved account credential was replaced. You are still signed in on this device."
-                                        } catch {
-                                            deleteError = error.localizedDescription
-                                        }
-                                    }
-                                } label: {
-                                    settingsRow(
-                                        "Refresh account security",
-                                        detail: "Replace the credential saved on this device",
-                                        symbol: "key.horizontal",
-                                        color: timeOfDay.accent
-                                    )
-                                }
-                                .buttonStyle(RepbaseSettingsRowButtonStyle())
+                            Rectangle().fill(timeOfDay.border).frame(height: 1)
 
-                                Rectangle().fill(timeOfDay.border).frame(height: 1)
-
-                                Button(role: .destructive) {
-                                    Task { await authentication.signOut() }
-                                } label: {
-                                    settingsRow(
-                                        "Sign out",
-                                        detail: "End this Repbase session",
-                                        symbol: "rectangle.portrait.and.arrow.right",
-                                        color: .red
-                                    )
-                                }
-                                .buttonStyle(RepbaseSettingsRowButtonStyle())
-
-                                Rectangle().fill(timeOfDay.border).frame(height: 1)
-
-                                Button(role: .destructive) {
-                                    showingDeleteConfirmation = true
-                                } label: {
-                                    settingsRow(
-                                        "Delete account",
-                                        detail: "Permanently delete your account and its data",
-                                        symbol: "trash",
-                                        color: .red
-                                    )
-                                }
-                                .buttonStyle(RepbaseSettingsRowButtonStyle())
-                            }
-                            .disabled(authentication.isWorking)
-                        }
-
-                        settingsSection("ABOUT", timeOfDay: timeOfDay) {
-                            VStack(spacing: 0) {
-                                ForEach(LegalDocuments.all) { document in
-                                    Button {
-                                        legalDocument = document
-                                    } label: {
-                                        settingsRow(
-                                            document.title,
-                                            detail: document.summary,
-                                            symbol: document.symbol
-                                        )
-                                    }
-                                    .buttonStyle(RepbaseSettingsRowButtonStyle())
-
-                                    Rectangle().fill(timeOfDay.border).frame(height: 1)
-                                }
-
-                                settingsValueRow(
-                                    "Repbase version",
-                                    value: versionLabel,
-                                    symbol: "info.circle"
+                            Button { editorDestination = .identity } label: {
+                                settingsActivityRow(
+                                    "Training identity",
+                                    detail: "Photo, disciplines, and gym",
+                                    icon: .lifting
                                 )
                             }
+                            .buttonStyle(RepbaseSettingsRowButtonStyle())
                         }
                     }
-                    .padding(.horizontal, 22)
-                    .padding(.top, 12)
-                    .padding(.bottom, 36)
+
+                    settingsSection("PERSONALIZATION", timeOfDay: timeOfDay) {
+                        Button { showingPersonalization = true } label: {
+                            settingsRow(
+                                "Your Repbase",
+                                detail: "Training types, weekly goal, and what home leads with",
+                                symbol: "slider.horizontal.3"
+                            )
+                        }
+                        .buttonStyle(RepbaseSettingsRowButtonStyle())
+                    }
+
+                    settingsSection("APPEARANCE", timeOfDay: timeOfDay) {
+                        Picker("Appearance", selection: $appearanceRawValue) {
+                            ForEach(RepbaseAppearancePreference.allCases) { appearance in
+                                Label(appearance.title, systemImage: appearance.symbol)
+                                    .tag(appearance.rawValue)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        .padding(.vertical, 14)
+                        .accessibilityHint("Changes the appearance throughout Repbase")
+                    }
+
+                    settingsSection("PRIVACY & PERMISSIONS", timeOfDay: timeOfDay) {
+                        VStack(spacing: 0) {
+                            // Blocking acts on one tap from a post, with
+                            // nothing to confirm. This is the way back
+                            // from a tap that was not meant.
+                            NavigationLink {
+                                BlockedAccountsView()
+                            } label: {
+                                settingsRow(
+                                    "Blocked accounts",
+                                    detail: "People you cannot see, and who cannot see you",
+                                    symbol: "hand.raised"
+                                )
+                            }
+                            .buttonStyle(RepbaseSettingsRowButtonStyle())
+
+                            Rectangle().fill(timeOfDay.border).frame(height: 1)
+
+                            NavigationLink {
+                                AppleHealthConnectionView()
+                            } label: {
+                                settingsRow(
+                                    "Apple Health",
+                                    detail: "Steps and completed workout imports",
+                                    symbol: "heart.text.square"
+                                )
+                            }
+                            .buttonStyle(RepbaseSettingsRowButtonStyle())
+
+                            Rectangle().fill(timeOfDay.border).frame(height: 1)
+
+                            NavigationLink {
+                                NotificationPreferencesView()
+                            } label: {
+                                settingsRow(
+                                    "Notifications",
+                                    detail: "Training, nutrition, and community updates",
+                                    symbol: "bell"
+                                )
+                            }
+                            .buttonStyle(RepbaseSettingsRowButtonStyle())
+
+                            Rectangle().fill(timeOfDay.border).frame(height: 1)
+
+                            NavigationLink {
+                                PrivacyAndPermissionsView()
+                            } label: {
+                                settingsRow(
+                                    "Privacy & permissions",
+                                    detail: "Location, photos, and how Repbase uses data",
+                                    symbol: "hand.raised"
+                                )
+                            }
+                            .buttonStyle(RepbaseSettingsRowButtonStyle())
+
+                            Rectangle().fill(timeOfDay.border).frame(height: 1)
+
+                            Button {
+                                guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+                                openURL(url)
+                            } label: {
+                                settingsRow(
+                                    "Open iOS settings",
+                                    detail: "Change Repbase system permissions",
+                                    symbol: "gearshape"
+                                )
+                            }
+                            .buttonStyle(RepbaseSettingsRowButtonStyle())
+                        }
+                    }
+
+                    settingsSection("FOOD", timeOfDay: timeOfDay) {
+                        NavigationLink {
+                            NutritionGoalsView()
+                        } label: {
+                            settingsRow(
+                                "Nutrition goals",
+                                detail: "Calories, protein, carbohydrates, and fat",
+                                symbol: "fork.knife"
+                            )
+                        }
+                        .buttonStyle(RepbaseSettingsRowButtonStyle())
+                    }
+
+                    settingsSection("WORKOUTS", timeOfDay: timeOfDay) {
+                        Button { workoutStore.retryPersistence() } label: {
+                            settingsRow(
+                                "Refresh workout data",
+                                detail: "Sync the latest plans and sessions",
+                                symbol: "arrow.clockwise"
+                            )
+                        }
+                        .buttonStyle(RepbaseSettingsRowButtonStyle())
+                    }
+
+                    settingsSection("ACCOUNT", timeOfDay: timeOfDay) {
+                        VStack(spacing: 0) {
+                            Button {
+                                Task {
+                                    do {
+                                        try await authentication.rotateSessionToken()
+                                        securityMessage = "Your saved account credential was replaced. You are still signed in on this device."
+                                    } catch {
+                                        deleteError = error.localizedDescription
+                                    }
+                                }
+                            } label: {
+                                settingsRow(
+                                    "Refresh account security",
+                                    detail: "Replace the credential saved on this device",
+                                    symbol: "key.horizontal",
+                                    color: timeOfDay.accent
+                                )
+                            }
+                            .buttonStyle(RepbaseSettingsRowButtonStyle())
+
+                            Rectangle().fill(timeOfDay.border).frame(height: 1)
+
+                            Button(role: .destructive) {
+                                Task { await authentication.signOut() }
+                            } label: {
+                                settingsRow(
+                                    "Sign out",
+                                    detail: "End this Repbase session",
+                                    symbol: "rectangle.portrait.and.arrow.right",
+                                    color: .red
+                                )
+                            }
+                            .buttonStyle(RepbaseSettingsRowButtonStyle())
+
+                            Rectangle().fill(timeOfDay.border).frame(height: 1)
+
+                            Button(role: .destructive) {
+                                showingDeleteConfirmation = true
+                            } label: {
+                                settingsRow(
+                                    "Delete account",
+                                    detail: "Permanently delete your account and its data",
+                                    symbol: "trash",
+                                    color: .red
+                                )
+                            }
+                            .buttonStyle(RepbaseSettingsRowButtonStyle())
+                        }
+                        .disabled(authentication.isWorking)
+                    }
+
+                    settingsSection("ABOUT", timeOfDay: timeOfDay) {
+                        VStack(spacing: 0) {
+                            ForEach(LegalDocuments.all) { document in
+                                Button {
+                                    legalDocument = document
+                                } label: {
+                                    settingsRow(
+                                        document.title,
+                                        detail: document.summary,
+                                        symbol: document.symbol
+                                    )
+                                }
+                                .buttonStyle(RepbaseSettingsRowButtonStyle())
+
+                                Rectangle().fill(timeOfDay.border).frame(height: 1)
+                            }
+
+                            settingsValueRow(
+                                "Repbase version",
+                                value: versionLabel,
+                                symbol: "info.circle"
+                            )
+                        }
+                    }
                 }
-                .scrollIndicators(.hidden)
-                .toolbar(.hidden, for: .navigationBar)
-                .homeTimeScreen(timeOfDay)
+                .padding(.horizontal, 22)
+                .padding(.top, 12)
+                .padding(.bottom, 36)
             }
+            .scrollIndicators(.hidden)
+            .toolbar(.hidden, for: .navigationBar)
+            .homeTimeScreen(timeOfDay)
         }
 #if DEBUG
         .task {
@@ -1360,73 +1356,71 @@ private struct PrivacyAndPermissionsView: View {
     @State private var notificationStatus: UNAuthorizationStatus = .notDetermined
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            let timeOfDay = HomeTimeOfDay(date: context.date)
+        let timeOfDay = HomeTimeOfDay.current
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: 28) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("PRIVACY & PERMISSIONS")
-                            .font(.community(size: 10, weight: .bold))
-                            .tracking(1.25)
-                            .foregroundStyle(timeOfDay.accent)
-                        Text("You stay in control.")
-                            .font(.community(size: 32, weight: .bold))
-                        Text("Repbase asks for access only when a feature needs it. You can change access at any time in iOS Settings.")
-                            .font(.community(.subheadline))
-                            .foregroundStyle(timeOfDay.secondaryText)
-                    }
-
-                    permissionExplanation(
-                        "Location",
-                        detail: "Used only during a route workout you start, to map distance and pace.",
-                        symbol: "location",
-                        status: locationLabel
-                    )
-                    permissionExplanation(
-                        "Photos",
-                        detail: "Used when you choose a profile photo. Repbase does not browse your library in the background.",
-                        symbol: "photo",
-                        status: "Selected items only"
-                    )
-                    permissionExplanation(
-                        "Apple Health",
-                        detail: "Read-only access to steps and completed workouts. Repbase never writes to Health.",
-                        symbol: "heart.text.square",
-                        status: activity.hasAskedHealth ? "Access requested" : "Not connected"
-                    )
-                    permissionExplanation(
-                        "Notifications",
-                        detail: "Used only for reminders you enable in Repbase.",
-                        symbol: "bell",
-                        status: notificationLabel
-                    )
-                    permissionExplanation(
-                        "Your data",
-                        detail: "Profile, workout, planner, and nutrition data are stored with your Repbase account so they sync across sessions.",
-                        symbol: "lock.shield",
-                        status: "Account protected"
-                    )
-
-                    Button {
-                        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
-                        openURL(url)
-                    } label: {
-                        Label("Open iOS Settings", systemImage: "arrow.up.right")
-                            .font(.community(.headline))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 15)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(timeOfDay.accent)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 28) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("PRIVACY & PERMISSIONS")
+                        .font(.community(size: 10, weight: .bold))
+                        .tracking(1.25)
+                        .foregroundStyle(timeOfDay.accent)
+                    Text("You stay in control.")
+                        .font(.community(size: 32, weight: .bold))
+                    Text("Repbase asks for access only when a feature needs it. You can change access at any time in iOS Settings.")
+                        .font(.community(.subheadline))
+                        .foregroundStyle(timeOfDay.secondaryText)
                 }
-                .padding(22)
+
+                permissionExplanation(
+                    "Location",
+                    detail: "Used only during a route workout you start, to map distance and pace.",
+                    symbol: "location",
+                    status: locationLabel
+                )
+                permissionExplanation(
+                    "Photos",
+                    detail: "Used when you choose a profile photo. Repbase does not browse your library in the background.",
+                    symbol: "photo",
+                    status: "Selected items only"
+                )
+                permissionExplanation(
+                    "Apple Health",
+                    detail: "Read-only access to steps and completed workouts. Repbase never writes to Health.",
+                    symbol: "heart.text.square",
+                    status: activity.hasAskedHealth ? "Access requested" : "Not connected"
+                )
+                permissionExplanation(
+                    "Notifications",
+                    detail: "Used only for reminders you enable in Repbase.",
+                    symbol: "bell",
+                    status: notificationLabel
+                )
+                permissionExplanation(
+                    "Your data",
+                    detail: "Profile, workout, planner, and nutrition data are stored with your Repbase account so they sync across sessions.",
+                    symbol: "lock.shield",
+                    status: "Account protected"
+                )
+
+                Button {
+                    guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+                    openURL(url)
+                } label: {
+                    Label("Open iOS Settings", systemImage: "arrow.up.right")
+                        .font(.community(.headline))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 15)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(timeOfDay.accent)
             }
-            .navigationTitle("Privacy")
-            .navigationBarTitleDisplayMode(.inline)
-            .homeTimeScreen(timeOfDay)
-            .task { await refreshPermissionStatus() }
+            .padding(22)
         }
+        .navigationTitle("Privacy")
+        .navigationBarTitleDisplayMode(.inline)
+        .homeTimeScreen(timeOfDay)
+        .task { await refreshPermissionStatus() }
     }
 
     private func permissionExplanation(_ title: String, detail: String, symbol: String, status: String) -> some View {
@@ -1510,52 +1504,50 @@ struct ProfileOnboardingView: View {
     }
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            let timeOfDay = HomeTimeOfDay(date: context.date)
+        let timeOfDay = HomeTimeOfDay.current
 
-            VStack(spacing: 0) {
-                onboardingHeader(timeOfDay: timeOfDay)
-                stepProgress(timeOfDay: timeOfDay)
+        VStack(spacing: 0) {
+            onboardingHeader(timeOfDay: timeOfDay)
+            stepProgress(timeOfDay: timeOfDay)
 
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 18) {
-                        stepHeading
-                        stepContent(timeOfDay: timeOfDay)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    stepHeading
+                    stepContent(timeOfDay: timeOfDay)
 
-                        if let error = store.errorMessage {
-                            Label(error, systemImage: "exclamationmark.triangle.fill")
-                                .font(.community(.footnote))
-                                .foregroundStyle(.red)
-                        }
-                    }
-                    .padding(.horizontal, 22)
-                    .padding(.top, 24)
-                    .padding(.bottom, 28)
-                }
-                .scrollIndicators(.hidden)
-
-                bottomAction(timeOfDay: timeOfDay)
-            }
-            .toolbar(.hidden, for: .navigationBar)
-            .homeTimeScreen(timeOfDay)
-            .onChange(of: selectedPhoto) { _, newItem in
-                guard let newItem else { return }
-                Task {
-                    if let data = try? await newItem.loadTransferable(type: Data.self) {
-                        await MainActor.run { draft.profileImageData = data }
+                    if let error = store.errorMessage {
+                        Label(error, systemImage: "exclamationmark.triangle.fill")
+                            .font(.community(.footnote))
+                            .foregroundStyle(.red)
                     }
                 }
+                .padding(.horizontal, 22)
+                .padding(.top, 24)
+                .padding(.bottom, 28)
             }
-            .task(id: gymSearch) {
-                let query = gymSearch.trimmingCharacters(in: .whitespacesAndNewlines)
-                guard !query.isEmpty else {
-                    gymResults = []
-                    return
+            .scrollIndicators(.hidden)
+
+            bottomAction(timeOfDay: timeOfDay)
+        }
+        .toolbar(.hidden, for: .navigationBar)
+        .homeTimeScreen(timeOfDay)
+        .onChange(of: selectedPhoto) { _, newItem in
+            guard let newItem else { return }
+            Task {
+                if let data = try? await newItem.loadTransferable(type: Data.self) {
+                    await MainActor.run { draft.profileImageData = data }
                 }
-                try? await Task.sleep(for: .milliseconds(300))
-                guard !Task.isCancelled else { return }
-                gymResults = await store.searchGyms(query)
             }
+        }
+        .task(id: gymSearch) {
+            let query = gymSearch.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !query.isEmpty else {
+                gymResults = []
+                return
+            }
+            try? await Task.sleep(for: .milliseconds(300))
+            guard !Task.isCancelled else { return }
+            gymResults = await store.searchGyms(query)
         }
     }
 

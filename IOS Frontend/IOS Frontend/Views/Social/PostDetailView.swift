@@ -20,7 +20,7 @@ struct PostDetailView: View {
     /// does not inherit what the feed set inside its own body, so this page
     /// came up in the day palette at eleven at night with the tab bar under
     /// it still dark.
-    @State private var timeOfDay = HomeTimeOfDay(date: Date())
+    private let timeOfDay = HomeTimeOfDay.current
     /// True until the first fetch has been attempted, so a post being loaded
     /// does not flash "this post is gone" on the way in.
     @State private var isFetching = true

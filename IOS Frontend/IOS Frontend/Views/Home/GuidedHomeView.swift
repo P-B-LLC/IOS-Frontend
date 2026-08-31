@@ -33,7 +33,7 @@ struct GuidedHomeView: View {
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
-            let timeOfDay = HomeTimeOfDay(date: context.date)
+            let timeOfDay = HomeTimeOfDay.current
 
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 14) {

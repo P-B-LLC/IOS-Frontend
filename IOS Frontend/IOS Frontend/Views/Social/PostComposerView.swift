@@ -84,9 +84,7 @@ struct PostComposerView: View {
     }
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            screen(timeOfDay: HomeTimeOfDay(date: context.date))
-        }
+        screen(timeOfDay: HomeTimeOfDay.current)
     }
 
     private func screen(timeOfDay: HomeTimeOfDay) -> some View {

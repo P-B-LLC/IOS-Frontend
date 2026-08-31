@@ -23,86 +23,84 @@ struct AuthenticationView: View {
     @State private var showsPasswordReset = false
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            let timeOfDay = HomeTimeOfDay(date: context.date)
+        let timeOfDay = HomeTimeOfDay.current
 
-            // Grouped so the screen modifier below has something to attach
-            // to. A modifier cannot be applied to a bare if/else in a
-            // ViewBuilder, and the compiler reports that as `homeTimeScreen`
-            // being used on the type `View` rather than on a value.
-            Group {
-            if hasEntered {
-                GeometryReader { geometry in
-                ScrollView {
-                    VStack(spacing: 0) {
-                        Spacer(minLength: 56)
-                        brand(timeOfDay: timeOfDay)
+        // Grouped so the screen modifier below has something to attach
+        // to. A modifier cannot be applied to a bare if/else in a
+        // ViewBuilder, and the compiler reports that as `homeTimeScreen`
+        // being used on the type `View` rather than on a value.
+        Group {
+        if hasEntered {
+            GeometryReader { geometry in
+            ScrollView {
+                VStack(spacing: 0) {
+                    Spacer(minLength: 56)
+                    brand(timeOfDay: timeOfDay)
 
-                        VStack(spacing: 14) {
-                            usernameField(timeOfDay: timeOfDay)
-                            passwordField(timeOfDay: timeOfDay)
+                    VStack(spacing: 14) {
+                        usernameField(timeOfDay: timeOfDay)
+                        passwordField(timeOfDay: timeOfDay)
 
-                            Button("Forgot password?") {
-                                authentication.clearError()
-                                showsPasswordReset = true
-                            }
-                            .font(.community(.footnote, weight: .semibold))
-                            .foregroundStyle(timeOfDay.accent)
-                            .frame(maxWidth: .infinity, alignment: .trailing)
-                            .disabled(authentication.isWorking)
-
-                            if let error = authentication.errorMessage {
-                                Label(error, systemImage: "exclamationmark.triangle.fill")
-                                    .font(.community(.footnote))
-                                    .foregroundStyle(Color.red)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(12)
-                                    .background(Color.red.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
-                            }
-
-                            signInButton(timeOfDay: timeOfDay)
+                        Button("Forgot password?") {
+                            authentication.clearError()
+                            showsPasswordReset = true
                         }
-                        .padding(.top, 38)
+                        .font(.community(.footnote, weight: .semibold))
+                        .foregroundStyle(timeOfDay.accent)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .disabled(authentication.isWorking)
 
-                        HStack(spacing: 5) {
-                            Text("New to Repbase?")
-                                .foregroundStyle(timeOfDay.secondaryText)
-                            Button("Create an account") {
-                                authentication.clearError()
-                                isCreatingAccount = true
-                            }
-                            .font(.community(.body, weight: .semibold))
-                            .foregroundStyle(timeOfDay.accent)
-                            .disabled(authentication.isWorking)
+                        if let error = authentication.errorMessage {
+                            Label(error, systemImage: "exclamationmark.triangle.fill")
+                                .font(.community(.footnote))
+                                .foregroundStyle(Color.red)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(12)
+                                .background(Color.red.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
                         }
-                        .font(.community(.subheadline))
-                        .padding(.top, 24)
 
-                        Spacer(minLength: 34)
+                        signInButton(timeOfDay: timeOfDay)
+                    }
+                    .padding(.top, 38)
+
+                    HStack(spacing: 5) {
+                        Text("New to Repbase?")
+                            .foregroundStyle(timeOfDay.secondaryText)
+                        Button("Create an account") {
+                            authentication.clearError()
+                            isCreatingAccount = true
+                        }
+                        .font(.community(.body, weight: .semibold))
+                        .foregroundStyle(timeOfDay.accent)
+                        .disabled(authentication.isWorking)
+                    }
+                    .font(.community(.subheadline))
+                    .padding(.top, 24)
+
+                    Spacer(minLength: 34)
 
 #if DEBUG
-                        Label(
-                            "Development · \(authentication.configuration.displayName)",
-                            systemImage: "hammer"
-                        )
-                        .font(.community(.caption2))
-                        .foregroundStyle(timeOfDay.secondaryText.opacity(0.72))
+                    Label(
+                        "Development · \(authentication.configuration.displayName)",
+                        systemImage: "hammer"
+                    )
+                    .font(.community(.caption2))
+                    .foregroundStyle(timeOfDay.secondaryText.opacity(0.72))
 #endif
-                    }
-                    .padding(.horizontal, RepbaseDesign.pageInset)
-                    .padding(.bottom, 20)
-                    .frame(maxWidth: 480)
-                    .frame(maxWidth: .infinity)
-                    .frame(minHeight: geometry.size.height)
                 }
-                .scrollDismissesKeyboard(.interactively)
-                }
-            } else {
-                welcome(timeOfDay: timeOfDay)
+                .padding(.horizontal, RepbaseDesign.pageInset)
+                .padding(.bottom, 20)
+                .frame(maxWidth: 480)
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: geometry.size.height)
             }
+            .scrollDismissesKeyboard(.interactively)
             }
-            .homeTimeScreen(timeOfDay)
+        } else {
+            welcome(timeOfDay: timeOfDay)
         }
+        }
+        .homeTimeScreen(timeOfDay)
         .fullScreenCover(isPresented: $isCreatingAccount) {
             NavigationStack {
                 AccountRegistrationView()
@@ -266,89 +264,87 @@ private struct AccountRegistrationView: View {
     @State private var username = ""
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            let timeOfDay = HomeTimeOfDay(date: context.date)
+        let timeOfDay = HomeTimeOfDay.current
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: 26) {
-                    HStack {
-                        Button { dismiss() } label: {
-                            Image(systemName: "xmark")
-                                .font(.community(size: 17, weight: .semibold))
-                                .frame(width: 44, height: 44)
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        Spacer()
-                        Text("Create Account").font(.community(.headline, weight: .bold))
-                        Spacer()
-                        Color.clear.frame(width: 44, height: 44)
-                    }
-
-                    VStack(alignment: .leading, spacing: 7) {
-                        Text("JOIN REPBASE")
-                            .font(.community(size: 10, weight: .bold))
-                            .tracking(1.3)
-                            .foregroundStyle(timeOfDay.accent)
-                        Text("Create your account.")
-                            .font(.community(size: 30, weight: .bold))
-                            .tracking(-0.65)
-                        Text("Goals, measurements, your photo, disciplines, and gym can be added later from Profile Settings.")
-                            .font(.community(.subheadline))
-                            .foregroundStyle(timeOfDay.secondaryText)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-
-                    VStack(spacing: 14) {
-                        registrationField("First name", text: $firstName, contentType: .givenName, timeOfDay: timeOfDay)
-                        registrationField("Last name", text: $lastName, contentType: .familyName, timeOfDay: timeOfDay)
-                        registrationField("Username", text: $username, contentType: .username, timeOfDay: timeOfDay, lowercase: true)
-                        registrationField("Email", text: $email, contentType: .emailAddress, timeOfDay: timeOfDay, lowercase: true)
-
-                        HStack(spacing: 12) {
-                            Image(systemName: "lock").foregroundStyle(timeOfDay.secondaryText)
-                            SecureField("Password", text: $password)
-                                .textContentType(.newPassword)
-                        }
-                        .authenticationField(timeOfDay: timeOfDay)
-
-                        Text("Use at least 8 characters.")
-                            .font(.community(.caption))
-                            .foregroundStyle(timeOfDay.secondaryText)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-
-                    if let error = authentication.errorMessage {
-                        Label(error, systemImage: "exclamationmark.triangle.fill")
-                            .font(.community(.footnote))
-                            .foregroundStyle(.red)
-                    }
-
-                    Button { register() } label: {
-                        HStack {
-                            if authentication.isWorking { ProgressView().tint(.white) }
-                            Text("Create Account")
-                            Spacer()
-                            Image(systemName: "arrow.right")
-                        }
-                        .font(.community(.headline, weight: .bold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 20)
-                        .frame(height: 56)
-                        .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 12))
+        ScrollView {
+            VStack(alignment: .leading, spacing: 26) {
+                HStack {
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark")
+                            .font(.community(size: 17, weight: .semibold))
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .disabled(!canRegister || authentication.isWorking)
-                    .opacity(canRegister ? 1 : 0.42)
+                    Spacer()
+                    Text("Create Account").font(.community(.headline, weight: .bold))
+                    Spacer()
+                    Color.clear.frame(width: 44, height: 44)
                 }
-                .padding(.horizontal, RepbaseDesign.pageInset)
-                .padding(.top, 12)
-                .padding(.bottom, 34)
+
+                VStack(alignment: .leading, spacing: 7) {
+                    Text("JOIN REPBASE")
+                        .font(.community(size: 10, weight: .bold))
+                        .tracking(1.3)
+                        .foregroundStyle(timeOfDay.accent)
+                    Text("Create your account.")
+                        .font(.community(size: 30, weight: .bold))
+                        .tracking(-0.65)
+                    Text("Goals, measurements, your photo, disciplines, and gym can be added later from Profile Settings.")
+                        .font(.community(.subheadline))
+                        .foregroundStyle(timeOfDay.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                VStack(spacing: 14) {
+                    registrationField("First name", text: $firstName, contentType: .givenName, timeOfDay: timeOfDay)
+                    registrationField("Last name", text: $lastName, contentType: .familyName, timeOfDay: timeOfDay)
+                    registrationField("Username", text: $username, contentType: .username, timeOfDay: timeOfDay, lowercase: true)
+                    registrationField("Email", text: $email, contentType: .emailAddress, timeOfDay: timeOfDay, lowercase: true)
+
+                    HStack(spacing: 12) {
+                        Image(systemName: "lock").foregroundStyle(timeOfDay.secondaryText)
+                        SecureField("Password", text: $password)
+                            .textContentType(.newPassword)
+                    }
+                    .authenticationField(timeOfDay: timeOfDay)
+
+                    Text("Use at least 8 characters.")
+                        .font(.community(.caption))
+                        .foregroundStyle(timeOfDay.secondaryText)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                if let error = authentication.errorMessage {
+                    Label(error, systemImage: "exclamationmark.triangle.fill")
+                        .font(.community(.footnote))
+                        .foregroundStyle(.red)
+                }
+
+                Button { register() } label: {
+                    HStack {
+                        if authentication.isWorking { ProgressView().tint(.white) }
+                        Text("Create Account")
+                        Spacer()
+                        Image(systemName: "arrow.right")
+                    }
+                    .font(.community(.headline, weight: .bold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 20)
+                    .frame(height: 56)
+                    .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 12))
+                }
+                .buttonStyle(.plain)
+                .disabled(!canRegister || authentication.isWorking)
+                .opacity(canRegister ? 1 : 0.42)
             }
-            .scrollDismissesKeyboard(.interactively)
-            .toolbar(.hidden, for: .navigationBar)
-            .homeTimeScreen(timeOfDay)
+            .padding(.horizontal, RepbaseDesign.pageInset)
+            .padding(.top, 12)
+            .padding(.bottom, 34)
         }
+        .scrollDismissesKeyboard(.interactively)
+        .toolbar(.hidden, for: .navigationBar)
+        .homeTimeScreen(timeOfDay)
     }
 
     private func registrationField(

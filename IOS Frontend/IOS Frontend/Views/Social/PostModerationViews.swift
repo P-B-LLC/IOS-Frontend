@@ -141,65 +141,63 @@ struct BlockedAccountsView: View {
     @Environment(SocialStore.self) private var store
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            let timeOfDay = HomeTimeOfDay(date: context.date)
+        let timeOfDay = HomeTimeOfDay.current
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
-                    Text("Blocked people cannot see your posts, and you cannot see theirs. Blocking also removes any following between you, which lifting a block does not put back.")
-                        .font(.community(.footnote))
-                        .foregroundStyle(timeOfDay.secondaryText)
-                        .fixedSize(horizontal: false, vertical: true)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Blocked people cannot see your posts, and you cannot see theirs. Blocking also removes any following between you, which lifting a block does not put back.")
+                    .font(.community(.footnote))
+                    .foregroundStyle(timeOfDay.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
 
-                    if store.isLoadingBlocks && store.blockedPeople.isEmpty {
-                        ProgressView()
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 40)
-                    } else if store.blockedPeople.isEmpty {
-                        ContentUnavailableView(
-                            "Nobody is blocked",
-                            systemImage: "hand.raised",
-                            description: Text("People you block from a post will appear here.")
-                        )
-                        .padding(.top, 30)
-                    } else {
-                        ForEach(store.blockedPeople) { blocked in
-                            HStack(spacing: 11) {
-                                avatar(blocked.person, timeOfDay: timeOfDay)
+                if store.isLoadingBlocks && store.blockedPeople.isEmpty {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 40)
+                } else if store.blockedPeople.isEmpty {
+                    ContentUnavailableView(
+                        "Nobody is blocked",
+                        systemImage: "hand.raised",
+                        description: Text("People you block from a post will appear here.")
+                    )
+                    .padding(.top, 30)
+                } else {
+                    ForEach(store.blockedPeople) { blocked in
+                        HStack(spacing: 11) {
+                            avatar(blocked.person, timeOfDay: timeOfDay)
 
-                                VStack(alignment: .leading, spacing: 1) {
-                                    Text(blocked.person.displayName)
-                                        .font(.community(.subheadline, weight: .semibold))
-                                        .foregroundStyle(timeOfDay.primaryText)
-                                        .lineLimit(1)
-                                    Text("@\(blocked.person.username)")
-                                        .font(.community(.caption2))
-                                        .foregroundStyle(timeOfDay.secondaryText)
-                                        .lineLimit(1)
-                                }
-
-                                Spacer(minLength: 8)
-
-                                Button("Unblock") {
-                                    Task { await store.unblock(blocked) }
-                                }
-                                .font(.community(.caption, weight: .semibold))
-                                .buttonStyle(.plain)
-                                .foregroundStyle(timeOfDay.accent)
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(blocked.person.displayName)
+                                    .font(.community(.subheadline, weight: .semibold))
+                                    .foregroundStyle(timeOfDay.primaryText)
+                                    .lineLimit(1)
+                                Text("@\(blocked.person.username)")
+                                    .font(.community(.caption2))
+                                    .foregroundStyle(timeOfDay.secondaryText)
+                                    .lineLimit(1)
                             }
-                            .padding(.vertical, 9)
+
+                            Spacer(minLength: 8)
+
+                            Button("Unblock") {
+                                Task { await store.unblock(blocked) }
+                            }
+                            .font(.community(.caption, weight: .semibold))
+                            .buttonStyle(.plain)
+                            .foregroundStyle(timeOfDay.accent)
                         }
+                        .padding(.vertical, 9)
                     }
                 }
-                .padding(.horizontal, RepbaseDesign.pageInset)
-                .padding(.top, 14)
-                .padding(.bottom, RepbaseDesign.bottomBarClearance)
             }
-            .scrollIndicators(.hidden)
-            .navigationTitle("Blocked accounts")
-            .navigationBarTitleDisplayMode(.inline)
-            .homeTimeScreen(timeOfDay)
+            .padding(.horizontal, RepbaseDesign.pageInset)
+            .padding(.top, 14)
+            .padding(.bottom, RepbaseDesign.bottomBarClearance)
         }
+        .scrollIndicators(.hidden)
+        .navigationTitle("Blocked accounts")
+        .navigationBarTitleDisplayMode(.inline)
+        .homeTimeScreen(timeOfDay)
         .task { await store.loadBlocks() }
     }
 

@@ -34,89 +34,87 @@ struct PlannerView: View {
     @State private var feedbackTask: Task<Void, Never>?
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            let timeOfDay = HomeTimeOfDay(date: context.date)
+        let timeOfDay = HomeTimeOfDay.current
 
-            ScrollView {
-                VStack(spacing: 14) {
-                    HStack(alignment: .bottom) {
-                        if showsBackButton {
-                            Button { dismiss() } label: {
-                                Image(systemName: "chevron.left")
-                                    .font(.community(size: 17, weight: .semibold))
-                                    .frame(width: 40, height: 40)
-                                    .contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain)
+        ScrollView {
+            VStack(spacing: 14) {
+                HStack(alignment: .bottom) {
+                    if showsBackButton {
+                        Button { dismiss() } label: {
+                            Image(systemName: "chevron.left")
+                                .font(.community(size: 17, weight: .semibold))
+                                .frame(width: 40, height: 40)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(timeOfDay.canvasPrimaryText)
+                        .accessibilityLabel("Back")
+                        .padding(.trailing, 2)
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("CALENDAR")
+                            .font(.community(size: 10, weight: .bold))
+                            .tracking(1.2)
+                            .foregroundStyle(timeOfDay.accent)
+                        Text(store.visibleMonth.formatted(.dateTime.month(.wide).year()))
+                            .font(.community(size: 32, weight: .bold))
+                            .tracking(-0.7)
                             .foregroundStyle(timeOfDay.canvasPrimaryText)
-                            .accessibilityLabel("Back")
-                            .padding(.trailing, 2)
-                        }
-
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("CALENDAR")
-                                .font(.community(size: 10, weight: .bold))
-                                .tracking(1.2)
-                                .foregroundStyle(timeOfDay.accent)
-                            Text(store.visibleMonth.formatted(.dateTime.month(.wide).year()))
-                                .font(.community(size: 32, weight: .bold))
-                                .tracking(-0.7)
-                                .foregroundStyle(timeOfDay.canvasPrimaryText)
-                        }
-                        Spacer(minLength: 0)
                     }
-
-                    if isMonthShown {
-                        PlannerMonthCalendar(
-                            clearedDate: clearedDate,
-                            completionPulse: completionPulse
-                        ) {
-                            withAnimation(.easeOut(duration: 0.2)) { isMonthShown = false }
-                        }
-                        .transition(.opacity.combined(with: .move(edge: .top)))
-                    }
-
-                    if !isMonthShown {
-                        PlannerWeekStrip(
-                            categoryFilter: $categoryFilter,
-                            isMonthShown: isMonthShown,
-                            onToggleMonth: {
-                                withAnimation(.easeOut(duration: 0.2)) { isMonthShown.toggle() }
-                            }
-                        )
-                    }
-
-                    addButtons(timeOfDay: timeOfDay)
-                    rotationStrip(timeOfDay: timeOfDay)
-                    daySection(timeOfDay: timeOfDay)
-                    pastDueSection(timeOfDay: timeOfDay)
-                    upcomingSection(timeOfDay: timeOfDay)
-
-                    if let error = store.persistenceError {
-                        errorCard(error, timeOfDay: timeOfDay)
-                    }
+                    Spacer(minLength: 0)
                 }
-                .padding(.horizontal, RepbaseDesign.pageInset)
-                .padding(.top, 16)
-                .padding(.bottom, RepbaseDesign.bottomBarClearance)
-            }
-            .scrollIndicators(.hidden)
-            .minimizesBottomBarOnScroll()
-            .toolbar(.hidden, for: .navigationBar)
-            .homeTimeScreen(timeOfDay)
-            .overlay(alignment: .top) {
-                if let completionMessage {
-                    completionToast(completionMessage, timeOfDay: timeOfDay)
-                        .padding(.top, 12)
-                        .transition(.move(edge: .top).combined(with: .opacity))
+
+                if isMonthShown {
+                    PlannerMonthCalendar(
+                        clearedDate: clearedDate,
+                        completionPulse: completionPulse
+                    ) {
+                        withAnimation(.easeOut(duration: 0.2)) { isMonthShown = false }
+                    }
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                }
+
+                if !isMonthShown {
+                    PlannerWeekStrip(
+                        categoryFilter: $categoryFilter,
+                        isMonthShown: isMonthShown,
+                        onToggleMonth: {
+                            withAnimation(.easeOut(duration: 0.2)) { isMonthShown.toggle() }
+                        }
+                    )
+                }
+
+                addButtons(timeOfDay: timeOfDay)
+                rotationStrip(timeOfDay: timeOfDay)
+                daySection(timeOfDay: timeOfDay)
+                pastDueSection(timeOfDay: timeOfDay)
+                upcomingSection(timeOfDay: timeOfDay)
+
+                if let error = store.persistenceError {
+                    errorCard(error, timeOfDay: timeOfDay)
                 }
             }
-            .overlay {
-                if store.isLoading {
-                    ProgressView()
-                        .padding(18)
-                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
-                }
+            .padding(.horizontal, RepbaseDesign.pageInset)
+            .padding(.top, 16)
+            .padding(.bottom, RepbaseDesign.bottomBarClearance)
+        }
+        .scrollIndicators(.hidden)
+        .minimizesBottomBarOnScroll()
+        .toolbar(.hidden, for: .navigationBar)
+        .homeTimeScreen(timeOfDay)
+        .overlay(alignment: .top) {
+            if let completionMessage {
+                completionToast(completionMessage, timeOfDay: timeOfDay)
+                    .padding(.top, 12)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+        .overlay {
+            if store.isLoading {
+                ProgressView()
+                    .padding(18)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
             }
         }
         .fullScreenCover(item: $editor) { mode in

@@ -38,31 +38,29 @@ struct PasswordResetView: View {
     }
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            let timeOfDay = HomeTimeOfDay(date: context.date)
+        let timeOfDay = HomeTimeOfDay.current
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: 26) {
-                    header
+        ScrollView {
+            VStack(alignment: .leading, spacing: 26) {
+                header
 
-                    switch step {
-                    case .askingForCode:
-                        askForCode(timeOfDay: timeOfDay)
-                    case .enteringCode:
-                        enterCode(timeOfDay: timeOfDay)
-                    }
+                switch step {
+                case .askingForCode:
+                    askForCode(timeOfDay: timeOfDay)
+                case .enteringCode:
+                    enterCode(timeOfDay: timeOfDay)
                 }
-                .padding(.horizontal, RepbaseDesign.pageInset)
-                .padding(.top, 12)
-                .padding(.bottom, 34)
             }
-            .scrollDismissesKeyboard(.interactively)
-            .toolbar(.hidden, for: .navigationBar)
-            .homeTimeScreen(timeOfDay)
-#if DEBUG
-            .task { applyPreviewFlag() }
-#endif
+            .padding(.horizontal, RepbaseDesign.pageInset)
+            .padding(.top, 12)
+            .padding(.bottom, 34)
         }
+        .scrollDismissesKeyboard(.interactively)
+        .toolbar(.hidden, for: .navigationBar)
+        .homeTimeScreen(timeOfDay)
+#if DEBUG
+        .task { applyPreviewFlag() }
+#endif
     }
 
     private var header: some View {

@@ -33,77 +33,75 @@ struct SocialLinksEditorView: View {
     }
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            let timeOfDay = HomeTimeOfDay(date: context.date)
+        let timeOfDay = HomeTimeOfDay.current
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
-                    Text("Add the accounts you want on your profile. Paste a link, or just type your handle and we will work out the address.")
-                        .font(.community(.footnote))
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                Text("Add the accounts you want on your profile. Paste a link, or just type your handle and we will work out the address.")
+                    .font(.community(.footnote))
+                    .foregroundStyle(timeOfDay.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if drafts.isEmpty {
+                    Text("No links yet.")
+                        .font(.community(.subheadline))
                         .foregroundStyle(timeOfDay.secondaryText)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    if drafts.isEmpty {
-                        Text("No links yet.")
-                            .font(.community(.subheadline))
-                            .foregroundStyle(timeOfDay.secondaryText)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.vertical, 18)
-                    } else {
-                        ForEach($drafts) { $draft in
-                            row($draft, timeOfDay: timeOfDay)
-                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.vertical, 18)
+                } else {
+                    ForEach($drafts) { $draft in
+                        row($draft, timeOfDay: timeOfDay)
                     }
-
-                    if !unusedPlatforms.isEmpty {
-                        Menu {
-                            ForEach(unusedPlatforms, id: \.self) { platform in
-                                Button {
-                                    drafts.append(
-                                        ProfileSocialLinkDraft(platform: platform, value: "")
-                                    )
-                                } label: {
-                                    Label(platform.title, systemImage: platform.systemImage)
-                                }
-                            }
-                        } label: {
-                            Label("Add a platform", systemImage: "plus.circle")
-                                .font(.community(.subheadline, weight: .semibold))
-                                .foregroundStyle(timeOfDay.accent)
-                        }
-                    }
-
-                    // The server's own words. It knows which row was wrong and
-                    // why, and paraphrasing that here would only be a worse
-                    // version of the same sentence.
-                    if let errorMessage {
-                        Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
-                            .font(.community(.footnote))
-                            .foregroundStyle(RepbaseDesign.danger)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-
-                    Button {
-                        save()
-                    } label: {
-                        HStack(spacing: 8) {
-                            if isSaving { ProgressView().controlSize(.small) }
-                            Text("Save links")
-                        }
-                        .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(EditorialPrimaryButtonStyle())
-                    .disabled(isSaving)
                 }
-                .padding(.horizontal, RepbaseDesign.pageInset)
-                .padding(.top, 16)
-                .padding(.bottom, RepbaseDesign.bottomBarClearance)
+
+                if !unusedPlatforms.isEmpty {
+                    Menu {
+                        ForEach(unusedPlatforms, id: \.self) { platform in
+                            Button {
+                                drafts.append(
+                                    ProfileSocialLinkDraft(platform: platform, value: "")
+                                )
+                            } label: {
+                                Label(platform.title, systemImage: platform.systemImage)
+                            }
+                        }
+                    } label: {
+                        Label("Add a platform", systemImage: "plus.circle")
+                            .font(.community(.subheadline, weight: .semibold))
+                            .foregroundStyle(timeOfDay.accent)
+                    }
+                }
+
+                // The server's own words. It knows which row was wrong and
+                // why, and paraphrasing that here would only be a worse
+                // version of the same sentence.
+                if let errorMessage {
+                    Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
+                        .font(.community(.footnote))
+                        .foregroundStyle(RepbaseDesign.danger)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Button {
+                    save()
+                } label: {
+                    HStack(spacing: 8) {
+                        if isSaving { ProgressView().controlSize(.small) }
+                        Text("Save links")
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(EditorialPrimaryButtonStyle())
+                .disabled(isSaving)
             }
-            .scrollIndicators(.hidden)
-            .navigationTitle("Social links")
-            .navigationBarTitleDisplayMode(.inline)
-            .homeTimeScreen(timeOfDay)
+            .padding(.horizontal, RepbaseDesign.pageInset)
+            .padding(.top, 16)
+            .padding(.bottom, RepbaseDesign.bottomBarClearance)
         }
+        .scrollIndicators(.hidden)
+        .navigationTitle("Social links")
+        .navigationBarTitleDisplayMode(.inline)
+        .homeTimeScreen(timeOfDay)
         .task {
             // Once. Re-seeding on every appearance would throw away an edit
             // the moment anything else refreshed the profile underneath.

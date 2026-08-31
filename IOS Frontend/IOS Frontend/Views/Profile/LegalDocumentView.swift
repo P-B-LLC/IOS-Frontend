@@ -18,43 +18,41 @@ struct LegalDocumentView: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            let timeOfDay = HomeTimeOfDay(date: context.date)
+        let timeOfDay = HomeTimeOfDay.current
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
-                    ForEach(document.sections) { section in
-                        VStack(alignment: .leading, spacing: 9) {
-                            if let heading = section.heading {
-                                Text(heading)
-                                    .font(.community(size: 11, weight: .bold))
-                                    .tracking(1.2)
-                                    .foregroundStyle(timeOfDay.accent)
-                            }
-                            if !section.text.isEmpty {
-                                Text(section.text)
-                                    .font(.community(.subheadline))
-                                    .foregroundStyle(timeOfDay.secondaryText)
-                                    .fixedSize(horizontal: false, vertical: true)
-                                    .lineSpacing(3)
-                            }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 22) {
+                ForEach(document.sections) { section in
+                    VStack(alignment: .leading, spacing: 9) {
+                        if let heading = section.heading {
+                            Text(heading)
+                                .font(.community(size: 11, weight: .bold))
+                                .tracking(1.2)
+                                .foregroundStyle(timeOfDay.accent)
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        if !section.text.isEmpty {
+                            Text(section.text)
+                                .font(.community(.subheadline))
+                                .foregroundStyle(timeOfDay.secondaryText)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .lineSpacing(3)
+                        }
                     }
-                }
-                .padding(.horizontal, 22)
-                .padding(.bottom, 40)
-            }
-            .scrollIndicators(.hidden)
-            .navigationTitle(document.title)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                        .font(.community(.body, weight: .semibold))
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-            .homeTimeScreen(timeOfDay)
+            .padding(.horizontal, 22)
+            .padding(.bottom, 40)
         }
+        .scrollIndicators(.hidden)
+        .navigationTitle(document.title)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Done") { dismiss() }
+                    .font(.community(.body, weight: .semibold))
+            }
+        }
+        .homeTimeScreen(timeOfDay)
     }
 }

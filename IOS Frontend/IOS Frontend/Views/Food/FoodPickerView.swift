@@ -21,50 +21,48 @@ struct FoodPickerView: View {
     @State private var databaseError: String?
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            let timeOfDay = HomeTimeOfDay(date: context.date)
+        let timeOfDay = HomeTimeOfDay.current
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    pickerHeader(timeOfDay: timeOfDay)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                pickerHeader(timeOfDay: timeOfDay)
 
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("FOOD DATABASE")
-                            .font(.community(size: 10, weight: .bold))
-                            .tracking(1.25)
-                            .foregroundStyle(timeOfDay.accent)
-                        Text("Find it quickly.")
-                            .font(.community(size: 28, weight: .bold))
-                            .tracking(-0.8)
-                        Text("Search the USDA food database, reuse something you have logged, or enter nutrition by hand.")
-                            .font(.community(.subheadline))
-                            .foregroundStyle(timeOfDay.canvasSecondaryText)
-                    }
-
-                    HStack(spacing: 12) {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundStyle(timeOfDay.canvasSecondaryText)
-                        TextField("Search foods", text: $searchText)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
-                    }
-                    .padding(.horizontal, 2)
-                    .frame(height: 52)
-                    .overlay(alignment: .bottom) { Divider() }
-
-                    databaseEditorialSection(timeOfDay: timeOfDay)
-                    recentEditorialSection(timeOfDay: timeOfDay)
-
-                    manualEntryCard(timeOfDay: timeOfDay)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("FOOD DATABASE")
+                        .font(.community(size: 10, weight: .bold))
+                        .tracking(1.25)
+                        .foregroundStyle(timeOfDay.accent)
+                    Text("Find it quickly.")
+                        .font(.community(size: 28, weight: .bold))
+                        .tracking(-0.8)
+                    Text("Search the USDA food database, reuse something you have logged, or enter nutrition by hand.")
+                        .font(.community(.subheadline))
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
                 }
-                .padding(.horizontal, RepbaseDesign.pageInset)
-                .padding(.bottom, 28)
+
+                HStack(spacing: 12) {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                    TextField("Search foods", text: $searchText)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                }
+                .padding(.horizontal, 2)
+                .frame(height: 52)
+                .overlay(alignment: .bottom) { Divider() }
+
+                databaseEditorialSection(timeOfDay: timeOfDay)
+                recentEditorialSection(timeOfDay: timeOfDay)
+
+                manualEntryCard(timeOfDay: timeOfDay)
             }
-            .scrollIndicators(.hidden)
-            .toolbar(.hidden, for: .navigationBar)
-            .homeTimeScreen(timeOfDay)
-            .task(id: searchText) { await searchDatabase() }
+            .padding(.horizontal, RepbaseDesign.pageInset)
+            .padding(.bottom, 28)
         }
+        .scrollIndicators(.hidden)
+        .toolbar(.hidden, for: .navigationBar)
+        .homeTimeScreen(timeOfDay)
+        .task(id: searchText) { await searchDatabase() }
     }
 
     private func pickerHeader(timeOfDay: HomeTimeOfDay) -> some View {

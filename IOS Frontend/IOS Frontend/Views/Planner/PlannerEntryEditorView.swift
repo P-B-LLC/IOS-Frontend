@@ -75,99 +75,97 @@ struct PlannerEntryEditorView: View {
     }
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            let timeOfDay = HomeTimeOfDay(date: context.date)
+        let timeOfDay = HomeTimeOfDay.current
 
-            NavigationStack {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 22) {
-                        EditorialFormHeader(
-                            title: title,
-                            leadingAction: .cancel,
-                            saveTitle: "Save",
-                            canSave: canSave,
-                            onDismiss: { dismiss() },
-                            onSave: save,
-                            showsSaveAction: false
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 22) {
+                    EditorialFormHeader(
+                        title: title,
+                        leadingAction: .cancel,
+                        saveTitle: "Save",
+                        canSave: canSave,
+                        onDismiss: { dismiss() },
+                        onSave: save,
+                        showsSaveAction: false
+                    )
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(draft.kind == .task ? "NEW TASK" : "NEW EVENT")
+                            .font(.community(size: 10, weight: .bold))
+                            .tracking(1.25)
+                            .foregroundStyle(timeOfDay.accent)
+                        Text(draft.kind == .task ? "Add something to your day." : "Put time on the calendar.")
+                            .font(.community(size: 34, weight: .bold, design: .rounded))
+                            .tracking(-0.8)
+                        Text(
+                            draft.kind == .task
+                                ? "A quick reminder that lives beside your events."
+                                : "Plan a moment with a clear start and finish."
                         )
+                        .font(.community(.subheadline))
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                    }
 
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text(draft.kind == .task ? "NEW TASK" : "NEW EVENT")
-                                .font(.community(size: 10, weight: .bold))
-                                .tracking(1.25)
-                                .foregroundStyle(timeOfDay.accent)
-                            Text(draft.kind == .task ? "Add something to your day." : "Put time on the calendar.")
-                                .font(.community(size: 34, weight: .bold, design: .rounded))
-                                .tracking(-0.8)
-                            Text(
-                                draft.kind == .task
-                                    ? "A quick reminder that lives beside your events."
-                                    : "Plan a moment with a clear start and finish."
-                            )
-                            .font(.community(.subheadline))
-                            .foregroundStyle(timeOfDay.canvasSecondaryText)
-                        }
+                    editorialNameAndType(timeOfDay: timeOfDay)
+                    editorialDetails(timeOfDay: timeOfDay)
 
-                        editorialNameAndType(timeOfDay: timeOfDay)
-                        editorialDetails(timeOfDay: timeOfDay)
+                    if !draft.notes.isEmpty || isEditing {
+                        editorialNotes
+                    }
 
-                        if !draft.notes.isEmpty || isEditing {
-                            editorialNotes
-                        }
+                    Button(isEditing ? "Save changes" : "Add \(draft.kind.title.lowercased())") {
+                        save()
+                    }
+                    .buttonStyle(EditorialPrimaryButtonStyle())
+                    .disabled(!canSave)
 
-                        Button(isEditing ? "Save changes" : "Add \(draft.kind.title.lowercased())") {
-                            save()
-                        }
-                        .buttonStyle(EditorialPrimaryButtonStyle())
-                        .disabled(!canSave)
-
-                        if case .edit(let entry) = mode {
-                            // Only an entry the server already knows about. A
-                            // draft has no id for a post to point at, and the
-                            // edits on screen are not saved until Save.
-                            if let serverID = entry.serverID {
-                                Button {
-                                    sharedEntry = SharedPostSource(id: serverID)
-                                } label: {
-                                    Label(
-                                        "Share to Feed",
-                                        systemImage: "square.and.arrow.up"
-                                    )
-                                    .font(.community(.subheadline, weight: .semibold))
-                                }
-                                .buttonStyle(.plain)
-                                .foregroundStyle(timeOfDay.accent)
-                                .frame(maxWidth: .infinity, alignment: .center)
-                            }
-
-                            Button(role: .destructive) {
-                                onDeleted?(entry)
-                                dismiss()
+                    if case .edit(let entry) = mode {
+                        // Only an entry the server already knows about. A
+                        // draft has no id for a post to point at, and the
+                        // edits on screen are not saved until Save.
+                        if let serverID = entry.serverID {
+                            Button {
+                                sharedEntry = SharedPostSource(id: serverID)
                             } label: {
-                                Label("Delete \(draft.kind.title)", systemImage: "trash")
-                                    .font(.community(.subheadline, weight: .semibold))
+                                Label(
+                                    "Share to Feed",
+                                    systemImage: "square.and.arrow.up"
+                                )
+                                .font(.community(.subheadline, weight: .semibold))
                             }
                             .buttonStyle(.plain)
-                            .foregroundStyle(Color.red)
+                            .foregroundStyle(timeOfDay.accent)
                             .frame(maxWidth: .infinity, alignment: .center)
                         }
+
+                        Button(role: .destructive) {
+                            onDeleted?(entry)
+                            dismiss()
+                        } label: {
+                            Label("Delete \(draft.kind.title)", systemImage: "trash")
+                                .font(.community(.subheadline, weight: .semibold))
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(Color.red)
+                        .frame(maxWidth: .infinity, alignment: .center)
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 28)
                 }
-                .scrollIndicators(.hidden)
-                .toolbar(.hidden, for: .navigationBar)
-                .homeTimeScreen(timeOfDay)
-                .fullScreenCover(item: $sharedEntry) { shared in
-                    NavigationStack {
-                        PostComposerView(
-                            kind: .planner,
-                            sourceID: shared.id,
-                            subject: draft.title.isEmpty
-                                ? draft.kind.title
-                                : draft.title
-                        )
-                    }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 28)
+            }
+            .scrollIndicators(.hidden)
+            .toolbar(.hidden, for: .navigationBar)
+            .homeTimeScreen(timeOfDay)
+            .fullScreenCover(item: $sharedEntry) { shared in
+                NavigationStack {
+                    PostComposerView(
+                        kind: .planner,
+                        sourceID: shared.id,
+                        subject: draft.title.isEmpty
+                            ? draft.kind.title
+                            : draft.title
+                    )
                 }
             }
         }

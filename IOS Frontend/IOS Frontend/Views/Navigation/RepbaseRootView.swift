@@ -246,19 +246,17 @@ struct RepbaseRootView: View {
             // TimelineView collapsed it to an empty screen, and would have
             // rebuilt every tab once a minute besides.
             if !isBarHidden {
-                TimelineView(.periodic(from: .now, by: 60)) { context in
-                    let timeOfDay = HomeTimeOfDay(date: context.date)
-                    RepbaseBottomNavigation(tab: $tab, isMinimized: showsMinimizedBar)
-                        .environment(\.homeTimeOfDay, timeOfDay)
-                        .tint(timeOfDay.accent)
-                        // Narrower as well as shorter. Height alone was the
-                        // honest change and almost invisible in motion -- and
-                        // buying more of it means taking it off the tap
-                        // targets, which are already only four points over the
-                        // minimum. Pulling the ends in reads as standing back
-                        // without costing anything a finger needs.
-                        .padding(.horizontal, showsMinimizedBar ? 58 : RepbaseDesign.pageInset)
-                }
+                let timeOfDay = HomeTimeOfDay.current
+                RepbaseBottomNavigation(tab: $tab, isMinimized: showsMinimizedBar)
+                    .environment(\.homeTimeOfDay, timeOfDay)
+                    .tint(timeOfDay.accent)
+                    // Narrower as well as shorter. Height alone was the
+                    // honest change and almost invisible in motion -- and
+                    // buying more of it means taking it off the tap
+                    // targets, which are already only four points over the
+                    // minimum. Pulling the ends in reads as standing back
+                    // without costing anything a finger needs.
+                    .padding(.horizontal, showsMinimizedBar ? 58 : RepbaseDesign.pageInset)
                 .transition(.opacity)
             }
         }

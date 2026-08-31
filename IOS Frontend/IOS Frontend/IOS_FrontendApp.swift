@@ -232,7 +232,7 @@ private struct AppRootView: View {
                         // a script cannot open.
                         PostReportSheet(
                             post: SocialStore.preview.feed[0],
-                            timeOfDay: HomeTimeOfDay(date: Date())
+                            timeOfDay: HomeTimeOfDay.current
                         )
                     case "blocked":
                         BlockedAccountsView()

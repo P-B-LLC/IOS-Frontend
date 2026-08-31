@@ -19,32 +19,30 @@ struct ProfileExpressionEditorView: View {
     @State private var showingPrompts = false
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            let timeOfDay = HomeTimeOfDay(date: context.date)
+        let timeOfDay = HomeTimeOfDay.current
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: 28) {
-                    header(timeOfDay: timeOfDay)
-                    promptsSection(timeOfDay: timeOfDay)
-                    liftsSection(timeOfDay: timeOfDay)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 28) {
+                header(timeOfDay: timeOfDay)
+                promptsSection(timeOfDay: timeOfDay)
+                liftsSection(timeOfDay: timeOfDay)
 
-                    if let message = store.errorMessage {
-                        Label(message, systemImage: "exclamationmark.triangle.fill")
-                            .font(.community(.footnote))
-                            .foregroundStyle(.red)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-
-                    saveButton(timeOfDay: timeOfDay)
+                if let message = store.errorMessage {
+                    Label(message, systemImage: "exclamationmark.triangle.fill")
+                        .font(.community(.footnote))
+                        .foregroundStyle(.red)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                .padding(.horizontal, RepbaseDesign.pageInset)
-                .padding(.top, 16)
-                .padding(.bottom, 40)
+
+                saveButton(timeOfDay: timeOfDay)
             }
-            .scrollDismissesKeyboard(.interactively)
-            .toolbar(.hidden, for: .navigationBar)
-            .homeTimeScreen(timeOfDay)
+            .padding(.horizontal, RepbaseDesign.pageInset)
+            .padding(.top, 16)
+            .padding(.bottom, 40)
         }
+        .scrollDismissesKeyboard(.interactively)
+        .toolbar(.hidden, for: .navigationBar)
+        .homeTimeScreen(timeOfDay)
         .fullScreenCover(isPresented: $showingPrompts) {
             NavigationStack { PromptPickerView() }
         }

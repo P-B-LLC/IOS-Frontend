@@ -58,24 +58,22 @@ struct TrainingTabView: View {
     }
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            let timeOfDay = HomeTimeOfDay(date: context.date)
+        let timeOfDay = HomeTimeOfDay.current
 
-            VStack(spacing: 0) {
-                switcher(timeOfDay: timeOfDay)
+        VStack(spacing: 0) {
+            switcher(timeOfDay: timeOfDay)
 
-                if isShowingQuickActions {
-                    quickActionTiles(timeOfDay: timeOfDay)
-                }
-
-                switch half {
-                case .workouts: WorkoutsView()
-                case .food: FoodTrackingView()
-                }
+            if isShowingQuickActions {
+                quickActionTiles(timeOfDay: timeOfDay)
             }
-            .homeTimeScreen(timeOfDay)
-            .animation(.spring(response: 0.3, dampingFraction: 0.82), value: isShowingQuickActions)
+
+            switch half {
+            case .workouts: WorkoutsView()
+            case .food: FoodTrackingView()
+            }
         }
+        .homeTimeScreen(timeOfDay)
+        .animation(.spring(response: 0.3, dampingFraction: 0.82), value: isShowingQuickActions)
         // The two halves offer different actions, so an open row would be
         // showing the wrong ones the moment the switch moves.
         .onChange(of: half) { isShowingQuickActions = false }

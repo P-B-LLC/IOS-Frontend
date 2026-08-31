@@ -7,79 +7,77 @@ struct AppleHealthConnectionView: View {
     @Environment(\.openURL) private var openURL
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            let timeOfDay = HomeTimeOfDay(date: context.date)
-            ScrollView {
-                VStack(alignment: .leading, spacing: 28) {
-                    RepbaseScreenHeader(
-                        eyebrow: "Apple Health",
-                        title: "Movement, connected.",
-                        detail: "Repbase imports steps and completed workouts, then stores the synced totals with your account."
-                    )
+        let timeOfDay = HomeTimeOfDay.current
+        ScrollView {
+            VStack(alignment: .leading, spacing: 28) {
+                RepbaseScreenHeader(
+                    eyebrow: "Apple Health",
+                    title: "Movement, connected.",
+                    detail: "Repbase imports steps and completed workouts, then stores the synced totals with your account."
+                )
 
-                    VStack(spacing: 0) {
-                        statusRow("Health available", value: activity.isHealthSupported ? "Yes" : "Unavailable")
+                VStack(spacing: 0) {
+                    statusRow("Health available", value: activity.isHealthSupported ? "Yes" : "Unavailable")
+                    Divider()
+                    statusRow("Access requested", value: activity.hasAskedHealth ? "Yes" : "Not yet")
+                    Divider()
+                    statusRow("Today's steps", value: activity.stepsToday?.formatted() ?? "Not reported")
+                    Divider()
+                    statusRow("7-day average", value: activity.weekAverage.map { "\($0.formatted()) steps" } ?? "Not reported")
+                    Divider()
+                    statusRow("8K goal days", value: "\(activity.goalDaysThisWeek) this week")
+                    if let synced = activity.lastSyncedAt {
                         Divider()
-                        statusRow("Access requested", value: activity.hasAskedHealth ? "Yes" : "Not yet")
-                        Divider()
-                        statusRow("Today's steps", value: activity.stepsToday?.formatted() ?? "Not reported")
-                        Divider()
-                        statusRow("7-day average", value: activity.weekAverage.map { "\($0.formatted()) steps" } ?? "Not reported")
-                        Divider()
-                        statusRow("8K goal days", value: "\(activity.goalDaysThisWeek) this week")
-                        if let synced = activity.lastSyncedAt {
-                            Divider()
-                            statusRow("Last synced", value: synced.formatted(.relative(presentation: .named)))
-                        }
-                    }
-
-                    if let summary = activity.lastImport {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("LATEST IMPORT").font(.community(.caption2, weight: .bold)).tracking(1)
-                                .foregroundStyle(timeOfDay.accent)
-                            Text("\(summary.imported) workouts added")
-                                .font(.community(.title3, weight: .bold))
-                            Text("\(summary.alreadyImported) already synced · \(summary.skippedOverlapping) overlapping")
-                                .font(.community(.caption)).foregroundStyle(.secondary)
-                        }
-                    }
-
-                    Button {
-                        if activity.hasAskedHealth {
-                            guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
-                            openURL(url)
-                        } else {
-                            Task { await activity.connectHealth() }
-                        }
-                    } label: {
-                        HStack {
-                            Text(activity.hasAskedHealth ? "Open iOS Settings" : "Connect Apple Health")
-                            Spacer()
-                            if activity.isRequestingHealthAccess { ProgressView().tint(.white) }
-                            else { Image(systemName: "arrow.up.right") }
-                        }
-                        .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(RepbasePrimaryButtonStyle())
-                    .disabled(!activity.isHealthSupported || activity.isRequestingHealthAccess)
-
-                    if activity.hasAskedHealth {
-                        Button {
-                            Task { await activity.refresh() }
-                        } label: {
-                            Label(activity.isSyncing ? "Syncing activity" : "Sync activity now", systemImage: "arrow.triangle.2.circlepath")
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.bordered)
-                        .disabled(activity.isSyncing)
+                        statusRow("Last synced", value: synced.formatted(.relative(presentation: .named)))
                     }
                 }
-                .padding(RepbaseDesign.pageInset)
+
+                if let summary = activity.lastImport {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("LATEST IMPORT").font(.community(.caption2, weight: .bold)).tracking(1)
+                            .foregroundStyle(timeOfDay.accent)
+                        Text("\(summary.imported) workouts added")
+                            .font(.community(.title3, weight: .bold))
+                        Text("\(summary.alreadyImported) already synced · \(summary.skippedOverlapping) overlapping")
+                            .font(.community(.caption)).foregroundStyle(.secondary)
+                    }
+                }
+
+                Button {
+                    if activity.hasAskedHealth {
+                        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+                        openURL(url)
+                    } else {
+                        Task { await activity.connectHealth() }
+                    }
+                } label: {
+                    HStack {
+                        Text(activity.hasAskedHealth ? "Open iOS Settings" : "Connect Apple Health")
+                        Spacer()
+                        if activity.isRequestingHealthAccess { ProgressView().tint(.white) }
+                        else { Image(systemName: "arrow.up.right") }
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(RepbasePrimaryButtonStyle())
+                .disabled(!activity.isHealthSupported || activity.isRequestingHealthAccess)
+
+                if activity.hasAskedHealth {
+                    Button {
+                        Task { await activity.refresh() }
+                    } label: {
+                        Label(activity.isSyncing ? "Syncing activity" : "Sync activity now", systemImage: "arrow.triangle.2.circlepath")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(activity.isSyncing)
+                }
             }
-            .navigationTitle("Apple Health")
-            .navigationBarTitleDisplayMode(.inline)
-            .homeTimeScreen(timeOfDay)
+            .padding(RepbaseDesign.pageInset)
         }
+        .navigationTitle("Apple Health")
+        .navigationBarTitleDisplayMode(.inline)
+        .homeTimeScreen(timeOfDay)
     }
 
     private func statusRow(_ title: String, value: String) -> some View {
@@ -102,67 +100,65 @@ struct NotificationPreferencesView: View {
     @State private var notificationError: String?
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            let timeOfDay = HomeTimeOfDay(date: context.date)
-            ScrollView {
-                VStack(alignment: .leading, spacing: 28) {
-                    RepbaseScreenHeader(
-                        eyebrow: "Notifications",
-                        title: "Only what helps.",
-                        detail: "Choose the moments worth bringing you back. These preferences never change what appears inside the app."
-                    )
+        let timeOfDay = HomeTimeOfDay.current
+        ScrollView {
+            VStack(alignment: .leading, spacing: 28) {
+                RepbaseScreenHeader(
+                    eyebrow: "Notifications",
+                    title: "Only what helps.",
+                    detail: "Choose the moments worth bringing you back. These preferences never change what appears inside the app."
+                )
 
-                    HStack {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("SYSTEM ACCESS").font(.community(.caption2, weight: .bold)).tracking(1)
-                                .foregroundStyle(timeOfDay.accent)
-                            Text(permissionLabel).font(.community(.headline))
-                            Text(permissionDetail).font(.community(.caption)).foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        if authorizationStatus == .notDetermined {
-                            Button("Allow") { Task { await requestPermission() } }
-                                .buttonStyle(.borderedProminent)
-                        } else if authorizationStatus == .denied {
-                            Button("Settings") {
-                                guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
-                                openURL(url)
-                            }
-                            .buttonStyle(.bordered)
-                        }
+                HStack {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("SYSTEM ACCESS").font(.community(.caption2, weight: .bold)).tracking(1)
+                            .foregroundStyle(timeOfDay.accent)
+                        Text(permissionLabel).font(.community(.headline))
+                        Text(permissionDetail).font(.community(.caption)).foregroundStyle(.secondary)
                     }
-                    .padding(.vertical, 16)
-                    .overlay(alignment: .top) { Divider() }
-                    .overlay(alignment: .bottom) { Divider() }
-
-                    VStack(spacing: 0) {
-                        preference("Training", detail: "Planned sessions, active workouts, and recovery", value: $training)
-                        Divider()
-                        preference("Nutrition", detail: "Meal reminders and daily targets", value: $nutrition)
-                        Divider()
-                        preference("Calendar", detail: "Tasks, events, and due items", value: $planner)
-                        Divider()
-                        preference("Community", detail: "Saved now; remote social alerts require server push support", value: $social)
-                    }
-
-                    Text("System-level permission is controlled in iOS Settings. Repbase will honor both your system permission and these choices.")
-                        .font(.community(.caption))
-                        .foregroundStyle(timeOfDay.secondaryText)
-
-                    if let notificationError {
-                        Text(notificationError).font(.community(.caption)).foregroundStyle(.orange)
+                    Spacer()
+                    if authorizationStatus == .notDetermined {
+                        Button("Allow") { Task { await requestPermission() } }
+                            .buttonStyle(.borderedProminent)
+                    } else if authorizationStatus == .denied {
+                        Button("Settings") {
+                            guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+                            openURL(url)
+                        }
+                        .buttonStyle(.bordered)
                     }
                 }
-                .padding(RepbaseDesign.pageInset)
+                .padding(.vertical, 16)
+                .overlay(alignment: .top) { Divider() }
+                .overlay(alignment: .bottom) { Divider() }
+
+                VStack(spacing: 0) {
+                    preference("Training", detail: "Planned sessions, active workouts, and recovery", value: $training)
+                    Divider()
+                    preference("Nutrition", detail: "Meal reminders and daily targets", value: $nutrition)
+                    Divider()
+                    preference("Calendar", detail: "Tasks, events, and due items", value: $planner)
+                    Divider()
+                    preference("Community", detail: "Saved now; remote social alerts require server push support", value: $social)
+                }
+
+                Text("System-level permission is controlled in iOS Settings. Repbase will honor both your system permission and these choices.")
+                    .font(.community(.caption))
+                    .foregroundStyle(timeOfDay.secondaryText)
+
+                if let notificationError {
+                    Text(notificationError).font(.community(.caption)).foregroundStyle(.orange)
+                }
             }
-            .navigationTitle("Notifications")
-            .navigationBarTitleDisplayMode(.inline)
-            .homeTimeScreen(timeOfDay)
-            .task { await refreshPermissionAndSchedules() }
-            .onChange(of: training) { _, _ in Task { await synchronizeSchedules() } }
-            .onChange(of: nutrition) { _, _ in Task { await synchronizeSchedules() } }
-            .onChange(of: planner) { _, _ in Task { await synchronizeSchedules() } }
+            .padding(RepbaseDesign.pageInset)
         }
+        .navigationTitle("Notifications")
+        .navigationBarTitleDisplayMode(.inline)
+        .homeTimeScreen(timeOfDay)
+        .task { await refreshPermissionAndSchedules() }
+        .onChange(of: training) { _, _ in Task { await synchronizeSchedules() } }
+        .onChange(of: nutrition) { _, _ in Task { await synchronizeSchedules() } }
+        .onChange(of: planner) { _, _ in Task { await synchronizeSchedules() } }
     }
 
     private func preference(_ title: String, detail: String, value: Binding<Bool>) -> some View {

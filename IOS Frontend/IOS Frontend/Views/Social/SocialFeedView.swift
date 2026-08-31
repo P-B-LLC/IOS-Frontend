@@ -63,9 +63,7 @@ struct SocialFeedView: View {
     @State private var visiting: VisitedPerson?
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            screen(timeOfDay: HomeTimeOfDay(date: context.date))
-        }
+        screen(timeOfDay: HomeTimeOfDay.current)
         // Out here, not inside the TimelineView. In there it is torn down and
         // re-declared on every tick, and a push never happened: liking a post
         // worked because it needs no navigation, while tapping a card or its

@@ -59,13 +59,16 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
     case dusk
     case night
 
-    init(date: Date, calendar: Calendar = .current) {
-        // Kept so the twenty-odd screens that ask for a HomeTimeOfDay still
-        // compile, but the case has stopped carrying meaning: appearance is a
-        // trait now, and every token below resolves against it when drawn.
-        // Nothing reads which case this is.
-        self = .day
-    }
+    /// The one value there is.
+    ///
+    /// This used to be four, chosen by the clock, and every screen wrapped
+    /// itself in a TimelineView to ask again each minute. The cases stopped
+    /// meaning anything when the palette moved onto the light and dark
+    /// traits -- a colour resolves against the appearance when it is drawn,
+    /// which is a thing SwiftUI already does without being asked once a
+    /// minute. What was left was thirty-three views rebuilding on a timer to
+    /// recompute the same answer.
+    static let current = HomeTimeOfDay.day
 
     var canvasStart: Color {
         Color(uiColor: .systemBackground)
