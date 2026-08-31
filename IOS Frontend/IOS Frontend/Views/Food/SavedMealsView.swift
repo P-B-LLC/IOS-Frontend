@@ -56,12 +56,18 @@ struct SavedMealsView: View {
         withAnimation(.snappy(duration: 0.2)) {
             appliedMealIDs.insert(savedMeal.id)
         }
-        // Long enough to read the tick, short enough not to be a wait. The
-        // meal underneath is where the food now is, so leaving is the rest
-        // of the answer.
+        // The tick says it landed, then the plus comes back.
+        //
+        // This used to close the sheet instead, which threw away the list on
+        // the strength of one tap. A saved meal is a thing you apply more
+        // than once -- the same lunch into two slots, or two saved meals into
+        // one -- and closing decided that adding one was the whole errand.
+        // Done is there for when it was.
         Task {
-            try? await Task.sleep(for: .seconds(0.65))
-            dismiss()
+            try? await Task.sleep(for: .seconds(1.4))
+            withAnimation(.snappy(duration: 0.2)) {
+                appliedMealIDs.remove(savedMeal.id)
+            }
         }
     }
 
