@@ -15,11 +15,12 @@ final class FoodTrackingStore {
     nonisolated struct MealLogEvent: Equatable, Sendable {
         let id: UUID
         let date: Date
+        let mealID: FoodMeal.ID
         let before: NutritionAmount
         let after: NutritionAmount
         let beforeMealCount: Int
         let afterMealCount: Int
-        let shouldCelebrate: Bool
+        var shouldCelebrate: Bool
     }
 
     private var repository: FoodAPIRepository?
@@ -69,6 +70,15 @@ final class FoodTrackingStore {
         }
         latestMealLogEvent = nil
         return event
+    }
+
+    /// Food may already have presented the large completion burst before Home
+    /// becomes visible. The before/after event is still left for Home to
+    /// animate, but its confetti is suppressed so one meal never celebrates
+    /// twice merely because the user changed tabs.
+    func markMealLogCelebrated(_ id: UUID) {
+        guard latestMealLogEvent?.id == id else { return }
+        latestMealLogEvent?.shouldCelebrate = false
     }
 
     func hasLoggedFood(on date: Date) -> Bool {
@@ -294,6 +304,7 @@ final class FoodTrackingStore {
             self.latestMealLogEvent = MealLogEvent(
                 id: UUID(),
                 date: Calendar.current.startOfDay(for: date),
+                mealID: mealID,
                 before: before,
                 after: self.total(on: date),
                 beforeMealCount: beforeMealCount,
@@ -445,6 +456,14 @@ final class FoodTrackingStore {
         else { return }
 
         let keys = dates.map(dateKey(for:))
+        var snapshots: [String: (date: Date, total: NutritionAmount, mealCount: Int)] = [:]
+        for (date, key) in zip(dates, keys) {
+            snapshots[key] = (
+                Calendar.current.startOfDay(for: date),
+                total(on: date),
+                loggedMealCount(on: date)
+            )
+        }
         let generation = connectionGeneration
         isSaving = true
         Task {
@@ -462,9 +481,22 @@ final class FoodTrackingStore {
                     let meals = try await repository.openDay(key)
                     guard connectionGeneration == generation else { return }
                     days[key] = meals
+                    if let before = snapshots[key],
+                       meals.indices.contains(mealNumber - 1) {
+                        let appliedMeal = meals[mealNumber - 1]
+                        latestMealLogEvent = MealLogEvent(
+                            id: UUID(),
+                            date: before.date,
+                            mealID: appliedMeal.id,
+                            before: before.total,
+                            after: meals.reduce(.zero) { $0 + $1.totalNutrition },
+                            beforeMealCount: before.mealCount,
+                            afterMealCount: meals.filter { !$0.entries.isEmpty }.count,
+                            shouldCelebrate: true
+                        )
+                    }
                 }
                 refreshRecentFoods()
-                RepbaseCelebrations.show(.mealLogged)
             } catch {
                 report(error, generation: generation)
             }

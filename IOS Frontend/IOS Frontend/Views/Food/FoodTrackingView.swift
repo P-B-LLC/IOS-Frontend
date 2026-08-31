@@ -21,6 +21,7 @@ struct FoodTrackingView: View {
 
     @Environment(FoodTrackingStore.self) private var store
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var selectedDate = Date()
     @State private var isEditingGoals = false
     @State private var isShowingSavedMeals = false
@@ -29,6 +30,15 @@ struct FoodTrackingView: View {
     /// Opens the composer on this page's own kind, so it asks which meal
     /// rather than which feature.
     @State private var isSharingMeal = false
+    @State private var displayedNutrition: NutritionAmount?
+    @State private var displayedLoggedMealCount: Int?
+    @State private var recentlyLoggedMealID: FoodMeal.ID?
+    @State private var nutritionPulse = false
+    @State private var dayCompletionPulse = false
+    @State private var mealSuccessMessage: String?
+    @State private var lastHandledMealLogID: UUID?
+    @State private var mealFeedbackTask: Task<Void, Never>?
+    @State private var isFoodVisible = false
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
@@ -56,8 +66,37 @@ struct FoodTrackingView: View {
             // the day the screen opens on.
             store.ensureDay(selectedDate)
         }
+        .onAppear {
+            isFoodVisible = true
+            synchronizeDisplayedNutrition()
+            presentLatestMealLogIfNeeded()
+        }
+        .onDisappear {
+            isFoodVisible = false
+            mealFeedbackTask?.cancel()
+            mealFeedbackTask = nil
+        }
         .onChange(of: selectedDate) {
             store.ensureDay(selectedDate)
+            mealFeedbackTask?.cancel()
+            nutritionPulse = false
+            dayCompletionPulse = false
+            recentlyLoggedMealID = nil
+            mealSuccessMessage = nil
+            synchronizeDisplayedNutrition()
+            presentLatestMealLogIfNeeded()
+        }
+        .onChange(of: store.latestMealLogEvent?.id) { _, _ in
+            guard isFoodVisible else { return }
+            presentLatestMealLogIfNeeded()
+        }
+        .onChange(of: store.total(on: selectedDate)) { _, newTotal in
+            guard mealFeedbackTask == nil else { return }
+            displayedNutrition = newTotal
+        }
+        .onChange(of: store.loggedMealCount(on: selectedDate)) { _, newCount in
+            guard mealFeedbackTask == nil else { return }
+            displayedLoggedMealCount = newCount
         }
     }
 
@@ -88,6 +127,15 @@ struct FoodTrackingView: View {
         .minimizesBottomBarOnScroll()
         .toolbar(.hidden, for: .navigationBar)
         .homeTimeScreen(timeOfDay)
+        .overlay(alignment: .bottom) {
+            if let mealSuccessMessage {
+                FoodLogSuccessToast(message: mealSuccessMessage)
+                    .padding(.horizontal, RepbaseDesign.pageInset)
+                    .padding(.bottom, RepbaseDesign.bottomBarClearance - 24)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .sensoryFeedback(.success, trigger: recentlyLoggedMealID)
     }
 
     private func foodHeader(timeOfDay: HomeTimeOfDay) -> some View {
@@ -213,6 +261,21 @@ struct FoodTrackingView: View {
                                     isSelected(date) ? timeOfDay.accent : Color.clear,
                                     in: Capsule()
                                 )
+                                .scaleEffect(
+                                    isSelected(date) && dayCompletionPulse && !reduceMotion
+                                        ? 1.10
+                                        : 1
+                                )
+                                .shadow(
+                                    color: isSelected(date) && dayCompletionPulse
+                                        ? timeOfDay.accent.opacity(0.30)
+                                        : Color.clear,
+                                    radius: 9
+                                )
+                                .animation(
+                                    .spring(response: 0.48, dampingFraction: 0.62),
+                                    value: dayCompletionPulse
+                                )
                                 .overlay(alignment: .bottomTrailing) {
                                     if store.hasLoggedFood(on: date), !isSelected(date) {
                                         Circle()
@@ -240,26 +303,76 @@ struct FoodTrackingView: View {
     }
 
     private func dailySummary(timeOfDay: HomeTimeOfDay) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+        let shown = displayedNutrition ?? total
+
+        return VStack(alignment: .leading, spacing: 10) {
             CalorieGoalCard(
-                value: total.calories,
+                value: shown.calories,
                 goal: store.goals.calories,
-                loggedFoodCount: loggedFoodCount
+                loggedFoodCount: loggedFoodCount,
+                isPulsing: nutritionPulse,
+                isDayComplete: selectedDayIsFullyLogged
             )
 
             HStack(spacing: 12) {
-                MacroGoalCard(title: "Protein", value: total.proteinGrams, goal: store.goals.proteinGrams, color: Color(hex: 0xD9824B))
-                MacroGoalCard(title: "Carbs", value: total.carbohydrateGrams, goal: store.goals.carbohydrateGrams, color: Color(hex: 0x4AAFB3))
-                MacroGoalCard(title: "Fat", value: total.fatGrams, goal: store.goals.fatGrams, color: Color(hex: 0xB76AA5))
+                MacroGoalCard(title: "Protein", value: shown.proteinGrams, goal: store.goals.proteinGrams, color: Color(hex: 0xD9824B), isPulsing: nutritionPulse, delay: 0.05)
+                MacroGoalCard(title: "Carbs", value: shown.carbohydrateGrams, goal: store.goals.carbohydrateGrams, color: Color(hex: 0x4AAFB3), isPulsing: nutritionPulse, delay: 0.14)
+                MacroGoalCard(title: "Fat", value: shown.fatGrams, goal: store.goals.fatGrams, color: Color(hex: 0xB76AA5), isPulsing: nutritionPulse, delay: 0.23)
             }
         }
         .padding(18)
         .foregroundStyle(timeOfDay.primaryText)
-        .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 25, style: .continuous))
+        .background(
+            dayCompletionPulse
+                ? LinearGradient(
+                    colors: [
+                        Color.repbaseDynamic(light: Color(hex: 0xFFFAF6), dark: Color(hex: 0x171817)),
+                        Color.repbaseDynamic(light: Color(hex: 0xEEF8F1), dark: Color(hex: 0x17271E))
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                : LinearGradient(
+                    colors: [timeOfDay.surfaceRaised, timeOfDay.surfaceRaised],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ),
+            in: RoundedRectangle(cornerRadius: 25, style: .continuous)
+        )
         .overlay {
             RoundedRectangle(cornerRadius: 25, style: .continuous)
-                .strokeBorder(timeOfDay.border, lineWidth: 1)
+                .strokeBorder(
+                    dayCompletionPulse
+                        ? Color.repbaseDynamic(
+                            light: Color(hex: 0x4E7461).opacity(0.22),
+                            dark: Color(hex: 0x9AC4AB).opacity(0.20)
+                        )
+                        : timeOfDay.border,
+                    lineWidth: 1
+                )
         }
+        .overlay {
+            if dayCompletionPulse && !reduceMotion {
+                FoodSummarySheen()
+                    .clipShape(RoundedRectangle(cornerRadius: 25, style: .continuous))
+                    .allowsHitTesting(false)
+            }
+        }
+        .offset(y: dayCompletionPulse && !reduceMotion ? -2 : 0)
+        .shadow(
+            color: dayCompletionPulse
+                ? Color.repbaseDynamic(
+                    light: Color(hex: 0x4E7461).opacity(0.13),
+                    dark: Color(hex: 0x62A37B).opacity(0.13)
+                )
+                : Color.clear,
+            radius: 17,
+            y: 8
+        )
+        .animation(
+            .spring(response: 0.56, dampingFraction: 0.76),
+            value: dayCompletionPulse
+        )
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Daily nutrition totals")
     }
@@ -294,9 +407,10 @@ struct FoodTrackingView: View {
                     .tracking(1)
                     .foregroundStyle(timeOfDay.canvasPrimaryText)
                 Spacer()
-                Text("\(meals.filter { !$0.entries.isEmpty }.count) of \(meals.count) logged")
+                Text("\(displayedLoggedMealCount ?? meals.filter { !$0.entries.isEmpty }.count) of \(meals.count) logged")
                     .font(.community(.caption, weight: .semibold))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
+                    .contentTransition(.numericText())
             }
 
             VStack(spacing: 0) {
@@ -304,7 +418,10 @@ struct FoodTrackingView: View {
                     NavigationLink {
                         MealDetailView(date: selectedDate, mealID: meal.id)
                     } label: {
-                        MealRow(meal: meal)
+                        MealRow(
+                            meal: meal,
+                            isRecentlyLogged: recentlyLoggedMealID == meal.id
+                        )
                     }
                     .buttonStyle(.plain)
 
@@ -401,6 +518,11 @@ struct FoodTrackingView: View {
         store.meals(on: selectedDate).reduce(0) { $0 + $1.entries.count }
     }
 
+    private var selectedDayIsFullyLogged: Bool {
+        let meals = store.meals(on: selectedDate)
+        return !meals.isEmpty && meals.allSatisfy { !$0.entries.isEmpty }
+    }
+
     private var weekDates: [Date] {
         let calendar = Calendar.current
         let day = calendar.startOfDay(for: selectedDate)
@@ -429,13 +551,91 @@ struct FoodTrackingView: View {
     private func changeWeek(by amount: Int) {
         selectedDate = Calendar.current.date(byAdding: .weekOfYear, value: amount, to: selectedDate) ?? selectedDate
     }
+
+    private func synchronizeDisplayedNutrition() {
+        displayedNutrition = store.total(on: selectedDate)
+        displayedLoggedMealCount = store.loggedMealCount(on: selectedDate)
+    }
+
+    /// Replays the confirmed before/after nutrition when Food becomes visible.
+    /// The event is intentionally not consumed here: Home still needs those
+    /// snapshots if the user goes there next. Only a large celebration is
+    /// marked as shown, preventing the same confetti from firing twice.
+    private func presentLatestMealLogIfNeeded() {
+        guard let event = store.latestMealLogEvent,
+              event.id != lastHandledMealLogID,
+              Calendar.current.isDate(event.date, inSameDayAs: selectedDate)
+        else { return }
+
+        lastHandledMealLogID = event.id
+        mealFeedbackTask?.cancel()
+        displayedNutrition = event.before
+        displayedLoggedMealCount = event.beforeMealCount
+        recentlyLoggedMealID = nil
+        nutritionPulse = false
+        dayCompletionPulse = false
+
+        let meals = store.meals(on: selectedDate)
+        let mealName = meals.first(where: { $0.id == event.mealID })?.name ?? "Meal"
+        let completedMeal = event.afterMealCount > event.beforeMealCount
+        let completedDay = !meals.isEmpty
+            && event.beforeMealCount < meals.count
+            && event.afterMealCount == meals.count
+
+        mealFeedbackTask = Task { @MainActor in
+            if !reduceMotion {
+                try? await Task.sleep(for: .milliseconds(150))
+            }
+            guard !Task.isCancelled else { return }
+
+            withAnimation(
+                reduceMotion
+                    ? .easeOut(duration: 0.18)
+                    : .spring(response: 0.72, dampingFraction: 0.84)
+            ) {
+                displayedNutrition = event.after
+                displayedLoggedMealCount = event.afterMealCount
+                recentlyLoggedMealID = event.mealID
+                nutritionPulse = true
+                dayCompletionPulse = completedDay
+                mealSuccessMessage = completedDay
+                    ? "Day complete. Every meal is in."
+                    : completedMeal ? "\(mealName) logged" : "\(mealName) updated"
+            }
+
+            if completedDay && event.shouldCelebrate {
+                store.markMealLogCelebrated(event.id)
+                RepbaseCelebrations.show(.mealLogged)
+            }
+
+            try? await Task.sleep(for: .milliseconds(reduceMotion ? 260 : 1_650))
+            guard !Task.isCancelled else { return }
+            withAnimation(.easeOut(duration: 0.24)) {
+                recentlyLoggedMealID = nil
+                nutritionPulse = false
+                mealSuccessMessage = nil
+            }
+
+            if dayCompletionPulse {
+                try? await Task.sleep(for: .milliseconds(reduceMotion ? 120 : 620))
+                guard !Task.isCancelled else { return }
+                withAnimation(.easeOut(duration: 0.26)) {
+                    dayCompletionPulse = false
+                }
+            }
+            mealFeedbackTask = nil
+        }
+    }
 }
 
 private struct CalorieGoalCard: View {
     @Environment(\.workoutVisualPhase) private var phase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let value: Decimal
     let goal: Decimal
     let loggedFoodCount: Int
+    let isPulsing: Bool
+    let isDayComplete: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -447,12 +647,38 @@ private struct CalorieGoalCard: View {
                         .foregroundStyle(phase.secondaryText)
                 }
                 Spacer()
+                if isDayComplete {
+                    Text("DAY COMPLETE")
+                        .font(.community(size: 8, weight: .bold))
+                        .tracking(0.9)
+                        .foregroundStyle(
+                            Color.repbaseDynamic(
+                                light: Color(hex: 0x406D55),
+                                dark: Color(hex: 0xB9DEC7)
+                            )
+                        )
+                        .padding(.horizontal, 9)
+                        .padding(.vertical, 6)
+                        .background(
+                            Color.repbaseDynamic(
+                                light: Color(hex: 0xE4F1E8),
+                                dark: Color(hex: 0x213A2C)
+                            ),
+                            in: Capsule()
+                        )
+                        .transition(.scale.combined(with: .opacity))
+                }
             }
 
             HStack(alignment: .lastTextBaseline, spacing: 8) {
                 Text(value.nutritionText)
                     .font(.community(size: 36, weight: .bold, design: .rounded))
                     .contentTransition(.numericText())
+                    .scaleEffect(isPulsing && !reduceMotion ? 1.025 : 1, anchor: .leading)
+                    .animation(
+                        .spring(response: 0.48, dampingFraction: 0.68),
+                        value: isPulsing
+                    )
                 Text("OF \(goal.nutritionText) KCAL")
                     .font(.community(.caption2, weight: .bold))
                     .foregroundStyle(phase.secondaryText)
@@ -467,6 +693,12 @@ private struct CalorieGoalCard: View {
                     Capsule().fill(phase.secondaryText.opacity(0.20))
                     Capsule().fill(phase.accent)
                         .frame(width: proxy.size.width * progress)
+                        .animation(
+                            reduceMotion
+                                ? .easeOut(duration: 0.18)
+                                : .spring(response: 0.72, dampingFraction: 0.84),
+                            value: progress
+                        )
                 }
             }
             .frame(height: 7)
@@ -486,10 +718,13 @@ private struct CalorieGoalCard: View {
 
 private struct MacroGoalCard: View {
     @Environment(\.workoutVisualPhase) private var phase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let title: String
     let value: Decimal
     let goal: Decimal
     let color: Color
+    let isPulsing: Bool
+    let delay: Double
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -500,14 +735,28 @@ private struct MacroGoalCard: View {
                 .font(.community(.subheadline, weight: .bold))
                 .lineLimit(1)
                 .minimumScaleFactor(0.65)
+                .contentTransition(.numericText())
 
             GeometryReader { proxy in
                 ZStack(alignment: .leading) {
                     Capsule().fill(phase.secondaryText.opacity(0.18))
                     Capsule().fill(color).frame(width: proxy.size.width * progress)
+                        .animation(
+                            reduceMotion
+                                ? .easeOut(duration: 0.18)
+                                : .spring(response: 0.68, dampingFraction: 0.82).delay(delay),
+                            value: progress
+                        )
                 }
             }
             .frame(height: 5)
+            .overlay {
+                if isPulsing && !reduceMotion {
+                    MacroRailSheen(color: color, delay: delay)
+                        .clipShape(Capsule())
+                        .allowsHitTesting(false)
+                }
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 8)
@@ -524,7 +773,9 @@ private struct MacroGoalCard: View {
 
 private struct MealRow: View {
     @Environment(\.workoutVisualPhase) private var phase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let meal: FoodMeal
+    let isRecentlyLogged: Bool
 
     var body: some View {
         HStack(spacing: 11) {
@@ -550,9 +801,38 @@ private struct MealRow: View {
                 .foregroundStyle(isLogged ? RepbasePalette.cream : phase.accent)
                 .frame(width: 29, height: 29)
                 .background(isLogged ? Color(hex: 0x5DAA86) : phase.accent.opacity(0.10), in: Circle())
+                .scaleEffect(isRecentlyLogged && !reduceMotion ? 1.10 : 1)
+                .animation(
+                    .spring(response: 0.46, dampingFraction: 0.62),
+                    value: isRecentlyLogged
+                )
         }
         .padding(.horizontal, 3)
         .padding(.vertical, 10)
+        .background {
+            if isRecentlyLogged {
+                RoundedRectangle(cornerRadius: 15, style: .continuous)
+                    .fill(
+                        Color.repbaseDynamic(
+                            light: Color(hex: 0xEEF8F1),
+                            dark: Color(hex: 0x17271E)
+                        )
+                    )
+                    .transition(.opacity)
+            }
+        }
+        .offset(y: isRecentlyLogged && !reduceMotion ? -2 : 0)
+        .shadow(
+            color: isRecentlyLogged
+                ? RepbaseDesign.success.opacity(0.14)
+                : Color.clear,
+            radius: 11,
+            y: 5
+        )
+        .animation(
+            .spring(response: 0.52, dampingFraction: 0.74),
+            value: isRecentlyLogged
+        )
         .contentShape(Rectangle())
     }
 
@@ -570,6 +850,102 @@ private struct MealRow: View {
         if name.contains("dinner") || name.contains("3") { return "takeoutbag.and.cup.and.straw" }
         if name.contains("snack") || name.contains("4") { return "moon" }
         return "fork.knife"
+    }
+}
+
+private struct FoodLogSuccessToast: View {
+    let message: String
+
+    var body: some View {
+        HStack(spacing: 9) {
+            Image(systemName: "sparkles")
+                .foregroundStyle(
+                    Color.repbaseDynamic(
+                        light: Color(hex: 0x4E7461),
+                        dark: Color(hex: 0x9AC4AB)
+                    )
+                )
+            Text(message)
+                .font(.community(.footnote, weight: .semibold))
+                .foregroundStyle(
+                    Color.repbaseDynamic(
+                        light: RepbasePalette.espresso,
+                        dark: Color.white
+                    )
+                )
+                .lineLimit(2)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 15)
+        .frame(minHeight: 48)
+        .background(
+            Color.repbaseDynamic(
+                light: Color(hex: 0xF1F8F3),
+                dark: Color(hex: 0x1D3126)
+            ),
+            in: Capsule()
+        )
+        .overlay {
+            Capsule().strokeBorder(
+                Color.repbaseDynamic(
+                    light: Color(hex: 0x4E7461).opacity(0.15),
+                    dark: Color(hex: 0x9AC4AB).opacity(0.18)
+                ),
+                lineWidth: 1
+            )
+        }
+        .shadow(color: Color.black.opacity(0.17), radius: 18, x: 0, y: 8)
+        .accessibilityAddTraits(.isStaticText)
+    }
+}
+
+private struct FoodSummarySheen: View {
+    @State private var travel: CGFloat = -1.2
+
+    var body: some View {
+        GeometryReader { geometry in
+            LinearGradient(
+                colors: [.clear, Color.white.opacity(0.42), .clear],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+            .frame(width: geometry.size.width * 0.38)
+            .rotationEffect(.degrees(-15))
+            .offset(x: geometry.size.width * travel)
+        }
+        .accessibilityHidden(true)
+        .onAppear {
+            withAnimation(.easeInOut(duration: 0.82).delay(0.12)) {
+                travel = 2.7
+            }
+        }
+    }
+}
+
+private struct MacroRailSheen: View {
+    let color: Color
+    let delay: Double
+    @State private var travel: CGFloat = -1
+
+    var body: some View {
+        GeometryReader { geometry in
+            Capsule()
+                .fill(
+                    LinearGradient(
+                        colors: [.clear, color.opacity(0.70), .clear],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .frame(width: geometry.size.width * 0.34)
+                .offset(x: geometry.size.width * travel)
+        }
+        .accessibilityHidden(true)
+        .onAppear {
+            withAnimation(.easeInOut(duration: 0.70).delay(delay)) {
+                travel = 2.9
+            }
+        }
     }
 }
 
