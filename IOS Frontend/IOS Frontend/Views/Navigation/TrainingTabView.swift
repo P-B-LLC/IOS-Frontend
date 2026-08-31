@@ -83,8 +83,15 @@ struct TrainingTabView: View {
         // `half` belongs to the root now, so the launch flag sets it here
         // rather than in init.
         .task {
-            if ProcessInfo.processInfo.environment["REPBASE_QUICK_ACTIONS"] == "food" {
+            let flag = ProcessInfo.processInfo.environment["REPBASE_QUICK_ACTIONS"]
+            if flag == "food" {
                 half = .food
+            }
+            // Straight into one of the sheets the row raises, which is a tap
+            // past a tap.
+            if let named = flag, let action = TrainingQuickAction(rawValue: named) {
+                quickAction = action
+                isShowingQuickActions = false
             }
         }
 #endif

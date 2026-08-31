@@ -31,6 +31,13 @@ struct SavedMealsView: View {
         let mealNumber: Int
     }
 
+    /// What has been applied on this visit, so the button can say so.
+    ///
+    /// Not persisted, and it should not be: a saved meal is meant to be
+    /// applied again tomorrow. The tick answers this tap, it does not
+    /// describe the meal.
+    @State private var appliedMealIDs: Set<SavedFoodMeal.ID> = []
+
     @State private var isCreatingMeal = false
     @State private var mealToEdit: SavedFoodMeal?
     @State private var mealToApply: SavedFoodMeal?
@@ -46,10 +53,16 @@ struct SavedMealsView: View {
             to: [destination.date],
             mealNumber: destination.mealNumber
         )
-        // Straight back to the meal, which is where the food now is. That
-        // arrival is the confirmation; a sheet saying it happened would be
-        // one more thing to dismiss on the way to seeing it.
-        dismiss()
+        withAnimation(.snappy(duration: 0.2)) {
+            appliedMealIDs.insert(savedMeal.id)
+        }
+        // Long enough to read the tick, short enough not to be a wait. The
+        // meal underneath is where the food now is, so leaving is the rest
+        // of the answer.
+        Task {
+            try? await Task.sleep(for: .seconds(0.65))
+            dismiss()
+        }
     }
 
     var body: some View {
@@ -68,9 +81,8 @@ struct SavedMealsView: View {
                             ForEach(Array(store.savedMeals.enumerated()), id: \.element.id) { index, savedMeal in
                             SavedMealRow(
                                 savedMeal: savedMeal,
-                                applyTitle: destination == nil
-                                    ? "Add to days"
-                                    : "Add to this meal"
+                                isApplied: appliedMealIDs.contains(savedMeal.id),
+                                opensPicker: destination == nil
                             ) {
                                 apply(savedMeal)
                             } onEdit: {
@@ -157,37 +169,82 @@ struct SavedMealsView: View {
 
 private struct SavedMealRow: View {
     let savedMeal: SavedFoodMeal
-    /// "Add to days" when the day is still a question, "Add to this meal"
-    /// when the caller already answered it.
-    var applyTitle = "Add to days"
+    /// True once this one has been applied on this visit.
+    var isApplied = false
+    /// Whether the button asks which day first, or applies where the caller
+    /// already said. An ellipsis says a question is coming; a plus does not.
+    var opensPicker = false
     let onUse: () -> Void
     let onEdit: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(savedMeal.name)
-                        .font(.community(.headline))
-                    Text(ingredientSummary)
-                        .font(.community(.caption))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-                Spacer()
-                Text("\(savedMeal.totalNutrition.calories.nutritionText) cal")
-                    .font(.community(.subheadline, weight: .semibold))
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(savedMeal.name)
+                    .font(.community(.headline))
+                Text(ingredientSummary)
+                    .font(.community(.caption))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
             }
 
-            HStack(spacing: 18) {
-                Button(applyTitle, systemImage: "calendar.badge.plus", action: onUse)
-                Button("Edit", systemImage: "pencil", action: onEdit)
-            }
-            .font(.community(.caption, weight: .semibold))
-            .foregroundStyle(RepbasePalette.caramel)
-            .buttonStyle(.plain)
+            Spacer(minLength: 8)
+
+            Text("\(savedMeal.totalNutrition.calories.nutritionText) cal")
+                .font(.community(.subheadline, weight: .semibold))
+                .foregroundStyle(.secondary)
+
+            // Two words of button became two icons. What the row is for is
+            // adding the meal, and a plus says that in the space a sentence
+            // was using.
+            iconButton("pencil", label: "Edit \(savedMeal.name)", action: onEdit)
+            applyButton
         }
-        .padding(.vertical, 16)
+        .padding(.vertical, 14)
+    }
+
+    private var applyButton: some View {
+        Button(action: onUse) {
+            Image(systemName: symbol)
+                .font(.community(size: 15, weight: .bold))
+                .foregroundStyle(isApplied ? Color.white : RepbasePalette.caramel)
+                .frame(width: 34, height: 34)
+                .background(
+                    Circle().fill(
+                        isApplied
+                            ? RepbaseDesign.success
+                            : RepbasePalette.caramel.opacity(0.14)
+                    )
+                )
+                .contentShape(Circle())
+                // Swaps rather than redraws, so the plus becomes the tick
+                // instead of one disappearing and another appearing.
+                .contentTransition(.symbolEffect(.replace))
+        }
+        .buttonStyle(.plain)
+        .disabled(isApplied)
+        .accessibilityLabel(isApplied ? "Added" : "Add \(savedMeal.name)")
+    }
+
+    private var symbol: String {
+        if isApplied { return "checkmark" }
+        return opensPicker ? "calendar.badge.plus" : "plus"
+    }
+
+    private func iconButton(
+        _ systemImage: String,
+        label: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.community(size: 13, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .frame(width: 34, height: 34)
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
     }
 
     private var ingredientSummary: String {
