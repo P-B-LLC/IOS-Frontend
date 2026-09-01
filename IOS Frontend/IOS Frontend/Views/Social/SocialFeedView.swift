@@ -1036,7 +1036,7 @@ struct PostCard: View {
     private var unsupportedBody: some View {
         HStack(spacing: 8) {
             Image(systemName: "questionmark.circle")
-            Text("This post needs a newer version of Repbase.")
+            Text("This post needs a newer version of Routiq.")
             Spacer(minLength: 0)
         }
         .font(.community(.caption))

@@ -202,7 +202,7 @@ final class SocialStore {
         photo: PostPhoto? = nil
     ) async -> Bool {
         guard let repository else {
-            errorMessage = "Connect to Repbase before posting."
+            errorMessage = "Connect to Routiq before posting."
             return false
         }
 

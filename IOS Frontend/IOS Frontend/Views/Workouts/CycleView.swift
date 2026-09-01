@@ -361,7 +361,7 @@ struct CycleView: View {
                 .foregroundStyle(phase.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Text("Repbase keeps track of which day of the cycle you are on, and can push everything back if you take a rest day you had not planned.")
+            Text("Routiq keeps track of which day of the cycle you are on, and can push everything back if you take a rest day you had not planned.")
                 .font(.community(.subheadline))
                 .foregroundStyle(phase.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)

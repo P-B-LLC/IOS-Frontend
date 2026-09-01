@@ -277,7 +277,7 @@ final class SocialProfileStore {
     /// the phone never becomes a second source of truth for profile data.
     func save(_ profile: SocialProfile) async -> Bool {
         guard repository != nil else {
-            errorMessage = "Connect to Repbase before saving profile changes."
+            errorMessage = "Connect to Routiq before saving profile changes."
             return false
         }
         return await push(profile)
@@ -450,7 +450,7 @@ final class SocialProfileStore {
     @discardableResult
     func savePrompts(_ answers: [ProfilePromptAnswer]) async -> Bool {
         guard let repository else {
-            errorMessage = "Connect to Repbase before editing your profile."
+            errorMessage = "Connect to Routiq before editing your profile."
             return false
         }
         let generation = connectionGeneration
@@ -478,7 +478,7 @@ final class SocialProfileStore {
     @discardableResult
     func saveSocialLinks(_ links: [ProfileSocialLinkDraft]) async -> Bool {
         guard let repository else {
-            errorMessage = "Connect to Repbase before editing your profile."
+            errorMessage = "Connect to Routiq before editing your profile."
             return false
         }
         let generation = connectionGeneration
@@ -501,7 +501,7 @@ final class SocialProfileStore {
     @discardableResult
     func saveHighlights(_ lifts: [HighlightLift]) async -> Bool {
         guard let repository else {
-            errorMessage = "Connect to Repbase before editing your profile."
+            errorMessage = "Connect to Routiq before editing your profile."
             return false
         }
         let generation = connectionGeneration

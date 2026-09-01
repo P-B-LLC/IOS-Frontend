@@ -123,7 +123,7 @@ struct DayWorkoutView: View {
                 ZStack {
                     Color.black.opacity(0.08)
                         .ignoresSafeArea()
-                    ProgressView("Saving to Repbase...")
+                    ProgressView("Saving to Routiq...")
                         .padding(18)
                         .background(
                             .regularMaterial,

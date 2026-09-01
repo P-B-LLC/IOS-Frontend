@@ -103,7 +103,7 @@ struct SavedMealsView: View {
                         }
                         }
                         .overlay(alignment: .top) { Divider() }
-                        Text("Saved meals sync with your Repbase account and are ready on every signed-in device.")
+                        Text("Saved meals sync with your Routiq account and are ready on every signed-in device.")
                             .font(.community(.caption))
                             .foregroundStyle(.secondary)
                     }
@@ -156,7 +156,7 @@ struct SavedMealsView: View {
                     .foregroundStyle(RepbasePalette.caramel)
                 Text("Your fastest meals will live here.")
                     .font(.community(.title2, weight: .bold))
-                Text("Build a recipe with its real ingredients and nutrition. Repbase keeps the totals ready to reuse.")
+                Text("Build a recipe with its real ingredients and nutrition. Routiq keeps the totals ready to reuse.")
                     .font(.community(.subheadline))
                     .foregroundStyle(.secondary)
             }
@@ -343,7 +343,7 @@ private struct SavedMealEditorView: View {
                 }
 
                 Label(
-                    "Saved recipes sync with your Repbase account.",
+                    "Saved recipes sync with your Routiq account.",
                     systemImage: "checkmark.icloud"
                 )
                 .font(.community(.caption))

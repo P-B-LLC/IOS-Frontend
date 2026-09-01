@@ -29,7 +29,7 @@ struct PersonProfileView: View {
                 ContentUnavailableView {
                     Label("Profile unavailable", systemImage: "person.crop.circle.badge.exclamationmark")
                 } description: {
-                    Text(store.errorMessage ?? "Repbase could not load this profile.")
+                    Text(store.errorMessage ?? "Routiq could not load this profile.")
                 }
             } else {
                 ProgressView()

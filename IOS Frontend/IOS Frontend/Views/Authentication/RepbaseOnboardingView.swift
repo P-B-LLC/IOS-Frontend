@@ -158,7 +158,7 @@ struct RepbaseOnboardingView: View {
             }
         } label: {
             HStack {
-                Text(step == .ready ? "Start using Repbase" : "Continue")
+                Text(step == .ready ? "Start using Routiq" : "Continue")
                 Image(systemName: "arrow.right")
             }.frame(maxWidth: .infinity)
         }

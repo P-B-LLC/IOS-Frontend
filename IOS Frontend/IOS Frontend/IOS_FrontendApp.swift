@@ -569,7 +569,7 @@ private struct AppRootView: View {
             case .checking:
                 VStack(spacing: 14) {
                     ProgressView()
-                    Text("Connecting to Repbase...")
+                    Text("Connecting to Routiq...")
                         .font(.community(.subheadline))
                         .foregroundStyle(.secondary)
                 }

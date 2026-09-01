@@ -91,7 +91,7 @@ struct RouteTrackingCard: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Track this \(workoutType.title.lowercased())?")
                 .font(.community(.callout, weight: .semibold))
-            Text("Repbase can map your route and measure your distance and pace while this session runs. Location is only used during a session you start.")
+            Text("Routiq can map your route and measure your distance and pace while this session runs. Location is only used during a session you start.")
                 .font(.community(.caption))
                 .foregroundStyle(.secondary)
             Button {

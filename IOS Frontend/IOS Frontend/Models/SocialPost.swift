@@ -69,7 +69,7 @@ nonisolated enum PostVisibility: String, CaseIterable, Identifiable, Sendable {
 
     var explanation: String {
         switch self {
-        case .publicToAll: "Anyone on Repbase can see this."
+        case .publicToAll: "Anyone on Routiq can see this."
         case .followers: "Only people who follow you."
         case .privateToMe: "Kept on your profile, shown to nobody else."
         }

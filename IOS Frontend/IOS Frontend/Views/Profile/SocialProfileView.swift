@@ -18,13 +18,13 @@ struct ProfileDestinationView: View {
         if let profile = store.profile {
             SocialProfileView(profile: profile)
         } else if store.isLoading || !store.hasLoadedProfile {
-            ProgressView("Loading profile from Repbase…")
+            ProgressView("Loading profile from Routiq…")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             ContentUnavailableView {
                 Label("Profile unavailable", systemImage: "person.crop.circle.badge.exclamationmark")
             } description: {
-                Text(store.errorMessage ?? "Repbase could not load this profile.")
+                Text(store.errorMessage ?? "Routiq could not load this profile.")
             } actions: {
                 if let token = authentication.token {
                     Button("Retry") {
@@ -342,7 +342,7 @@ struct SocialProfileView: View {
                             .foregroundStyle(timeOfDay.accent)
                     }
                     .buttonStyle(.plain)
-                    .accessibilityHint("Opens \(link.platform.title) outside Repbase")
+                    .accessibilityHint("Opens \(link.platform.title) outside Routiq")
                 }
             }
         }
@@ -389,7 +389,7 @@ struct SocialProfileView: View {
             }
             .buttonStyle(.plain)
 
-            ShareLink(item: "Meet \(profile.displayName) (@\(profile.username)) on Repbase.") {
+            ShareLink(item: "Meet \(profile.displayName) (@\(profile.username)) on Routiq.") {
                 Text("Share")
                     .font(.community(.footnote, weight: .bold))
                     .foregroundStyle(timeOfDay.accent)
@@ -929,7 +929,7 @@ private struct ProfileSettingsView: View {
                     settingsSection("PERSONALIZATION", timeOfDay: timeOfDay) {
                         Button { showingPersonalization = true } label: {
                             settingsRow(
-                                "Your Repbase",
+                                "Your Routiq",
                                 detail: "Training types, weekly goal, and what home leads with",
                                 symbol: "slider.horizontal.3"
                             )
@@ -946,7 +946,7 @@ private struct ProfileSettingsView: View {
                         }
                         .pickerStyle(.segmented)
                         .padding(.vertical, 14)
-                        .accessibilityHint("Changes the appearance throughout Repbase")
+                        .accessibilityHint("Changes the appearance throughout Routiq")
                     }
 
                     settingsSection("PRIVACY & PERMISSIONS", timeOfDay: timeOfDay) {
@@ -998,7 +998,7 @@ private struct ProfileSettingsView: View {
                             } label: {
                                 settingsRow(
                                     "Privacy & permissions",
-                                    detail: "Location, photos, and how Repbase uses data",
+                                    detail: "Location, photos, and how Routiq uses data",
                                     symbol: "hand.raised"
                                 )
                             }
@@ -1012,7 +1012,7 @@ private struct ProfileSettingsView: View {
                             } label: {
                                 settingsRow(
                                     "Open iOS settings",
-                                    detail: "Change Repbase system permissions",
+                                    detail: "Change Routiq system permissions",
                                     symbol: "gearshape"
                                 )
                             }
@@ -1072,7 +1072,7 @@ private struct ProfileSettingsView: View {
                             } label: {
                                 settingsRow(
                                     "Sign out",
-                                    detail: "End this Repbase session",
+                                    detail: "End this Routiq session",
                                     symbol: "rectangle.portrait.and.arrow.right",
                                     color: .red
                                 )
@@ -1114,7 +1114,7 @@ private struct ProfileSettingsView: View {
                             }
 
                             settingsValueRow(
-                                "Repbase version",
+                                "Routiq version",
                                 value: versionLabel,
                                 symbol: "info.circle"
                             )
@@ -1158,7 +1158,7 @@ private struct ProfileSettingsView: View {
             }
         }
         .confirmationDialog(
-            "Delete your Repbase account?",
+            "Delete your Routiq account?",
             isPresented: $showingDeleteConfirmation,
             titleVisibility: .visible
         ) {
@@ -1173,7 +1173,7 @@ private struct ProfileSettingsView: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("This permanently removes your profile and all associated Repbase data. This cannot be undone.")
+            Text("This permanently removes your profile and all associated Routiq data. This cannot be undone.")
         }
         .alert("Account Request Could Not Be Completed", isPresented: Binding(
             get: { deleteError != nil },
@@ -1367,7 +1367,7 @@ private struct PrivacyAndPermissionsView: View {
                         .foregroundStyle(timeOfDay.accent)
                     Text("You stay in control.")
                         .font(.community(size: 32, weight: .bold))
-                    Text("Repbase asks for access only when a feature needs it. You can change access at any time in iOS Settings.")
+                    Text("Routiq asks for access only when a feature needs it. You can change access at any time in iOS Settings.")
                         .font(.community(.subheadline))
                         .foregroundStyle(timeOfDay.secondaryText)
                 }
@@ -1380,25 +1380,25 @@ private struct PrivacyAndPermissionsView: View {
                 )
                 permissionExplanation(
                     "Photos",
-                    detail: "Used when you choose a profile photo. Repbase does not browse your library in the background.",
+                    detail: "Used when you choose a profile photo. Routiq does not browse your library in the background.",
                     symbol: "photo",
                     status: "Selected items only"
                 )
                 permissionExplanation(
                     "Apple Health",
-                    detail: "Read-only access to steps and completed workouts. Repbase never writes to Health.",
+                    detail: "Read-only access to steps and completed workouts. Routiq never writes to Health.",
                     symbol: "heart.text.square",
                     status: activity.hasAskedHealth ? "Access requested" : "Not connected"
                 )
                 permissionExplanation(
                     "Notifications",
-                    detail: "Used only for reminders you enable in Repbase.",
+                    detail: "Used only for reminders you enable in Routiq.",
                     symbol: "bell",
                     status: notificationLabel
                 )
                 permissionExplanation(
                     "Your data",
-                    detail: "Profile, workout, planner, and nutrition data are stored with your Repbase account so they sync across sessions.",
+                    detail: "Profile, workout, planner, and nutrition data are stored with your Routiq account so they sync across sessions.",
                     symbol: "lock.shield",
                     status: "Account protected"
                 )
@@ -1628,9 +1628,9 @@ struct ProfileOnboardingView: View {
     private var stepHeading: some View {
         switch step {
         case 0:
-            heading("Create your login", detail: "This is how you’ll get back into Repbase.")
+            heading("Create your login", detail: "This is how you’ll get back into Routiq.")
         case 1:
-            heading("What should we call you?", detail: "Your name and username identify you across Repbase.")
+            heading("What should we call you?", detail: "Your name and username identify you across Routiq.")
         case 2:
             heading("Set your goals", detail: "Keep these private or choose exactly what appears publicly.")
         default:

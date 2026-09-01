@@ -44,7 +44,7 @@ struct TrainingDashboardContent: View {
                 }
 
                 if store.isLoading {
-                    ProgressView("Loading this week from Repbase...")
+                    ProgressView("Loading this week from Routiq...")
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 30)
                         .workoutCard()
@@ -255,7 +255,7 @@ struct TrainingDashboardContent: View {
             milestoneCard
 
             if store.isLoadingDashboardSessions && store.dashboardSessions.isEmpty {
-                ProgressView("Loading progress from Repbase...")
+                ProgressView("Loading progress from Routiq...")
                     .font(.community(.footnote))
                     .frame(maxWidth: .infinity)
             }

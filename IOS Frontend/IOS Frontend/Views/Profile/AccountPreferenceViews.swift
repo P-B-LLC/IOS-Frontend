@@ -13,7 +13,7 @@ struct AppleHealthConnectionView: View {
                 RepbaseScreenHeader(
                     eyebrow: "Apple Health",
                     title: "Movement, connected.",
-                    detail: "Repbase imports steps and completed workouts, then stores the synced totals with your account."
+                    detail: "Routiq imports steps and completed workouts, then stores the synced totals with your account."
                 )
 
                 VStack(spacing: 0) {
@@ -142,7 +142,7 @@ struct NotificationPreferencesView: View {
                     preference("Community", detail: "Saved now; remote social alerts require server push support", value: $social)
                 }
 
-                Text("System-level permission is controlled in iOS Settings. Repbase will honor both your system permission and these choices.")
+                Text("System-level permission is controlled in iOS Settings. Routiq will honor both your system permission and these choices.")
                     .font(.community(.caption))
                     .foregroundStyle(timeOfDay.secondaryText)
 
@@ -183,7 +183,7 @@ struct NotificationPreferencesView: View {
     private var permissionDetail: String {
         authorizationStatus == .denied
             ? "Open iOS Settings to restore permission."
-            : "Repbase schedules only the reminders enabled below."
+            : "Routiq schedules only the reminders enabled below."
     }
 
     private func requestPermission() async {

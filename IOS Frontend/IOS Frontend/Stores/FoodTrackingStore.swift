@@ -402,7 +402,7 @@ final class FoodTrackingStore {
         to date: Date
     ) async -> PlanOutcome {
         guard let repository, !isSaving else {
-            return PlanOutcome(errorMessage: "Not connected to Repbase.")
+            return PlanOutcome(errorMessage: "Not connected to Routiq.")
         }
 
         let generation = connectionGeneration

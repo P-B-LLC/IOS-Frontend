@@ -64,7 +64,7 @@ struct AuthenticationView: View {
                     .padding(.top, 38)
 
                     HStack(spacing: 5) {
-                        Text("New to Repbase?")
+                        Text("New to Routiq?")
                             .foregroundStyle(timeOfDay.secondaryText)
                         Button("Create an account") {
                             authentication.clearError()
@@ -126,7 +126,7 @@ struct AuthenticationView: View {
         VStack(alignment: .leading, spacing: 0) {
             Spacer(minLength: 70)
 
-            Text("REPBASE")
+            Text("ROUTIQ")
                 .font(.community(.caption, weight: .bold))
                 .tracking(2.2)
                 .foregroundStyle(timeOfDay.accent)
@@ -182,7 +182,7 @@ struct AuthenticationView: View {
                     .font(.community(size: 9, weight: .bold))
                     .tracking(1.35)
                     .foregroundStyle(timeOfDay.accent)
-                Text("Repbase")
+                Text("Routiq")
                     .font(.community(size: 30, weight: .bold))
                     .tracking(-0.65)
                 Text("Welcome back")
@@ -283,7 +283,7 @@ private struct AccountRegistrationView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 7) {
-                    Text("JOIN REPBASE")
+                    Text("JOIN ROUTIQ")
                         .font(.community(size: 10, weight: .bold))
                         .tracking(1.3)
                         .foregroundStyle(timeOfDay.accent)

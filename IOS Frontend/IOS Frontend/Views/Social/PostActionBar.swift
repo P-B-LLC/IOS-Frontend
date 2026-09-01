@@ -78,15 +78,15 @@ struct PostActionBar: View {
         let shown = post.displayed
         let who = shown.author.displayName
         if !shown.caption.isEmpty {
-            return "\(who) on Repbase: \(shown.caption)"
+            return "\(who) on Routiq: \(shown.caption)"
         }
         if let workout = shown.workout {
-            return "\(who) trained \(workout.title) on Repbase."
+            return "\(who) trained \(workout.title) on Routiq."
         }
         if let meal = shown.meal {
-            return "\(who) logged \(meal.name) on Repbase."
+            return "\(who) logged \(meal.name) on Routiq."
         }
-        return "\(who) posted on Repbase."
+        return "\(who) posted on Routiq."
     }
 
     private func action(
