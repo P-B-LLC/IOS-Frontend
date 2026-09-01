@@ -88,6 +88,13 @@ nonisolated struct RemoteProfile: Equatable, Sendable {
     /// Defaulted to open, matching the server's own default, so a profile
     /// built here without saying is a profile that has not chosen to hide.
     var isProfilePublic: Bool = true
+    /// Whether *this* reader was given the profile or a closed door.
+    ///
+    /// Not the same question as `isProfilePublic`, and both are needed. A
+    /// follower of a closed profile is handed every field and still sees
+    /// `isProfilePublic` false; a page that read only that would draw the
+    /// closed door over data it already had.
+    var isReadable: Bool = true
     var disciplines: [String]
     var gymID: Int?
     var gymName: String?
@@ -258,6 +265,7 @@ actor ProfileAPIRepository {
                 showsWeight: payload.showsWeight ?? false,
                 showsTargetWeight: payload.showsTargetWeight ?? false,
                 isProfilePublic: payload.isProfilePublic ?? true,
+                isReadable: payload.isReadable ?? true,
                 // Already strings here, unlike on /me/ where the contract
                 // gives a closed enum.
                 disciplines: payload.disciplines,

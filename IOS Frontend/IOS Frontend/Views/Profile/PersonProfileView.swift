@@ -24,11 +24,12 @@ struct PersonProfileView: View {
     var body: some View {
         Group {
             if let person {
-                // A closed profile is answered, not refused: the server sends
-                // the username and the fact that it is closed, and nothing
-                // else. Drawing the ordinary page over that would be drawing
-                // a profile with every field blank.
-                if person.isProfilePublic {
+                // Readable, not public: a closed profile is still handed
+                // in full to the people following it, and only they and its
+                // owner get anything to draw. The server answers a closed
+                // door with the username and nothing else, so the ordinary
+                // page over that would be a profile of blank fields.
+                if person.isReadable {
                     SocialProfileView(profile: person, isCurrentUser: false)
                 } else {
                     PrivateProfileView(person: person)
@@ -92,7 +93,7 @@ struct PrivateProfileView: View {
                 // Says what is true of this page and no more. Their posts are
                 // not hidden by this switch, and claiming otherwise here would
                 // be promising something the app does not do.
-                Text("They have chosen not to share their profile.")
+                Text("Only their followers can see this profile.")
                     .font(.community(.subheadline))
                     .foregroundStyle(timeOfDay.secondaryText)
                     .multilineTextAlignment(.center)

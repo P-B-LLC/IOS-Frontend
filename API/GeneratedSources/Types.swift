@@ -8250,6 +8250,8 @@ public enum Components {
             public var showsTargetWeight: Swift.Bool?
             /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/is_profile_public`.
             public var isProfilePublic: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/is_readable`.
+            public var isReadable: Swift.Bool
             /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/created_at`.
             public var createdAt: Foundation.Date
             /// Creates a new `PublicRepbaseUser`.
@@ -8274,6 +8276,7 @@ public enum Components {
             ///   - showsWeight:
             ///   - showsTargetWeight:
             ///   - isProfilePublic:
+            ///   - isReadable:
             ///   - createdAt:
             public init(
                 id: Swift.Int,
@@ -8295,6 +8298,7 @@ public enum Components {
                 showsWeight: Swift.Bool? = nil,
                 showsTargetWeight: Swift.Bool? = nil,
                 isProfilePublic: Swift.Bool? = nil,
+                isReadable: Swift.Bool,
                 createdAt: Foundation.Date
             ) {
                 self.id = id
@@ -8316,6 +8320,7 @@ public enum Components {
                 self.showsWeight = showsWeight
                 self.showsTargetWeight = showsTargetWeight
                 self.isProfilePublic = isProfilePublic
+                self.isReadable = isReadable
                 self.createdAt = createdAt
             }
             public enum CodingKeys: String, CodingKey {
@@ -8338,6 +8343,7 @@ public enum Components {
                 case showsWeight = "shows_weight"
                 case showsTargetWeight = "shows_target_weight"
                 case isProfilePublic = "is_profile_public"
+                case isReadable = "is_readable"
                 case createdAt = "created_at"
             }
         }

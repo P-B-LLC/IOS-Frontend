@@ -120,12 +120,17 @@ struct SocialProfile: Codable, Equatable {
     var showsHeight: Bool
     var showsWeight: Bool
     var showsTargetWeight: Bool
-    /// Whether this profile is readable by anybody but its owner.
+    /// Whether this profile is open to everybody.
     ///
     /// Defaulted, so the profiles built in previews and the empty one used
-    /// during sign-up need not mention it. On somebody else's profile this is
-    /// the whole of what the server will say when it is false.
+    /// during sign-up need not mention it.
     var isProfilePublic: Bool = true
+    /// Whether the person looking was given this profile or a closed door.
+    ///
+    /// A closed profile is still readable by its owner and by the people
+    /// following them, so this and `isProfilePublic` disagree often and the
+    /// page cares about this one.
+    var isReadable: Bool = true
     var disciplines: Set<AthleteDiscipline>
     var gym: GymIdentity?
     var profileImageData: Data?
@@ -283,7 +288,7 @@ final class SocialProfileStore {
     /// the phone never becomes a second source of truth for profile data.
     func save(_ profile: SocialProfile) async -> Bool {
         guard repository != nil else {
-            errorMessage = "Connect to Routiq before saving profile changes."
+            errorMessage = "Connect to Rytivo before saving profile changes."
             return false
         }
         return await push(profile)
@@ -433,6 +438,7 @@ final class SocialProfileStore {
             showsWeight: remote.showsWeight,
             showsTargetWeight: remote.showsTargetWeight,
             isProfilePublic: remote.isProfilePublic,
+            isReadable: remote.isReadable,
             disciplines: Set(remote.disciplines.compactMap(AthleteDiscipline.init(apiValue:))),
             gym: remote.gymID.map {
                 GymIdentity(
@@ -458,7 +464,7 @@ final class SocialProfileStore {
     @discardableResult
     func savePrompts(_ answers: [ProfilePromptAnswer]) async -> Bool {
         guard let repository else {
-            errorMessage = "Connect to Routiq before editing your profile."
+            errorMessage = "Connect to Rytivo before editing your profile."
             return false
         }
         let generation = connectionGeneration
@@ -486,7 +492,7 @@ final class SocialProfileStore {
     @discardableResult
     func saveSocialLinks(_ links: [ProfileSocialLinkDraft]) async -> Bool {
         guard let repository else {
-            errorMessage = "Connect to Routiq before editing your profile."
+            errorMessage = "Connect to Rytivo before editing your profile."
             return false
         }
         let generation = connectionGeneration
@@ -509,7 +515,7 @@ final class SocialProfileStore {
     @discardableResult
     func saveHighlights(_ lifts: [HighlightLift]) async -> Bool {
         guard let repository else {
-            errorMessage = "Connect to Routiq before editing your profile."
+            errorMessage = "Connect to Rytivo before editing your profile."
             return false
         }
         let generation = connectionGeneration
@@ -659,11 +665,11 @@ final class SocialProfileStore {
                 socialLinks: [
                     ProfileSocialLink(
                         platform: .instagram,
-                        url: URL(string: "https://www.instagram.com/repbase")!
+                        url: URL(string: "https://www.instagram.com/rytivo")!
                     ),
                     ProfileSocialLink(
                         platform: .snapchat,
-                        url: URL(string: "https://www.snapchat.com/add/repbase")!
+                        url: URL(string: "https://www.snapchat.com/add/rytivo")!
                     )
                 ]
             )

@@ -441,6 +441,7 @@ private struct AppRootView: View {
                             showsWeight: false,
                             showsTargetWeight: false,
                             isProfilePublic: false,
+                            isReadable: false,
                             disciplines: [],
                             gym: nil,
                             profileImageData: nil
