@@ -1527,6 +1527,9 @@ struct ProfileOnboardingView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var selectedPhoto: PhotosPickerItem?
+    /// A picked photo waiting to be framed. Non-nil is what puts the cropper
+    /// on screen.
+    @State private var pendingPhoto: PendingProfilePhoto?
     @State private var gymSearch = ""
     @State private var gymResults: [GymIdentity] = []
     @State private var isCreatingGym = false
@@ -1584,10 +1587,29 @@ struct ProfileOnboardingView: View {
         .onChange(of: selectedPhoto) { _, newItem in
             guard let newItem else { return }
             Task {
-                if let data = try? await newItem.loadTransferable(type: Data.self) {
-                    await MainActor.run { draft.profileImageData = data }
+                let data = try? await newItem.loadTransferable(type: Data.self)
+                await MainActor.run {
+                    // Cleared whatever happens, so choosing the same photo a
+                    // second time still reads as a change and reopens the
+                    // cropper, rather than looking like nothing happened.
+                    selectedPhoto = nil
+                    guard let data, let image = UIImage(data: data) else { return }
+                    pendingPhoto = PendingProfilePhoto(image: image)
                 }
             }
+        }
+        // Full screen rather than a sheet: framing a picture is a gesture on
+        // the picture, and a sheet that can be dragged away underneath the
+        // drag is a fight between the two.
+        .fullScreenCover(item: $pendingPhoto) { pending in
+            ProfilePhotoCropperView(
+                image: pending.image,
+                onCancel: { pendingPhoto = nil },
+                onUse: { cropped in
+                    draft.profileImageData = cropped
+                    pendingPhoto = nil
+                }
+            )
         }
         .task(id: gymSearch) {
             let query = gymSearch.trimmingCharacters(in: .whitespacesAndNewlines)
