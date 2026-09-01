@@ -37,7 +37,7 @@ struct PersonProfileView: View {
                 ContentUnavailableView {
                     Label("Profile unavailable", systemImage: "person.crop.circle.badge.exclamationmark")
                 } description: {
-                    Text(store.errorMessage ?? "Routiq could not load this profile.")
+                    Text(store.errorMessage ?? "Rytivo could not load this profile.")
                 }
             } else {
                 ProgressView()
@@ -60,7 +60,7 @@ struct PersonProfileView: View {
 /// button that quietly did nothing would be worse than no button. There is no
 /// photo or name either: the server withholds both, and this page says only
 /// what it was actually told.
-private struct PrivateProfileView: View {
+struct PrivateProfileView: View {
     let person: SocialProfile
 
     var body: some View {
@@ -69,11 +69,15 @@ private struct PrivateProfileView: View {
         VStack(spacing: 18) {
             Spacer(minLength: 0)
 
+            // Bordered as well as filled. The raised surface is near enough
+            // to the page behind it on the light theme that the circle
+            // vanished and the lock floated on nothing.
             Image(systemName: "lock.fill")
                 .font(.community(size: 30, weight: .semibold))
-                .foregroundStyle(timeOfDay.secondaryText)
+                .foregroundStyle(timeOfDay.accent)
                 .frame(width: 92, height: 92)
-                .background(timeOfDay.surfaceRaised, in: Circle())
+                .background(timeOfDay.accent.opacity(0.10), in: Circle())
+                .overlay { Circle().strokeBorder(timeOfDay.accent.opacity(0.22), lineWidth: 1) }
 
             VStack(spacing: 7) {
                 Text("@\(person.username)")

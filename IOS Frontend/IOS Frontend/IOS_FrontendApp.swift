@@ -391,6 +391,7 @@ private struct AppRootView: View {
             } else if let profilePreview = ProcessInfo.processInfo.environment["REPBASE_PROFILE_PREVIEW"],
                       profilePreview != "profile",
                       profilePreview != "public",
+                      profilePreview != "private",
                       profilePreview != "links" {
                 NavigationStack {
                     ProfileOnboardingView(
@@ -418,6 +419,33 @@ private struct AppRootView: View {
                       let profile = socialProfileStore.profile {
                 NavigationStack {
                     SocialProfileView(profile: profile, isCurrentUser: false)
+                }
+            } else if ProcessInfo.processInfo.environment["REPBASE_PROFILE_PREVIEW"] == "private" {
+                NavigationStack {
+                    // Seeded the way the server actually answers for a closed
+                    // profile: the username, the fact of it, and every other
+                    // field emptied. A sample with a name and a face in it
+                    // would be previewing something that cannot happen.
+                    PrivateProfileView(
+                        person: SocialProfile(
+                            provider: .apple,
+                            firstName: "",
+                            lastName: "",
+                            username: "ada.lifts",
+                            bio: "",
+                            heightFeet: 0,
+                            heightInches: 0,
+                            weightPounds: 0,
+                            targetWeightPounds: 0,
+                            showsHeight: false,
+                            showsWeight: false,
+                            showsTargetWeight: false,
+                            isProfilePublic: false,
+                            disciplines: [],
+                            gym: nil,
+                            profileImageData: nil
+                        )
+                    )
                 }
             } else if let profilePreview = ProcessInfo.processInfo.environment["REPBASE_PROFILE_PREVIEW"] {
                 NavigationStack {
@@ -569,7 +597,7 @@ private struct AppRootView: View {
             case .checking:
                 VStack(spacing: 14) {
                     ProgressView()
-                    Text("Connecting to Routiq...")
+                    Text("Connecting to Rytivo...")
                         .font(.community(.subheadline))
                         .foregroundStyle(.secondary)
                 }
