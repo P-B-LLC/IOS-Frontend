@@ -83,6 +83,11 @@ nonisolated struct RemoteProfile: Equatable, Sendable {
     var showsHeight: Bool
     var showsWeight: Bool
     var showsTargetWeight: Bool
+    /// Whether anybody but the owner may read this profile.
+    ///
+    /// Defaulted to open, matching the server's own default, so a profile
+    /// built here without saying is a profile that has not chosen to hide.
+    var isProfilePublic: Bool = true
     var disciplines: [String]
     var gymID: Int?
     var gymName: String?
@@ -152,7 +157,8 @@ actor ProfileAPIRepository {
                     gym: profile.gymID,
                     showsHeight: profile.showsHeight,
                     showsWeight: profile.showsWeight,
-                    showsTargetWeight: profile.showsTargetWeight
+                    showsTargetWeight: profile.showsTargetWeight,
+                    isProfilePublic: profile.isProfilePublic
                 )
             )
         )
@@ -251,6 +257,7 @@ actor ProfileAPIRepository {
                 showsHeight: payload.showsHeight ?? false,
                 showsWeight: payload.showsWeight ?? false,
                 showsTargetWeight: payload.showsTargetWeight ?? false,
+                isProfilePublic: payload.isProfilePublic ?? true,
                 // Already strings here, unlike on /me/ where the contract
                 // gives a closed enum.
                 disciplines: payload.disciplines,
@@ -500,6 +507,7 @@ actor ProfileAPIRepository {
             showsHeight: payload.showsHeight ?? false,
             showsWeight: payload.showsWeight ?? false,
             showsTargetWeight: payload.showsTargetWeight ?? false,
+            isProfilePublic: payload.isProfilePublic ?? true,
             disciplines: (payload.disciplines ?? []).map(\.rawValue),
             gymID: payload.gym,
             gymName: payload.gymName,

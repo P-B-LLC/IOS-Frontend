@@ -883,7 +883,7 @@ private struct ProfileSettingsView: View {
                             Button { editorDestination = .basics } label: {
                                 settingsRow(
                                     "Profile details",
-                                    detail: "Name, username, and bio",
+                                    detail: "Photo, name, username, and bio",
                                     symbol: "person.crop.circle"
                                 )
                             }
@@ -918,7 +918,7 @@ private struct ProfileSettingsView: View {
                             Button { editorDestination = .identity } label: {
                                 settingsActivityRow(
                                     "Training identity",
-                                    detail: "Photo, disciplines, and gym",
+                                    detail: "Disciplines and gym",
                                     icon: .lifting
                                 )
                             }
@@ -951,6 +951,23 @@ private struct ProfileSettingsView: View {
 
                     settingsSection("PRIVACY & PERMISSIONS", timeOfDay: timeOfDay) {
                         VStack(spacing: 0) {
+                            // First, because it is the one thing on this list
+                            // that decides whether there is anything for the
+                            // rest of it to be about.
+                            settingsToggleRow(
+                                "Public profile",
+                                detail: isProfilePublic.wrappedValue
+                                    ? "Anyone can open your profile"
+                                    : "Only you can see your profile",
+                                symbol: isProfilePublic.wrappedValue
+                                    ? "globe"
+                                    : "lock",
+                                isOn: isProfilePublic,
+                                timeOfDay: timeOfDay
+                            )
+
+                            Rectangle().fill(timeOfDay.border).frame(height: 1)
+
                             // Blocking acts on one tap from a post, with
                             // nothing to confirm. This is the way back
                             // from a tap that was not meant.
@@ -1251,6 +1268,39 @@ private struct ProfileSettingsView: View {
                             lineWidth: 1
                         )
                 }
+        }
+    }
+
+    /// Reads the profile the store holds, and writes through the store.
+    ///
+    /// Not bound to the `profile` this view was handed: that is a snapshot
+    /// taken when settings opened, so a switch bound to it would show the old
+    /// answer until the page was left and opened again.
+    private var isProfilePublic: Binding<Bool> {
+        Binding(
+            // Falls back to the snapshot this view was handed, for the
+            // moment before the store has finished loading its own copy.
+            get: { store.profile?.isProfilePublic ?? profile.isProfilePublic },
+            set: { isPublic in
+                Task { await store.setProfilePublic(isPublic) }
+            }
+        )
+    }
+
+    /// A row that is the setting, rather than a way to reach it.
+    private func settingsToggleRow(
+        _ title: String,
+        detail: String,
+        symbol: String,
+        isOn: Binding<Bool>,
+        timeOfDay: HomeTimeOfDay
+    ) -> some View {
+        HStack(spacing: 14) {
+            settingsRow(title, detail: detail, symbol: symbol)
+            Toggle("", isOn: isOn)
+                .labelsHidden()
+                .tint(timeOfDay.accent)
+                .disabled(store.isSaving)
         }
     }
 
@@ -1729,6 +1779,30 @@ struct ProfileOnboardingView: View {
 
     private func nameStep(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(spacing: 13) {
+            // The picture sits with the name. It used to live on the identity
+            // step, which meant Settings -> Profile details -- the page people
+            // open to change how they appear -- was the one place that could
+            // not change the thing they most often come to change.
+            HStack(spacing: 14) {
+                ProfileAvatarView(profile: draft, size: 78, timeOfDay: timeOfDay)
+                VStack(alignment: .leading, spacing: 8) {
+                    PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                        Label("Choose photo", systemImage: "photo")
+                            .font(.community(.subheadline, weight: .bold))
+                    }
+                    // Only while signing up. Afterwards it would read as
+                    // "remove my photo" and it does not do that: it drops the
+                    // image waiting to be uploaded, not the one already saved.
+                    if !isEditing {
+                        Button("Set it later") { draft.profileImageData = nil }
+                            .font(.community(.caption, weight: .semibold))
+                            .foregroundStyle(timeOfDay.secondaryText)
+                    }
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.bottom, 4)
+
             profileField("First name", text: $draft.firstName, contentType: .givenName, timeOfDay: timeOfDay)
             profileField("Last name", text: $draft.lastName, contentType: .familyName, timeOfDay: timeOfDay)
 
@@ -1839,19 +1913,6 @@ struct ProfileOnboardingView: View {
 
     private func identityStep(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(alignment: .leading, spacing: 20) {
-            HStack(spacing: 14) {
-                ProfileAvatarView(profile: draft, size: 78, timeOfDay: timeOfDay)
-                VStack(alignment: .leading, spacing: 8) {
-                    PhotosPicker(selection: $selectedPhoto, matching: .images) {
-                        Label("Choose photo", systemImage: "photo")
-                            .font(.community(.subheadline, weight: .bold))
-                    }
-                    Button("Set it later") { draft.profileImageData = nil }
-                        .font(.community(.caption, weight: .semibold))
-                        .foregroundStyle(timeOfDay.secondaryText)
-                }
-            }
-
             VStack(alignment: .leading, spacing: 10) {
                 Text("How do you train?").font(.community(.headline))
                 Text("Choose all that fit.").font(.community(.caption)).foregroundStyle(timeOfDay.secondaryText)

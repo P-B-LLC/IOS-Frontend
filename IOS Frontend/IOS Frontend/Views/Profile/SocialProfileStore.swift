@@ -120,6 +120,12 @@ struct SocialProfile: Codable, Equatable {
     var showsHeight: Bool
     var showsWeight: Bool
     var showsTargetWeight: Bool
+    /// Whether this profile is readable by anybody but its owner.
+    ///
+    /// Defaulted, so the profiles built in previews and the empty one used
+    /// during sign-up need not mention it. On somebody else's profile this is
+    /// the whole of what the server will say when it is false.
+    var isProfilePublic: Bool = true
     var disciplines: Set<AthleteDiscipline>
     var gym: GymIdentity?
     var profileImageData: Data?
@@ -374,6 +380,7 @@ final class SocialProfileStore {
             remote.showsHeight = profile.showsHeight
             remote.showsWeight = profile.showsWeight
             remote.showsTargetWeight = profile.showsTargetWeight
+            remote.isProfilePublic = profile.isProfilePublic
             remote.disciplines = profile.disciplines.map(\.apiValue).sorted()
             remote.gymID = profile.gym?.serverID
             try await repository.save(remote)
@@ -425,6 +432,7 @@ final class SocialProfileStore {
             showsHeight: remote.showsHeight,
             showsWeight: remote.showsWeight,
             showsTargetWeight: remote.showsTargetWeight,
+            isProfilePublic: remote.isProfilePublic,
             disciplines: Set(remote.disciplines.compactMap(AthleteDiscipline.init(apiValue:))),
             gym: remote.gymID.map {
                 GymIdentity(
@@ -526,6 +534,35 @@ final class SocialProfileStore {
     /// Returns what is already held straight away, so opening a profile a
     /// second time draws immediately rather than blanking while it asks again.
     @discardableResult
+    /// Opens or closes the profile to everybody else.
+    ///
+    /// Its own call rather than a whole-profile save. This is one switch in
+    /// settings, and pushing the entire profile to turn it would send the
+    /// measurements and re-upload the photo alongside it.
+    func setProfilePublic(_ isPublic: Bool) async {
+        guard let repository, !isSaving else { return }
+        let generation = connectionGeneration
+        isSaving = true
+        errorMessage = nil
+        defer { if connectionGeneration == generation { isSaving = false } }
+
+        do {
+            var remote = try await repository.profile()
+            remote.isProfilePublic = isPublic
+            try await repository.save(remote)
+            let saved = try await repository.profile()
+            guard connectionGeneration == generation else { return }
+            profile = Self.profile(from: saved)
+            // Profiles already read are the public view of them, and this
+            // just changed what that view is. Dropping them means the next
+            // visit asks rather than drawing what it remembers.
+            peopleByID = [:]
+        } catch {
+            guard connectionGeneration == generation else { return }
+            errorMessage = error.userFacingMessage
+        }
+    }
+
     func person(_ userID: Int) async -> SocialProfile? {
         if let held = peopleByID[userID] { return held }
         guard let repository else { return nil }
