@@ -28,7 +28,6 @@ struct PlannerView: View {
     @State private var openingDay: Weekday?
     @State private var handledCompletionID: UUID?
     @State private var completedEntryID: PlannerEntry.ID?
-    @State private var clearedDate: String?
     @State private var completionPulse = false
     @State private var completionMessage: String?
     @State private var feedbackTask: Task<Void, Never>?
@@ -283,6 +282,26 @@ struct PlannerView: View {
         }
     }
 
+    /// The day on screen, when every task on it is actually done.
+    ///
+    /// Read from the day rather than remembered from the moment it happened.
+    /// This was state, set once when the last task of a day was ticked and
+    /// never unset by anything -- so unticking that task left the badge, the
+    /// banner and the calendar all still claiming a day that was no longer
+    /// clear, while the counter beside them read 0/1.
+    ///
+    /// Counted through `taskCounts` rather than by filtering here, so that the
+    /// claim and the "0/1 TASKS" figure can never come from two different
+    /// ideas of what a task is.
+    ///
+    /// A day with nothing on it is not cleared. Clearing is something you do,
+    /// and an empty day has had nothing done to it.
+    private var clearedDate: String? {
+        let counts = store.taskCounts(on: store.selectedDate)
+        guard counts.total > 0, counts.done == counts.total else { return nil }
+        return PlannerStore.dateString(store.selectedDate)
+    }
+
     private func dayOverview(timeOfDay: HomeTimeOfDay) -> some View {
         let entries = store.entries(on: store.selectedDate)
         let counts = store.taskCounts(on: store.selectedDate)
@@ -341,7 +360,6 @@ struct PlannerView: View {
                 ? "You cleared \(store.selectedDate.formatted(.dateTime.weekday(.wide))). Everything planned is done."
                 : "\(event.title) complete · \(event.completedTasks) of \(event.totalTasks)"
             if event.clearedDay {
-                clearedDate = event.date
                 completionPulse.toggle()
             }
         }
