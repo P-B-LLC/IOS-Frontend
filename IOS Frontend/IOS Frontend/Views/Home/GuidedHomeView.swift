@@ -634,7 +634,19 @@ private struct GuidedDayFlow: View {
     private func finishSection(number: Int) -> some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
-                stageLabel(stageNumber(number, .finish), color: timeOfDay.secondaryText)
+                // "Finish" is what is left of today. When everything left is
+                // late that word is wrong twice over: there is nothing of
+                // today's to finish, and it hides that the work is overdue.
+                // Tinted to match the planner's own Past due section, so the
+                // same thing reads the same way in both places.
+                stageLabel(
+                    everythingLeftIsPastDue
+                        ? String(format: "%02d · PAST DUE", number)
+                        : stageNumber(number, .finish),
+                    color: everythingLeftIsPastDue
+                        ? Color(hex: 0xD8557A)
+                        : timeOfDay.secondaryText
+                )
                 Text(taskSummary)
                     .font(.community(.headline))
                     .foregroundStyle(timeOfDay.primaryText)
@@ -754,12 +766,22 @@ private struct GuidedDayFlow: View {
         return workout.type.title
     }
 
+    /// The next thing on the day being looked at, and only that day.
+    ///
+    /// Overdue work is deliberately not folded in. A task left unfinished on
+    /// Monday is late, not "up next" on Tuesday, and announcing it as the
+    /// day's next thing made a day with nothing on it read as a day with
+    /// something on it. It is still shown, under "still to do" below and in
+    /// the planner's own past due section, both of which name it for what it
+    /// is. This also makes today behave like every other day: only today ever
+    /// mixed in work from other dates.
+    ///
+    /// Sorting on time alone is sound only because every entry here shares a
+    /// date. Mixing days in let a 07:00 from last week outrank this morning,
+    /// since nothing in the comparison looked at the date at all.
     private var nextEntry: PlannerEntry? {
-        let overdue = isToday ? planner.pastDue.filter { !$0.isComplete } : []
-        let onDay = planner.entries(on: selectedDate).filter { !$0.isComplete || !$0.isCompletable }
-        var seen: Set<PlannerEntry.ID> = []
-        return (overdue + onDay)
-            .filter { seen.insert($0.id).inserted }
+        planner.entries(on: selectedDate)
+            .filter { !$0.isComplete || !$0.isCompletable }
             .sorted { ($0.time ?? "99:99:99") < ($1.time ?? "99:99:99") }
             .first
     }
@@ -779,15 +801,45 @@ private struct GuidedDayFlow: View {
         return (overdue + onDay).filter { seen.insert($0.id).inserted }
     }
 
+    /// Whether a task is late rather than merely unfinished.
+    private func isPastDue(_ task: PlannerEntry) -> Bool {
+        planner.pastDue.contains { $0.isSameEntry(as: task) }
+    }
+
+    /// Whether everything still to do is late.
+    ///
+    /// All of it, not any of it. A day holding one overdue task and one of its
+    /// own still has work of its own in it, and calling the whole section past
+    /// due would misdescribe the second.
+    private var everythingLeftIsPastDue: Bool {
+        !remainingTasks.isEmpty && remainingTasks.allSatisfy(isPastDue)
+    }
+
     private var taskSummary: String {
         let count = remainingTasks.count
-        return count == 0 ? "Everything is done" : "\(count) task\(count == 1 ? "" : "s") still to do"
+        guard count > 0 else { return "Everything is done" }
+        let noun = "task\(count == 1 ? "" : "s")"
+        return everythingLeftIsPastDue
+            ? "\(count) \(noun) past due"
+            : "\(count) \(noun) still to do"
     }
 
     private var taskDetail: String {
         guard let task = remainingTasks.first else { return "Nothing else needs your attention" }
+        // Named with the day it was due. A bare title reads as something
+        // planned for today, which is the confusion worth removing.
+        if isPastDue(task), let day = task.dayValue {
+            return "\(task.title) · due \(Self.overdueDay(day))"
+        }
         if let time = task.displayTime { return "\(task.title) · due by \(time)" }
         return task.title
+    }
+
+    /// "yesterday" when it was, and the day by name when it was longer ago.
+    private static func overdueDay(_ day: Date) -> String {
+        Calendar.current.isDateInYesterday(day)
+            ? "yesterday"
+            : day.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
     }
 
     private var weeklyProgress: Double {

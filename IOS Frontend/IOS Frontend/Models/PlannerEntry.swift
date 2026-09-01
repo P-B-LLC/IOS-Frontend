@@ -316,6 +316,20 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
         )
     }
 
+    /// The day this sits on, as a date.
+    ///
+    /// The stored field is the server's `YYYY-MM-DD`, which is the right thing
+    /// to send back but cannot be compared or formatted. Parsed by hand rather
+    /// than through a formatter: this is a calendar day with no time and no
+    /// zone, and handing it to one invites it to be shifted by the device's.
+    var dayValue: Date? {
+        let parts = date.split(separator: "-").compactMap { Int($0) }
+        guard parts.count == 3 else { return nil }
+        return Calendar.current.date(
+            from: DateComponents(year: parts[0], month: parts[1], day: parts[2])
+        )
+    }
+
     /// Whether two copies are the same entry.
     ///
     /// By server id, because the local one is not stable across reads. The
