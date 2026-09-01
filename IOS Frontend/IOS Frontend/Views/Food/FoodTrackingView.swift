@@ -452,6 +452,22 @@ struct FoodTrackingView: View {
                 .repbaseControlSurface(cornerRadius: 15)
             }
 
+            // Only on a day with nothing logged on it. Copying onto a day that
+            // already has food is refused by the server rather than doubling
+            // it, so there is nothing to gain by offering it there.
+            if store.canCopyPreviousDay(onto: selectedDate) {
+                Button {
+                    store.copyPreviousDay(onto: selectedDate)
+                } label: {
+                    Label(copyPreviousDayTitle, systemImage: "clock.arrow.circlepath")
+                        .font(.community(.subheadline, weight: .semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 11)
+                }
+                .repbaseControlSurface(cornerRadius: 15)
+                .disabled(store.isSaving)
+            }
+
             if let firstMeal = meals.first {
                 NavigationLink {
                     MealDetailView(date: selectedDate, mealID: firstMeal.id)
@@ -508,6 +524,15 @@ struct FoodTrackingView: View {
             .repbaseCard(contentPadding: 14, cornerRadius: 17)
         }
         .buttonStyle(.plain)
+    }
+
+    /// Named for the day being looked at, not for today. The week strip can
+    /// be moved off today, and "yesterday" would then be the wrong word for
+    /// the day this copies.
+    private var copyPreviousDayTitle: String {
+        Calendar.current.isDateInToday(selectedDate)
+            ? "Same as yesterday"
+            : "Same as the day before"
     }
 
     private var total: NutritionAmount { store.total(on: selectedDate) }

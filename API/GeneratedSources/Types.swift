@@ -215,6 +215,11 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/food/meals/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/food/meals/{id}//delete(food_meals_destroy)`.
     func foodMealsDestroy(_ input: Operations.FoodMealsDestroy.Input) async throws -> Operations.FoodMealsDestroy.Output
+    /// Copy everything eaten on source_date onto target_date, meal names and all. Refused when the target day already has food on it, so sending the same request twice cannot quietly double a day. Foods are copied rather than linked: editing one afterwards leaves the day it came from alone.
+    ///
+    /// - Remark: HTTP `POST /api/v1/food/meals/copy-day/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/meals/copy-day//post(food_meals_copy_day_create)`.
+    func foodMealsCopyDayCreate(_ input: Operations.FoodMealsCopyDayCreate.Input) async throws -> Operations.FoodMealsCopyDayCreate.Output
     /// Open a day and get its meals, creating the day's empty meal slots the first time. Safe to call every time a day is shown: it only adds slots a day is short of, so opening the same day twice does not double them.
     ///
     /// - Remark: HTTP `POST /api/v1/food/meals/ensure-day/`.
@@ -1501,6 +1506,19 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//api/v1/food/meals/{id}//delete(food_meals_destroy)`.
     public func foodMealsDestroy(path: Operations.FoodMealsDestroy.Input.Path) async throws -> Operations.FoodMealsDestroy.Output {
         try await foodMealsDestroy(Operations.FoodMealsDestroy.Input(path: path))
+    }
+    /// Copy everything eaten on source_date onto target_date, meal names and all. Refused when the target day already has food on it, so sending the same request twice cannot quietly double a day. Foods are copied rather than linked: editing one afterwards leaves the day it came from alone.
+    ///
+    /// - Remark: HTTP `POST /api/v1/food/meals/copy-day/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/meals/copy-day//post(food_meals_copy_day_create)`.
+    public func foodMealsCopyDayCreate(
+        headers: Operations.FoodMealsCopyDayCreate.Input.Headers = .init(),
+        body: Operations.FoodMealsCopyDayCreate.Input.Body
+    ) async throws -> Operations.FoodMealsCopyDayCreate.Output {
+        try await foodMealsCopyDayCreate(Operations.FoodMealsCopyDayCreate.Input(
+            headers: headers,
+            body: body
+        ))
     }
     /// Open a day and get its meals, creating the day's empty meal slots the first time. Safe to call every time a day is shown: it only adds slots a day is short of, so opening the same day twice does not double them.
     ///
@@ -3534,6 +3552,36 @@ public enum Components {
             case imageJpeg = "image/jpeg"
             case imagePng = "image/png"
             case imageWebp = "image/webp"
+        }
+        /// Which day to copy the eating from, and which day to put it on.
+        ///
+        /// Two dates rather than "yesterday": the rule about which day is being
+        /// repeated belongs to the screen asking, and the device knows what day it is
+        /// for the person holding it. A server that guessed would be guessing in its
+        /// own timezone.
+        ///
+        /// - Remark: Generated from `#/components/schemas/CopyFoodDayRequest`.
+        public struct CopyFoodDayRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CopyFoodDayRequest/source_date`.
+            public var sourceDate: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CopyFoodDayRequest/target_date`.
+            public var targetDate: Swift.String
+            /// Creates a new `CopyFoodDayRequest`.
+            ///
+            /// - Parameters:
+            ///   - sourceDate:
+            ///   - targetDate:
+            public init(
+                sourceDate: Swift.String,
+                targetDate: Swift.String
+            ) {
+                self.sourceDate = sourceDate
+                self.targetDate = targetDate
+            }
+            public enum CodingKeys: String, CodingKey {
+                case sourceDate = "source_date"
+                case targetDate = "target_date"
+            }
         }
         /// * `workout` - Workout
         /// * `meal` - Meal
@@ -15724,6 +15772,127 @@ public enum Operations {
             ///
             /// A response with a code that is not documented in the OpenAPI document.
             case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// Copy everything eaten on source_date onto target_date, meal names and all. Refused when the target day already has food on it, so sending the same request twice cannot quietly double a day. Foods are copied rather than linked: editing one afterwards leaves the day it came from alone.
+    ///
+    /// - Remark: HTTP `POST /api/v1/food/meals/copy-day/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/meals/copy-day//post(food_meals_copy_day_create)`.
+    public enum FoodMealsCopyDayCreate {
+        public static let id: Swift.String = "food_meals_copy_day_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/meals/copy-day/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodMealsCopyDayCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodMealsCopyDayCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodMealsCopyDayCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/food/meals/copy-day/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/meals/copy-day/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.CopyFoodDayRequest)
+            }
+            public var body: Operations.FoodMealsCopyDayCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.FoodMealsCopyDayCreate.Input.Headers = .init(),
+                body: Operations.FoodMealsCopyDayCreate.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/meals/copy-day/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/meals/copy-day/POST/responses/200/content/application\/json`.
+                    case json([Components.Schemas.FoodMeal])
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: [Components.Schemas.FoodMeal] {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodMealsCopyDayCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodMealsCopyDayCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/meals/copy-day//post(food_meals_copy_day_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.FoodMealsCopyDayCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.FoodMealsCopyDayCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
         }
     }
     /// Open a day and get its meals, creating the day's empty meal slots the first time. Safe to call every time a day is shown: it only adds slots a day is short of, so opening the same day twice does not double them.

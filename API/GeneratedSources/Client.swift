@@ -2716,6 +2716,75 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// Copy everything eaten on source_date onto target_date, meal names and all. Refused when the target day already has food on it, so sending the same request twice cannot quietly double a day. Foods are copied rather than linked: editing one afterwards leaves the day it came from alone.
+    ///
+    /// - Remark: HTTP `POST /api/v1/food/meals/copy-day/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/meals/copy-day//post(food_meals_copy_day_create)`.
+    public func foodMealsCopyDayCreate(_ input: Operations.FoodMealsCopyDayCreate.Input) async throws -> Operations.FoodMealsCopyDayCreate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.FoodMealsCopyDayCreate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/food/meals/copy-day/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .post
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                let body: OpenAPIRuntime.HTTPBody?
+                switch input.body {
+                case let .json(value):
+                    body = try converter.setRequiredRequestBodyAsJSON(
+                        value,
+                        headerFields: &request.headerFields,
+                        contentType: "application/json; charset=utf-8"
+                    )
+                }
+                return (request, body)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.FoodMealsCopyDayCreate.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            [Components.Schemas.FoodMeal].self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
     /// Open a day and get its meals, creating the day's empty meal slots the first time. Safe to call every time a day is shown: it only adds slots a day is short of, so opening the same day twice does not double them.
     ///
     /// - Remark: HTTP `POST /api/v1/food/meals/ensure-day/`.

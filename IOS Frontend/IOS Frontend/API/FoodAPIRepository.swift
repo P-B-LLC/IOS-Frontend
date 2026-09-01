@@ -99,6 +99,38 @@ actor FoodAPIRepository {
         }
     }
 
+    /// Copies a whole day's eating onto another day, and answers with the
+    /// day it landed on.
+    ///
+    /// One call rather than replaying every meal and every food from here: the
+    /// server writes it in a single transaction, so a connection that drops
+    /// halfway cannot leave a day holding half of yesterday. It also answers
+    /// with the target day in full, which is why nothing has to be re-read
+    /// afterwards.
+    ///
+    /// A refusal (nothing to copy, or a day that already has food) comes back
+    /// as a 400 the contract does not describe, so the body is decoded for the
+    /// sentence the server put in it rather than reported as a status code.
+    func copyDay(from source: String, to target: String) async throws -> [FoodMeal] {
+        let output = try await client.foodMealsCopyDayCreate(
+            body: .json(
+                Components.Schemas.CopyFoodDayRequest(
+                    sourceDate: source,
+                    targetDate: target
+                )
+            )
+        )
+        switch output {
+        case .ok(let response):
+            return try response.body.json.map(Self.meal(from:))
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(
+                statusCode: statusCode,
+                payload: payload
+            )
+        }
+    }
+
     /// Foods logged before, most recent first, one row per name.
     func recentFoods() async throws -> [FoodEntry] {
         let output = try await client.foodMealsRecentFoodsList()

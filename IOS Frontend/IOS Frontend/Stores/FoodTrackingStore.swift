@@ -503,6 +503,76 @@ final class FoodTrackingStore {
         }
     }
 
+    // MARK: - Repeating a day
+
+    /// Whether to offer repeating the previous day onto `date`.
+    ///
+    /// The day itself must be empty. The server refuses to copy onto a day
+    /// that already has food rather than risk doubling it, so a button that
+    /// could only fail is not worth showing.
+    ///
+    /// The day before is checked only when it happens to be loaded. Days
+    /// arrive a calendar month at a time, so on the first of a month the day
+    /// before is not in hand -- and hiding the button then would hide it on
+    /// the very morning it is most useful. Not knowing is treated as "offer
+    /// it" and the server gets the final say.
+    func canCopyPreviousDay(onto date: Date) -> Bool {
+        guard !hasLoggedFood(on: date) else { return false }
+        guard let previous = Calendar.current.date(
+            byAdding: .day, value: -1, to: date
+        ) else { return false }
+
+        guard let known = days[dateKey(for: previous)] else { return true }
+        return known.contains { !$0.entries.isEmpty }
+    }
+
+    /// Copies the day before `date` onto it.
+    ///
+    /// For the person who eats much the same thing every day and would
+    /// otherwise retype it each morning. The server does the copying and
+    /// answers with the whole day, so this replaces the day rather than
+    /// merging into it and there is no window where half of it has arrived.
+    func copyPreviousDay(onto date: Date) {
+        guard let repository, !isSaving else { return }
+        let calendar = Calendar.current
+        guard let previous = calendar.date(
+            byAdding: .day, value: -1, to: date
+        ) else { return }
+
+        let key = dateKey(for: date)
+        let sourceKey = dateKey(for: previous)
+        let startOfDay = calendar.startOfDay(for: date)
+        let before = total(on: date)
+        let beforeMealCount = loggedMealCount(on: date)
+        let generation = connectionGeneration
+        isSaving = true
+        Task {
+            defer { if connectionGeneration == generation { isSaving = false } }
+            do {
+                let meals = try await repository.copyDay(from: sourceKey, to: key)
+                guard connectionGeneration == generation else { return }
+                days[key] = meals
+                // Announced the same way logging a meal by hand is, so the
+                // day's progress animates instead of jumping.
+                if let landed = meals.first(where: { !$0.entries.isEmpty }) {
+                    latestMealLogEvent = MealLogEvent(
+                        id: UUID(),
+                        date: startOfDay,
+                        mealID: landed.id,
+                        before: before,
+                        after: meals.reduce(.zero) { $0 + $1.totalNutrition },
+                        beforeMealCount: beforeMealCount,
+                        afterMealCount: meals.filter { !$0.entries.isEmpty }.count,
+                        shouldCelebrate: true
+                    )
+                }
+                refreshRecentFoods()
+            } catch {
+                report(error, generation: generation)
+            }
+        }
+    }
+
     // MARK: - Goals
 
     func updateGoals(_ goals: NutritionGoals) {
