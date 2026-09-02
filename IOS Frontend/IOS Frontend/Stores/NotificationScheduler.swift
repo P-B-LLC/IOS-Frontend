@@ -134,7 +134,7 @@ final class NotificationScheduler: NSObject {
     /// should be.
     func reschedule(
         entries: [PlannerEntry],
-        untimedWorkoutDays: [Date],
+        untimedWorkouts: [PlannerEntry],
         now: Date = Date()
     ) async {
         let settings = await centre.notificationSettings()
@@ -145,7 +145,7 @@ final class NotificationScheduler: NSObject {
 
         if isOn(Setting.food) { await scheduleFood(now: now) }
         if isOn(Setting.workouts) {
-            await scheduleWorkouts(days: untimedWorkoutDays, now: now)
+            await scheduleWorkouts(untimedWorkouts, now: now)
         }
         if isOn(Setting.tasks) { await scheduleTasks(entries, now: now) }
     }
@@ -177,15 +177,48 @@ final class NotificationScheduler: NSObject {
                 guard fires > now else { continue }
                 await add(
                     id: "rytivo.task.\(serverID).\(minutes)",
-                    title: entry.title,
-                    body: minutes == 1
-                        ? "Starting in a minute."
-                        : "Starting in \(minutes) minutes.",
+                    title: Self.headline(for: entry),
+                    body: Self.detail(for: entry, minutesAway: minutes),
                     at: fires,
                     category: Category.task,
                     userInfo: ["taskID": serverID]
                 )
             }
+        }
+    }
+
+    /// What the notification is about, named by what kind of thing it is.
+    ///
+    /// The title used to be the entry's own title and nothing else, which on a
+    /// lock screen is a bare word with no way to tell what it belongs to --
+    /// "Morning Run" could as easily have been a message. Saying which of the
+    /// app's things it is costs a couple of words and answers that.
+    static func headline(for entry: PlannerEntry) -> String {
+        switch entry.kind {
+        case .task: return "Upcoming Task: \(entry.title)"
+        case .event: return "Upcoming Event: \(entry.title)"
+        }
+    }
+
+    /// The line under it: how long, then the clock, then anything unusual.
+    ///
+    /// Ordered by what somebody glancing at it needs first. The countdown is
+    /// the reason it arrived; the clock time is what they will check it
+    /// against; the priority only appears when it is the one worth saying.
+    static func detail(for entry: PlannerEntry, minutesAway: Int) -> String {
+        var parts = [countdown(minutesAway)]
+        if let when = entry.displayTimeRange ?? entry.displayTime {
+            parts.append(when)
+        }
+        if entry.priority == .high { parts.append("High priority") }
+        return parts.joined(separator: " \u{00B7} ")
+    }
+
+    private static func countdown(_ minutes: Int) -> String {
+        switch minutes {
+        case 60: return "In 1 hour"
+        case 1: return "In 1 minute"
+        default: return "In \(minutes) minutes"
         }
     }
 
@@ -212,15 +245,15 @@ final class NotificationScheduler: NSObject {
     /// rhythm whatever the calendar says.
     private func scheduleFood(now: Date) async {
         guard !isMutedToday(Key.foodMutedOn, now: now) else { return }
-        let times: [(hour: Int, body: String)] = [
-            (9, "Log what you had for breakfast while it is still fresh."),
-            (14, "Log lunch before the afternoon runs away."),
-            (20, "Round off the day -- log dinner and anything after it."),
+        let times: [(hour: Int, meal: String, body: String)] = [
+            (9, "Breakfast", "Log what you had while it is still fresh."),
+            (14, "Lunch", "Log it before the afternoon runs away."),
+            (20, "Dinner", "Round off the day, and anything after it."),
         ]
-        for (hour, body) in times.prefix(Budget.food) {
+        for (hour, meal, body) in times.prefix(Budget.food) {
             await addRepeatingDaily(
                 id: "rytivo.food.\(hour)",
-                title: "Track your food",
+                title: "Food Check-In: \(meal)",
                 body: body,
                 hour: hour,
                 category: Category.food
@@ -235,16 +268,27 @@ final class NotificationScheduler: NSObject {
     /// A workout with a time is a planner entry with a time, and it already
     /// gets the full ladder above. Reminding about it here as well would be
     /// two notifications for one session.
-    private func scheduleWorkouts(days: [Date], now: Date) async {
+    private func scheduleWorkouts(_ entries: [PlannerEntry], now: Date) async {
         guard !isMutedToday(Key.workoutMutedOn, now: now) else { return }
         let calendar = Calendar.current
-        for day in days.sorted().prefix(Budget.workoutDays) {
+        let days = entries
+            .compactMap { entry -> (Date, PlannerEntry)? in
+                guard let day = entry.dayValue else { return nil }
+                return (day, entry)
+            }
+            .sorted { $0.0 < $1.0 }
+            .prefix(Budget.workoutDays)
+
+        for (day, entry) in days {
             guard let fires = calendar.date(
                 bySettingHour: 8, minute: 0, second: 0, of: day
             ), fires > now else { continue }
+            // Named, because "you have training planned" is the same sentence
+            // every morning and says nothing about which session it is.
+            let name = entry.workoutName ?? entry.title
             await add(
                 id: "rytivo.workout.\(Self.dayKey(day))",
-                title: "You have training planned",
+                title: "Training Session Today: \(name)",
                 body: "No time set for it, so it is yours to place in the day.",
                 at: fires,
                 category: Category.workout,

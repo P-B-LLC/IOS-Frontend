@@ -258,9 +258,9 @@ struct NotificationPreferencesView: View {
         let entries = planner_.entriesByDate.values.flatMap { $0 }
         await NotificationScheduler.shared.reschedule(
             entries: entries,
-            untimedWorkoutDays: entries
-                .filter { $0.workoutID != nil && $0.time == nil }
-                .compactMap(\.dayValue)
+            untimedWorkouts: entries.filter {
+                $0.workoutID != nil && $0.time == nil
+            }
         )
         notificationError = nil
     }

@@ -619,12 +619,11 @@ private struct AppRootView: View {
     /// a timed workout being reminded about twice.
     private func rescheduleReminders() async {
         let entries = plannerStore.entriesByDate.values.flatMap { $0 }
-        let untimedWorkoutDays = entries
-            .filter { $0.workoutID != nil && $0.time == nil }
-            .compactMap(\.dayValue)
         await NotificationScheduler.shared.reschedule(
             entries: entries,
-            untimedWorkoutDays: untimedWorkoutDays
+            untimedWorkouts: entries.filter {
+                $0.workoutID != nil && $0.time == nil
+            }
         )
     }
 
