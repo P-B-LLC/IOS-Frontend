@@ -587,6 +587,9 @@ private struct AppRootView: View {
             )
             await plannerStore.syncScheduledWorkouts(workoutStore.currentWeekWorkouts)
             await rescheduleReminders()
+            // So the icon is right from launch rather than only after the
+            // Social tab has been opened once.
+            await socialStore.refreshUnreadNotificationCount()
         }
         .task(id: workoutStore.currentWeekWorkouts) {
 #if DEBUG

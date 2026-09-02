@@ -297,6 +297,24 @@ final class NotificationScheduler: NSObject {
         }
     }
 
+    // MARK: - The number on the icon
+
+    /// Sets the badge, or clears it at zero.
+    ///
+    /// It counts unread notifications and deliberately nothing else. The
+    /// reminders this class schedules are about a moment -- a task starting in
+    /// five minutes -- and a badge left over from one is a number that cannot
+    /// be cleared by doing the thing it was about, because the thing has
+    /// already happened. Unread notifications are the opposite: they stay true
+    /// until somebody reads them, which is exactly what a badge should track.
+    ///
+    /// Lives here rather than in the social store because this class owns the
+    /// notification centre, and the badge needs the same permission as the
+    /// rest of it.
+    func setBadge(_ count: Int) async {
+        try? await centre.setBadgeCount(max(count, 0))
+    }
+
     // MARK: - Muting
 
     var mutedTaskIDs: Set<Int> {

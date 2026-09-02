@@ -100,6 +100,10 @@ final class SocialStore {
         requestedUserIDs = []
         notifications = []
         unreadNotifications = 0
+        // One account's count must never sit on the icon for the next. Signing
+        // out is not reading them, so this clears the number without touching
+        // what the server still holds as unread.
+        Task { await NotificationScheduler.shared.setBadge(0) }
         // One account's threads must never be shown to the next.
         comments = [:]
         openedPosts = [:]
@@ -247,6 +251,7 @@ final class SocialStore {
         if let count = try? await repository.unreadNotificationCount(),
            connectionGeneration == generation {
             unreadNotifications = count
+            await NotificationScheduler.shared.setBadge(count)
         }
     }
 
@@ -258,6 +263,7 @@ final class SocialStore {
             try await repository.markNotificationsRead()
             guard connectionGeneration == generation else { return }
             unreadNotifications = 0
+            await NotificationScheduler.shared.setBadge(0)
         } catch {
             guard connectionGeneration == generation else { return }
             errorMessage = error.userFacingMessage
