@@ -20,13 +20,13 @@ public enum RepbaseAPIClientError: LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .invalidServerURL:
-            return "The Routiq API URL must include a valid host."
+            return "The Rytivo API URL must include a valid host."
         case .insecureServerURL:
-            return "The Routiq API URL must use HTTPS."
+            return "The Rytivo API URL must use HTTPS."
         case .serverURLMustBeOrigin:
-            return "The Routiq API URL must be an origin without a path, query, or fragment."
+            return "The Rytivo API URL must be an origin without a path, query, or fragment."
         case .emptyToken:
-            return "The Routiq API token cannot be empty."
+            return "The Rytivo API token cannot be empty."
         case .insecureLocalhostOverrideRequired:
             return "HTTP is permitted only for an explicitly enabled localhost development server."
         }
