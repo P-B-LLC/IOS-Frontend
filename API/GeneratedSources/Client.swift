@@ -9113,6 +9113,198 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// What has happened to you, newest first.
+    ///
+    /// Read here rather than delivered: nothing in these builds can push, so the
+    /// page asks when it opens. Read-only apart from marking them seen, because
+    /// a notification is a record of something somebody else did and there is
+    /// nothing about it for its recipient to edit.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/notifications/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/notifications//get(social_notifications_list)`.
+    public func socialNotificationsList(_ input: Operations.SocialNotificationsList.Input) async throws -> Operations.SocialNotificationsList.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SocialNotificationsList.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/social/notifications/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .get
+                )
+                suppressMutabilityWarning(&request)
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "page",
+                    value: input.query.page
+                )
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SocialNotificationsList.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.PaginatedNotificationList.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Mark every notification as seen. Answers with what is left unread, which is zero, so the caller has one shape to read whichever of these two it called.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/notifications/read/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/notifications/read//post(social_notifications_read_create)`.
+    public func socialNotificationsReadCreate(_ input: Operations.SocialNotificationsReadCreate.Input) async throws -> Operations.SocialNotificationsReadCreate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SocialNotificationsReadCreate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/social/notifications/read/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .post
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SocialNotificationsReadCreate.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.UnreadCount.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// How many notifications have not been seen yet.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/notifications/unread-count/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/notifications/unread-count//get(social_notifications_unread_count_retrieve)`.
+    public func socialNotificationsUnreadCountRetrieve(_ input: Operations.SocialNotificationsUnreadCountRetrieve.Input) async throws -> Operations.SocialNotificationsUnreadCountRetrieve.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SocialNotificationsUnreadCountRetrieve.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/social/notifications/unread-count/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .get
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SocialNotificationsUnreadCountRetrieve.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.UnreadCount.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
     /// Posts: what someone has chosen to show other people.
     ///
     /// Reading and writing use different querysets on purpose. A reader gets

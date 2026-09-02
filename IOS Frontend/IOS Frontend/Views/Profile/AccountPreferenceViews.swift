@@ -96,6 +96,9 @@ struct NotificationPreferencesView: View {
     @AppStorage("notifications.nutrition") private var nutrition = true
     @AppStorage("notifications.social") private var social = true
     @AppStorage("notifications.planner") private var planner = true
+    /// The plan the reminders are built from. Named with a trailing underscore
+    /// only because `planner` above is already the switch.
+    @Environment(PlannerStore.self) private var planner_
     @State private var authorizationStatus: UNAuthorizationStatus = .notDetermined
     @State private var notificationError: String?
 
@@ -133,14 +136,51 @@ struct NotificationPreferencesView: View {
                 .overlay(alignment: .bottom) { Divider() }
 
                 VStack(spacing: 0) {
-                    preference("Training", detail: "Planned sessions, active workouts, and recovery", value: $training)
+                    preference(
+                        "Workouts",
+                        detail: "One in the morning on days holding training with no set time. Training you have given a time is reminded about as a task.",
+                        value: $training
+                    )
                     Divider()
-                    preference("Nutrition", detail: "Meal reminders and daily targets", value: $nutrition)
+                    preference(
+                        "Food",
+                        detail: "Morning, afternoon and evening, to log what you ate.",
+                        value: $nutrition
+                    )
                     Divider()
-                    preference("Calendar", detail: "Tasks, events, and due items", value: $planner)
+                    preference(
+                        "Tasks & events",
+                        detail: "An hour before, then thirty, fifteen, five and one minute before it starts.",
+                        value: $planner
+                    )
                     Divider()
-                    preference("Community", detail: "Saved now; remote social alerts require server push support", value: $social)
+                    preference(
+                        "Community",
+                        detail: "Follows, likes, reposts and replies. Shown on the notifications page in Social rather than sent to your phone.",
+                        value: $social
+                    )
                 }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("MUTING IS NOT TURNING OFF")
+                        .font(.community(size: 10, weight: .bold))
+                        .tracking(1.1)
+                        .foregroundStyle(timeOfDay.accent)
+                    Text("Muting from a notification is temporary — one task, or food for the rest of that day. It comes back tomorrow. The switches above are what stop a kind of reminder altogether, and iOS Settings stops all of them.")
+                        .font(.community(.footnote))
+                        .foregroundStyle(timeOfDay.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                // Said plainly rather than left to be discovered: nothing
+                // another person does can reach a closed phone in these
+                // builds, because there is no push entitlement to send it
+                // with. Everything above that does arrive is scheduled by the
+                // phone itself from a time already known.
+                Text("Reminders for workouts, food, tasks and events are scheduled on this device. Community activity is read when you open the notifications page.")
+                    .font(.community(.caption))
+                    .foregroundStyle(timeOfDay.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 Text("System-level permission is controlled in iOS Settings. Rytivo will honor both your system permission and these choices.")
                     .font(.community(.caption))
@@ -205,24 +245,24 @@ struct NotificationPreferencesView: View {
         }
     }
 
+    /// Rebuilds the reminders to match the switches.
+    ///
+    /// The three fixed daily nudges this page used to add itself are gone.
+    /// They knew nothing about what was actually planned, and they fought the
+    /// real scheduler, which clears everything pending before laying down what
+    /// the plan says. One place decides now, and this asks it to think again.
     private func synchronizeSchedules() async {
-        let center = UNUserNotificationCenter.current()
-        center.removePendingNotificationRequests(withIdentifiers: Self.localReminderIDs)
-        guard authorizationStatus == .authorized || authorizationStatus == .provisional else { return }
-        do {
-            if training {
-                try await schedule("repbase.training.daily", hour: 8, title: "Your training plan is ready", body: "Take a look at today's session before the day gets busy.")
-            }
-            if nutrition {
-                try await schedule("repbase.nutrition.daily", hour: 12, title: "Keep your plate in view", body: "Log lunch while the portions are still easy to remember.")
-            }
-            if planner {
-                try await schedule("repbase.planner.daily", hour: 18, title: "Tomorrow starts tonight", body: "Review your tasks, events, and planned training.")
-            }
-            notificationError = nil
-        } catch {
-            notificationError = error.localizedDescription
-        }
+        UNUserNotificationCenter.current().removePendingNotificationRequests(
+            withIdentifiers: Self.localReminderIDs
+        )
+        let entries = planner_.entriesByDate.values.flatMap { $0 }
+        await NotificationScheduler.shared.reschedule(
+            entries: entries,
+            untimedWorkoutDays: entries
+                .filter { $0.workoutID != nil && $0.time == nil }
+                .compactMap(\.dayValue)
+        )
+        notificationError = nil
     }
 
     private func schedule(

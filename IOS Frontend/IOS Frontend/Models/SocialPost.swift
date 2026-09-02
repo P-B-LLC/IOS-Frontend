@@ -302,6 +302,60 @@ nonisolated struct BlockedPerson: Identifiable, Equatable, Hashable, Sendable {
     let person: PostAuthor
 }
 
+/// One line of the notifications page.
+nonisolated struct SocialNotification: Identifiable, Equatable, Hashable, Sendable {
+    /// What somebody did. Unknown covers a kind added on the server before
+    /// this build knew about it: the row still names who and when, which is
+    /// more use than dropping it.
+    enum Kind: String, Sendable {
+        case follow
+        case followRequest = "follow_request"
+        case like
+        case repost
+        case comment
+        case unknown
+    }
+
+    let id: Int
+    let kind: Kind
+    let actorID: Int
+    let actorUsername: String
+    let actorFirstName: String
+    let actorLastName: String
+    let actorPhotoURL: String?
+    let postID: Int?
+    let commentBody: String?
+    let isRead: Bool
+
+    var actorName: String {
+        let full = "\(actorFirstName) \(actorLastName)"
+            .trimmingCharacters(in: .whitespaces)
+        return full.isEmpty ? actorUsername : full
+    }
+
+    /// What the row says happened, in words rather than a code.
+    var summary: String {
+        switch kind {
+        case .follow: return "started following you"
+        case .followRequest: return "asked to follow you"
+        case .like: return "liked your post"
+        case .repost: return "reposted your post"
+        case .comment: return "commented on your post"
+        case .unknown: return "did something"
+        }
+    }
+
+    var symbol: String {
+        switch kind {
+        case .follow, .followRequest: return "person.badge.plus"
+        case .like: return "heart.fill"
+        case .repost: return "arrow.2.squarepath"
+        case .comment: return "bubble.left"
+        case .unknown: return "bell"
+        }
+    }
+}
+
 /// Somebody waiting to be let in to a closed profile.
 ///
 /// `id` is the request rather than the person: approving and declining act on

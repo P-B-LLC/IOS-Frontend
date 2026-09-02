@@ -577,6 +577,53 @@ actor SocialAPIRepository {
         }
     }
 
+    // MARK: - What has happened to you
+
+    func notifications() async throws -> [SocialNotification] {
+        let output = try await client.socialNotificationsList(query: .init())
+        switch output {
+        case .ok(let response):
+            return try response.body.json.results.map { row in
+                SocialNotification(
+                    id: row.id,
+                    kind: SocialNotification.Kind(rawValue: row.kind.rawValue)
+                        ?? .unknown,
+                    actorID: row.actorId,
+                    actorUsername: row.actorUsername,
+                    actorFirstName: row.actorFirstName,
+                    actorLastName: row.actorLastName,
+                    actorPhotoURL: row.actorPhotoUrl,
+                    postID: row.post,
+                    commentBody: row.commentBody,
+                    isRead: row.isRead
+                )
+            }
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    @discardableResult
+    func unreadNotificationCount() async throws -> Int {
+        let output = try await client.socialNotificationsUnreadCountRetrieve()
+        switch output {
+        case .ok(let response):
+            return try response.body.json.unread
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    func markNotificationsRead() async throws {
+        let output = try await client.socialNotificationsReadCreate()
+        switch output {
+        case .ok:
+            return
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
     func approveFollowRequest(_ id: Int) async throws {
         let output = try await client.socialFollowRequestsApproveCreate(
             path: .init(id: id)

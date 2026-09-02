@@ -850,6 +850,26 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /api/v1/social/follow-requests/{id}/approve/`.
     /// - Remark: Generated from `#/paths//api/v1/social/follow-requests/{id}/approve//post(social_follow_requests_approve_create)`.
     func socialFollowRequestsApproveCreate(_ input: Operations.SocialFollowRequestsApproveCreate.Input) async throws -> Operations.SocialFollowRequestsApproveCreate.Output
+    /// What has happened to you, newest first.
+    ///
+    /// Read here rather than delivered: nothing in these builds can push, so the
+    /// page asks when it opens. Read-only apart from marking them seen, because
+    /// a notification is a record of something somebody else did and there is
+    /// nothing about it for its recipient to edit.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/notifications/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/notifications//get(social_notifications_list)`.
+    func socialNotificationsList(_ input: Operations.SocialNotificationsList.Input) async throws -> Operations.SocialNotificationsList.Output
+    /// Mark every notification as seen. Answers with what is left unread, which is zero, so the caller has one shape to read whichever of these two it called.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/notifications/read/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/notifications/read//post(social_notifications_read_create)`.
+    func socialNotificationsReadCreate(_ input: Operations.SocialNotificationsReadCreate.Input) async throws -> Operations.SocialNotificationsReadCreate.Output
+    /// How many notifications have not been seen yet.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/notifications/unread-count/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/notifications/unread-count//get(social_notifications_unread_count_retrieve)`.
+    func socialNotificationsUnreadCountRetrieve(_ input: Operations.SocialNotificationsUnreadCountRetrieve.Input) async throws -> Operations.SocialNotificationsUnreadCountRetrieve.Output
     /// Posts: what someone has chosen to show other people.
     ///
     /// Reading and writing use different querysets on purpose. A reader gets
@@ -2864,6 +2884,38 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//api/v1/social/follow-requests/{id}/approve//post(social_follow_requests_approve_create)`.
     public func socialFollowRequestsApproveCreate(path: Operations.SocialFollowRequestsApproveCreate.Input.Path) async throws -> Operations.SocialFollowRequestsApproveCreate.Output {
         try await socialFollowRequestsApproveCreate(Operations.SocialFollowRequestsApproveCreate.Input(path: path))
+    }
+    /// What has happened to you, newest first.
+    ///
+    /// Read here rather than delivered: nothing in these builds can push, so the
+    /// page asks when it opens. Read-only apart from marking them seen, because
+    /// a notification is a record of something somebody else did and there is
+    /// nothing about it for its recipient to edit.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/notifications/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/notifications//get(social_notifications_list)`.
+    public func socialNotificationsList(
+        query: Operations.SocialNotificationsList.Input.Query = .init(),
+        headers: Operations.SocialNotificationsList.Input.Headers = .init()
+    ) async throws -> Operations.SocialNotificationsList.Output {
+        try await socialNotificationsList(Operations.SocialNotificationsList.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Mark every notification as seen. Answers with what is left unread, which is zero, so the caller has one shape to read whichever of these two it called.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/notifications/read/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/notifications/read//post(social_notifications_read_create)`.
+    public func socialNotificationsReadCreate(headers: Operations.SocialNotificationsReadCreate.Input.Headers = .init()) async throws -> Operations.SocialNotificationsReadCreate.Output {
+        try await socialNotificationsReadCreate(Operations.SocialNotificationsReadCreate.Input(headers: headers))
+    }
+    /// How many notifications have not been seen yet.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/notifications/unread-count/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/notifications/unread-count//get(social_notifications_unread_count_retrieve)`.
+    public func socialNotificationsUnreadCountRetrieve(headers: Operations.SocialNotificationsUnreadCountRetrieve.Input.Headers = .init()) async throws -> Operations.SocialNotificationsUnreadCountRetrieve.Output {
+        try await socialNotificationsUnreadCountRetrieve(Operations.SocialNotificationsUnreadCountRetrieve.Input(headers: headers))
     }
     /// Posts: what someone has chosen to show other people.
     ///
@@ -4918,6 +4970,103 @@ public enum Components {
             case skiErg = "ski_erg"
             case other = "other"
         }
+        /// One line of the notifications page.
+        ///
+        /// Flattened rather than nested. Every row names a person and sometimes a
+        /// post, and a page of them should not cost a nested serializer per row for
+        /// fields that are three strings and a URL.
+        ///
+        /// - Remark: Generated from `#/components/schemas/Notification`.
+        public struct Notification: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/Notification/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/Notification/kind`.
+            public var kind: Components.Schemas.NotificationKindEnum
+            /// - Remark: Generated from `#/components/schemas/Notification/actor_id`.
+            public var actorId: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/Notification/actor_username`.
+            public var actorUsername: Swift.String
+            /// - Remark: Generated from `#/components/schemas/Notification/actor_first_name`.
+            public var actorFirstName: Swift.String
+            /// - Remark: Generated from `#/components/schemas/Notification/actor_last_name`.
+            public var actorLastName: Swift.String
+            /// - Remark: Generated from `#/components/schemas/Notification/actor_photo_url`.
+            public var actorPhotoUrl: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Notification/post`.
+            public var post: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/Notification/comment_body`.
+            public var commentBody: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Notification/is_read`.
+            public var isRead: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/Notification/created_at`.
+            public var createdAt: Foundation.Date
+            /// Creates a new `Notification`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - kind:
+            ///   - actorId:
+            ///   - actorUsername:
+            ///   - actorFirstName:
+            ///   - actorLastName:
+            ///   - actorPhotoUrl:
+            ///   - post:
+            ///   - commentBody:
+            ///   - isRead:
+            ///   - createdAt:
+            public init(
+                id: Swift.Int,
+                kind: Components.Schemas.NotificationKindEnum,
+                actorId: Swift.Int,
+                actorUsername: Swift.String,
+                actorFirstName: Swift.String,
+                actorLastName: Swift.String,
+                actorPhotoUrl: Swift.String? = nil,
+                post: Swift.Int? = nil,
+                commentBody: Swift.String? = nil,
+                isRead: Swift.Bool,
+                createdAt: Foundation.Date
+            ) {
+                self.id = id
+                self.kind = kind
+                self.actorId = actorId
+                self.actorUsername = actorUsername
+                self.actorFirstName = actorFirstName
+                self.actorLastName = actorLastName
+                self.actorPhotoUrl = actorPhotoUrl
+                self.post = post
+                self.commentBody = commentBody
+                self.isRead = isRead
+                self.createdAt = createdAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case kind
+                case actorId = "actor_id"
+                case actorUsername = "actor_username"
+                case actorFirstName = "actor_first_name"
+                case actorLastName = "actor_last_name"
+                case actorPhotoUrl = "actor_photo_url"
+                case post
+                case commentBody = "comment_body"
+                case isRead = "is_read"
+                case createdAt = "created_at"
+            }
+        }
+        /// * `follow` - Started following you
+        /// * `follow_request` - Asked to follow you
+        /// * `like` - Liked your post
+        /// * `repost` - Reposted your post
+        /// * `comment` - Commented on your post
+        ///
+        /// - Remark: Generated from `#/components/schemas/NotificationKindEnum`.
+        @frozen public enum NotificationKindEnum: String, Codable, Hashable, Sendable, CaseIterable {
+            case follow = "follow"
+            case followRequest = "follow_request"
+            case like = "like"
+            case repost = "repost"
+            case comment = "comment"
+        }
         /// - Remark: Generated from `#/components/schemas/NullEnum`.
         public typealias NullEnum = OpenAPIRuntime.OpenAPIValueContainer
         /// - Remark: Generated from `#/components/schemas/NutritionGoal`.
@@ -5263,6 +5412,41 @@ public enum Components {
                 next: Swift.String? = nil,
                 previous: Swift.String? = nil,
                 results: [Components.Schemas.Gym]
+            ) {
+                self.count = count
+                self.next = next
+                self.previous = previous
+                self.results = results
+            }
+            public enum CodingKeys: String, CodingKey {
+                case count
+                case next
+                case previous
+                case results
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PaginatedNotificationList`.
+        public struct PaginatedNotificationList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PaginatedNotificationList/count`.
+            public var count: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PaginatedNotificationList/next`.
+            public var next: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedNotificationList/previous`.
+            public var previous: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedNotificationList/results`.
+            public var results: [Components.Schemas.Notification]
+            /// Creates a new `PaginatedNotificationList`.
+            ///
+            /// - Parameters:
+            ///   - count:
+            ///   - next:
+            ///   - previous:
+            ///   - results:
+            public init(
+                count: Swift.Int,
+                next: Swift.String? = nil,
+                previous: Swift.String? = nil,
+                results: [Components.Schemas.Notification]
             ) {
                 self.count = count
                 self.next = next
@@ -9913,6 +10097,23 @@ public enum Components {
         @frozen public enum UnitPreferenceEnum: String, Codable, Hashable, Sendable, CaseIterable {
             case metric = "metric"
             case imperial = "imperial"
+        }
+        /// How many notifications are still unseen.
+        ///
+        /// - Remark: Generated from `#/components/schemas/UnreadCount`.
+        public struct UnreadCount: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/UnreadCount/unread`.
+            public var unread: Swift.Int
+            /// Creates a new `UnreadCount`.
+            ///
+            /// - Parameters:
+            ///   - unread:
+            public init(unread: Swift.Int) {
+                self.unread = unread
+            }
+            public enum CodingKeys: String, CodingKey {
+                case unread
+            }
         }
         /// * `public` - Public
         /// * `followers` - Followers
@@ -27948,6 +28149,361 @@ public enum Operations {
             ///
             /// A response with a code that is not documented in the OpenAPI document.
             case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// What has happened to you, newest first.
+    ///
+    /// Read here rather than delivered: nothing in these builds can push, so the
+    /// page asks when it opens. Read-only apart from marking them seen, because
+    /// a notification is a record of something somebody else did and there is
+    /// nothing about it for its recipient to edit.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/notifications/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/notifications//get(social_notifications_list)`.
+    public enum SocialNotificationsList {
+        public static let id: Swift.String = "social_notifications_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/notifications/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/notifications/GET/query/page`.
+                public var page: Swift.Int?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - page: A page number within the paginated result set.
+                public init(page: Swift.Int? = nil) {
+                    self.page = page
+                }
+            }
+            public var query: Operations.SocialNotificationsList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/social/notifications/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialNotificationsList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialNotificationsList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialNotificationsList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.SocialNotificationsList.Input.Query = .init(),
+                headers: Operations.SocialNotificationsList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/notifications/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/notifications/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedNotificationList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedNotificationList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialNotificationsList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialNotificationsList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/notifications//get(social_notifications_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialNotificationsList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialNotificationsList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Mark every notification as seen. Answers with what is left unread, which is zero, so the caller has one shape to read whichever of these two it called.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/notifications/read/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/notifications/read//post(social_notifications_read_create)`.
+    public enum SocialNotificationsReadCreate {
+        public static let id: Swift.String = "social_notifications_read_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/notifications/read/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialNotificationsReadCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialNotificationsReadCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialNotificationsReadCreate.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            public init(headers: Operations.SocialNotificationsReadCreate.Input.Headers = .init()) {
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/notifications/read/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/notifications/read/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.UnreadCount)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.UnreadCount {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialNotificationsReadCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialNotificationsReadCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/notifications/read//post(social_notifications_read_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialNotificationsReadCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialNotificationsReadCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// How many notifications have not been seen yet.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/notifications/unread-count/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/notifications/unread-count//get(social_notifications_unread_count_retrieve)`.
+    public enum SocialNotificationsUnreadCountRetrieve {
+        public static let id: Swift.String = "social_notifications_unread_count_retrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/notifications/unread-count/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialNotificationsUnreadCountRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialNotificationsUnreadCountRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialNotificationsUnreadCountRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            public init(headers: Operations.SocialNotificationsUnreadCountRetrieve.Input.Headers = .init()) {
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/notifications/unread-count/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/notifications/unread-count/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.UnreadCount)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.UnreadCount {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialNotificationsUnreadCountRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialNotificationsUnreadCountRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/notifications/unread-count//get(social_notifications_unread_count_retrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialNotificationsUnreadCountRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialNotificationsUnreadCountRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
         }
     }
     /// Posts: what someone has chosen to show other people.

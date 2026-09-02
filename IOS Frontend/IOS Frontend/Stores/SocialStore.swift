@@ -29,6 +29,11 @@ final class SocialStore {
     private(set) var followersByUser: [Int: [PostAuthor]] = [:]
     private(set) var followingByUser: [Int: [PostAuthor]] = [:]
     private(set) var changingFollowFor: Set<Int> = []
+    /// What has happened to the signed-in user, newest first.
+    private(set) var notifications: [SocialNotification] = []
+    /// How many of those have not been seen. Kept apart from the list because
+    /// the badge is wanted in places that have no reason to load the page.
+    private(set) var unreadNotifications = 0
     /// People asking to follow the signed-in user, newest first.
     private(set) var followRequests: [FollowRequestSummary] = []
     /// Requests being answered, so a row cannot be approved twice while the
@@ -93,6 +98,8 @@ final class SocialStore {
         followRequests = []
         answeringRequests = []
         requestedUserIDs = []
+        notifications = []
+        unreadNotifications = 0
         // One account's threads must never be shown to the next.
         comments = [:]
         openedPosts = [:]
@@ -213,6 +220,46 @@ final class SocialStore {
             applyToAuthor(user.id) { $0.viewerFollowsAuthor = follows }
             if let viewerID { await loadRelationships(for: viewerID) }
         } catch {
+            errorMessage = error.userFacingMessage
+        }
+    }
+
+    // MARK: - What has happened to you
+
+    func loadNotifications() async {
+        guard let repository else { return }
+        let generation = connectionGeneration
+        do {
+            let loaded = try await repository.notifications()
+            guard connectionGeneration == generation else { return }
+            notifications = loaded
+        } catch {
+            guard connectionGeneration == generation else { return }
+            errorMessage = error.userFacingMessage
+        }
+    }
+
+    func refreshUnreadNotificationCount() async {
+        guard let repository else { return }
+        let generation = connectionGeneration
+        // Quietly: this runs to draw a dot, and a failed count is not worth a
+        // message across a page somebody is reading for another reason.
+        if let count = try? await repository.unreadNotificationCount(),
+           connectionGeneration == generation {
+            unreadNotifications = count
+        }
+    }
+
+    /// Marks everything seen, which is what opening the page means.
+    func markNotificationsRead() async {
+        guard let repository, unreadNotifications > 0 else { return }
+        let generation = connectionGeneration
+        do {
+            try await repository.markNotificationsRead()
+            guard connectionGeneration == generation else { return }
+            unreadNotifications = 0
+        } catch {
+            guard connectionGeneration == generation else { return }
             errorMessage = error.userFacingMessage
         }
     }

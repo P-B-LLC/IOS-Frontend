@@ -41,6 +41,11 @@ struct IOS_FrontendApp: App {
 
     init() {
         RepbaseTypography.configureUIKitAppearance()
+        // Registers the categories the reminders carry their mute buttons on,
+        // and takes delivery of taps. Before any of them is scheduled: a
+        // notification naming a category nobody registered arrives with no
+        // buttons on it at all.
+        MainActor.assumeIsolated { NotificationScheduler.shared.start() }
         let configuration = APIConfiguration.current
         _authentication = State(
             initialValue: AuthenticationStore(configuration: configuration)
@@ -581,6 +586,7 @@ private struct AppRootView: View {
                 token: token
             )
             await plannerStore.syncScheduledWorkouts(workoutStore.currentWeekWorkouts)
+            await rescheduleReminders()
         }
         .task(id: workoutStore.currentWeekWorkouts) {
 #if DEBUG
@@ -588,7 +594,27 @@ private struct AppRootView: View {
 #endif
             guard authentication.token != nil else { return }
             await plannerStore.syncScheduledWorkouts(workoutStore.currentWeekWorkouts)
+            await rescheduleReminders()
         }
+    }
+
+    /// Rebuilds every reminder the device raises on its own.
+    ///
+    /// Driven off the planner alone, which is enough for both halves of it. A
+    /// scheduled workout is already synced into the planner as a task, so a
+    /// workout somebody gave an hour is an entry with a time and gets the
+    /// countdown; one they did not is an entry without a time, and gets the
+    /// single morning nudge instead. Deriving both from one list is what stops
+    /// a timed workout being reminded about twice.
+    private func rescheduleReminders() async {
+        let entries = plannerStore.entriesByDate.values.flatMap { $0 }
+        let untimedWorkoutDays = entries
+            .filter { $0.workoutID != nil && $0.time == nil }
+            .compactMap(\.dayValue)
+        await NotificationScheduler.shared.reschedule(
+            entries: entries,
+            untimedWorkoutDays: untimedWorkoutDays
+        )
     }
 
     @ViewBuilder

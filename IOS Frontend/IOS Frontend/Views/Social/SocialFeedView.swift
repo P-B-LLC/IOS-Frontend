@@ -91,6 +91,7 @@ struct SocialFeedView: View {
             }
 #endif
             if let initiallyOpened { opened = initiallyOpened }
+            await store.refreshUnreadNotificationCount()
         }
     }
 
@@ -198,6 +199,27 @@ struct SocialFeedView: View {
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
 
             Spacer()
+
+            NavigationLink {
+                NotificationsView()
+            } label: {
+                Image(systemName: "bell")
+                    .font(.community(.headline))
+                    .foregroundStyle(timeOfDay.canvasPrimaryText)
+                    .frame(width: 34, height: 34)
+                    .overlay(alignment: .topTrailing) {
+                        // A dot rather than a number. The count is behind the
+                        // page anyway, and "you have things waiting" is the
+                        // whole of what a glance needs.
+                        if store.unreadNotifications > 0 {
+                            Circle()
+                                .fill(RepbaseDesign.danger)
+                                .frame(width: 9, height: 9)
+                                .offset(x: -3, y: 3)
+                        }
+                    }
+            }
+            .buttonStyle(.plain)
 
             Button {
                 isComposing = true
