@@ -129,26 +129,32 @@ struct WorkoutEditorView: View {
     }
 
     private func workoutHeader(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack {
-            Button("Cancel") { dismiss() }
-                .font(.community(.subheadline, weight: .semibold))
-                .foregroundStyle(timeOfDay.secondaryText)
-                .buttonStyle(.plain)
-
-            Spacer()
-
-            Button {
-                save()
-            } label: {
-                Label("Save", systemImage: "checkmark")
+        VStack(spacing: 7) {
+            HStack {
+                RytivoBrandLockup(size: 22)
+                Spacer()
             }
-            .buttonStyle(RepbaseAccentCapsuleButtonStyle(timeOfDay: timeOfDay))
-            .disabled(!canSave)
-        }
-        .overlay {
-            Text(navigationTitle)
-                .font(.community(.headline))
-                .foregroundStyle(timeOfDay.canvasPrimaryText)
+
+            HStack {
+                Button("Cancel") { dismiss() }
+                    .font(.community(.subheadline, weight: .medium))
+                    .foregroundStyle(timeOfDay.canvasPrimaryText)
+                    .buttonStyle(.plain)
+
+                Spacer()
+
+                Text(navigationTitle)
+                    .font(.community(.headline, weight: .bold))
+                    .foregroundStyle(timeOfDay.canvasPrimaryText)
+
+                Spacer()
+
+                Button("Save") { save() }
+                    .font(.community(.subheadline, weight: .bold))
+                    .foregroundStyle(timeOfDay.accent)
+                    .buttonStyle(.plain)
+                    .disabled(!canSave)
+            }
         }
         .padding(.horizontal, 16)
         .padding(.top, 10)

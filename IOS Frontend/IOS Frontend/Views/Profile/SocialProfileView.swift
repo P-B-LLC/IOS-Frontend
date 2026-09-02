@@ -1673,32 +1673,41 @@ struct ProfileOnboardingView: View {
     }
 
     private func onboardingHeader(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack {
-            Button {
-                if !editsOneSection, step > (isEditing ? 1 : 0) {
-                    withAnimation(.easeOut(duration: 0.2)) { step -= 1 }
-                } else {
-                    dismiss()
-                }
-            } label: {
-                Image(systemName: canGoBack ? "chevron.left" : "xmark")
+        VStack(spacing: 8) {
+            HStack {
+                RytivoBrandLockup(size: 22)
+                Spacer()
             }
-            .buttonStyle(RepbaseSculptedIconButtonStyle(timeOfDay: timeOfDay))
 
-            Spacer()
-            Text(sectionTitle)
-                .font(.community(.headline, weight: .bold))
-                .lineLimit(1)
-            Spacer()
-            // A count of one is not worth printing, and neither is the page
-            // number of a page you did not arrive at by turning.
-            if editsOneSection {
-                Color.clear.frame(width: 44, height: 44)
-            } else {
-                Text("\(step - firstStep + 1)/\(stepCount)")
-                    .font(.community(.caption, weight: .bold))
-                    .foregroundStyle(timeOfDay.secondaryText)
-                    .frame(width: 44, height: 44)
+            HStack {
+                Button {
+                    if !editsOneSection, step > (isEditing ? 1 : 0) {
+                        withAnimation(.easeOut(duration: 0.2)) { step -= 1 }
+                    } else {
+                        dismiss()
+                    }
+                } label: {
+                    Image(systemName: canGoBack ? "chevron.left" : "xmark")
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(timeOfDay.canvasPrimaryText)
+                .frame(width: 44, height: 44)
+
+                Spacer()
+                Text(sectionTitle)
+                    .font(.community(.headline, weight: .bold))
+                    .lineLimit(1)
+                Spacer()
+                // A count of one is not worth printing, and neither is the page
+                // number of a page you did not arrive at by turning.
+                if editsOneSection {
+                    Color.clear.frame(width: 44, height: 44)
+                } else {
+                    Text("\(step - firstStep + 1)/\(stepCount)")
+                        .font(.community(.caption, weight: .bold))
+                        .foregroundStyle(timeOfDay.secondaryText)
+                        .frame(width: 44, height: 44)
+                }
             }
         }
         .padding(.horizontal, 20)
