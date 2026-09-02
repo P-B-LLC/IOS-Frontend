@@ -596,6 +596,17 @@ private struct AppRootView: View {
             await plannerStore.syncScheduledWorkouts(workoutStore.currentWeekWorkouts)
             await rescheduleReminders()
         }
+        // A task added, moved, finished or deleted changes what should be
+        // waiting on the phone. Without this the reminders only caught up on
+        // the next sign-in, so a task written for this evening was never
+        // reminded about at all.
+        .task(id: plannerStore.entriesByDate) {
+#if DEBUG
+            guard Self.isPreviewing == false else { return }
+#endif
+            guard authentication.token != nil else { return }
+            await rescheduleReminders()
+        }
     }
 
     /// Rebuilds every reminder the device raises on its own.
