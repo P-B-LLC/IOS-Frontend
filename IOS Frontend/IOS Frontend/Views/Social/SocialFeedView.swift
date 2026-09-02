@@ -186,8 +186,6 @@ struct SocialFeedView: View {
 
     private func socialHeader(timeOfDay: HomeTimeOfDay) -> some View {
         HStack(spacing: 12) {
-            RytivoBrandLockup(size: 24)
-
             Text("Social")
                 .font(.community(.title3, weight: .bold))
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
@@ -227,6 +225,10 @@ struct SocialFeedView: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Create post")
+        }
+        .overlay {
+            RytivoBrandLockup(size: 24)
+                .allowsHitTesting(false)
         }
         .padding(.horizontal, RepbaseDesign.pageInset)
         .padding(.top, 8)
