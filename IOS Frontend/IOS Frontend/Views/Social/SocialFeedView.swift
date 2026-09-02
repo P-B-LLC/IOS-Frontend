@@ -185,20 +185,14 @@ struct SocialFeedView: View {
     }
 
     private func socialHeader(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack {
-            Text(viewerInitials)
-                .font(.community(size: 11, weight: .bold))
-                .foregroundStyle(Color.white)
-                .frame(width: 34, height: 34)
-                .background(timeOfDay.accent, in: Circle())
-
-            Spacer()
+        HStack(spacing: 12) {
+            RytivoBrandLockup(size: 24)
 
             Text("Social")
-                .font(.community(.headline, weight: .bold))
+                .font(.community(.title3, weight: .bold))
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
 
-            Spacer()
+            Spacer(minLength: 4)
 
             NavigationLink {
                 NotificationsView()

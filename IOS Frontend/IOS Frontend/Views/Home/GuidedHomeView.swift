@@ -65,15 +65,7 @@ struct GuidedHomeView: View {
             .scrollIndicators(.hidden)
             .minimizesBottomBarOnScroll()
             .background {
-                LinearGradient(
-                    colors: [
-                        .repbaseDynamic(light: Color(hex: 0xFAF3ED), dark: Color(hex: 0x070806)),
-                        .repbaseDynamic(light: Color(hex: 0xF3E7DE), dark: Color(hex: 0x090A08))
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
+                Color(uiColor: .systemBackground).ignoresSafeArea()
             }
             .toolbar(.hidden, for: .navigationBar)
             // Keyed on the connection: home appears before the session is
@@ -108,53 +100,63 @@ private struct GuidedHomeHeader: View {
     var showsSteps = true
 
     var body: some View {
-        HStack(alignment: .center, spacing: 16) {
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(greeting.uppercased())
-                    .font(.community(.caption2, weight: .bold))
-                    .tracking(0.7)
-                    .foregroundStyle(timeOfDay.accent)
-
-                Text(firstName)
-                    .font(.community(.largeTitle, weight: .bold))
-                    .tracking(-0.6)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                RytivoBrandLockup(size: 24)
+                Spacer()
+                Text("Home")
+                    .font(.community(.title3, weight: .bold))
                     .foregroundStyle(timeOfDay.canvasPrimaryText)
-
-                Text(date.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))
-                    .font(.community(.footnote))
-                    .foregroundStyle(timeOfDay.canvasSecondaryText)
             }
 
-            Spacer(minLength: 8)
+            HStack(alignment: .center, spacing: 16) {
 
-            if showsSteps {
-            VStack(alignment: .trailing, spacing: 4) {
-                Text(stepCount)
-                    .font(.community(.title2, weight: .bold))
-                    .foregroundStyle(timeOfDay.canvasPrimaryText)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(greeting.uppercased())
+                        .font(.community(.caption2, weight: .bold))
+                        .tracking(0.7)
+                        .foregroundStyle(timeOfDay.accent)
 
-                Text(stepCaption)
-                    .font(.community(.caption2, weight: .bold))
-                    .tracking(0.35)
-                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+                    Text(firstName)
+                        .font(.community(.largeTitle, weight: .bold))
+                        .tracking(-0.6)
+                        .foregroundStyle(timeOfDay.canvasPrimaryText)
 
-                GeometryReader { proxy in
-                    ZStack(alignment: .leading) {
-                        Capsule()
-                            .fill(timeOfDay.canvasBorder)
-                        Capsule()
-                            .fill(timeOfDay.accent)
-                            .frame(width: proxy.size.width * stepProgress)
-                    }
+                    Text(date.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))
+                        .font(.community(.footnote))
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
                 }
-                .frame(width: 88, height: 3)
-            }
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel(stepAccessibilityLabel)
+
+                Spacer(minLength: 8)
+
+                if showsSteps {
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text(stepCount)
+                            .font(.community(.title2, weight: .bold))
+                            .foregroundStyle(timeOfDay.canvasPrimaryText)
+
+                        Text(stepCaption)
+                            .font(.community(.caption2, weight: .bold))
+                            .tracking(0.35)
+                            .foregroundStyle(timeOfDay.canvasSecondaryText)
+
+                        GeometryReader { proxy in
+                            ZStack(alignment: .leading) {
+                                Capsule()
+                                    .fill(timeOfDay.canvasBorder)
+                                Capsule()
+                                    .fill(timeOfDay.accent)
+                                    .frame(width: proxy.size.width * stepProgress)
+                            }
+                        }
+                        .frame(width: 88, height: 3)
+                    }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel(stepAccessibilityLabel)
+                }
             }
         }
-        .frame(minHeight: 82)
+        .frame(minHeight: 116)
     }
 
     private var firstName: String {

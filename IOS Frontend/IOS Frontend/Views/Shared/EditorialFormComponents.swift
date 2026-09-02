@@ -7,6 +7,32 @@
 
 import SwiftUI
 
+/// A small product signature for destination and workflow headers.
+/// Authentication may use the mark as a hero; utility pages keep it compact
+/// so Rytivo remains recognizable without competing with the page title.
+struct RytivoBrandLockup: View {
+    var size: CGFloat = 24
+
+    @Environment(\.homeTimeOfDay) private var timeOfDay
+
+    var body: some View {
+        HStack(spacing: max(7, size * 0.28)) {
+            Image("RytivoLogoMark")
+                .resizable()
+                .scaledToFit()
+                .frame(width: size, height: size)
+                .accessibilityHidden(true)
+
+            Text("Rytivo")
+                .font(.community(size: max(15, size * 0.67), weight: .bold))
+                .tracking(-0.35)
+                .foregroundStyle(timeOfDay.canvasPrimaryText)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Rytivo")
+    }
+}
+
 struct EditorialFormHeader: View {
     enum LeadingAction: Equatable {
         case cancel
@@ -24,23 +50,22 @@ struct EditorialFormHeader: View {
     @Environment(\.homeTimeOfDay) private var timeOfDay
 
     var body: some View {
-        HStack {
+        VStack(spacing: 7) {
+            HStack {
+                RytivoBrandLockup(size: 22)
+                Spacer()
+            }
+
+            HStack {
             Button(action: onDismiss) {
                 if leadingAction == .back {
                     Image(systemName: "chevron.left")
                         .font(.community(.body, weight: .semibold))
                         .frame(width: 42, height: 42)
-                        .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 14))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 14)
-                                .strokeBorder(timeOfDay.border, lineWidth: 1)
-                        }
                 } else {
                     Text("Cancel")
-                        .font(.community(.subheadline, weight: .semibold))
-                        .padding(.horizontal, 13)
-                        .frame(height: 40)
-                        .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 13))
+                        .font(.community(.subheadline, weight: .medium))
+                        .frame(minWidth: 48, minHeight: 42, alignment: .leading)
                 }
             }
             .buttonStyle(.plain)
@@ -48,31 +73,26 @@ struct EditorialFormHeader: View {
 
             Spacer()
             Text(title)
-                .font(.community(.subheadline, weight: .bold))
+                .font(.community(.headline, weight: .bold))
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
             Spacer()
 
             if showsSaveAction {
                 Button(action: onSave) {
-                    HStack(spacing: 6) {
-                        Text(saveTitle)
-                        Image(systemName: "arrow.up.right")
-                            .font(.community(.caption, weight: .bold))
-                    }
+                    Text(saveTitle)
                     .font(.community(.subheadline, weight: .bold))
-                    .foregroundStyle(timeOfDay.onPrimaryAction)
-                    .padding(.horizontal, 13)
-                    .frame(height: 40)
-                    .background(timeOfDay.primaryActionSurface, in: RoundedRectangle(cornerRadius: 13))
+                    .foregroundStyle(timeOfDay.accent)
+                    .frame(minWidth: 48, minHeight: 42, alignment: .trailing)
                 }
                 .buttonStyle(.plain)
                 .disabled(!canSave)
                 .opacity(canSave ? 1 : 0.35)
             } else {
-                Color.clear.frame(width: 42, height: 42)
+                Color.clear.frame(width: 48, height: 42)
+            }
             }
         }
-        .frame(height: 48)
+        .padding(.top, 6)
     }
 }
 

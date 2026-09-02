@@ -37,6 +37,14 @@ struct PlannerView: View {
 
         ScrollView {
             VStack(spacing: 14) {
+                HStack {
+                    RytivoBrandLockup(size: 24)
+                    Spacer()
+                    Text("Calendar")
+                        .font(.community(.title3, weight: .bold))
+                        .foregroundStyle(timeOfDay.canvasPrimaryText)
+                }
+
                 HStack(alignment: .bottom) {
                     if showsBackButton {
                         Button { dismiss() } label: {

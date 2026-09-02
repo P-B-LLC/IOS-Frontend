@@ -61,6 +61,16 @@ struct TrainingTabView: View {
         let timeOfDay = HomeTimeOfDay.current
 
         VStack(spacing: 0) {
+            HStack {
+                RytivoBrandLockup(size: 24)
+                Spacer()
+                Text(half.title)
+                    .font(.community(.title3, weight: .bold))
+                    .foregroundStyle(timeOfDay.canvasPrimaryText)
+            }
+            .padding(.horizontal, RepbaseDesign.pageInset)
+            .padding(.top, 8)
+
             switcher(timeOfDay: timeOfDay)
 
             if isShowingQuickActions {

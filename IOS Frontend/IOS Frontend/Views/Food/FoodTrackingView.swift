@@ -101,6 +101,15 @@ struct FoodTrackingView: View {
     private func screen(timeOfDay: HomeTimeOfDay) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
+                if showsBackButton {
+                    HStack {
+                        RytivoBrandLockup(size: 24)
+                        Spacer()
+                        Text("Food")
+                            .font(.community(.title3, weight: .bold))
+                            .foregroundStyle(timeOfDay.canvasPrimaryText)
+                    }
+                }
                 foodHeader(timeOfDay: timeOfDay)
                 weekSelector(timeOfDay: timeOfDay)
                 dailySummary(timeOfDay: timeOfDay)

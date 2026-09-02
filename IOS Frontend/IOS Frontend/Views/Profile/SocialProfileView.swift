@@ -127,6 +127,13 @@ struct SocialProfileView: View {
 
         ScrollView {
             VStack(spacing: 16) {
+                HStack {
+                    RytivoBrandLockup(size: 24)
+                    Spacer()
+                    Text("Profile")
+                        .font(.community(.title3, weight: .bold))
+                        .foregroundStyle(timeOfDay.canvasPrimaryText)
+                }
                 profileHeader(timeOfDay: timeOfDay)
                 identityCard(timeOfDay: timeOfDay)
                 sectionPicker(timeOfDay: timeOfDay)

@@ -25,6 +25,7 @@ struct FoodPickerView: View {
 
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                RytivoBrandLockup(size: 24)
                 pickerHeader(timeOfDay: timeOfDay)
 
                 VStack(alignment: .leading, spacing: 6) {
