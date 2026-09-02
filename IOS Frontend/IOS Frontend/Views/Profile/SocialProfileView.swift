@@ -880,10 +880,20 @@ private struct ProfileSettingsView: View {
                     settingsHeader(timeOfDay: timeOfDay)
 
                     VStack(alignment: .leading, spacing: 5) {
-                        Text("APP SETTINGS")
-                            .font(.community(size: 10, weight: .bold))
-                            .tracking(1.3)
-                            .foregroundStyle(timeOfDay.accent)
+                        HStack(spacing: 8) {
+                            Image("RytivoLogoMark")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 24, height: 24)
+                                .accessibilityHidden(true)
+
+                            Text("RYTIVO SETTINGS")
+                                .font(.community(size: 10, weight: .bold))
+                                .tracking(1.3)
+                                .foregroundStyle(timeOfDay.accent)
+                        }
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel("Rytivo settings")
                         Text("Everything in one place.")
                             .font(.community(size: 34, weight: .bold))
                         Text("Manage your public identity, nutrition targets, workout data, and account.")

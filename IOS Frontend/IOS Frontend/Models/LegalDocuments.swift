@@ -30,7 +30,7 @@ enum LegalDocuments {
     ///
     /// - Important: Replace with the registered legal name if the app ships
     ///   under a company rather than an individual developer.
-    static let publisher = "Routiq"
+    static let publisher = "Rytivo"
 
     /// The date the current wording took effect. Update it whenever the text
     /// below changes in substance, not for typographical fixes.
@@ -44,19 +44,19 @@ enum LegalDocuments {
         id: "privacy",
         title: "Privacy Policy",
         symbol: "hand.raised",
-        summary: "What Routiq stores, and what it does not do with it.",
+        summary: "What Rytivo stores, and what it does not do with it.",
         body: """
         Effective \(effectiveDate)
 
         WHAT THIS COVERS
 
-        This policy covers the Routiq iOS app and the Routiq server it talks \
+        This policy covers the Rytivo iOS app and the Rytivo server it talks \
         to. It is written to describe what actually happens to your data, not \
         to reserve rights we do not use.
 
         THE SHORT VERSION
 
-        Routiq stores what you put into it so it can show it back to you. It \
+        Rytivo stores what you put into it so it can show it back to you. It \
         does not contain advertising, analytics, or tracking software, and it \
         does not sell or share your data with anyone.
 
@@ -87,13 +87,13 @@ enum LegalDocuments {
         Your location, during a session and only then. If you start a run, \
         ride, or swim and grant location access, the app records the route so \
         it can show you distance and pace. It stops when you end the session. \
-        Routiq does not track your location in the background or when no \
+        Rytivo does not track your location in the background or when no \
         session is running.
 
         Steps and health data. Your daily step count and step goal. If you \
         connect Apple Health, the app reads the data types you approve in \
         Health's own permission screen. Apple Health data is read to display \
-        and record your activity in Routiq; you can revoke the permission at \
+        and record your activity in Rytivo; you can revoke the permission at \
         any time in the Health app.
 
         Food. Meals and their entries, your nutrition goals, and any meals you \
@@ -121,11 +121,11 @@ enum LegalDocuments {
         your behaviour to a third party. No sale of data. No sharing with data \
         brokers, advertisers, or partners. No profiling for marketing. Nothing \
         you log -- not a workout, a meal, a weight, or a post -- leaves \
-        Routiq.
+        Rytivo.
 
         EMAIL
 
-        Routiq sends email only when it is part of something you asked for, \
+        Rytivo sends email only when it is part of something you asked for, \
         such as a password reset code. It does not send marketing email.
 
         HOW LONG IT IS KEPT
@@ -150,7 +150,7 @@ enum LegalDocuments {
 
         CHILDREN
 
-        Routiq is not intended for children under 13, and accounts should not \
+        Rytivo is not intended for children under 13, and accounts should not \
         be created for them. If you believe a child has an account, write to \
         \(contactEmail) and it will be removed.
 
@@ -181,13 +181,13 @@ enum LegalDocuments {
         id: "terms",
         title: "Terms of Service",
         symbol: "doc.text",
-        summary: "The rules for using Routiq and for posting on it.",
+        summary: "The rules for using Rytivo and for posting on it.",
         body: """
         Effective \(effectiveDate)
 
         AGREEING TO THESE TERMS
 
-        Using Routiq means agreeing to these terms. If you do not agree with \
+        Using Rytivo means agreeing to these terms. If you do not agree with \
         them, do not use the app.
 
         You must be at least 13 years old to have an account.
@@ -212,7 +212,7 @@ enum LegalDocuments {
         CONTENT WE DO NOT ALLOW
 
         There is no tolerance for objectionable content or abusive behaviour on \
-        Routiq. Do not post:
+        Rytivo. Do not post:
 
         • Content that harasses, threatens, bullies, or intimidates anybody.
         • Hate speech, or content attacking people over race, ethnicity, \
@@ -220,7 +220,7 @@ enum LegalDocuments {
         orientation, or age.
         • Sexually explicit material, or any sexual content involving minors.
         • Content depicting or encouraging violence, self-harm, or eating \
-        disorders. Routiq is a training app and a place where that content \
+        disorders. Rytivo is a training app and a place where that content \
         does real damage.
         • Content promoting illegal drugs, or the illegal sale of prescription \
         or performance-enhancing substances.
@@ -243,7 +243,7 @@ enum LegalDocuments {
 
         HEALTH AND TRAINING IS NOT MEDICAL ADVICE
 
-        Routiq records training, food, and body measurements. It does not give \
+        Rytivo records training, food, and body measurements. It does not give \
         medical advice, and nothing in it is a diagnosis, a treatment, or a \
         substitute for a doctor. Calorie and macro figures are estimates from \
         what you enter.
@@ -265,7 +265,7 @@ enum LegalDocuments {
 
         THE SERVICE AS IT IS
 
-        Routiq is provided as it is, without warranty. It may be unavailable, \
+        Rytivo is provided as it is, without warranty. It may be unavailable, \
         it may lose data, and it may change. Keep your own record of anything \
         you cannot afford to lose.
 
@@ -276,7 +276,7 @@ enum LegalDocuments {
         CHANGES
 
         If these terms change in substance, the effective date changes with \
-        them and the new version appears here. Continuing to use Routiq after \
+        them and the new version appears here. Continuing to use Rytivo after \
         that means accepting the new version.
 
         CONTACT
@@ -291,14 +291,14 @@ enum LegalDocuments {
         id: "eula",
         title: "License Agreement",
         symbol: "signature",
-        summary: "The licence to use the Routiq app itself.",
+        summary: "The licence to use the Rytivo app itself.",
         body: """
         Effective \(effectiveDate)
 
         THE LICENCE
 
         \(publisher) grants you a personal, non-transferable, non-exclusive \
-        licence to use the Routiq app on Apple devices you own or control, as \
+        licence to use the Rytivo app on Apple devices you own or control, as \
         permitted by the App Store Terms of Service. You do not own the app; \
         you are licensed to use it.
 
@@ -307,7 +307,7 @@ enum LegalDocuments {
         Do not copy, sell, rent, sublicense, or redistribute the app. Do not \
         reverse-engineer, decompile, or disassemble it except where that right \
         cannot lawfully be excluded. Do not use it to build a competing \
-        service, and do not scrape the Routiq service through it.
+        service, and do not scrape the Rytivo service through it.
 
         APPLE'S STANDARD AGREEMENT
 
@@ -327,7 +327,7 @@ enum LegalDocuments {
 
         USER CONTENT
 
-        Posting on Routiq is also governed by the Terms of Service, including \
+        Posting on Rytivo is also governed by the Terms of Service, including \
         its rules on objectionable content and the commitment to act on reports \
         within 24 hours.
 

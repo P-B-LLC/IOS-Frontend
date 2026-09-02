@@ -233,7 +233,7 @@ struct WorkoutPlanFields: View {
         VStack(alignment: .leading, spacing: 8) {
             Label("How this is logged", systemImage: "stopwatch")
                 .font(.community(.subheadline, weight: .semibold))
-            Text("Start the session when you set off and end it when you finish. Routiq follows your route by GPS and works out your distance, time, and pace — there is nothing to type in.")
+            Text("Start the session when you set off and end it when you finish. Rytivo follows your route by GPS and works out your distance, time, and pace — there is nothing to type in.")
                 .font(.community(.caption))
                 .foregroundStyle(phase.secondaryText)
         }

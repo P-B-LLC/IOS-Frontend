@@ -43,10 +43,10 @@
 	<key>NSLocationTemporaryUsageDescriptionDictionary</key>
 	<dict>
 		<key>RouteTracking</key>
-		<string>Routiq needs your exact location to map the route of this run, ride, or swim and to measure its distance. Without it the session can still be timed, but no route can be recorded.</string>
+		<string>Rytivo needs your exact location to map the route of this run, ride, or swim and to measure its distance. Without it the session can still be timed, but no route can be recorded.</string>
 	</dict>
 	<key>NSMotionUsageDescription</key>
-	<string>Routiq reads your device's barometer during a run, ride, or swim to measure the elevation you climb. It is only used while a session you started is running.</string>
+	<string>Rytivo reads your device's barometer during a run, ride, or swim to measure the elevation you climb. It is only used while a session you started is running.</string>
 	<!--
 	  HealthKit. Reading only, and only this key.
 	  NSHealthUpdateUsageDescription was here too, added on the belief that
@@ -59,6 +59,6 @@
 	  lists only Steps.
 	-->
 	<key>NSHealthShareUsageDescription</key>
-	<string>Routiq reads your step count and the runs, rides, and swims recorded by your iPhone or Apple Watch, so your training shows up here without entering it twice.</string>
+	<string>Rytivo reads your step count and the runs, rides, and swims recorded by your iPhone or Apple Watch, so your training shows up here without entering it twice.</string>
 </dict>
 </plist>

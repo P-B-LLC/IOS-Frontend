@@ -122,7 +122,7 @@ PAGE = """<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{title} — Routiq</title>
+<title>{title} — Rytivo</title>
 <style>
   :root {{ color-scheme: light dark; --ink: #1c1a17; --quiet: #5f5952;
            --paper: #faf7f2; --accent: #a9714b; }}
@@ -144,7 +144,7 @@ PAGE = """<!doctype html>
 <main>
 <h1>{title}</h1>
 {body}
-<footer>Routiq</footer>
+<footer>Rytivo</footer>
 </main>
 </body>
 </html>

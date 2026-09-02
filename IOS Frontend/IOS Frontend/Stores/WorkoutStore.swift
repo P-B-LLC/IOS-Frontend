@@ -443,7 +443,7 @@ final class WorkoutStore {
     /// looking broken. Nil when editing is available.
     var editingBlockedReason: String? {
         if repository == nil {
-            return "Not connected to Routiq. Check your connection and retry."
+            return "Not connected to Rytivo. Check your connection and retry."
         }
         if isLoading { return "Loading this week…" }
         if isSaving { return "Saving…" }

@@ -64,8 +64,8 @@ struct GearEditorView: View {
                         mileageRow(
                             title: "Already covered",
                             detail: mode.kind == .shoe
-                                ? "Starting mileage before Routiq begins tracking."
-                                : "Existing mileage before Routiq begins tracking rides.",
+                                ? "Starting mileage before Rytivo begins tracking."
+                                : "Existing mileage before Rytivo begins tracking rides.",
                             text: $startingMilesText,
                             placeholder: "0"
                         )
@@ -74,7 +74,7 @@ struct GearEditorView: View {
                             title: mode.kind == .shoe ? "Replace at" : "Service at",
                             detail: mode.kind == .shoe
                                 ? "We will show remaining distance as sessions are saved."
-                                : "Routiq will show the distance remaining until service.",
+                                : "Rytivo will show the distance remaining until service.",
                             text: $retireAtMilesText,
                             placeholder: "None"
                         )
@@ -163,7 +163,7 @@ struct GearEditorView: View {
     private var introText: String {
         mode.kind == .shoe
             ? "Give this pair a name, then decide how you want mileage tracked."
-            : "Add the bike, then choose when Routiq should flag its next service."
+            : "Add the bike, then choose when Rytivo should flag its next service."
     }
 
     private var notesPlaceholder: String {

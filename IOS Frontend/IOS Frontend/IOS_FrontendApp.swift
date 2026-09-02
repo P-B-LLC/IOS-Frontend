@@ -597,6 +597,11 @@ private struct AppRootView: View {
             switch authentication.phase {
             case .checking:
                 VStack(spacing: 14) {
+                    Image("RytivoLogoMark")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 72, height: 72)
+                        .accessibilityHidden(true)
                     ProgressView()
                     Text("Connecting to Rytivo...")
                         .font(.community(.subheadline))

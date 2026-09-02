@@ -87,7 +87,7 @@ final class PlannerStore {
     /// leaving a dead control with no explanation.
     var editingBlockedReason: String? {
         if repository == nil {
-            return "Not connected to Routiq, so tasks cannot be saved yet."
+            return "Not connected to Rytivo, so tasks cannot be saved yet."
         }
         if isSaving { return "Saving..." }
         return nil

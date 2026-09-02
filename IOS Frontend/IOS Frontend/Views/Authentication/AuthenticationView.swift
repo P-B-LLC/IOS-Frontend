@@ -64,7 +64,7 @@ struct AuthenticationView: View {
                     .padding(.top, 38)
 
                     HStack(spacing: 5) {
-                        Text("New to Routiq?")
+                        Text("New to Rytivo?")
                             .foregroundStyle(timeOfDay.secondaryText)
                         Button("Create an account") {
                             authentication.clearError()
@@ -126,10 +126,20 @@ struct AuthenticationView: View {
         VStack(alignment: .leading, spacing: 0) {
             Spacer(minLength: 70)
 
-            Text("ROUTIQ")
-                .font(.community(.caption, weight: .bold))
-                .tracking(2.2)
-                .foregroundStyle(timeOfDay.accent)
+            HStack(spacing: 10) {
+                Image("RytivoLogoMark")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 38, height: 38)
+                    .accessibilityHidden(true)
+
+                Text("Rytivo")
+                    .font(.community(size: 24, weight: .bold))
+                    .tracking(-0.5)
+                    .foregroundStyle(timeOfDay.primaryText)
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Rytivo")
 
             Text("Everything important,\nin one flow.")
                 .font(.community(size: 42, weight: .bold))
@@ -173,16 +183,18 @@ struct AuthenticationView: View {
 
     private func brand(timeOfDay: HomeTimeOfDay) -> some View {
         HStack(spacing: 14) {
-            ActivityIconArtwork(kind: .lifting, size: 27, color: Color.white)
-                .frame(width: 50, height: 50)
-                .background(timeOfDay.accent, in: RoundedRectangle(cornerRadius: 12))
+            Image("RytivoLogoMark")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 58, height: 58)
+                .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 3) {
-                Text("TRAINING, ORGANIZED")
+                Text("YOUR DAY, IN MOTION")
                     .font(.community(size: 9, weight: .bold))
                     .tracking(1.35)
                     .foregroundStyle(timeOfDay.accent)
-                Text("Routiq")
+                Text("Rytivo")
                     .font(.community(size: 30, weight: .bold))
                     .tracking(-0.65)
                 Text("Welcome back")
@@ -283,7 +295,7 @@ private struct AccountRegistrationView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 7) {
-                    Text("JOIN ROUTIQ")
+                    Text("JOIN RYTIVO")
                         .font(.community(size: 10, weight: .bold))
                         .tracking(1.3)
                         .foregroundStyle(timeOfDay.accent)

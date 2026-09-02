@@ -103,7 +103,7 @@ struct PostComposerView: View {
                 VStack(alignment: .leading, spacing: 24) {
                     if !social.isConnected {
                         notice(
-                            "Connect to Routiq to post.",
+                            "Connect to Rytivo to post.",
                             timeOfDay: timeOfDay
                         )
                     }
@@ -459,7 +459,7 @@ struct PostComposerView: View {
                 return
             }
             guard let contentType = Self.contentType(of: data) else {
-                photoError = "That is not an image Routiq can post."
+                photoError = "That is not an image Rytivo can post."
                 return
             }
             guard data.count <= Self.photoByteLimit else {

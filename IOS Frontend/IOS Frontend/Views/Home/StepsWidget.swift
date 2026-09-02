@@ -169,7 +169,7 @@ struct StepsWidget: View {
     private var connectCard: some View {
         if store.hasAskedHealth {
             connectBody(
-                message: "No steps from Health yet. Turn Routiq on under Settings, Privacy & Security, Health.",
+                message: "No steps from Health yet. Turn Rytivo on under Settings, Privacy & Security, Health.",
                 action: nil
             )
         } else {
