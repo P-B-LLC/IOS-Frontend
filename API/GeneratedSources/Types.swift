@@ -5055,6 +5055,7 @@ public enum Components {
         }
         /// * `follow` - Started following you
         /// * `follow_request` - Asked to follow you
+        /// * `follow_approved` - Accepted your follow request
         /// * `like` - Liked your post
         /// * `repost` - Reposted your post
         /// * `comment` - Commented on your post
@@ -5063,6 +5064,7 @@ public enum Components {
         @frozen public enum NotificationKindEnum: String, Codable, Hashable, Sendable, CaseIterable {
             case follow = "follow"
             case followRequest = "follow_request"
+            case followApproved = "follow_approved"
             case like = "like"
             case repost = "repost"
             case comment = "comment"

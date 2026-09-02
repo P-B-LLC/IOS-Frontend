@@ -310,6 +310,7 @@ nonisolated struct SocialNotification: Identifiable, Equatable, Hashable, Sendab
     enum Kind: String, Sendable {
         case follow
         case followRequest = "follow_request"
+        case followApproved = "follow_approved"
         case like
         case repost
         case comment
@@ -338,6 +339,7 @@ nonisolated struct SocialNotification: Identifiable, Equatable, Hashable, Sendab
         switch kind {
         case .follow: return "started following you"
         case .followRequest: return "asked to follow you"
+        case .followApproved: return "accepted your follow request"
         case .like: return "liked your post"
         case .repost: return "reposted your post"
         case .comment: return "commented on your post"
@@ -348,6 +350,7 @@ nonisolated struct SocialNotification: Identifiable, Equatable, Hashable, Sendab
     var symbol: String {
         switch kind {
         case .follow, .followRequest: return "person.badge.plus"
+        case .followApproved: return "person.crop.circle.badge.checkmark"
         case .like: return "heart.fill"
         case .repost: return "arrow.2.squarepath"
         case .comment: return "bubble.left"
