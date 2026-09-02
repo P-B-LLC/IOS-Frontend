@@ -141,6 +141,13 @@ struct AuthenticationView: View {
             .accessibilityElement(children: .combine)
             .accessibilityLabel("Rytivo")
 
+            Text("Plan. Execute. Inspire.")
+                .font(.community(size: 11, weight: .bold))
+                .tracking(1.15)
+                .foregroundStyle(timeOfDay.accent)
+                .padding(.top, 8)
+                .accessibilityLabel("Plan. Execute. Inspire.")
+
             Text("Everything important,\nin one flow.")
                 .font(.community(size: 42, weight: .bold))
                 .tracking(-1.2)
