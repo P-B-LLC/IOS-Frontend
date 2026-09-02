@@ -255,6 +255,18 @@ struct NotificationPreferencesView: View {
         UNUserNotificationCenter.current().removePendingNotificationRequests(
             withIdentifiers: Self.localReminderIDs
         )
+        // Only with the plan actually in hand.
+        //
+        // Signed out this store is empty, and rebuilding from it does not mean
+        // "nothing is planned" -- it means nothing has been loaded. The
+        // rebuild clears the schedule first, so from an empty store it tore
+        // down every task and workout reminder and put back only the three
+        // food rules, which are the ones needing no data to write.
+        //
+        // Which is exactly what happened: this is the page somebody opens to
+        // grant permission, and opening it before signing in silently emptied
+        // the schedule while leaving food behind to make it look fine.
+        guard planner_.isConnected else { return }
         let entries = planner_.entriesByDate.values.flatMap { $0 }
         await NotificationScheduler.shared.reschedule(
             entries: entries,

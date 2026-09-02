@@ -138,10 +138,13 @@ final class NotificationScheduler: NSObject {
         now: Date = Date()
     ) async {
         let settings = await centre.notificationSettings()
-        centre.removeAllPendingNotificationRequests()
+        // Checked before anything is torn down. Clearing first and then
+        // discovering there is no permission to write replacements leaves the
+        // schedule empty for no reason.
         guard settings.authorizationStatus == .authorized
             || settings.authorizationStatus == .provisional
         else { return }
+        centre.removeAllPendingNotificationRequests()
 
         if isOn(Setting.food) { await scheduleFood(now: now) }
         if isOn(Setting.workouts) {
