@@ -815,6 +815,41 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /api/v1/social/feed/`.
     /// - Remark: Generated from `#/paths//api/v1/social/feed//get(social_feed_list)`.
     func socialFeedList(_ input: Operations.SocialFeedList.Input) async throws -> Operations.SocialFeedList.Output
+    /// The requests waiting on you, and the two answers to them.
+    ///
+    /// Only ever the ones pointed at the person asking. A request somebody else
+    /// sent to somebody else is not theirs to read, approve or refuse, and
+    /// scoping the queryset is what makes that a 404 rather than a check that
+    /// could be forgotten in one of the three places below.
+    ///
+    /// Declining is a DELETE because that is what it does: the row goes, and
+    /// nothing records that it was ever refused. The alternative is keeping a
+    /// refusal on file, which is a note about somebody that they cannot see and
+    /// did not agree to.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/follow-requests/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/follow-requests//get(social_follow_requests_list)`.
+    func socialFollowRequestsList(_ input: Operations.SocialFollowRequestsList.Input) async throws -> Operations.SocialFollowRequestsList.Output
+    /// The requests waiting on you, and the two answers to them.
+    ///
+    /// Only ever the ones pointed at the person asking. A request somebody else
+    /// sent to somebody else is not theirs to read, approve or refuse, and
+    /// scoping the queryset is what makes that a 404 rather than a check that
+    /// could be forgotten in one of the three places below.
+    ///
+    /// Declining is a DELETE because that is what it does: the row goes, and
+    /// nothing records that it was ever refused. The alternative is keeping a
+    /// refusal on file, which is a note about somebody that they cannot see and
+    /// did not agree to.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/follow-requests/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/follow-requests/{id}//delete(social_follow_requests_destroy)`.
+    func socialFollowRequestsDestroy(_ input: Operations.SocialFollowRequestsDestroy.Input) async throws -> Operations.SocialFollowRequestsDestroy.Output
+    /// Let this person follow you. The request becomes a follow and stops being a request.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/follow-requests/{id}/approve/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/follow-requests/{id}/approve//post(social_follow_requests_approve_create)`.
+    func socialFollowRequestsApproveCreate(_ input: Operations.SocialFollowRequestsApproveCreate.Input) async throws -> Operations.SocialFollowRequestsApproveCreate.Output
     /// Posts: what someone has chosen to show other people.
     ///
     /// Reading and writing use different querysets on purpose. A reader gets
@@ -917,7 +952,7 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /api/v1/users/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/users/{id}//get(users_retrieve)`.
     func usersRetrieve(_ input: Operations.UsersRetrieve.Input) async throws -> Operations.UsersRetrieve.Output
-    /// Follow this user. Following again changes nothing and answers 200, so a double tap is not an error.
+    /// Follow this user. Following again changes nothing and answers 200, so a double tap is not an error. A profile that is not public answers 202 instead: nothing has been followed, and a request is waiting for its owner to answer.
     ///
     /// - Remark: HTTP `POST /api/v1/users/{id}/follow/`.
     /// - Remark: Generated from `#/paths//api/v1/users/{id}/follow//post(users_follow_create)`.
@@ -2783,6 +2818,53 @@ extension APIProtocol {
             headers: headers
         ))
     }
+    /// The requests waiting on you, and the two answers to them.
+    ///
+    /// Only ever the ones pointed at the person asking. A request somebody else
+    /// sent to somebody else is not theirs to read, approve or refuse, and
+    /// scoping the queryset is what makes that a 404 rather than a check that
+    /// could be forgotten in one of the three places below.
+    ///
+    /// Declining is a DELETE because that is what it does: the row goes, and
+    /// nothing records that it was ever refused. The alternative is keeping a
+    /// refusal on file, which is a note about somebody that they cannot see and
+    /// did not agree to.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/follow-requests/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/follow-requests//get(social_follow_requests_list)`.
+    public func socialFollowRequestsList(
+        query: Operations.SocialFollowRequestsList.Input.Query = .init(),
+        headers: Operations.SocialFollowRequestsList.Input.Headers = .init()
+    ) async throws -> Operations.SocialFollowRequestsList.Output {
+        try await socialFollowRequestsList(Operations.SocialFollowRequestsList.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// The requests waiting on you, and the two answers to them.
+    ///
+    /// Only ever the ones pointed at the person asking. A request somebody else
+    /// sent to somebody else is not theirs to read, approve or refuse, and
+    /// scoping the queryset is what makes that a 404 rather than a check that
+    /// could be forgotten in one of the three places below.
+    ///
+    /// Declining is a DELETE because that is what it does: the row goes, and
+    /// nothing records that it was ever refused. The alternative is keeping a
+    /// refusal on file, which is a note about somebody that they cannot see and
+    /// did not agree to.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/follow-requests/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/follow-requests/{id}//delete(social_follow_requests_destroy)`.
+    public func socialFollowRequestsDestroy(path: Operations.SocialFollowRequestsDestroy.Input.Path) async throws -> Operations.SocialFollowRequestsDestroy.Output {
+        try await socialFollowRequestsDestroy(Operations.SocialFollowRequestsDestroy.Input(path: path))
+    }
+    /// Let this person follow you. The request becomes a follow and stops being a request.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/follow-requests/{id}/approve/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/follow-requests/{id}/approve//post(social_follow_requests_approve_create)`.
+    public func socialFollowRequestsApproveCreate(path: Operations.SocialFollowRequestsApproveCreate.Input.Path) async throws -> Operations.SocialFollowRequestsApproveCreate.Output {
+        try await socialFollowRequestsApproveCreate(Operations.SocialFollowRequestsApproveCreate.Input(path: path))
+    }
     /// Posts: what someone has chosen to show other people.
     ///
     /// Reading and writing use different querysets on purpose. A reader gets
@@ -3005,7 +3087,7 @@ extension APIProtocol {
             headers: headers
         ))
     }
-    /// Follow this user. Following again changes nothing and answers 200, so a double tap is not an error.
+    /// Follow this user. Following again changes nothing and answers 200, so a double tap is not an error. A profile that is not public answers 202 instead: nothing has been followed, and a request is waiting for its owner to answer.
     ///
     /// - Remark: HTTP `POST /api/v1/users/{id}/follow/`.
     /// - Remark: Generated from `#/paths//api/v1/users/{id}/follow//post(users_follow_create)`.
@@ -4023,6 +4105,64 @@ public enum Components {
                 case muscleGroup = "muscle_group"
             }
         }
+        /// A pending request, described by whoever is asking.
+        ///
+        /// The requester rather than the target: this list is only ever read by the
+        /// person being asked, and they know who they are.
+        ///
+        /// - Remark: Generated from `#/components/schemas/FollowRequest`.
+        public struct FollowRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/FollowRequest/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/FollowRequest/requester_id`.
+            public var requesterId: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/FollowRequest/username`.
+            public var username: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FollowRequest/first_name`.
+            public var firstName: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FollowRequest/last_name`.
+            public var lastName: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FollowRequest/profile_photo_url`.
+            public var profilePhotoUrl: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/FollowRequest/created_at`.
+            public var createdAt: Foundation.Date
+            /// Creates a new `FollowRequest`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - requesterId:
+            ///   - username:
+            ///   - firstName:
+            ///   - lastName:
+            ///   - profilePhotoUrl:
+            ///   - createdAt:
+            public init(
+                id: Swift.Int,
+                requesterId: Swift.Int,
+                username: Swift.String,
+                firstName: Swift.String,
+                lastName: Swift.String,
+                profilePhotoUrl: Swift.String? = nil,
+                createdAt: Foundation.Date
+            ) {
+                self.id = id
+                self.requesterId = requesterId
+                self.username = username
+                self.firstName = firstName
+                self.lastName = lastName
+                self.profilePhotoUrl = profilePhotoUrl
+                self.createdAt = createdAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case requesterId = "requester_id"
+                case username
+                case firstName = "first_name"
+                case lastName = "last_name"
+                case profilePhotoUrl = "profile_photo_url"
+                case createdAt = "created_at"
+            }
+        }
         /// One food. Nutrition is per serving; totals are derived, never stored,
         /// so a serving count and its totals cannot drift apart.
         ///
@@ -4948,6 +5088,41 @@ public enum Components {
                 next: Swift.String? = nil,
                 previous: Swift.String? = nil,
                 results: [Components.Schemas.Exercise]
+            ) {
+                self.count = count
+                self.next = next
+                self.previous = previous
+                self.results = results
+            }
+            public enum CodingKeys: String, CodingKey {
+                case count
+                case next
+                case previous
+                case results
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PaginatedFollowRequestList`.
+        public struct PaginatedFollowRequestList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PaginatedFollowRequestList/count`.
+            public var count: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PaginatedFollowRequestList/next`.
+            public var next: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedFollowRequestList/previous`.
+            public var previous: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedFollowRequestList/results`.
+            public var results: [Components.Schemas.FollowRequest]
+            /// Creates a new `PaginatedFollowRequestList`.
+            ///
+            /// - Parameters:
+            ///   - count:
+            ///   - next:
+            ///   - previous:
+            ///   - results:
+            public init(
+                count: Swift.Int,
+                next: Swift.String? = nil,
+                previous: Swift.String? = nil,
+                results: [Components.Schemas.FollowRequest]
             ) {
                 self.count = count
                 self.next = next
@@ -8252,6 +8427,10 @@ public enum Components {
             public var isProfilePublic: Swift.Bool?
             /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/is_readable`.
             public var isReadable: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/viewer_follows`.
+            public var viewerFollows: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/viewer_has_requested`.
+            public var viewerHasRequested: Swift.Bool
             /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/created_at`.
             public var createdAt: Foundation.Date
             /// Creates a new `PublicRepbaseUser`.
@@ -8277,6 +8456,8 @@ public enum Components {
             ///   - showsTargetWeight:
             ///   - isProfilePublic:
             ///   - isReadable:
+            ///   - viewerFollows:
+            ///   - viewerHasRequested:
             ///   - createdAt:
             public init(
                 id: Swift.Int,
@@ -8299,6 +8480,8 @@ public enum Components {
                 showsTargetWeight: Swift.Bool? = nil,
                 isProfilePublic: Swift.Bool? = nil,
                 isReadable: Swift.Bool,
+                viewerFollows: Swift.Bool,
+                viewerHasRequested: Swift.Bool,
                 createdAt: Foundation.Date
             ) {
                 self.id = id
@@ -8321,6 +8504,8 @@ public enum Components {
                 self.showsTargetWeight = showsTargetWeight
                 self.isProfilePublic = isProfilePublic
                 self.isReadable = isReadable
+                self.viewerFollows = viewerFollows
+                self.viewerHasRequested = viewerHasRequested
                 self.createdAt = createdAt
             }
             public enum CodingKeys: String, CodingKey {
@@ -8344,6 +8529,8 @@ public enum Components {
                 case showsTargetWeight = "shows_target_weight"
                 case isProfilePublic = "is_profile_public"
                 case isReadable = "is_readable"
+                case viewerFollows = "viewer_follows"
+                case viewerHasRequested = "viewer_has_requested"
                 case createdAt = "created_at"
             }
         }
@@ -27469,6 +27656,300 @@ public enum Operations {
             }
         }
     }
+    /// The requests waiting on you, and the two answers to them.
+    ///
+    /// Only ever the ones pointed at the person asking. A request somebody else
+    /// sent to somebody else is not theirs to read, approve or refuse, and
+    /// scoping the queryset is what makes that a 404 rather than a check that
+    /// could be forgotten in one of the three places below.
+    ///
+    /// Declining is a DELETE because that is what it does: the row goes, and
+    /// nothing records that it was ever refused. The alternative is keeping a
+    /// refusal on file, which is a note about somebody that they cannot see and
+    /// did not agree to.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/follow-requests/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/follow-requests//get(social_follow_requests_list)`.
+    public enum SocialFollowRequestsList {
+        public static let id: Swift.String = "social_follow_requests_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/follow-requests/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/follow-requests/GET/query/page`.
+                public var page: Swift.Int?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - page: A page number within the paginated result set.
+                public init(page: Swift.Int? = nil) {
+                    self.page = page
+                }
+            }
+            public var query: Operations.SocialFollowRequestsList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/social/follow-requests/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialFollowRequestsList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialFollowRequestsList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialFollowRequestsList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.SocialFollowRequestsList.Input.Query = .init(),
+                headers: Operations.SocialFollowRequestsList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/follow-requests/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/follow-requests/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedFollowRequestList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedFollowRequestList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialFollowRequestsList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialFollowRequestsList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/follow-requests//get(social_follow_requests_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialFollowRequestsList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialFollowRequestsList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// The requests waiting on you, and the two answers to them.
+    ///
+    /// Only ever the ones pointed at the person asking. A request somebody else
+    /// sent to somebody else is not theirs to read, approve or refuse, and
+    /// scoping the queryset is what makes that a 404 rather than a check that
+    /// could be forgotten in one of the three places below.
+    ///
+    /// Declining is a DELETE because that is what it does: the row goes, and
+    /// nothing records that it was ever refused. The alternative is keeping a
+    /// refusal on file, which is a note about somebody that they cannot see and
+    /// did not agree to.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/follow-requests/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/follow-requests/{id}//delete(social_follow_requests_destroy)`.
+    public enum SocialFollowRequestsDestroy {
+        public static let id: Swift.String = "social_follow_requests_destroy"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/follow-requests/{id}/DELETE/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this follow request.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/follow-requests/{id}/DELETE/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this follow request.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialFollowRequestsDestroy.Input.Path
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            public init(path: Operations.SocialFollowRequestsDestroy.Input.Path) {
+                self.path = path
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct NoContent: Sendable, Hashable {
+                /// Creates a new `NoContent`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/follow-requests/{id}//delete(social_follow_requests_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            case noContent(Operations.SocialFollowRequestsDestroy.Output.NoContent)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/follow-requests/{id}//delete(social_follow_requests_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            public static var noContent: Self {
+                .noContent(.init())
+            }
+            /// The associated value of the enum case if `self` is `.noContent`.
+            ///
+            /// - Throws: An error if `self` is not `.noContent`.
+            /// - SeeAlso: `.noContent`.
+            public var noContent: Operations.SocialFollowRequestsDestroy.Output.NoContent {
+                get throws {
+                    switch self {
+                    case let .noContent(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "noContent",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// Let this person follow you. The request becomes a follow and stops being a request.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/follow-requests/{id}/approve/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/follow-requests/{id}/approve//post(social_follow_requests_approve_create)`.
+    public enum SocialFollowRequestsApproveCreate {
+        public static let id: Swift.String = "social_follow_requests_approve_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/follow-requests/{id}/approve/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this follow request.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/follow-requests/{id}/approve/POST/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this follow request.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialFollowRequestsApproveCreate.Input.Path
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            public init(path: Operations.SocialFollowRequestsApproveCreate.Input.Path) {
+                self.path = path
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct NoContent: Sendable, Hashable {
+                /// Creates a new `NoContent`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/follow-requests/{id}/approve//post(social_follow_requests_approve_create)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            case noContent(Operations.SocialFollowRequestsApproveCreate.Output.NoContent)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/follow-requests/{id}/approve//post(social_follow_requests_approve_create)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            public static var noContent: Self {
+                .noContent(.init())
+            }
+            /// The associated value of the enum case if `self` is `.noContent`.
+            ///
+            /// - Throws: An error if `self` is not `.noContent`.
+            /// - SeeAlso: `.noContent`.
+            public var noContent: Operations.SocialFollowRequestsApproveCreate.Output.NoContent {
+                get throws {
+                    switch self {
+                    case let .noContent(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "noContent",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
     /// Posts: what someone has chosen to show other people.
     ///
     /// Reading and writing use different querysets on purpose. A reader gets
@@ -29626,7 +30107,7 @@ public enum Operations {
             }
         }
     }
-    /// Follow this user. Following again changes nothing and answers 200, so a double tap is not an error.
+    /// Follow this user. Following again changes nothing and answers 200, so a double tap is not an error. A profile that is not public answers 202 instead: nothing has been followed, and a request is waiting for its owner to answer.
     ///
     /// - Remark: HTTP `POST /api/v1/users/{id}/follow/`.
     /// - Remark: Generated from `#/paths//api/v1/users/{id}/follow//post(users_follow_create)`.
@@ -29722,6 +30203,41 @@ public enum Operations {
                     default:
                         try throwUnexpectedResponseStatus(
                             expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct Accepted: Sendable, Hashable {
+                /// Creates a new `Accepted`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/users/{id}/follow//post(users_follow_create)/responses/202`.
+            ///
+            /// HTTP response code: `202 accepted`.
+            case accepted(Operations.UsersFollowCreate.Output.Accepted)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/users/{id}/follow//post(users_follow_create)/responses/202`.
+            ///
+            /// HTTP response code: `202 accepted`.
+            public static var accepted: Self {
+                .accepted(.init())
+            }
+            /// The associated value of the enum case if `self` is `.accepted`.
+            ///
+            /// - Throws: An error if `self` is not `.accepted`.
+            /// - SeeAlso: `.accepted`.
+            public var accepted: Operations.UsersFollowCreate.Output.Accepted {
+                get throws {
+                    switch self {
+                    case let .accepted(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "accepted",
                             response: self
                         )
                     }

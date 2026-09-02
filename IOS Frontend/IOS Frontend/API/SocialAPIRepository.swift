@@ -520,11 +520,23 @@ actor SocialAPIRepository {
         return values
     }
 
-    func follow(_ userID: Int) async throws {
+    /// What happened when the button was pressed.
+    ///
+    /// A closed profile cannot be followed outright, so the same tap means
+    /// two different things and the button has to know which.
+    enum FollowOutcome {
+        case following
+        case requested
+    }
+
+    @discardableResult
+    func follow(_ userID: Int) async throws -> FollowOutcome {
         let output = try await client.usersFollowCreate(path: .init(id: userID))
         switch output {
         case .created, .ok:
-            return
+            return .following
+        case .accepted:
+            return .requested
         case .conflict:
             // A block stands between the two people. Reported rather than
             // retried: nothing the app does will make this succeed.
@@ -536,6 +548,51 @@ actor SocialAPIRepository {
 
     func unfollow(_ userID: Int) async throws {
         let output = try await client.usersFollowDestroy(path: .init(id: userID))
+        switch output {
+        case .noContent:
+            return
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    // MARK: - Requests waiting on you
+
+    func followRequests() async throws -> [FollowRequestSummary] {
+        let output = try await client.socialFollowRequestsList(query: .init())
+        switch output {
+        case .ok(let response):
+            return try response.body.json.results.map {
+                FollowRequestSummary(
+                    id: $0.id,
+                    requesterID: $0.requesterId,
+                    username: $0.username,
+                    firstName: $0.firstName,
+                    lastName: $0.lastName,
+                    photoURL: $0.profilePhotoUrl
+                )
+            }
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    func approveFollowRequest(_ id: Int) async throws {
+        let output = try await client.socialFollowRequestsApproveCreate(
+            path: .init(id: id)
+        )
+        switch output {
+        case .noContent:
+            return
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    func declineFollowRequest(_ id: Int) async throws {
+        let output = try await client.socialFollowRequestsDestroy(
+            path: .init(id: id)
+        )
         switch output {
         case .noContent:
             return

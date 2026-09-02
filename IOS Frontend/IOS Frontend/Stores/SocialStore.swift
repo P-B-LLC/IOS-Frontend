@@ -29,6 +29,17 @@ final class SocialStore {
     private(set) var followersByUser: [Int: [PostAuthor]] = [:]
     private(set) var followingByUser: [Int: [PostAuthor]] = [:]
     private(set) var changingFollowFor: Set<Int> = []
+    /// People asking to follow the signed-in user, newest first.
+    private(set) var followRequests: [FollowRequestSummary] = []
+    /// Requests being answered, so a row cannot be approved twice while the
+    /// first answer is still in the air.
+    private(set) var answeringRequests: Set<Int> = []
+    /// People this viewer has asked to follow and not been answered by.
+    ///
+    /// Held here as well as on the profile payload because the payload is a
+    /// snapshot: after the tap that made the request, the button has to change
+    /// without the profile being fetched again.
+    private(set) var requestedUserIDs: Set<Int> = []
 
     var isConnected: Bool { repository != nil }
 
@@ -77,6 +88,11 @@ final class SocialStore {
         followersByUser = [:]
         followingByUser = [:]
         changingFollowFor = []
+        // Who is waiting on this account, and who this account is waiting on.
+        // Both belong to whoever was signed in, and neither may outlive them.
+        followRequests = []
+        answeringRequests = []
+        requestedUserIDs = []
         // One account's threads must never be shown to the next.
         comments = [:]
         openedPosts = [:]
@@ -176,11 +192,69 @@ final class SocialStore {
         changingFollowFor.insert(user.id)
         defer { changingFollowFor.remove(user.id) }
         do {
-            if follows { try await repository.follow(user.id) }
-            else { try await repository.unfollow(user.id) }
+            if follows {
+                // A closed profile cannot be followed outright; the same tap
+                // leaves a request instead, and the button has to say so
+                // rather than claiming a follow that did not happen.
+                let outcome = try await repository.follow(user.id)
+                switch outcome {
+                case .requested:
+                    requestedUserIDs.insert(user.id)
+                    return
+                case .following:
+                    requestedUserIDs.remove(user.id)
+                }
+            } else {
+                try await repository.unfollow(user.id)
+                // Unfollowing and withdrawing a request are the same call and
+                // the same button, so both states clear together.
+                requestedUserIDs.remove(user.id)
+            }
             applyToAuthor(user.id) { $0.viewerFollowsAuthor = follows }
             if let viewerID { await loadRelationships(for: viewerID) }
         } catch {
+            errorMessage = error.userFacingMessage
+        }
+    }
+
+    // MARK: - Requests waiting on you
+
+    func loadFollowRequests() async {
+        guard let repository else { return }
+        let generation = connectionGeneration
+        do {
+            let loaded = try await repository.followRequests()
+            guard connectionGeneration == generation else { return }
+            followRequests = loaded
+        } catch {
+            guard connectionGeneration == generation else { return }
+            errorMessage = error.userFacingMessage
+        }
+    }
+
+    /// Lets somebody in, or turns them away.
+    ///
+    /// The row goes either way, which is what both answers have in common: a
+    /// declined request leaves nothing on file, because a record of having
+    /// been refused is a note about somebody they cannot see.
+    func answerFollowRequest(
+        _ request: FollowRequestSummary,
+        approve: Bool
+    ) async {
+        guard let repository, !answeringRequests.contains(request.id) else { return }
+        answeringRequests.insert(request.id)
+        defer { answeringRequests.remove(request.id) }
+        let generation = connectionGeneration
+        do {
+            if approve {
+                try await repository.approveFollowRequest(request.id)
+            } else {
+                try await repository.declineFollowRequest(request.id)
+            }
+            guard connectionGeneration == generation else { return }
+            followRequests.removeAll { $0.id == request.id }
+        } catch {
+            guard connectionGeneration == generation else { return }
             errorMessage = error.userFacingMessage
         }
     }
@@ -202,7 +276,7 @@ final class SocialStore {
         photo: PostPhoto? = nil
     ) async -> Bool {
         guard let repository else {
-            errorMessage = "Connect to Routiq before posting."
+            errorMessage = "Connect to Rytivo before posting."
             return false
         }
 

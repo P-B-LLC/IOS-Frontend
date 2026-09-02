@@ -18,13 +18,13 @@ struct ProfileDestinationView: View {
         if let profile = store.profile {
             SocialProfileView(profile: profile)
         } else if store.isLoading || !store.hasLoadedProfile {
-            ProgressView("Loading profile from Routiq…")
+            ProgressView("Loading profile from Rytivo…")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             ContentUnavailableView {
                 Label("Profile unavailable", systemImage: "person.crop.circle.badge.exclamationmark")
             } description: {
-                Text(store.errorMessage ?? "Routiq could not load this profile.")
+                Text(store.errorMessage ?? "Rytivo could not load this profile.")
             } actions: {
                 if let token = authentication.token {
                     Button("Retry") {
@@ -188,6 +188,20 @@ struct SocialProfileView: View {
         }
     }
 
+    /// What the button says, which is one of three things rather than two.
+    ///
+    /// A closed profile cannot be followed on a tap, so between "Follow" and
+    /// "Following" there is a state where the answer is somebody else's to
+    /// give. Read from the store first because that is what the tap updates;
+    /// the profile payload is a snapshot from before it.
+    private var followActionTitle: String {
+        if viewerFollowsSubject { return "Following" }
+        if let subjectID, social.requestedUserIDs.contains(subjectID) {
+            return "Requested"
+        }
+        return profile.viewerHasRequested ? "Requested" : "Follow"
+    }
+
     /// Your own profile is a place in the app; somebody else's is somewhere you
     /// navigated to. So only the second one gets a header, carrying the name
     /// of whoever you are looking at and the way back to where you came from.
@@ -342,7 +356,7 @@ struct SocialProfileView: View {
                             .foregroundStyle(timeOfDay.accent)
                     }
                     .buttonStyle(.plain)
-                    .accessibilityHint("Opens \(link.platform.title) outside Routiq")
+                    .accessibilityHint("Opens \(link.platform.title) outside Rytivo")
                 }
             }
         }
@@ -380,7 +394,7 @@ struct SocialProfileView: View {
                         }
                     } label: {
                         profilePrimaryActionLabel(
-                            viewerFollowsSubject ? "Following" : "Follow",
+                            followActionTitle,
                             timeOfDay: timeOfDay
                         )
                     }
@@ -389,7 +403,7 @@ struct SocialProfileView: View {
             }
             .buttonStyle(.plain)
 
-            ShareLink(item: "Meet \(profile.displayName) (@\(profile.username)) on Routiq.") {
+            ShareLink(item: "Meet \(profile.displayName) (@\(profile.username)) on Rytivo.") {
                 Text("Share")
                     .font(.community(.footnote, weight: .bold))
                     .foregroundStyle(timeOfDay.accent)
@@ -929,7 +943,7 @@ private struct ProfileSettingsView: View {
                     settingsSection("PERSONALIZATION", timeOfDay: timeOfDay) {
                         Button { showingPersonalization = true } label: {
                             settingsRow(
-                                "Your Routiq",
+                                "Your Rytivo",
                                 detail: "Training types, weekly goal, and what home leads with",
                                 symbol: "slider.horizontal.3"
                             )
@@ -946,7 +960,7 @@ private struct ProfileSettingsView: View {
                         }
                         .pickerStyle(.segmented)
                         .padding(.vertical, 14)
-                        .accessibilityHint("Changes the appearance throughout Routiq")
+                        .accessibilityHint("Changes the appearance throughout Rytivo")
                     }
 
                     settingsSection("PRIVACY & PERMISSIONS", timeOfDay: timeOfDay) {
@@ -967,6 +981,24 @@ private struct ProfileSettingsView: View {
                             )
 
                             Rectangle().fill(timeOfDay.border).frame(height: 1)
+
+                            // Only while the profile is closed. An open
+                            // one is followed without asking, so the list
+                            // behind this row can never have anything in it.
+                            if !isProfilePublic.wrappedValue {
+                                NavigationLink {
+                                    FollowRequestsView()
+                                } label: {
+                                    settingsRow(
+                                        "Follow requests",
+                                        detail: "People asking to follow you",
+                                        symbol: "person.badge.clock"
+                                    )
+                                }
+                                .buttonStyle(RepbaseSettingsRowButtonStyle())
+
+                                Rectangle().fill(timeOfDay.border).frame(height: 1)
+                            }
 
                             // Blocking acts on one tap from a post, with
                             // nothing to confirm. This is the way back
@@ -1015,7 +1047,7 @@ private struct ProfileSettingsView: View {
                             } label: {
                                 settingsRow(
                                     "Privacy & permissions",
-                                    detail: "Location, photos, and how Routiq uses data",
+                                    detail: "Location, photos, and how Rytivo uses data",
                                     symbol: "hand.raised"
                                 )
                             }
@@ -1029,7 +1061,7 @@ private struct ProfileSettingsView: View {
                             } label: {
                                 settingsRow(
                                     "Open iOS settings",
-                                    detail: "Change Routiq system permissions",
+                                    detail: "Change Rytivo system permissions",
                                     symbol: "gearshape"
                                 )
                             }
@@ -1089,7 +1121,7 @@ private struct ProfileSettingsView: View {
                             } label: {
                                 settingsRow(
                                     "Sign out",
-                                    detail: "End this Routiq session",
+                                    detail: "End this Rytivo session",
                                     symbol: "rectangle.portrait.and.arrow.right",
                                     color: .red
                                 )
@@ -1131,7 +1163,7 @@ private struct ProfileSettingsView: View {
                             }
 
                             settingsValueRow(
-                                "Routiq version",
+                                "Rytivo version",
                                 value: versionLabel,
                                 symbol: "info.circle"
                             )
@@ -1175,7 +1207,7 @@ private struct ProfileSettingsView: View {
             }
         }
         .confirmationDialog(
-            "Delete your Routiq account?",
+            "Delete your Rytivo account?",
             isPresented: $showingDeleteConfirmation,
             titleVisibility: .visible
         ) {
@@ -1190,7 +1222,7 @@ private struct ProfileSettingsView: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("This permanently removes your profile and all associated Routiq data. This cannot be undone.")
+            Text("This permanently removes your profile and all associated Rytivo data. This cannot be undone.")
         }
         .alert("Account Request Could Not Be Completed", isPresented: Binding(
             get: { deleteError != nil },
@@ -1417,7 +1449,7 @@ private struct PrivacyAndPermissionsView: View {
                         .foregroundStyle(timeOfDay.accent)
                     Text("You stay in control.")
                         .font(.community(size: 32, weight: .bold))
-                    Text("Routiq asks for access only when a feature needs it. You can change access at any time in iOS Settings.")
+                    Text("Rytivo asks for access only when a feature needs it. You can change access at any time in iOS Settings.")
                         .font(.community(.subheadline))
                         .foregroundStyle(timeOfDay.secondaryText)
                 }
@@ -1430,25 +1462,25 @@ private struct PrivacyAndPermissionsView: View {
                 )
                 permissionExplanation(
                     "Photos",
-                    detail: "Used when you choose a profile photo. Routiq does not browse your library in the background.",
+                    detail: "Used when you choose a profile photo. Rytivo does not browse your library in the background.",
                     symbol: "photo",
                     status: "Selected items only"
                 )
                 permissionExplanation(
                     "Apple Health",
-                    detail: "Read-only access to steps and completed workouts. Routiq never writes to Health.",
+                    detail: "Read-only access to steps and completed workouts. Rytivo never writes to Health.",
                     symbol: "heart.text.square",
                     status: activity.hasAskedHealth ? "Access requested" : "Not connected"
                 )
                 permissionExplanation(
                     "Notifications",
-                    detail: "Used only for reminders you enable in Routiq.",
+                    detail: "Used only for reminders you enable in Rytivo.",
                     symbol: "bell",
                     status: notificationLabel
                 )
                 permissionExplanation(
                     "Your data",
-                    detail: "Profile, workout, planner, and nutrition data are stored with your Routiq account so they sync across sessions.",
+                    detail: "Profile, workout, planner, and nutrition data are stored with your Rytivo account so they sync across sessions.",
                     symbol: "lock.shield",
                     status: "Account protected"
                 )
@@ -1700,9 +1732,9 @@ struct ProfileOnboardingView: View {
     private var stepHeading: some View {
         switch step {
         case 0:
-            heading("Create your login", detail: "This is how you’ll get back into Routiq.")
+            heading("Create your login", detail: "This is how you’ll get back into Rytivo.")
         case 1:
-            heading("What should we call you?", detail: "Your name and username identify you across Routiq.")
+            heading("What should we call you?", detail: "Your name and username identify you across Rytivo.")
         case 2:
             heading("Set your goals", detail: "Keep these private or choose exactly what appears publicly.")
         default:

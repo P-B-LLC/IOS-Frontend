@@ -8950,6 +8950,169 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// The requests waiting on you, and the two answers to them.
+    ///
+    /// Only ever the ones pointed at the person asking. A request somebody else
+    /// sent to somebody else is not theirs to read, approve or refuse, and
+    /// scoping the queryset is what makes that a 404 rather than a check that
+    /// could be forgotten in one of the three places below.
+    ///
+    /// Declining is a DELETE because that is what it does: the row goes, and
+    /// nothing records that it was ever refused. The alternative is keeping a
+    /// refusal on file, which is a note about somebody that they cannot see and
+    /// did not agree to.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/follow-requests/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/follow-requests//get(social_follow_requests_list)`.
+    public func socialFollowRequestsList(_ input: Operations.SocialFollowRequestsList.Input) async throws -> Operations.SocialFollowRequestsList.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SocialFollowRequestsList.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/social/follow-requests/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .get
+                )
+                suppressMutabilityWarning(&request)
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "page",
+                    value: input.query.page
+                )
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SocialFollowRequestsList.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.PaginatedFollowRequestList.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// The requests waiting on you, and the two answers to them.
+    ///
+    /// Only ever the ones pointed at the person asking. A request somebody else
+    /// sent to somebody else is not theirs to read, approve or refuse, and
+    /// scoping the queryset is what makes that a 404 rather than a check that
+    /// could be forgotten in one of the three places below.
+    ///
+    /// Declining is a DELETE because that is what it does: the row goes, and
+    /// nothing records that it was ever refused. The alternative is keeping a
+    /// refusal on file, which is a note about somebody that they cannot see and
+    /// did not agree to.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/follow-requests/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/follow-requests/{id}//delete(social_follow_requests_destroy)`.
+    public func socialFollowRequestsDestroy(_ input: Operations.SocialFollowRequestsDestroy.Input) async throws -> Operations.SocialFollowRequestsDestroy.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SocialFollowRequestsDestroy.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/social/follow-requests/{}/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .delete
+                )
+                suppressMutabilityWarning(&request)
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 204:
+                    return .noContent(.init())
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Let this person follow you. The request becomes a follow and stops being a request.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/follow-requests/{id}/approve/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/follow-requests/{id}/approve//post(social_follow_requests_approve_create)`.
+    public func socialFollowRequestsApproveCreate(_ input: Operations.SocialFollowRequestsApproveCreate.Input) async throws -> Operations.SocialFollowRequestsApproveCreate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SocialFollowRequestsApproveCreate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/social/follow-requests/{}/approve/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .post
+                )
+                suppressMutabilityWarning(&request)
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 204:
+                    return .noContent(.init())
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
     /// Posts: what someone has chosen to show other people.
     ///
     /// Reading and writing use different querysets on purpose. A reader gets
@@ -10045,7 +10208,7 @@ public struct Client: APIProtocol {
             }
         )
     }
-    /// Follow this user. Following again changes nothing and answers 200, so a double tap is not an error.
+    /// Follow this user. Following again changes nothing and answers 200, so a double tap is not an error. A profile that is not public answers 202 instead: nothing has been followed, and a request is waiting for its owner to answer.
     ///
     /// - Remark: HTTP `POST /api/v1/users/{id}/follow/`.
     /// - Remark: Generated from `#/paths//api/v1/users/{id}/follow//post(users_follow_create)`.
@@ -10073,6 +10236,8 @@ public struct Client: APIProtocol {
                     return .created(.init())
                 case 200:
                     return .ok(.init())
+                case 202:
+                    return .accepted(.init())
                 case 409:
                     return .conflict(.init())
                 default:

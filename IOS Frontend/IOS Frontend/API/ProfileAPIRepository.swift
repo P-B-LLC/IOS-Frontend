@@ -95,6 +95,11 @@ nonisolated struct RemoteProfile: Equatable, Sendable {
     /// `isProfilePublic` false; a page that read only that would draw the
     /// closed door over data it already had.
     var isReadable: Bool = true
+    /// Whether the reader already follows this person.
+    var viewerFollows: Bool = false
+    /// Whether the reader has asked to and is waiting for an answer. Survives
+    /// the emptying of a closed profile, so the button can say so.
+    var viewerHasRequested: Bool = false
     var disciplines: [String]
     var gymID: Int?
     var gymName: String?
@@ -266,6 +271,8 @@ actor ProfileAPIRepository {
                 showsTargetWeight: payload.showsTargetWeight ?? false,
                 isProfilePublic: payload.isProfilePublic ?? true,
                 isReadable: payload.isReadable ?? true,
+                viewerFollows: payload.viewerFollows ?? false,
+                viewerHasRequested: payload.viewerHasRequested ?? false,
                 // Already strings here, unlike on /me/ where the contract
                 // gives a closed enum.
                 disciplines: payload.disciplines,

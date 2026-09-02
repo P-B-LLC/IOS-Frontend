@@ -56,12 +56,17 @@ struct PersonProfileView: View {
 
 /// What a profile says when its owner has closed it.
 ///
-/// Deliberately plain. There is no follow button, because following someone
-/// privately is a request-and-approval flow that does not exist yet, and a
-/// button that quietly did nothing would be worse than no button. There is no
-/// photo or name either: the server withholds both, and this page says only
-/// what it was actually told.
+/// Deliberately plain, and it says only what it was actually told: the server
+/// withholds the name and the photo along with everything else, so neither
+/// appears here.
+///
+/// The one thing it offers is the way in. Asking to follow does not open
+/// anything by itself -- it waits on the person on the other side, which is
+/// what separates this from a public profile where the same tap is the whole
+/// transaction.
 struct PrivateProfileView: View {
+    @Environment(SocialStore.self) private var social
+
     let person: SocialProfile
 
     var body: some View {
@@ -90,14 +95,42 @@ struct PrivateProfileView: View {
                     .foregroundStyle(timeOfDay.primaryText)
                     .multilineTextAlignment(.center)
 
-                // Says what is true of this page and no more. Their posts are
-                // not hidden by this switch, and claiming otherwise here would
-                // be promising something the app does not do.
                 Text("Only their followers can see this profile.")
                     .font(.community(.subheadline))
                     .foregroundStyle(timeOfDay.secondaryText)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
+            }
+
+            // The way in, and the only one. Asking does not open anything by
+            // itself: it waits until the person on the other side answers,
+            // which is what makes this different from a public profile where
+            // the same tap is the whole transaction.
+            if let id = person.id {
+                Button {
+                    Task { await ask(id) }
+                } label: {
+                    Text(hasAsked(id) ? "Requested" : "Follow")
+                        .font(.community(.headline))
+                        .foregroundStyle(hasAsked(id) ? timeOfDay.accent : Color.white)
+                        .padding(.horizontal, 34)
+                        .padding(.vertical, 13)
+                        .background(
+                            hasAsked(id)
+                                ? timeOfDay.accent.opacity(0.12)
+                                : timeOfDay.accent,
+                            in: Capsule()
+                        )
+                }
+                .buttonStyle(.plain)
+                .disabled(social.changingFollowFor.contains(id))
+                .padding(.top, 4)
+
+                if hasAsked(id) {
+                    Text("They will see your request.")
+                        .font(.community(.caption))
+                        .foregroundStyle(timeOfDay.secondaryText)
+                }
             }
 
             Spacer(minLength: 0)
@@ -107,5 +140,24 @@ struct PrivateProfileView: View {
         .homeTimeScreen(timeOfDay)
         .navigationTitle("Profile")
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    /// Asked already, either in this session or before the page was opened.
+    private func hasAsked(_ id: Int) -> Bool {
+        social.requestedUserIDs.contains(id) || person.viewerHasRequested
+    }
+
+    private func ask(_ id: Int) async {
+        await social.setFollowing(
+            true,
+            user: PostAuthor(
+                id: id,
+                username: person.username,
+                firstName: person.firstName,
+                lastName: person.lastName,
+                photoURL: person.profilePhotoURL
+            ),
+            viewerID: nil
+        )
     }
 }

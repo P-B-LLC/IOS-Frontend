@@ -131,6 +131,9 @@ struct SocialProfile: Codable, Equatable {
     /// following them, so this and `isProfilePublic` disagree often and the
     /// page cares about this one.
     var isReadable: Bool = true
+    var viewerFollows: Bool = false
+    /// Waiting on an answer from this person.
+    var viewerHasRequested: Bool = false
     var disciplines: Set<AthleteDiscipline>
     var gym: GymIdentity?
     var profileImageData: Data?
@@ -439,6 +442,8 @@ final class SocialProfileStore {
             showsTargetWeight: remote.showsTargetWeight,
             isProfilePublic: remote.isProfilePublic,
             isReadable: remote.isReadable,
+            viewerFollows: remote.viewerFollows,
+            viewerHasRequested: remote.viewerHasRequested,
             disciplines: Set(remote.disciplines.compactMap(AthleteDiscipline.init(apiValue:))),
             gym: remote.gymID.map {
                 GymIdentity(

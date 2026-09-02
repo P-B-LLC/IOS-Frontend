@@ -69,7 +69,7 @@ nonisolated enum PostVisibility: String, CaseIterable, Identifiable, Sendable {
 
     var explanation: String {
         switch self {
-        case .publicToAll: "Anyone on Routiq can see this."
+        case .publicToAll: "Anyone on Rytivo can see this."
         case .followers: "Only people who follow you."
         case .privateToMe: "Kept on your profile, shown to nobody else."
         }
@@ -300,6 +300,24 @@ nonisolated struct SavedMealOutcome: Equatable, Hashable, Sendable {
 nonisolated struct BlockedPerson: Identifiable, Equatable, Hashable, Sendable {
     let id: Int
     let person: PostAuthor
+}
+
+/// Somebody waiting to be let in to a closed profile.
+///
+/// `id` is the request rather than the person: approving and declining act on
+/// the request, and the same person could ask again after being refused.
+nonisolated struct FollowRequestSummary: Identifiable, Equatable, Hashable, Sendable {
+    let id: Int
+    let requesterID: Int
+    let username: String
+    let firstName: String
+    let lastName: String
+    let photoURL: String?
+
+    var displayName: String {
+        let full = "\(firstName) \(lastName)".trimmingCharacters(in: .whitespaces)
+        return full.isEmpty ? username : full
+    }
 }
 
 /// Why somebody is reporting a post.
