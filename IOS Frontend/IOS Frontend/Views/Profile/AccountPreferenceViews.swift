@@ -101,6 +101,10 @@ struct NotificationPreferencesView: View {
     @Environment(PlannerStore.self) private var planner_
     @State private var authorizationStatus: UNAuthorizationStatus = .notDetermined
     @State private var notificationError: String?
+    /// Changed to redraw the muted summary after clearing it. The mutes live
+    /// in UserDefaults rather than in any observable object, so nothing else
+    /// would tell this view they had gone.
+    @State private var mutedSummaryToken = UUID()
 
     var body: some View {
         let timeOfDay = HomeTimeOfDay.current
@@ -161,6 +165,28 @@ struct NotificationPreferencesView: View {
                     )
                 }
 
+                if !mutedTaskCount.isEmpty {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("MUTED RIGHT NOW")
+                            .font(.community(size: 10, weight: .bold))
+                            .tracking(1.1)
+                            .foregroundStyle(timeOfDay.accent)
+                        Text(mutedTaskCount)
+                            .font(.community(.subheadline))
+                            .foregroundStyle(timeOfDay.secondaryText)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Button("Un-mute everything") {
+                            NotificationScheduler.shared.unmuteEveryTask()
+                            NotificationScheduler.shared.clearTodaysMutes()
+                            mutedSummaryToken = UUID()
+                            Task { await synchronizeSchedules() }
+                        }
+                        .font(.community(.subheadline, weight: .bold))
+                        .foregroundStyle(timeOfDay.accent)
+                    }
+                    .padding(.vertical, 4)
+                }
+
                 VStack(alignment: .leading, spacing: 8) {
                     Text("MUTING IS NOT TURNING OFF")
                         .font(.community(size: 10, weight: .bold))
@@ -199,6 +225,21 @@ struct NotificationPreferencesView: View {
         .onChange(of: training) { _, _ in Task { await synchronizeSchedules() } }
         .onChange(of: nutrition) { _, _ in Task { await synchronizeSchedules() } }
         .onChange(of: planner) { _, _ in Task { await synchronizeSchedules() } }
+    }
+
+    /// What is currently silenced, in words, or empty when nothing is.
+    private var mutedTaskCount: String {
+        _ = mutedSummaryToken
+        let scheduler = NotificationScheduler.shared
+        var parts: [String] = []
+        let tasks = scheduler.mutedTaskIDs.count
+        if tasks > 0 {
+            parts.append(tasks == 1 ? "1 task" : "\(tasks) tasks")
+        }
+        if scheduler.isFoodMutedToday { parts.append("food for today") }
+        if scheduler.isWorkoutMutedToday { parts.append("workouts for today") }
+        guard !parts.isEmpty else { return "" }
+        return parts.joined(separator: ", ") + " muted from a notification."
     }
 
     private func preference(_ title: String, detail: String, value: Binding<Bool>) -> some View {

@@ -339,6 +339,26 @@ final class NotificationScheduler: NSObject {
         defaults.set(Array(muted), forKey: Key.mutedTasks)
     }
 
+    /// Lets every muted task speak again.
+    ///
+    /// Muting happens from a notification, in a second, often to find out what
+    /// the button does -- and until this existed there was no way back from
+    /// it. A task silenced by a stray tap stayed silent, with nothing on any
+    /// screen to say it had happened or that a mute was why.
+    func unmuteEveryTask() {
+        defaults.removeObject(forKey: Key.mutedTasks)
+    }
+
+    /// Whether food or workouts are quiet for the rest of today, and the way
+    /// back from that too. Both come from the same kind of tap.
+    var isFoodMutedToday: Bool { isMutedToday(Key.foodMutedOn, now: Date()) }
+    var isWorkoutMutedToday: Bool { isMutedToday(Key.workoutMutedOn, now: Date()) }
+
+    func clearTodaysMutes() {
+        defaults.removeObject(forKey: Key.foodMutedOn)
+        defaults.removeObject(forKey: Key.workoutMutedOn)
+    }
+
     /// Quiet until tomorrow, not off.
     ///
     /// Stored as the day it was asked for rather than as a flag with an expiry
