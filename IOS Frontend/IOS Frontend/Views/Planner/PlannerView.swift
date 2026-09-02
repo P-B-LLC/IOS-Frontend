@@ -314,11 +314,22 @@ struct PlannerView: View {
         let entries = store.entries(on: store.selectedDate)
         let counts = store.taskCounts(on: store.selectedDate)
         let events = entries.filter { $0.kind == .event }.count
+        // Compared as minutes rather than as text. Formatting the clock and
+        // comparing the strings looked equivalent and was not: on a phone set
+        // to twelve hours, dropping the AM/PM renders nine in the evening as
+        // "09", so at 9pm a ten o'clock breakfast still sorted as later than
+        // now and was offered as what was coming next.
         let next = store.timedEntries(on: store.selectedDate).first {
-            guard Calendar.current.isDateInToday(store.selectedDate),
-                  let time = $0.time else { return true }
-            let now = Date().formatted(.dateTime.hour(.twoDigits(amPM: .omitted)).minute(.twoDigits))
-            return String(time.prefix(5)) >= now
+            guard Calendar.current.isDateInToday(store.selectedDate) else {
+                return true
+            }
+            guard let minutes = PlannerDuration.minutesPastMidnight($0.time) else {
+                return true
+            }
+            let now = Calendar.current.dateComponents(
+                [.hour, .minute], from: Date()
+            )
+            return minutes >= (now.hour ?? 0) * 60 + (now.minute ?? 0)
         }
 
         return HStack(spacing: 0) {

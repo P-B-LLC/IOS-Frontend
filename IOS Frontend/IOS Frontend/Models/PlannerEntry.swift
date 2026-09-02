@@ -232,6 +232,33 @@ nonisolated enum PlannerDuration {
               let minute = Int(time.dropFirst(3).prefix(2)) else { return nil }
         return hour * 60 + minute
     }
+
+    /// A time of day, written the way this device writes them.
+    ///
+    /// The stored value is the server's `HH:mm:ss`, which is the right thing
+    /// to send and the wrong thing to show. Printing its first five characters
+    /// gave twenty-four hour on every phone, including ones whose own status
+    /// bar reads 2:30 PM -- the app disagreeing with the device it was running
+    /// on. Formatted against the current locale instead, so a phone set to
+    /// twelve hour sees twelve and one set to twenty-four still sees 14:30.
+    ///
+    /// Minutes rather than the string, because the end of something is
+    /// arithmetic and there is no point going back through text to render it.
+    static func clockText(minutesPastMidnight minutes: Int) -> String {
+        let calendar = Calendar.current
+        guard let moment = calendar.date(
+            bySettingHour: minutes / 60,
+            minute: minutes % 60,
+            second: 0,
+            of: Date()
+        ) else {
+            // An hour that does not exist today -- the gap a clock jumps at
+            // the spring change -- is still a time somebody typed, so it is
+            // written plainly rather than dropped.
+            return String(format: "%02d:%02d", minutes / 60, minutes % 60)
+        }
+        return moment.formatted(date: .omitted, time: .shortened)
+    }
 }
 
 /// One task or event on a day.
@@ -354,11 +381,13 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
 
     /// The time shown beside the title, e.g. "16:00". Nil when untimed.
     var displayTime: String? {
-        guard let time, time.count >= 5 else { return nil }
-        return String(time.prefix(5))
+        guard let minutes = PlannerDuration.minutesPastMidnight(time) else {
+            return nil
+        }
+        return PlannerDuration.clockText(minutesPastMidnight: minutes)
     }
 
-    /// When it finishes, as `HH:mm`. Nil when nothing said how long.
+    /// When it finishes. Nil when nothing said how long.
     ///
     /// Wraps past midnight rather than stopping at it: a party that starts at
     /// 23:00 and runs two hours ends at 01:00, and saying 23:59 would be a lie
@@ -367,11 +396,13 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
         guard let durationMinutes,
               let start = PlannerDuration.minutesPastMidnight(time) else { return nil }
         let end = (start + durationMinutes) % (24 * 60)
-        return String(format: "%02d:%02d", end / 60, end % 60)
+        return PlannerDuration.clockText(minutesPastMidnight: end)
     }
 
-    /// "17:30 – 19:00" when a length is set, "17:30" when only a start is,
-    /// nil when the day is all anyone said.
+    /// Start and end when a length is set, the start alone when only that is,
+    /// nil when the day is all anyone said. Both sides in the device's own
+    /// notation, so "5:30 PM – 7:00 PM" and "17:30 – 19:00" are the same
+    /// entry on two differently configured phones.
     var displayTimeRange: String? {
         guard let displayTime else { return nil }
         guard let displayEndTime else { return displayTime }
