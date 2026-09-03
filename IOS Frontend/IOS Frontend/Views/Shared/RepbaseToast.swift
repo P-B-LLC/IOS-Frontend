@@ -1,6 +1,17 @@
 import SwiftUI
 
-/// A line that says something happened, then leaves.
+/// The small receipt shown after somebody takes an item from the social feed.
+///
+/// `accessibilityMessage` keeps the server's useful detail (including renamed
+/// copies) without making the visual confirmation grow into a second card.
+nonisolated struct RepbaseToastPresentation: Equatable {
+    let title: String
+    let accessibilityMessage: String
+    let actionTitle: String
+    let destination: RepbaseDestination
+}
+
+/// A compact status capsule that says something happened, then leaves.
 ///
 /// Saving a meal or a workout used to answer with a notice inserted at the
 /// top of the feed. Two problems with that. It pushed the whole feed down,
@@ -10,7 +21,9 @@ import SwiftUI
 ///
 /// This sits over the page instead of in it, and takes itself away.
 struct RepbaseToast: ViewModifier {
-    @Binding var message: String?
+    @Environment(\.colorScheme) private var colorScheme
+    @Binding var presentation: RepbaseToastPresentation?
+    let onAction: (RepbaseDestination) -> Void
 
     /// Long enough to read a sentence, short enough not to be in the way.
     private static let staysFor = Duration.seconds(3.2)
@@ -18,75 +31,88 @@ struct RepbaseToast: ViewModifier {
     func body(content: Content) -> some View {
         content
             .overlay(alignment: .top) {
-                if let message {
-                    banner(message)
+                if let presentation {
+                    banner(presentation)
                         // Slides from the edge it belongs to, so where it
                         // came from and where it will go are the same place.
                         .transition(
                             .move(edge: .top)
                                 .combined(with: .opacity)
                         )
-                        // Keyed on the text: a second save while the first is
+                        // Keyed on the receipt: a second save while the first is
                         // still up restarts the clock rather than inheriting
                         // whatever was left of it.
-                        .task(id: message) {
+                        .task(id: presentation) {
                             try? await Task.sleep(for: Self.staysFor)
                             guard !Task.isCancelled else { return }
                             withAnimation(.snappy(duration: 0.25)) {
-                                self.message = nil
+                                self.presentation = nil
                             }
                         }
                 }
             }
-            .animation(.snappy(duration: 0.3), value: message)
+            .animation(.snappy(duration: 0.3), value: presentation)
     }
 
-    private func banner(_ text: String) -> some View {
-        HStack(spacing: 9) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.community(size: 14, weight: .bold))
-                .foregroundStyle(RepbaseDesign.success)
+    private func banner(_ receipt: RepbaseToastPresentation) -> some View {
+        let capsuleSurface = colorScheme == .dark ? Color.white : Color.black
+        let capsuleText = colorScheme == .dark ? Color.black : Color.white
 
-            Text(text)
+        return HStack(spacing: 8) {
+            Image(systemName: "checkmark")
+                .font(.community(size: 10, weight: .bold))
+                .foregroundStyle(Color.white)
+                .frame(width: 22, height: 22)
+                .background(RepbasePalette.caramel, in: Circle())
+
+            Text(receipt.title)
                 .font(.community(.caption, weight: .semibold))
-                .foregroundStyle(RepbaseDesign.ink)
-                .fixedSize(horizontal: false, vertical: true)
-                .multilineTextAlignment(.leading)
+                .foregroundStyle(capsuleText)
+                .lineLimit(1)
 
-            Spacer(minLength: 0)
+            Button(receipt.actionTitle) {
+                withAnimation(.snappy(duration: 0.22)) {
+                    presentation = nil
+                }
+                onAction(receipt.destination)
+            }
+            .font(.community(.caption, weight: .bold))
+            .foregroundStyle(RepbasePalette.caramel)
+            .buttonStyle(.plain)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 11)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(RepbaseDesign.ink.opacity(0.12), lineWidth: 1)
-        }
-        .shadow(color: .black.opacity(0.18), radius: 14, y: 6)
-        .padding(.horizontal, 16)
+        .padding(.leading, 9)
+        .padding(.trailing, 12)
+        .frame(minHeight: 42)
+        .background(capsuleSurface, in: Capsule())
+        .overlay { Capsule().strokeBorder(capsuleText.opacity(0.12), lineWidth: 1) }
+        .shadow(color: .black.opacity(colorScheme == .dark ? 0.28 : 0.18), radius: 10, y: 4)
+        .padding(.horizontal, 48)
         .padding(.top, 6)
         // Dismissable early, both ways somebody would try.
         .onTapGesture {
-            withAnimation(.snappy(duration: 0.25)) { message = nil }
+            withAnimation(.snappy(duration: 0.25)) { presentation = nil }
         }
         .gesture(
             DragGesture(minimumDistance: 12)
                 .onEnded { drag in
                     guard drag.translation.height < 0 else { return }
-                    withAnimation(.snappy(duration: 0.25)) { message = nil }
+                    withAnimation(.snappy(duration: 0.25)) { presentation = nil }
                 }
         )
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(.isStaticText)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(receipt.accessibilityMessage)
     }
 }
 
 extension View {
-    /// Shows `message` over this view until it clears itself.
+    /// Shows a save receipt over this view until it clears itself.
     ///
     /// The binding is set back to nil when the toast leaves, so the caller
     /// holds one optional and nothing has to remember to tidy up.
-    func repbaseToast(_ message: Binding<String?>) -> some View {
-        modifier(RepbaseToast(message: message))
+    func repbaseToast(
+        _ presentation: Binding<RepbaseToastPresentation?>,
+        onAction: @escaping (RepbaseDestination) -> Void
+    ) -> some View {
+        modifier(RepbaseToast(presentation: presentation, onAction: onAction))
     }
 }

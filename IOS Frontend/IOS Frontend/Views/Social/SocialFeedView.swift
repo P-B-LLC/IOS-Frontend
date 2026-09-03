@@ -62,6 +62,7 @@ struct SocialFeedView: View {
 
     @Environment(SocialStore.self) private var store
     @Environment(SocialProfileStore.self) private var profileStore
+    @Environment(\.repbaseNavigate) private var navigate
 
     /// Opens straight onto a post's thread. Only set by the preview launch
     /// mode: `simctl` cannot tap, so pushing on arrival is the only way to
@@ -236,7 +237,9 @@ struct SocialFeedView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .homeTimeScreen(timeOfDay)
-        .repbaseToast(saveConfirmation)
+        .repbaseToast(saveConfirmation) { destination in
+            navigate(destination)
+        }
         .fullScreenCover(isPresented: $isComposing) {
             PostComposerView()
         }
@@ -626,9 +629,27 @@ struct SocialFeedView: View {
     /// saves a workout or a meal, never both, and whichever landed last is
     /// the one worth reading. Clearing it clears both, so nothing is left
     /// behind to reappear the next time the other one fires.
-    private var saveConfirmation: Binding<String?> {
+    private var saveConfirmation: Binding<RepbaseToastPresentation?> {
         Binding(
-            get: { store.lastSavedWorkout?.message ?? store.lastSavedMeal?.message },
+            get: {
+                if let workout = store.lastSavedWorkout {
+                    return RepbaseToastPresentation(
+                        title: workout.wasAlreadySaved ? "Workout already saved" : "Workout saved",
+                        accessibilityMessage: workout.message,
+                        actionTitle: "View",
+                        destination: .workouts
+                    )
+                }
+                if let meal = store.lastSavedMeal {
+                    return RepbaseToastPresentation(
+                        title: meal.wasAlreadySaved ? "Meal already saved" : "Meal saved",
+                        accessibilityMessage: meal.message,
+                        actionTitle: "Log",
+                        destination: .food
+                    )
+                }
+                return nil
+            },
             set: { updated in
                 guard updated == nil else { return }
                 store.lastSavedWorkout = nil

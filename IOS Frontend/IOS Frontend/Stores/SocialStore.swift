@@ -632,6 +632,7 @@ final class SocialStore {
         do {
             let outcome = try await repository.saveMeal(fromPost: post.id)
             guard connectionGeneration == generation else { return }
+            lastSavedWorkout = nil
             lastSavedMeal = outcome
             apply(to: post.id) { $0.viewerHasSaved = true }
             await onSavedMealsChanged?()
@@ -744,6 +745,7 @@ final class SocialStore {
         do {
             let outcome = try await repository.saveWorkout(fromPost: post.id)
             guard connectionGeneration == generation else { return }
+            lastSavedMeal = nil
             lastSavedWorkout = outcome
             // The card says Saved without waiting for the feed to be read
             // again. The server already knows; this is the same answer,
