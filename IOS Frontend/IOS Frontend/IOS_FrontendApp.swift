@@ -265,6 +265,10 @@ private struct AppRootView: View {
                         CycleEditorPreviewPush()
                     case "dashboard":
                         TrainingDashboardContent()
+                    case "saved":
+                        // The saved library, which is a tap inside the
+                        // training tab and so out of a script's reach.
+                        SavedWorkoutsView()
                     default:
                         // "empty" arrives here too, with an empty store behind
                         // it, which is the no-rotation state.
