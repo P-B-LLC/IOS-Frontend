@@ -155,7 +155,7 @@ expected. Never `reset --hard` to silence it.
 Xcode 26.6 (17F113), macOS 26.3
 Simulators: iPhone 17 Pro C0B019D8-A7DA-4470-AA96-A75F6ECE7B1D
             iPhone 17     498BF02E-6003-408B-BBB6-262EB87627E8  (used latterly)
-Bundle ID:  P-B-LLC.IOS-Frontend
+Bundle ID:  com.pbllc.rytivo   (was P-B-LLC.IOS-Frontend until Sept 2)
 Deployment: iOS 26.5
 ```
 

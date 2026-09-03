@@ -27,7 +27,12 @@ struct KeychainTokenStore: Sendable {
     private let account: String
 
     init(
-        service: String = "P-B-LLC.IOS-Frontend.repbase-api",
+        // Tracks the bundle identifier by hand, because it is a label rather
+        // than a lookup. Changing the identifier already orphans what is
+        // stored here — iOS scopes Keychain items by an access group derived
+        // from it — so leaving this string on the old name would only make
+        // the next reader think the two were connected.
+        service: String = "com.pbllc.rytivo.api",
         account: String = "authentication-token"
     ) {
         self.service = service
@@ -44,7 +49,7 @@ struct KeychainTokenStore: Sendable {
     /// unreliable, so this asks the Keychain directly.
     static func diagnose() -> String {
         let probe = KeychainTokenStore(
-            service: "P-B-LLC.IOS-Frontend.keychain-check",
+            service: "com.pbllc.rytivo.keychain-check",
             account: "probe"
         )
         do {
