@@ -839,6 +839,13 @@ final class SocialStore {
         if let index = feed.firstIndex(where: { $0.id == postID }) {
             change(&feed[index])
         }
+        // Discover holds its own list, so a card looked at there is a
+        // different copy from the one in the feed. Missing it meant liking,
+        // reposting or saving from that tab changed nothing on screen: the
+        // server was told and the card carried on saying Save.
+        if let index = discoverPosts.firstIndex(where: { $0.id == postID }) {
+            change(&discoverPosts[index])
+        }
         // A post opened from outside the feed is held here instead, and a like
         // made on its page has to show there too.
         if var opened = openedPosts[postID] {
@@ -856,6 +863,10 @@ final class SocialStore {
     private func applyToAuthor(_ authorID: Int, _ change: (inout FeedPost) -> Void) {
         for index in feed.indices where feed[index].author.id == authorID {
             change(&feed[index])
+        }
+        for index in discoverPosts.indices
+        where discoverPosts[index].author.id == authorID {
+            change(&discoverPosts[index])
         }
         for id in openedPosts.keys where openedPosts[id]?.author.id == authorID {
             guard var post = openedPosts[id] else { continue }
@@ -877,6 +888,9 @@ final class SocialStore {
         for index in feed.indices where feed[index].id == post.id {
             feed[index] = post
         }
+        for index in discoverPosts.indices where discoverPosts[index].id == post.id {
+            discoverPosts[index] = post
+        }
         if openedPosts[post.id] != nil {
             openedPosts[post.id] = post
         }
@@ -890,6 +904,12 @@ final class SocialStore {
             feed[index].commentCount = post.commentCount
             feed[index].repostCount = post.repostCount
         }
+        for index in discoverPosts.indices
+        where discoverPosts[index].repostOf?.id == post.id {
+            discoverPosts[index].likeCount = post.likeCount
+            discoverPosts[index].commentCount = post.commentCount
+            discoverPosts[index].repostCount = post.repostCount
+        }
     }
 
     /// Posts opened from somewhere the feed does not hold — a profile, a
@@ -899,7 +919,9 @@ final class SocialStore {
     /// The post as it currently stands, so a page opened from a card follows
     /// it as counts change rather than freezing a copy.
     func post(withID id: Int) -> FeedPost? {
-        feed.first { $0.id == id } ?? openedPosts[id]
+        feed.first { $0.id == id }
+            ?? discoverPosts.first { $0.id == id }
+            ?? openedPosts[id]
     }
 
     /// Fetches a post the feed does not have. Does nothing when it does.
