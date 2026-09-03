@@ -3354,18 +3354,6 @@ public enum Servers {}
 public enum Components {
     /// Types generated from the `#/components/schemas` section of the OpenAPI document.
     public enum Schemas {
-        /// * `lifting` - Lifting
-        /// * `running` - Running
-        /// * `biking` - Biking
-        /// * `swimming` - Swimming
-        ///
-        /// - Remark: Generated from `#/components/schemas/ActivityEnum`.
-        @frozen public enum ActivityEnum: String, Codable, Hashable, Sendable, CaseIterable {
-            case lifting = "lifting"
-            case running = "running"
-            case biking = "biking"
-            case swimming = "swimming"
-        }
         /// Which days to copy a saved meal into, and which meal on each of them.
         ///
         /// Days rather than a meal id: the screen that applies a saved meal asks for a
@@ -4889,7 +4877,7 @@ public enum Components {
             /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest/external_id`.
             public var externalId: Swift.String
             /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest/activity`.
-            public var activity: Components.Schemas.ActivityEnum
+            public var activity: Components.Schemas.WorkoutTypeEnum
             /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest/started_at`.
             public var startedAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest/ended_at`.
@@ -4906,7 +4894,7 @@ public enum Components {
             ///   - distanceKm:
             public init(
                 externalId: Swift.String,
-                activity: Components.Schemas.ActivityEnum,
+                activity: Components.Schemas.WorkoutTypeEnum,
                 startedAt: Foundation.Date,
                 endedAt: Foundation.Date,
                 distanceKm: Swift.String? = nil
@@ -4957,26 +4945,6 @@ public enum Components {
                 case username
                 case password
             }
-        }
-        /// * `treadmill` - Treadmill
-        /// * `stationary_bike` - Stationary Bike
-        /// * `stair_master` - Stair Master
-        /// * `elliptical` - Elliptical
-        /// * `rowing_machine` - Rowing Machine
-        /// * `assault_bike` - Assault Bike
-        /// * `ski_erg` - Ski Erg
-        /// * `other` - Other
-        ///
-        /// - Remark: Generated from `#/components/schemas/MachineEnum`.
-        @frozen public enum MachineEnum: String, Codable, Hashable, Sendable, CaseIterable {
-            case treadmill = "treadmill"
-            case stationaryBike = "stationary_bike"
-            case stairMaster = "stair_master"
-            case elliptical = "elliptical"
-            case rowingMachine = "rowing_machine"
-            case assaultBike = "assault_bike"
-            case skiErg = "ski_erg"
-            case other = "other"
         }
         /// One line of the notifications page.
         ///
@@ -7374,6 +7342,8 @@ public enum Components {
             public var kind: Swift.String
             /// - Remark: Generated from `#/components/schemas/Post/image_url`.
             public var imageUrl: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Post/feed_image_url`.
+            public var feedImageUrl: Swift.String?
             /// - Remark: Generated from `#/components/schemas/Post/caption`.
             public var caption: Swift.String
             /// - Remark: Generated from `#/components/schemas/Post/visibility`.
@@ -7489,6 +7459,7 @@ public enum Components {
             ///   - author:
             ///   - kind:
             ///   - imageUrl:
+            ///   - feedImageUrl:
             ///   - caption:
             ///   - visibility:
             ///   - workout:
@@ -7512,6 +7483,7 @@ public enum Components {
                 author: Components.Schemas.Post.AuthorPayload,
                 kind: Swift.String,
                 imageUrl: Swift.String? = nil,
+                feedImageUrl: Swift.String? = nil,
                 caption: Swift.String,
                 visibility: Swift.String,
                 workout: Components.Schemas.Post.WorkoutPayload? = nil,
@@ -7535,6 +7507,7 @@ public enum Components {
                 self.author = author
                 self.kind = kind
                 self.imageUrl = imageUrl
+                self.feedImageUrl = feedImageUrl
                 self.caption = caption
                 self.visibility = visibility
                 self.workout = workout
@@ -7559,6 +7532,7 @@ public enum Components {
                 case author
                 case kind
                 case imageUrl = "image_url"
+                case feedImageUrl = "feed_image_url"
                 case caption
                 case visibility
                 case workout
@@ -9281,6 +9255,8 @@ public enum Components {
             public var kind: Swift.String
             /// - Remark: Generated from `#/components/schemas/RepostedPost/image_url`.
             public var imageUrl: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/feed_image_url`.
+            public var feedImageUrl: Swift.String?
             /// - Remark: Generated from `#/components/schemas/RepostedPost/caption`.
             public var caption: Swift.String
             /// - Remark: Generated from `#/components/schemas/RepostedPost/workout`.
@@ -9352,6 +9328,7 @@ public enum Components {
             ///   - author:
             ///   - kind:
             ///   - imageUrl:
+            ///   - feedImageUrl:
             ///   - caption:
             ///   - workout:
             ///   - meal:
@@ -9362,6 +9339,7 @@ public enum Components {
                 author: Components.Schemas.RepostedPost.AuthorPayload,
                 kind: Swift.String,
                 imageUrl: Swift.String? = nil,
+                feedImageUrl: Swift.String? = nil,
                 caption: Swift.String,
                 workout: Components.Schemas.RepostedPost.WorkoutPayload? = nil,
                 meal: Components.Schemas.RepostedPost.MealPayload? = nil,
@@ -9372,6 +9350,7 @@ public enum Components {
                 self.author = author
                 self.kind = kind
                 self.imageUrl = imageUrl
+                self.feedImageUrl = feedImageUrl
                 self.caption = caption
                 self.workout = workout
                 self.meal = meal
@@ -9383,6 +9362,7 @@ public enum Components {
                 case author
                 case kind
                 case imageUrl = "image_url"
+                case feedImageUrl = "feed_image_url"
                 case caption
                 case workout
                 case meal
@@ -9671,7 +9651,7 @@ public enum Components {
         /// - Remark: Generated from `#/components/schemas/SessionCardioRequest`.
         public struct SessionCardioRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/SessionCardioRequest/machine`.
-            public var machine: Components.Schemas.MachineEnum
+            public var machine: Components.Schemas.CardioMachineEnum
             /// - Remark: Generated from `#/components/schemas/SessionCardioRequest/seconds`.
             public var seconds: Swift.Int
             /// - Remark: Generated from `#/components/schemas/SessionCardioRequest/distance_km`.
@@ -9683,7 +9663,7 @@ public enum Components {
             ///   - seconds:
             ///   - distanceKm:
             public init(
-                machine: Components.Schemas.MachineEnum,
+                machine: Components.Schemas.CardioMachineEnum,
                 seconds: Swift.Int,
                 distanceKm: Swift.String? = nil
             ) {

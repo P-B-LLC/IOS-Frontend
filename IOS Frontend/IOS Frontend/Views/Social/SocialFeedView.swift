@@ -680,10 +680,23 @@ struct SocialFeedView: View {
 /// `kind`, so a post whose kind this build does not know still draws whatever
 /// of it is recognisable.
 struct PostCard: View {
+    /// Which copy of the attached photo to draw.
+    enum PhotoSize {
+        /// The card-sized copy the server made. What a feed of these wants.
+        case feed
+        /// The photo as it was posted. What opening a post asks for.
+        case asPosted
+    }
+
     @Environment(SocialStore.self) private var store
 
     let post: FeedPost
     let timeOfDay: HomeTimeOfDay
+    /// Feed by default, because that is where most of these are drawn and
+    /// where sending originals cost the most — dozens of cards, two to four
+    /// megabytes each. The post's own page overrides it: opening a post is a
+    /// deliberate request to look at the picture properly.
+    var photoSize: PhotoSize = .feed
     /// Opens the thread. Nil on the detail page, where the card is already
     /// the thing being read and must not push another copy of itself.
     var openComments: (() -> Void)?
@@ -737,7 +750,7 @@ struct PostCard: View {
                     }
                 }
 
-                if let imageURL = shown.imageURL {
+                if let imageURL = drawnPhotoURL(shown) {
                     photo(imageURL, meal: shown.meal)
 
                     if let workout = shown.workout {
@@ -804,6 +817,19 @@ struct PostCard: View {
     /// image sizing itself -- that keeps the placeholder, the failure mark
     /// and the photo all one shape, so nothing resizes as it swaps between
     /// them.
+    /// Which URL this card should actually pull.
+    ///
+    /// Both fall back to the other, so a post with a picture always draws one
+    /// whichever size was asked for — an older server that does not send the
+    /// small copy still fills a feed, and a variant that was never made still
+    /// fills a detail page.
+    private func drawnPhotoURL(_ shown: RepostedPost) -> URL? {
+        switch photoSize {
+        case .feed: return shown.feedImageURL ?? shown.imageURL
+        case .asPosted: return shown.imageURL ?? shown.feedImageURL
+        }
+    }
+
     private func photo(_ url: URL, meal: PostMealSnapshot?) -> some View {
         Color.clear
             .aspectRatio(

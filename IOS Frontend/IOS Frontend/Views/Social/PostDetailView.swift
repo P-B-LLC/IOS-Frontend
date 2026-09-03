@@ -82,6 +82,10 @@ struct PostDetailView: View {
             PostCard(
                 post: post,
                 timeOfDay: timeOfDay,
+                // The photo as it was posted. The feed draws the small copy
+                // because it draws dozens of them; arriving here means
+                // somebody chose this one picture and wants to see it.
+                photoSize: .asPosted,
                 // The same sheet the feed raises, from the same button. Being
                 // on the post's own page is not a reason to have already
                 // opened its comments.

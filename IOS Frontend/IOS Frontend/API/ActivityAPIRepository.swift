@@ -172,7 +172,9 @@ actor ActivityAPIRepository {
 
     private nonisolated static func activity(
         _ type: WorkoutType
-    ) -> Components.Schemas.ActivityEnum {
+    // Named WorkoutTypeEnum rather than ActivityEnum since the schema stopped
+    // emitting one component per field name. Same four values either way.
+    ) -> Components.Schemas.WorkoutTypeEnum {
         switch type {
         case .lifting: .lifting
         case .running: .running

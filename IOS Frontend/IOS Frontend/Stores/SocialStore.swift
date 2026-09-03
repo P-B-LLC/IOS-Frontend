@@ -230,6 +230,19 @@ final class SocialStore {
             let loaded = try await repository.notifications()
             guard connectionGeneration == generation else { return }
             notifications = loaded
+            // An approval is the answer to a request this device is still
+            // drawing as pending. The button reads a profile snapshot that
+            // only changes on a refetch, so it went on saying "Requested"
+            // after they had been let in.
+            //
+            // It did tend to right itself, because the way somebody learns
+            // they were approved is this page, and the way they act on it is
+            // to open the profile — which refetches. That is luck in the
+            // shape of a fix, and it fails for anyone who reads the row and
+            // goes somewhere else.
+            for row in loaded where row.kind == .followApproved {
+                requestedUserIDs.remove(row.actorID)
+            }
         } catch {
             guard connectionGeneration == generation else { return }
             errorMessage = error.userFacingMessage
@@ -256,6 +269,16 @@ final class SocialStore {
             try await repository.markNotificationsRead()
             guard connectionGeneration == generation else { return }
             unreadNotifications = 0
+            // The rows on screen as well as the count. The server has them
+            // marked and the badge is cleared, but each row still carried the
+            // `isRead` it was fetched with, so the dots stayed lit down a page
+            // that had just read every one of them — and stayed lit until
+            // something refetched, which on this page is nothing.
+            notifications = notifications.map { row in
+                var seen = row
+                seen.isRead = true
+                return seen
+            }
             await NotificationScheduler.shared.setBadge(0)
         } catch {
             guard connectionGeneration == generation else { return }

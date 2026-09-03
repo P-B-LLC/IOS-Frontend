@@ -902,9 +902,11 @@ actor WorkoutAPIRepository {
         seconds: Int,
         distanceKilometers: Double?
     ) async throws {
-        // The request body declares its own enum for this field, distinct from
-        // the one on the workout and session schemas.
-        guard let machineValue = Components.Schemas.MachineEnum(
+        // One component now, shared by the request body, the workout and the
+        // session. It used to be three names for the same eight machines, so
+        // this line named a type of its own that happened to hold the same
+        // values as the one two functions below.
+        guard let machineValue = Components.Schemas.CardioMachineEnum(
             rawValue: machine.rawValue
         ) else {
             throw APIServiceError.malformedResponse

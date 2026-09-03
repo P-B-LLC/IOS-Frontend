@@ -693,6 +693,11 @@ actor SocialAPIRepository {
             // A URL the server built. Dropped rather than guessed at if it is
             // not one, so a card draws without its photo instead of failing.
             imageURL: payload.imageUrl.flatMap { URL(string: $0) },
+            // Falls back to the original here as well as on the server. The
+            // server already answers with it when no smaller copy exists, so
+            // this covers only the case of a build talking to an older one.
+            feedImageURL: payload.feedImageUrl.flatMap { URL(string: $0) }
+                ?? payload.imageUrl.flatMap { URL(string: $0) },
             // An unknown visibility reads as the most private thing it could
             // be, so a build that has not learned a new level never draws
             // something as more widely shared than it is.
@@ -724,6 +729,8 @@ actor SocialAPIRepository {
             kind: PostKind(payload.kind),
             caption: payload.caption,
             imageURL: payload.imageUrl.flatMap { URL(string: $0) },
+            feedImageURL: payload.feedImageUrl.flatMap { URL(string: $0) }
+                ?? payload.imageUrl.flatMap { URL(string: $0) },
             createdAt: payload.createdAt,
             workout: payload.workout.map { workout(from: $0.value1) },
             meal: payload.meal.map { meal(from: $0.value1) },

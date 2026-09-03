@@ -170,6 +170,9 @@ nonisolated struct RepostedPost: Equatable, Hashable, Sendable {
     var kind: PostKind
     var caption: String
     var imageURL: URL?
+    /// The same photo at card size. Never nil while `imageURL` is set — the
+    /// server falls back to the original rather than answering null.
+    var feedImageURL: URL?
     var createdAt: Date
     var workout: PostWorkoutSnapshot?
     var meal: PostMealSnapshot?
@@ -181,8 +184,16 @@ nonisolated struct FeedPost: Identifiable, Equatable, Hashable, Sendable {
     var author: PostAuthor
     var kind: PostKind
     var caption: String
-    /// The attached photo, if the author chose one.
+    /// The attached photo, if the author chose one. Full size, as posted.
     var imageURL: URL?
+    /// The same photo, shrunk to card size on the server.
+    ///
+    /// A feed draws dozens of these, and the originals are two to four
+    /// megabytes each — enough that a scroll on cellular felt like the app
+    /// being slow rather than the pictures being big. Never nil while
+    /// `imageURL` is set: the server answers with the original when no
+    /// smaller copy was worth making.
+    var feedImageURL: URL?
     var visibility: PostVisibility
     var createdAt: Date
     var viewerFollowsAuthor: Bool
@@ -258,6 +269,7 @@ nonisolated struct FeedPost: Identifiable, Equatable, Hashable, Sendable {
             kind: kind,
             caption: caption,
             imageURL: imageURL,
+            feedImageURL: feedImageURL,
             createdAt: createdAt,
             workout: workout,
             meal: meal,
@@ -326,7 +338,13 @@ nonisolated struct SocialNotification: Identifiable, Equatable, Hashable, Sendab
     let actorPhotoURL: String?
     let postID: Int?
     let commentBody: String?
-    let isRead: Bool
+    /// Whether this row has been seen.
+    ///
+    /// Settable, unlike the rest, because opening the page marks everything
+    /// read on the server and the rows in hand have to follow. Refetching to
+    /// learn what this device just caused would be a request whose answer is
+    /// already known.
+    var isRead: Bool
 
     var actorName: String {
         let full = "\(actorFirstName) \(actorLastName)"
