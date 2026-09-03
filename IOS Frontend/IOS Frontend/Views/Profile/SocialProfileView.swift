@@ -71,7 +71,6 @@ struct SocialProfileView: View {
     @State private var isFollowing = false
     /// The post whose comments are raised over the profile, if any.
     @State private var commenting: ProfileCommentTarget?
-    @State private var editingExpression = false
 
     /// Whose profile this is. Every count, list and request on the page is
     /// keyed off it rather than off the signed-in user, which is what makes
@@ -126,7 +125,7 @@ struct SocialProfileView: View {
         let timeOfDay = HomeTimeOfDay.current
 
         ScrollView {
-            VStack(spacing: 16) {
+            VStack(spacing: 0) {
                 HStack {
                     RytivoBrandLockup(size: 24)
                     Spacer()
@@ -166,11 +165,6 @@ struct SocialProfileView: View {
             if opensSettingsOnLaunch { showingSettings = true }
         }
 #endif
-        .fullScreenCover(isPresented: $editingExpression) {
-            NavigationStack {
-                ProfileExpressionEditorView()
-            }
-        }
         // Out here, not inside the TimelineView, which tears its contents down
         // on every tick.
         //
@@ -192,6 +186,10 @@ struct SocialProfileView: View {
                 ? ()
                 : store.loadHighlights(forUser: subjectID)
             _ = await (posts, relationships, lifts, mine)
+        }
+        .task(id: workoutStore.isConnected) {
+            guard isCurrentUser, workoutStore.isConnected else { return }
+            await workoutStore.loadDashboardSessions()
         }
     }
 
@@ -275,7 +273,7 @@ struct SocialProfileView: View {
     private func identityCard(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .center, spacing: 14) {
-                ProfileAvatarView(profile: profile, size: 78, timeOfDay: timeOfDay)
+                ProfileAvatarView(profile: profile, size: 72, timeOfDay: timeOfDay)
 
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(alignment: .center, spacing: 10) {
@@ -295,11 +293,7 @@ struct SocialProfileView: View {
                         .font(.community(.caption))
                         .foregroundStyle(timeOfDay.secondaryText)
 
-                    Text("\(myPostCount) posts   ·   \(followerCount) followers   ·   \(followingCount) following")
-                        .font(.community(size: 11, weight: .semibold))
-                        .foregroundStyle(timeOfDay.canvasPrimaryText)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.84)
+                    socialCounts(timeOfDay: timeOfDay)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -315,30 +309,97 @@ struct SocialProfileView: View {
                 socialLinksRow(timeOfDay: timeOfDay)
             }
 
-            if let gym = profile.gym {
-                Text((gym.city.isEmpty ? gym.name : "\(gym.name) · \(gym.city)").uppercased())
+            if !identitySummary.isEmpty {
+                Text(identitySummary.uppercased())
                     .font(.community(size: 10, weight: .bold))
                     .tracking(0.8)
                     .foregroundStyle(timeOfDay.accent)
                     .lineLimit(1)
-            } else if let discipline = primaryDiscipline {
-                Text(discipline.uppercased())
-                    .font(.community(size: 10, weight: .bold))
-                    .tracking(0.8)
-                    .foregroundStyle(timeOfDay.accent)
             }
 
-            profileAction(timeOfDay: timeOfDay)
-                .padding(.top, 4)
+            if !isCurrentUser {
+                followButton(timeOfDay: timeOfDay)
+                    .padding(.top, 2)
+            }
 
-            // Now a separator between the identity and the sections below,
-            // rather than a lid the action was tucked under.
-            Rectangle()
-                .fill(timeOfDay.border)
-                .frame(height: 1)
-                .padding(.top, 4)
+            if isCurrentUser {
+                momentumBand(timeOfDay: timeOfDay)
+                    .padding(.top, 2)
+            }
         }
-        .padding(.vertical, 8)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 14)
+        .background(
+            LinearGradient(
+                colors: [
+                    timeOfDay.surfaceRaised.opacity(0.18),
+                    timeOfDay.accent.opacity(0.08)
+                ],
+                startPoint: .leading,
+                endPoint: .trailing
+            ),
+            in: RoundedRectangle(cornerRadius: 20, style: .continuous)
+        )
+        .padding(.top, 10)
+        .padding(.bottom, 12)
+    }
+
+    private func socialCounts(timeOfDay: HomeTimeOfDay) -> some View {
+        HStack(spacing: 7) {
+            profileCount(myPostCount, label: "posts", color: timeOfDay.canvasPrimaryText)
+            Text("·").foregroundStyle(timeOfDay.secondaryText)
+            profileCount(followerCount, label: "followers", color: timeOfDay.accent)
+            Text("·").foregroundStyle(timeOfDay.secondaryText)
+            profileCount(followingCount, label: "following", color: timeOfDay.canvasPrimaryText)
+        }
+        .font(.community(size: 11, weight: .semibold))
+        .lineLimit(1)
+        .minimumScaleFactor(0.82)
+        .accessibilityElement(children: .combine)
+    }
+
+    private func profileCount(_ count: Int, label: String, color: Color) -> some View {
+        Text("\(count) \(label)")
+            .fontWeight(label == "followers" ? .bold : .semibold)
+            .foregroundStyle(color)
+    }
+
+    private var identitySummary: String {
+        let discipline = primaryDiscipline
+        let gym = profile.gym.map { $0.city.isEmpty ? $0.name : "\($0.name) · \($0.city)" }
+        return [discipline, gym].compactMap { $0 }.joined(separator: "  ·  ")
+    }
+
+    private func momentumBand(timeOfDay: HomeTimeOfDay) -> some View {
+        let stats = workoutStore.trainingStats
+        let goalProgress = stats.weeklyGoal > 0
+            ? Int((Double(stats.completedThisWeek) / Double(stats.weeklyGoal) * 100).rounded())
+            : 0
+
+        return HStack(spacing: 8) {
+            Text("YOUR MOMENTUM")
+                .font(.community(size: 9, weight: .bold))
+                .tracking(0.7)
+                .foregroundStyle(RepbaseDesign.success)
+
+            Spacer(minLength: 4)
+
+            Text("\(stats.totalWorkouts) workouts · \(stats.currentStreakText) streak · \(goalProgress)% goal")
+                .font(.community(size: 10, weight: .bold))
+                .foregroundStyle(timeOfDay.canvasPrimaryText)
+                .lineLimit(1)
+                .minimumScaleFactor(0.78)
+        }
+        .padding(.horizontal, 12)
+        .frame(maxWidth: .infinity, minHeight: 36)
+        .background(
+            Color.repbaseDynamic(
+                light: RepbasePalette.sage.opacity(0.22),
+                dark: RepbasePalette.sage.opacity(0.18)
+            ),
+            in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+        )
+        .accessibilityElement(children: .combine)
     }
 
     private var primaryDiscipline: String? {
@@ -381,64 +442,25 @@ struct SocialProfileView: View {
         subjectID.flatMap { social.followingByUser[$0]?.count } ?? 0
     }
 
-    @ViewBuilder
-    private func profileAction(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack(spacing: 8) {
-            Group {
-                if isCurrentUser {
-                    Button { editingProfile = true } label: {
-                        profilePrimaryActionLabel("Edit profile", timeOfDay: timeOfDay)
-                    }
-                } else {
-                    Button {
-                        guard let author = subjectAsAuthor else { return }
-                        Task {
-                            await social.setFollowing(
-                                !viewerFollowsSubject,
-                                user: author,
-                                viewerID: store.viewerID
-                            )
-                        }
-                    } label: {
-                        profilePrimaryActionLabel(
-                            followActionTitle,
-                            timeOfDay: timeOfDay
-                        )
-                    }
-                    .disabled(subjectAsAuthor.map { social.changingFollowFor.contains($0.id) } ?? true)
-                }
+    private func followButton(timeOfDay: HomeTimeOfDay) -> some View {
+        Button {
+            guard let author = subjectAsAuthor else { return }
+            Task {
+                await social.setFollowing(
+                    !viewerFollowsSubject,
+                    user: author,
+                    viewerID: store.viewerID
+                )
             }
-            .buttonStyle(.plain)
-
-            ShareLink(item: "Meet \(profile.displayName) (@\(profile.username)) on Rytivo.") {
-                Text("Share")
-                    .font(.community(.footnote, weight: .bold))
-                    .foregroundStyle(timeOfDay.accent)
-                    .frame(minWidth: 68, minHeight: 36)
-                    .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 11))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 11)
-                            .strokeBorder(timeOfDay.border, lineWidth: 1)
-                    }
-            }
-            .buttonStyle(.plain)
-        }
-    }
-
-    private func profilePrimaryActionLabel(
-        _ title: String,
-        timeOfDay: HomeTimeOfDay
-    ) -> some View {
-        HStack(spacing: 8) {
-            Text(title)
+        } label: {
+            Text(followActionTitle)
                 .font(.community(.footnote, weight: .bold))
-            Text("→")
-                .font(.community(.subheadline, weight: .bold))
+                .foregroundStyle(timeOfDay.onPrimaryAction)
+                .frame(maxWidth: .infinity, minHeight: 38)
+                .background(timeOfDay.primaryActionSurface, in: RoundedRectangle(cornerRadius: 12))
         }
-        .foregroundStyle(timeOfDay.onPrimaryAction)
-        .frame(minWidth: 132, minHeight: 36)
-        .background(timeOfDay.primaryActionSurface, in: RoundedRectangle(cornerRadius: 11))
-        .contentShape(RoundedRectangle(cornerRadius: 11))
+        .buttonStyle(.plain)
+        .disabled(subjectAsAuthor.map { social.changingFollowFor.contains($0.id) } ?? true)
     }
 
     private func profileStat(_ value: String, label: String) -> some View {
@@ -574,51 +596,54 @@ struct SocialProfileView: View {
     }
 
     private func aboutSection(timeOfDay: HomeTimeOfDay) -> some View {
-        VStack(alignment: .leading, spacing: 22) {
+        VStack(alignment: .leading, spacing: 0) {
             if !myPrompts.isEmpty {
-                VStack(alignment: .leading, spacing: 14) {
+                VStack(alignment: .leading, spacing: 18) {
                     ForEach(myPrompts) { prompt in
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: 5) {
                             Text(prompt.questionLabel.uppercased())
                                 .font(.community(size: 9, weight: .bold))
                                 .tracking(1.1)
                                 .foregroundStyle(timeOfDay.accent)
                             Text(prompt.answer)
-                                .font(.community(size: 18, weight: .semibold))
+                                .font(.community(.body, weight: .semibold))
                                 .foregroundStyle(timeOfDay.primaryText)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
-            }
+                .padding(.vertical, 18)
 
-            if !myHighlights.isEmpty {
-                VStack(alignment: .leading, spacing: 12) {
-                    ForEach(myHighlights) { lift in
-                        highlightRow(lift, timeOfDay: timeOfDay)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                Divider()
             }
 
             if !trainingIdentityMetrics.isEmpty {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("TRAINING IDENTITY")
-                        .font(.community(size: 9, weight: .bold))
-                        .tracking(1.1)
-                        .foregroundStyle(timeOfDay.accent)
-
-                    LazyVGrid(
-                        columns: [GridItem(.flexible()), GridItem(.flexible())],
-                        alignment: .leading,
-                        spacing: 18
-                    ) {
-                        ForEach(trainingIdentityMetrics) { metric in
-                            aboutMetric(metric, timeOfDay: timeOfDay)
+                VStack(spacing: 0) {
+                    ForEach(trainingIdentityMetrics.indices, id: \.self) { index in
+                        aboutInformationRow(trainingIdentityMetrics[index], timeOfDay: timeOfDay)
+                        if index < trainingIdentityMetrics.count - 1 {
+                            Divider()
                         }
                     }
                 }
+                .padding(.vertical, 4)
+
+                Divider()
+            }
+
+            if !myHighlights.isEmpty {
+                VStack(spacing: 0) {
+                    ForEach(myHighlights.indices, id: \.self) { index in
+                        featuredLiftRow(myHighlights[index], timeOfDay: timeOfDay)
+                        if index < myHighlights.count - 1 {
+                            Divider()
+                        }
+                    }
+                }
+                .padding(.vertical, 4)
+
+                Divider()
             }
 
             if isAboutEmpty && myPrompts.isEmpty && myHighlights.isEmpty {
@@ -631,42 +656,110 @@ struct SocialProfileView: View {
                 .foregroundStyle(timeOfDay.secondaryText)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
-                .padding(28)
+                .padding(.vertical, 32)
             }
 
             if isCurrentUser {
                 Button {
-                    editingExpression = true
+                    editingProfile = true
                 } label: {
-                    HStack(spacing: 12) {
+                    HStack(spacing: 14) {
+                        Text("Edit profile")
+                            .font(.community(.subheadline, weight: .bold))
+                            .foregroundStyle(timeOfDay.onPrimaryAction)
+                            .padding(.horizontal, 18)
+                            .frame(minHeight: 42)
+                            .background(
+                                timeOfDay.primaryActionSurface,
+                                in: RoundedRectangle(cornerRadius: 13, style: .continuous)
+                            )
+
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Shape your profile")
-                                .font(.community(.subheadline, weight: .bold))
+                            Text("Your profile hub")
+                                .font(.community(.caption, weight: .bold))
                                 .foregroundStyle(timeOfDay.primaryText)
-                            Text("Prompts, lifts and training details")
+                            Text("Manage your bio, details, and training identity")
                                 .font(.community(.caption2))
                                 .foregroundStyle(timeOfDay.secondaryText)
+                                .lineLimit(2)
                         }
-                        Spacer(minLength: 0)
-                        Text("→")
-                            .font(.community(.title3, weight: .bold))
-                            .foregroundStyle(timeOfDay.accent)
                     }
-                    .padding(.horizontal, 16)
-                    .frame(maxWidth: .infinity, minHeight: 74)
-                    .background(
-                        Color.repbaseDynamic(
-                            light: RepbasePalette.sage.opacity(0.20),
-                            dark: RepbasePalette.sage.opacity(0.18)
-                        ),
-
-                        in: RoundedRectangle(cornerRadius: 18)
-                    )
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 18)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityHint("Opens your profile details editor")
             }
         }
-        .padding(.vertical, 18)
+        .padding(.bottom, 18)
+    }
+
+    private func aboutInformationRow(
+        _ metric: AboutMetric,
+        timeOfDay: HomeTimeOfDay
+    ) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 14) {
+            Text(metric.title)
+                .font(.community(size: 9, weight: .bold))
+                .tracking(0.9)
+                .foregroundStyle(timeOfDay.accent)
+                .frame(width: 92, alignment: .leading)
+
+            Text(metric.value)
+                .font(.community(.subheadline, weight: .semibold))
+                .foregroundStyle(timeOfDay.primaryText)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            if let badge = metric.badge {
+                Text(badge.uppercased())
+                    .font(.community(size: 8, weight: .bold))
+                    .foregroundStyle(timeOfDay.accent)
+            }
+        }
+        .padding(.vertical, 13)
+    }
+
+    private func featuredLiftRow(
+        _ lift: HighlightLift,
+        timeOfDay: HomeTimeOfDay
+    ) -> some View {
+        HStack(alignment: .center, spacing: 14) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("FEATURED LIFT")
+                    .font(.community(size: 9, weight: .bold))
+                    .tracking(0.9)
+                    .foregroundStyle(timeOfDay.accent)
+                Text(lift.label)
+                    .font(.community(.body, weight: .bold))
+                    .foregroundStyle(timeOfDay.primaryText)
+            }
+
+            Spacer(minLength: 12)
+
+            VStack(alignment: .trailing, spacing: 2) {
+                if let pounds = lift.displayPounds, let reps = lift.reps {
+                    Text("\(pounds) lb × \(reps)")
+                        .font(.community(.headline, weight: .bold))
+                        .foregroundStyle(timeOfDay.primaryText)
+                } else {
+                    Text("Not logged")
+                        .font(.community(.subheadline, weight: .semibold))
+                        .foregroundStyle(timeOfDay.secondaryText)
+                }
+
+                if let estimate = lift.estimatedOneRepMaxPounds {
+                    Text("est. 1RM \(estimate) lb")
+                        .font(.community(.caption2))
+                        .foregroundStyle(timeOfDay.secondaryText)
+                } else {
+                    Text(liftSourceLabel(lift).lowercased())
+                        .font(.community(.caption2))
+                        .foregroundStyle(timeOfDay.secondaryText)
+                }
+            }
+        }
+        .padding(.vertical, 14)
     }
 
     private var trainingIdentityMetrics: [AboutMetric] {
