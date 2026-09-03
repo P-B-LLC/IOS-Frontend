@@ -397,6 +397,7 @@ private struct AppRootView: View {
                       profilePreview != "profile",
                       profilePreview != "public",
                       profilePreview != "private",
+                      profilePreview != "edit",
                       profilePreview != "links" {
                 NavigationStack {
                     ProfileOnboardingView(
@@ -424,6 +425,13 @@ private struct AppRootView: View {
                       let profile = socialProfileStore.profile {
                 NavigationStack {
                     SocialProfileView(profile: profile, isCurrentUser: false)
+                }
+            } else if ProcessInfo.processInfo.environment["REPBASE_PROFILE_PREVIEW"] == "edit",
+                      let profile = socialProfileStore.profile {
+                NavigationStack {
+                    // The whole-profile editor, which sits behind a sign-in
+                    // and several taps, so a script cannot reach it.
+                    ProfileOnboardingView(seed: profile, isEditing: true)
                 }
             } else if ProcessInfo.processInfo.environment["REPBASE_PROFILE_PREVIEW"] == "private" {
                 NavigationStack {

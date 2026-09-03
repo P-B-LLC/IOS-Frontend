@@ -965,6 +965,9 @@ private struct ProfileSettingsView: View {
 #endif
 
     private enum ProfileEditorDestination: Int, Identifiable {
+        /// The whole profile on one page. Zero rather than a page number,
+        /// because it is not one of the pages.
+        case everything = 0
         case basics = 1
         case goals = 2
         case identity = 3
@@ -1002,52 +1005,24 @@ private struct ProfileSettingsView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
+                    // One row, because there is now one editor.
+                    //
+                    // These were four rows opening the sign-up questions at
+                    // four different pages, which was a second way to change
+                    // the same fields the profile's own Edit button changes --
+                    // and a worse one, since each opened a single question with
+                    // no sight of the rest. The editor shows the whole profile
+                    // at once, so settings points at it rather than
+                    // reimplementing a slice of it.
                     settingsSection("PROFILE", timeOfDay: timeOfDay) {
-                        VStack(spacing: 0) {
-                            Button { editorDestination = .basics } label: {
-                                settingsRow(
-                                    "Profile details",
-                                    detail: "Photo, name, username, and bio",
-                                    symbol: "person.crop.circle"
-                                )
-                            }
-                            .buttonStyle(RepbaseSettingsRowButtonStyle())
-
-                            Rectangle().fill(timeOfDay.border).frame(height: 1)
-
-                            NavigationLink {
-                                SocialLinksEditorView()
-                            } label: {
-                                settingsRow(
-                                    "Social links",
-                                    detail: "The accounts shown on your profile",
-                                    symbol: "link"
-                                )
-                            }
-                            .buttonStyle(RepbaseSettingsRowButtonStyle())
-
-                            Rectangle().fill(timeOfDay.border).frame(height: 1)
-
-                            Button { editorDestination = .goals } label: {
-                                settingsRow(
-                                    "Body goals & privacy",
-                                    detail: "Height, weight, target weight, and visibility",
-                                    symbol: "scope"
-                                )
-                            }
-                            .buttonStyle(RepbaseSettingsRowButtonStyle())
-
-                            Rectangle().fill(timeOfDay.border).frame(height: 1)
-
-                            Button { editorDestination = .identity } label: {
-                                settingsActivityRow(
-                                    "Training identity",
-                                    detail: "Disciplines and gym",
-                                    icon: .lifting
-                                )
-                            }
-                            .buttonStyle(RepbaseSettingsRowButtonStyle())
+                        Button { editorDestination = .everything } label: {
+                            settingsRow(
+                                "Edit profile",
+                                detail: "Photo, name, bio, body, training, and links",
+                                symbol: "person.crop.circle"
+                            )
                         }
+                        .buttonStyle(RepbaseSettingsRowButtonStyle())
                     }
 
                     settingsSection("PERSONALIZATION", timeOfDay: timeOfDay) {
@@ -1301,7 +1276,12 @@ private struct ProfileSettingsView: View {
                 ProfileOnboardingView(
                     seed: profile,
                     isEditing: true,
-                    initialStep: destination.rawValue
+                    // No step means the whole profile. The single-question
+                    // editors are still reachable this way if something needs
+                    // one, but nothing points at them any more.
+                    initialStep: destination == .everything
+                        ? nil
+                        : destination.rawValue
                 )
                     .environment(store)
             }
@@ -1691,9 +1671,21 @@ struct ProfileOnboardingView: View {
     /// passes none, and still walks all four.
     private let editsOneSection: Bool
 
+    /// Editing the whole profile at once, which is what the profile page asks
+    /// for.
+    ///
+    /// Making a profile and changing one are not the same act. A new account
+    /// has none of the answers, so the questions come one at a time and a
+    /// Continue between them makes sense. Somebody fixing a typo in their bio
+    /// has every answer already and wants that one field -- not a walk through
+    /// two other pages to reach a Save. So editing lays the whole thing out on
+    /// one page and saves it in one press.
+    private let editsEverything: Bool
+
     init(seed: SocialProfile, isEditing: Bool = false, initialStep: Int? = nil) {
         self.isEditing = isEditing
         self.editsOneSection = isEditing && initialStep != nil
+        self.editsEverything = isEditing && initialStep == nil
         _draft = State(initialValue: seed)
         _step = State(initialValue: initialStep ?? (isEditing ? 1 : 0))
     }
@@ -1707,8 +1699,12 @@ struct ProfileOnboardingView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
-                    stepHeading
-                    stepContent(timeOfDay: timeOfDay)
+                    if editsEverything {
+                        everything(timeOfDay: timeOfDay)
+                    } else {
+                        stepHeading
+                        stepContent(timeOfDay: timeOfDay)
+                    }
 
                     if let error = store.errorMessage {
                         Label(error, systemImage: "exclamationmark.triangle.fill")
@@ -1793,7 +1789,7 @@ struct ProfileOnboardingView: View {
                 Spacer()
                 // A count of one is not worth printing, and neither is the page
                 // number of a page you did not arrive at by turning.
-                if editsOneSection {
+                if editsOneSection || editsEverything {
                     Color.clear.frame(width: 44, height: 44)
                 } else {
                     Text("\(step - firstStep + 1)/\(stepCount)")
@@ -1809,7 +1805,8 @@ struct ProfileOnboardingView: View {
 
     @ViewBuilder
     private func stepProgress(timeOfDay: HomeTimeOfDay) -> some View {
-        if !editsOneSection {
+        // No progress bar over a page with no steps to be partway through.
+        if !editsOneSection, !editsEverything {
             HStack(spacing: 6) {
                 ForEach(firstStep..<4, id: \.self) { index in
                     Capsule()
@@ -1828,7 +1825,7 @@ struct ProfileOnboardingView: View {
     /// The back arrow means a page to go back to. On a single section there
     /// is none, so it is a close.
     private var canGoBack: Bool {
-        !editsOneSection && step > (isEditing ? 1 : 0)
+        !editsOneSection && !editsEverything && step > (isEditing ? 1 : 0)
     }
 
     /// What this screen is for, said at the top.
@@ -1859,6 +1856,107 @@ struct ProfileOnboardingView: View {
         default:
             heading("Build your identity", detail: "Show people how you train and where you belong.")
         }
+    }
+
+    /// Everything the profile shows, in the order it shows it.
+    @ViewBuilder
+    private func everything(timeOfDay: HomeTimeOfDay) -> some View {
+        heading(
+            "How you appear",
+            detail: "Everything on this page is what other people see when they open your profile."
+        )
+
+        editorSection("PHOTO, NAME & BIO", timeOfDay: timeOfDay) {
+            nameStep(timeOfDay: timeOfDay)
+        }
+        editorSection("BODY & WHAT IS SHOWN", timeOfDay: timeOfDay) {
+            goalsStep(timeOfDay: timeOfDay)
+        }
+        editorSection("TRAINING IDENTITY", timeOfDay: timeOfDay) {
+            identityStep(timeOfDay: timeOfDay)
+        }
+
+        // Pushed rather than inlined. Both already exist as their own screens
+        // with their own saving, and copying either into this page would be
+        // two editors for one thing -- which is the redundancy this change
+        // exists to remove, not to add somewhere else.
+        editorSection("MORE ON YOUR PROFILE", timeOfDay: timeOfDay) {
+            VStack(spacing: 0) {
+                NavigationLink {
+                    ProfileExpressionEditorView()
+                } label: {
+                    editorRow(
+                        "Prompts and featured lifts",
+                        detail: "Why you train, and the lifts you put on show",
+                        symbol: "quote.bubble",
+                        timeOfDay: timeOfDay
+                    )
+                }
+                .buttonStyle(.plain)
+
+                Rectangle().fill(timeOfDay.border).frame(height: 1)
+
+                NavigationLink {
+                    SocialLinksEditorView()
+                } label: {
+                    editorRow(
+                        "Social links",
+                        detail: "The accounts shown on your profile",
+                        symbol: "link",
+                        timeOfDay: timeOfDay
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func editorSection<Content: View>(
+        _ title: String,
+        timeOfDay: HomeTimeOfDay,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.community(size: 10, weight: .bold))
+                .tracking(1.15)
+                .foregroundStyle(timeOfDay.accent)
+            content()
+        }
+        .padding(.top, 10)
+    }
+
+    private func editorRow(
+        _ title: String,
+        detail: String,
+        symbol: String,
+        timeOfDay: HomeTimeOfDay
+    ) -> some View {
+        HStack(spacing: 13) {
+            Image(systemName: symbol)
+                .font(.community(.subheadline, weight: .semibold))
+                .foregroundStyle(timeOfDay.accent)
+                .frame(width: 34, height: 34)
+                .background(timeOfDay.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.community(.subheadline, weight: .semibold))
+                    .foregroundStyle(timeOfDay.primaryText)
+                Text(detail)
+                    .font(.community(.caption))
+                    .foregroundStyle(timeOfDay.secondaryText)
+                    .lineLimit(1)
+            }
+
+            Spacer(minLength: 8)
+
+            Image(systemName: "chevron.right")
+                .font(.community(.caption2))
+                .foregroundStyle(timeOfDay.secondaryText)
+        }
+        .padding(.vertical, 13)
+        .contentShape(Rectangle())
     }
 
     private func heading(_ title: String, detail: String) -> some View {
@@ -2270,9 +2368,17 @@ struct ProfileOnboardingView: View {
     }
 
     /// Whether pressing the button finishes rather than turns the page.
-    private var isSaveStep: Bool { editsOneSection || step == 3 }
+    private var isSaveStep: Bool { editsOneSection || editsEverything || step == 3 }
 
     private var canContinue: Bool {
+        // One page means one set of rules, rather than whichever step happens
+        // to be showing. A name and a username are the only things the profile
+        // cannot be drawn without.
+        if editsEverything {
+            return !draft.firstName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                && !draft.lastName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                && !draft.username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }
 
         switch step {
         case 0:
