@@ -999,6 +999,35 @@ final class WorkoutStore {
         }
     }
 
+    /// Deletes a saved workout, and everything planned from it.
+    ///
+    /// The week is read again afterwards rather than patched: the days this
+    /// workout occupied are gone on the server, and working out which of them
+    /// were on screen is more effort than asking.
+    func deleteSavedWorkout(_ workout: WorkoutSummary) async {
+        guard let repository, !isSaving else { return }
+        let generation = connectionGeneration
+        isSaving = true
+        defer { if connectionGeneration == generation { isSaving = false } }
+
+        do {
+            try await repository.deleteSavedWorkout(id: workout.id)
+            guard connectionGeneration == generation else { return }
+            knownWorkouts.removeAll { $0.id == workout.id }
+            await reloadWeek(
+                using: repository,
+                generation: generation,
+                showsLoadingState: false
+            )
+        } catch {
+            guard connectionGeneration == generation else { return }
+            // Shown rather than swallowed: the refusal names the rotation
+            // standing in the way, which is the one thing that makes the
+            // failure actionable.
+            persistenceError = error.userFacingMessage
+        }
+    }
+
     /// Whether there is anything planned to clear. Offering the button over an
     /// empty calendar would be offering to do nothing.
     var hasAnythingScheduled: Bool {

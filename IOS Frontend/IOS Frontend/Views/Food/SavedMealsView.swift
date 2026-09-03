@@ -94,6 +94,10 @@ struct SavedMealsView: View {
                             } onEdit: {
                                 mealToEdit = savedMeal
                             }
+                            // Swiped rather than tapped, and said so in the
+                            // footer below: a delete sitting next to the
+                            // button that puts a meal on a day is a mis-tap
+                            // with nothing to undo it.
                             .swipeActions(edge: .trailing) {
                                 Button("Delete", systemImage: "trash", role: .destructive) {
                                     store.removeReusableMeal(id: savedMeal.id)
@@ -103,7 +107,7 @@ struct SavedMealsView: View {
                         }
                         }
                         .overlay(alignment: .top) { Divider() }
-                        Text("Saved meals sync with your Rytivo account and are ready on every signed-in device.")
+                        Text("Swipe a meal to delete it. Saved meals sync with your Rytivo account and are ready on every signed-in device.")
                             .font(.community(.caption))
                             .foregroundStyle(.secondary)
                     }

@@ -55,6 +55,14 @@ struct SavedWorkoutsView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
+                // The server's refusal, which names the rotation in the way.
+                if let message = store.persistenceError {
+                    Text(message)
+                        .font(.community(.footnote))
+                        .foregroundStyle(.orange)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
                 if store.knownWorkouts.isEmpty {
                     empty
                 } else {
@@ -64,6 +72,12 @@ struct SavedWorkoutsView: View {
                             if index < store.knownWorkouts.count - 1 { Divider().opacity(0.45) }
                         }
                     }
+
+                    Text("Deleting a saved workout also removes the days it is planned on. Training you have already done stays in your history, and a workout a rotation is built from cannot be deleted until the rotation changes.")
+                        .font(.community(.caption))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.top, 4)
                 }
             }
             .padding(.horizontal, RepbaseDesign.pageInset)
@@ -134,6 +148,23 @@ struct SavedWorkoutsView: View {
             // One at a time. Two taps in flight would schedule the same
             // workout on the same day twice.
             .disabled(scheduling != nil || store.isSaving)
+
+            // Set apart from Add rather than beside it. The two do opposite
+            // things and a thumb that misses by a few points should not
+            // delete the workout it meant to plan.
+            Button {
+                Task { await store.deleteSavedWorkout(workout) }
+            } label: {
+                Image(systemName: "trash")
+                    .font(.community(.footnote, weight: .semibold))
+                    .foregroundStyle(RepbaseDesign.danger)
+                    .frame(width: 40, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(store.isSaving)
+            .padding(.leading, 6)
+            .accessibilityLabel("Delete \(workout.name)")
             .accessibilityLabel("Add \(workout.name)")
             .accessibilityHint("Schedules it on \(date.formatted(date: .abbreviated, time: .omitted))")
         }

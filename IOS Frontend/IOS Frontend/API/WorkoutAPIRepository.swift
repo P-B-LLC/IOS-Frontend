@@ -258,6 +258,26 @@ actor WorkoutAPIRepository {
         }
     }
 
+    /// Deletes a saved workout outright.
+    ///
+    /// Not the same as unscheduling it from a day: this removes the workout
+    /// itself, and the days it was planned on go with it. The server refuses
+    /// when a rotation is built out of it, because a rotation with a hole in
+    /// it is a shape nothing can read -- that arrives as a 400 carrying the
+    /// reason, which is worth showing rather than turning into a status code.
+    func deleteSavedWorkout(id: Int) async throws {
+        let output = try await client.workoutsDestroy(path: .init(id: id))
+        switch output {
+        case .noContent:
+            return
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(
+                statusCode: statusCode,
+                payload: payload
+            )
+        }
+    }
+
     func removeSchedule(_ workout: Workout) async throws {
         guard let scheduleID = workout.scheduleID else {
             throw APIServiceError.missingServerIdentifier("Workout schedule")
