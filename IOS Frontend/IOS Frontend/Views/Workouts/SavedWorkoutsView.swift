@@ -137,17 +137,23 @@ struct SavedWorkoutsView: View {
                         ProgressView().controlSize(.small)
                     } else {
                         Text("Add")
-                            .font(.community(.footnote, weight: .semibold))
+                            .font(.community(.caption, weight: .semibold))
                     }
                 }
-                .frame(minWidth: 52, minHeight: 44)
-                .contentShape(Rectangle())
+                .frame(minWidth: 38, minHeight: 26)
             }
             .buttonStyle(.bordered)
             .buttonBorderShape(.capsule)
+            .controlSize(.small)
             // One at a time. Two taps in flight would schedule the same
             // workout on the same day twice.
             .disabled(scheduling != nil || store.isSaving)
+            // Drawn smaller than it is pressed. Forty-four points is the least
+            // a finger reliably hits, so the pill shrinks and the tap target
+            // stays where it was -- a lighter control should not be a harder
+            // one to use.
+            .frame(height: 44)
+            .contentShape(Rectangle())
 
             // Set apart from Add rather than beside it. The two do opposite
             // things and a thumb that misses by a few points should not
