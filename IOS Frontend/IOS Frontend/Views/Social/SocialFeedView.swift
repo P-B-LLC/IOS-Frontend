@@ -45,12 +45,19 @@ struct SocialFeedView: View {
         let isConnected: Bool
     }
 
+    /// The two tabs.
+    ///
+    /// There used to be a Following tab beside this one, holding the people
+    /// you follow and nothing else. It is folded into For You now — the
+    /// people you follow are simply what For You opens with — because a tab
+    /// that only ever shows a subset of the tab next to it makes the reader
+    /// do the merging.
     private enum FeedMode: String, CaseIterable, Identifiable {
-        case following = "Following"
-        case discover = "For you"
+        /// The following feed, then everybody else once it runs out.
+        case forYou = "For you"
+        /// Search, and the people you do not follow yet.
+        case discover = "Discover"
         var id: String { rawValue }
-
-        static var allCases: [FeedMode] { [.discover, .following] }
     }
 
     @Environment(SocialStore.self) private var store
@@ -69,7 +76,7 @@ struct SocialFeedView: View {
     /// because `sheet(item:)` wants Identifiable and a bare Int is not —
     /// unlike `navigationDestination(item:)`, which only wants Hashable.
     @State private var commenting: CommentedPost?
-    @State private var feedMode: FeedMode = .discover
+    @State private var feedMode: FeedMode = .forYou
     @State private var searchText = ""
     /// Whose profile is open, if anyone's.
     @State private var visiting: VisitedPerson?
@@ -93,6 +100,9 @@ struct SocialFeedView: View {
             // preview harness: what is worth looking at here is whether the
             // server's answer draws correctly, which sample data cannot show.
             if let seeded = ProcessInfo.processInfo.environment["REPBASE_SOCIAL_SEARCH"] {
+                // Onto the tab the box lives on, or the seed would land on a
+                // page with nothing to type into.
+                feedMode = .discover
                 searchText = seeded
             }
             // Opens a real post inside the real signed-in app, tab bar and
@@ -156,19 +166,32 @@ struct SocialFeedView: View {
 
                 if isListLoading && displayedPosts.isEmpty {
                     ProgressView().padding(.top, 40)
-                } else if store.searchFoundNothing {
+                } else if feedMode == .discover, store.searchFoundNothing {
                     // A search that matched nothing is not an empty feed, and
                     // saying "share a workout to start your own" to somebody
                     // looking for a person answers a question they did not ask.
+                    //
+                    // Gated on the tab because the query outlives it: leaving
+                    // a search on Discover and stepping back to For You must
+                    // not tell the reader their own feed matched nothing.
                     noMatchesState(timeOfDay: timeOfDay)
-                } else if store.isShowingSearchResults && displayedPosts.isEmpty {
+                } else if feedMode == .discover,
+                          store.isShowingSearchResults,
+                          displayedPosts.isEmpty {
                     // People matched, posts did not. The section above is
                     // showing the answer, so this says only what is missing.
                     noMatchingPostsState(timeOfDay: timeOfDay)
                 } else if displayedPosts.isEmpty {
                     emptyState(timeOfDay: timeOfDay)
                 } else {
-                    ForEach(displayedPosts) { post in
+                    ForEach(Array(displayedPosts.enumerated()), id: \.element.id) { position, post in
+                        // Where the people you follow end and the rest begin.
+                        // Without it the change of subject is only visible as
+                        // names you do not recognise, which reads as the feed
+                        // having gone wrong rather than having moved on.
+                        if position == followedPostCount, position > 0 {
+                            caughtUpDivider(timeOfDay: timeOfDay)
+                        }
                         // The card is not itself a button: the action bar
                         // inside it has four of its own, and a button holding
                         // buttons swallows their taps. A tap anywhere else
@@ -187,8 +210,10 @@ struct SocialFeedView: View {
                             .task {
                                 // The last card asks for the next page as it
                                 // comes into view, so the feed keeps going
-                                // without a button to press.
-                                if feedMode == .following, post.id == store.feed.last?.id {
+                                // without a button to press. Only For You
+                                // pages: Discover is a capped read, not a
+                                // cursor walk, and has no next page to ask for.
+                                if feedMode == .forYou, post.id == store.feed.last?.id {
                                     await store.loadMore()
                                 }
                             }
@@ -203,7 +228,12 @@ struct SocialFeedView: View {
         }
         .scrollIndicators(.hidden)
         .minimizesBottomBarOnScroll()
-        .refreshable { await store.refresh() }
+        // Pulls down on whichever list the tab is actually showing. For You
+        // reloads both, because it draws both.
+        .refreshable {
+            if feedMode == .forYou { await store.refresh() }
+            await store.loadDiscover()
+        }
         .toolbar(.hidden, for: .navigationBar)
         .homeTimeScreen(timeOfDay)
         .repbaseToast(saveConfirmation)
@@ -214,7 +244,11 @@ struct SocialFeedView: View {
             PostCommentsSheet(postID: target.id, timeOfDay: timeOfDay)
         }
         .task(id: DiscoverLoad(mode: feedMode, isConnected: store.isConnected)) {
-            guard feedMode == .discover, store.isConnected else { return }
+            // Both tabs need this list now, not just Discover: For You ends
+            // with it once the following feed runs out, and a reader who
+            // follows nobody would otherwise reach the bottom of an empty
+            // tab with the posts that would fill it never requested.
+            guard store.isConnected else { return }
             await store.loadDiscover()
             if let viewerID = profileStore.viewerID {
                 await store.loadRelationships(for: viewerID)
@@ -435,23 +469,52 @@ struct SocialFeedView: View {
     }
 
     private var isListLoading: Bool {
-        guard feedMode == .discover else { return store.isLoading }
-        return store.isShowingSearchResults ? store.isSearching : store.isLoadingDiscover
+        switch feedMode {
+        case .forYou:
+            // The following feed is what this tab opens with, so it is the
+            // one whose arrival the spinner is waiting on.
+            return store.isLoading
+        case .discover:
+            return store.isShowingSearchResults ? store.isSearching : store.isLoadingDiscover
+        }
     }
 
-    /// What the list shows: the people you follow, everybody, or a search.
+    /// What the list shows, which is a different question per tab.
     ///
-    /// Discover reads its own list rather than filtering the feed. The feed is
-    /// deliberately only the people you follow, so filtering it could never
-    /// surface a stranger — which is the entire point of Discover.
+    /// For You is the following feed and then everybody else. The second half
+    /// is held back until the first has no more pages, so the reader is never
+    /// scrolling through strangers while their own people are still arriving
+    /// — paging in above where somebody is reading moves the page under them.
     ///
-    /// Results arrive already narrowed, by a server that also decided what
-    /// this reader may see. Nothing is filtered here: a second pass over the
-    /// results could only ever remove rows the server had allowed, and the
-    /// one it used to do — matching the typed text — is the query itself.
+    /// Discover is the other half on its own, or the search results when
+    /// there are any. Search is deliberately not narrowed to strangers:
+    /// looking somebody up should find them whether or not you follow them.
+    ///
+    /// Results arrive already narrowed by a server that also decided what
+    /// this reader may see. Nothing is filtered here beyond the overlap guard
+    /// below: a second pass could only ever remove rows the server allowed.
     private var displayedPosts: [FeedPost] {
-        guard feedMode == .discover else { return store.feed }
-        return store.isShowingSearchResults ? store.searchedPosts : store.discoverPosts
+        switch feedMode {
+        case .forYou:
+            guard store.hasReachedEnd else { return store.feed }
+            // The two halves are disjoint as the server sends them, but
+            // following somebody mid-session puts their post in both until
+            // whichever list reloads second catches up, and a duplicate id in
+            // a ForEach is a crash rather than a cosmetic fault.
+            let alreadyShown = Set(store.feed.map(\.id))
+            return store.feed + store.discoverPosts.filter { !alreadyShown.contains($0.id) }
+        case .discover:
+            return store.isShowingSearchResults ? store.searchedPosts : store.discoverPosts
+        }
+    }
+
+    /// How many of the displayed posts came from the following feed.
+    ///
+    /// Only used to put a line under them, so the change of subject from
+    /// "people you follow" to "people you might" is visible rather than
+    /// something the reader has to infer from unfamiliar names.
+    private var followedPostCount: Int {
+        feedMode == .forYou ? store.feed.count : 0
     }
 
     /// Opens the composer. Kept beside the title rather than floating over the
@@ -472,6 +535,25 @@ struct SocialFeedView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("New post")
+    }
+
+    /// The line between the people you follow and the people you might.
+    private func caughtUpDivider(timeOfDay: HomeTimeOfDay) -> some View {
+        HStack(spacing: 10) {
+            Rectangle()
+                .fill(timeOfDay.canvasSecondaryText.opacity(0.25))
+                .frame(height: 1)
+            Text("YOU'RE ALL CAUGHT UP")
+                .font(.community(size: 10, weight: .bold))
+                .tracking(1.1)
+                .foregroundStyle(timeOfDay.canvasSecondaryText)
+                .fixedSize()
+            Rectangle()
+                .fill(timeOfDay.canvasSecondaryText.opacity(0.25))
+                .frame(height: 1)
+        }
+        .padding(.horizontal, RepbaseDesign.pageInset)
+        .padding(.vertical, 22)
     }
 
     /// Nothing matched at all — no people and no posts.
@@ -507,13 +589,17 @@ struct SocialFeedView: View {
 
     private func emptyState(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(spacing: 10) {
-            Image(systemName: "person.2")
+            Image(systemName: feedMode == .discover ? "person.2.badge.plus" : "person.2")
                 .font(.community(size: 30, weight: .semibold))
                 .foregroundStyle(timeOfDay.accent)
-            Text("Nothing here yet")
+            Text(feedMode == .discover ? "Nobody new right now" : "Nothing here yet")
                 .font(.community(.headline))
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
-            Text("Posts from people you follow show up here. Share a workout, a meal, or something off your calendar to start your own.")
+            Text(
+                feedMode == .discover
+                    ? "Posts from people you don't follow yet show up here. Search above to find somebody by name."
+                    : "The people you follow come first here, then everybody else. Share a workout, a meal, or something off your calendar to start your own."
+            )
                 .font(.community(.subheadline))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(timeOfDay.canvasSecondaryText)
@@ -521,10 +607,13 @@ struct SocialFeedView: View {
 
             // Repeats the header's button where the eye already is. An empty
             // feed is exactly when the one in the corner goes unnoticed.
-            Button("Write a post") { isComposing = true }
-                .font(.community(.subheadline, weight: .semibold))
-                .foregroundStyle(timeOfDay.accent)
-                .padding(.top, 2)
+            // Not on Discover: nothing there is waiting on the reader to post.
+            if feedMode != .discover {
+                Button("Write a post") { isComposing = true }
+                    .font(.community(.subheadline, weight: .semibold))
+                    .foregroundStyle(timeOfDay.accent)
+                    .padding(.top, 2)
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 44)

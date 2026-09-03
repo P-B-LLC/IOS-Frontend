@@ -57,8 +57,16 @@ actor SocialAPIRepository {
     /// the people you follow; this is the same visibility rules applied to
     /// everybody, so a stranger's public post is here and their private one
     /// is not.
+    /// - Parameter fromFollowing: `false` for the people the reader does not
+    ///   follow, which is what Discover is; `true` for the ones they do; nil
+    ///   for everybody. The split is the server's rather than a filter over a
+    ///   page it happened to send, because this list is capped — filtering
+    ///   five pages down to the strangers in them would leave a Discover tab
+    ///   whose length depended on how much of the page was people you already
+    ///   follow.
     func allPosts(
         matching search: String? = nil,
+        fromFollowing: Bool? = nil,
         limitPages: Int = 5
     ) async throws -> [FeedPost] {
         let term = Self.searchTerm(search)
@@ -68,7 +76,7 @@ actor SocialAPIRepository {
         var pagesRead = 0
         repeat {
             let output = try await client.socialPostsList(
-                query: .init(page: page, search: term)
+                query: .init(fromFollowing: fromFollowing, page: page, search: term)
             )
             let body: Components.Schemas.PaginatedPostList
             switch output {

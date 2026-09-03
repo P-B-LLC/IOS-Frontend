@@ -28535,6 +28535,10 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/social/posts/GET/query/author`.
                 public var author: Swift.Int?
+                /// Split the list by whether the reader follows the author. `true` is the people they follow; `false` is the people they do not, and also drops the reader's own posts, because a page for finding new people should not open with your own. Omitted, the list is everybody. Anything other than true or false is a 400 rather than a guess.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/GET/query/from_following`.
+                public var fromFollowing: Swift.Bool?
                 /// A page number within the paginated result set.
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/social/posts/GET/query/page`.
@@ -28547,14 +28551,17 @@ public enum Operations {
                 ///
                 /// - Parameters:
                 ///   - author: Return only posts by this user, still filtered by what the reader is allowed to see.
+                ///   - fromFollowing: Split the list by whether the reader follows the author. `true` is the people they follow; `false` is the people they do not, and also drops the reader's own posts, because a page for finding new people should not open with your own. Omitted, the list is everybody. Anything other than true or false is a 400 rather than a guess.
                 ///   - page: A page number within the paginated result set.
                 ///   - search: Return only posts matching this, ignoring case: the caption, the author's username or name, the title of the workout, meal or planner entry attached, or the name of a food or exercise inside it — so a meal posted as "Meal 1" is still found by the chicken in it. Narrows what the reader is already allowed to see and never widens it, so a post hidden from them stays hidden however well it matches. Combines with `author` when both are given.
                 public init(
                     author: Swift.Int? = nil,
+                    fromFollowing: Swift.Bool? = nil,
                     page: Swift.Int? = nil,
                     search: Swift.String? = nil
                 ) {
                     self.author = author
+                    self.fromFollowing = fromFollowing
                     self.page = page
                     self.search = search
                 }

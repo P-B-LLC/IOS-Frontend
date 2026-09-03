@@ -9340,6 +9340,13 @@ public struct Client: APIProtocol {
                     in: &request,
                     style: .form,
                     explode: true,
+                    name: "from_following",
+                    value: input.query.fromFollowing
+                )
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
                     name: "page",
                     value: input.query.page
                 )

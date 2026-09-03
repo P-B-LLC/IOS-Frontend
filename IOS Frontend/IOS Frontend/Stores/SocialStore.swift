@@ -16,7 +16,11 @@ final class SocialStore {
     private var connectionGeneration = UUID()
     /// Where the next page starts. Nil once the feed has been read to the end.
     private var nextCursor: String?
-    private var hasReachedEnd = false
+    /// Whether the following feed has no more pages.
+    ///
+    /// Read by the For You tab, which holds back the people you do not follow
+    /// until the ones you do have run out.
+    private(set) var hasReachedEnd = false
 
     private(set) var feed: [FeedPost] = []
     private(set) var isLoading = false
@@ -438,9 +442,14 @@ final class SocialStore {
 
     // MARK: - Discover
 
-    /// Everyone's posts, not just the people you follow. Kept apart from
-    /// `feed` because they answer different questions and a reader switching
-    /// tabs should not have to wait for the other one to reload.
+    /// Posts by people the reader does **not** follow. Kept apart from `feed`
+    /// because they answer different questions and a reader switching tabs
+    /// should not have to wait for the other one to reload.
+    ///
+    /// Both tabs are built from this one list: Discover is it, and For You is
+    /// the following feed with it appended. Narrowed by the server rather than
+    /// here — see `allPosts(matching:fromFollowing:limitPages:)` for why a
+    /// capped list cannot be filtered after the fact.
     private(set) var discoverPosts: [FeedPost] = []
     private(set) var isLoadingDiscover = false
 
@@ -451,7 +460,7 @@ final class SocialStore {
         defer { if connectionGeneration == generation { isLoadingDiscover = false } }
 
         do {
-            let loaded = try await repository.allPosts()
+            let loaded = try await repository.allPosts(fromFollowing: false)
             guard connectionGeneration == generation else { return }
             discoverPosts = loaded
         } catch {
