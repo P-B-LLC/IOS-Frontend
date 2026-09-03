@@ -379,6 +379,12 @@ private struct AppRootView: View {
                 NavigationStack {
                     FoodPickerView(date: Date(), mealID: meal.id)
                 }
+            } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "saved" {
+                NavigationStack {
+                    // Two taps inside the food page, which a script cannot
+                    // make, and the one list whose delete needed looking at.
+                    SavedMealsView(referenceDate: Date())
+                }
             } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "goals" {
                 NavigationStack {
                     NutritionGoalsView()

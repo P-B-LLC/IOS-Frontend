@@ -93,21 +93,14 @@ struct SavedMealsView: View {
                                 apply(savedMeal)
                             } onEdit: {
                                 mealToEdit = savedMeal
-                            }
-                            // Swiped rather than tapped, and said so in the
-                            // footer below: a delete sitting next to the
-                            // button that puts a meal on a day is a mis-tap
-                            // with nothing to undo it.
-                            .swipeActions(edge: .trailing) {
-                                Button("Delete", systemImage: "trash", role: .destructive) {
-                                    store.removeReusableMeal(id: savedMeal.id)
-                                }
+                            } onDelete: {
+                                store.removeReusableMeal(id: savedMeal.id)
                             }
                             if index < store.savedMeals.count - 1 { Divider().opacity(0.45) }
                         }
                         }
                         .overlay(alignment: .top) { Divider() }
-                        Text("Swipe a meal to delete it. Saved meals sync with your Rytivo account and are ready on every signed-in device.")
+                        Text("Saved meals sync with your Rytivo account and are ready on every signed-in device. Deleting one leaves the days you already put it on alone.")
                             .font(.community(.caption))
                             .foregroundStyle(.secondary)
                     }
@@ -186,6 +179,7 @@ private struct SavedMealRow: View {
     var opensPicker = false
     let onUse: () -> Void
     let onEdit: () -> Void
+    let onDelete: () -> Void
 
     var body: some View {
         HStack(spacing: 12) {
@@ -208,6 +202,15 @@ private struct SavedMealRow: View {
             // adding the meal, and a plus says that in the space a sentence
             // was using.
             iconButton("pencil", label: "Edit \(savedMeal.name)", action: onEdit)
+            // Set before the apply button and tinted as the exception it is.
+            // The two do opposite things, and the row exists to add the meal,
+            // so the destructive one should never be the easier reach.
+            iconButton(
+                "trash",
+                label: "Delete \(savedMeal.name)",
+                tint: RepbaseDesign.danger,
+                action: onDelete
+            )
             applyButton
         }
         .padding(.vertical, 14)
@@ -244,12 +247,13 @@ private struct SavedMealRow: View {
     private func iconButton(
         _ systemImage: String,
         label: String,
+        tint: Color? = nil,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
             Image(systemName: systemImage)
                 .font(.community(size: 13, weight: .semibold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(tint ?? Color.secondary)
                 .frame(width: 34, height: 34)
                 .contentShape(Circle())
         }
