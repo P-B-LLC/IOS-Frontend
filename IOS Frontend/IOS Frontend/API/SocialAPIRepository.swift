@@ -57,13 +57,19 @@ actor SocialAPIRepository {
     /// the people you follow; this is the same visibility rules applied to
     /// everybody, so a stranger's public post is here and their private one
     /// is not.
-    func allPosts(limitPages: Int = 5) async throws -> [FeedPost] {
+    func allPosts(
+        matching search: String? = nil,
+        limitPages: Int = 5
+    ) async throws -> [FeedPost] {
+        let term = Self.searchTerm(search)
         var page: Int?
         var visited: Set<Int> = []
         var values: [FeedPost] = []
         var pagesRead = 0
         repeat {
-            let output = try await client.socialPostsList(query: .init(page: page))
+            let output = try await client.socialPostsList(
+                query: .init(page: page, search: term)
+            )
             let body: Components.Schemas.PaginatedPostList
             switch output {
             case .ok(let response):
@@ -470,14 +476,34 @@ actor SocialAPIRepository {
 
     // MARK: - Following
 
-    func people() async throws -> [PostAuthor] {
-        try await pagedPeople { page in
-            switch try await self.client.usersList(query: .init(page: page)) {
+    /// Everybody, or the people matching a search.
+    ///
+    /// The search is the server's rather than a filter over what was already
+    /// downloaded. The people worth finding are mostly the ones not on screen
+    /// yet — somebody who has never posted appears in no feed at all — and a
+    /// client-side filter can only ever narrow what it already holds.
+    func people(matching search: String? = nil) async throws -> [PostAuthor] {
+        let term = Self.searchTerm(search)
+        return try await pagedPeople { page in
+            switch try await self.client.usersList(
+                query: .init(page: page, search: term)
+            ) {
             case .ok(let response): return try response.body.json
             case .undocumented(let statusCode, _):
                 throw APIServiceError.undocumentedStatus(statusCode)
             }
         }
+    }
+
+    /// A term worth sending, or nil for no search at all.
+    ///
+    /// Whitespace alone is not a search. Sent as an empty string the
+    /// parameter would be present and blank, which this server happens to
+    /// read as no filter — but relying on that makes an empty box depend on
+    /// a server-side detail, and the day it changes the page silently empties.
+    private static func searchTerm(_ raw: String?) -> String? {
+        let trimmed = raw?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return trimmed.isEmpty ? nil : trimmed
     }
 
     func followers(of userID: Int) async throws -> [PostAuthor] {

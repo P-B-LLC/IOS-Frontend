@@ -25,7 +25,6 @@ final class SocialStore {
     private(set) var errorMessage: String?
     /// Set when a post goes out, so a screen can say so and move on.
     private(set) var lastPosted: FeedPost?
-    private(set) var people: [PostAuthor] = []
     private(set) var followersByUser: [Int: [PostAuthor]] = [:]
     private(set) var followingByUser: [Int: [PostAuthor]] = [:]
     private(set) var changingFollowFor: Set<Int> = []
@@ -89,7 +88,10 @@ final class SocialStore {
         isPosting = false
         errorMessage = nil
         lastPosted = nil
-        people = []
+        // Results name real people and are answered per reader — a block is
+        // applied against whoever asked — so they belong to the account that
+        // searched and must not outlive it.
+        clearSearch()
         followersByUser = [:]
         followingByUser = [:]
         changingFollowFor = []
@@ -163,19 +165,6 @@ final class SocialStore {
             feed.append(contentsOf: page.posts.filter { !known.contains($0.id) })
             nextCursor = page.nextCursor
             hasReachedEnd = page.nextCursor == nil
-        } catch {
-            guard connectionGeneration == generation else { return }
-            errorMessage = error.userFacingMessage
-        }
-    }
-
-    func loadPeople() async {
-        guard let repository else { return }
-        let generation = connectionGeneration
-        do {
-            let loaded = try await repository.people()
-            guard connectionGeneration == generation else { return }
-            people = loaded
         } catch {
             guard connectionGeneration == generation else { return }
             errorMessage = error.userFacingMessage
@@ -471,6 +460,78 @@ final class SocialStore {
         }
     }
 
+    // MARK: - Search
+
+    /// What the server was last asked for. Empty means the tab is showing
+    /// Discover itself rather than results.
+    private(set) var searchQuery = ""
+    private(set) var searchedPeople: [PostAuthor] = []
+    private(set) var searchedPosts: [FeedPost] = []
+    private(set) var isSearching = false
+
+    var isShowingSearchResults: Bool { !searchQuery.isEmpty }
+
+    /// Whether a finished search found nothing, as opposed to not having run.
+    ///
+    /// Separate from "both lists are empty", which is also true before the
+    /// first keystroke and while the first one is in flight. Drawing "no
+    /// results" in either of those says the search failed when it has not yet
+    /// been asked.
+    var searchFoundNothing: Bool {
+        isShowingSearchResults
+            && !isSearching
+            && searchedPeople.isEmpty
+            && searchedPosts.isEmpty
+    }
+
+    /// Ask the server who and what matches.
+    ///
+    /// Both halves are awaited together rather than separately: they are one
+    /// answer to one question, and letting them land independently draws a
+    /// list of people over an empty set of posts for however long the slower
+    /// request takes.
+    func search(_ query: String) async {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let repository, !trimmed.isEmpty else {
+            clearSearch()
+            return
+        }
+
+        let generation = connectionGeneration
+        searchQuery = trimmed
+        isSearching = true
+        // Guarded on the query as well as the connection. A slower earlier
+        // search finishing after a newer one started must not turn the
+        // spinner off underneath it.
+        defer {
+            if connectionGeneration == generation, searchQuery == trimmed {
+                isSearching = false
+            }
+        }
+
+        do {
+            async let people = repository.people(matching: trimmed)
+            // Fewer pages than Discover pulls. Somebody searching is looking
+            // for one thing, and reading five pages to show the first few
+            // matches spends the request budget on results nobody scrolls to.
+            async let posts = repository.allPosts(matching: trimmed, limitPages: 2)
+            let found = try await (people, posts)
+            guard connectionGeneration == generation, searchQuery == trimmed else { return }
+            searchedPeople = found.0
+            searchedPosts = found.1
+        } catch {
+            guard connectionGeneration == generation, searchQuery == trimmed else { return }
+            errorMessage = error.userFacingMessage
+        }
+    }
+
+    func clearSearch() {
+        searchQuery = ""
+        searchedPeople = []
+        searchedPosts = []
+        isSearching = false
+    }
+
     // MARK: - One person's posts
 
     /// Posts by author, for a profile page. Held here rather than in the
@@ -611,7 +672,13 @@ final class SocialStore {
             guard connectionGeneration == generation else { return }
             feed.removeAll { $0.displayed.author.id == author.id }
             discoverPosts.removeAll { $0.displayed.author.id == author.id }
-            people.removeAll { $0.id == author.id }
+            // Search results too, and for the same reason. Blocking somebody
+            // found by searching for them leaves their row directly under the
+            // box that found it, and the server will not return them again —
+            // so without this the only thing still showing them is the screen
+            // the block was made from.
+            searchedPeople.removeAll { $0.id == author.id }
+            searchedPosts.removeAll { $0.displayed.author.id == author.id }
             lastModerationMessage =
                 "Blocked \(author.displayName). You will not see each other's posts."
         } catch {

@@ -33,6 +33,18 @@ struct SocialFeedView: View {
         let isConnected: Bool
     }
 
+    /// What a search depends on: the text, and something to ask.
+    ///
+    /// The connection is half of it because it does not exist yet when this
+    /// page first appears — it is fetched, and the store holds nothing until
+    /// that returns. Keyed on the text alone, a search made before then asks
+    /// a store with no repository, gets nothing, and never runs again,
+    /// because the text it is keyed on has not changed since.
+    private struct SearchRequest: Equatable {
+        let text: String
+        let isConnected: Bool
+    }
+
     private enum FeedMode: String, CaseIterable, Identifiable {
         case following = "Following"
         case discover = "For you"
@@ -76,6 +88,13 @@ struct SocialFeedView: View {
         }
         .task {
 #if DEBUG
+            // Types into the search box, because simctl cannot. Deliberately
+            // the real signed-in feed against the real server rather than the
+            // preview harness: what is worth looking at here is whether the
+            // server's answer draws correctly, which sample data cannot show.
+            if let seeded = ProcessInfo.processInfo.environment["REPBASE_SOCIAL_SEARCH"] {
+                searchText = seeded
+            }
             // Opens a real post inside the real signed-in app, tab bar and
             // all. The preview harness renders this page on a bare stack,
             // which is not the layout anyone actually gets.
@@ -100,6 +119,17 @@ struct SocialFeedView: View {
             LazyVStack(spacing: 0) {
                 socialHeader(timeOfDay: timeOfDay)
                 modePicker(timeOfDay: timeOfDay)
+
+                if feedMode == .discover {
+                    searchField(timeOfDay: timeOfDay)
+                    // Only while searching. A permanent list of eight
+                    // arbitrary people above the feed is not an answer to
+                    // anything; it was there before because the search could
+                    // not reach anybody who was not already on the page.
+                    if store.isShowingSearchResults && !store.searchedPeople.isEmpty {
+                        peopleSection(timeOfDay: timeOfDay)
+                    }
+                }
 
                 if let message = store.errorMessage {
                     notice(message, symbol: "exclamationmark.triangle.fill", timeOfDay: timeOfDay)
@@ -126,6 +156,15 @@ struct SocialFeedView: View {
 
                 if isListLoading && displayedPosts.isEmpty {
                     ProgressView().padding(.top, 40)
+                } else if store.searchFoundNothing {
+                    // A search that matched nothing is not an empty feed, and
+                    // saying "share a workout to start your own" to somebody
+                    // looking for a person answers a question they did not ask.
+                    noMatchesState(timeOfDay: timeOfDay)
+                } else if store.isShowingSearchResults && displayedPosts.isEmpty {
+                    // People matched, posts did not. The section above is
+                    // showing the answer, so this says only what is missing.
+                    noMatchingPostsState(timeOfDay: timeOfDay)
                 } else if displayedPosts.isEmpty {
                     emptyState(timeOfDay: timeOfDay)
                 } else {
@@ -177,10 +216,25 @@ struct SocialFeedView: View {
         .task(id: DiscoverLoad(mode: feedMode, isConnected: store.isConnected)) {
             guard feedMode == .discover, store.isConnected else { return }
             await store.loadDiscover()
-            await store.loadPeople()
             if let viewerID = profileStore.viewerID {
                 await store.loadRelationships(for: viewerID)
             }
+        }
+        .task(id: SearchRequest(text: searchText, isConnected: store.isConnected)) {
+            let typed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !typed.isEmpty else {
+                store.clearSearch()
+                return
+            }
+            guard store.isConnected else { return }
+            // Debounced by sleeping first. `.task(id:)` cancels the previous
+            // one the moment the text changes, so a keystroke inside this
+            // window throws the pending request away before it is sent —
+            // otherwise every letter of a handle is its own round trip, and
+            // the answers race each other back.
+            try? await Task.sleep(for: .milliseconds(300))
+            guard !Task.isCancelled else { return }
+            await store.search(typed)
         }
     }
 
@@ -273,6 +327,40 @@ struct SocialFeedView: View {
         }
     }
 
+    private func searchField(timeOfDay: HomeTimeOfDay) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(timeOfDay.accent)
+            TextField("Search people or posts", text: $searchText)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .submitLabel(.search)
+
+            if store.isSearching {
+                ProgressView().controlSize(.small)
+            } else if !searchText.isEmpty {
+                // Clearing by hand rather than only by deleting: a handle is
+                // long enough that holding backspace is the slower way out,
+                // and the field is the one control here with no other exit.
+                Button {
+                    searchText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                }
+                .buttonStyle(.plain)
+                // The glyph is smaller than a finger; the frame is not.
+                .contentShape(Rectangle())
+                .accessibilityLabel("Clear search")
+            }
+        }
+        .padding(.horizontal, 16)
+        .frame(height: 50)
+        .repbaseDepthSurface(cornerRadius: 18)
+        .padding(.horizontal, RepbaseDesign.pageInset)
+        .padding(.bottom, 12)
+    }
+
     private func peopleSection(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
@@ -281,13 +369,13 @@ struct SocialFeedView: View {
                     .tracking(1.2)
                     .foregroundStyle(timeOfDay.accent)
                 Spacer()
-                Text("\(filteredPeople.count) found")
+                Text("\(store.searchedPeople.count) found")
                     .font(.community(.caption2))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
             }
             .padding(.bottom, 8)
 
-            ForEach(Array(filteredPeople.prefix(8).enumerated()), id: \.element.id) { index, person in
+            ForEach(Array(store.searchedPeople.prefix(8).enumerated()), id: \.element.id) { index, person in
                 HStack(spacing: 12) {
                     Circle()
                         .fill(timeOfDay.accent.opacity(0.12))
@@ -328,23 +416,17 @@ struct SocialFeedView: View {
                 // Not a Button wrapping the row: it holds the Follow button,
                 // and a button inside a button swallows the inner tap.
                 .onTapGesture { visiting = VisitedPerson(id: person.id) }
-                if index < min(filteredPeople.count, 8) - 1 { Divider() }
+                if index < min(store.searchedPeople.count, 8) - 1 { Divider() }
             }
         }
         .padding(.vertical, 12)
+        // Inset to the same margin the cards below use, so the heading lines
+        // up with them instead of sitting against the edge of the screen. The
+        // dividers are added after and stay full width, which is what makes
+        // the section read as a band rather than another card.
+        .padding(.horizontal, RepbaseDesign.pageInset)
         .overlay(alignment: .top) { Divider() }
         .overlay(alignment: .bottom) { Divider() }
-    }
-
-    private var filteredPeople: [PostAuthor] {
-        let viewerID = profileStore.viewerID
-        let available = store.people.filter { $0.id != viewerID }
-        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !query.isEmpty else { return available }
-        return available.filter {
-            $0.displayName.localizedCaseInsensitiveContains(query)
-                || $0.username.localizedCaseInsensitiveContains(query)
-        }
     }
 
     private func isFollowing(_ person: PostAuthor) -> Bool {
@@ -353,27 +435,23 @@ struct SocialFeedView: View {
     }
 
     private var isListLoading: Bool {
-        feedMode == .discover ? store.isLoadingDiscover : store.isLoading
+        guard feedMode == .discover else { return store.isLoading }
+        return store.isShowingSearchResults ? store.isSearching : store.isLoadingDiscover
     }
 
-    /// What the list shows: the people you follow, or everybody.
+    /// What the list shows: the people you follow, everybody, or a search.
     ///
     /// Discover reads its own list rather than filtering the feed. The feed is
     /// deliberately only the people you follow, so filtering it could never
     /// surface a stranger — which is the entire point of Discover.
+    ///
+    /// Results arrive already narrowed, by a server that also decided what
+    /// this reader may see. Nothing is filtered here: a second pass over the
+    /// results could only ever remove rows the server had allowed, and the
+    /// one it used to do — matching the typed text — is the query itself.
     private var displayedPosts: [FeedPost] {
         guard feedMode == .discover else { return store.feed }
-        let everyone = store.discoverPosts
-        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        guard !query.isEmpty else { return everyone }
-        return everyone.filter { post in
-            let shown = post.displayed
-            return shown.author.displayName.lowercased().contains(query)
-                || shown.author.username.lowercased().contains(query)
-                || shown.caption.lowercased().contains(query)
-                || shown.workout?.title.lowercased().contains(query) == true
-                || shown.meal?.name.lowercased().contains(query) == true
-        }
+        return store.isShowingSearchResults ? store.searchedPosts : store.discoverPosts
     }
 
     /// Opens the composer. Kept beside the title rather than floating over the
@@ -394,6 +472,37 @@ struct SocialFeedView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("New post")
+    }
+
+    /// Nothing matched at all — no people and no posts.
+    private func noMatchesState(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+                .font(.community(size: 30, weight: .semibold))
+                .foregroundStyle(timeOfDay.accent)
+            Text("No matches")
+                .font(.community(.headline))
+                .foregroundStyle(timeOfDay.canvasPrimaryText)
+            Text("Nothing came back for \u{201C}\(store.searchQuery)\u{201D}. Try a username, someone's name, or a word from a post.")
+                .font(.community(.subheadline))
+                .multilineTextAlignment(.center)
+                .foregroundStyle(timeOfDay.canvasSecondaryText)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 44)
+        .padding(.horizontal, RepbaseDesign.pageInset)
+    }
+
+    /// People matched but no posts did.
+    private func noMatchingPostsState(timeOfDay: HomeTimeOfDay) -> some View {
+        Text("No posts match \u{201C}\(store.searchQuery)\u{201D}.")
+            .font(.community(.subheadline))
+            .multilineTextAlignment(.center)
+            .foregroundStyle(timeOfDay.canvasSecondaryText)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 32)
+            .padding(.horizontal, RepbaseDesign.pageInset)
     }
 
     private func emptyState(timeOfDay: HomeTimeOfDay) -> some View {

@@ -966,6 +966,10 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /api/v1/step-counts/record/`.
     /// - Remark: Generated from `#/paths//api/v1/step-counts/record//post(step_counts_record_create)`.
     func stepCountsRecordCreate(_ input: Operations.StepCountsRecordCreate.Input) async throws -> Operations.StepCountsRecordCreate.Output
+    /// Everybody, or the people matching a search.
+    ///
+    /// Never the viewer themself, and never anyone on either side of a block: the point of the list is people worth reaching, and neither of those is.
+    ///
     /// - Remark: HTTP `GET /api/v1/users/`.
     /// - Remark: Generated from `#/paths//api/v1/users//get(users_list)`.
     func usersList(_ input: Operations.UsersList.Input) async throws -> Operations.UsersList.Output
@@ -3117,6 +3121,10 @@ extension APIProtocol {
     public func stepCountsRecordCreate(body: Operations.StepCountsRecordCreate.Input.Body) async throws -> Operations.StepCountsRecordCreate.Output {
         try await stepCountsRecordCreate(Operations.StepCountsRecordCreate.Input(body: body))
     }
+    /// Everybody, or the people matching a search.
+    ///
+    /// Never the viewer themself, and never anyone on either side of a block: the point of the list is people worth reaching, and neither of those is.
+    ///
     /// - Remark: HTTP `GET /api/v1/users/`.
     /// - Remark: Generated from `#/paths//api/v1/users//get(users_list)`.
     public func usersList(
@@ -28531,17 +28539,24 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/social/posts/GET/query/page`.
                 public var page: Swift.Int?
+                /// Return only posts matching this, ignoring case: the caption, the author's username or name, the title of the workout, meal or planner entry attached, or the name of a food or exercise inside it — so a meal posted as "Meal 1" is still found by the chicken in it. Narrows what the reader is already allowed to see and never widens it, so a post hidden from them stays hidden however well it matches. Combines with `author` when both are given.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/GET/query/search`.
+                public var search: Swift.String?
                 /// Creates a new `Query`.
                 ///
                 /// - Parameters:
                 ///   - author: Return only posts by this user, still filtered by what the reader is allowed to see.
                 ///   - page: A page number within the paginated result set.
+                ///   - search: Return only posts matching this, ignoring case: the caption, the author's username or name, the title of the workout, meal or planner entry attached, or the name of a food or exercise inside it — so a meal posted as "Meal 1" is still found by the chicken in it. Narrows what the reader is already allowed to see and never widens it, so a post hidden from them stays hidden however well it matches. Combines with `author` when both are given.
                 public init(
                     author: Swift.Int? = nil,
-                    page: Swift.Int? = nil
+                    page: Swift.Int? = nil,
+                    search: Swift.String? = nil
                 ) {
                     self.author = author
                     self.page = page
+                    self.search = search
                 }
             }
             public var query: Operations.SocialPostsList.Input.Query
@@ -30409,6 +30424,10 @@ public enum Operations {
             case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
         }
     }
+    /// Everybody, or the people matching a search.
+    ///
+    /// Never the viewer themself, and never anyone on either side of a block: the point of the list is people worth reaching, and neither of those is.
+    ///
     /// - Remark: HTTP `GET /api/v1/users/`.
     /// - Remark: Generated from `#/paths//api/v1/users//get(users_list)`.
     public enum UsersList {
@@ -30420,12 +30439,21 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/users/GET/query/page`.
                 public var page: Swift.Int?
+                /// Find people by username or name, ignoring case. A leading @ is ignored, and a query with a space is matched against the full name, so "aaron pio" finds the person "aaron" and "pio" alone would each find as well. Omitted, the list is everybody.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/users/GET/query/search`.
+                public var search: Swift.String?
                 /// Creates a new `Query`.
                 ///
                 /// - Parameters:
                 ///   - page: A page number within the paginated result set.
-                public init(page: Swift.Int? = nil) {
+                ///   - search: Find people by username or name, ignoring case. A leading @ is ignored, and a query with a space is matched against the full name, so "aaron pio" finds the person "aaron" and "pio" alone would each find as well. Omitted, the list is everybody.
+                public init(
+                    page: Swift.Int? = nil,
+                    search: Swift.String? = nil
+                ) {
                     self.page = page
+                    self.search = search
                 }
             }
             public var query: Operations.UsersList.Input.Query

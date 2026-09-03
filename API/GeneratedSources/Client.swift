@@ -9343,6 +9343,13 @@ public struct Client: APIProtocol {
                     name: "page",
                     value: input.query.page
                 )
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "search",
+                    value: input.query.search
+                )
                 converter.setAcceptHeader(
                     in: &request.headerFields,
                     contentTypes: input.headers.accept
@@ -10275,6 +10282,10 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// Everybody, or the people matching a search.
+    ///
+    /// Never the viewer themself, and never anyone on either side of a block: the point of the list is people worth reaching, and neither of those is.
+    ///
     /// - Remark: HTTP `GET /api/v1/users/`.
     /// - Remark: Generated from `#/paths//api/v1/users//get(users_list)`.
     public func usersList(_ input: Operations.UsersList.Input) async throws -> Operations.UsersList.Output {
@@ -10297,6 +10308,13 @@ public struct Client: APIProtocol {
                     explode: true,
                     name: "page",
                     value: input.query.page
+                )
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "search",
+                    value: input.query.search
                 )
                 converter.setAcceptHeader(
                     in: &request.headerFields,
