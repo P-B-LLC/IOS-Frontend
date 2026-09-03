@@ -51,7 +51,6 @@ struct SocialProfileView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
     @Environment(AuthenticationStore.self) private var authentication
-    @Environment(WorkoutStore.self) private var workoutStore
     @Environment(SocialProfileStore.self) private var store
     /// The feed's store, because the posts on this page are the same posts:
     /// liking one here has to be the like the feed shows.
@@ -62,6 +61,7 @@ struct SocialProfileView: View {
     @State private var selectedSection: ProfileSection = .posts
     @State private var editingProfile = false
     @State private var showingSettings = false
+    @State private var isComposing = false
 #if DEBUG
     // Settings is two taps in and simctl has no tap, which is why the
     // appearance picker on it could not be checked from here.
@@ -149,6 +149,13 @@ struct SocialProfileView: View {
         }
         .scrollIndicators(.hidden)
         .minimizesBottomBarOnScroll()
+        .overlay(alignment: .bottomTrailing) {
+            if isCurrentUser {
+                createPostButton(timeOfDay: timeOfDay)
+                    .padding(.trailing, RepbaseDesign.pageInset + 2)
+                    .padding(.bottom, 12)
+            }
+        }
         .toolbar(.hidden, for: .navigationBar)
         .homeTimeScreen(timeOfDay)
         .fullScreenCover(isPresented: $editingProfile) {
@@ -159,6 +166,9 @@ struct SocialProfileView: View {
         }
         .fullScreenCover(isPresented: $showingSettings) {
             ProfileSettingsView(profile: profile)
+        }
+        .fullScreenCover(isPresented: $isComposing) {
+            PostComposerView()
         }
 #if DEBUG
         .task {
@@ -187,10 +197,31 @@ struct SocialProfileView: View {
                 : store.loadHighlights(forUser: subjectID)
             _ = await (posts, relationships, lifts, mine)
         }
-        .task(id: workoutStore.isConnected) {
-            guard isCurrentUser, workoutStore.isConnected else { return }
-            await workoutStore.loadDashboardSessions()
+    }
+
+    /// A fixed way to post that does not consume a row in the profile.
+    ///
+    /// The app shell lays its navigation bar into the safe area below this
+    /// view, so anchoring the button to the viewport's bottom edge keeps it
+    /// immediately above that bar while the profile feed moves underneath.
+    private func createPostButton(timeOfDay: HomeTimeOfDay) -> some View {
+        Button {
+            isComposing = true
+        } label: {
+            Image(systemName: "plus")
+                .font(.community(size: 20, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .frame(width: 42, height: 42)
+                .background(timeOfDay.accent, in: Circle())
+                .overlay {
+                    Circle()
+                        .strokeBorder(Color.white.opacity(0.28), lineWidth: 1)
+                }
+                .shadow(color: timeOfDay.shadow.opacity(0.7), radius: 7, x: 0, y: 3)
         }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Create post")
+        .accessibilityHint("Opens the post composer")
     }
 
     /// What the button says, which is one of three things rather than two.
@@ -322,24 +353,9 @@ struct SocialProfileView: View {
                     .padding(.top, 2)
             }
 
-            if isCurrentUser {
-                momentumBand(timeOfDay: timeOfDay)
-                    .padding(.top, 2)
-            }
         }
-        .padding(.horizontal, 12)
+        .padding(.horizontal, 4)
         .padding(.vertical, 14)
-        .background(
-            LinearGradient(
-                colors: [
-                    timeOfDay.surfaceRaised.opacity(0.18),
-                    timeOfDay.accent.opacity(0.08)
-                ],
-                startPoint: .leading,
-                endPoint: .trailing
-            ),
-            in: RoundedRectangle(cornerRadius: 20, style: .continuous)
-        )
         .padding(.top, 10)
         .padding(.bottom, 12)
     }
@@ -348,7 +364,7 @@ struct SocialProfileView: View {
         HStack(spacing: 7) {
             profileCount(myPostCount, label: "posts", color: timeOfDay.canvasPrimaryText)
             Text("·").foregroundStyle(timeOfDay.secondaryText)
-            profileCount(followerCount, label: "followers", color: timeOfDay.accent)
+            profileCount(followerCount, label: "followers", color: timeOfDay.canvasPrimaryText)
             Text("·").foregroundStyle(timeOfDay.secondaryText)
             profileCount(followingCount, label: "following", color: timeOfDay.canvasPrimaryText)
         }
@@ -360,7 +376,7 @@ struct SocialProfileView: View {
 
     private func profileCount(_ count: Int, label: String, color: Color) -> some View {
         Text("\(count) \(label)")
-            .fontWeight(label == "followers" ? .bold : .semibold)
+            .fontWeight(.semibold)
             .foregroundStyle(color)
     }
 
@@ -368,38 +384,6 @@ struct SocialProfileView: View {
         let discipline = primaryDiscipline
         let gym = profile.gym.map { $0.city.isEmpty ? $0.name : "\($0.name) · \($0.city)" }
         return [discipline, gym].compactMap { $0 }.joined(separator: "  ·  ")
-    }
-
-    private func momentumBand(timeOfDay: HomeTimeOfDay) -> some View {
-        let stats = workoutStore.trainingStats
-        let goalProgress = stats.weeklyGoal > 0
-            ? Int((Double(stats.completedThisWeek) / Double(stats.weeklyGoal) * 100).rounded())
-            : 0
-
-        return HStack(spacing: 8) {
-            Text("YOUR MOMENTUM")
-                .font(.community(size: 9, weight: .bold))
-                .tracking(0.7)
-                .foregroundStyle(RepbaseDesign.success)
-
-            Spacer(minLength: 4)
-
-            Text("\(stats.totalWorkouts) workouts · \(stats.currentStreakText) streak · \(goalProgress)% goal")
-                .font(.community(size: 10, weight: .bold))
-                .foregroundStyle(timeOfDay.canvasPrimaryText)
-                .lineLimit(1)
-                .minimumScaleFactor(0.78)
-        }
-        .padding(.horizontal, 12)
-        .frame(maxWidth: .infinity, minHeight: 36)
-        .background(
-            Color.repbaseDynamic(
-                light: RepbasePalette.sage.opacity(0.22),
-                dark: RepbasePalette.sage.opacity(0.18)
-            ),
-            in: RoundedRectangle(cornerRadius: 12, style: .continuous)
-        )
-        .accessibilityElement(children: .combine)
     }
 
     private var primaryDiscipline: String? {
