@@ -245,6 +245,14 @@ private struct AppRootView: View {
                         // Arrives with the thread already pushed, which is the
                         // only way to check that a card leads anywhere.
                         SocialFeedView(initiallyOpened: 1)
+                    case "cropper", "cropper-avatar":
+                        // The cropper is behind the photo picker, which is a
+                        // system sheet a script cannot drive. This opens it on
+                        // a generated picture instead, which is enough to see
+                        // the window, the shape chips and the dimmed surround.
+                        // `-avatar` shows the profile configuration of the
+                        // same view: square, circular, no choice of shape.
+                        PhotoCropperPreview()
                     default:
                         SocialFeedView()
                     }

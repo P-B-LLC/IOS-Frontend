@@ -40,6 +40,11 @@ struct PostComposerView: View {
     @State private var photoData: Data?
     @State private var photoContentType: String?
     @State private var photoError: String?
+    /// The photo being framed, if the cropper is open.
+    @State private var framing: PendingPhoto?
+    /// The picture as it was picked, kept so Reframe starts from the whole
+    /// photo rather than cropping a crop.
+    @State private var pickedImage: UIImage?
 
     /// Set when the sheet was opened from a particular thing's page, which is
     /// then the only thing it can post. Nil when opened from the feed, where
@@ -372,7 +377,7 @@ struct PostComposerView: View {
         VStack(alignment: .leading, spacing: 11) {
             EditorialSectionTitle(
                 title: "Photo",
-                detail: "Optional. Kept at the shape you framed it."
+                detail: "Optional. Choose a shape and frame it."
             )
 
             if let photoData, let image = UIImage(data: photoData) {
@@ -395,11 +400,25 @@ struct PostComposerView: View {
                             RoundedRectangle(cornerRadius: RepbaseDesign.cardRadius)
                         )
 
-                    Button("Remove photo") {
-                        clearPhoto()
+                    HStack(spacing: 18) {
+                        // Reframes the picture as picked, not the crop of it.
+                        // Cropping a crop loses a little every time and cannot
+                        // widen back out to a shape it has already been cut
+                        // narrower than.
+                        if let pickedImage {
+                            Button("Reframe") {
+                                framing = PendingPhoto(image: pickedImage)
+                            }
+                            .font(.community(.subheadline, weight: .semibold))
+                            .foregroundStyle(timeOfDay.accent)
+                        }
+
+                        Button("Remove photo") {
+                            clearPhoto()
+                        }
+                        .font(.community(.subheadline, weight: .semibold))
+                        .foregroundStyle(.red)
                     }
-                    .font(.community(.subheadline, weight: .semibold))
-                    .foregroundStyle(.red)
                 }
             } else {
                 PhotosPicker(
@@ -441,70 +460,80 @@ struct PostComposerView: View {
         .onChange(of: pickedPhoto) { _, item in
             Task { await load(item) }
         }
+        .fullScreenCover(item: $framing) { pending in
+            PhotoCropperView(
+                image: pending.image,
+                onCancel: {
+                    framing = nil
+                    // Only if nothing was framed yet. Cancelling a Reframe
+                    // should leave the crop already chosen alone rather than
+                    // taking the photo off the post.
+                    if photoData == nil { clearPhoto() }
+                },
+                onUse: useFramed
+            )
+        }
     }
 
-    /// Reads the chosen picture and works out what to call it.
+    /// Reads the chosen picture and opens the cropper on it.
     ///
-    /// The picker hands over whatever the library holds, which on an iPhone is
-    /// often HEIC. The contract accepts that, so the bytes are sent as they
-    /// are rather than re-encoded; only a type the contract does not list is
-    /// converted, and anything that cannot be identified at all is refused
-    /// here rather than by the server.
+    /// Nothing is checked about the bytes here, on purpose. The picker hands
+    /// over whatever the library holds, which on an iPhone is usually HEIC and
+    /// often more than five megabytes -- and both of those were refusals until
+    /// now. What is posted is the cropper's output, which is always a bounded
+    /// JPEG, so the questions worth asking are asked of that instead.
+    ///
+    /// The HEIC part was a real refusal and not a theoretical one. The
+    /// contract lists `image/heic` as acceptable, but the server reads photos
+    /// with Pillow, which is not built with HEIF here -- so an iPhone photo
+    /// sent as it came was rejected on arrival for being unreadable. Going
+    /// through the cropper re-encodes it, because iOS decodes HEIC perfectly
+    /// well even where the server cannot.
     private func load(_ item: PhotosPickerItem?) async {
         guard let item else { return }
         photoError = nil
         do {
-            guard let data = try await item.loadTransferable(type: Data.self) else {
+            guard let data = try await item.loadTransferable(type: Data.self),
+                  let image = UIImage(data: data) else {
                 photoError = "That photo could not be read."
                 return
             }
-            guard let contentType = Self.contentType(of: data) else {
-                photoError = "That is not an image Rytivo can post."
-                return
-            }
-            guard data.count <= Self.photoByteLimit else {
-                photoError = "That photo is larger than 5 MB."
-                return
-            }
-            photoData = data
-            photoContentType = contentType
+            pickedImage = image
+            framing = PendingPhoto(image: image)
         } catch {
             photoError = error.localizedDescription
         }
     }
 
+    /// Takes what the cropper cut, if it is small enough to send.
+    private func useFramed(_ data: Data) {
+        framing = nil
+        guard data.count <= Self.photoByteLimit else {
+            // Reachable only from an enormous picture at the widest shape;
+            // the cropper bounds its longest edge, so most crops land far
+            // under. Said plainly rather than failing at the server.
+            photoError = "That photo is still larger than 5 MB once framed."
+            return
+        }
+        photoError = nil
+        photoData = data
+        // The cropper writes JPEG whatever went in, which is the one type
+        // every part of this pipeline can read.
+        photoContentType = "image/jpeg"
+    }
+
     private func clearPhoto() {
         pickedPhoto = nil
+        pickedImage = nil
+        framing = nil
         photoData = nil
         photoContentType = nil
         photoError = nil
     }
 
-    /// The image type, read from the bytes themselves.
-    ///
-    /// `PhotosPickerItem.supportedContentTypes` is often empty for a library
-    /// asset, and the file extension is not available at all, so the magic
-    /// number is the only thing that actually says what this is.
-    private static func contentType(of data: Data) -> String? {
-        let bytes = [UInt8](data.prefix(12))
-        guard bytes.count >= 12 else { return nil }
-        if bytes[0] == 0xFF, bytes[1] == 0xD8, bytes[2] == 0xFF {
-            return "image/jpeg"
-        }
-        if bytes[0] == 0x89, bytes[1] == 0x50, bytes[2] == 0x4E, bytes[3] == 0x47 {
-            return "image/png"
-        }
-        // RIFF....WEBP
-        if bytes[0] == 0x52, bytes[1] == 0x49, bytes[2] == 0x46, bytes[3] == 0x46,
-           bytes[8] == 0x57, bytes[9] == 0x45, bytes[10] == 0x42, bytes[11] == 0x50 {
-            return "image/webp"
-        }
-        // ....ftypheic / heix / hevc / mif1, the HEIF family the API accepts.
-        if bytes[4] == 0x66, bytes[5] == 0x74, bytes[6] == 0x79, bytes[7] == 0x70 {
-            return "image/heic"
-        }
-        return nil
-    }
+    // Sniffing the type out of the bytes lived here, reading magic numbers to
+    // decide between JPEG, PNG, WebP and HEIC. Nothing needs it now: whatever
+    // was picked, what gets posted is the cropper's JPEG.
 
     // MARK: - Caption
 
