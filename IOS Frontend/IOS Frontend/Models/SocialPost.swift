@@ -130,6 +130,11 @@ nonisolated struct PostMealSnapshot: Equatable, Hashable, Sendable {
     var totalCarbohydrateGrams: Decimal
     var totalFatGrams: Decimal
     var entries: [PostFoodLine]
+    /// How the meal was made, if its author wrote it down.
+    ///
+    /// Empty for most posts. A meal is a list of foods; this is what somebody
+    /// did with them, and only the ones actually cooked have anything to say.
+    var cookingInstructions: String = ""
 }
 
 nonisolated struct PostPlannerSnapshot: Equatable, Hashable, Sendable {

@@ -342,7 +342,8 @@ final class SocialStore {
         caption: String,
         visibility: PostVisibility,
         showsWeights: Bool = true,
-        photo: PostPhoto? = nil
+        photo: PostPhoto? = nil,
+        cookingInstructions: String = ""
     ) async -> Bool {
         guard let repository else {
             errorMessage = "Connect to Rytivo before posting."
@@ -361,7 +362,8 @@ final class SocialStore {
                 caption: caption,
                 visibility: visibility,
                 showsWeights: showsWeights,
-                photo: photo
+                photo: photo,
+                cookingInstructions: cookingInstructions
             )
             guard connectionGeneration == generation else { return false }
             // A private post is deliberately kept out of the stream, exactly as

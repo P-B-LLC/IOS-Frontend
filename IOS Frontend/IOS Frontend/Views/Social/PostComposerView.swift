@@ -29,6 +29,8 @@ struct PostComposerView: View {
     @State private var selectedDay = Date()
     @State private var didChooseOpeningDay = false
     @State private var caption = ""
+    /// How the meal was made, for a food post. Ignored for anything else.
+    @State private var cookingInstructions = ""
     @State private var visibility: PostVisibility = .publicToAll
     /// Whether the numbers lifted go out with the workout. On by default:
     /// somebody who says nothing has posted a workout, and one without its
@@ -57,6 +59,9 @@ struct PostComposerView: View {
     /// The contract's cap. Enforced here so a long caption is stopped as it is
     /// typed rather than by a 400 with nothing on screen to explain it.
     private static let captionLimit = 300
+    /// Longer than a caption because a recipe is a list of steps. Matches
+    /// the ceiling the server puts on the same field.
+    private static let instructionsLimit = 4000
 
     /// Opened from the feed: nothing chosen yet, and anything may be posted.
     init() {
@@ -130,6 +135,12 @@ struct PostComposerView: View {
                     }
                     photoSection(timeOfDay: timeOfDay)
                     captionSection(timeOfDay: timeOfDay)
+                    // Only for food. A recipe has nothing to say about a
+                    // workout, and an empty box asking for one is a question
+                    // the poster has to decide not to answer.
+                    if source == .meal {
+                        instructionsSection(timeOfDay: timeOfDay)
+                    }
                     if source == .workout {
                         weightsSection(timeOfDay: timeOfDay)
                     }
@@ -581,6 +592,47 @@ struct PostComposerView: View {
         }
     }
 
+    // MARK: - How it was made
+
+    /// The recipe, for a meal post.
+    ///
+    /// Multi-line and unformatted on purpose. A recipe is a list of steps and
+    /// people already know how to write one; a structured step editor would
+    /// be more to build, more to tap, and worse at the half of recipes that
+    /// are two sentences.
+    private func instructionsSection(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(alignment: .leading, spacing: 11) {
+            EditorialSectionTitle(
+                title: "Cooking instructions",
+                detail: "Optional. Shown when somebody opens the post."
+            )
+
+            TextField(
+                "How you made it",
+                text: $cookingInstructions,
+                axis: .vertical
+            )
+            .lineLimit(3...12)
+            .font(.community(.body))
+            .foregroundStyle(timeOfDay.canvasPrimaryText)
+            .textInputAutocapitalization(.sentences)
+            .padding(.vertical, 12)
+            .overlay(alignment: .bottom) {
+                Divider()
+            }
+            .onChange(of: cookingInstructions) { _, value in
+                if value.count > Self.instructionsLimit {
+                    cookingInstructions = String(value.prefix(Self.instructionsLimit))
+                }
+            }
+
+            Text("\(cookingInstructions.count)/\(Self.instructionsLimit)")
+                .font(.community(.caption2).monospacedDigit())
+                .foregroundStyle(timeOfDay.canvasSecondaryText)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+    }
+
     // MARK: - Visibility
 
     /// Whether the load goes out with the workout.
@@ -753,7 +805,12 @@ struct PostComposerView: View {
                 caption: caption.trimmingCharacters(in: .whitespacesAndNewlines),
                 visibility: visibility,
                 showsWeights: showsWeights,
-                photo: attachedPhoto
+                photo: attachedPhoto,
+                // Sent whatever the kind; the server keeps it only on a meal.
+                // Filtering here as well would mean two places deciding the
+                // same thing, and they would eventually disagree.
+                cookingInstructions: cookingInstructions
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
             )
             // Left open when it failed, so the error is read beside the post it
             // belongs to and the caption is not lost.

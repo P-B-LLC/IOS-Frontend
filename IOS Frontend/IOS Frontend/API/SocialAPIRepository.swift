@@ -134,7 +134,10 @@ actor SocialAPIRepository {
         caption: String,
         visibility: PostVisibility,
         showsWeights: Bool = true,
-        photo: PostPhoto? = nil
+        photo: PostPhoto? = nil,
+        // How the meal was made. The server keeps it on a meal post's
+        // snapshot and ignores it for any other kind.
+        cookingInstructions: String = ""
     ) async throws -> FeedPost {
         guard let kindPayload = Components.Schemas.CreatePostKindEnum(
             rawValue: kind.apiValue
@@ -166,7 +169,12 @@ actor SocialAPIRepository {
                     showsWeights: showsWeights,
                     visibility: .init(value1: visibilityPayload),
                     contentType: contentType,
-                    imageBase64: photo?.base64
+                    imageBase64: photo?.base64,
+                    // Omitted rather than sent blank, so an empty box does
+                    // not read as somebody having written nothing on purpose.
+                    cookingInstructions: cookingInstructions.isEmpty
+                        ? nil
+                        : cookingInstructions
                 )
             )
         )
@@ -822,7 +830,8 @@ actor SocialAPIRepository {
                     servings: FoodDecimal.value(entry.servings),
                     totalCalories: FoodDecimal.value(entry.totalCalories)
                 )
-            }
+            },
+            cookingInstructions: payload.cookingInstructions ?? ""
         )
     }
 

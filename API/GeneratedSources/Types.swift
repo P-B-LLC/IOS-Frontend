@@ -3768,6 +3768,10 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CreatePostRequest/image_base64`.
             public var imageBase64: Swift.String?
+            /// How the meal was made, for a meal post. Ignored for other kinds.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreatePostRequest/cooking_instructions`.
+            public var cookingInstructions: Swift.String?
             /// Creates a new `CreatePostRequest`.
             ///
             /// - Parameters:
@@ -3778,6 +3782,7 @@ public enum Components {
             ///   - visibility:
             ///   - contentType:
             ///   - imageBase64: The image bytes, base64 encoded, without a data: prefix.
+            ///   - cookingInstructions: How the meal was made, for a meal post. Ignored for other kinds.
             public init(
                 kind: Components.Schemas.CreatePostKindEnum,
                 sourceId: Swift.Int,
@@ -3785,7 +3790,8 @@ public enum Components {
                 showsWeights: Swift.Bool? = nil,
                 visibility: Components.Schemas.CreatePostRequest.VisibilityPayload? = nil,
                 contentType: Components.Schemas.ContentTypeEnum? = nil,
-                imageBase64: Swift.String? = nil
+                imageBase64: Swift.String? = nil,
+                cookingInstructions: Swift.String? = nil
             ) {
                 self.kind = kind
                 self.sourceId = sourceId
@@ -3794,6 +3800,7 @@ public enum Components {
                 self.visibility = visibility
                 self.contentType = contentType
                 self.imageBase64 = imageBase64
+                self.cookingInstructions = cookingInstructions
             }
             public enum CodingKeys: String, CodingKey {
                 case kind
@@ -3803,6 +3810,7 @@ public enum Components {
                 case visibility
                 case contentType = "content_type"
                 case imageBase64 = "image_base64"
+                case cookingInstructions = "cooking_instructions"
             }
         }
         /// When the new rotation takes over.
@@ -7692,6 +7700,8 @@ public enum Components {
             public var date: Swift.String
             /// - Remark: Generated from `#/components/schemas/PostMeal/entries`.
             public var entries: [Components.Schemas.PostMealEntry]
+            /// - Remark: Generated from `#/components/schemas/PostMeal/cooking_instructions`.
+            public var cookingInstructions: Swift.String
             /// - Remark: Generated from `#/components/schemas/PostMeal/total_calories`.
             public var totalCalories: Swift.String
             /// - Remark: Generated from `#/components/schemas/PostMeal/total_protein_grams`.
@@ -7706,6 +7716,7 @@ public enum Components {
             ///   - name:
             ///   - date:
             ///   - entries:
+            ///   - cookingInstructions:
             ///   - totalCalories:
             ///   - totalProteinGrams:
             ///   - totalCarbohydrateGrams:
@@ -7714,6 +7725,7 @@ public enum Components {
                 name: Swift.String,
                 date: Swift.String,
                 entries: [Components.Schemas.PostMealEntry],
+                cookingInstructions: Swift.String,
                 totalCalories: Swift.String,
                 totalProteinGrams: Swift.String,
                 totalCarbohydrateGrams: Swift.String,
@@ -7722,6 +7734,7 @@ public enum Components {
                 self.name = name
                 self.date = date
                 self.entries = entries
+                self.cookingInstructions = cookingInstructions
                 self.totalCalories = totalCalories
                 self.totalProteinGrams = totalProteinGrams
                 self.totalCarbohydrateGrams = totalCarbohydrateGrams
@@ -7731,6 +7744,7 @@ public enum Components {
                 case name
                 case date
                 case entries
+                case cookingInstructions = "cooking_instructions"
                 case totalCalories = "total_calories"
                 case totalProteinGrams = "total_protein_grams"
                 case totalCarbohydrateGrams = "total_carbohydrate_grams"

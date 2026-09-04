@@ -59,7 +59,15 @@ struct PostDetailView: View {
         .navigationDestination(item: $visitingAuthor) { userID in
             PersonProfileView(userID: userID)
         }
-        .task {
+        .task(id: store.isConnected) {
+            // Keyed on the connection, because without one this concluded the
+            // post was gone rather than waiting for something to ask.
+            // Restoring the session is asynchronous, so a page opened on
+            // arrival — from a notification, or straight into a post — ran
+            // this once against an empty store, fetched nothing, and drew
+            // "This post is gone" over a post that was there. Permanently:
+            // nothing ran it again, because nothing it watched had changed.
+            guard store.isConnected else { return }
             // Fetched first when the feed does not hold it — opened from a
             // profile, or from a card that has since paged out.
             await store.loadPost(id: postID)
@@ -82,10 +90,11 @@ struct PostDetailView: View {
             PostCard(
                 post: post,
                 timeOfDay: timeOfDay,
-                // The photo as it was posted. The feed draws the small copy
-                // because it draws dozens of them; arriving here means
-                // somebody chose this one picture and wants to see it.
-                photoSize: .asPosted,
+                // Everything: the recipe under a meal, every exercise under a
+                // workout, and the photo as it was posted rather than the
+                // card-sized copy. Arriving here is a deliberate request to
+                // read the post rather than scan past it.
+                presentation: .detail,
                 // The same sheet the feed raises, from the same button. Being
                 // on the post's own page is not a reason to have already
                 // opened its comments.

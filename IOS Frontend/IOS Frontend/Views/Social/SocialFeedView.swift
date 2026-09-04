@@ -687,23 +687,25 @@ struct SocialFeedView: View {
 /// `kind`, so a post whose kind this build does not know still draws whatever
 /// of it is recognisable.
 struct PostCard: View {
-    /// Which copy of the attached photo to draw.
-    enum PhotoSize {
-        /// The card-sized copy the server made. What a feed of these wants.
+    /// How much of the post this drawing is meant to show.
+    ///
+    /// One switch rather than two, because the two things it decides always
+    /// move together. A feed wants the summary and the small photo; the
+    /// post's own page wants everything and the picture as it was posted.
+    enum Presentation {
+        /// Name, the numbers worth scanning, and the card-sized photo.
         case feed
-        /// The photo as it was posted. What opening a post asks for.
-        case asPosted
+        /// The whole thing: the recipe under a meal, every exercise under a
+        /// workout, and the photo at the size it was uploaded.
+        case detail
     }
 
     @Environment(SocialStore.self) private var store
 
     let post: FeedPost
     let timeOfDay: HomeTimeOfDay
-    /// Feed by default, because that is where most of these are drawn and
-    /// where sending originals cost the most — dozens of cards, two to four
-    /// megabytes each. The post's own page overrides it: opening a post is a
-    /// deliberate request to look at the picture properly.
-    var photoSize: PhotoSize = .feed
+    /// Feed by default, because that is where most of these are drawn.
+    var presentation: Presentation = .feed
     /// Opens the thread. Nil on the detail page, where the card is already
     /// the thing being read and must not push another copy of itself.
     var openComments: (() -> Void)?
@@ -831,11 +833,14 @@ struct PostCard: View {
     /// small copy still fills a feed, and a variant that was never made still
     /// fills a detail page.
     private func drawnPhotoURL(_ shown: RepostedPost) -> URL? {
-        switch photoSize {
+        switch presentation {
         case .feed: return shown.feedImageURL ?? shown.imageURL
-        case .asPosted: return shown.imageURL ?? shown.feedImageURL
+        case .detail: return shown.imageURL ?? shown.feedImageURL
         }
     }
+
+    /// Whether this drawing shows what is inside the post, or only names it.
+    private var showsContents: Bool { presentation == .detail }
 
     private func photo(_ url: URL, meal: PostMealSnapshot?) -> some View {
         Color.clear
@@ -1003,12 +1008,13 @@ struct PostCard: View {
                     .tracking(0.5)
                     .foregroundStyle(timeOfDay.accent)
 
-                if !imageAttached {
-                    Text(workout.title)
-                        .font(.community(.subheadline, weight: .bold))
-                        .foregroundStyle(timeOfDay.primaryText)
-                        .lineLimit(1)
-                }
+                // Always, photo or not. It used to be dropped whenever a
+                // picture was attached, which left the card showing a shape
+                // and two numbers and never saying which workout it was.
+                Text(workout.title)
+                    .font(.community(.subheadline, weight: .bold))
+                    .foregroundStyle(timeOfDay.primaryText)
+                    .lineLimit(1)
 
                 Spacer(minLength: 4)
 
@@ -1021,21 +1027,46 @@ struct PostCard: View {
                 }
             }
 
-            if imageAttached {
+            // The work and the time it took, which is what a reader is
+            // actually comparing against their own. Duration used to be
+            // dropped whenever a photo was attached, for no reason beyond
+            // the layout being written twice.
+            HStack(spacing: 6) {
                 Text(workoutSummary(workout))
-                    .font(.community(.caption, weight: .semibold))
-                    .foregroundStyle(timeOfDay.secondaryText)
-                    .padding(.top, 5)
-            } else {
-                HStack(spacing: 6) {
-                    Text(workoutSummary(workout))
-                    if let duration = workout.durationSeconds, duration > 0 {
-                        Text("·")
-                        Text(Self.duration(duration))
+                if let duration = workout.durationSeconds, duration > 0 {
+                    Text("·")
+                    Text(Self.duration(duration))
+                }
+            }
+            .font(.community(.caption, weight: imageAttached ? .semibold : .regular))
+            .foregroundStyle(timeOfDay.secondaryText)
+            .padding(.top, imageAttached ? 5 : 0)
+
+            // Every exercise and its sets, on the post's own page only. This
+            // is what somebody opened the post to read: a card saying "6 sets"
+            // does not say which six.
+            if showsContents, !workout.exercises.isEmpty {
+                Divider().padding(.vertical, 6)
+
+                VStack(spacing: 8) {
+                    ForEach(workout.exercises) { line in
+                        HStack(spacing: 8) {
+                            Text(line.name)
+                                .font(.community(size: 12, weight: .semibold))
+                                .foregroundStyle(timeOfDay.primaryText)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+
+                            // The same summary the post's expanded body uses,
+                            // which already knows that a workout posted
+                            // without weights says "4 × 5" and not "4 × 5 @ 0".
+                            Text(Self.setSummary(line, showsWeights: post.showsWeights))
+                                .font(.community(size: 11, weight: .semibold))
+                                .foregroundStyle(timeOfDay.secondaryText)
+                                .layoutPriority(1)
+                        }
                     }
                 }
-                .font(.community(.caption))
-                .foregroundStyle(timeOfDay.secondaryText)
             }
         }
         .padding(.horizontal, 12)
@@ -1066,30 +1097,56 @@ struct PostCard: View {
                     .foregroundStyle(timeOfDay.accent)
             }
 
-            // What is in it, which is the part worth copying. The card gave
-            // a name and three macro totals, so deciding whether to save
-            // somebody's meal meant saving it first and reading it after.
-            if !meal.entries.isEmpty {
-                VStack(spacing: 4) {
+            // The recipe, on the post's own page only.
+            //
+            // A feed is scanned: the name, the calories and three macros are
+            // what somebody reads deciding whether to stop, and eight lines
+            // of ingredients under every card push the next post off the
+            // screen. Opening one is the moment somebody wants to cook it.
+            if showsContents, !meal.entries.isEmpty {
+                Divider().padding(.vertical, 2)
+
+                Text("INGREDIENTS")
+                    .font(.community(size: 9, weight: .bold))
+                    .tracking(0.9)
+                    .foregroundStyle(RepbaseDesign.success)
+
+                VStack(spacing: 6) {
                     ForEach(meal.entries) { line in
                         HStack(spacing: 8) {
                             Text(line.name)
-                                .font(.community(size: 11, weight: .semibold))
+                                .font(.community(size: 12, weight: .semibold))
                                 .foregroundStyle(timeOfDay.primaryText)
-                                .lineLimit(1)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                             Text(servingsText(line.servings))
-                                .font(.community(size: 10))
+                                .font(.community(size: 11))
                                 .foregroundStyle(timeOfDay.secondaryText)
                                 .layoutPriority(1)
-                            Spacer(minLength: 4)
                             Text("\(line.totalCalories.nutritionText) kcal")
-                                .font(.community(size: 10, weight: .semibold))
+                                .font(.community(size: 11, weight: .semibold))
                                 .foregroundStyle(timeOfDay.secondaryText)
                                 .layoutPriority(1)
                         }
                     }
                 }
-                .padding(.top, 2)
+            }
+
+            if showsContents, !meal.cookingInstructions.isEmpty {
+                Divider().padding(.vertical, 2)
+
+                Text("HOW IT WAS MADE")
+                    .font(.community(size: 9, weight: .bold))
+                    .tracking(0.9)
+                    .foregroundStyle(RepbaseDesign.success)
+
+                // Whatever the author typed, line breaks and all: a recipe is
+                // a list of steps, and the steps are the line breaks.
+                Text(meal.cookingInstructions)
+                    .font(.community(.subheadline))
+                    .foregroundStyle(timeOfDay.primaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             HStack(spacing: 14) {
@@ -1148,7 +1205,12 @@ struct PostCard: View {
             let miles = ImperialUnits.miles(fromKilometers: distance.nutritionDouble)
             return "\(String(format: "%.2f", miles)) mi · \(Self.pace(duration: workout.durationSeconds, miles: miles)) pace"
         }
-        return "\(workout.exerciseCount) exercises · \(workout.totalSetCount) sets"
+        // The sets, not the exercise count. What a reader compares against
+        // their own is how much work was done and how long it took; how many
+        // movements it was spread over is detail for the page itself, where
+        // every one of them is listed anyway.
+        let sets = workout.totalSetCount
+        return sets == 1 ? "1 working set" : "\(sets) working sets"
     }
 
     private func workoutBody(_ workout: PostWorkoutSnapshot) -> some View {
