@@ -460,6 +460,20 @@ struct PostComposerView: View {
         .onChange(of: pickedPhoto) { _, item in
             Task { await load(item) }
         }
+#if DEBUG
+        // Opens the cropper the way a picked photo does, because the library
+        // picker is a system sheet no script can drive. Worth having as its
+        // own hook rather than reusing the cropper's: presented as a cover
+        // from here it had no top safe area and Cancel sat under the Dynamic
+        // Island, which a preview of the cropper on its own never showed.
+        .task {
+            guard ProcessInfo.processInfo.environment["REPBASE_COMPOSER_CROP"] != nil
+            else { return }
+            let sample = PhotoCropperPreview.sample
+            pickedImage = sample
+            framing = PendingPhoto(image: sample)
+        }
+#endif
         .fullScreenCover(item: $framing) { pending in
             PhotoCropperView(
                 image: pending.image,

@@ -100,8 +100,18 @@ struct PhotoCropperView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .contentShape(Rectangle())
-            .gesture(dragGesture(window: window))
-            .simultaneousGesture(zoomGesture(window: window))
+            // One composed gesture, not a `.gesture` plus a
+            // `.simultaneousGesture`. The two modifiers differ in exactly the
+            // way that matters here: `.gesture` yields to a subview that
+            // wants the touch, and `.simultaneousGesture` does not. With the
+            // zoom attached the second way, this view took touches that
+            // belonged to the buttons drawn over it -- Cancel rendered
+            // perfectly and did nothing at all.
+            //
+            // `.simultaneously(with:)` composes them into a single gesture
+            // that still defers to subviews, which is how the profile cropper
+            // this came from had it.
+            .gesture(dragGesture(window: window).simultaneously(with: zoomGesture(window: window)))
             .overlay(alignment: .top) { header }
             .overlay(alignment: .bottom) { footer(window: window) }
             // Changing shape moves the window, so an offset that was legal
@@ -116,6 +126,9 @@ struct PhotoCropperView: View {
             }
         }
         .background(Color.black)
+        // As the profile cropper always did. The bar is unreadable over a
+        // photograph and its space is wanted for the picture.
+        .statusBarHidden()
     }
 
     // MARK: - The window
@@ -362,7 +375,10 @@ struct PhotoCropperPreview: View {
         }
     }
 
-    private static var sample: UIImage {
+    /// Also used by the composer's own preview hook, which opens the cropper
+    /// the way the app does -- as a cover -- because that is the context the
+    /// safe-area bug lived in and a root-level preview did not reproduce it.
+    static var sample: UIImage {
         let size = CGSize(width: 1200, height: 800)
         let format = UIGraphicsImageRendererFormat()
         format.scale = 1

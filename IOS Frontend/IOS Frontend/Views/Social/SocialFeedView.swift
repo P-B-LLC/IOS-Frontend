@@ -100,6 +100,13 @@ struct SocialFeedView: View {
             // the real signed-in feed against the real server rather than the
             // preview harness: what is worth looking at here is whether the
             // server's answer draws correctly, which sample data cannot show.
+            // Opens the composer, which opens the cropper over it. The whole
+            // route rather than the cropper alone: presented this way it had
+            // no top safe area and Cancel sat under the Dynamic Island, and a
+            // preview of the cropper on its own showed none of that.
+            if ProcessInfo.processInfo.environment["REPBASE_COMPOSER_CROP"] != nil {
+                isComposing = true
+            }
             if let seeded = ProcessInfo.processInfo.environment["REPBASE_SOCIAL_SEARCH"] {
                 // Onto the tab the box lives on, or the seed would land on a
                 // page with nothing to type into.
