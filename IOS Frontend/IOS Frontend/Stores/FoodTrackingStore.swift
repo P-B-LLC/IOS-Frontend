@@ -749,7 +749,17 @@ extension FoodTrackingStore {
                             carbohydrateGrams: 72, fatGrams: 4
                         )
                     )
-                ]
+                ],
+                // Written out, because a sample library where nothing has a
+                // recipe cannot show what a saved recipe looks like -- and
+                // the preview flag that reaches this editor is the same one
+                // that swaps the real library for this, so it is the only
+                // saved recipe a screenshot can ever reach.
+                cookingInstructions: """
+                    1. Poach the chicken for 15 minutes, then shred it.
+                    2. Rice on first — it takes the longest.
+                    3. Toss the vegetables in the pan the chicken came out of.
+                    """
             )
         ]
         store.recentFoods = breakfast.entries + lunch.entries + snack.entries

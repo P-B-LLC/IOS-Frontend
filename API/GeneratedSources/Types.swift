@@ -6550,21 +6550,27 @@ public enum Components {
             public var name: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PatchedSavedFoodMealRequest/ingredients`.
             public var ingredients: [Components.Schemas.SavedFoodIngredientRequest]?
+            /// - Remark: Generated from `#/components/schemas/PatchedSavedFoodMealRequest/cooking_instructions`.
+            public var cookingInstructions: Swift.String?
             /// Creates a new `PatchedSavedFoodMealRequest`.
             ///
             /// - Parameters:
             ///   - name:
             ///   - ingredients:
+            ///   - cookingInstructions:
             public init(
                 name: Swift.String? = nil,
-                ingredients: [Components.Schemas.SavedFoodIngredientRequest]? = nil
+                ingredients: [Components.Schemas.SavedFoodIngredientRequest]? = nil,
+                cookingInstructions: Swift.String? = nil
             ) {
                 self.name = name
                 self.ingredients = ingredients
+                self.cookingInstructions = cookingInstructions
             }
             public enum CodingKeys: String, CodingKey {
                 case name
                 case ingredients
+                case cookingInstructions = "cooking_instructions"
             }
         }
         /// - Remark: Generated from `#/components/schemas/PatchedSessionExerciseRequest`.
@@ -9507,6 +9513,8 @@ public enum Components {
             public var name: Swift.String
             /// - Remark: Generated from `#/components/schemas/SavedFoodMeal/ingredients`.
             public var ingredients: [Components.Schemas.SavedFoodIngredient]
+            /// - Remark: Generated from `#/components/schemas/SavedFoodMeal/cooking_instructions`.
+            public var cookingInstructions: Swift.String?
             /// - Remark: Generated from `#/components/schemas/SavedFoodMeal/created_at`.
             public var createdAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/SavedFoodMeal/updated_at`.
@@ -9517,18 +9525,21 @@ public enum Components {
             ///   - id:
             ///   - name:
             ///   - ingredients:
+            ///   - cookingInstructions:
             ///   - createdAt:
             ///   - updatedAt:
             public init(
                 id: Swift.Int,
                 name: Swift.String,
                 ingredients: [Components.Schemas.SavedFoodIngredient],
+                cookingInstructions: Swift.String? = nil,
                 createdAt: Foundation.Date,
                 updatedAt: Foundation.Date
             ) {
                 self.id = id
                 self.name = name
                 self.ingredients = ingredients
+                self.cookingInstructions = cookingInstructions
                 self.createdAt = createdAt
                 self.updatedAt = updatedAt
             }
@@ -9536,6 +9547,7 @@ public enum Components {
                 case id
                 case name
                 case ingredients
+                case cookingInstructions = "cooking_instructions"
                 case createdAt = "created_at"
                 case updatedAt = "updated_at"
             }
@@ -9549,21 +9561,27 @@ public enum Components {
             public var name: Swift.String
             /// - Remark: Generated from `#/components/schemas/SavedFoodMealRequest/ingredients`.
             public var ingredients: [Components.Schemas.SavedFoodIngredientRequest]
+            /// - Remark: Generated from `#/components/schemas/SavedFoodMealRequest/cooking_instructions`.
+            public var cookingInstructions: Swift.String?
             /// Creates a new `SavedFoodMealRequest`.
             ///
             /// - Parameters:
             ///   - name:
             ///   - ingredients:
+            ///   - cookingInstructions:
             public init(
                 name: Swift.String,
-                ingredients: [Components.Schemas.SavedFoodIngredientRequest]
+                ingredients: [Components.Schemas.SavedFoodIngredientRequest],
+                cookingInstructions: Swift.String? = nil
             ) {
                 self.name = name
                 self.ingredients = ingredients
+                self.cookingInstructions = cookingInstructions
             }
             public enum CodingKeys: String, CodingKey {
                 case name
                 case ingredients
+                case cookingInstructions = "cooking_instructions"
             }
         }
         /// What saving somebody else's posted meal produced.

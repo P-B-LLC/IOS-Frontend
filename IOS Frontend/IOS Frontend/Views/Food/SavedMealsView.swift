@@ -127,6 +127,18 @@ struct SavedMealsView: View {
                 SavedMealEditorView()
             }
         }
+#if DEBUG
+        // Opens the editor on the first saved meal that carries a recipe.
+        // It is a tap inside a list inside a tab, and simctl cannot tap, so
+        // without this the one screen that shows a saved recipe could be
+        // built and never looked at.
+        .task {
+            guard ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "recipe"
+            else { return }
+            mealToEdit = store.savedMeals.first { !$0.cookingInstructions.isEmpty }
+                ?? store.savedMeals.first
+        }
+#endif
         .fullScreenCover(item: $mealToEdit) { savedMeal in
             NavigationStack {
                 SavedMealEditorView(existing: savedMeal)
@@ -339,6 +351,26 @@ private struct SavedMealEditorView: View {
                     }
                     .buttonStyle(.plain)
                     .overlay(alignment: .top) { Divider() }
+                    .overlay(alignment: .bottom) { Divider() }
+                }
+
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("How it's made")
+                        .font(.community(.title3, weight: .bold))
+
+                    // Carried in when the meal was saved from somebody's
+                    // post, and editable either way: a recipe kept in a
+                    // library is one somebody intends to cook, and the note
+                    // about what they changed belongs with it.
+                    TextField(
+                        "Optional. Steps, temperatures, anything worth remembering.",
+                        text: $draft.cookingInstructions,
+                        axis: .vertical
+                    )
+                    .lineLimit(3...14)
+                    .font(.community(.body))
+                    .textInputAutocapitalization(.sentences)
+                    .padding(.vertical, 10)
                     .overlay(alignment: .bottom) { Divider() }
                 }
 

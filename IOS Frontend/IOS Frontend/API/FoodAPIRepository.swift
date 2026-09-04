@@ -312,7 +312,8 @@ actor FoodAPIRepository {
                 body: .json(
                     Components.Schemas.SavedFoodMealRequest(
                         name: recipe.name,
-                        ingredients: ingredients
+                        ingredients: ingredients,
+                        cookingInstructions: recipe.cookingInstructions
                     )
                 )
             )
@@ -328,7 +329,8 @@ actor FoodAPIRepository {
             body: .json(
                 Components.Schemas.SavedFoodMealRequest(
                     name: recipe.name,
-                    ingredients: ingredients
+                    ingredients: ingredients,
+                    cookingInstructions: recipe.cookingInstructions
                 )
             )
         )
@@ -454,7 +456,8 @@ actor FoodAPIRepository {
                         fatGrams: FoodDecimal.value(ingredient.fatGrams)
                     )
                 )
-            }
+            },
+            cookingInstructions: payload.cookingInstructions ?? ""
         )
     }
 

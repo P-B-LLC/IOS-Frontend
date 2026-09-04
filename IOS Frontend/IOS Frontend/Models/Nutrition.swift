@@ -116,17 +116,25 @@ nonisolated struct SavedFoodMeal: Identifiable, Equatable, Hashable, Codable, Se
     var serverID: Int?
     var name: String
     var ingredients: [FoodEntry]
+    /// How it is made, when whoever saved it had a recipe to keep.
+    ///
+    /// Copied from the post it was saved from rather than looked up, so it
+    /// survives that post being edited or deleted. Blank for a meal built by
+    /// hand and for one saved from a post whose author wrote none.
+    var cookingInstructions: String
 
     init(
         id: UUID = UUID(),
         serverID: Int? = nil,
         name: String,
-        ingredients: [FoodEntry] = []
+        ingredients: [FoodEntry] = [],
+        cookingInstructions: String = ""
     ) {
         self.id = id
         self.serverID = serverID
         self.name = name
         self.ingredients = ingredients
+        self.cookingInstructions = cookingInstructions
     }
 
     var totalNutrition: NutritionAmount {
