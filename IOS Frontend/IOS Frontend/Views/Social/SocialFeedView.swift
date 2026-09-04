@@ -764,18 +764,23 @@ struct PostCard: View {
 
                     if let workout = shown.workout {
                         compactWorkoutAttachment(workout, imageAttached: true)
-                    } else if post.offersMealToSave {
-                        HStack {
-                            Spacer(minLength: 0)
-                            saveMealButton
-                        }
+                    } else if let meal = shown.meal {
+                        // A meal with a photo used to stop here, at the photo
+                        // and a Save button. The strip across the picture
+                        // carries the name and the calories, so it looked
+                        // complete in a feed -- but the macros were missing,
+                        // and opening the post showed the same picture again
+                        // with no ingredients and no recipe under it. Every
+                        // meal post that had a photo, which is most of the
+                        // ones worth reading.
+                        compactMealAttachment(meal, imageAttached: true)
                     } else if let planner = shown.planner {
                         compactPlannerAttachment(planner)
                     }
                 } else if let workout = shown.workout {
                     compactWorkoutAttachment(workout, imageAttached: false)
                 } else if let meal = shown.meal {
-                    compactMealAttachment(meal)
+                    compactMealAttachment(meal, imageAttached: false)
                 } else if let planner = shown.planner {
                     compactPlannerAttachment(planner)
                 } else {
@@ -1079,22 +1084,30 @@ struct PostCard: View {
         }
     }
 
-    private func compactMealAttachment(_ meal: PostMealSnapshot) -> some View {
+    private func compactMealAttachment(
+        _ meal: PostMealSnapshot,
+        imageAttached: Bool
+    ) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("MEAL")
-                        .font(.community(size: 9, weight: .bold))
-                        .tracking(0.5)
-                        .foregroundStyle(RepbaseDesign.success)
-                    Text(meal.name)
+            // Skipped when a photo is above: the strip across it already
+            // carries the name and the calories, and saying them twice in
+            // eighty points of card reads as a mistake.
+            if !imageAttached {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("MEAL")
+                            .font(.community(size: 9, weight: .bold))
+                            .tracking(0.5)
+                            .foregroundStyle(RepbaseDesign.success)
+                        Text(meal.name)
+                            .font(.community(.subheadline, weight: .bold))
+                            .foregroundStyle(timeOfDay.primaryText)
+                    }
+                    Spacer(minLength: 4)
+                    Text("\(meal.totalCalories.nutritionText) kcal")
                         .font(.community(.subheadline, weight: .bold))
-                        .foregroundStyle(timeOfDay.primaryText)
+                        .foregroundStyle(timeOfDay.accent)
                 }
-                Spacer(minLength: 4)
-                Text("\(meal.totalCalories.nutritionText) kcal")
-                    .font(.community(.subheadline, weight: .bold))
-                    .foregroundStyle(timeOfDay.accent)
             }
 
             // The recipe, on the post's own page only.
