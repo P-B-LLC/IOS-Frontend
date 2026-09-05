@@ -33,7 +33,10 @@ struct KeychainTokenStore: Sendable, AuthenticationTokenStore {
     private let service: String
     private let account: String
 
-    init(
+    // Nonisolated so it can still be spelled as a default argument. Conforming
+    // to the main-actor protocol above isolates the whole type, and Swift
+    // evaluates default arguments outside that isolation.
+    nonisolated init(
         // Tracks the bundle identifier by hand, because it is a label rather
         // than a lookup. Changing the identifier already orphans what is
         // stored here — iOS scopes Keychain items by an access group derived
