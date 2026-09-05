@@ -182,6 +182,19 @@ struct SavedMealsView: View {
     }
 }
 
+extension SavedFoodMeal {
+    /// "2 ingredients", and whether there is a method saved with them.
+    ///
+    /// The recipe itself only appears on the editor screen. Without a word
+    /// here, the sole way to find out which saved meals carry one is to open
+    /// each of them in turn, which is the opposite of what a library is for.
+    fileprivate var librarySummary: String {
+        let count = ingredients.count
+        let food = count == 1 ? "1 ingredient" : "\(count) ingredients"
+        return cookingInstructions.isEmpty ? food : "\(food) · recipe"
+    }
+}
+
 private struct SavedMealRow: View {
     let savedMeal: SavedFoodMeal
     /// True once this one has been applied on this visit.
@@ -198,7 +211,7 @@ private struct SavedMealRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(savedMeal.name)
                     .font(.community(.headline))
-                Text(ingredientSummary)
+                Text(savedMeal.librarySummary)
                     .font(.community(.caption))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -273,10 +286,6 @@ private struct SavedMealRow: View {
         .accessibilityLabel(label)
     }
 
-    private var ingredientSummary: String {
-        let count = savedMeal.ingredients.count
-        return count == 1 ? "1 ingredient" : "\(count) ingredients"
-    }
 }
 
 private struct SavedMealEditorView: View {
@@ -293,6 +302,11 @@ private struct SavedMealEditorView: View {
             initialValue: existing ?? SavedFoodMeal(name: "")
         )
     }
+
+    /// Matches the ceiling the server puts on the same field, so a long
+    /// recipe is stopped as it is typed rather than by a 400 on save with
+    /// nothing on screen to explain it. Same number as the post composer's.
+    private static let instructionsLimit = 4000
 
     var body: some View {
         ScrollView {
@@ -372,6 +386,18 @@ private struct SavedMealEditorView: View {
                     .textInputAutocapitalization(.sentences)
                     .padding(.vertical, 10)
                     .overlay(alignment: .bottom) { Divider() }
+                    .onChange(of: draft.cookingInstructions) { _, value in
+                        if value.count > Self.instructionsLimit {
+                            draft.cookingInstructions = String(
+                                value.prefix(Self.instructionsLimit)
+                            )
+                        }
+                    }
+
+                    Text("\(draft.cookingInstructions.count)/\(Self.instructionsLimit)")
+                        .font(.community(.caption2).monospacedDigit())
+                        .foregroundStyle(phase.secondaryText)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
                 }
 
                 if !draft.ingredients.isEmpty {
@@ -670,7 +696,7 @@ private struct ApplySavedMealView: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(savedMeal.name)
                             .font(.community(.headline))
-                        Text("\(savedMeal.ingredients.count) ingredients")
+                        Text(savedMeal.librarySummary)
                             .font(.community(.caption))
                             .foregroundStyle(.secondary)
                     }

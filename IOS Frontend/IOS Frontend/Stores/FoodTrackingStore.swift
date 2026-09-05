@@ -760,6 +760,29 @@ extension FoodTrackingStore {
                     2. Rice on first — it takes the longest.
                     3. Toss the vegetables in the pan the chicken came out of.
                     """
+            ),
+            // Deliberately without one. The list says which saved meals carry
+            // a method, and a library where every meal has a recipe cannot
+            // show that: one row reading "· recipe" proves nothing unless
+            // there is a row beside it that does not.
+            SavedFoodMeal(
+                name: "Yoghurt and berries",
+                ingredients: [
+                    FoodEntry(
+                        name: "Greek yoghurt",
+                        nutritionPerServing: NutritionAmount(
+                            calories: 130, proteinGrams: 22,
+                            carbohydrateGrams: 8, fatGrams: 1
+                        )
+                    ),
+                    FoodEntry(
+                        name: "Mixed berries",
+                        nutritionPerServing: NutritionAmount(
+                            calories: 70, proteinGrams: 1,
+                            carbohydrateGrams: 17, fatGrams: 0
+                        )
+                    )
+                ]
             )
         ]
         store.recentFoods = breakfast.entries + lunch.entries + snack.entries
