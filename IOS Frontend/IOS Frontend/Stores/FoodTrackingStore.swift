@@ -766,7 +766,7 @@ extension FoodTrackingStore {
             // show that: one row reading "· recipe" proves nothing unless
             // there is a row beside it that does not.
             SavedFoodMeal(
-                name: "Yoghurt and berries",
+                name: "Yoghurt bowl",
                 ingredients: [
                     FoodEntry(
                         name: "Greek yoghurt",

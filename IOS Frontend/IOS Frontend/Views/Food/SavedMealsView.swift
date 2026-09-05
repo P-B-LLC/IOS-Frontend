@@ -208,25 +208,34 @@ private struct SavedMealRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(savedMeal.name)
-                    .font(.community(.headline))
-                Text(savedMeal.librarySummary)
-                    .font(.community(.caption))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+            // The meal itself opens it. A pencil was the way in before, which
+            // put the ordinary thing to do behind the smallest target on the
+            // row and left the name -- the part that reads like it opens the
+            // thing it names -- doing nothing at all when tapped.
+            Button(action: onEdit) {
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(savedMeal.name)
+                            .font(.community(.headline))
+                        Text(savedMeal.librarySummary)
+                            .font(.community(.caption))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+
+                    Spacer(minLength: 8)
+
+                    Text("\(savedMeal.totalNutrition.calories.nutritionText) cal")
+                        .font(.community(.subheadline, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                }
+                // Without this the gap between the name and the calories is
+                // not part of the button, and most of the row stays dead.
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .accessibilityHint("Opens the recipe")
 
-            Spacer(minLength: 8)
-
-            Text("\(savedMeal.totalNutrition.calories.nutritionText) cal")
-                .font(.community(.subheadline, weight: .semibold))
-                .foregroundStyle(.secondary)
-
-            // Two words of button became two icons. What the row is for is
-            // adding the meal, and a plus says that in the space a sentence
-            // was using.
-            iconButton("pencil", label: "Edit \(savedMeal.name)", action: onEdit)
             // Set before the apply button and tinted as the exception it is.
             // The two do opposite things, and the row exists to add the meal,
             // so the destructive one should never be the easier reach.
