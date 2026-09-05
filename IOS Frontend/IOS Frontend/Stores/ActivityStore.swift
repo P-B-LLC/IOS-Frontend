@@ -167,7 +167,9 @@ final class ActivityStore {
         }
 
         await reload(generation: generation, showsLoadingState: true)
+        guard connectionGeneration == generation, !Task.isCancelled else { return }
         await loadStepGoal()
+        guard connectionGeneration == generation, !Task.isCancelled else { return }
 
         // Apple's sheet is the whole of the asking. The app requests Health
         // access itself, once, rather than drawing a card that asks the user
@@ -177,6 +179,7 @@ final class ActivityStore {
         if health.hasAsked == false {
             await health.requestAuthorization()
         }
+        guard connectionGeneration == generation, !Task.isCancelled else { return }
         await syncFromHealth(generation: generation)
     }
 

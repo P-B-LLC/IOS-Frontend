@@ -281,7 +281,7 @@ final class RouteTracker: NSObject, CLLocationManagerDelegate {
         }
         isReadingBarometer = true
         altimeter.startRelativeAltitudeUpdates(to: .main) { [weak self] data, _ in
-            guard let self, let data else { return }
+            guard let self, self.isTracking, self.isReadingBarometer, let data else { return }
             relativeAltitudeMeters = data.relativeAltitude.doubleValue
             usesBarometricAltitude = true
         }
@@ -320,6 +320,14 @@ final class RouteTracker: NSObject, CLLocationManagerDelegate {
     func reset() {
         stopTracking()
         points = []
+        lastLocation = nil
+        elevationReference = nil
+        relativeAltitudeMeters = nil
+        altitudeAnchorMeters = nil
+        currentSpeedMetersPerSecond = nil
+        liveDistanceMeters = 0
+        liveElevationGainMeters = 0
+        usesBarometricAltitude = false
         trackingError = nil
     }
 

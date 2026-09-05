@@ -29,6 +29,15 @@ final class RemoteImageCache {
     static let shared = RemoteImageCache()
 
     private let images = NSCache<NSString, UIImage>()
+    private var generation = UUID()
+
+    func clear() {
+        generation = UUID()
+        for task in inFlight.values { task.cancel() }
+        inFlight.removeAll()
+        images.removeAllObjects()
+        URLCache.shared.removeAllCachedResponses()
+    }
     /// Downloads already running, so two cards showing the same photo make
     /// one request rather than two.
     private var inFlight: [String: Task<UIImage?, Never>] = [:]
@@ -42,9 +51,14 @@ final class RemoteImageCache {
     }
 
     func image(for url: URL, maxPixel: CGFloat) async -> UIImage? {
+        let generation = self.generation
         let key = Self.key(url, maxPixel)
         if let hit = images.object(forKey: key as NSString) { return hit }
-        if let running = inFlight[key] { return await running.value }
+        if let running = inFlight[key] {
+            let result = await running.value
+            guard self.generation == generation, !Task.isCancelled else { return nil }
+            return result
+        }
 
         let task = Task<UIImage?, Never> {
             guard let (data, response) = try? await URLSession.shared.data(from: url),
@@ -56,6 +70,7 @@ final class RemoteImageCache {
         }
         inFlight[key] = task
         let result = await task.value
+        guard self.generation == generation, !Task.isCancelled else { return nil }
         inFlight[key] = nil
         if let result { images.setObject(result, forKey: key as NSString) }
         return result

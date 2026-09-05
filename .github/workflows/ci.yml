@@ -57,3 +57,6 @@ jobs:
       # and as flicker everywhere else it happened.
       - name: Decoded models have stable ids
         run: python3 Scripts/check-stable-ids.py
+
+      - name: Account safety regression tests
+        run: bash Scripts/test-account-safety.sh

@@ -25,6 +25,7 @@ struct AuthenticatedUser: Equatable, Sendable {
 
 enum AuthenticationPhase: Equatable {
     case checking
+    case recoveryRequired
     case signedOut
     case signedIn(AuthenticatedUser)
 }
@@ -64,10 +65,16 @@ struct PasswordResetThrottled: LocalizedError {
 }
 
 @Observable
+@MainActor
 final class AuthenticationStore {
     let configuration: APIConfiguration
 
-    private let tokenStore: KeychainTokenStore
+    private let tokenStore: any AuthenticationTokenStore
+    private let defaults: UserDefaults
+    private let sessionLoader: (@MainActor (String) async throws -> AuthenticatedUser)?
+    private var sessionGeneration = UUID()
+    private static let removalPendingKey = "authentication.credentialRemovalPending"
+    var onSessionEnded: (() -> Void)?
     private(set) var phase: AuthenticationPhase = .checking
     private(set) var token: String?
     private(set) var isWorking = false
@@ -82,43 +89,49 @@ final class AuthenticationStore {
 
     init(
         configuration: APIConfiguration,
-        tokenStore: KeychainTokenStore = KeychainTokenStore()
+        tokenStore: any AuthenticationTokenStore = KeychainTokenStore(),
+        defaults: UserDefaults = .standard,
+        sessionLoader: (@MainActor (String) async throws -> AuthenticatedUser)? = nil
     ) {
         self.configuration = configuration
         self.tokenStore = tokenStore
+        self.defaults = defaults
+        self.sessionLoader = sessionLoader
     }
 
     func restoreSession() async {
+        guard !isWorking else { return }
+        let generation = UUID()
+        sessionGeneration = generation
+        isWorking = true
+        defer { if sessionGeneration == generation { isWorking = false } }
         needsOnboarding = false
         phase = .checking
         errorMessage = nil
 
         do {
+            if defaults.bool(forKey: Self.removalPendingKey) {
+                clearLocalSession()
+                return
+            }
             guard let savedToken = try tokenStore.read() else {
-                phase = .signedOut
+                clearLocalSession()
                 return
             }
 
-            let client = try authenticatedClient(token: savedToken)
-            let output = try await client.meRetrieve()
-            let user: Components.Schemas.RepbaseUser
-            switch output {
-            case .ok(let response):
-                user = try response.body.json
-            case .undocumented(let statusCode, let payload):
-                throw await RepbaseAPIHTTPError.decode(
-                    statusCode: statusCode,
-                    payload: payload
-                )
-            }
-
+            let user = try await loadRestoredUser(token: savedToken)
+            guard sessionGeneration == generation, !Task.isCancelled else { return }
             token = savedToken
-            phase = .signedIn(Self.map(user))
+            phase = .signedIn(user)
         } catch {
-            try? tokenStore.delete()
-            token = nil
-            phase = .signedOut
-            errorMessage = "Please sign in again. \(error.localizedDescription)"
+            guard sessionGeneration == generation, !Task.isCancelled else { return }
+            if Self.isRejectedSession(error) {
+                clearLocalSession()
+                errorMessage = "Your session has expired. Please sign in again."
+            } else {
+                phase = .recoveryRequired
+                errorMessage = "We couldn't reconnect. Your saved login is safe. Check your connection and try again."
+            }
         }
     }
 
@@ -186,38 +199,48 @@ final class AuthenticationStore {
     }
 
     func signOut() async {
-        guard !isWorking else { return }
+        let outgoingToken = token
+        clearLocalSession()
+        let generation = sessionGeneration
         isWorking = true
-        defer { isWorking = false }
-
-        if let token {
+        defer { if sessionGeneration == generation { isWorking = false } }
+        if let outgoingToken {
             do {
-                let client = try authenticatedClient(token: token)
+                let client = try authenticatedClient(token: outgoingToken)
                 _ = try await client.authLogoutCreate()
             } catch {
                 // Local credentials are still cleared if the server is offline
                 // or the token has already expired.
             }
         }
+    }
 
+    private func clearLocalSession() {
+        sessionGeneration = UUID()
+        // A failed Keychain delete must not restore a logged-out account later.
+        defaults.set(true, forKey: Self.removalPendingKey)
+        onSessionEnded?()
+        token = nil
+        needsOnboarding = false
+        isWorking = false
+        phase = .signedOut
         do {
             try tokenStore.delete()
+            defaults.removeObject(forKey: Self.removalPendingKey)
             errorMessage = nil
         } catch {
             errorMessage = error.localizedDescription
         }
-        token = nil
-        needsOnboarding = false
-        phase = .signedOut
     }
 
     /// Replaces the current API credential without ending the user's session.
     func rotateSessionToken() async throws {
         guard !isWorking else { return }
         guard let token else { return }
+        let generation = sessionGeneration
         isWorking = true
         errorMessage = nil
-        defer { isWorking = false }
+        defer { if sessionGeneration == generation { isWorking = false } }
 
         do {
             let client = try authenticatedClient(token: token)
@@ -232,10 +255,12 @@ final class AuthenticationStore {
                     payload: payload
                 )
             }
+            guard sessionGeneration == generation, !Task.isCancelled else { return }
             try tokenStore.save(response.token)
             self.token = response.token
             phase = .signedIn(Self.map(response.user.value1))
         } catch {
+            guard sessionGeneration == generation, !Task.isCancelled else { return }
             errorMessage = error.localizedDescription
             throw error
         }
@@ -244,18 +269,18 @@ final class AuthenticationStore {
     func deleteAccount() async throws {
         guard !isWorking else { return }
         guard let token else { return }
+        let generation = sessionGeneration
         isWorking = true
         errorMessage = nil
-        defer { isWorking = false }
+        defer { if sessionGeneration == generation { isWorking = false } }
 
         do {
             let client = try authenticatedClient(token: token)
             let output = try await client.meDestroy(.init())
+            guard sessionGeneration == generation, !Task.isCancelled else { return }
             switch output {
             case .noContent:
-                try tokenStore.delete()
-                self.token = nil
-                phase = .signedOut
+                clearLocalSession()
             case .undocumented(let statusCode, let payload):
                 throw await RepbaseAPIHTTPError.decode(
                     statusCode: statusCode,
@@ -263,6 +288,7 @@ final class AuthenticationStore {
                 )
             }
         } catch {
+            guard sessionGeneration == generation, !Task.isCancelled else { return }
             errorMessage = error.localizedDescription
             throw error
         }
@@ -354,18 +380,41 @@ final class AuthenticationStore {
         _ request: () async throws -> Components.Schemas.AuthResponse
     ) async {
         guard !isWorking else { return }
+        let generation = sessionGeneration
         isWorking = true
         errorMessage = nil
-        defer { isWorking = false }
+        defer { if sessionGeneration == generation { isWorking = false } }
 
         do {
             let response = try await request()
+            guard sessionGeneration == generation, !Task.isCancelled else { return }
             try tokenStore.save(response.token)
+            defaults.removeObject(forKey: Self.removalPendingKey)
             token = response.token
             phase = .signedIn(Self.map(response.user.value1))
         } catch {
+            guard sessionGeneration == generation, !Task.isCancelled else { return }
             errorMessage = error.localizedDescription
             phase = .signedOut
+        }
+    }
+
+    private static func isRejectedSession(_ error: Error) -> Bool {
+        if let response = error as? RepbaseAPIHTTPError { return response.statusCode == 401 }
+        if let response = error as? APIServiceError,
+           case .undocumentedStatus(401) = response { return true }
+        return false
+    }
+
+    private func loadRestoredUser(token: String) async throws -> AuthenticatedUser {
+        if let sessionLoader { return try await sessionLoader(token) }
+        let client = try authenticatedClient(token: token)
+        let output = try await client.meRetrieve()
+        switch output {
+        case .ok(let response):
+            return Self.map(try response.body.json)
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload)
         }
     }
 

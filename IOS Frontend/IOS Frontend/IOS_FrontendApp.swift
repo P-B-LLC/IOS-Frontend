@@ -545,6 +545,7 @@ private struct AppRootView: View {
             // this, signing out would clear the sample data it exists to show.
             guard Self.isPreviewing == false else { return }
 #endif
+            authentication.onSessionEnded = { clearAccountState() }
             await authentication.restoreSession()
         }
         .task(id: authentication.token) {
@@ -554,32 +555,33 @@ private struct AppRootView: View {
             guard Self.isPreviewing == false else { return }
 #endif
             guard let token = authentication.token else {
-                workoutStore.disconnect()
-                plannerStore.disconnect()
-                socialProfileStore.disconnect()
-                socialStore.disconnect()
-                activityStore.disconnect()
-                gearStore.disconnect()
-                cycleStore.disconnect()
-                foodTrackingStore.reset()
+                // A temporary restore failure must not erase existing local
+                // reminders. Explicit logout/rejection runs synchronous cleanup.
+                if authentication.phase == .signedOut { clearAccountState() }
                 return
             }
+            guard case .signedIn(let user) = authentication.phase else { return }
+            NotificationScheduler.shared.setAccount(user.id)
             await socialProfileStore.connect(
                 configuration: authentication.configuration,
                 token: token
             )
+            guard authentication.token == token, !Task.isCancelled else { return }
             await workoutStore.connect(
                 configuration: authentication.configuration,
                 token: token
             )
+            guard authentication.token == token, !Task.isCancelled else { return }
             await plannerStore.connect(
                 configuration: authentication.configuration,
                 token: token
             )
+            guard authentication.token == token, !Task.isCancelled else { return }
             await foodTrackingStore.connect(
                 configuration: authentication.configuration,
                 token: token
             )
+            guard authentication.token == token, !Task.isCancelled else { return }
             // Saving somebody else's workout or meal writes a row into a list
             // this store does not hold. Without these the copy sat on the
             // server and stayed missing from Saved workouts until the next
@@ -594,14 +596,17 @@ private struct AppRootView: View {
                 configuration: authentication.configuration,
                 token: token
             )
+            guard authentication.token == token, !Task.isCancelled else { return }
             await activityStore.connect(
                 configuration: authentication.configuration,
                 token: token
             )
+            guard authentication.token == token, !Task.isCancelled else { return }
             await gearStore.connect(
                 configuration: authentication.configuration,
                 token: token
             )
+            guard authentication.token == token, !Task.isCancelled else { return }
             // Starting or switching a rotation plans days on the server. The
             // week on screen belongs to the workout store, so it has to be
             // told to read them, or the rotation looks like it did nothing.
@@ -612,10 +617,13 @@ private struct AppRootView: View {
                 configuration: authentication.configuration,
                 token: token
             )
+            guard authentication.token == token, !Task.isCancelled else { return }
             await plannerStore.syncScheduledWorkouts(workoutStore.currentWeekWorkouts)
+            guard authentication.token == token, !Task.isCancelled else { return }
             await rescheduleReminders()
             // So the icon is right from launch rather than only after the
             // Social tab has been opened once.
+            guard authentication.token == token, !Task.isCancelled else { return }
             await socialStore.refreshUnreadNotificationCount()
         }
         .task(id: workoutStore.currentWeekWorkouts) {
@@ -648,6 +656,7 @@ private struct AppRootView: View {
     /// single morning nudge instead. Deriving both from one list is what stops
     /// a timed workout being reminded about twice.
     private func rescheduleReminders() async {
+        guard authentication.token != nil, !Task.isCancelled else { return }
         let entries = plannerStore.entriesByDate.values.flatMap { $0 }
         await NotificationScheduler.shared.reschedule(
             entries: entries,
@@ -655,6 +664,19 @@ private struct AppRootView: View {
                 $0.workoutID != nil && $0.time == nil
             }
         )
+    }
+
+    private func clearAccountState() {
+        NotificationScheduler.shared.setAccount(nil)
+        workoutStore.disconnect()
+        plannerStore.disconnect()
+        socialProfileStore.disconnect()
+        socialStore.disconnect()
+        activityStore.disconnect()
+        gearStore.disconnect()
+        cycleStore.disconnect()
+        foodTrackingStore.reset()
+        RemoteImageCache.shared.clear()
     }
 
     @ViewBuilder
@@ -673,6 +695,25 @@ private struct AppRootView: View {
                         .font(.community(.subheadline))
                         .foregroundStyle(.secondary)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .repbaseScreen(.prepare)
+            case .recoveryRequired:
+                VStack(spacing: 20) {
+                    Text("Let's reconnect.")
+                        .font(.community(.title2, weight: .semibold))
+                    Text(authentication.errorMessage ?? "Your saved login is safe.")
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                    Button("Try again") {
+                        Task { await authentication.restoreSession() }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(authentication.isWorking)
+                    Button("Sign out") {
+                        Task { await authentication.signOut() }
+                    }
+                }
+                .padding(28)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .repbaseScreen(.prepare)
             case .signedOut:

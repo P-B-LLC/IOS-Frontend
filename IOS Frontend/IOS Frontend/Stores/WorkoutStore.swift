@@ -151,6 +151,9 @@ final class WorkoutStore {
 
     func disconnect() {
         connectionGeneration = UUID()
+        routeTracker.reset()
+        trainingStats = .empty
+        completedSessions = []
         repository = nil
         schedule = [:]
         activeSession = nil
@@ -590,11 +593,7 @@ final class WorkoutStore {
                 guard connectionGeneration == generation else { return }
                 persistenceError = error.userFacingMessage
             }
-            // Cleared unconditionally. Operations are serialized by the
-            // `!isSaving` guard at entry, so no newer save can be running, and
-            // a stale return must not leave the day editor permanently
-            // disabled with nothing on screen explaining it.
-            isSaving = false
+            if connectionGeneration == generation { isSaving = false }
         }
     }
 
@@ -760,17 +759,20 @@ final class WorkoutStore {
               let set = exercise.sets.first(where: { $0.id == setID }) else {
             return
         }
+        let generation = connectionGeneration
         let workoutType = session.workoutType
 
         pendingSetIDs.insert(setID)
         persistenceError = nil
         Task {
+            defer { if connectionGeneration == generation { pendingSetIDs.remove(setID) } }
             do {
                 if set.isLogged {
                     guard let entryID = set.serverID else {
                         throw APIServiceError.missingServerIdentifier("Set entry")
                     }
                     try await repository.deleteSetEntry(id: entryID)
+                    guard connectionGeneration == generation else { return }
                     mutateSet(on: day, exerciseID: exerciseID, setID: setID) {
                         $0.serverID = nil
                         $0.isLogged = false
@@ -781,15 +783,16 @@ final class WorkoutStore {
                         sessionExerciseID: exercise.sessionExerciseID,
                         workoutType: workoutType
                     )
+                    guard connectionGeneration == generation else { return }
                     mutateSet(on: day, exerciseID: exerciseID, setID: setID) {
                         $0.serverID = entryID
                         $0.isLogged = true
                     }
                 }
             } catch {
+                guard connectionGeneration == generation else { return }
                 persistenceError = error.userFacingMessage
             }
-            pendingSetIDs.remove(setID)
         }
     }
 
@@ -825,19 +828,22 @@ final class WorkoutStore {
             return
         }
 
+        let generation = connectionGeneration
         pendingSetIDs.insert(lastSet.id)
         Task {
+            defer { if connectionGeneration == generation { pendingSetIDs.remove(lastSet.id) } }
             do {
                 try await repository.deleteSetEntry(id: entryID)
+                guard connectionGeneration == generation else { return }
                 removeSessionSet(
                     on: day,
                     exerciseID: exerciseID,
                     setID: lastSet.id
                 )
             } catch {
+                guard connectionGeneration == generation else { return }
                 persistenceError = error.userFacingMessage
             }
-            pendingSetIDs.remove(lastSet.id)
         }
     }
 
@@ -850,9 +856,10 @@ final class WorkoutStore {
             return nil
         }
 
+        let generation = connectionGeneration
         isSaving = true
         persistenceError = nil
-        defer { isSaving = false }
+        defer { if connectionGeneration == generation { isSaving = false } }
         do {
             let statsBeforeCompletion = trainingStats
             // Upload the track before ending so the session's distance and
@@ -860,11 +867,14 @@ final class WorkoutStore {
             let recorded = routeTracker.stopTracking()
             if session.tracksDistance, recorded.count >= 2 {
                 do {
-                    routeSummary = try await repository.uploadRoute(
+                    let uploadedRoute = try await repository.uploadRoute(
                         recorded,
                         sessionID: session.serverID
                     )
+                    guard connectionGeneration == generation else { return nil }
+                    routeSummary = uploadedRoute
                 } catch {
+                    guard connectionGeneration == generation else { return nil }
                     // The workout itself still counts; say the track failed
                     // rather than losing the session over it.
                     persistenceError = "Session saved, but the route could not be uploaded: \(error.localizedDescription)"
@@ -872,6 +882,7 @@ final class WorkoutStore {
             }
 
             try await repository.endSession(id: session.serverID)
+            guard connectionGeneration == generation else { return nil }
             completedSessions.append(
                 CompletedWorkoutSession(session: session, endedAt: Date())
             )
@@ -883,6 +894,7 @@ final class WorkoutStore {
             // them again rather than re-deriving them from a full history
             // download, and the badge window stays bounded.
             if let stats = try? await repository.trainingStats() {
+                guard connectionGeneration == generation else { return nil }
                 trainingStats = stats
             }
             if let refreshed = try? await repository.completedSessions(
@@ -892,9 +904,11 @@ final class WorkoutStore {
                     to: Date()
                 )
             ) {
+                guard connectionGeneration == generation else { return nil }
                 dashboardSessions = refreshed
             }
 
+            guard connectionGeneration == generation else { return nil }
             if session.loggedSetCount > 0 {
                 pendingTrainingDashboardReward = TrainingDashboardReward(
                     workoutName: session.workoutName,
@@ -910,13 +924,17 @@ final class WorkoutStore {
             // chart or the record list, so the finished workout is still
             // reported as saved either way.
             if session.tracksDistance {
-                sessionHistory = (try? await repository.sessionHistory(
+                let history = (try? await repository.sessionHistory(
                     workoutName: session.workoutName
                 )) ?? []
+                guard connectionGeneration == generation else { return nil }
+                sessionHistory = history
             } else {
-                personalRecords = (try? await repository.personalRecords(
+                let records = (try? await repository.personalRecords(
                     sessionID: session.serverID
                 )) ?? []
+                guard connectionGeneration == generation else { return nil }
+                personalRecords = records
 
                 var progress: [LiftProgressSeries] = []
                 for exercise in session.exercises {
@@ -925,14 +943,17 @@ final class WorkoutStore {
                         exerciseName: exercise.name,
                         workoutName: session.workoutName
                     ), series.hasEnoughToPlot {
+                        guard connectionGeneration == generation else { return nil }
                         progress.append(series)
                     }
                 }
+                guard connectionGeneration == generation else { return nil }
                 liftProgress = progress
             }
 
             return session.loggedSetCount
         } catch {
+            guard connectionGeneration == generation else { return nil }
             persistenceError = error.userFacingMessage
             return nil
         }
@@ -955,17 +976,20 @@ final class WorkoutStore {
             return
         }
 
+        let generation = connectionGeneration
         isSaving = true
         persistenceError = nil
-        defer { isSaving = false }
+        defer { if connectionGeneration == generation { isSaving = false } }
         do {
             try await repository.discardSession(id: session.serverID)
+            guard connectionGeneration == generation else { return }
             activeSession = nil
             // A discarded session keeps no track.
             routeTracker.reset()
             routeSummary = nil
             completedRoute = []
         } catch {
+            guard connectionGeneration == generation else { return }
             persistenceError = error.userFacingMessage
         }
     }
@@ -1217,6 +1241,7 @@ final class WorkoutStore {
             return false
         }
 
+        let generation = connectionGeneration
         let seconds = max(1, Int(Date().timeIntervalSince(startedAt).rounded()))
         cardioStartedAt = nil
         persistenceError = nil
@@ -1228,10 +1253,12 @@ final class WorkoutStore {
                 seconds: seconds,
                 distanceKilometers: distanceKilometers
             )
+            guard connectionGeneration == generation else { return false }
             recordedCardioSeconds = seconds
             cardioSessionID = nil
             return true
         } catch {
+            guard connectionGeneration == generation else { return false }
             // The time is kept on screen so it is not lost to a failed save.
             cardioStartedAt = startedAt
             persistenceError = "Cardio could not be saved: \(error.localizedDescription)"

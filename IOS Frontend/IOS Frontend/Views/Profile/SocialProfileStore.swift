@@ -368,6 +368,7 @@ final class SocialProfileStore {
         highlightsByUser = [:]
         peopleByID = [:]
         isLoading = false
+        isSaving = false
         hasLoadedProfile = false
         errorMessage = nil
     }

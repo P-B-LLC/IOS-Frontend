@@ -22,7 +22,14 @@ enum KeychainTokenStoreError: LocalizedError {
     }
 }
 
-struct KeychainTokenStore: Sendable {
+@MainActor
+protocol AuthenticationTokenStore {
+    func read() throws -> String?
+    func save(_ token: String) throws
+    func delete() throws
+}
+
+struct KeychainTokenStore: Sendable, AuthenticationTokenStore {
     private let service: String
     private let account: String
 

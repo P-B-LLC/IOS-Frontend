@@ -52,6 +52,7 @@ final class NotificationScheduler: NSObject {
     }
 
     private enum Key {
+        static let owner = "notifications.accountID"
         static let mutedTasks = "notifications.mutedTaskIDs"
         static let foodMutedOn = "notifications.foodMutedOn"
         static let workoutMutedOn = "notifications.workoutMutedOn"
@@ -77,6 +78,27 @@ final class NotificationScheduler: NSObject {
 
     private let defaults = UserDefaults.standard
     private let centre = UNUserNotificationCenter.current()
+    private var accountID: Int?
+    private var generation = UUID()
+    @TaskLocal private static var schedulingGeneration: UUID?
+
+    /// Invalidates all in-flight schedule writes before removing account data.
+    func setAccount(_ id: Int?) {
+        guard accountID != id || id == nil else { return }
+        let previousOwner = defaults.object(forKey: Key.owner) as? Int
+        accountID = id
+        generation = UUID()
+        if id == nil || previousOwner != id {
+            centre.removeAllPendingNotificationRequests()
+            centre.removeAllDeliveredNotifications()
+            defaults.removeObject(forKey: Key.mutedTasks)
+            defaults.removeObject(forKey: Key.foodMutedOn)
+            defaults.removeObject(forKey: Key.workoutMutedOn)
+        }
+        if let id { defaults.set(id, forKey: Key.owner) }
+        else { defaults.removeObject(forKey: Key.owner) }
+        Task { await setBadge(0) }
+    }
 
     // MARK: - Setting up
 
@@ -137,7 +159,11 @@ final class NotificationScheduler: NSObject {
         untimedWorkouts: [PlannerEntry],
         now: Date = Date()
     ) async {
+        guard accountID != nil, !Task.isCancelled else { return }
+        let run = UUID()
+        generation = run
         let settings = await centre.notificationSettings()
+        guard generation == run, !Task.isCancelled else { return }
         // Checked before anything is torn down. Clearing first and then
         // discovering there is no permission to write replacements leaves the
         // schedule empty for no reason.
@@ -146,11 +172,13 @@ final class NotificationScheduler: NSObject {
         else { return }
         centre.removeAllPendingNotificationRequests()
 
-        if isOn(Setting.food) { await scheduleFood(now: now) }
-        if isOn(Setting.workouts) {
-            await scheduleWorkouts(untimedWorkouts, now: now)
+        await Self.$schedulingGeneration.withValue(run) {
+            if isOn(Setting.food) { await scheduleFood(now: now) }
+            if isOn(Setting.workouts) {
+                await scheduleWorkouts(untimedWorkouts, now: now)
+            }
+            if isOn(Setting.tasks) { await scheduleTasks(entries, now: now) }
         }
-        if isOn(Setting.tasks) { await scheduleTasks(entries, now: now) }
     }
 
     // MARK: - Tasks and events
@@ -315,7 +343,9 @@ final class NotificationScheduler: NSObject {
     /// notification centre, and the badge needs the same permission as the
     /// rest of it.
     func setBadge(_ count: Int) async {
-        try? await centre.setBadgeCount(max(count, 0))
+        let owner = accountID
+        try? await centre.setBadgeCount(owner == nil ? 0 : max(count, 0))
+        if accountID != owner { try? await centre.setBadgeCount(0) }
     }
 
     // MARK: - Muting
@@ -328,9 +358,7 @@ final class NotificationScheduler: NSObject {
         var muted = mutedTaskIDs
         muted.insert(id)
         defaults.set(Array(muted), forKey: Key.mutedTasks)
-        centre.removePendingNotificationRequests(
-            withIdentifiers: Self.ladder.map { "rytivo.task.\(id).\($0)" }
-        )
+        removeToday(prefix: "rytivo.task.\(id).")
     }
 
     func unmuteTask(_ id: Int) {
@@ -388,22 +416,28 @@ final class NotificationScheduler: NSObject {
         category: String,
         userInfo: [String: Any]
     ) async {
+        guard let run = Self.schedulingGeneration, run == generation,
+              let accountID, !Task.isCancelled else { return }
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
         content.sound = .default
         content.categoryIdentifier = category
         content.userInfo = userInfo
+        content.userInfo["accountID"] = accountID
 
         let parts = Calendar.current.dateComponents(
             [.year, .month, .day, .hour, .minute], from: date
         )
         let request = UNNotificationRequest(
-            identifier: id,
+            identifier: "\(id).\(run.uuidString)",
             content: content,
             trigger: UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)
         )
         try? await centre.add(request)
+        if generation != run || Task.isCancelled {
+            centre.removePendingNotificationRequests(withIdentifiers: [request.identifier])
+        }
     }
 
     private func addRepeatingDaily(
@@ -413,14 +447,17 @@ final class NotificationScheduler: NSObject {
         hour: Int,
         category: String
     ) async {
+        guard let run = Self.schedulingGeneration, run == generation,
+              let accountID, !Task.isCancelled else { return }
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
         content.sound = .default
         content.categoryIdentifier = category
+        content.userInfo["accountID"] = accountID
 
         let request = UNNotificationRequest(
-            identifier: id,
+            identifier: "\(id).\(run.uuidString)",
             content: content,
             trigger: UNCalendarNotificationTrigger(
                 dateMatching: DateComponents(hour: hour, minute: 0),
@@ -428,6 +465,9 @@ final class NotificationScheduler: NSObject {
             )
         )
         try? await centre.add(request)
+        if generation != run || Task.isCancelled {
+            centre.removePendingNotificationRequests(withIdentifiers: [request.identifier])
+        }
     }
 
     static func dayKey(_ date: Date) -> String {
@@ -452,6 +492,10 @@ extension NotificationScheduler: UNUserNotificationCenterDelegate {
         let action = response.actionIdentifier
         let info = response.notification.request.content.userInfo
         Task { @MainActor in
+            guard let owner = self.accountID, info["accountID"] as? Int == owner else {
+                completionHandler()
+                return
+            }
             switch action {
             case Action.muteTask:
                 if let id = info["taskID"] as? Int { self.muteTask(id) }
@@ -478,15 +522,20 @@ extension NotificationScheduler: UNUserNotificationCenterDelegate {
         withCompletionHandler completionHandler:
             @escaping (UNNotificationPresentationOptions) -> Void
     ) {
-        completionHandler([.banner, .sound])
+        let owner = notification.request.content.userInfo["accountID"] as? Int
+        Task { @MainActor in
+            completionHandler(owner != nil && owner == self.accountID ? [.banner, .sound] : [])
+        }
     }
 
     private func removeToday(prefix: String) {
+        let owner = accountID
         centre.getPendingNotificationRequests { requests in
             let ids = requests
                 .map(\.identifier)
                 .filter { $0.hasPrefix(prefix) }
             Task { @MainActor in
+                guard self.accountID == owner else { return }
                 self.centre.removePendingNotificationRequests(withIdentifiers: ids)
             }
         }
