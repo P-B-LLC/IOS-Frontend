@@ -37,6 +37,13 @@ struct PlannerMonthCalendar: View {
             grid
             legend
         }
+        // A week is seven days, so this is seven columns at every text size.
+        // At the accessibility sizes the headings came apart into stacked
+        // single letters -- M, O, N -- and the dates themselves turned into
+        // ellipses, which is a calendar that has stopped saying which day
+        // anything is on. Capped because picking a day here opens that day's
+        // own screen, and that one grows the whole way.
+        .typeSizeCeiling()
         .repbaseCard(contentPadding: 18, cornerRadius: 24)
         .background {
             if clearedDate != nil {

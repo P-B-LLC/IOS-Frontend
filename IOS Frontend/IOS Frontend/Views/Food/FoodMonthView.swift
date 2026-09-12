@@ -106,6 +106,9 @@ struct FoodMonthView: View {
     // MARK: - Grid
 
     private var grid: some View {
+        // Seven columns and fixed-height cells: this one cannot reflow even
+        // in principle. Same cap as the planner's month grid, and for the
+        // same reason -- a day here opens the day, which does scale.
         LazyVGrid(
             columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7),
             spacing: 6
@@ -125,6 +128,7 @@ struct FoodMonthView: View {
                 .buttonStyle(.plain)
             }
         }
+        .typeSizeCeiling()
     }
 
     private func dayCell(_ day: Date) -> some View {

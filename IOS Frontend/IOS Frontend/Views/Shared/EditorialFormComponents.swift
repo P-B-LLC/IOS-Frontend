@@ -28,6 +28,13 @@ struct RytivoBrandLockup: View {
                 .tracking(-0.35)
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
         }
+        // A signature next to a logo, sized against that logo, and read by
+        // VoiceOver from the label below rather than from the glyphs. Letting
+        // it grow to the accessibility sizes did not make anything more
+        // legible -- it took the width the page title needed, so "Calendar"
+        // beside it broke into "Calenda / r". The name of the page is the
+        // content here; the wordmark is decoration.
+        .typeSizeCeiling(.large)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Rytivo")
     }

@@ -172,6 +172,10 @@ struct HomeCalendarCard: View {
                 .frame(maxWidth: .infinity)
             }
         }
+        // Seven days across a card, with the today marker a fixed 20pt circle
+        // the number has to sit inside. Same cap as the other week and month
+        // views; the day itself opens a screen that grows properly.
+        .typeSizeCeiling()
     }
 
     private var nextUp: some View {

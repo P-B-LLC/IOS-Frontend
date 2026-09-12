@@ -66,6 +66,10 @@ struct PlannerWeekStrip: View {
                 dayTab(date)
             }
         }
+        // Seven tabs across, for the same reason the month grid has seven
+        // columns. Capped here rather than on the whole card, so the
+        // categories and the progress line underneath still grow.
+        .typeSizeCeiling()
     }
 
     private func dayTab(_ date: Date) -> some View {

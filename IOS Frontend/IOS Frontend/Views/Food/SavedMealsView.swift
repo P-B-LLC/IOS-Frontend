@@ -207,24 +207,30 @@ private struct SavedMealRow: View {
     let onDelete: () -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
+        // Becomes a column at the accessibility sizes. As a row it gave the
+        // name about a third of the width, which is narrower than the word
+        // "Chicken" -- so the name came apart mid-word, "Chicke / n rice /
+        // bowl", and the summary under it truncated to "2 ingre...", hiding
+        // whether the meal even has a recipe.
+        AdaptiveRow(spacing: 12) {
             // The meal itself opens it. A pencil was the way in before, which
             // put the ordinary thing to do behind the smallest target on the
             // row and left the name -- the part that reads like it opens the
             // thing it names -- doing nothing at all when tapped.
             Button(action: onEdit) {
-                HStack(spacing: 12) {
+                AdaptiveRow(spacing: 12) {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(savedMeal.name)
                             .font(.community(.headline))
                         Text(savedMeal.librarySummary)
                             .font(.community(.caption))
                             .foregroundStyle(.secondary)
-                            .lineLimit(1)
+                            // Allowed a second line rather than truncating.
+                            // "2 ingredients - recipe" is the only place the
+                            // list says a recipe is there at all.
+                            .lineLimit(2)
                     }
-
-                    Spacer(minLength: 8)
-
+                } trailing: {
                     Text("\(savedMeal.totalNutrition.calories.nutritionText) cal")
                         .font(.community(.subheadline, weight: .semibold))
                         .foregroundStyle(.secondary)
@@ -235,7 +241,7 @@ private struct SavedMealRow: View {
             }
             .buttonStyle(.plain)
             .accessibilityHint("Opens the recipe")
-
+        } trailing: {
             // Set before the apply button and tinted as the exception it is.
             // The two do opposite things, and the row exists to add the meal,
             // so the destructive one should never be the easier reach.
