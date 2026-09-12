@@ -46,29 +46,24 @@ xcodebuild -project "IOS Frontend/IOS Frontend.xcodeproj" -scheme "IOS Frontend"
 Then install it and confirm it is still running ten seconds later. A build that
 launches and vanishes is this bug.
 
-### 2. Serve media with `DEBUG` off — *repbase*
+### 2. Serve media with `DEBUG` off — *done, `a98ad5f`*
 
-**State:** `config/urls.py` serves `MEDIA_URL` only under `if settings.DEBUG`.
-Production must run with `DEBUG=False`, so every avatar, post photo and feed
-image 404s. Measured against a `DEBUG=False` server:
+Photos are served by `core/media.py` in every configuration, behind a keyed
+signature, and no longer under `if settings.DEBUG`. Against a `DEBUG=False`
+server: signed 200, unsigned 403, tampered 403. The real app needed no change
+— its requests appear in the access log carrying signatures, answered 200.
 
-```
-api   : HTTP 401   (healthy — auth required)
-media : HTTP 404   (every photo in the app)
-```
+The same commit closed the access-control gap below. What is left here is a
+**deployment choice, not a code change**: set `REPBASE_MEDIA_ACCEL_REDIRECT_ROOT`
+to the internal location a proxy maps onto `MEDIA_ROOT` and nginx sends the
+file while Django only checks the signature — no image bytes through Python.
+Left unset it works, just with Python pushing the bytes.
 
-**Do:** pick one, they are materially different and each forecloses the others:
-
-- **Object storage** (S3/R2 + `django-storages`). Right answer long-term; media
-  stops living on the app host, survives redeploys, and `feed_image` upload
-  already goes through Django's storage API so the change is settings-level.
-- **Reverse proxy** (nginx/Caddy serving `/media/`). Cheapest if the host is a
-  VM you control; ties media to that box's disk.
-- **Env-gated Django serving.** Fastest to a closed beta, worst under load, and
-  puts user uploads through the app server. Acceptable only as a stopgap.
-
-**Verify:** `curl` a real media path against a server started with
-`DJANGO_DEBUG=false`. Expect 200.
+Object storage (S3/R2 + `django-storages`) remains the long-term answer and is
+now a settings-level change: everything reads through `default_storage` rather
+than the filesystem, which was worth getting right — the first version called
+`django.views.static.serve` and would have worked perfectly until media moved
+to S3 and then served nothing.
 
 ### 3. Configure email — *repbase*
 
@@ -118,9 +113,13 @@ repository setting, not a file, so no commit can do it.
 
 ## Should do before strangers use it
 
-- **Media has no access control.** Anyone with a URL can fetch any photo,
-  including one belonging to a private account. Fine for a closed beta *if
-  known*; not fine as a surprise.
+- ~~**Media has no access control.**~~ *Done, `a98ad5f`.* A photo URL now
+  carries an HMAC over the file name and an expiry, so it is unguessable and
+  stops working on its own — roughly a week, rounded to a day so the URL stays
+  stable long enough for the app's image cache to be worth having. It does not
+  decide *who* may see a post; that is still the feed's job, done where the
+  post is served, so someone who cannot see a post never receives its URL.
+  What it bounds is how long a URL keeps working once handed out.
 - **`CFBundleName` is "IOS Frontend".** The display name is correctly Rytivo,
   but the bundle name shows in parts of system UI and in App Store Connect.
   `PRODUCT_NAME = "$(TARGET_NAME)"` is where it comes from.
