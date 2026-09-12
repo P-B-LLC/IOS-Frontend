@@ -1,5 +1,10 @@
 # Releasing
 
+> Before a first beta, read [BETA_READINESS.md](BETA_READINESS.md). It lists
+> what a real user hits on day one — including that a release build needs
+> `REPBASE_API_URL` set or it exits on launch, and that photos 404 until media
+> is served with `DEBUG` off.
+
 Two things have to be green before a version ships: the backend test suite in
 `P-B-LLC/repbase`, and the iOS build checks here. Both already run in CI. Until
 the step below is done, **neither one blocks anything** — and that is not a
