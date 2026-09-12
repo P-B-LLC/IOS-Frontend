@@ -57,6 +57,27 @@ struct AdaptiveRow<Leading: View, Trailing: View>: View {
     }
 }
 
+/// Content that sits side by side until the text is large, then sits stacked.
+///
+/// `AdaptiveRow`'s smaller sibling, for things that belong *next to* each
+/// other rather than at opposite ends of a row -- a name and the handle after
+/// it, where a spacer between them would be wrong at any size.
+struct AdaptiveStack<Content: View>: View {
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    var spacing: CGFloat = 6
+    var alignment: HorizontalAlignment = .leading
+    @ViewBuilder var content: () -> Content
+
+    var body: some View {
+        if typeSize.isAccessibilitySize {
+            VStack(alignment: alignment, spacing: spacing / 2, content: content)
+        } else {
+            HStack(spacing: spacing, content: content)
+        }
+    }
+}
+
 extension View {
     /// Stops the text inside this subtree growing past `ceiling`.
     ///

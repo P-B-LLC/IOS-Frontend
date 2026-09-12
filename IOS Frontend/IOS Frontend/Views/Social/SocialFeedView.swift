@@ -328,6 +328,14 @@ struct SocialFeedView: View {
             RytivoBrandLockup(size: 24)
                 .allowsHitTesting(false)
         }
+        // The wordmark sits in an overlay, centred over this row, which works
+        // because the row leaves a gap in its middle. At the accessibility
+        // sizes "Social" and the Post button grew into that gap and ran
+        // underneath it -- three things overlapping, and the button's label
+        // cut to "+ Po...". Capped so the bar keeps its shape; both buttons
+        // carry their own accessibility labels, so nothing is lost to a
+        // reader who cannot see it.
+        .typeSizeCeiling()
         .padding(.horizontal, RepbaseDesign.pageInset)
         .padding(.top, 8)
         .padding(.bottom, 10)
@@ -907,24 +915,33 @@ struct PostCard: View {
     /// would credit them with it.
     private var authorLine: some View {
         HStack(spacing: 6) {
-            HStack(spacing: 6) {
+            // Four labels on one line, each held to it, which at the
+            // accessibility sizes left "Aar... @a... - 1..." -- a byline that
+            // no longer says who posted. Stacked, the name gets its own line
+            // and the handle and age share the next.
+            AdaptiveStack(spacing: 6) {
                 Text(shown.author.displayName)
                     .font(.community(.subheadline, weight: .bold))
                     .foregroundStyle(timeOfDay.primaryText)
                     .lineLimit(1)
 
-                Text("@" + shown.author.username)
-                    .font(.community(.caption))
-                    .foregroundStyle(timeOfDay.canvasSecondaryText)
-                    .lineLimit(1)
+                // Deliberately a plain row: the handle, the separator and the
+                // age are one phrase, and stacking them too would spend three
+                // lines saying what one says.
+                HStack(spacing: 6) {
+                    Text("@" + shown.author.username)
+                        .font(.community(.caption))
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                        .lineLimit(1)
 
-                Text("·")
-                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+                    Text("·")
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
 
-                Text(shown.createdAt, format: .relative(presentation: .numeric))
-                    .font(.community(.caption))
-                    .foregroundStyle(timeOfDay.canvasSecondaryText)
-                    .lineLimit(1)
+                    Text(shown.createdAt, format: .relative(presentation: .numeric))
+                        .font(.community(.caption))
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                        .lineLimit(1)
+                }
             }
             .contentShape(Rectangle())
             .onTapGesture { openAuthor?(shown.author.id) }
