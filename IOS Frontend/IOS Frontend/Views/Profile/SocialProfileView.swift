@@ -1710,12 +1710,21 @@ struct ProfileOnboardingView: View {
             guard let newItem else { return }
             Task {
                 let data = try? await newItem.loadTransferable(type: Data.self)
+                // Decoded before the hop back, not inside it. This ran in a
+                // MainActor.run block, so a full-size photo from the library
+                // was read into pixels on the main thread while the picker
+                // was still dismissing.
+                let image: UIImage? = if let data {
+                    await PhotoDecoding.decoded(data)
+                } else {
+                    nil
+                }
                 await MainActor.run {
                     // Cleared whatever happens, so choosing the same photo a
                     // second time still reads as a change and reopens the
                     // cropper, rather than looking like nothing happened.
                     selectedPhoto = nil
-                    guard let data, let image = UIImage(data: data) else { return }
+                    guard let image else { return }
                     pendingPhoto = PendingProfilePhoto(image: image)
                 }
             }

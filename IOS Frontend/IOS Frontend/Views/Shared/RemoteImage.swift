@@ -63,7 +63,7 @@ final class RemoteImageCache {
         let task = Task<UIImage?, Never> {
             guard let (data, response) = try? await URLSession.shared.data(from: url),
                   (response as? HTTPURLResponse).map({ (200..<300).contains($0.statusCode) }) ?? true,
-                  let shrunk = Self.downsample(data, maxPixel: maxPixel) else {
+                  let shrunk = await Self.downsample(data, maxPixel: maxPixel) else {
                 return nil
             }
             return shrunk
@@ -80,7 +80,17 @@ final class RemoteImageCache {
     ///
     /// `CGImageSourceCreateThumbnailAtIndex` never builds the full-size bitmap,
     /// so a four-megabyte photograph costs what a small one costs.
-    private nonisolated static func downsample(_ data: Data, maxPixel: CGFloat) -> UIImage? {
+    ///
+    /// `@concurrent` is what actually keeps this off the main thread, and it
+    /// is doing more work than it looks like. This type is main-actor
+    /// isolated, and an unstructured `Task {}` started inside it inherits
+    /// that isolation -- so the body above ran on the main actor, and this
+    /// function ran there with it. `nonisolated` never moved it: that says
+    /// the work does not *need* the main actor, not that it leaves it. Every
+    /// photo in the feed was therefore decoded on the main thread, which is
+    /// the one thing the comment at the top of this file promises it is not.
+    @concurrent
+    private nonisolated static func downsample(_ data: Data, maxPixel: CGFloat) async -> UIImage? {
         let sourceOptions = [kCGImageSourceShouldCache: false] as CFDictionary
         guard let source = CGImageSourceCreateWithData(data as CFData, sourceOptions) else {
             return nil
