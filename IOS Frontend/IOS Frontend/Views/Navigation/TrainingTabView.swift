@@ -13,27 +13,24 @@ import SwiftUI
 /// moves between constantly anyway — and left no room for the feed. The switch
 /// sits at the top of this tab rather than being a second bar at the bottom, so
 /// there is still only one control in the app that changes area.
-struct TrainingTabView: View {
-    nonisolated enum Half: String, CaseIterable, Identifiable {
-        case workouts
-        case food
-
-        var id: String { rawValue }
-
-        var title: String {
-            switch self {
-            case .workouts: "Workouts"
-            case .food: "Food"
-            }
-        }
-
-        var symbol: String {
-            switch self {
-            case .workouts: ActivityIconKind.lifting.systemName
-            case .food: "fork.knife"
-            }
+/// The icon each half draws with.
+///
+/// Kept beside the view rather than with the cases, because it borrows from
+/// the app's icon vocabulary and `TrainingHalf` lives in a file that imports
+/// nothing but Foundation so the routing tests can reach it.
+extension TrainingHalf {
+    var symbol: String {
+        switch self {
+        case .workouts: ActivityIconKind.lifting.systemName
+        case .food: "fork.knife"
         }
     }
+}
+
+struct TrainingTabView: View {
+    /// Spelled `TrainingTabView.Half` everywhere it is used, and defined in
+    /// RepbaseRoute.swift, where routing needs it.
+    typealias Half = TrainingHalf
 
     /// Which half is showing.
     ///

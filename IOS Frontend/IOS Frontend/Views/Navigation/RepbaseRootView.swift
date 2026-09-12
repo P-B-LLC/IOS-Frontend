@@ -96,48 +96,6 @@ private struct MinimizesBottomBarOnScroll: ViewModifier {
     }
 }
 
-nonisolated enum RepbaseTab: String, CaseIterable, Identifiable {
-    case home
-    /// Workouts and food together. They were a slot each, which is two of five
-    /// spent on the two halves of the same day, and left none for the feed.
-    case training
-    case planner
-    case social
-    case account
-
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .home: "Home"
-        case .training: "Training"
-        case .planner: "Calendar"
-        case .social: "Social"
-        case .account: "Account"
-        }
-    }
-
-    var symbol: String {
-        switch self {
-        case .home: "house"
-        case .training: "dumbbell"
-        case .planner: "calendar"
-        case .social: "person.2"
-        case .account: "person"
-        }
-    }
-
-    var iconAsset: String {
-        switch self {
-        case .home: "RepbaseHome"
-        case .training: "RepbaseTraining"
-        case .planner: "RepbaseCalendar"
-        case .social: "RepbaseSocial"
-        case .account: "RepbaseAccount"
-        }
-    }
-}
-
 /// Everything the signed-in app shows, with the bottom bar outside it.
 ///
 /// A `TabView` rather than pushing each area from the home page: pushing meant
@@ -212,31 +170,18 @@ struct RepbaseRootView: View {
                 .tag(RepbaseTab.account)
         }
         .environment(chrome)
+        // Which tab a destination selects, which half it shows and whether it
+        // clears the stack first is worked out by RepbaseRoute, and tested
+        // there. This applies the answer and owns the state; it decides
+        // nothing. Clearing before appending is the rule worth keeping in
+        // sight: arriving from Home is a fresh trip, not a step deeper into
+        // wherever the tab was left three days ago.
         .environment(\.repbaseNavigate, RepbaseNavigateAction { destination in
-            switch destination {
-            case .workouts:
-                trainingHalf = .workouts
-                trainingPath = NavigationPath()
-                tab = .training
-            case .workoutDay(let day):
-                trainingHalf = .workouts
-                // Replaced rather than appended: arriving from Home is a
-                // fresh trip, not a step deeper into wherever the tab was
-                // left three days ago.
-                trainingPath = NavigationPath()
-                trainingPath.append(day)
-                tab = .training
-            case .food:
-                trainingHalf = .food
-                trainingPath = NavigationPath()
-                tab = .training
-            case .planner:
-                tab = .planner
-            case .social:
-                tab = .social
-            case .account:
-                tab = .account
-            }
+            let route = RepbaseRoute(for: destination)
+            if let half = route.trainingHalf { trainingHalf = half }
+            if route.clearsTrainingPath { trainingPath = NavigationPath() }
+            if let day = route.pushesDay { trainingPath.append(day) }
+            tab = route.tab
         })
         .onPreferenceChange(HidesBottomBarPreference.self) { isBarHidden = $0 }
         // A new tab is a new page, and a new page starts at the top.
