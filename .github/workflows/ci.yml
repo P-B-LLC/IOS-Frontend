@@ -39,6 +39,34 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             build
 
+      # A release build reads its server from REPBASE_API_URL in the bundle
+      # and refuses to run without an https one. That plumbing was broken and
+      # nothing noticed, because nothing here had ever built Release: the key
+      # was set as INFOPLIST_KEY_REPBASE_API_URL, which only works for keys
+      # Xcode knows about, so it never reached the built plist and every
+      # release build died on launch. This builds Release and reads the key
+      # back out, which is the only way to see that it survived the build.
+      - name: A release build carries the server it was given
+        run: |
+          xcodebuild \
+            -project "IOS Frontend/IOS Frontend.xcodeproj" \
+            -scheme "IOS Frontend" \
+            -configuration Release \
+            -destination "generic/platform=iOS Simulator" \
+            -derivedDataPath .build/DerivedDataRelease \
+            CODE_SIGNING_ALLOWED=NO \
+            REPBASE_API_URL="https://ci.invalid/" \
+            build
+          plist=".build/DerivedDataRelease/Build/Products/Release-iphonesimulator/IOS Frontend.app/Info.plist"
+          got=$(/usr/libexec/PlistBuddy -c "Print :REPBASE_API_URL" "$plist" 2>/dev/null || true)
+          if [ "$got" != "https://ci.invalid/" ]; then
+            echo "REPBASE_API_URL did not reach the built app: got '${got:-<missing>}'."
+            echo "A release build would crash on launch. It must be a key in"
+            echo "IOS Frontend/Info.plist spelled \$(REPBASE_API_URL), not an"
+            echo "INFOPLIST_KEY_ build setting."
+            exit 1
+          fi
+
       # API/GeneratedSources is committed, and the client is generated from
       # API/openapi.yaml. A contract updated without regenerating leaves the
       # app talking to a server it no longer matches -- which is how a saved

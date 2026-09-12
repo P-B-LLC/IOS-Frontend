@@ -10,6 +10,20 @@
 		<true/>
 	</dict>
 	<!--
+	  Which server a release build talks to. APIConfiguration reads this and
+	  refuses to run without an https value, so it is what stands between a
+	  shipped build and one quietly pointing at a laptop.
+
+	  It has to be spelled here rather than as INFOPLIST_KEY_REPBASE_API_URL,
+	  which is what the project used to carry and what made every release
+	  build die on launch: INFOPLIST_KEY_* only works for the keys Xcode
+	  knows about, so a custom one is silently dropped and never reaches the
+	  built plist. Written this way Xcode expands the build setting, and CI
+	  checks that it still does.
+	-->
+	<key>REPBASE_API_URL</key>
+	<string>$(REPBASE_API_URL)</string>
+	<!--
 	  Xcode merges this file with the keys generated from the
 	  INFOPLIST_KEY_* build settings. It holds only what the generator
 	  cannot express: UIBackgroundModes is required for location updates
