@@ -109,7 +109,12 @@ private struct GuidedHomeHeader: View {
                     .foregroundStyle(timeOfDay.canvasPrimaryText)
             }
 
-            HStack(alignment: .center, spacing: 16) {
+            // Two columns sharing one line is what tore the greeting apart at
+            // the accessibility sizes: the name had about a third of the
+            // width, so "Aaron" came out "Aaro / n" and the steps caption
+            // beside it read "NOT REPOR / TED". Stacked, each gets the width
+            // of the screen and neither has to break a word.
+            AdaptiveRow(spacing: 16) {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(greeting.uppercased())
@@ -126,9 +131,7 @@ private struct GuidedHomeHeader: View {
                         .font(.community(.footnote))
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                 }
-
-                Spacer(minLength: 8)
-
+            } trailing: {
                 if showsSteps {
                     VStack(alignment: .trailing, spacing: 4) {
                         Text(stepCount)
@@ -235,6 +238,12 @@ private struct GuidedHomeWeekStrip: View {
                 .accessibilityAddTraits(isSelected(day) ? [.isSelected] : [])
             }
         }
+        // Seven days across, same as the planner's. Left uncapped, the dates
+        // stacked a digit per line -- "1 / 0" for the tenth -- and the
+        // selected day became a tall bar. VoiceOver reads the full date from
+        // the label on each button, so nothing is lost by holding the glyphs
+        // to a size that fits a seventh of the screen.
+        .typeSizeCeiling()
         .padding(5)
         .background(
             timeOfDay.surfaceRaised,
