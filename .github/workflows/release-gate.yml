@@ -1,0 +1,38 @@
+name: Release gate
+
+# A release starts with a version tag, so that is where the checks have to
+# hold. CI already runs on pushes to main, but nothing depends on the result:
+# these repositories have no branch protection, so a red run blocks nothing
+# and a broken commit reaches main anyway. That is not hypothetical -- 18487ff
+# failed to compile the app target and landed regardless.
+#
+# This does not make main unpushable. It makes a tagged version unshippable
+# without the checks passing, which is the point at which it matters most.
+on:
+  push:
+    tags: ["v*"]
+  # So a release can be rehearsed against any branch before the tag is cut.
+  workflow_dispatch:
+
+jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
+
+  verdict:
+    needs: checks
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Say plainly whether this version may ship
+        run: |
+          if [ "${{ needs.checks.result }}" != "success" ]; then
+            echo "### Do not ship ${GITHUB_REF_NAME}" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "The build and test checks did not pass, so this tag is not releasable." >> "$GITHUB_STEP_SUMMARY"
+            echo "Open the 'checks' job above for the failure." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          echo "### ${GITHUB_REF_NAME} passed the release checks" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "The app target builds, the generated client matches the contract," >> "$GITHUB_STEP_SUMMARY"
+          echo "decoded models keep their ids, and the account safety tests pass." >> "$GITHUB_STEP_SUMMARY"
