@@ -82,9 +82,12 @@ struct TrainingDashboardContent: View {
 
     private var workoutPlanCard: some View {
         VStack(alignment: .leading, spacing: 15) {
-            HStack {
+            // A title and a count sharing a line, which at the accessibility
+            // sizes left the title about half the card and broke it into
+            // "Workou / t plan".
+            AdaptiveRow(spacing: 8) {
                 Text("Workout plan").font(.community(.headline))
-                Spacer()
+            } trailing: {
                 Text("\(store.currentWeekWorkouts.count) planned")
                     .font(.community(.footnote))
                     .foregroundStyle(phase.secondaryText)
@@ -106,6 +109,11 @@ struct TrainingDashboardContent: View {
                     .buttonStyle(.plain)
                 }
             }
+            // Seven days across, like every other week row in the app. Left
+            // uncapped the headings came apart into stacked letters -- M, O,
+            // N -- and the workout names under them truncated to "P...", so
+            // the row said neither which day nor which workout.
+            .typeSizeCeiling()
 
             // Without a rotation, the week is whatever was put there by hand,
             // and changing your mind about all of it should not mean opening

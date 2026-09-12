@@ -139,6 +139,12 @@ struct TrainingTabView: View {
                 .accessibilityAddTraits(item == half ? [.isSelected] : [])
             }
         }
+        // Two segments sharing one row, each an icon plus a word. There is no
+        // arrangement of that which fits "Workouts" into half a screen beside
+        // an icon at the accessibility sizes -- it came out "Wor / kout / s"
+        // -- and a switcher whose labels are unreadable is worse than a small
+        // one. The traits above still tell VoiceOver which half is selected.
+        .typeSizeCeiling()
         .padding(4)
         .repbaseInsetSurface(cornerRadius: 13)
     }
