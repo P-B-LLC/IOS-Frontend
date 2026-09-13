@@ -11,6 +11,10 @@ import SwiftUI
 struct FoodPickerView: View {
     @Environment(FoodTrackingStore.self) private var store
     @Environment(\.dismiss) private var dismiss
+    @State private var isSaving = false
+    @State private var saveError: String?
+    @State private var pendingAdd: FoodEntry?
+    @State private var draftSaved = false
 
     let date: Date
     let mealID: FoodMeal.ID
@@ -52,6 +56,12 @@ struct FoodPickerView: View {
                 .frame(height: 52)
                 .overlay(alignment: .bottom) { Divider() }
 
+                if let pendingAdd {
+                    Button("Retry saving \(pendingAdd.name)") { add(pendingAdd) }
+                        .font(.community(.subheadline, weight: .semibold))
+                        .disabled(isSaving)
+                }
+
                 databaseEditorialSection(timeOfDay: timeOfDay)
                 recentEditorialSection(timeOfDay: timeOfDay)
 
@@ -63,6 +73,9 @@ struct FoodPickerView: View {
         .scrollIndicators(.hidden)
         .toolbar(.hidden, for: .navigationBar)
         .homeTimeScreen(timeOfDay)
+        .saveFeedback(isSaving: isSaving, error: saveError)
+        .recoverableDraft(key: "food-picker-\(mealID)", value: $pendingAdd,
+                          saved: $draftSaved, error: $saveError)
         .task(id: searchText) { await searchDatabase() }
     }
 
@@ -204,16 +217,31 @@ struct FoodPickerView: View {
     /// Adds a copy of a previously used food. A fresh identifier keeps this
     /// entry independent, so editing it never changes the original.
     private func add(_ food: FoodEntry) {
-        store.saveFood(
-            FoodEntry(
-                name: food.name,
-                servings: food.servings,
-                nutritionPerServing: food.nutritionPerServing
-            ),
+        guard !isSaving else { return }
+        if let pendingAdd,
+           pendingAdd.name != food.name || pendingAdd.servings != food.servings || pendingAdd.nutritionPerServing != food.nutritionPerServing {
+            saveError = "Please retry the previous food first so we can confirm whether it saved."
+            return
+        }
+        let entry = pendingAdd ?? FoodEntry(name: food.name, servings: food.servings,
+                                           nutritionPerServing: food.nutritionPerServing)
+        pendingAdd = entry
+        isSaving = true
+        saveError = nil
+        Task {
+            defer { isSaving = false }
+            let saved = await store.saveFood(
+            entry,
             in: mealID,
             on: date
         )
+        guard saved else {
+            saveError = store.errorMessage ?? "Couldn't save. Your changes are still here; please try again."
+            return
+        }
+        draftSaved = true
         dismiss()
+        }
     }
 
     private func searchDatabase() async {

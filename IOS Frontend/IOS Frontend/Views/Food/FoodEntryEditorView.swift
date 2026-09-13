@@ -10,10 +10,30 @@ import SwiftUI
 struct FoodEntryEditorView: View {
     @Environment(FoodTrackingStore.self) private var store
     @Environment(\.dismiss) private var dismiss
+    @State private var isSaving = false
+    @State private var saveError: String?
+    @State private var draftSaved = false
+    private struct Checkpoint: Codable, Equatable {
+        var id: UUID
+        var name: String
+        var servings: String
+        var calories: String
+        var protein: String
+        var carbohydrates: String
+        var fat: String
+    }
+    private var checkpoint: Binding<Checkpoint> {
+        Binding(get: { Checkpoint(id: existingID, name: name, servings: servings, calories: calories,
+                                  protein: protein, carbohydrates: carbohydrates, fat: fat) }, set: {
+            existingID = $0.id; name = $0.name; servings = $0.servings; calories = $0.calories
+            protein = $0.protein; carbohydrates = $0.carbohydrates; fat = $0.fat
+        })
+    }
 
     let date: Date
     let mealID: FoodMeal.ID
-    private let existingID: FoodEntry.ID
+    private let existingServerID: Int?
+    @State private var existingID: FoodEntry.ID
     private let isEditing: Bool
     /// Called instead of `dismiss()` after a successful save. Lets a presenting
     /// picker close its whole sheet rather than only popping this screen.
@@ -35,7 +55,8 @@ struct FoodEntryEditorView: View {
         self.date = date
         self.mealID = mealID
         self.onSaved = onSaved
-        existingID = existing?.id ?? UUID()
+        existingServerID = existing?.serverID
+        _existingID = State(initialValue: existing?.id ?? UUID())
         isEditing = existing != nil
         _name = State(initialValue: existing?.name ?? "")
         _servings = State(initialValue: existing?.servings.nutritionText ?? "1")
@@ -55,7 +76,7 @@ struct FoodEntryEditorView: View {
                     leadingAction: .back,
                     saveTitle: "Save",
                     canSave: isValid,
-                    onDismiss: { dismiss() },
+                    onDismiss: { if !isSaving { dismiss() } },
                     onSave: save,
                     showsSaveAction: false
                 )
@@ -146,6 +167,9 @@ struct FoodEntryEditorView: View {
         .scrollIndicators(.hidden)
         .toolbar(.hidden, for: .navigationBar)
         .homeTimeScreen(timeOfDay)
+        .saveFeedback(isSaving: isSaving, error: saveError)
+        .recoverableDraft(key: "food-\(mealID)-\(existingServerID.map(String.init) ?? "new")",
+                          value: checkpoint, saved: $draftSaved, error: $saveError)
     }
 
     private func macroField(
@@ -191,9 +215,15 @@ struct FoodEntryEditorView: View {
             return
         }
 
-        store.saveFood(
+        guard !isSaving else { return }
+        isSaving = true
+        saveError = nil
+        Task {
+            defer { isSaving = false }
+            let saved = await store.saveFood(
             FoodEntry(
                 id: existingID,
+                serverID: existingServerID,
                 name: name.trimmingCharacters(in: .whitespacesAndNewlines),
                 servings: servings,
                 nutritionPerServing: NutritionAmount(
@@ -207,10 +237,16 @@ struct FoodEntryEditorView: View {
             on: date,
             celebrates: !isEditing
         )
+        guard saved else {
+            saveError = store.errorMessage ?? "Couldn't save. Your changes are still here; please try again."
+            return
+        }
+        draftSaved = true
         if let onSaved {
             onSaved()
         } else {
             dismiss()
+        }
         }
     }
 

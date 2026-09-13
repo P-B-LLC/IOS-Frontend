@@ -24,6 +24,12 @@ struct TrainingDashboardReward {
 @Observable
 final class WorkoutStore {
     private var repository: WorkoutAPIRepository?
+    private let recovery = PendingWorkoutSaves()
+    private var recoveryOwnerID: Int?
+    private var recoveryOrigin = ""
+    private(set) var pendingWorkoutSaveCount = 0
+    private(set) var recoveryError: String?
+    private(set) var isRecoveringWorkouts = false
 
     /// Whether this store can reach the server yet.
     ///
@@ -39,7 +45,15 @@ final class WorkoutStore {
     private(set) var persistenceError: String?
     private(set) var isLoading = false
     private(set) var isSaving = false
-    private(set) var activeSession: ActiveWorkoutSession?
+    private(set) var activeSession: ActiveWorkoutSession? {
+        didSet { checkpointActiveSession() }
+    }
+    private(set) var recoveredActiveSession = false
+    private var lastCheckpointAt = Date.distantPast
+    private struct ActiveCheckpoint: Codable {
+        let session: ActiveWorkoutSession
+        let points: [RoutePoint]
+    }
     private(set) var completedSessions: [CompletedWorkoutSession] = []
     private(set) var pendingSetIDs: Set<WorkoutSetDraft.ID> = []
     /// Records the GPS track for cardio sessions.
@@ -118,11 +132,14 @@ final class WorkoutStore {
 
     init(initialSchedule: [Weekday: [Workout]] = [:]) {
         schedule = initialSchedule
+        routeTracker.onPointsChanged = { [weak self] in self?.checkpointActiveSession(force: false) }
     }
 
     // MARK: - Connection
 
-    func connect(configuration: APIConfiguration, token: String) async {
+    func connect(configuration: APIConfiguration, token: String, accountID: Int? = nil) async {
+        recoveryOwnerID = accountID
+        recoveryOrigin = configuration.serverURL.absoluteString
         let generation = UUID()
         connectionGeneration = generation
         activeSession = nil
@@ -134,7 +151,8 @@ final class WorkoutStore {
         do {
             let repository = try WorkoutAPIRepository(
                 configuration: configuration,
-                token: token
+                token: token,
+                recoveryScope: EditorDraftRecovery.shared.scope
             )
             self.repository = repository
             await reloadWeek(
@@ -142,6 +160,7 @@ final class WorkoutStore {
                 generation: generation,
                 showsLoadingState: true
             )
+            await restoreActiveCheckpoint(using: repository, generation: generation)
         } catch {
             self.repository = nil
             schedule = [:]
@@ -150,6 +169,12 @@ final class WorkoutStore {
     }
 
     func disconnect() {
+        checkpointActiveSession()
+        recoveredActiveSession = false
+        recoveryOwnerID = nil
+        pendingWorkoutSaveCount = 0
+        recoveryError = nil
+        isRecoveringWorkouts = false
         connectionGeneration = UUID()
         routeTracker.reset()
         trainingStats = .empty
@@ -566,8 +591,8 @@ final class WorkoutStore {
         }
     }
 
-    func saveWorkout(_ workout: Workout, on day: Weekday) {
-        guard let repository, !isSaving else { return }
+    func saveWorkout(_ workout: Workout, on day: Weekday) async -> Bool {
+        guard let repository, !isSaving else { return false }
         let generation = connectionGeneration
         // Only an edit of a workout already on this day replaces it; anything
         // else is scheduled alongside whatever is already planned.
@@ -577,23 +602,23 @@ final class WorkoutStore {
         isSaving = true
         persistenceError = nil
 
-        Task {
-            do {
-                try await repository.saveWorkout(
-                    workout,
-                    replacing: existing,
-                    scheduledDate: date
-                )
-                await reloadWeek(
-                    using: repository,
-                    generation: generation,
-                    showsLoadingState: false
-                )
-            } catch {
-                guard connectionGeneration == generation else { return }
-                persistenceError = error.userFacingMessage
-            }
-            if connectionGeneration == generation { isSaving = false }
+        defer { if connectionGeneration == generation { isSaving = false } }
+        do {
+            try await repository.saveWorkout(
+                workout,
+                replacing: existing,
+                scheduledDate: date
+            )
+            await reloadWeek(
+                using: repository,
+                generation: generation,
+                showsLoadingState: false
+            )
+            return connectionGeneration == generation
+        } catch {
+            guard connectionGeneration == generation else { return false }
+            persistenceError = error.userFacingMessage
+            return false
         }
     }
 
@@ -696,7 +721,10 @@ final class WorkoutStore {
                     on: day
                 )
                 guard connectionGeneration == generation else { return }
+                routeTracker.reset()
                 activeSession = session
+                if checkpointActiveSession() { try await repository.acknowledgeSessionStart(id: session.serverID) }
+                guard connectionGeneration == generation else { return }
                 routeSummary = nil
                 completedRoute = []
                 previousSets = [:]
@@ -718,11 +746,7 @@ final class WorkoutStore {
                 guard connectionGeneration == generation else { return }
                 persistenceError = error.userFacingMessage
             }
-            // Cleared unconditionally. Operations are serialized by the
-            // `!isSaving` guard at entry, so no newer save can be running, and
-            // a stale return must not leave the day editor permanently
-            // disabled with nothing on screen explaining it.
-            isSaving = false
+            if connectionGeneration == generation { isSaving = false }
         }
     }
 
@@ -734,6 +758,7 @@ final class WorkoutStore {
         reps: String? = nil,
         distanceKilometers: String? = nil
     ) {
+        guard !pendingSetIDs.contains(setID) else { return }
         mutateSet(on: day, exerciseID: exerciseID, setID: setID) { set in
             if let weightKilograms {
                 set.weightKilograms = weightKilograms
@@ -771,22 +796,31 @@ final class WorkoutStore {
                     guard let entryID = set.serverID else {
                         throw APIServiceError.missingServerIdentifier("Set entry")
                     }
-                    try await repository.deleteSetEntry(id: entryID)
+                    try await repository.unlogSet(id: entryID, sessionExerciseID: exercise.sessionExerciseID, setNumber: set.setNumber)
                     guard connectionGeneration == generation else { return }
                     mutateSet(on: day, exerciseID: exerciseID, setID: setID) {
                         $0.serverID = nil
                         $0.isLogged = false
                     }
                 } else {
-                    let entryID = try await repository.logSet(
+                    let logged = try await repository.logSet(
                         set,
                         sessionExerciseID: exercise.sessionExerciseID,
                         workoutType: workoutType
                     )
                     guard connectionGeneration == generation else { return }
+                    let weight = logged.request.weightKg ?? ""
+                    let reps = logged.request.reps.map(String.init) ?? ""
+                    let distance = logged.request.distanceKm ?? ""
                     mutateSet(on: day, exerciseID: exerciseID, setID: setID) {
-                        $0.serverID = entryID
+                        $0.serverID = logged.id
                         $0.isLogged = true
+                        $0.weightKilograms = weight
+                        $0.reps = reps
+                        $0.distanceKilometers = distance
+                    }
+                    if weight != set.weightKilograms || reps != set.reps || distance != set.distanceKilometers {
+                        persistenceError = "Your earlier set was saved. Its saved values are shown; unlog it first if you want to change them."
                     }
                 }
             } catch {
@@ -833,7 +867,7 @@ final class WorkoutStore {
         Task {
             defer { if connectionGeneration == generation { pendingSetIDs.remove(lastSet.id) } }
             do {
-                try await repository.deleteSetEntry(id: entryID)
+                try await repository.unlogSet(id: entryID, sessionExerciseID: exercise.sessionExerciseID, setNumber: lastSet.setNumber)
                 guard connectionGeneration == generation else { return }
                 removeSessionSet(
                     on: day,
@@ -852,7 +886,7 @@ final class WorkoutStore {
               let session = activeSession,
               session.day == day,
               pendingSetIDs.isEmpty,
-              !isSaving else {
+              !isSaving, !isRecoveringWorkouts else {
             return nil
         }
 
@@ -862,29 +896,26 @@ final class WorkoutStore {
         defer { if connectionGeneration == generation { isSaving = false } }
         do {
             let statsBeforeCompletion = trainingStats
-            // Upload the track before ending so the session's distance and
-            // pace are already computed when the completion summary appears.
-            let recorded = routeTracker.stopTracking()
-            if session.tracksDistance, recorded.count >= 2 {
-                do {
-                    let uploadedRoute = try await repository.uploadRoute(
-                        recorded,
-                        sessionID: session.serverID
-                    )
-                    guard connectionGeneration == generation else { return nil }
-                    routeSummary = uploadedRoute
-                } catch {
-                    guard connectionGeneration == generation else { return nil }
-                    // The workout itself still counts; say the track failed
-                    // rather than losing the session over it.
-                    persistenceError = "Session saved, but the route could not be uploaded: \(error.localizedDescription)"
-                }
+            guard let ownerID = recoveryOwnerID else {
+                persistenceError = "Reconnect before finishing this workout."
+                return nil
             }
-
-            try await repository.endSession(id: session.serverID)
+            // Write the finish intent before the first network request. A disk
+            // failure leaves the route in memory and does not pretend it is safe.
+            let recorded = routeTracker.stopTracking()
+            let existing = try recovery.entries(ownerID: ownerID, origin: recoveryOrigin)
+                .first { $0.sessionID == session.serverID }
+            let pending = existing ?? PendingWorkoutSave(
+                id: UUID(), ownerID: ownerID, origin: recoveryOrigin,
+                sessionID: session.serverID, workoutName: session.workoutName,
+                requestedAt: Date(), points: session.tracksDistance ? recorded : []
+            )
+            try recovery.put(pending)
+            refreshPendingWorkoutCount()
+            try await transmitPendingWorkout(pending, using: repository, generation: generation)
             guard connectionGeneration == generation else { return nil }
             completedSessions.append(
-                CompletedWorkoutSession(session: session, endedAt: Date())
+                CompletedWorkoutSession(session: session, endedAt: pending.requestedAt)
             )
             activeSession = nil
             routeTracker.reset()
@@ -954,7 +985,8 @@ final class WorkoutStore {
             return session.loggedSetCount
         } catch {
             guard connectionGeneration == generation else { return nil }
-            persistenceError = error.userFacingMessage
+            persistenceError = "Workout has not fully synced. Keep this screen open and tap Finish to retry, or retry from Training after reopening. \(error.userFacingMessage ?? error.localizedDescription)"
+            recoveryError = persistenceError
             return nil
         }
     }
@@ -983,14 +1015,160 @@ final class WorkoutStore {
         do {
             try await repository.discardSession(id: session.serverID)
             guard connectionGeneration == generation else { return }
+            if let ownerID = recoveryOwnerID {
+                do {
+                    try recovery.discardSession(ownerID: ownerID, origin: recoveryOrigin, sessionID: session.serverID)
+                } catch {
+                    recoveryError = "Workout discarded. Local recovery cleanup needs another attempt."
+                }
+                refreshPendingWorkoutCount()
+            }
             activeSession = nil
             // A discarded session keeps no track.
+            clearActiveCheckpoint(sessionID: session.serverID)
             routeTracker.reset()
             routeSummary = nil
             completedRoute = []
         } catch {
             guard connectionGeneration == generation else { return }
             persistenceError = error.userFacingMessage
+        }
+    }
+
+    @discardableResult
+    func checkpointActiveSession(force: Bool = true) -> Bool {
+        guard let session = activeSession, let ownerID = recoveryOwnerID else { return false }
+        guard force || Date().timeIntervalSince(lastCheckpointAt) >= 5 else { return false }
+        do {
+            try EditorDraftRecovery.shared.save(ActiveCheckpoint(session: session, points: routeTracker.points),
+                key: "active-workout", scope: .init(ownerID: ownerID, origin: recoveryOrigin))
+            lastCheckpointAt = Date()
+            return true
+        } catch {
+            recoveryError = "Couldn't checkpoint this session locally. \(error.localizedDescription)"
+            return false
+        }
+    }
+
+    private func clearActiveCheckpoint(sessionID: Int) {
+        guard let ownerID = recoveryOwnerID else { return }
+        let scope = EditorDraftRecovery.Scope(ownerID: ownerID, origin: recoveryOrigin)
+        do {
+            if let saved = try EditorDraftRecovery.shared.load(ActiveCheckpoint.self, key: "active-workout", scope: scope),
+               saved.session.serverID == sessionID {
+                try EditorDraftRecovery.shared.remove(key: "active-workout", scope: scope)
+            }
+            recoveredActiveSession = false
+        } catch { recoveryError = "Session saved, but its local checkpoint needs cleanup." }
+    }
+
+    private func restoreActiveCheckpoint(using repository: WorkoutAPIRepository, generation: UUID) async {
+        guard activeSession == nil, let ownerID = recoveryOwnerID else { return }
+        let scope = EditorDraftRecovery.Scope(ownerID: ownerID, origin: recoveryOrigin)
+        do {
+            guard let saved = try EditorDraftRecovery.shared.load(ActiveCheckpoint.self, key: "active-workout", scope: scope) else {
+                if let recovered = try await repository.recoverPendingSessionStart(),
+                   generation == connectionGeneration, activeSession == nil {
+                    routeTracker.reset()
+                    activeSession = recovered
+                    recoveredActiveSession = true
+                    if checkpointActiveSession() { try await repository.acknowledgeSessionStart(id: recovered.serverID) }
+                }
+                return
+            }
+            if try recovery.entries(ownerID: ownerID, origin: recoveryOrigin).contains(where: { $0.sessionID == saved.session.serverID }) { return }
+            let isActive = try await repository.isSessionActive(id: saved.session.serverID)
+            guard generation == connectionGeneration, activeSession == nil else { return }
+            guard isActive else {
+                clearActiveCheckpoint(sessionID: saved.session.serverID)
+                try await repository.acknowledgeSessionStart(id: saved.session.serverID)
+                return
+            }
+            let reconciled = try await repository.reconcileLoggedSets(saved.session)
+            guard generation == connectionGeneration, activeSession == nil else { return }
+            routeTracker.restore(saved.points)
+            activeSession = reconciled
+            recoveredActiveSession = true
+            if checkpointActiveSession() { try await repository.acknowledgeSessionStart(id: reconciled.serverID) }
+        } catch {
+            guard generation == connectionGeneration else { return }
+            recoveryError = "Your session checkpoint is kept, but couldn't be reopened. \(error.userFacingMessage ?? error.localizedDescription)"
+        }
+    }
+
+    func resumeRecoveredTracking() {
+        guard recoveredActiveSession, activeSession?.tracksDistance == true else { return }
+        routeTracker.startTracking(preservingPoints: true)
+        if routeTracker.isTracking { recoveredActiveSession = false }
+    }
+
+    func refreshPendingWorkoutCount() {
+        guard let ownerID = recoveryOwnerID else { return }
+        do {
+            pendingWorkoutSaveCount = try recovery.entries(ownerID: ownerID, origin: recoveryOrigin).count
+        } catch { recoveryError = "Couldn't read locally saved workouts. \(error.localizedDescription)" }
+    }
+
+    func deleteAccountRecovery(ownerID: Int, origin: String) {
+        do { try recovery.removeAccount(ownerID: ownerID, origin: origin) }
+        catch { recoveryError = "Local recovery data could not be removed. \(error.localizedDescription)" }
+    }
+
+    private func transmitPendingWorkout(
+        _ pending: PendingWorkoutSave, using repository: WorkoutAPIRepository, generation: UUID
+    ) async throws {
+        for offset in stride(from: 0, to: pending.points.count, by: 1000) {
+            guard generation == connectionGeneration, !Task.isCancelled else { throw CancellationError() }
+            let batch = Array(pending.points[offset..<min(offset + 1000, pending.points.count)])
+            let summary = try await repository.uploadRoute(batch, sessionID: pending.sessionID)
+            guard generation == connectionGeneration, !Task.isCancelled else { throw CancellationError() }
+            routeSummary = summary
+        }
+        guard generation == connectionGeneration, !Task.isCancelled else { throw CancellationError() }
+        try await repository.endSession(id: pending.sessionID, endedAt: pending.requestedAt)
+        guard generation == connectionGeneration, !Task.isCancelled else { throw CancellationError() }
+        // Both operations are retry-safe; even a failed local delete can retry.
+        try recovery.remove(pending)
+        clearActiveCheckpoint(sessionID: pending.sessionID)
+        refreshPendingWorkoutCount()
+        recoveryError = nil
+    }
+
+    func retryPendingWorkoutSaves() async {
+        guard let repository, let ownerID = recoveryOwnerID,
+              !isSaving, !isRecoveringWorkouts else { return }
+        let generation = connectionGeneration
+        isRecoveringWorkouts = true
+        recoveryError = nil
+        defer { if generation == connectionGeneration { isRecoveringWorkouts = false } }
+        do {
+            let pending = try recovery.entries(ownerID: ownerID, origin: recoveryOrigin)
+            pendingWorkoutSaveCount = pending.count
+            var syncedAny = false
+            var lastFailure: String?
+            for item in pending {
+                // A live screen must consume its own completion once, via Finish.
+                if activeSession?.serverID == item.sessionID { continue }
+                do {
+                    try await transmitPendingWorkout(item, using: repository, generation: generation)
+                    syncedAny = true
+                } catch {
+                    guard generation == connectionGeneration, !Task.isCancelled else { return }
+                    // Keep this record, but do not block recovery of other workouts.
+                    lastFailure = error.userFacingMessage
+                }
+            }
+            guard generation == connectionGeneration else { return }
+            if let lastFailure {
+                recoveryError = "Workout sync is pending. Your local copy is kept. \(lastFailure)"
+            }
+            if syncedAny { await loadDashboardSessions() }
+            if activeSession == nil, generation == connectionGeneration {
+                await restoreActiveCheckpoint(using: repository, generation: generation)
+            }
+        } catch {
+            guard generation == connectionGeneration else { return }
+            recoveryError = "Workout sync is pending. Your local copy is kept. \(error.userFacingMessage ?? error.localizedDescription)"
         }
     }
 

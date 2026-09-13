@@ -24,7 +24,7 @@ extension UUID {
     /// points at. Two of the same exercise in one workout are two rows; they
     /// share an exercise id and differ by the id joining each into the
     /// workout, so that is the one that identifies them.
-    static func stable(forServerID serverID: Int) -> UUID {
+    nonisolated static func stable(forServerID serverID: Int) -> UUID {
         var bytes = [UInt8](repeating: 0, count: 16)
         withUnsafeBytes(of: UInt64(bitPattern: Int64(serverID)).bigEndian) { raw in
             bytes.replaceSubrange(8..<16, with: raw)

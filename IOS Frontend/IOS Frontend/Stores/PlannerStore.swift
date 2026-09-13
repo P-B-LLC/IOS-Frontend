@@ -26,6 +26,11 @@ struct PlannerCompletionEvent: Identifiable, Equatable {
 final class PlannerStore {
     private var repository: PlannerAPIRepository?
     private var connectionGeneration = UUID()
+    private let completions = PlannerCompletionCoordinator()
+
+    func isCompletionPending(_ entry: PlannerEntry) -> Bool {
+        entry.serverID.map { completions.isPending($0) } ?? false
+    }
 
     /// Everything loaded for the visible month, keyed by its `YYYY-MM-DD` date.
     /// The month is the unit because the calendar has to mark every day in it,
@@ -102,6 +107,8 @@ final class PlannerStore {
     func connect(configuration: APIConfiguration, token: String) async {
         let generation = UUID()
         connectionGeneration = generation
+        completions.reset()
+        latestCompletionEvent = nil
         isLoading = false
         isSaving = false
         isSyncingScheduledWorkouts = false
@@ -109,7 +116,8 @@ final class PlannerStore {
         do {
             let repository = try PlannerAPIRepository(
                 configuration: configuration,
-                token: token
+                token: token,
+                recoveryScope: EditorDraftRecovery.shared.scope
             )
             self.repository = repository
             await reloadMonth(generation: generation, showsLoadingState: true)
@@ -121,6 +129,7 @@ final class PlannerStore {
     }
 
     func disconnect() {
+        completions.reset()
         connectionGeneration = UUID()
         repository = nil
         // One user's plans must never be shown to the next.
@@ -257,12 +266,19 @@ final class PlannerStore {
 
     // MARK: - Writing
 
-    func save(_ draft: PlannerEntry) {
-        guard let repository, !isSaving else { return }
+    func save(_ draft: PlannerEntry) async -> Bool {
+        guard let repository, !isSaving, !isCompletionPending(draft) else { return false }
         let generation = connectionGeneration
         var draft = draft
+        // The editor may have opened before a checkbox was confirmed elsewhere.
+        // Saving its title/schedule must not restore that old completion value.
+        if let serverID = draft.serverID,
+           let current = entriesByDate.values.joined().first(where: { $0.serverID == serverID })
+                ?? pastDue.first(where: { $0.serverID == serverID }) {
+            draft.isComplete = current.isComplete
+        }
         draft.title = draft.title.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !draft.title.isEmpty else { return }
+        guard !draft.title.isEmpty else { return false }
         // An event is not something to finish, so it never carries completion.
         if !draft.isCompletable { draft.isComplete = false }
         // Tasks and events draw from different halves of the category list.
@@ -274,75 +290,73 @@ final class PlannerStore {
         isSaving = true
         persistenceError = nil
 
-        Task {
-            do {
-                if draft.serverID == nil {
-                    try await repository.create(draft)
-                } else {
-                    try await repository.update(draft)
-                }
-                await reloadMonth(generation: generation, showsLoadingState: false)
-            } catch {
-                guard connectionGeneration == generation else { return }
-                persistenceError = error.userFacingMessage
+        defer { if connectionGeneration == generation { isSaving = false } }
+        do {
+            let saved: PlannerEntry
+            if draft.serverID == nil {
+                saved = try await repository.create(draft)
+            } else {
+                saved = try await repository.update(draft)
             }
-            isSaving = false
+            guard connectionGeneration == generation else { return false }
+            for date in Array(entriesByDate.keys) {
+                entriesByDate[date]?.removeAll { $0.serverID == saved.serverID }
+            }
+            entriesByDate[saved.date, default: []].append(saved.identified(as: draft.id))
+            await reloadMonth(generation: generation, showsLoadingState: false)
+            return connectionGeneration == generation
+        } catch {
+            guard connectionGeneration == generation else { return false }
+            persistenceError = error.userFacingMessage
+            return false
         }
     }
 
     /// Ticks a task off, or puts it back.
     ///
-    /// The row flips straight away and is put back if the server refuses, so a
-    /// checkbox never sits there unresponsive while a request is in flight.
+    /// All copies share the server task's pending control. Only confirmed
+    /// completion changes are displayed or celebrated; failures need no rollback.
     func setComplete(_ entry: PlannerEntry, _ isComplete: Bool) {
-        guard let repository, entry.isCompletable else { return }
+        guard let repository, !isSaving, entry.isCompletable, let serverID = entry.serverID else { return }
+        // A sheet/overdue row may hold an older copy. Read current store state.
+        let entry = entriesByDate.values.joined().first { $0.serverID == serverID }
+            ?? pastDue.first { $0.serverID == serverID } ?? entry
         let generation = connectionGeneration
         let previous = entry.isComplete
-        let tasksBefore = entriesByDate[entry.date, default: []].filter(\.isCompletable)
-        let completedBefore = tasksBefore.filter(\.isComplete).count
-        let completedAfter = max(
-            0,
-            min(tasksBefore.count, completedBefore + (isComplete && !previous ? 1 : 0))
-        )
-        withAnimation(.easeOut(duration: 0.25)) {
-            apply(to: entry) { $0.isComplete = isComplete }
-        }
-        persistenceError = nil
-
-        Task {
-            do {
-                let saved = try await repository.setComplete(entry, isComplete)
+        let accepted = completions.submit(serverID: serverID, current: previous, desired: isComplete,
+            operation: { try await repository.setComplete(entry, isComplete).isComplete },
+            onSuccess: { [weak self] confirmed in
+                guard let self else { return }
                 guard connectionGeneration == generation else { return }
-                // Under the id it already had. Taking the saved copy's fresh
-                // one renamed the row mid-operation, and retirePastDue then
-                // looked for an id no longer in the list and gave up — which
-                // is why a ticked-off overdue task stayed on screen.
-                apply(to: entry) { $0 = saved.identified(as: entry.id) }
-                if saved.isComplete {
+                // PATCH owns only completion, not potentially newer row metadata.
+                withAnimation(.easeOut(duration: 0.25)) {
+                    self.apply(to: entry) { $0.isComplete = confirmed }
+                }
+                if confirmed {
                     if !previous {
+                        let tasks = entriesByDate[entry.date, default: []].filter(\.isCompletable)
+                        let completed = tasks.filter(\.isComplete).count
                         latestCompletionEvent = PlannerCompletionEvent(
                             entryID: entry.id,
                             date: entry.date,
-                            title: saved.title,
-                            completedTasks: completedAfter,
-                            totalTasks: tasksBefore.count,
-                            clearedDay: !tasksBefore.isEmpty && completedAfter == tasksBefore.count
+                            title: entry.title,
+                            completedTasks: completed,
+                            totalTasks: tasks.count,
+                            clearedDay: !tasks.isEmpty && completed == tasks.count
                         )
                     }
                     retirePastDue(entry.id, generation: generation)
                 }
-            } catch {
+            }, onFailure: { [weak self] error in
+                guard let self else { return }
                 guard connectionGeneration == generation else { return }
-                withAnimation(.easeOut(duration: 0.25)) {
-                    apply(to: entry) { $0.isComplete = previous }
-                }
-                persistenceError = error.userFacingMessage
-            }
-        }
+                persistenceError = error.userFacingMessage ?? "Couldn't confirm this task. Tap its checkbox to retry."
+            })
+        if accepted { persistenceError = nil }
     }
 
     func delete(_ entry: PlannerEntry) {
-        guard let repository, !isSaving else { return }
+        guard let repository, !isSaving, !isCompletionPending(entry) else { return }
         let generation = connectionGeneration
         isSaving = true
         persistenceError = nil
@@ -400,9 +414,10 @@ final class PlannerStore {
             // Not fatal: the server is the one that remembers having asked, so
             // a failure here costs a month of tasks, not the month itself.
             try? await repository.syncScheduledWorkouts(from: range.start, to: range.end)
+            let read = completions.beginRead()
             let loaded = try await repository.entries(from: range.start, to: range.end)
             guard connectionGeneration == generation else { return }
-            entriesByDate = Dictionary(grouping: loaded, by: \.date)
+            entriesByDate = Dictionary(grouping: loaded.map { reconcileCompletion($0, read: read) }, by: \.date)
         } catch {
             guard connectionGeneration == generation else { return }
             persistenceError = error.userFacingMessage
@@ -432,6 +447,7 @@ final class PlannerStore {
         else { return }
 
         do {
+            let read = completions.beginRead()
             async let overdue = repository.pastDueTasks(
                 since: Self.dateString(earliest),
                 before: Self.dateString(yesterday)
@@ -453,7 +469,9 @@ final class PlannerStore {
                 to: today
             ).map(Self.dateString)
             pastDue = loadedOverdue
+                .map { reconcileCompletion($0, read: read) }
                 .filter { entry in
+                    guard !entry.isComplete else { return false }
                     // A hand-written task keeps the full horizon; only
                     // workouts age out early.
                     guard entry.category == .workout, entry.workoutID != nil,
@@ -471,6 +489,14 @@ final class PlannerStore {
             guard connectionGeneration == generation else { return }
             persistenceError = error.userFacingMessage
         }
+    }
+
+    /// Applies a change wherever the entry is held.
+    private func reconcileCompletion(_ entry: PlannerEntry, read: PlannerCompletionCoordinator.ReadToken) -> PlannerEntry {
+        guard let serverID = entry.serverID else { return entry }
+        var result = entry
+        result.isComplete = completions.reconcile(entry.isComplete, serverID: serverID, read: read)
+        return result
     }
 
     /// Applies a change wherever the entry is held.
@@ -507,7 +533,8 @@ final class PlannerStore {
             guard connectionGeneration == generation else { return }
             // It may have been unticked while the strikethrough was still on
             // screen, in which case it is outstanding again and stays.
-            guard pastDue.first(where: { $0.id == id })?.isComplete == true else { return }
+            guard let entry = pastDue.first(where: { $0.id == id }),
+                  entry.isComplete, !isCompletionPending(entry) else { return }
             withAnimation(.easeInOut(duration: 0.35)) {
                 pastDue.removeAll { $0.id == id }
             }

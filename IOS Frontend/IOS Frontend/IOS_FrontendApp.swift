@@ -144,6 +144,7 @@ struct IOS_FrontendApp: App {
 }
 
 private struct AppRootView: View {
+    @Environment(\.scenePhase) private var scenePhase
 #if DEBUG
     /// Whether the app was launched to look at one page with sample data,
     /// rather than as the real signed-in app.
@@ -539,6 +540,12 @@ private struct AppRootView: View {
         }
         .font(.community(.body))
         .repbaseCelebrationOverlay()
+        .onChange(of: scenePhase) { _, phase in
+            if phase != .active { workoutStore.checkpointActiveSession() }
+            if phase == .active {
+                Task { await workoutStore.retryPendingWorkoutSaves() }
+            }
+        }
         .task {
 #if DEBUG
             // A preview run must not touch the network or the stores; without
@@ -546,6 +553,10 @@ private struct AppRootView: View {
             guard Self.isPreviewing == false else { return }
 #endif
             authentication.onSessionEnded = { clearAccountState() }
+            authentication.onAccountDeleted = { ownerID in
+                workoutStore.deleteAccountRecovery(ownerID: ownerID, origin: authentication.configuration.serverURL.absoluteString)
+                try? EditorDraftRecovery.shared.removeAccount(scope: .init(ownerID: ownerID, origin: authentication.configuration.serverURL.absoluteString))
+            }
             await authentication.restoreSession()
         }
         .task(id: authentication.token) {
@@ -561,6 +572,7 @@ private struct AppRootView: View {
                 return
             }
             guard case .signedIn(let user) = authentication.phase else { return }
+            EditorDraftRecovery.shared.scope = .init(ownerID: user.id, origin: authentication.configuration.serverURL.absoluteString)
             NotificationScheduler.shared.setAccount(user.id)
             await socialProfileStore.connect(
                 configuration: authentication.configuration,
@@ -569,7 +581,8 @@ private struct AppRootView: View {
             guard authentication.token == token, !Task.isCancelled else { return }
             await workoutStore.connect(
                 configuration: authentication.configuration,
-                token: token
+                token: token,
+                accountID: user.id
             )
             guard authentication.token == token, !Task.isCancelled else { return }
             await plannerStore.connect(
@@ -625,6 +638,8 @@ private struct AppRootView: View {
             // Social tab has been opened once.
             guard authentication.token == token, !Task.isCancelled else { return }
             await socialStore.refreshUnreadNotificationCount()
+            guard authentication.token == token, !Task.isCancelled else { return }
+            await workoutStore.retryPendingWorkoutSaves()
         }
         .task(id: workoutStore.currentWeekWorkouts) {
 #if DEBUG
@@ -667,6 +682,7 @@ private struct AppRootView: View {
     }
 
     private func clearAccountState() {
+        EditorDraftRecovery.shared.scope = nil
         NotificationScheduler.shared.setAccount(nil)
         workoutStore.disconnect()
         plannerStore.disconnect()

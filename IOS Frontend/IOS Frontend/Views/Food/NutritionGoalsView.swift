@@ -10,15 +10,20 @@ import SwiftUI
 struct NutritionGoalsView: View {
     @Environment(FoodTrackingStore.self) private var store
     @Environment(\.dismiss) private var dismiss
+    @State private var isSaving = false
+    @State private var saveError: String?
 
     @State private var calories = ""
     @State private var protein = ""
     @State private var carbohydrates = ""
     @State private var fat = ""
+    @State private var loadedDraft = false
 
     var body: some View {
         goalsScreen(timeOfDay: HomeTimeOfDay.current)
         .onAppear {
+            guard !loadedDraft else { return }
+            loadedDraft = true
             calories = store.goals.calories.nutritionText
             protein = store.goals.proteinGrams.nutritionText
             carbohydrates = store.goals.carbohydrateGrams.nutritionText
@@ -35,7 +40,7 @@ struct NutritionGoalsView: View {
                         leadingAction: .cancel,
                         saveTitle: "Save",
                         canSave: isValid,
-                        onDismiss: { dismiss() },
+                        onDismiss: { if !isSaving { dismiss() } },
                         onSave: save
                     )
 
@@ -94,6 +99,7 @@ struct NutritionGoalsView: View {
             .scrollIndicators(.hidden)
             .toolbar(.hidden, for: .navigationBar)
             .homeTimeScreen(timeOfDay)
+            .saveFeedback(isSaving: isSaving, error: saveError)
         }
     }
 
@@ -176,7 +182,12 @@ struct NutritionGoalsView: View {
               let fat = positive(fat) else {
             return
         }
-        store.updateGoals(
+        guard !isSaving else { return }
+        isSaving = true
+        saveError = nil
+        Task {
+            defer { isSaving = false }
+            let saved = await store.updateGoals(
             NutritionGoals(
                 calories: calories,
                 proteinGrams: protein,
@@ -184,7 +195,12 @@ struct NutritionGoalsView: View {
                 fatGrams: fat
             )
         )
+        guard saved else {
+            saveError = store.errorMessage ?? "Couldn't save. Your changes are still here; please try again."
+            return
+        }
         dismiss()
+        }
     }
 
     private func positive(_ text: String) -> Decimal? {

@@ -309,10 +309,15 @@ private struct SavedMealEditorView: View {
     @Environment(\.workoutVisualPhase) private var phase
 
     @State private var draft: SavedFoodMeal
+    private let recoveryKey: String
+    @State private var draftSaved = false
+    @State private var isSaving = false
+    @State private var saveError: String?
     @State private var isAddingIngredient = false
     @State private var ingredientToEdit: FoodEntry?
 
     init(existing: SavedFoodMeal? = nil) {
+        recoveryKey = "recipe-" + (existing?.serverID.map(String.init) ?? "new")
         _draft = State(
             initialValue: existing ?? SavedFoodMeal(name: "")
         )
@@ -441,8 +446,15 @@ private struct SavedMealEditorView: View {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {
                     draft.name = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
-                    store.saveReusableMeal(draft)
-                    dismiss()
+                    guard !isSaving else { return }
+                    isSaving = true
+                    saveError = nil
+                    let savedDraft = draft
+                    Task {
+                        defer { isSaving = false }
+                        if await store.saveReusableMeal(savedDraft) { draftSaved = true; dismiss() }
+                        else { saveError = store.errorMessage ?? "Couldn't save. Your recipe is still here; please try again." }
+                    }
                 }
                 .disabled(!isValid)
             }
@@ -455,6 +467,8 @@ private struct SavedMealEditorView: View {
                 }
             }
         }
+        .saveFeedback(isSaving: isSaving, error: saveError)
+        .recoverableDraft(key: recoveryKey, value: $draft, saved: $draftSaved, error: $saveError)
         .fullScreenCover(item: $ingredientToEdit) { ingredient in
             NavigationStack {
                 RecipeIngredientEditorView(existing: ingredient) { updated in

@@ -23,21 +23,27 @@ struct WorkoutEditorView: View {
     }
 
     let mode: Mode
+    private let recoveryContext: String
     /// Existing workout names, passed in rather than read from the
     /// environment so previews stand alone.
     var suggestions: [WorkoutSummary] = []
-    var onSaved: ((Workout) -> Void)?
+    var onSaved: ((Workout) async -> Bool)?
 
+    @State private var isSaving = false
+    @State private var saveError: String?
+    @State private var draftSaved = false
     @Environment(\.dismiss) private var dismiss
     @State private var draft: Workout
 
     init(
         mode: Mode,
         suggestions: [WorkoutSummary] = [],
-        onSaved: ((Workout) -> Void)? = nil
+        recoveryContext: String = "library",
+        onSaved: ((Workout) async -> Bool)? = nil
     ) {
         self.mode = mode
         self.suggestions = suggestions
+        self.recoveryContext = recoveryContext
         self.onSaved = onSaved
         switch mode {
         case .create:
@@ -53,6 +59,15 @@ struct WorkoutEditorView: View {
         switch mode {
         case .create, .build: return true
         case .edit: return false
+        }
+    }
+
+    private var recoveryKey: String {
+        switch mode {
+        case .create, .build:
+            return "workout-new-\(recoveryContext)"
+        case .edit(let workout):
+            return "workout-edit-\(workout.serverID.map(String.init) ?? workout.id.uuidString)"
         }
     }
 
@@ -125,6 +140,8 @@ struct WorkoutEditorView: View {
             }
             .toolbar(.hidden, for: .navigationBar)
             .homeTimeScreen(timeOfDay)
+            .saveFeedback(isSaving: isSaving, error: saveError)
+            .recoverableDraft(key: recoveryKey, value: $draft, saved: $draftSaved, error: $saveError)
         }
     }
 
@@ -168,8 +185,15 @@ struct WorkoutEditorView: View {
             exercise.name = exercise.name.trimmingCharacters(in: .whitespacesAndNewlines)
             return exercise.name.isEmpty ? nil : exercise
         }
-        onSaved?(draft)
-        dismiss()
+        guard !isSaving, let onSaved else { return }
+        isSaving = true
+        saveError = nil
+        let savedDraft = draft
+        Task {
+            defer { isSaving = false }
+            if await onSaved(savedDraft) { draftSaved = true; dismiss() }
+            else { saveError = "Couldn't save this workout. Your changes are still here; please try again." }
+        }
     }
 }
 

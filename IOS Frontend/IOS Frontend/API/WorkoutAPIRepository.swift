@@ -14,9 +14,32 @@ import RepbaseAPI
 actor WorkoutAPIRepository {
     private let configuration: APIConfiguration
     private let client: Client
+    private let recoveryScope: EditorDraftRecovery.Scope?
+    private struct SessionStartContext: Codable, Sendable {
+        let workout: Workout
+        let day: Weekday
+    }
+    struct LoggedSet: Sendable {
+        let id: Int
+        let request: Components.Schemas.SetEntryRequest
+    }
+    enum RecoveryFailure: LocalizedError {
+        case unavailable, differentStart
+        var errorDescription: String? {
+            switch self {
+            case .unavailable: return "Local save recovery is unavailable. Reconnect your account and try again."
+            case .differentStart: return "A previous workout start is waiting to be confirmed. Retry workout sync before starting another workout."
+            }
+        }
+    }
+    private struct TemplateCreateIntent: Codable, Sendable {
+        let draft: Workout
+        let request: Components.Schemas.WorkoutTemplateRequest
+    }
 
-    init(configuration: APIConfiguration, token: String) throws {
+    init(configuration: APIConfiguration, token: String, recoveryScope: EditorDraftRecovery.Scope? = nil) throws {
         self.configuration = configuration
+        self.recoveryScope = recoveryScope
         client = try RepbaseAPIClientFactory.makeAuthenticated(
             serverURL: configuration.serverURL,
             token: token,
@@ -298,17 +321,7 @@ actor WorkoutAPIRepository {
         _ draft: Workout,
         scheduledDate: String
     ) async throws {
-        let templateID = try await createTemplate(draft)
-        do {
-            try await scheduleWorkout(
-                templateID: templateID,
-                scheduledDate: scheduledDate
-            )
-        } catch {
-            throw APIServiceError.partialWorkoutCreation(
-                "The template exists on the server, but its date assignment needs attention. \(error.localizedDescription)"
-            )
-        }
+        _ = try await createTemplate(draft, initialDate: scheduledDate)
     }
 
     /// Creates a workout and its exercises, and answers with its server id.
@@ -317,74 +330,61 @@ actor WorkoutAPIRepository {
     /// its anchor, so a schedule row written here would land the workout on a
     /// day the cycle did not choose, and the cycle would then write its own
     /// alongside it.
-    func createTemplate(_ draft: Workout) async throws -> Int {
-        let template: Components.Schemas.WorkoutTemplate
-
-        // Workout names are unique per user, and a template is meant to be
-        // scheduled on as many days as the user likes. Reuse one they already
-        // have by that name instead of failing on the uniqueness constraint.
-        //
-        // Reused as it stands: the exercises on screen are not written over
-        // the saved ones. A rotation day is a choice of which workout goes
-        // there, not a licence to rewrite a workout used elsewhere.
-        if let existing = try await fetchAllWorkouts().first(
-            where: { Self.normalizedName($0.name) == Self.normalizedName(draft.name) }
-        ) {
-            return existing.id
+    func createTemplate(_ draft: Workout, initialDate: String? = nil) async throws -> Int {
+        let operationKey = "create-workout-\(draft.id)"
+        var intent: TemplateCreateIntent?
+        if let recoveryScope {
+            intent = try await EditorDraftRecovery.shared.load(TemplateCreateIntent.self, key: operationKey, scope: recoveryScope)
         }
-
-        let templateOutput = try await client.workoutsCreate(
-            body: .json(
-                Components.Schemas.WorkoutTemplateRequest(
-                    name: draft.name,
-                    workoutType: Self.workoutTypePayload(draft.type),
-                    cardioMachine: draft.cardioMachine
-                        .flatMap(Self.cardioEnum)
-                        .map { .CardioMachineEnum($0) }
-                        ?? .NullEnum(.init()),
-                    cardioTargetMinutes: draft.cardioTargetMinutes.map(Int64.init)
-                )
+        if intent == nil {
+            // A deliberate library reuse must not rewrite its exercises.
+            if let existing = try await fetchAllWorkouts().first(where: {
+                Self.normalizedName($0.name) == Self.normalizedName(draft.name)
+            }) {
+                if let initialDate {
+                    let schedules = try await fetchAllSchedules()
+                    if !schedules.contains(where: { $0.workout == existing.id && $0.scheduledDate == initialDate }) {
+                        try await scheduleWorkout(templateID: existing.id, scheduledDate: initialDate)
+                    }
+                }
+                return existing.id
+            }
+            var resolved: [String: Int] = [:]
+            var initialExercises: [Components.Schemas.InitialWorkoutExerciseRequest] = []
+            for (index, exercise) in draft.exercises.enumerated() {
+                let exerciseID = try await resolveExercise(exercise, resolved: &resolved)
+                initialExercises.append(.init(exercise: exerciseID, order: Int64(index + 1),
+                                              targetSets: exercise.targetSets.map(Int64.init)))
+            }
+            let request = try Components.Schemas.WorkoutTemplateRequest(
+                name: draft.name, workoutType: Self.workoutTypePayload(draft.type),
+                cardioMachine: draft.cardioMachine.flatMap(Self.cardioEnum)
+                    .map { .CardioMachineEnum($0) } ?? .NullEnum(.init()),
+                cardioTargetMinutes: draft.cardioTargetMinutes.map(Int64.init),
+                initialExercises: initialExercises, initialDate: initialDate
             )
+            let snapshot = TemplateCreateIntent(draft: draft, request: request)
+            if let recoveryScope {
+                intent = try await EditorDraftRecovery.shared.capture(snapshot, key: operationKey, scope: recoveryScope)
+            } else { intent = snapshot }
+        }
+        guard let intent else { throw APIServiceError.missingServerIdentifier("Workout save intent") }
+        let output = try await client.workoutsCreate(
+            headers: .init(idempotencyKey: intent.draft.id.uuidString),
+            body: .json(intent.request)
         )
-
-        switch templateOutput {
+        switch output {
         case .created(let response):
-            template = try response.body.json
+            let template = try response.body.json
+            if intent.draft != draft {
+                try await updateWorkout(draft, existing: intent.draft, workoutID: template.id)
+            }
+            if let recoveryScope { try await EditorDraftRecovery.shared.remove(key: operationKey, scope: recoveryScope) }
+            return template.id
         case .undocumented(let statusCode, _):
+            if statusCode == 400, let recoveryScope { try await EditorDraftRecovery.shared.remove(key: operationKey, scope: recoveryScope) }
             throw APIServiceError.undocumentedStatus(statusCode)
         }
-
-        do {
-            var resolved: [String: Int] = [:]
-            for (index, exercise) in draft.exercises.enumerated() {
-                let exerciseID = try await resolveExercise(
-                    exercise,
-                    resolved: &resolved
-                )
-                let relationOutput = try await client.workoutExercisesCreate(
-                    body: .json(
-                        Components.Schemas.WorkoutExerciseRequest(
-                            workout: template.id,
-                            exercise: exerciseID,
-                            order: Int64(index + 1),
-                            targetSets: exercise.targetSets.map(Int64.init)
-                        )
-                    )
-                )
-                switch relationOutput {
-                case .created:
-                    break
-                case .undocumented(let statusCode, _):
-                    throw APIServiceError.undocumentedStatus(statusCode)
-                }
-            }
-        } catch {
-            throw APIServiceError.partialWorkoutCreation(
-                "The template exists on the server, but its exercises need attention. \(error.localizedDescription)"
-            )
-        }
-
-        return template.id
     }
 
     private func scheduleWorkout(
@@ -418,94 +418,31 @@ actor WorkoutAPIRepository {
         existing: Workout,
         workoutID: Int
     ) async throws {
-        let templateOutput = try await client.workoutsPartialUpdate(
+        var resolved: [String: Int] = [:]
+        var plan: [Components.Schemas.WorkoutPlanExerciseRequest] = []
+        for (index, exercise) in draft.exercises.enumerated() {
+            let exerciseID = try await resolveExercise(exercise, resolved: &resolved)
+            plan.append(.init(
+                relationId: exercise.workoutExerciseID,
+                exercise: exerciseID, order: index + 1,
+                targetSets: exercise.targetSets.map(Int64.init)
+            ))
+        }
+        let output = try await client.workoutsPartialUpdate(
             path: .init(id: workoutID),
-            body: .json(
-                Components.Schemas.PatchedWorkoutTemplateRequest(
-                    name: draft.name,
-                    workoutType: Self.workoutTypePayload(draft.type),
-                    cardioMachine: draft.cardioMachine
-                        .flatMap(Self.cardioEnum)
-                        .map { .CardioMachineEnum($0) }
-                        ?? .NullEnum(.init()),
-                    cardioTargetMinutes: draft.cardioTargetMinutes.map(Int64.init)
-                )
-            )
+            body: .json(.init(
+                name: draft.name,
+                workoutType: Self.workoutTypePayload(draft.type),
+                cardioMachine: draft.cardioMachine.flatMap(Self.cardioEnum)
+                    .map { .CardioMachineEnum($0) } ?? .NullEnum(.init()),
+                cardioTargetMinutes: draft.cardioTargetMinutes.map(Int64.init),
+                exercisePlan: plan
+            ))
         )
-        switch templateOutput {
-        case .ok:
-            break
+        switch output {
+        case .ok: return
         case .undocumented(let statusCode, _):
             throw APIServiceError.undocumentedStatus(statusCode)
-        }
-
-        do {
-            let retainedRelationIDs = Set(
-                draft.exercises.compactMap(\.workoutExerciseID)
-            )
-            for removed in existing.exercises {
-                guard let relationID = removed.workoutExerciseID,
-                      !retainedRelationIDs.contains(relationID) else {
-                    continue
-                }
-                let output = try await client.workoutExercisesDestroy(
-                    path: .init(id: relationID)
-                )
-                switch output {
-                case .noContent:
-                    break
-                case .undocumented(let statusCode, _):
-                    throw APIServiceError.undocumentedStatus(statusCode)
-                }
-            }
-
-            var resolved: [String: Int] = [:]
-            for (index, exercise) in draft.exercises.enumerated() {
-                let exerciseID = try await resolveExercise(
-                    exercise,
-                    resolved: &resolved
-                )
-
-                if let relationID = exercise.workoutExerciseID {
-                    let output = try await client.workoutExercisesPartialUpdate(
-                        path: .init(id: relationID),
-                        body: .json(
-                            Components.Schemas.PatchedWorkoutExerciseRequest(
-                                exercise: exerciseID,
-                                order: Int64(index + 1),
-                                targetSets: exercise.targetSets.map(Int64.init)
-                            )
-                        )
-                    )
-                    switch output {
-                    case .ok:
-                        break
-                    case .undocumented(let statusCode, _):
-                        throw APIServiceError.undocumentedStatus(statusCode)
-                    }
-                } else {
-                    let output = try await client.workoutExercisesCreate(
-                        body: .json(
-                            Components.Schemas.WorkoutExerciseRequest(
-                                workout: workoutID,
-                                exercise: exerciseID,
-                                order: Int64(index + 1),
-                                targetSets: exercise.targetSets.map(Int64.init)
-                            )
-                        )
-                    )
-                    switch output {
-                    case .created:
-                        break
-                    case .undocumented(let statusCode, _):
-                        throw APIServiceError.undocumentedStatus(statusCode)
-                    }
-                }
-            }
-        } catch {
-            throw APIServiceError.partialWorkoutCreation(
-                "The workout name was saved, but one or more exercise changes failed. \(error.localizedDescription)"
-            )
         }
     }
 
@@ -571,27 +508,31 @@ actor WorkoutAPIRepository {
         for workout: Workout,
         on day: Weekday
     ) async throws -> ActiveWorkoutSession {
+        guard let recoveryScope else { throw RecoveryFailure.unavailable }
+        try await WorkoutWriteRecovery.finishConsumption(key: "session-start", contextKey: "session-start-context", scope: recoveryScope)
+        let context = try await EditorDraftRecovery.shared.capture(
+            SessionStartContext(workout: workout, day: day), key: "session-start-context", scope: recoveryScope)
+        guard context.workout.serverID == workout.serverID else { throw RecoveryFailure.differentStart }
+        let workout = context.workout
+        let day = context.day
         guard let workoutServerID = workout.serverID else {
             throw APIServiceError.missingServerIdentifier("Workout")
         }
 
-        let createOutput = try await client.sessionsCreate(
-            body: .json(
-                Components.Schemas.WorkoutSessionRequest(
-                    workout: workoutServerID
-                )
-            )
-        )
-        let created: Components.Schemas.WorkoutSession
-        switch createOutput {
-        case .created(let response):
-            created = try response.body.json
-        case .undocumented(let statusCode, _):
-            throw APIServiceError.undocumentedStatus(statusCode)
-        }
+        let receipt = try await WorkoutWriteRecovery.create(key: "session-start",
+            payload: Components.Schemas.WorkoutSessionRequest(workout: workoutServerID), scope: recoveryScope,
+            delete: { _ in throw RecoveryFailure.unavailable },
+            send: { [client] operationID, request in
+                let output = try await client.sessionsCreate(headers: .init(idempotencyKey: operationID.uuidString), body: .json(request))
+                switch output {
+                case .created(let response): return try response.body.json.id
+                case .undocumented(let status, _): throw APIServiceError.undocumentedStatus(status)
+                }
+            })
+        guard let createdID = receipt.resourceID else { throw APIServiceError.malformedResponse }
 
         let startOutput = try await client.sessionsStartCreate(
-            path: .init(id: created.id)
+            path: .init(id: createdID)
         )
         let started: Components.Schemas.WorkoutSession
         switch startOutput {
@@ -604,7 +545,7 @@ actor WorkoutAPIRepository {
         // Asked for by session. This used to read every session-exercise row
         // the account owns and filter here, so opening one session got slower
         // with every session ever logged.
-        var sessionRelations = try await fetchSessionExercises(session: created.id)
+        var sessionRelations = try await fetchSessionExercises(session: createdID)
             .sorted { ($0.order ?? 1, $0.id) < ($1.order ?? 1, $1.id) }
 
         var exercises: [SessionExerciseDraft] = []
@@ -627,7 +568,7 @@ actor WorkoutAPIRepository {
             )
         }
 
-        return ActiveWorkoutSession(
+        let session = ActiveWorkoutSession(
             id: .stable(forServerID: started.id),
             serverID: started.id,
             day: day,
@@ -638,13 +579,33 @@ actor WorkoutAPIRepository {
             startedAt: started.startedAt ?? Date(),
             exercises: exercises
         )
+        return try await reconcileLoggedSets(session)
+    }
+
+    func recoverPendingSessionStart() async throws -> ActiveWorkoutSession? {
+        guard let recoveryScope else { return nil }
+        try await WorkoutWriteRecovery.finishConsumption(key: "session-start", contextKey: "session-start-context", scope: recoveryScope)
+        guard let context = try await EditorDraftRecovery.shared.load(SessionStartContext.self,
+                  key: "session-start-context", scope: recoveryScope) else { return nil }
+        return try await startSession(for: context.workout, on: context.day)
+    }
+
+    /// Called only after a durable active-session checkpoint has been written.
+    func acknowledgeSessionStart(id: Int) async throws {
+        guard let recoveryScope else { return }
+        if let receipt = try await EditorDraftRecovery.shared.load(
+            WorkoutWriteRecovery.Receipt<Components.Schemas.WorkoutSessionRequest>.self,
+            key: "session-start", scope: recoveryScope), receipt.resourceID == id {
+            try await WorkoutWriteRecovery.consume(key: "session-start", contextKey: "session-start-context",
+                                                   resourceID: id, scope: recoveryScope)
+        }
     }
 
     func logSet(
         _ set: WorkoutSetDraft,
         sessionExerciseID: Int,
         workoutType: WorkoutType
-    ) async throws -> Int {
+    ) async throws -> LoggedSet {
         let reps: Int64?
         let distanceKilometers: String?
 
@@ -671,9 +632,8 @@ actor WorkoutAPIRepository {
         let trimmedWeight = set.weightKilograms
             .trimmingCharacters(in: .whitespacesAndNewlines)
 
-        let output = try await client.setEntriesCreate(
-            body: .json(
-                Components.Schemas.SetEntryRequest(
+        guard let recoveryScope else { throw RecoveryFailure.unavailable }
+        let request = Components.Schemas.SetEntryRequest(
                     sessionExercise: sessionExerciseID,
                     setNumber: Int64(set.setNumber),
                     weightKg: trimmedWeight.isEmpty ? nil : trimmedWeight,
@@ -681,14 +641,57 @@ actor WorkoutAPIRepository {
                     distanceKm: distanceKilometers,
                     completedAt: Date()
                 )
-            )
-        )
-        switch output {
-        case .created(let response):
-            return try response.body.json.id
-        case .undocumented(let statusCode, _):
-            throw APIServiceError.undocumentedStatus(statusCode)
+        let receipt = try await WorkoutWriteRecovery.create(
+            key: Self.setWriteKey(sessionExerciseID, set.setNumber), payload: request, scope: recoveryScope,
+            delete: { [self] id in try await deleteSetEntry(id: id) },
+            send: { [client] operationID, original in
+                let output = try await client.setEntriesCreate(headers: .init(idempotencyKey: operationID.uuidString), body: .json(original))
+                switch output {
+                case .created(let response): return try response.body.json.id
+                case .undocumented(let status, _): throw APIServiceError.undocumentedStatus(status)
+                }
+            })
+        guard let id = receipt.resourceID else { throw APIServiceError.malformedResponse }
+        return LoggedSet(id: id, request: receipt.payload)
+    }
+
+    private nonisolated static func setWriteKey(_ exercise: Int, _ number: Int) -> String {
+        "set-write-\(exercise)-\(number)"
+    }
+
+    func unlogSet(id: Int, sessionExerciseID: Int, setNumber: Int) async throws {
+        guard let recoveryScope else { throw RecoveryFailure.unavailable }
+        try await WorkoutWriteRecovery.remove(key: Self.setWriteKey(sessionExerciseID, setNumber),
+            resourceID: id, scope: recoveryScope, send: { [self] id in try await deleteSetEntry(id: id) })
+    }
+
+    func reconcileLoggedSets(_ saved: ActiveWorkoutSession) async throws -> ActiveWorkoutSession {
+        let entries = try await fetchSetEntries(session: saved.serverID)
+        var session = saved
+        for exerciseIndex in session.exercises.indices {
+            let relation = session.exercises[exerciseIndex].sessionExerciseID
+            for setIndex in session.exercises[exerciseIndex].sets.indices {
+                let number = session.exercises[exerciseIndex].sets[setIndex].setNumber
+                let entry = entries.first { $0.sessionExercise == relation && $0.setNumber == Int64(number) }
+                session.exercises[exerciseIndex].sets[setIndex].serverID = entry?.id
+                session.exercises[exerciseIndex].sets[setIndex].isLogged = entry != nil
+                if let entry {
+                    session.exercises[exerciseIndex].sets[setIndex].weightKilograms = entry.weightKg ?? ""
+                    session.exercises[exerciseIndex].sets[setIndex].reps = entry.reps.map(String.init) ?? ""
+                    session.exercises[exerciseIndex].sets[setIndex].distanceKilometers = entry.distanceKm ?? ""
+                } else if let recoveryScope {
+                    let key = Self.setWriteKey(relation, number)
+                    if let receipt = try await EditorDraftRecovery.shared.load(
+                        WorkoutWriteRecovery.Receipt<Components.Schemas.SetEntryRequest>.self,
+                        key: key, scope: recoveryScope), receipt.resourceID != nil {
+                        // A confirmed row that no longer exists was deleted;
+                        // never replay its old resource ID into the restored UI.
+                        try await EditorDraftRecovery.shared.remove(key: key, scope: recoveryScope)
+                    }
+                }
+            }
         }
+        return session
     }
 
     /// Totals, streaks and the six-week trend, counted by the server.
@@ -1286,13 +1289,27 @@ actor WorkoutAPIRepository {
         switch output {
         case .noContent:
             return
+        case .undocumented(404, _):
+            return // A lost DELETE reply is safe to retry: the row is already gone.
         case .undocumented(let statusCode, _):
             throw APIServiceError.undocumentedStatus(statusCode)
         }
     }
 
-    func endSession(id: Int) async throws {
-        let output = try await client.sessionsEndCreate(path: .init(id: id))
+    func isSessionActive(id: Int) async throws -> Bool {
+        let output = try await client.sessionsRetrieve(path: .init(id: id))
+        switch output {
+        case .ok(let response): return try response.body.json.status.value1 == .active
+        case .undocumented(let statusCode, _):
+            if statusCode == 404 { return false }
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    func endSession(id: Int, endedAt: Date? = nil) async throws {
+        let output = try await client.sessionsEndCreate(
+            path: .init(id: id), body: .json(.init(endedAt: endedAt))
+        )
         switch output {
         case .ok:
             return

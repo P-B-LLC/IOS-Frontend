@@ -27,10 +27,24 @@ struct PlannerEntryEditorView: View {
     /// Workouts the user already has, passed in rather than read from the
     /// environment so previews stand alone.
     var workouts: [WorkoutSummary] = []
-    var onSaved: ((PlannerEntry) -> Void)?
+    var onSaved: ((PlannerEntry) async -> Bool)?
     var onDeleted: ((PlannerEntry) -> Void)?
 
     @Environment(\.dismiss) private var dismiss
+    @State private var isSaving = false
+    @State private var saveError: String?
+    @State private var draftSaved = false
+    private struct Checkpoint: Codable, Equatable {
+        var draft: PlannerEntry
+        var date: Date
+        var time: Date
+        var hasTime: Bool
+    }
+    private var checkpoint: Binding<Checkpoint> {
+        Binding(get: { Checkpoint(draft: draft, date: date, time: time, hasTime: hasTime) }, set: {
+            draft = $0.draft; date = $0.date; time = $0.time; hasTime = $0.hasTime
+        })
+    }
     @State private var draft: PlannerEntry
     @State private var date: Date
     @State private var time: Date
@@ -41,7 +55,7 @@ struct PlannerEntryEditorView: View {
     init(
         mode: Mode,
         workouts: [WorkoutSummary] = [],
-        onSaved: ((PlannerEntry) -> Void)? = nil,
+        onSaved: ((PlannerEntry) async -> Bool)? = nil,
         onDeleted: ((PlannerEntry) -> Void)? = nil
     ) {
         self.mode = mode
@@ -157,6 +171,8 @@ struct PlannerEntryEditorView: View {
             .scrollIndicators(.hidden)
             .toolbar(.hidden, for: .navigationBar)
             .homeTimeScreen(timeOfDay)
+            .saveFeedback(isSaving: isSaving, error: saveError)
+            .recoverableDraft(key: "planner-\(mode.id)", value: checkpoint, saved: $draftSaved, error: $saveError)
             .fullScreenCover(item: $sharedEntry) { shared in
                 NavigationStack {
                     PostComposerView(
@@ -378,8 +394,14 @@ struct PlannerEntryEditorView: View {
         if saved.kind == .event { saved.isComplete = false }
         if !saved.category.suits(saved.kind) { saved.category = .other }
         if saved.category != .workout { saved.workoutID = nil }
-        onSaved?(saved)
-        dismiss()
+        guard !isSaving, let onSaved else { return }
+        isSaving = true
+        saveError = nil
+        Task {
+            defer { isSaving = false }
+            if await onSaved(saved) { draftSaved = true; dismiss() }
+            else { saveError = "Couldn't save. Your changes are still here; please try again." }
+        }
     }
 
     private var isEditing: Bool {

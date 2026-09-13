@@ -11,9 +11,11 @@ import RepbaseAPI
 actor PlannerAPIRepository {
     private let configuration: APIConfiguration
     private let client: Client
+    private let recoveryScope: EditorDraftRecovery.Scope?
 
-    init(configuration: APIConfiguration, token: String) throws {
+    init(configuration: APIConfiguration, token: String, recoveryScope: EditorDraftRecovery.Scope? = nil) throws {
         self.configuration = configuration
+        self.recoveryScope = recoveryScope
         client = try RepbaseAPIClientFactory.makeAuthenticated(
             serverURL: configuration.serverURL,
             token: token,
@@ -105,7 +107,14 @@ actor PlannerAPIRepository {
 
     @discardableResult
     func create(_ draft: PlannerEntry) async throws -> PlannerEntry {
+        let desired = draft
+        let operationKey = "create-planner-\(draft.id)"
+        var draft = draft
+        if let recoveryScope {
+            draft = try await EditorDraftRecovery.shared.capture(draft, key: operationKey, scope: recoveryScope)
+        }
         let output = try await client.plannerCreate(
+            headers: .init(idempotencyKey: draft.id.uuidString),
             body: .json(
                 Components.Schemas.PlannerEntryRequest(
                     kind: Self.kindPayload(draft.kind),
@@ -123,8 +132,16 @@ actor PlannerAPIRepository {
         )
         switch output {
         case .created(let response):
-            return Self.entry(from: try response.body.json)
+            var saved = Self.entry(from: try response.body.json)
+            if desired != draft {
+                var revision = desired
+                revision.serverID = saved.serverID
+                saved = try await update(revision)
+            }
+            if let recoveryScope { try await EditorDraftRecovery.shared.remove(key: operationKey, scope: recoveryScope) }
+            return saved
         case .undocumented(let statusCode, _):
+            if statusCode == 400, let recoveryScope { try await EditorDraftRecovery.shared.remove(key: operationKey, scope: recoveryScope) }
             throw APIServiceError.undocumentedStatus(statusCode)
         }
     }

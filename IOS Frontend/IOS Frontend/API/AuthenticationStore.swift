@@ -75,6 +75,7 @@ final class AuthenticationStore {
     private var sessionGeneration = UUID()
     private static let removalPendingKey = "authentication.credentialRemovalPending"
     var onSessionEnded: (() -> Void)?
+    var onAccountDeleted: ((Int) -> Void)?
     private(set) var phase: AuthenticationPhase = .checking
     private(set) var token: String?
     private(set) var isWorking = false
@@ -280,6 +281,7 @@ final class AuthenticationStore {
             guard sessionGeneration == generation, !Task.isCancelled else { return }
             switch output {
             case .noContent:
+                if case .signedIn(let user) = phase { onAccountDeleted?(user.id) }
                 clearLocalSession()
             case .undocumented(let statusCode, let payload):
                 throw await RepbaseAPIHTTPError.decode(

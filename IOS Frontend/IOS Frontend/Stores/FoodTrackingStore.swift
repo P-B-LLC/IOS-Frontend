@@ -101,7 +101,8 @@ final class FoodTrackingStore {
             )
             let repository = try FoodAPIRepository(
                 configuration: configuration,
-                token: token
+                token: token,
+                recoveryScope: EditorDraftRecovery.shared.scope
             )
             self.repository = repository
 
@@ -279,40 +280,44 @@ final class FoodTrackingStore {
 
     // MARK: - Foods
 
+    @discardableResult
     func saveFood(
         _ food: FoodEntry,
         in mealID: FoodMeal.ID,
         on date: Date,
         celebrates: Bool = true
-    ) {
-        guard let serverID = mealServerID(mealID, on: date) else { return }
+    ) async -> Bool {
+        guard let repository, !isSaving,
+              let serverID = mealServerID(mealID, on: date) else { return false }
+        let generation = connectionGeneration
         let before = total(on: date)
         let beforeMealCount = loggedMealCount(on: date)
-        perform(on: date) { repository in
+        isSaving = true
+        errorMessage = nil
+        defer { if connectionGeneration == generation { isSaving = false } }
+        do {
             let saved = try await repository.saveFood(food, inMeal: serverID)
-            return (saved, serverID)
-        } merge: { meals, result in
-            guard let index = meals.firstIndex(where: { $0.serverID == result.1 })
-            else { return }
-            if let existing = meals[index].entries
-                .firstIndex(where: { $0.serverID == result.0.serverID }) {
-                meals[index].entries[existing] = result.0
-            } else {
-                meals[index].entries.append(result.0)
+            guard connectionGeneration == generation else { return false }
+            let key = dateKey(for: date)
+            if let index = days[key]?.firstIndex(where: { $0.serverID == serverID }) {
+                if let entryIndex = days[key]?[index].entries.firstIndex(where: { $0.serverID == saved.serverID }) {
+                    days[key]?[index].entries[entryIndex] = saved
+                } else {
+                    days[key]?[index].entries.append(saved)
+                }
             }
-        } onSuccess: {
-            self.latestMealLogEvent = MealLogEvent(
-                id: UUID(),
-                date: Calendar.current.startOfDay(for: date),
-                mealID: mealID,
-                before: before,
-                after: self.total(on: date),
-                beforeMealCount: beforeMealCount,
-                afterMealCount: self.loggedMealCount(on: date),
+            latestMealLogEvent = MealLogEvent(
+                id: UUID(), date: Calendar.current.startOfDay(for: date), mealID: mealID,
+                before: before, after: total(on: date),
+                beforeMealCount: beforeMealCount, afterMealCount: loggedMealCount(on: date),
                 shouldCelebrate: celebrates
             )
+            refreshRecentFoods()
+            return true
+        } catch {
+            report(error, generation: generation)
+            return false
         }
-        refreshRecentFoods()
     }
 
     func removeFood(id: FoodEntry.ID, from mealID: FoodMeal.ID, on date: Date) {
@@ -333,28 +338,29 @@ final class FoodTrackingStore {
 
     // MARK: - Recipes
 
-    func saveReusableMeal(_ savedMeal: SavedFoodMeal) {
-        guard let repository else { return }
+    func saveReusableMeal(_ savedMeal: SavedFoodMeal) async -> Bool {
+        guard let repository, !isSaving else { return false }
         let generation = connectionGeneration
         isSaving = true
-        Task {
-            defer { if connectionGeneration == generation { isSaving = false } }
-            do {
-                let saved = try await repository.saveRecipe(savedMeal)
-                guard connectionGeneration == generation else { return }
-                if let index = savedMeals.firstIndex(where: {
-                    $0.serverID == saved.serverID
-                }) {
-                    savedMeals[index] = saved
-                } else {
-                    savedMeals.append(saved)
-                }
-                savedMeals.sort {
-                    $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
-                }
-            } catch {
-                report(error, generation: generation)
+        errorMessage = nil
+        defer { if connectionGeneration == generation { isSaving = false } }
+        do {
+            let saved = try await repository.saveRecipe(savedMeal)
+            guard connectionGeneration == generation else { return false }
+            if let index = savedMeals.firstIndex(where: {
+                $0.serverID == saved.serverID
+            }) {
+                savedMeals[index] = saved
+            } else {
+                savedMeals.append(saved)
             }
+            savedMeals.sort {
+                $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+            }
+            return true
+        } catch {
+            report(error, generation: generation)
+            return false
         }
     }
 
@@ -575,19 +581,20 @@ final class FoodTrackingStore {
 
     // MARK: - Goals
 
-    func updateGoals(_ goals: NutritionGoals) {
-        guard let repository else { return }
+    func updateGoals(_ goals: NutritionGoals) async -> Bool {
+        guard let repository, !isSaving else { return false }
         let generation = connectionGeneration
         isSaving = true
-        Task {
-            defer { if connectionGeneration == generation { isSaving = false } }
-            do {
-                let saved = try await repository.saveGoals(goals)
-                guard connectionGeneration == generation else { return }
-                self.goals = saved
-            } catch {
-                report(error, generation: generation)
-            }
+        errorMessage = nil
+        defer { if connectionGeneration == generation { isSaving = false } }
+        do {
+            let saved = try await repository.saveGoals(goals)
+            guard connectionGeneration == generation else { return false }
+            self.goals = saved
+            return true
+        } catch {
+            report(error, generation: generation)
+            return false
         }
     }
 
@@ -617,7 +624,7 @@ final class FoodTrackingStore {
         merge: @escaping (inout [FoodMeal], Result) -> Void,
         onSuccess: (() -> Void)? = nil
     ) {
-        guard let repository else { return }
+        guard let repository, !isSaving else { return }
         let key = dateKey(for: date)
         let generation = connectionGeneration
         isSaving = true

@@ -11,39 +11,6 @@ import CoreMotion
 import Foundation
 import Observation
 
-/// One recorded GPS fix, ready to be sent to the API.
-nonisolated struct RoutePoint: Identifiable, Hashable, Sendable {
-    let id: UUID
-    let latitude: Double
-    let longitude: Double
-    let recordedAt: Date
-    /// The device's own speed reading in meters per second, taken from the
-    /// GPS Doppler shift rather than derived from consecutive positions, so it
-    /// carries no accumulated positional error. Nil when unavailable.
-    let speedMetersPerSecond: Double?
-    /// Height above sea level in meters, when the device had a vertical fix.
-    let altitudeMeters: Double?
-
-    init(
-        id: UUID = UUID(),
-        latitude: Double,
-        longitude: Double,
-        recordedAt: Date,
-        speedMetersPerSecond: Double? = nil,
-        altitudeMeters: Double? = nil
-    ) {
-        self.id = id
-        self.latitude = latitude
-        self.longitude = longitude
-        self.recordedAt = recordedAt
-        self.speedMetersPerSecond = speedMetersPerSecond
-        self.altitudeMeters = altitudeMeters
-    }
-
-    var coordinate: CLLocationCoordinate2D {
-        CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
-    }
-}
 
 /// Collects location fixes while a cardio session is running.
 ///
@@ -51,6 +18,7 @@ nonisolated struct RoutePoint: Identifiable, Hashable, Sendable {
 /// launch, so the system prompt appears with the reason visible on screen.
 @Observable
 final class RouteTracker: NSObject, CLLocationManagerDelegate {
+    var onPointsChanged: (() -> Void)?
     /// What the app is allowed to do right now, in terms the UI can act on.
     enum Permission: Equatable {
         case notDetermined
@@ -178,12 +146,12 @@ final class RouteTracker: NSObject, CLLocationManagerDelegate {
     }
 
     /// Begins recording. Does nothing unless location access is authorized.
-    func startTracking() {
+    func startTracking(preservingPoints: Bool = false) {
         guard permission.allowsTracking, !isTracking else { return }
-        points = []
+        if !preservingPoints { points = [] }
         trackingError = nil
         currentSpeedMetersPerSecond = nil
-        liveDistanceMeters = 0
+        if !preservingPoints { liveDistanceMeters = 0 }
         liveElevationGainMeters = 0
         lastLocation = nil
         elevationReference = nil
@@ -331,6 +299,18 @@ final class RouteTracker: NSObject, CLLocationManagerDelegate {
         trackingError = nil
     }
 
+    func restore(_ savedPoints: [RoutePoint]) {
+        reset()
+        points = savedPoints
+        for (before, after) in zip(savedPoints, savedPoints.dropFirst()) {
+            let gap = after.recordedAt.timeIntervalSince(before.recordedAt)
+            guard gap > 0, gap <= 60,
+                  after.speedMetersPerSecond.map({ $0 >= Self.movingSpeedFloor }) ?? true else { continue }
+            liveDistanceMeters += CLLocation(latitude: before.latitude, longitude: before.longitude)
+                .distance(from: CLLocation(latitude: after.latitude, longitude: after.longitude))
+        }
+    }
+
     // MARK: - CLLocationManagerDelegate
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
@@ -349,6 +329,7 @@ final class RouteTracker: NSObject, CLLocationManagerDelegate {
         didUpdateLocations locations: [CLLocation]
     ) {
         guard isTracking else { return }
+        defer { onPointsChanged?() }
         trackingError = nil
 
         for location in locations {

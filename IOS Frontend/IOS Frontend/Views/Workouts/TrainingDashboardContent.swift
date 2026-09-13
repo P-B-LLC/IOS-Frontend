@@ -39,6 +39,27 @@ struct TrainingDashboardContent: View {
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 22) {
+                if store.recoveredActiveSession, let session = store.activeSession {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Recovered \(session.workoutName)").font(.community(.headline))
+                        Text("Your session is still open. Continue it or finish it from its workout day.")
+                            .font(.community(.footnote))
+                        NavigationLink("Open recovered session") { DayWorkoutView(day: session.day) }
+                        if session.tracksDistance {
+                            Button("Resume GPS tracking") { store.resumeRecoveredTracking() }
+                        }
+                    }
+                }
+                if store.pendingWorkoutSaveCount > 0 || store.recoveryError != nil {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Workout sync pending").font(.community(.headline))
+                        Text(store.recoveryError ?? "Your workout is saved on this device until sync completes. If its session is open, tap Finish there to retry.")
+                            .font(.community(.footnote))
+                        Button("Retry sync") { Task { await store.retryPendingWorkoutSaves() } }
+                            .disabled(store.isRecoveringWorkouts || store.isSaving)
+                        if store.isRecoveringWorkouts { ProgressView("Syncing…") }
+                    }
+                }
                 if let persistenceError = store.persistenceError {
                     errorCard(persistenceError)
                 }
@@ -60,6 +81,7 @@ struct TrainingDashboardContent: View {
             .padding(.bottom, RepbaseDesign.bottomBarClearance)
         }
         .minimizesBottomBarOnScroll()
+        .task { await store.retryPendingWorkoutSaves() }
         .overlay(alignment: .bottom) {
             if let rewardToast {
                 TrainingRewardToast(message: rewardToast)

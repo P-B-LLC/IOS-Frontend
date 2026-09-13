@@ -42,9 +42,11 @@ nonisolated enum FoodDecimal {
 actor FoodAPIRepository {
     private let configuration: APIConfiguration
     private let client: Client
+    private let recoveryScope: EditorDraftRecovery.Scope?
 
-    init(configuration: APIConfiguration, token: String) throws {
+    init(configuration: APIConfiguration, token: String, recoveryScope: EditorDraftRecovery.Scope? = nil) throws {
         self.configuration = configuration
+        self.recoveryScope = recoveryScope
         client = try RepbaseAPIClientFactory.makeAuthenticated(
             serverURL: configuration.serverURL,
             token: token,
@@ -256,25 +258,40 @@ actor FoodAPIRepository {
             }
         }
 
+        let desired = entry
+        let operationKey = "create-food-\(mealID)-\(entry.id)"
+        var submitted = entry
+        if let recoveryScope {
+            submitted = try await EditorDraftRecovery.shared.capture(entry, key: operationKey, scope: recoveryScope)
+        }
         let output = try await client.foodEntriesCreate(
+            headers: .init(idempotencyKey: submitted.id.uuidString),
             body: .json(
                 Components.Schemas.FoodEntryRequest(
                     meal: mealID,
-                    name: entry.name,
-                    servings: FoodDecimal.string(entry.servings),
-                    calories: FoodDecimal.string(entry.nutritionPerServing.calories),
-                    proteinGrams: FoodDecimal.string(entry.nutritionPerServing.proteinGrams),
+                    name: submitted.name,
+                    servings: FoodDecimal.string(submitted.servings),
+                    calories: FoodDecimal.string(submitted.nutritionPerServing.calories),
+                    proteinGrams: FoodDecimal.string(submitted.nutritionPerServing.proteinGrams),
                     carbohydrateGrams: FoodDecimal.string(
-                        entry.nutritionPerServing.carbohydrateGrams
+                        submitted.nutritionPerServing.carbohydrateGrams
                     ),
-                    fatGrams: FoodDecimal.string(entry.nutritionPerServing.fatGrams)
+                    fatGrams: FoodDecimal.string(submitted.nutritionPerServing.fatGrams)
                 )
             )
         )
         switch output {
         case .created(let response):
-            return Self.entry(from: try response.body.json)
+            var saved = Self.entry(from: try response.body.json)
+            if desired != submitted {
+                var revision = desired
+                revision.serverID = saved.serverID
+                saved = try await saveFood(revision, inMeal: mealID)
+            }
+            if let recoveryScope { try await EditorDraftRecovery.shared.remove(key: operationKey, scope: recoveryScope) }
+            return saved
         case .undocumented(let statusCode, _):
+            if statusCode == 400, let recoveryScope { try await EditorDraftRecovery.shared.remove(key: operationKey, scope: recoveryScope) }
             throw APIServiceError.undocumentedStatus(statusCode)
         }
     }
@@ -293,6 +310,12 @@ actor FoodAPIRepository {
 
     @discardableResult
     func saveRecipe(_ recipe: SavedFoodMeal) async throws -> SavedFoodMeal {
+        let desired = recipe
+        let operationKey = "create-recipe-\(recipe.id)"
+        var recipe = recipe
+        if recipe.serverID == nil, let recoveryScope {
+            recipe = try await EditorDraftRecovery.shared.capture(recipe, key: operationKey, scope: recoveryScope)
+        }
         let ingredients = recipe.ingredients.map { ingredient in
             Components.Schemas.SavedFoodIngredientRequest(
                 name: ingredient.name,
@@ -326,6 +349,7 @@ actor FoodAPIRepository {
         }
 
         let output = try await client.foodSavedMealsCreate(
+            headers: .init(idempotencyKey: recipe.id.uuidString),
             body: .json(
                 Components.Schemas.SavedFoodMealRequest(
                     name: recipe.name,
@@ -336,8 +360,16 @@ actor FoodAPIRepository {
         )
         switch output {
         case .created(let response):
-            return Self.savedMeal(from: try response.body.json)
+            var saved = Self.savedMeal(from: try response.body.json)
+            if desired != recipe {
+                var revision = desired
+                revision.serverID = saved.serverID
+                saved = try await saveRecipe(revision)
+            }
+            if let recoveryScope { try await EditorDraftRecovery.shared.remove(key: operationKey, scope: recoveryScope) }
+            return saved
         case .undocumented(let statusCode, _):
+            if statusCode == 400, let recoveryScope { try await EditorDraftRecovery.shared.remove(key: operationKey, scope: recoveryScope) }
             throw APIServiceError.undocumentedStatus(statusCode)
         }
     }

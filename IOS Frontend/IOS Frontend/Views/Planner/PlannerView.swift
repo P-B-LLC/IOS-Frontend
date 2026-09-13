@@ -128,7 +128,7 @@ struct PlannerView: View {
             PlannerEntryEditorView(
                 mode: mode,
                 workouts: workoutStore.knownWorkouts,
-                onSaved: { store.save($0) },
+                onSaved: { await store.save($0) },
                 onDeleted: { store.delete($0) }
             )
         }
@@ -674,16 +674,21 @@ struct PlannerEntryRow: View {
                 store.setComplete(entry, !entry.isComplete)
             }
         } label: {
-            Image(systemName: entry.isComplete ? "checkmark.circle.fill" : "circle")
-                .font(.community(.title3))
-                .foregroundStyle(
-                    entry.isComplete
-                        ? Color(hex: 0x3FAE6A)
-                        : timeOfDay.secondaryText.opacity(0.5)
-                )
+            if store.isCompletionPending(entry) {
+                ProgressView().controlSize(.small).frame(width: 20, height: 20)
+            } else {
+                Image(systemName: entry.isComplete ? "checkmark.circle.fill" : "circle")
+                    .font(.community(.title3))
+                    .foregroundStyle(
+                        entry.isComplete
+                            ? Color(hex: 0x3FAE6A)
+                            : timeOfDay.secondaryText.opacity(0.5)
+                    )
+            }
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(entry.isComplete ? "Mark not done" : "Mark done")
+        .disabled(store.isSaving || store.isCompletionPending(entry))
+        .accessibilityLabel(store.isCompletionPending(entry) ? "Saving task" : (entry.isComplete ? "Mark not done" : "Mark done"))
     }
 
     private static func date(from value: String) -> Date? {

@@ -95,6 +95,7 @@ struct DayWorkoutView: View {
             // the remainder of it.
             guard let session = activeSession,
                   session.tracksDistance,
+                  !store.recoveredActiveSession,
                   store.routeTracker.permission.allowsTracking,
                   !store.routeTracker.isTracking else {
                 return
@@ -104,9 +105,10 @@ struct DayWorkoutView: View {
         .fullScreenCover(item: $editor) { mode in
             WorkoutEditorView(
                 mode: mode,
-                suggestions: store.knownWorkouts
+                suggestions: store.knownWorkouts,
+                recoveryContext: WorkoutStore.dateString(store.workoutDate(for: day))
             ) { savedWorkout in
-                store.saveWorkout(savedWorkout, on: day)
+                await store.saveWorkout(savedWorkout, on: day)
             }
         }
         .fullScreenCover(item: $sharedWorkout) { shared in

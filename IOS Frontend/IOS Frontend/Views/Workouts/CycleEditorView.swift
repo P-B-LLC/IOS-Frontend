@@ -237,7 +237,7 @@ struct CycleEditorView: View {
                 // workouts, so reuse has to be a tap and not a retype.
                 suggestions: workoutStore.knownWorkouts
             ) { built in
-                Task { await assign(built, at: slot.position) }
+                await assign(built, at: slot.position)
             }
         } label: {
             HStack(spacing: 12) {
@@ -280,12 +280,13 @@ struct CycleEditorView: View {
     /// The workout has to exist on the server before a slot can name it, and
     /// the id it gets back is the only thing that identifies it — so the day
     /// stays on rest if the save fails, rather than pointing at nothing.
-    private func assign(_ built: Workout, at position: Int) async {
-        guard let id = await workoutStore.createTemplate(built) else { return }
+    private func assign(_ built: Workout, at position: Int) async -> Bool {
+        guard let id = await workoutStore.createTemplate(built) else { return false }
         guard let index = draft.slots.firstIndex(where: { $0.position == position })
-        else { return }
+        else { return false }
         draft.slots[index].workoutID = id
         draft.slots[index].workoutName = built.name
+        return true
     }
 
     private func clear(at position: Int) {

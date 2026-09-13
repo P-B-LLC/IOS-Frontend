@@ -268,17 +268,22 @@ struct PlannerDaySchedule: View {
                 store.setComplete(entry, !entry.isComplete)
             }
         } label: {
-            Image(systemName: entry.isComplete ? "checkmark.circle.fill" : "circle")
-                .font(.community(size: 17, weight: .regular))
-                .foregroundStyle(
-                    entry.isComplete
-                        ? Color(hex: 0x3FAE6A)
-                        : (onCanvas ? timeOfDay.canvasSecondaryText : timeOfDay.secondaryText)
-                            .opacity(0.6)
-                )
+            if store.isCompletionPending(entry) {
+                ProgressView().controlSize(.small).frame(width: 20, height: 20)
+            } else {
+                Image(systemName: entry.isComplete ? "checkmark.circle.fill" : "circle")
+                    .font(.community(size: 17, weight: .regular))
+                    .foregroundStyle(
+                        entry.isComplete
+                            ? Color(hex: 0x3FAE6A)
+                            : (onCanvas ? timeOfDay.canvasSecondaryText : timeOfDay.secondaryText)
+                                .opacity(0.6)
+                    )
+            }
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(entry.isComplete ? "Mark not done" : "Mark done")
+        .disabled(store.isSaving || store.isCompletionPending(entry))
+        .accessibilityLabel(store.isCompletionPending(entry) ? "Saving task" : (entry.isComplete ? "Mark not done" : "Mark done"))
     }
 
     private func subtitle(_ entry: PlannerEntry) -> String {

@@ -175,7 +175,7 @@ nonisolated struct Workout: Identifiable, Hashable, Codable, Sendable {
 /// One editable set while a workout session is in progress. Weight remains a
 /// string so decimal precision is preserved when this draft is mapped to the
 /// backend's decimal-string `weight_kg` field.
-nonisolated struct WorkoutSetDraft: Identifiable, Hashable, Sendable {
+nonisolated struct WorkoutSetDraft: Identifiable, Hashable, Codable, Sendable {
     let id: UUID
     var serverID: Int?
     var setNumber: Int
@@ -473,7 +473,7 @@ nonisolated struct SessionRouteSummary: Hashable, Sendable {
 }
 
 /// The set-entry rows for one planned exercise in an active session.
-nonisolated struct SessionExerciseDraft: Identifiable, Hashable, Sendable {
+nonisolated struct SessionExerciseDraft: Identifiable, Hashable, Codable, Sendable {
     let id: Exercise.ID
     let exerciseServerID: Int
     let sessionExerciseID: Int
@@ -483,7 +483,7 @@ nonisolated struct SessionExerciseDraft: Identifiable, Hashable, Sendable {
 
 /// App-facing state for the single API workout session currently being logged.
 /// Both local view identity and the backend integer session ID are retained.
-nonisolated struct ActiveWorkoutSession: Identifiable, Hashable, Sendable {
+nonisolated struct ActiveWorkoutSession: Identifiable, Hashable, Codable, Sendable {
     let id: UUID
     let serverID: Int
     let day: Weekday
