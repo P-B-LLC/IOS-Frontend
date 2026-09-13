@@ -1,8 +1,8 @@
 # Beta readiness
 
 What stands between today's `main` and a real person using Rytivo. Written
-2026-09-12, revised 2026-09-13. Covers both repositories; `repbase` items are
-marked.
+2026-09-12, revised 2026-09-13 after a full audit. Covers both repositories;
+`repbase` items are marked.
 
 Everything below was checked against a running build or server, not read off
 the source. Where something is inferred rather than observed, it says so.
@@ -138,6 +138,66 @@ repository can do in advance — bundle name, entitlements, privacy manifest,
 export-compliance declaration, archive and export script — is done.
 
 ---
+## Carry these into the database move
+
+From an audit on 2026-09-13, run against the live database and a built app
+rather than by reading. Everything here is invisible on SQLite with ten
+accounts and stops being invisible somewhere between there and a real
+PostgreSQL with real people on it. Four items from that audit are already
+fixed and are recorded below so nobody re-finds them.
+
+### Fixed
+
+- ~~**The PostgreSQL job ran two test modules.**~~ *Fixed, `c4868c5`.* It ran
+  the two written for the row-lock work — the tests least in need of a real
+  database, because they were written knowing they needed one. It now runs the
+  whole suite. **This has never executed**: the build Mac has no PostgreSQL and
+  no container runtime, which is exactly why the gap existed. The first Actions
+  run is the real test, and a failure there is the job working.
+- ~~**A new database connection per request.**~~ *Fixed, `c4868c5`.*
+  `CONN_MAX_AGE` is 60 seconds with health checks. Read the comment before
+  deploying behind PgBouncer in transaction mode — there it must be 0.
+- ~~**Every launch re-downloaded every photo.**~~ *Fixed, `b920553`.* The
+  decoded-image `NSCache` dies with the process and `URLSession.shared` had the
+  system default response cache, a few megabytes. The signed media URLs already
+  round their expiry to a whole day so they stay cacheable, and the responses
+  already carry `immutable` — none of which bought anything until there was
+  somewhere to put the bytes that outlives a launch.
+- ~~**The image cache bounded a count, not a size.**~~ *Fixed, `b920553`.*
+  Images are charged their decoded bytes against a 64 MB ceiling.
+
+### Still open
+
+- **Login is a sequential scan waiting to happen.** Sign-in, registration and
+  password reset all match on `__iexact`, and the schema has no expression
+  index anywhere. On PostgreSQL that compiles to `UPPER(col) = UPPER(...)`,
+  which a plain B-tree index cannot serve. The fix is an index on `Upper(...)`
+  for `auth_user.email` and `auth_user.username`, or `CITEXT`.
+- **Account email uniqueness is enforced in a serializer, not the database.**
+  The auth user is stock Django's, whose `email` is not unique; `RepbaseUser`
+  is a profile beside it. Registration checks `.exists()` and then commits,
+  which SQLite's single writer hides and PostgreSQL will not. Password reset
+  then takes `.first()` of the match, so duplicates would send the code to an
+  arbitrary one of them. Wants a real unique constraint, which means deciding
+  what to do about any duplicates already in the data.
+- **`FoodSearchCache` has no eviction, and is already the largest table in the
+  database** — 53 KB from about ten development accounts, bigger than every
+  table holding real user data. It has a seven-day `LIFETIME` that is checked
+  when a row is read and never used to delete one, so every distinct search
+  term anybody has ever typed is a permanent row holding a JSON payload.
+- **`SaveReceipt` is the same shape and brand new.** One row per create per
+  account, holding the full response body, kept until the account is deleted.
+  There is no index on `created_at` either, so the cleanup job this will
+  eventually want has nothing to scan by. Decide now whether receipts expire on
+  age or on a per-account cap; deciding later means deciding it during an
+  incident.
+- **`WorkoutSessionSerializer` exposes `route_distance_km` on list responses.**
+  It is a property that loads every GPS point of every session in the page and
+  recomputes in Python, while `recorded_distance_km` sits stored on the row for
+  exactly this reason. It costs nothing today — see the route-tracking note
+  under the test holes — and a page of fifty recorded runs is a different
+  matter.
+
 
 ## Should do before strangers use it
 
@@ -154,6 +214,13 @@ export-compliance declaration, archive and export script — is done.
 - **`LegalDocuments.contactEmail` is `support@repbase.app`**, and the privacy
   copy tells users to write there to have data removed. If nobody reads that
   mailbox, the legal text promises something no one answers.
+- **Documentation has outgrown anyone reading it.** 3,100 lines across
+  seventeen files between the two repositories, of which `CLAUDE_HANDOFF.md`
+  is 1,526 on its own. `SAVE_RECOVERY.md` exists in *both* repositories
+  describing one feature from two sides, alongside `WORKOUT_SAVE_GATE.md`,
+  `PLANNER_COMPLETION_GATE.md` and an `ACCOUNT_SAFETY.md` that is also in
+  both — five documents for one area of work. The gate documents were written
+  to be read once, by whoever took the next shift, and that has happened.
 - **Backups.** Nothing is backed up today. Once a stranger's data is in there,
   losing it is a different kind of problem.
 - ~~**Build numbers.**~~ *Handled, `0defe8a`.*
@@ -178,6 +245,16 @@ Worth knowing before trusting a green run:
   the rules and seven tests check them, but no test taps a Home card.
 - **The release-gate workflows have never executed.** The YAML parses; GitHub
   Actions has not run it. The first `v*` tag is the real test.
+- **Route tracking has never stored a single point.** `SessionRoutePoint` is
+  empty in the live database — no session has ever recorded one, despite
+  `RouteTracker`, the distance and pace maths, the upload endpoint and the
+  deduplication logic all existing and being tested in isolation. The GPS path
+  has never run end to end against the server. Worth one recorded run in the
+  simulator before a beta tester takes the app outside.
+- **The PostgreSQL job has never executed.** It now runs the full suite (see
+  the database-move section), but no run has happened: the build Mac has no
+  PostgreSQL and no container runtime, so this could not be checked before
+  pushing it.
 - **The photo-test teardown fix was never reproduced.** The failure is a
   Windows file-handle case; the suite is clean on macOS, CI is Linux, and there
   is no Python on the Windows checkout. It was fixed by reading the code.
