@@ -29,11 +29,12 @@
 
 ## Verification
 
-- Five new native tests exercise the production recovery flow with actual disk
+- Seven new native tests exercise the production recovery flow with actual disk
   storage and simulated commit-then-lost-response callbacks: relaunch and exact
   replay, deletion/relog, corrected validation failure, interrupted start receipt
-  consumption, and account deletion during a response.
-- All 30 native regression tests passed.
+  consumption, account deletion during a response, and delayed responses trying
+  to resurrect a consumed receipt or erase a newer relog receipt.
+- All 32 native regression tests passed.
 - All 27 focused backend recovery tests passed. Full backend suite: 288 tests
   ran, OK; two PostgreSQL-only skips (286 passed).
 - Debug simulator build passed. Mac logs and subsequent Release validation:
