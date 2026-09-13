@@ -111,6 +111,11 @@ cannot reach it.
   21 MB of media** on the Mac. Migrate or start clean, but decide rather than
   discover.
 - A real WSGI/ASGI server (gunicorn/uvicorn), not `runserver`.
+- **A daily scheduler**, for `manage.py prune_expired_rows` (expired food-cache
+  entries and save receipts) and `manage.py retry_media_deletions` (storage
+  deletions that failed after their row was gone). Both are safe to run twice,
+  on an empty database, and interrupted. Until something runs them, two tables
+  that now have an expiry policy still never actually shrink.
 
 ### 5. Turn on branch protection — *ruleset committed `ca93235`/`8415cf4`*
 
@@ -170,6 +175,29 @@ fixed and are recorded below so nobody re-finds them.
 - ~~**The image cache bounded a count, not a size.**~~ *Fixed, `b920553`.*
   Images are charged their decoded bytes against a 64 MB ceiling.
 
+- ~~**Two tables that only ever grew.**~~ *Fixed, `prune_expired_rows`.*
+  `FoodSearchCache` was the largest table in the database — 53 KB from about
+  ten development accounts, ahead of every table holding real user data — and
+  `SaveReceipt` was the same shape and brand new. Both now expire, and both
+  have an index on the column the pruning query reads.
+
+  The trap worth knowing about: the food cache has **two clocks, deliberately
+  far apart**. `LIFETIME` (7 days) decides when an answer is re-fetched;
+  `RETENTION` (90 days) decides when the row is deleted. Past `LIFETIME` an
+  entry is stale but not useless — it is exactly what the search endpoint
+  serves when FoodData Central cannot be reached. Pruning on `LIFETIME` looks
+  right and quietly deletes the outage fallback, and nothing would say so
+  until an outage. Two tests fail if anyone makes that change.
+
+  `SaveReceipt` keeps 30 days, which is long enough for the retries that
+  realistically happen given the app holds pending saves in a file across
+  relaunches. A retry older than that creates a duplicate rather than
+  replaying — the behaviour from before receipts existed, so the tail case
+  degrades to the old normal.
+
+  **This needs a scheduler**, which is part of blocker 4 above. Until
+  something runs the command daily, "expires" still means "would expire".
+
 ### Still open
 
 - **Login is a sequential scan waiting to happen.** Sign-in, registration and
@@ -184,17 +212,6 @@ fixed and are recorded below so nobody re-finds them.
   then takes `.first()` of the match, so duplicates would send the code to an
   arbitrary one of them. Wants a real unique constraint, which means deciding
   what to do about any duplicates already in the data.
-- **`FoodSearchCache` has no eviction, and is already the largest table in the
-  database** — 53 KB from about ten development accounts, bigger than every
-  table holding real user data. It has a seven-day `LIFETIME` that is checked
-  when a row is read and never used to delete one, so every distinct search
-  term anybody has ever typed is a permanent row holding a JSON payload.
-- **`SaveReceipt` is the same shape and brand new.** One row per create per
-  account, holding the full response body, kept until the account is deleted.
-  There is no index on `created_at` either, so the cleanup job this will
-  eventually want has nothing to scan by. Decide now whether receipts expire on
-  age or on a per-account cap; deciding later means deciding it during an
-  incident.
 - **`WorkoutSessionSerializer` exposes `route_distance_km` on list responses.**
   It is a property that loads every GPS point of every session in the page and
   recomputes in Python, while `recorded_distance_km` sits stored on the row for
