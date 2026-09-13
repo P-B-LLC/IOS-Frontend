@@ -2487,11 +2487,13 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/end//post(sessions_end_create)`.
     public func sessionsEndCreate(
         path: Operations.SessionsEndCreate.Input.Path,
-        headers: Operations.SessionsEndCreate.Input.Headers = .init()
+        headers: Operations.SessionsEndCreate.Input.Headers = .init(),
+        body: Operations.SessionsEndCreate.Input.Body? = nil
     ) async throws -> Operations.SessionsEndCreate.Output {
         try await sessionsEndCreate(Operations.SessionsEndCreate.Input(
             path: path,
-            headers: headers
+            headers: headers,
+            body: body
         ))
     }
     /// Bests set during this session that beat everything logged before.
@@ -4921,6 +4923,100 @@ public enum Components {
                 case distanceKm = "distance_km"
             }
         }
+        /// - Remark: Generated from `#/components/schemas/InitialWorkoutExercise`.
+        public struct InitialWorkoutExercise: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/InitialWorkoutExercise/exercise`.
+            public var exercise: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/InitialWorkoutExercise/order`.
+            public var order: Swift.Int64?
+            /// - Remark: Generated from `#/components/schemas/InitialWorkoutExercise/target_sets`.
+            public var targetSets: Swift.Int64?
+            /// - Remark: Generated from `#/components/schemas/InitialWorkoutExercise/target_reps`.
+            public var targetReps: Swift.Int64?
+            /// - Remark: Generated from `#/components/schemas/InitialWorkoutExercise/target_weight_kg`.
+            public var targetWeightKg: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/InitialWorkoutExercise/notes`.
+            public var notes: Swift.String?
+            /// Creates a new `InitialWorkoutExercise`.
+            ///
+            /// - Parameters:
+            ///   - exercise:
+            ///   - order:
+            ///   - targetSets:
+            ///   - targetReps:
+            ///   - targetWeightKg:
+            ///   - notes:
+            public init(
+                exercise: Swift.Int,
+                order: Swift.Int64? = nil,
+                targetSets: Swift.Int64? = nil,
+                targetReps: Swift.Int64? = nil,
+                targetWeightKg: Swift.String? = nil,
+                notes: Swift.String? = nil
+            ) {
+                self.exercise = exercise
+                self.order = order
+                self.targetSets = targetSets
+                self.targetReps = targetReps
+                self.targetWeightKg = targetWeightKg
+                self.notes = notes
+            }
+            public enum CodingKeys: String, CodingKey {
+                case exercise
+                case order
+                case targetSets = "target_sets"
+                case targetReps = "target_reps"
+                case targetWeightKg = "target_weight_kg"
+                case notes
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/InitialWorkoutExerciseRequest`.
+        public struct InitialWorkoutExerciseRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/InitialWorkoutExerciseRequest/exercise`.
+            public var exercise: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/InitialWorkoutExerciseRequest/order`.
+            public var order: Swift.Int64?
+            /// - Remark: Generated from `#/components/schemas/InitialWorkoutExerciseRequest/target_sets`.
+            public var targetSets: Swift.Int64?
+            /// - Remark: Generated from `#/components/schemas/InitialWorkoutExerciseRequest/target_reps`.
+            public var targetReps: Swift.Int64?
+            /// - Remark: Generated from `#/components/schemas/InitialWorkoutExerciseRequest/target_weight_kg`.
+            public var targetWeightKg: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/InitialWorkoutExerciseRequest/notes`.
+            public var notes: Swift.String?
+            /// Creates a new `InitialWorkoutExerciseRequest`.
+            ///
+            /// - Parameters:
+            ///   - exercise:
+            ///   - order:
+            ///   - targetSets:
+            ///   - targetReps:
+            ///   - targetWeightKg:
+            ///   - notes:
+            public init(
+                exercise: Swift.Int,
+                order: Swift.Int64? = nil,
+                targetSets: Swift.Int64? = nil,
+                targetReps: Swift.Int64? = nil,
+                targetWeightKg: Swift.String? = nil,
+                notes: Swift.String? = nil
+            ) {
+                self.exercise = exercise
+                self.order = order
+                self.targetSets = targetSets
+                self.targetReps = targetReps
+                self.targetWeightKg = targetWeightKg
+                self.notes = notes
+            }
+            public enum CodingKeys: String, CodingKey {
+                case exercise
+                case order
+                case targetSets = "target_sets"
+                case targetReps = "target_reps"
+                case targetWeightKg = "target_weight_kg"
+                case notes
+            }
+        }
         /// * `bench` - Bench Press
         /// * `squat` - Squat
         /// * `deadlift` - Deadlift
@@ -6877,6 +6973,18 @@ public enum Components {
             public var cardioTargetMinutes: Swift.Int64?
             /// - Remark: Generated from `#/components/schemas/PatchedWorkoutTemplateRequest/description`.
             public var description: Swift.String?
+            /// Create-only: save all initial exercises in the same transaction as the template.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PatchedWorkoutTemplateRequest/initial_exercises`.
+            public var initialExercises: [Components.Schemas.InitialWorkoutExerciseRequest]?
+            /// Create-only: optionally schedule the new template in the same transaction.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PatchedWorkoutTemplateRequest/initial_date`.
+            public var initialDate: Swift.String?
+            /// Update-only: atomically replace the exercise plan, preserving supplied relation IDs.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PatchedWorkoutTemplateRequest/exercise_plan`.
+            public var exercisePlan: [Components.Schemas.WorkoutPlanExerciseRequest]?
             /// Creates a new `PatchedWorkoutTemplateRequest`.
             ///
             /// - Parameters:
@@ -6885,18 +6993,27 @@ public enum Components {
             ///   - cardioMachine:
             ///   - cardioTargetMinutes:
             ///   - description:
+            ///   - initialExercises: Create-only: save all initial exercises in the same transaction as the template.
+            ///   - initialDate: Create-only: optionally schedule the new template in the same transaction.
+            ///   - exercisePlan: Update-only: atomically replace the exercise plan, preserving supplied relation IDs.
             public init(
                 name: Swift.String? = nil,
                 workoutType: Components.Schemas.WorkoutTypeEnum? = nil,
                 cardioMachine: Components.Schemas.PatchedWorkoutTemplateRequest.CardioMachinePayload? = nil,
                 cardioTargetMinutes: Swift.Int64? = nil,
-                description: Swift.String? = nil
+                description: Swift.String? = nil,
+                initialExercises: [Components.Schemas.InitialWorkoutExerciseRequest]? = nil,
+                initialDate: Swift.String? = nil,
+                exercisePlan: [Components.Schemas.WorkoutPlanExerciseRequest]? = nil
             ) {
                 self.name = name
                 self.workoutType = workoutType
                 self.cardioMachine = cardioMachine
                 self.cardioTargetMinutes = cardioTargetMinutes
                 self.description = description
+                self.initialExercises = initialExercises
+                self.initialDate = initialDate
+                self.exercisePlan = exercisePlan
             }
             public enum CodingKeys: String, CodingKey {
                 case name
@@ -6904,6 +7021,9 @@ public enum Components {
                 case cardioMachine = "cardio_machine"
                 case cardioTargetMinutes = "cardio_target_minutes"
                 case description
+                case initialExercises = "initial_exercises"
+                case initialDate = "initial_date"
+                case exercisePlan = "exercise_plan"
             }
         }
         /// A best set during a session that beat everything logged before it.
@@ -9791,6 +9911,23 @@ public enum Components {
                 case notes
             }
         }
+        /// - Remark: Generated from `#/components/schemas/SessionFinishRequest`.
+        public struct SessionFinishRequest: Codable, Hashable, Sendable {
+            /// Original device finish time; omit for server time.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SessionFinishRequest/ended_at`.
+            public var endedAt: Foundation.Date?
+            /// Creates a new `SessionFinishRequest`.
+            ///
+            /// - Parameters:
+            ///   - endedAt: Original device finish time; omit for server time.
+            public init(endedAt: Foundation.Date? = nil) {
+                self.endedAt = endedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case endedAt = "ended_at"
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/SessionRoutePoint`.
         public struct SessionRoutePoint: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/SessionRoutePoint/id`.
@@ -10489,6 +10626,112 @@ public enum Components {
                 case notes
             }
         }
+        /// - Remark: Generated from `#/components/schemas/WorkoutPlanExercise`.
+        public struct WorkoutPlanExercise: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlanExercise/relation_id`.
+            public var relationId: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlanExercise/exercise`.
+            public var exercise: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlanExercise/order`.
+            public var order: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlanExercise/target_sets`.
+            public var targetSets: Swift.Int64?
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlanExercise/target_reps`.
+            public var targetReps: Swift.Int64?
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlanExercise/target_weight_kg`.
+            public var targetWeightKg: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlanExercise/notes`.
+            public var notes: Swift.String?
+            /// Creates a new `WorkoutPlanExercise`.
+            ///
+            /// - Parameters:
+            ///   - relationId:
+            ///   - exercise:
+            ///   - order:
+            ///   - targetSets:
+            ///   - targetReps:
+            ///   - targetWeightKg:
+            ///   - notes:
+            public init(
+                relationId: Swift.Int? = nil,
+                exercise: Swift.Int,
+                order: Swift.Int,
+                targetSets: Swift.Int64? = nil,
+                targetReps: Swift.Int64? = nil,
+                targetWeightKg: Swift.String? = nil,
+                notes: Swift.String? = nil
+            ) {
+                self.relationId = relationId
+                self.exercise = exercise
+                self.order = order
+                self.targetSets = targetSets
+                self.targetReps = targetReps
+                self.targetWeightKg = targetWeightKg
+                self.notes = notes
+            }
+            public enum CodingKeys: String, CodingKey {
+                case relationId = "relation_id"
+                case exercise
+                case order
+                case targetSets = "target_sets"
+                case targetReps = "target_reps"
+                case targetWeightKg = "target_weight_kg"
+                case notes
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/WorkoutPlanExerciseRequest`.
+        public struct WorkoutPlanExerciseRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlanExerciseRequest/relation_id`.
+            public var relationId: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlanExerciseRequest/exercise`.
+            public var exercise: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlanExerciseRequest/order`.
+            public var order: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlanExerciseRequest/target_sets`.
+            public var targetSets: Swift.Int64?
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlanExerciseRequest/target_reps`.
+            public var targetReps: Swift.Int64?
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlanExerciseRequest/target_weight_kg`.
+            public var targetWeightKg: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlanExerciseRequest/notes`.
+            public var notes: Swift.String?
+            /// Creates a new `WorkoutPlanExerciseRequest`.
+            ///
+            /// - Parameters:
+            ///   - relationId:
+            ///   - exercise:
+            ///   - order:
+            ///   - targetSets:
+            ///   - targetReps:
+            ///   - targetWeightKg:
+            ///   - notes:
+            public init(
+                relationId: Swift.Int? = nil,
+                exercise: Swift.Int,
+                order: Swift.Int,
+                targetSets: Swift.Int64? = nil,
+                targetReps: Swift.Int64? = nil,
+                targetWeightKg: Swift.String? = nil,
+                notes: Swift.String? = nil
+            ) {
+                self.relationId = relationId
+                self.exercise = exercise
+                self.order = order
+                self.targetSets = targetSets
+                self.targetReps = targetReps
+                self.targetWeightKg = targetWeightKg
+                self.notes = notes
+            }
+            public enum CodingKeys: String, CodingKey {
+                case relationId = "relation_id"
+                case exercise
+                case order
+                case targetSets = "target_sets"
+                case targetReps = "target_reps"
+                case targetWeightKg = "target_weight_kg"
+                case notes
+            }
+        }
         /// A workout repeating weekly.
         ///
         /// ``effective_from`` and ``effective_until`` are read-only on purpose. The
@@ -11117,6 +11360,18 @@ public enum Components {
             public var cardioTargetMinutes: Swift.Int64?
             /// - Remark: Generated from `#/components/schemas/WorkoutTemplateRequest/description`.
             public var description: Swift.String?
+            /// Create-only: save all initial exercises in the same transaction as the template.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutTemplateRequest/initial_exercises`.
+            public var initialExercises: [Components.Schemas.InitialWorkoutExerciseRequest]?
+            /// Create-only: optionally schedule the new template in the same transaction.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutTemplateRequest/initial_date`.
+            public var initialDate: Swift.String?
+            /// Update-only: atomically replace the exercise plan, preserving supplied relation IDs.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutTemplateRequest/exercise_plan`.
+            public var exercisePlan: [Components.Schemas.WorkoutPlanExerciseRequest]?
             /// Creates a new `WorkoutTemplateRequest`.
             ///
             /// - Parameters:
@@ -11125,18 +11380,27 @@ public enum Components {
             ///   - cardioMachine:
             ///   - cardioTargetMinutes:
             ///   - description:
+            ///   - initialExercises: Create-only: save all initial exercises in the same transaction as the template.
+            ///   - initialDate: Create-only: optionally schedule the new template in the same transaction.
+            ///   - exercisePlan: Update-only: atomically replace the exercise plan, preserving supplied relation IDs.
             public init(
                 name: Swift.String,
                 workoutType: Components.Schemas.WorkoutTypeEnum? = nil,
                 cardioMachine: Components.Schemas.WorkoutTemplateRequest.CardioMachinePayload? = nil,
                 cardioTargetMinutes: Swift.Int64? = nil,
-                description: Swift.String? = nil
+                description: Swift.String? = nil,
+                initialExercises: [Components.Schemas.InitialWorkoutExerciseRequest]? = nil,
+                initialDate: Swift.String? = nil,
+                exercisePlan: [Components.Schemas.WorkoutPlanExerciseRequest]? = nil
             ) {
                 self.name = name
                 self.workoutType = workoutType
                 self.cardioMachine = cardioMachine
                 self.cardioTargetMinutes = cardioTargetMinutes
                 self.description = description
+                self.initialExercises = initialExercises
+                self.initialDate = initialDate
+                self.exercisePlan = exercisePlan
             }
             public enum CodingKeys: String, CodingKey {
                 case name
@@ -11144,6 +11408,9 @@ public enum Components {
                 case cardioMachine = "cardio_machine"
                 case cardioTargetMinutes = "cardio_target_minutes"
                 case description
+                case initialExercises = "initial_exercises"
+                case initialDate = "initial_date"
+                case exercisePlan = "exercise_plan"
             }
         }
         /// * `lifting` - Lifting
@@ -14632,12 +14899,21 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/api/v1/food/entries/POST/header`.
             public struct Headers: Sendable, Hashable {
+                /// Persist a fresh UUID per intended create and reuse it with the same JSON body on retry. Successful responses are replayed without a second create. Reusing the key with changed input returns 409. Keys are scoped to the authenticated account and endpoint and retained until account deletion.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/entries/POST/header/Idempotency-Key`.
+                public var idempotencyKey: Swift.String?
                 public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodEntriesCreate.AcceptableContentType>]
                 /// Creates a new `Headers`.
                 ///
                 /// - Parameters:
+                ///   - idempotencyKey: Persist a fresh UUID per intended create and reuse it with the same JSON body on retry. Successful responses are replayed without a second create. Reusing the key with changed input returns 409. Keys are scoped to the authenticated account and endpoint and retained until account deletion.
                 ///   - accept:
-                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodEntriesCreate.AcceptableContentType>] = .defaultValues()) {
+                public init(
+                    idempotencyKey: Swift.String? = nil,
+                    accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodEntriesCreate.AcceptableContentType>] = .defaultValues()
+                ) {
+                    self.idempotencyKey = idempotencyKey
                     self.accept = accept
                 }
             }
@@ -16714,12 +16990,21 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/POST/header`.
             public struct Headers: Sendable, Hashable {
+                /// Persist a fresh UUID per intended create and reuse it with the same JSON body on retry. Successful responses are replayed without a second create. Reusing the key with changed input returns 409. Keys are scoped to the authenticated account and endpoint and retained until account deletion.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/POST/header/Idempotency-Key`.
+                public var idempotencyKey: Swift.String?
                 public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodSavedMealsCreate.AcceptableContentType>]
                 /// Creates a new `Headers`.
                 ///
                 /// - Parameters:
+                ///   - idempotencyKey: Persist a fresh UUID per intended create and reuse it with the same JSON body on retry. Successful responses are replayed without a second create. Reusing the key with changed input returns 409. Keys are scoped to the authenticated account and endpoint and retained until account deletion.
                 ///   - accept:
-                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodSavedMealsCreate.AcceptableContentType>] = .defaultValues()) {
+                public init(
+                    idempotencyKey: Swift.String? = nil,
+                    accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodSavedMealsCreate.AcceptableContentType>] = .defaultValues()
+                ) {
+                    self.idempotencyKey = idempotencyKey
                     self.accept = accept
                 }
             }
@@ -21003,12 +21288,21 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/api/v1/planner/POST/header`.
             public struct Headers: Sendable, Hashable {
+                /// Persist a fresh UUID per intended create and reuse it with the same JSON body on retry. Successful responses are replayed without a second create. Reusing the key with changed input returns 409. Keys are scoped to the authenticated account and endpoint and retained until account deletion.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/planner/POST/header/Idempotency-Key`.
+                public var idempotencyKey: Swift.String?
                 public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.PlannerCreate.AcceptableContentType>]
                 /// Creates a new `Headers`.
                 ///
                 /// - Parameters:
+                ///   - idempotencyKey: Persist a fresh UUID per intended create and reuse it with the same JSON body on retry. Successful responses are replayed without a second create. Reusing the key with changed input returns 409. Keys are scoped to the authenticated account and endpoint and retained until account deletion.
                 ///   - accept:
-                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.PlannerCreate.AcceptableContentType>] = .defaultValues()) {
+                public init(
+                    idempotencyKey: Swift.String? = nil,
+                    accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.PlannerCreate.AcceptableContentType>] = .defaultValues()
+                ) {
+                    self.idempotencyKey = idempotencyKey
                     self.accept = accept
                 }
             }
@@ -24966,17 +25260,26 @@ public enum Operations {
                 }
             }
             public var headers: Operations.SessionsEndCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/end/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/end/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.SessionFinishRequest)
+            }
+            public var body: Operations.SessionsEndCreate.Input.Body?
             /// Creates a new `Input`.
             ///
             /// - Parameters:
             ///   - path:
             ///   - headers:
+            ///   - body:
             public init(
                 path: Operations.SessionsEndCreate.Input.Path,
-                headers: Operations.SessionsEndCreate.Input.Headers = .init()
+                headers: Operations.SessionsEndCreate.Input.Headers = .init(),
+                body: Operations.SessionsEndCreate.Input.Body? = nil
             ) {
                 self.path = path
                 self.headers = headers
+                self.body = body
             }
         }
         @frozen public enum Output: Sendable, Hashable {
@@ -32254,12 +32557,21 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/api/v1/workouts/POST/header`.
             public struct Headers: Sendable, Hashable {
+                /// Persist a fresh UUID per intended create and reuse it with the same JSON body on retry. Successful responses are replayed without a second create. Reusing the key with changed input returns 409. Keys are scoped to the authenticated account and endpoint and retained until account deletion.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/workouts/POST/header/Idempotency-Key`.
+                public var idempotencyKey: Swift.String?
                 public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.WorkoutsCreate.AcceptableContentType>]
                 /// Creates a new `Headers`.
                 ///
                 /// - Parameters:
+                ///   - idempotencyKey: Persist a fresh UUID per intended create and reuse it with the same JSON body on retry. Successful responses are replayed without a second create. Reusing the key with changed input returns 409. Keys are scoped to the authenticated account and endpoint and retained until account deletion.
                 ///   - accept:
-                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.WorkoutsCreate.AcceptableContentType>] = .defaultValues()) {
+                public init(
+                    idempotencyKey: Swift.String? = nil,
+                    accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.WorkoutsCreate.AcceptableContentType>] = .defaultValues()
+                ) {
+                    self.idempotencyKey = idempotencyKey
                     self.accept = accept
                 }
             }
