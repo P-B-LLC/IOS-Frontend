@@ -34,7 +34,7 @@ merge. That lives in repository settings, so no commit can switch it on. What
 > Then **Create**.
 
 Once per repository, and the two files differ because the job lists do:
-`build` in `IOS-Frontend`, `test` and `recovery-postgres` in `repbase`. A job
+`build` in `IOS-Frontend`, `test` and `postgres` in `repbase`. A job
 nobody has ticked is a check nobody is held to, so when a workflow gains a
 job, add it to the JSON and import again.
 
