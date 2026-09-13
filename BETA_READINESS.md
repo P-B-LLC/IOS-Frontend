@@ -198,27 +198,33 @@ fixed and are recorded below so nobody re-finds them.
   **This needs a scheduler**, which is part of blocker 4 above. Until
   something runs the command daily, "expires" still means "would expire".
 
+- ~~**Unindexed, unenforced account identity.**~~ *Fixed, `3b27f52`.* Sign-in,
+  registration and password reset all matched on `__iexact` with no expression
+  index anywhere in the schema, so every one of them scanned the user table on
+  PostgreSQL; and case-insensitive uniqueness was a serializer check followed
+  by a commit, which SQLite hides by allowing one writer at a time. One unique
+  index on the upper-cased column answers both, for email and username.
+
+  Raw SQL, because the model is `django.contrib.auth`'s and this project
+  cannot add a migration to that app. The email index is **partial** — two
+  accounts in the live data have no email at all, and an empty string is not a
+  duplicate of another empty string. That was found by running the migration
+  against the real database rather than only an empty test one; a non-partial
+  index would have refused to apply.
+
 ### Still open
 
-- **Login is a sequential scan waiting to happen.** Sign-in, registration and
-  password reset all match on `__iexact`, and the schema has no expression
-  index anywhere. On PostgreSQL that compiles to `UPPER(col) = UPPER(...)`,
-  which a plain B-tree index cannot serve. The fix is an index on `Upper(...)`
-  for `auth_user.email` and `auth_user.username`, or `CITEXT`.
-- **Account email uniqueness is enforced in a serializer, not the database.**
-  The auth user is stock Django's, whose `email` is not unique; `RepbaseUser`
-  is a profile beside it. Registration checks `.exists()` and then commits,
-  which SQLite's single writer hides and PostgreSQL will not. Password reset
-  then takes `.first()` of the match, so duplicates would send the code to an
-  arbitrary one of them. Wants a real unique constraint, which means deciding
-  what to do about any duplicates already in the data.
-- **`WorkoutSessionSerializer` exposes `route_distance_km` on list responses.**
-  It is a property that loads every GPS point of every session in the page and
-  recomputes in Python, while `recorded_distance_km` sits stored on the row for
-  exactly this reason. It costs nothing today — see the route-tracking note
-  under the test holes — and a page of fifty recorded runs is a different
-  matter.
+- **Half of the route serialization cost.** *Partly fixed, `3b27f52`.* Pace,
+  average speed and moving pace each re-read `route_distance_km`, so one
+  session ran the haversine loop four times over every point; those values are
+  now cached per instance. The list still **loads** the points, because max
+  speed, elevation and splits each walk them too. Finishing it needs either
+  six more denormalised columns or a lighter serializer for list responses,
+  and a lighter serializer changes the contract the app decodes — so it wants
+  a decision, not a patch. Entirely latent meanwhile: no session in this
+  database has ever recorded a point.
 
+---
 
 ## Should do before strangers use it
 
