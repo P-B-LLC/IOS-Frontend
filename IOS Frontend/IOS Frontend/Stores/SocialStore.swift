@@ -14,6 +14,7 @@ import Observation
 final class SocialStore {
     private var repository: SocialAPIRepository?
     private var connectionGeneration = UUID()
+    private let likes = SocialLikeCoordinator()
     /// Where the next page starts. Nil once the feed has been read to the end.
     private var nextCursor: String?
     /// Whether the following feed has no more pages.
@@ -56,6 +57,7 @@ final class SocialStore {
     // MARK: - The server
 
     func connect(configuration: APIConfiguration, token: String) async {
+        likes.reset()
         let generation = UUID()
         connectionGeneration = generation
         isLoading = true
@@ -82,6 +84,7 @@ final class SocialStore {
     }
 
     func disconnect() {
+        likes.reset()
         connectionGeneration = UUID()
         repository = nil
         feed = []
@@ -397,36 +400,46 @@ final class SocialStore {
 
     // MARK: - Liking and reposting
 
-    /// Turns the like on or off, showing the new state at once and putting it
-    /// back if the server refuses.
-    ///
-    /// Optimistic because a like is the one action where the delay is the
-    /// whole experience: a heart that fills a third of a second after the tap
-    /// reads as a broken button, and people tap it again.
+    /// All copies of an original post share one pending like operation.
+    func isLikePending(_ post: FeedPost) -> Bool {
+        likes.isPending(post.repostOf?.id ?? post.id)
+    }
+
     func toggleLike(_ post: FeedPost) async {
         guard let repository else { return }
         let generation = connectionGeneration
-        let wanted = !post.viewerHasLiked
-
-        apply(to: post.id) {
-            $0.viewerHasLiked = wanted
-            // Guarded so a stale card cannot take the count below zero.
-            $0.likeCount = max(0, $0.likeCount + (wanted ? 1 : -1))
-        }
-
+        let originalID = post.repostOf?.id ?? post.id
+        let current = self.post(withID: originalID) ?? self.post(withID: post.id) ?? post
+        let wanted = !current.viewerHasLiked
         do {
-            let saved = try await repository.setLiked(wanted, postID: post.id)
-            guard connectionGeneration == generation else { return }
-            // The server's figures replace the guess: other people have been
-            // liking it too, and its count is the true one.
-            replace(saved)
+            guard let saved = try await likes.submit(postID: originalID, operation: {
+                let result = try await repository.setLiked(wanted, postID: originalID)
+                return .init(liked: result.viewerHasLiked, count: result.likeCount)
+            }), connectionGeneration == generation else { return }
+            // Patch only like fields: a like response must not overwrite a
+            // caption, comment count or repost changed while it was in flight.
+            applyLike(saved, originalID: originalID)
         } catch {
             guard connectionGeneration == generation else { return }
-            apply(to: post.id) {
-                $0.viewerHasLiked = !wanted
-                $0.likeCount = max(0, $0.likeCount + (wanted ? -1 : 1))
-            }
             errorMessage = error.userFacingMessage
+        }
+    }
+
+    private func applyLike(_ saved: SocialLikeCoordinator.Confirmation, originalID: Int) {
+        func update(_ post: inout FeedPost) {
+            guard post.id == originalID || post.repostOf?.id == originalID else { return }
+            post.viewerHasLiked = saved.liked
+            post.likeCount = max(0, saved.count)
+        }
+        for index in feed.indices { update(&feed[index]) }
+        for index in discoverPosts.indices { update(&discoverPosts[index]) }
+        for id in Array(openedPosts.keys) {
+            if var post = openedPosts[id] { update(&post); openedPosts[id] = post }
+        }
+        for author in Array(authorPosts.keys) {
+            guard var posts = authorPosts[author] else { continue }
+            for index in posts.indices { update(&posts[index]) }
+            authorPosts[author] = posts
         }
     }
 

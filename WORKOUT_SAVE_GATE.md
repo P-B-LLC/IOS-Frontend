@@ -37,7 +37,7 @@
 - All 32 native regression tests passed.
 - All 27 focused backend recovery tests passed. Full backend suite: 288 tests
   ran, OK; two PostgreSQL-only skips (286 passed).
-- Debug simulator build passed. Mac logs and subsequent Release validation:
+- Debug and final Release arm64 simulator builds passed (unsigned). Mac logs:
   `/Users/user299988/Documents/RytivoBetaValidation/workout.VCEt1N`.
 - Schema parity, stable-ID and whitespace checks passed.
 

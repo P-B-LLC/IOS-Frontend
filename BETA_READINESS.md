@@ -1,5 +1,9 @@
 # Beta readiness
 
+September 13 follow-up: audit fixes 1–3 (default gear, partial photo posts,
+social likes) are implemented. See [implementation and verification notes](BETA_AUDIT_FIXES_1_3.md).
+Remaining production and verification gates below are not automatically closed.
+
 What stands between today's `main` and a real person using Rytivo. Written
 2026-09-12, revised 2026-09-13 after a full audit. Covers both repositories;
 `repbase` items are marked.

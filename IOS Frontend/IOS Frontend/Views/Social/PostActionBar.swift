@@ -50,10 +50,12 @@ struct PostActionBar: View {
                 symbol: post.viewerHasLiked ? "heart.fill" : "heart",
                 count: post.likeCount,
                 tint: post.viewerHasLiked ? Color(hex: 0xE0446B) : timeOfDay.secondaryText,
-                label: post.viewerHasLiked ? "Unlike" : "Like"
+                label: post.viewerHasLiked ? "Unlike" : "Like",
+                pending: store.isLikePending(post)
             ) {
                 Task { await store.toggleLike(post) }
             }
+            .disabled(store.isLikePending(post))
 
             // Share is the system sheet, not something the server hears
             // about: what is being handed over is a link, and where it goes
@@ -94,13 +96,19 @@ struct PostActionBar: View {
         count: Int,
         tint: Color,
         label: String,
+        pending: Bool = false,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
             actionLabel(symbol: symbol, count: count, tint: tint)
+                .opacity(pending ? 0 : 1)
+                .overlay(alignment: .leading) {
+                    if pending { ProgressView().controlSize(.small).tint(tint) }
+                }
         }
         .buttonStyle(.plain)
         .accessibilityLabel(count > 0 ? "\(label), \(count)" : label)
+        .accessibilityValue(pending ? "Saving" : "")
     }
 
     private func actionLabel(symbol: String, count: Int, tint: Color) -> some View {
