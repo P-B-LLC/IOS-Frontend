@@ -40,6 +40,7 @@ struct IOS_FrontendApp: App {
 #endif
 
     init() {
+        Self.enlargeTheResponseCache()
         RepbaseTypography.configureUIKitAppearance()
         // Registers the categories the reminders carry their mute buttons on,
         // and takes delivery of taps. Before any of them is scheduled: a
@@ -82,6 +83,36 @@ struct IOS_FrontendApp: App {
         _plannerStore = State(initialValue: PlannerStore())
         _workoutStore = State(initialValue: WorkoutStore())
 #endif
+    }
+
+    /// Give URLSession somewhere to keep photographs between launches.
+    ///
+    /// `RemoteImageCache` holds decoded images in an `NSCache`, which lives
+    /// and dies with the process: every launch re-downloaded every photo the
+    /// user had already seen. Underneath it `URLSession.shared` was using the
+    /// system default response cache, a few megabytes, which a feed of
+    /// photographs evicts itself out of almost immediately.
+    ///
+    /// The server side of this already exists and was going unused. Photo
+    /// URLs are signed with an expiry rounded to a whole day, specifically so
+    /// the same photo keeps the same URL long enough to be worth caching, and
+    /// the responses carry `Cache-Control: private, max-age=..., immutable`.
+    /// Without somewhere to put them that outlives the process, none of that
+    /// bought anything.
+    ///
+    /// Sized for a photo feed rather than for an API: the JSON is small and
+    /// mostly uncacheable anyway. The disk figure is deliberately generous
+    /// because iOS empties the Caches directory itself when storage runs
+    /// short, so the cost of asking for too much is bounded and the cost of
+    /// asking for too little is paid on cellular.
+    ///
+    /// Signing out still calls `URLCache.shared.removeAllCachedResponses()`,
+    /// which matters more now that there is something in it to remove.
+    private static func enlargeTheResponseCache() {
+        URLCache.shared = URLCache(
+            memoryCapacity: 32 * 1024 * 1024,
+            diskCapacity: 256 * 1024 * 1024
+        )
     }
 
     var body: some Scene {

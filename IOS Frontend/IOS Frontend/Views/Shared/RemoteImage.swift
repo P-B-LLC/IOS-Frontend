@@ -43,7 +43,29 @@ final class RemoteImageCache {
     private var inFlight: [String: Task<UIImage?, Never>] = [:]
 
     private init() {
+        // A count alone does not bound anything worth bounding. 120 feed
+        // thumbnails is a few megabytes; 120 photos opened full screen on a
+        // Pro Max is closer to seven hundred, and the count limit would not
+        // have objected to either. NSCache does evict under memory pressure,
+        // but "the system is already short of memory" is later than this
+        // should be noticing.
         images.countLimit = 120
+        images.totalCostLimit = 64 * 1024 * 1024
+    }
+
+    /// What an image costs to keep: its decoded bytes, not its file size.
+    ///
+    /// A downsampled 300 KB JPEG is nothing on disk and several megabytes
+    /// once it is a bitmap, and the bitmap is what is being held here.
+    private static func bytes(of image: UIImage) -> Int {
+        if let bitmap = image.cgImage {
+            return bitmap.bytesPerRow * bitmap.height
+        }
+        // No backing bitmap to measure, so estimate from the drawn size at
+        // four bytes a pixel rather than charge it nothing and let it sit
+        // there for free.
+        let pixels = image.size.width * image.scale * image.size.height * image.scale
+        return Int(pixels * 4)
     }
 
     func cached(_ url: URL, maxPixel: CGFloat) -> UIImage? {
@@ -72,7 +94,9 @@ final class RemoteImageCache {
         let result = await task.value
         guard self.generation == generation, !Task.isCancelled else { return nil }
         inFlight[key] = nil
-        if let result { images.setObject(result, forKey: key as NSString) }
+        if let result {
+            images.setObject(result, forKey: key as NSString, cost: Self.bytes(of: result))
+        }
         return result
     }
 
