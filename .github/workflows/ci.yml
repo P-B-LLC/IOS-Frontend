@@ -46,7 +46,7 @@ jobs:
       # Xcode knows about, so it never reached the built plist and every
       # release build died on launch. This builds Release and reads the key
       # back out, which is the only way to see that it survived the build.
-      - name: A release build carries the server it was given
+      - name: A release build carries the name and server it was given
         run: |
           xcodebuild \
             -project "IOS Frontend/IOS Frontend.xcodeproj" \
@@ -64,6 +64,20 @@ jobs:
             echo "A release build would crash on launch. It must be a key in"
             echo "IOS Frontend/Info.plist spelled \$(REPBASE_API_URL), not an"
             echo "INFOPLIST_KEY_ build setting."
+            exit 1
+          fi
+
+          # The same question about a different key. CFBundleName is what
+          # Settings, storage listings and App Store Connect fall back to,
+          # and it is generated from PRODUCT_NAME unless Info.plist wins the
+          # merge -- which is precisely what this asserts, because "does the
+          # generator or the file win" is not worth anyone re-deriving.
+          name=$(/usr/libexec/PlistBuddy -c "Print :CFBundleName" "$plist" 2>/dev/null || true)
+          if [ "$name" != "Rytivo" ]; then
+            echo "CFBundleName is '${name:-<missing>}', not Rytivo."
+            echo "It is set in IOS Frontend/Info.plist. If the value generated"
+            echo "from PRODUCT_NAME is winning that merge, set PRODUCT_NAME"
+            echo "instead and update the .app paths in this file."
             exit 1
           fi
 

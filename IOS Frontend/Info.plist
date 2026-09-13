@@ -2,6 +2,21 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!--
+	  The name the system files this app under: the Home screen label's
+	  quieter twin. CFBundleDisplayName is already Rytivo and is what a user
+	  reads, but CFBundleName is what Settings, storage listings, permission
+	  prompts and App Store Connect fall back to, and it was "IOS Frontend"
+	  everywhere those appear.
+
+	  Written here rather than as PRODUCT_NAME, which is where it came from.
+	  PRODUCT_NAME also names the built .app and the executable inside it, so
+	  changing it renames build outputs and every path in CI that refers to
+	  them, for no gain a user could see. CI reads this key back out of a
+	  built app, the same way it does for REPBASE_API_URL.
+	-->
+	<key>CFBundleName</key>
+	<string>Rytivo</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
