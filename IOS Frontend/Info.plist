@@ -3,6 +3,22 @@
 <plist version="1.0">
 <dict>
 	<!--
+	  Export compliance. Without this key every single TestFlight and App
+	  Store upload stops and asks the same question by hand before the build
+	  can go anywhere, which is a slow way to answer "no" forty times.
+
+	  false is the answer because the only cryptography here is the system's:
+	  HTTPS through URLSession, and the Keychain holding the session token.
+	  Apple exempts both. It would have to become true if the app ever did
+	  its own encryption -- shipped its own algorithm, or encrypted files
+	  itself before storing or sending them.
+
+	  This is a declaration to a regulator, not a build setting. Re-read it
+	  if that ever changes.
+	-->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<!--
 	  The name the system files this app under: the Home screen label's
 	  quieter twin. CFBundleDisplayName is already Rytivo and is what a user
 	  reads, but CFBundleName is what Settings, storage listings, permission
