@@ -1,7 +1,8 @@
 # Beta readiness
 
 What stands between today's `main` and a real person using Rytivo. Written
-2026-09-12. Covers both repositories; `repbase` items are marked.
+2026-09-12, revised 2026-09-13. Covers both repositories; `repbase` items are
+marked.
 
 Everything below was checked against a running build or server, not read off
 the source. Where something is inferred rather than observed, it says so.
@@ -10,8 +11,10 @@ the source. Where something is inferred rather than observed, it says so.
 
 ## Blockers
 
-A beta tester hits these on day one. Roughly in dependency order — 1 needs the
-host that 4 produces, so 4 is the one to start.
+A beta tester hits these on day one. Roughly in dependency order: 1 and 3 both
+need the host that 4 produces, so 4 is the one to start, and 6 is the one to
+start *today* because it is the only item with somebody else's queue in front
+of it.
 
 ### 1. Give release builds a server URL
 
@@ -65,23 +68,26 @@ than the filesystem, which was worth getting right — the first version called
 `django.views.static.serve` and would have worked perfectly until media moved
 to S3 and then served nothing.
 
-### 3. Configure email — *repbase*
+### 3. Configure email — *repbase* — *code done `f936138`, account not bought*
 
-**State:** no `EMAIL_BACKEND` is set, so Django falls back to SMTP on
-`localhost:25`. `core/views.py` calls `send_mail(..., fail_silently=False)`, so
-a password reset request raises and returns 500. The reset code row is written
-*before* the send, so the user ends up with a code that was never delivered.
+**Was:** no provider, so `send_mail(..., fail_silently=False)` raised and a
+password reset returned 500 with a live code already written — and that 500
+only ever happened for an address that *has* an account, which made a mail
+outage into the account enumerator the blanket 204 exists to prevent.
 
-`DEFAULT_FROM_EMAIL` also defaults to `noreply@repbase.local`. `.local` is a
-reserved mDNS TLD — undeliverable, and most providers reject it as a From
-address.
+**Now:** a failed send spends the code and still answers 204, with the failure
+logged. And the bad configuration cannot reach production quietly:
+`manage.py check --deploy` refuses Django's `localhost` SMTP default, a
+`DEFAULT_FROM_EMAIL` on a reserved suffix, and SMTP without TLS. Verified —
+with the defaults this repository shipped it reports exactly `core.E002` and
+`core.E003`, and with a provider configured it reports neither.
 
-**Do:** set a real provider (`EMAIL_BACKEND`, host, port, credentials) and a
-`DEFAULT_FROM_EMAIL` on a domain that exists. Decide whether a send failure
-should still 500 or be swallowed with the code invalidated; 500 is defensible,
-silently pretending is not.
-
-**Verify:** request a reset against a `DEBUG=False` server and read the mail.
+**Left to do, and it needs a person with a card:** pick a provider (Postmark,
+SES, Resend, Fastmail — anything that will relay), and set `SMTP_HOST`,
+`SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` and `DEFAULT_FROM_EMAIL` on a
+domain that exists. Then request a reset against a `DEBUG=False` server and
+read the mail. Until the domain in item 4 exists there is nothing to put in
+`DEFAULT_FROM_EMAIL`, so this follows the deploy rather than leading it.
 
 ### 4. Deploy the backend at all — *repbase*
 
@@ -95,19 +101,41 @@ cannot reach it.
 - A host with HTTPS, and `DJANGO_ALLOWED_HOSTS`, `DJANGO_SECRET_KEY` and
   `DJANGO_DEBUG=false` set. The security settings already read from env and
   tighten themselves when `DEBUG` is off — that part is done.
+- Run `manage.py check --deploy` as part of starting it, and treat a failure
+  as a failed deploy. That is what makes item 3's checks worth having.
 - Decide what happens to today's data: **10 accounts, a 2 MB database and
   21 MB of media** on the Mac. Migrate or start clean, but decide rather than
   discover.
 - A real WSGI/ASGI server (gunicorn/uvicorn), not `runserver`.
 
-### 5. Turn on branch protection
+### 5. Turn on branch protection — *ruleset committed `ca93235`/`8415cf4`*
 
 **State:** both repos run CI on every push and pull request, and nothing
 depends on the result. That is how `18487ff` — which did not compile — reached
 `main` and sat there for a week.
 
-**Do:** the exact clicks are in [RELEASING.md](RELEASING.md). It is a
-repository setting, not a file, so no commit can do it.
+**Do:** Settings → Rules → Rulesets → New ruleset → **Import a ruleset**, and
+pick `.github/rulesets/protect-main.json` from that repository. Once each. The
+two files differ because the job lists do.
+
+Be ready for what it costs: a required check cannot have passed for a commit
+that is not on GitHub yet, so direct pushes to `main` stop working and the
+flow becomes branch → push → pull request → merge. Details in
+[RELEASING.md](RELEASING.md).
+
+### 6. Buy an Apple Developer membership
+
+**State:** not bought. `DEVELOPMENT_TEAM` appears zero times in the project,
+there is no distribution certificate and no App Store Connect record, so there
+is no way to put a build on a phone that is not plugged into this Mac.
+
+**Do:** [APPLE_DEVELOPER.md](APPLE_DEVELOPER.md) is the ordered list. The one
+thing worth starting today is the **D-U-N-S lookup**, if the LLC rather than a
+person should be the seller: it is free, it can take five business days, it
+gates the enrolment, and it cannot be changed afterwards without transferring
+the account. Everything else on that list takes minutes, and everything the
+repository can do in advance — bundle name, entitlements, privacy manifest,
+export-compliance declaration, archive and export script — is done.
 
 ---
 
@@ -120,16 +148,18 @@ repository setting, not a file, so no commit can do it.
   decide *who* may see a post; that is still the feed's job, done where the
   post is served, so someone who cannot see a post never receives its URL.
   What it bounds is how long a URL keeps working once handed out.
-- **`CFBundleName` is "IOS Frontend".** The display name is correctly Rytivo,
-  but the bundle name shows in parts of system UI and in App Store Connect.
-  `PRODUCT_NAME = "$(TARGET_NAME)"` is where it comes from.
+- ~~**`CFBundleName` is "IOS Frontend".**~~ *Done, `0f56899`.* Both the
+  display name and the bundle name are Rytivo, and CI reads the latter back
+  out of a built Release app rather than trusting the build setting.
 - **`LegalDocuments.contactEmail` is `support@repbase.app`**, and the privacy
   copy tells users to write there to have data removed. If nobody reads that
   mailbox, the legal text promises something no one answers.
 - **Backups.** Nothing is backed up today. Once a stranger's data is in there,
   losing it is a different kind of problem.
-- **Build numbers.** Currently `1.0 (1)`; every TestFlight upload needs a new
-  `CFBundleVersion`.
+- ~~**Build numbers.**~~ *Handled, `0defe8a`.*
+  `Scripts/archive-for-testflight.sh` numbers each build with the commit
+  count, which only goes up, and refuses to export an archive carrying a
+  different number than it asked for.
 
 ---
 
