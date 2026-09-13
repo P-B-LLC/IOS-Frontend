@@ -25,20 +25,30 @@ to it.
 
 ## The part that is a GitHub setting, not a file
 
-A workflow can report a failure; only **branch protection** can refuse a merge.
-That lives in repository settings and cannot be committed, so it has to be
-switched on by hand, once per repository:
+A workflow can report a failure; only **branch protection** can refuse a
+merge. That lives in repository settings, so no commit can switch it on. What
+*is* committed is the ruleset itself, ready to import:
 
-> Settings → Branches → Add branch ruleset → target `main` →
-> **Require status checks to pass**, then select every job the CI workflow
-> publishes — at the time of writing `build` in `IOS-Frontend` and `test` in
-> `repbase`. Select any new ones as they are added; a job nobody has ticked is
-> a check nobody is held to.
->
-> Tick **Require branches to be up to date before merging** as well, so a check
-> cannot pass against a stale base.
+> Settings → Rules → Rulesets → **New ruleset** → **Import a ruleset**, and
+> pick `.github/rulesets/protect-main.json` from that repository's checkout.
+> Then **Create**.
 
-Until that is on, the release gate catches a bad **tag** but a bad **commit**
+Once per repository, and the two files differ because the job lists do:
+`build` in `IOS-Frontend`, `test` and `recovery-postgres` in `repbase`. A job
+nobody has ticked is a check nobody is held to, so when a workflow gains a
+job, add it to the JSON and import again.
+
+**This changes how you push.** A required check cannot have passed for a
+commit that is not on GitHub yet, so pushing straight to `main` starts being
+refused: branch, push, open a pull request, let CI run, merge. That is the
+whole point — `18487ff` reached `main` exactly because a direct push had
+nothing attached to it — but it is a real change to a habit rather than a
+silent one, and worth knowing before the first time it stops you.
+
+For a genuine emergency, add yourself to the **Bypass list** after importing.
+Left empty, as it ships, the rule applies to everyone including the owner.
+
+Until this is on, the release gate catches a bad **tag** and a bad **commit**
 still reaches `main`.
 
 ## Checking a build without waiting for CI
