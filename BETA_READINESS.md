@@ -44,7 +44,7 @@ xcodebuild -project "IOS Frontend/IOS Frontend.xcodeproj" -scheme "IOS Frontend"
   -configuration Release -destination "generic/platform=iOS Simulator" \
   -derivedDataPath /tmp/dd CODE_SIGNING_ALLOWED=NO build
 /usr/libexec/PlistBuddy -c "Print :REPBASE_API_URL" \
-  "/tmp/dd/Build/Products/Release-iphonesimulator/IOS Frontend.app/Info.plist"
+  "/tmp/dd/Build/Products/Release-iphonesimulator/Rytivo.app/Info.plist"
 ```
 Then install it and confirm it is still running ten seconds later. A build that
 launches and vanishes is this bug.

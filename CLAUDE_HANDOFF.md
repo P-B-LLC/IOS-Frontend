@@ -179,7 +179,7 @@ signed                    KEYCHAIN-CHECK works
 CODE_SIGNING_ALLOWED=NO   KEYCHAIN-CHECK unavailable
 ```
 
-Then install from `/tmp/cli-dd/Build/Products/Debug-iphonesimulator/IOS Frontend.app`.
+Then install from `/tmp/cli-dd/Build/Products/Debug-iphonesimulator/Rytivo.app`.
 
 ### Build environment gotchas, all hit this session
 

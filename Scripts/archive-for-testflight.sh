@@ -69,7 +69,7 @@ xcodebuild archive \
 # the check that would have caught release builds dying on launch: the value
 # was passed in exactly like this, and never reached the bundle, because
 # Info.plist did not name it.
-plist="$archive/Products/Applications/IOS Frontend.app/Info.plist"
+plist="$archive/Products/Applications/Rytivo.app/Info.plist"
 read_key() { /usr/libexec/PlistBuddy -c "Print :$1" "$plist" 2>/dev/null || true; }
 
 got_url="$(read_key REPBASE_API_URL)"

@@ -57,7 +57,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             REPBASE_API_URL="https://ci.invalid/" \
             build
-          plist=".build/DerivedDataRelease/Build/Products/Release-iphonesimulator/IOS Frontend.app/Info.plist"
+          plist=".build/DerivedDataRelease/Build/Products/Release-iphonesimulator/Rytivo.app/Info.plist"
           got=$(/usr/libexec/PlistBuddy -c "Print :REPBASE_API_URL" "$plist" 2>/dev/null || true)
           if [ "$got" != "https://ci.invalid/" ]; then
             echo "REPBASE_API_URL did not reach the built app: got '${got:-<missing>}'."
