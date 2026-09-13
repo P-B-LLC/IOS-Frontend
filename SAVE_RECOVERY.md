@@ -55,13 +55,10 @@ Compilation and unit tests are not substitutes for device acceptance.
 
 ## Remaining gates — not a beta sign-off
 
-1. The iOS client still uses create-then-start without durable idempotency. A lost
-   response can leave an unconfirmed session. Backend commit `eccc2c3` now adds
-   session/set create idempotency and replay-safe start, but iOS generated
-   headers/client operation persistence still need integration. Set-log POSTs
-   need lost-response reconciliation, including checkpoint restoration and
-   intentional unlog/relog (which must receive a new operation key).
-   Not every app write is retry-safe yet.
+1. Session/set client retry integration is now implemented, including generated
+   headers, durable original requests, relaunch reconciliation and unlog/relog
+   operation identities. See `WORKOUT_SAVE_GATE.md`. Device acceptance against
+   the deployed backend is still required; this is not an app-wide offline guarantee.
 2. Execute PostgreSQL concurrency CI for first-create receipt locking and
    overlapping route/end retries. SQLite skips these tests. The hosted Mac's
    administrator-owned Homebrew directories prevent a PostgreSQL install;

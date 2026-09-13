@@ -29,7 +29,7 @@ final class EditorDraftRecovery {
     }
 
     func save<T: Encodable>(_ value: T, key: String, scope: Scope) throws {
-        guard !isDeleted(scope) else { throw CocoaError(.fileWriteNoPermission) }
+        try requireAvailable(scope)
         let file = url(key: key, scope: scope)
         var folder = file.deletingLastPathComponent()
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
@@ -41,6 +41,10 @@ final class EditorDraftRecovery {
         options.insert(.completeFileProtectionUnlessOpen)
 #endif
         try JSONEncoder().encode(value).write(to: file, options: options)
+    }
+
+    func requireAvailable(_ scope: Scope) throws {
+        guard !isDeleted(scope) else { throw CocoaError(.fileWriteNoPermission) }
     }
 
     /// Keep the first submitted snapshot until its result is confirmed. Later

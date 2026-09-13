@@ -21,14 +21,17 @@ actor WorkoutAPIRepository {
     }
     struct LoggedSet: Sendable {
         let id: Int
-        let request: Components.Schemas.SetEntryRequest
+        let weightKilograms: String
+        let reps: String
+        let distanceKilometers: String
     }
     enum RecoveryFailure: LocalizedError {
-        case unavailable, differentStart
+        case unavailable, differentStart, finishedStart
         var errorDescription: String? {
             switch self {
             case .unavailable: return "Local save recovery is unavailable. Reconnect your account and try again."
             case .differentStart: return "A previous workout start is waiting to be confirmed. Retry workout sync before starting another workout."
+            case .finishedStart: return "The previous session has already ended or was removed. You can now start a new workout."
             }
         }
     }
@@ -510,25 +513,32 @@ actor WorkoutAPIRepository {
     ) async throws -> ActiveWorkoutSession {
         guard let recoveryScope else { throw RecoveryFailure.unavailable }
         try await WorkoutWriteRecovery.finishConsumption(key: "session-start", contextKey: "session-start-context", scope: recoveryScope)
+        guard workout.serverID != nil else { throw APIServiceError.missingServerIdentifier("Workout") }
         let context = try await EditorDraftRecovery.shared.capture(
             SessionStartContext(workout: workout, day: day), key: "session-start-context", scope: recoveryScope)
-        guard context.workout.serverID == workout.serverID else { throw RecoveryFailure.differentStart }
+        guard context.workout.serverID == workout.serverID, context.day == day else { throw RecoveryFailure.differentStart }
         let workout = context.workout
         let day = context.day
         guard let workoutServerID = workout.serverID else {
             throw APIServiceError.missingServerIdentifier("Workout")
         }
 
-        let receipt = try await WorkoutWriteRecovery.create(key: "session-start",
-            payload: Components.Schemas.WorkoutSessionRequest(workout: workoutServerID), scope: recoveryScope,
-            delete: { _ in throw RecoveryFailure.unavailable },
-            send: { [client] operationID, request in
-                let output = try await client.sessionsCreate(headers: .init(idempotencyKey: operationID.uuidString), body: .json(request))
-                switch output {
-                case .created(let response): return try response.body.json.id
-                case .undocumented(let status, _): throw APIServiceError.undocumentedStatus(status)
-                }
-            })
+        let receipt: WorkoutWriteRecovery.Receipt<Components.Schemas.WorkoutSessionRequest>
+        do {
+            receipt = try await WorkoutWriteRecovery.create(key: "session-start",
+                payload: Components.Schemas.WorkoutSessionRequest(workout: workoutServerID), scope: recoveryScope,
+                delete: { _ in throw RecoveryFailure.unavailable },
+                send: { [client] operationID, request in
+                    let output = try await client.sessionsCreate(headers: .init(idempotencyKey: operationID.uuidString), body: .json(request))
+                    switch output {
+                    case .created(let response): return try response.body.json.id
+                    case .undocumented(let status, _): throw APIServiceError.undocumentedStatus(status)
+                    }
+                })
+        } catch APIServiceError.undocumentedStatus(400) {
+            try await EditorDraftRecovery.shared.remove(key: "session-start-context", scope: recoveryScope)
+            throw APIServiceError.undocumentedStatus(400)
+        }
         guard let createdID = receipt.resourceID else { throw APIServiceError.malformedResponse }
 
         let startOutput = try await client.sessionsStartCreate(
@@ -539,6 +549,17 @@ actor WorkoutAPIRepository {
         case .ok(let response):
             started = try response.body.json
         case .undocumented(let statusCode, _):
+            if statusCode == 404 {
+                try await acknowledgeSessionStart(id: createdID)
+                throw RecoveryFailure.finishedStart
+            }
+            if statusCode == 409 {
+                let current = try await client.sessionsRetrieve(path: .init(id: createdID))
+                if case .ok(let response) = current, try response.body.json.status.value1 == .completed {
+                    try await acknowledgeSessionStart(id: createdID)
+                    throw RecoveryFailure.finishedStart
+                }
+            }
             throw APIServiceError.undocumentedStatus(statusCode)
         }
 
@@ -590,7 +611,7 @@ actor WorkoutAPIRepository {
         return try await startSession(for: context.workout, on: context.day)
     }
 
-    /// Called only after a durable active-session checkpoint has been written.
+    /// Consume after a durable checkpoint, or a confirmed terminal server state.
     func acknowledgeSessionStart(id: Int) async throws {
         guard let recoveryScope else { return }
         if let receipt = try await EditorDraftRecovery.shared.load(
@@ -652,7 +673,9 @@ actor WorkoutAPIRepository {
                 }
             })
         guard let id = receipt.resourceID else { throw APIServiceError.malformedResponse }
-        return LoggedSet(id: id, request: receipt.payload)
+        return LoggedSet(id: id, weightKilograms: receipt.payload.weightKg ?? "",
+                         reps: receipt.payload.reps.map(String.init) ?? "",
+                         distanceKilometers: receipt.payload.distanceKm ?? "")
     }
 
     private nonisolated static func setWriteKey(_ exercise: Int, _ number: Int) -> String {
@@ -663,6 +686,29 @@ actor WorkoutAPIRepository {
         guard let recoveryScope else { throw RecoveryFailure.unavailable }
         try await WorkoutWriteRecovery.remove(key: Self.setWriteKey(sessionExerciseID, setNumber),
             resourceID: id, scope: recoveryScope, send: { [self] id in try await deleteSetEntry(id: id) })
+    }
+
+    /// Removing a row with an uncertain earlier save must settle that request
+    /// and delete its server result before dropping the local row.
+    func removeUnconfirmedSet(sessionExerciseID: Int, setNumber: Int) async throws {
+        guard let recoveryScope else { throw RecoveryFailure.unavailable }
+        let key = Self.setWriteKey(sessionExerciseID, setNumber)
+        if let deleting = try await EditorDraftRecovery.shared.load(Int.self, key: key + "-delete", scope: recoveryScope) {
+            try await unlogSet(id: deleting, sessionExerciseID: sessionExerciseID, setNumber: setNumber)
+            return
+        }
+        guard let receipt = try await EditorDraftRecovery.shared.load(
+            WorkoutWriteRecovery.Receipt<Components.Schemas.SetEntryRequest>.self, key: key, scope: recoveryScope) else { return }
+        let confirmed = try await WorkoutWriteRecovery.create(key: key, payload: receipt.payload, scope: recoveryScope,
+            delete: { [self] id in try await deleteSetEntry(id: id) }, send: { [client] operationID, request in
+                let output = try await client.setEntriesCreate(headers: .init(idempotencyKey: operationID.uuidString), body: .json(request))
+                switch output {
+                case .created(let response): return try response.body.json.id
+                case .undocumented(let status, _): throw APIServiceError.undocumentedStatus(status)
+                }
+            })
+        guard let id = confirmed.resourceID else { throw APIServiceError.malformedResponse }
+        try await unlogSet(id: id, sessionExerciseID: sessionExerciseID, setNumber: setNumber)
     }
 
     func reconcileLoggedSets(_ saved: ActiveWorkoutSession) async throws -> ActiveWorkoutSession {

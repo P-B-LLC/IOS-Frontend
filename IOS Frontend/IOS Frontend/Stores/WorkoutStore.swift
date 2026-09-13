@@ -809,9 +809,9 @@ final class WorkoutStore {
                         workoutType: workoutType
                     )
                     guard connectionGeneration == generation else { return }
-                    let weight = logged.request.weightKg ?? ""
-                    let reps = logged.request.reps.map(String.init) ?? ""
-                    let distance = logged.request.distanceKm ?? ""
+                    let weight = logged.weightKilograms
+                    let reps = logged.reps
+                    let distance = logged.distanceKilometers
                     mutateSet(on: day, exerciseID: exerciseID, setID: setID) {
                         $0.serverID = logged.id
                         $0.isLogged = true
@@ -853,21 +853,16 @@ final class WorkoutStore {
             return
         }
 
-        guard let entryID = lastSet.serverID else {
-            removeSessionSet(
-                on: day,
-                exerciseID: exerciseID,
-                setID: lastSet.id
-            )
-            return
-        }
-
         let generation = connectionGeneration
         pendingSetIDs.insert(lastSet.id)
         Task {
             defer { if connectionGeneration == generation { pendingSetIDs.remove(lastSet.id) } }
             do {
-                try await repository.unlogSet(id: entryID, sessionExerciseID: exercise.sessionExerciseID, setNumber: lastSet.setNumber)
+                if let entryID = lastSet.serverID {
+                    try await repository.unlogSet(id: entryID, sessionExerciseID: exercise.sessionExerciseID, setNumber: lastSet.setNumber)
+                } else {
+                    try await repository.removeUnconfirmedSet(sessionExerciseID: exercise.sessionExerciseID, setNumber: lastSet.setNumber)
+                }
                 guard connectionGeneration == generation else { return }
                 removeSessionSet(
                     on: day,

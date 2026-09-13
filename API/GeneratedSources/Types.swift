@@ -23745,12 +23745,21 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/api/v1/session-exercises/POST/header`.
             public struct Headers: Sendable, Hashable {
+                /// Persist a fresh UUID per intended create and reuse it with the same JSON body on retry. Successful responses are replayed without a second create. Reusing the key with changed input returns 409. Keys are scoped to the authenticated account and endpoint and retained until account deletion.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/session-exercises/POST/header/Idempotency-Key`.
+                public var idempotencyKey: Swift.String?
                 public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SessionExercisesCreate.AcceptableContentType>]
                 /// Creates a new `Headers`.
                 ///
                 /// - Parameters:
+                ///   - idempotencyKey: Persist a fresh UUID per intended create and reuse it with the same JSON body on retry. Successful responses are replayed without a second create. Reusing the key with changed input returns 409. Keys are scoped to the authenticated account and endpoint and retained until account deletion.
                 ///   - accept:
-                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SessionExercisesCreate.AcceptableContentType>] = .defaultValues()) {
+                public init(
+                    idempotencyKey: Swift.String? = nil,
+                    accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SessionExercisesCreate.AcceptableContentType>] = .defaultValues()
+                ) {
+                    self.idempotencyKey = idempotencyKey
                     self.accept = accept
                 }
             }
@@ -24500,12 +24509,21 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/api/v1/sessions/POST/header`.
             public struct Headers: Sendable, Hashable {
+                /// Persist a fresh UUID per intended create and reuse it with the same JSON body on retry. Successful responses are replayed without a second create. Reusing the key with changed input returns 409. Keys are scoped to the authenticated account and endpoint and retained until account deletion.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/sessions/POST/header/Idempotency-Key`.
+                public var idempotencyKey: Swift.String?
                 public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SessionsCreate.AcceptableContentType>]
                 /// Creates a new `Headers`.
                 ///
                 /// - Parameters:
+                ///   - idempotencyKey: Persist a fresh UUID per intended create and reuse it with the same JSON body on retry. Successful responses are replayed without a second create. Reusing the key with changed input returns 409. Keys are scoped to the authenticated account and endpoint and retained until account deletion.
                 ///   - accept:
-                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SessionsCreate.AcceptableContentType>] = .defaultValues()) {
+                public init(
+                    idempotencyKey: Swift.String? = nil,
+                    accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SessionsCreate.AcceptableContentType>] = .defaultValues()
+                ) {
+                    self.idempotencyKey = idempotencyKey
                     self.accept = accept
                 }
             }
@@ -26478,12 +26496,21 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/api/v1/set-entries/POST/header`.
             public struct Headers: Sendable, Hashable {
+                /// Persist a fresh UUID per intended create and reuse it with the same JSON body on retry. Successful responses are replayed without a second create. Reusing the key with changed input returns 409. Keys are scoped to the authenticated account and endpoint and retained until account deletion.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/set-entries/POST/header/Idempotency-Key`.
+                public var idempotencyKey: Swift.String?
                 public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SetEntriesCreate.AcceptableContentType>]
                 /// Creates a new `Headers`.
                 ///
                 /// - Parameters:
+                ///   - idempotencyKey: Persist a fresh UUID per intended create and reuse it with the same JSON body on retry. Successful responses are replayed without a second create. Reusing the key with changed input returns 409. Keys are scoped to the authenticated account and endpoint and retained until account deletion.
                 ///   - accept:
-                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SetEntriesCreate.AcceptableContentType>] = .defaultValues()) {
+                public init(
+                    idempotencyKey: Swift.String? = nil,
+                    accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SetEntriesCreate.AcceptableContentType>] = .defaultValues()
+                ) {
+                    self.idempotencyKey = idempotencyKey
                     self.accept = accept
                 }
             }

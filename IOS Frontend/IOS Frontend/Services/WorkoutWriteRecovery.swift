@@ -42,10 +42,19 @@ enum WorkoutWriteRecovery {
                 receipt.resourceID = try await send(receipt.operationID, receipt.payload)
             } catch APIServiceError.undocumentedStatus(400) {
                 // Definitive validation rejection: no create was committed.
-                try storage.remove(key: key, scope: scope)
+                if let current = try storage.load(Receipt<Payload>.self, key: key, scope: scope),
+                   current.operationID == receipt.operationID {
+                    try storage.remove(key: key, scope: scope)
+                }
                 throw APIServiceError.undocumentedStatus(400)
             }
-            try storage.save(receipt, key: key, scope: scope)
+            try storage.requireAvailable(scope)
+            // Another caller may have consumed this receipt while HTTP was
+            // suspended. Never resurrect it or overwrite a newer operation.
+            if let current = try storage.load(Receipt<Payload>.self, key: key, scope: scope),
+               current.operationID == receipt.operationID {
+                try storage.save(receipt, key: key, scope: scope)
+            }
         }
         return receipt
     }
@@ -56,7 +65,9 @@ enum WorkoutWriteRecovery {
         // Tombstone first. A lost DELETE reply must not resurrect an old receipt.
         try storage.save(resourceID, key: key + "-delete", scope: scope)
         try await send(resourceID)
-        try storage.remove(key: key, scope: scope)
-        try storage.remove(key: key + "-delete", scope: scope)
+        if try storage.load(Int.self, key: key + "-delete", scope: scope) == resourceID {
+            try storage.remove(key: key, scope: scope)
+            try storage.remove(key: key + "-delete", scope: scope)
+        }
     }
 }

@@ -105,4 +105,40 @@ final class WorkoutWriteRecoveryTests: XCTestCase {
         } catch {}
         XCTAssertNil(try disk.load(WorkoutWriteRecovery.Receipt<[String: Int]>.self, key: "set", scope: scope))
     }
+
+    @MainActor func testLateCreateResponseCannotResurrectConsumedStart() async throws {
+        let (disk, directory) = storage()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let result = try await WorkoutWriteRecovery.create(key: "start", payload: ["workout": 1], scope: scope, storage: disk,
+            delete: { _ in XCTFail() }, send: { [scope] _, _ in
+                // Another same-key recovery caller already checkpointed this
+                // session while the first HTTP response was delayed.
+                try WorkoutWriteRecovery.consume(key: "start", contextKey: "context", resourceID: 7, scope: scope, storage: disk)
+                return 7
+            })
+        XCTAssertEqual(result.resourceID, 7)
+        XCTAssertNil(try disk.load(WorkoutWriteRecovery.Receipt<[String: Int]>.self, key: "start", scope: scope))
+        let next = try await WorkoutWriteRecovery.create(key: "start", payload: ["workout": 2], scope: scope, storage: disk,
+            delete: { _ in XCTFail() }, send: { _, _ in 8 })
+        XCTAssertNotEqual(result.operationID, next.operationID)
+        XCTAssertEqual(next.resourceID, 8)
+    }
+
+    @MainActor func testLateDeleteResponseCannotEraseTheRelogReceipt() async throws {
+        let (disk, directory) = storage()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        _ = try await WorkoutWriteRecovery.create(key: "set", payload: ["reps": 8], scope: scope, storage: disk,
+            delete: { _ in XCTFail() }, send: { _, _ in 10 })
+        try await WorkoutWriteRecovery.remove(key: "set", resourceID: 10, scope: scope, storage: disk,
+            send: { [scope] _ in
+                // A duplicate DELETE returned first and a relog followed it.
+                try disk.remove(key: "set", scope: scope)
+                try disk.remove(key: "set-delete", scope: scope)
+                _ = try await WorkoutWriteRecovery.create(key: "set", payload: ["reps": 12], scope: scope, storage: disk,
+                    delete: { _ in XCTFail() }, send: { _, _ in 11 })
+            })
+        let kept = try disk.load(WorkoutWriteRecovery.Receipt<[String: Int]>.self, key: "set", scope: scope)
+        XCTAssertEqual(kept?.resourceID, 11)
+        XCTAssertEqual(kept?.payload, ["reps": 12])
+    }
 }
