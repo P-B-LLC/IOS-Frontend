@@ -11,7 +11,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		FA6A73D9302913740028C89A /* IOS Frontend.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "IOS Frontend.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		FA6A73D9302913740028C89A /* Rytivo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Rytivo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -45,7 +45,7 @@
 		FA6A73DA302913740028C89A /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				FA6A73D9302913740028C89A /* IOS Frontend.app */,
+				FA6A73D9302913740028C89A /* Rytivo.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -73,7 +73,7 @@
 				B218230A000000000000000E /* RepbaseAPI */,
 			);
 			productName = "IOS Frontend";
-			productReference = FA6A73D9302913740028C89A /* IOS Frontend.app */;
+			productReference = FA6A73D9302913740028C89A /* Rytivo.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
