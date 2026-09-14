@@ -212,17 +212,33 @@ fixed and are recorded below so nobody re-finds them.
   against the real database rather than only an empty test one; a non-partial
   index would have refused to apply.
 
+- ~~**The session list walked every GPS track it returned.**~~ *Fixed,
+  `377fd11`.* The decision was between a lighter serializer for list responses
+  and storing the derived values, and the app settled it: `sessionHistory`
+  reads distance, pace, moving pace and elevation gain **off the list
+  endpoint** to plot progress for a named workout, so dropping them would have
+  broken a shipped feature. The list keeps reporting them and stops
+  recomputing them instead — seven values worked out when the track is
+  uploaded and kept in one JSON column, with computing left in as the fallback.
+
+  Safe because the upload endpoint is the only thing in the codebase that ever
+  writes `SessionRoutePoint`, so a stored summary cannot drift from the points
+  it describes. Contract unchanged — the schema output is byte-identical, so
+  the generated client needed nothing.
+
+  Worth knowing for the next performance fix here: **a query count would not
+  have caught this.** `prefetch_related` is one query however many sessions
+  there are, so the unfixed code satisfied "more sessions, same number of
+  queries" while pulling every fix of every session into memory. The cost was
+  rows and arithmetic, not round trips, and the test asserts the point table is
+  not read at all.
+
 ### Still open
 
-- **Half of the route serialization cost.** *Partly fixed, `3b27f52`.* Pace,
-  average speed and moving pace each re-read `route_distance_km`, so one
-  session ran the haversine loop four times over every point; those values are
-  now cached per instance. The list still **loads** the points, because max
-  speed, elevation and splits each walk them too. Finishing it needs either
-  six more denormalised columns or a lighter serializer for list responses,
-  and a lighter serializer changes the contract the app decodes — so it wants
-  a decision, not a patch. Entirely latent meanwhile: no session in this
-  database has ever recorded a point.
+Nothing here that does not need the deployed database or the Apple account.
+The two items above that are marked fixed but not yet *running* — pruning needs
+a scheduler, and the PostgreSQL job has never executed — are the ones to watch
+when the host exists.
 
 ---
 
