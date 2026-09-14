@@ -10967,7 +10967,7 @@ public enum Components {
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/workout`.
             public var workout: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/workout_name`.
-            public var workoutName: Swift.String
+            public var workoutName: Swift.String?
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/workout_type`.
             public var workoutType: Swift.String?
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/status`.
@@ -11101,7 +11101,7 @@ public enum Components {
                 id: Swift.Int,
                 repbaseUser: Swift.Int,
                 workout: Swift.Int? = nil,
-                workoutName: Swift.String,
+                workoutName: Swift.String? = nil,
                 workoutType: Swift.String? = nil,
                 status: Components.Schemas.WorkoutSession.StatusPayload,
                 startedAt: Foundation.Date? = nil,

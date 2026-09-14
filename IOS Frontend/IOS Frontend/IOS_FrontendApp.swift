@@ -213,7 +213,13 @@ private struct AppRootView: View {
     var body: some View {
         Group {
 #if DEBUG
-            if ProcessInfo.processInfo.environment["REPBASE_HEALTH_CHECK"] != nil {
+            if ProcessInfo.processInfo.environment["REPBASE_ROUTE_CHECK"] != nil {
+                // The GPS path has never run end to end, because recording a
+                // run starts with a tap and nothing here can tap. simctl can
+                // drive the location and grant the authorisation, so this
+                // runs the rest of it.
+                RouteProbeView()
+            } else if ProcessInfo.processInfo.environment["REPBASE_HEALTH_CHECK"] != nil {
                 // Whether the simulator honours a HealthKit entitlement that
                 // device signing strips is a runtime question, not a build one.
                 HealthKitProbeView()

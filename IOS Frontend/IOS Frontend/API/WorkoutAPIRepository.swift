@@ -595,7 +595,10 @@ actor WorkoutAPIRepository {
             day: day,
             workoutID: workout.id,
             workoutServerID: workoutServerID,
-            workoutName: started.workoutName,
+            // The server sends no name when the session has no template. This
+            // one was just started from a template, so the local name is both
+            // known and authoritative.
+            workoutName: started.workoutName ?? workout.name,
             workoutType: workout.type,
             startedAt: started.startedAt ?? Date(),
             exercises: exercises
@@ -1103,7 +1106,10 @@ actor WorkoutAPIRepository {
                 }
                 return PostableSession(
                     sessionID: session.id,
-                    workoutName: session.workoutName,
+                    // Null once the workout behind the session is deleted --
+                    // the same case workoutType below is nil for. Labelled
+                    // rather than blank, as DayWorkoutView already does.
+                    workoutName: session.workoutName ?? "Workout",
                     performedAt: performedAt,
                     durationSeconds: session.durationSeconds,
                     routeDistanceKilometers: session.routeDistanceKm,
