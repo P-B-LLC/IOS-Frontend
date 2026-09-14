@@ -291,12 +291,26 @@ Worth knowing before trusting a green run:
   the rules and seven tests check them, but no test taps a Home card.
 - **The release-gate workflows have never executed.** The YAML parses; GitHub
   Actions has not run it. The first `v*` tag is the real test.
-- **Route tracking has never stored a single point.** `SessionRoutePoint` is
-  empty in the live database — no session has ever recorded one, despite
-  `RouteTracker`, the distance and pace maths, the upload endpoint and the
-  deduplication logic all existing and being tested in isolation. The GPS path
-  has never run end to end against the server. Worth one recorded run in the
-  simulator before a beta tester takes the app outside.
+- ~~**Route tracking has never stored a single point.**~~ *Run, `5e48257`.* It
+  has now: 20 fixes recorded from simulated GPS, uploaded through the real
+  repository method, stored, summarised (0.057 km, 10.8 km/h top speed, 19.1
+  moving seconds, one split) and decoded by the app. `RouteProbeView` does what
+  the tap would have led to — `simctl privacy grant` supplies the
+  authorisation, `simctl location start` drives the waypoints — following the
+  `HealthKitProbeView` pattern already here for the same kind of problem.
+
+  **It found a bug on the first run**, which is the argument for having done
+  it: the upload returned 200, the server stored every point, and the app
+  could not decode the reply. `workout_name` was omitted rather than sent as
+  null for a session with no template, and since `workout` is `SET_NULL`,
+  deleting one workout template made every session that used it undecodable —
+  a training history that stops loading. Fixed in `03af2c6`.
+
+  **Still unrun: altitude.** `simctl` supplies no barometric data, so
+  `elevation_gain_m` came back nil and that path has still never executed.
+  And none of this replaces someone recording a real run outdoors with the
+  screen locked — background location, signal loss and battery are all
+  untouched by it.
 - **The PostgreSQL job has never executed.** It now runs the full suite (see
   the database-move section), but no run has happened: the build Mac has no
   PostgreSQL and no container runtime, so this could not be checked before
