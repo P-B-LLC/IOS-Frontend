@@ -1,5 +1,8 @@
 # Beta readiness
 
+Audit item 4: stale food-day refresh protection is implemented; see
+[food synchronization verification](FOOD_DAY_SYNC_GATE.md) for scope and tests.
+
 September 13 follow-up: audit fixes 1–3 (default gear, partial photo posts,
 social likes) are implemented. See [implementation and verification notes](BETA_AUDIT_FIXES_1_3.md).
 Remaining production and verification gates below are not automatically closed.

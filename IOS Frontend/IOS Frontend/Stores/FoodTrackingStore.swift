@@ -29,6 +29,8 @@ final class FoodTrackingStore {
     /// holding its own API client is how that went unnoticed.
     private var catalogue: FoodDatabaseRepository?
     private var connectionGeneration = UUID()
+    private let daySync = FoodDaySyncCoordinator()
+    private var dayRequests: [String: Task<[FoodMeal]?, Never>] = [:]
     /// Days a screen asked for before there was a server to ask.
     private var pendingDays: Set<String> = []
 
@@ -90,6 +92,10 @@ final class FoodTrackingStore {
     func connect(configuration: APIConfiguration, token: String) async {
         let generation = UUID()
         connectionGeneration = generation
+        resetDayReads()
+        days = [:]
+        isSaving = false
+        latestMealLogEvent = nil
         isLoading = true
         errorMessage = nil
         defer { if connectionGeneration == generation { isLoading = false } }
@@ -107,6 +113,10 @@ final class FoodTrackingStore {
             self.repository = repository
 
             let today = Date()
+            let start = dateKey(for: today.addingTimeInterval(-14 * 86_400))
+            let end = dateKey(for: today.addingTimeInterval(7 * 86_400))
+            guard let read = daySync.beginRead("initial") else { return }
+            defer { daySync.endRead(read) }
             // A fortnight back and a week forward, not a month either way.
             // Sixty-two days of meals were read on every sign-in to draw one,
             // and any day outside this window is fetched by `ensureDay` the
@@ -114,8 +124,8 @@ final class FoodTrackingStore {
             // because meals are logged after eating; the forward days are for
             // meal prep, which is planned a week out rather than a month.
             let loaded = try await repository.days(
-                from: dateKey(for: today.addingTimeInterval(-14 * 86_400)),
-                to: dateKey(for: today.addingTimeInterval(7 * 86_400))
+                from: start,
+                to: end
             )
             // Started together rather than awaited one after another. These
             // four reads do not depend on each other, and run sequentially they
@@ -130,7 +140,7 @@ final class FoodTrackingStore {
             )
 
             guard connectionGeneration == generation else { return }
-            days = loaded
+            mergeDays(loaded, from: start, to: end, read: read)
             savedMeals = recipes
             goals = targets
             recentFoods = recent
@@ -153,6 +163,7 @@ final class FoodTrackingStore {
 
     func disconnect() {
         connectionGeneration = UUID()
+        resetDayReads()
         repository = nil
         pendingDays = []
         days = [:]
@@ -198,10 +209,15 @@ final class FoodTrackingStore {
 
         let key = dateKey(for: month.start)
         guard !loadedMonths.contains(key) else { return }
+        guard let read = daySync.beginRead("month:\(key)") else { return }
+        let end = dateKey(for: month.end.addingTimeInterval(-1))
 
         let generation = connectionGeneration
         isLoadingMonth = true
-        defer { if connectionGeneration == generation { isLoadingMonth = false } }
+        defer {
+            daySync.endRead(read)
+            if connectionGeneration == generation { isLoadingMonth = daySync.hasMonthReads }
+        }
 
         do {
             let loaded = try await repository.days(
@@ -209,13 +225,12 @@ final class FoodTrackingStore {
                 // `end` is inclusive on the server and `month.end` is the
                 // first instant of the next month, so step back a day rather
                 // than reading one that belongs to the month after.
-                to: dateKey(for: month.end.addingTimeInterval(-86_400))
+                to: end
             )
             guard connectionGeneration == generation else { return }
-            // Merged, not replaced: days already open elsewhere keep whatever
-            // was just logged into them.
-            days.merge(loaded) { _, fresh in fresh }
-            loadedMonths.insert(key)
+            if mergeDays(loaded, from: key, to: end, read: read) {
+                loadedMonths.insert(key)
+            }
         } catch {
             report(error, generation: generation)
         }
@@ -237,13 +252,74 @@ final class FoodTrackingStore {
     private func openDay(_ key: String, using repository: FoodAPIRepository) {
         let generation = connectionGeneration
         Task {
+            guard connectionGeneration == generation else { return }
+            _ = await loadDay(key, using: repository)
+        }
+    }
+
+    private func loadDay(_ key: String, using repository: FoodAPIRepository) async -> [FoodMeal]? {
+        if daySync.isWriting(key) {
+            pendingDays.insert(key)
+            return nil
+        }
+        if let request = dayRequests[key] { return await request.value }
+        guard let read = daySync.beginRead("day:\(key)") else { return nil }
+        let generation = connectionGeneration
+        let request = Task { () -> [FoodMeal]? in
+            defer {
+                if daySync.endRead(read) { dayRequests[key] = nil }
+            }
+            guard connectionGeneration == generation, daySync.isCurrent(read),
+                  !Task.isCancelled else { return nil }
             do {
                 let meals = try await repository.openDay(key)
-                guard connectionGeneration == generation else { return }
+                guard connectionGeneration == generation, !Task.isCancelled,
+                      daySync.accept(read, day: key) else { return nil }
                 days[key] = meals
+                pendingDays.remove(key)
+                return meals
             } catch {
-                report(error, generation: generation)
+                if daySync.isCurrent(read), !Task.isCancelled {
+                    report(error, generation: generation)
+                }
+                return nil
             }
+        }
+        dayRequests[key] = request
+        return await request.value
+    }
+
+    private func resetDayReads() {
+        daySync.reset()
+        for request in dayRequests.values { request.cancel() }
+        dayRequests = [:]
+        loadedMonths = []
+        isLoadingMonth = false
+    }
+
+    @discardableResult
+    private func mergeDays(_ loaded: [String: [FoodMeal]], from start: String, to end: String,
+                           read: FoodDaySyncCoordinator.Read) -> Bool {
+        // Missing keys in a range response also represent confirmed empty days.
+        let keys = Set(loaded.keys).union(days.keys.filter { $0 >= start && $0 <= end })
+        var complete = true
+        for key in keys {
+            if daySync.accept(read, day: key) { days[key] = loaded[key] ?? [] }
+            else { complete = false }
+        }
+        return complete
+    }
+
+    private func beginDayWrite(_ keys: Set<String>) -> FoodDaySyncCoordinator.Write {
+        let write = daySync.beginWrite(days: keys)
+        for key in keys { dayRequests.removeValue(forKey: key)?.cancel() }
+        return write
+    }
+
+    private func finishDayWrite(_ write: FoodDaySyncCoordinator.Write) {
+        guard daySync.endWrite(write), let repository else { return }
+        for key in write.days where pendingDays.remove(key) != nil {
+            openDay(key, using: repository)
         }
     }
 
@@ -292,6 +368,8 @@ final class FoodTrackingStore {
         let generation = connectionGeneration
         let before = total(on: date)
         let beforeMealCount = loggedMealCount(on: date)
+        let write = beginDayWrite([dateKey(for: date)])
+        defer { finishDayWrite(write) }
         isSaving = true
         errorMessage = nil
         defer { if connectionGeneration == generation { isSaving = false } }
@@ -413,11 +491,14 @@ final class FoodTrackingStore {
 
         let generation = connectionGeneration
         let key = dateKey(for: date)
+        let write = beginDayWrite([key])
+        defer { finishDayWrite(write) }
         isSaving = true
         defer { if connectionGeneration == generation { isSaving = false } }
 
         var outcome = PlanOutcome()
         for slot in slots {
+            guard connectionGeneration == generation else { return outcome }
             guard let serverID = slot.meal.serverID else {
                 outcome.failed.append(slot.meal.name)
                 continue
@@ -443,7 +524,9 @@ final class FoodTrackingStore {
         guard connectionGeneration == generation else { return outcome }
         // Read the day back rather than assuming what landed. Some slots may
         // have been written and some not, and the server knows which.
-        openDay(key, using: repository)
+        finishDayWrite(write)
+        _ = await loadDay(key, using: repository)
+        guard connectionGeneration == generation else { return outcome }
         if !outcome.applied.isEmpty {
             RepbaseCelebrations.show(.mealLogged)
         }
@@ -455,15 +538,16 @@ final class FoodTrackingStore {
         to dates: [Date],
         mealNumber: Int
     ) {
-        guard let repository,
+        guard let repository, !isSaving,
               let serverID = savedMeal.serverID,
               mealNumber > 0,
               !dates.isEmpty
         else { return }
 
-        let keys = dates.map(dateKey(for:))
+        let dateKeys = dates.map(dateKey(for:))
+        let keys = Array(Set(dateKeys)).sorted()
         var snapshots: [String: (date: Date, total: NutritionAmount, mealCount: Int)] = [:]
-        for (date, key) in zip(dates, keys) {
+        for (date, key) in zip(dates, dateKeys) {
             snapshots[key] = (
                 Calendar.current.startOfDay(for: date),
                 total(on: date),
@@ -471,22 +555,27 @@ final class FoodTrackingStore {
             )
         }
         let generation = connectionGeneration
+        let write = beginDayWrite(Set(keys))
         isSaving = true
         Task {
+            defer { finishDayWrite(write) }
             defer { if connectionGeneration == generation { isSaving = false } }
+            guard connectionGeneration == generation else { return }
             do {
                 _ = try await repository.applyRecipe(
                     serverID,
                     toDates: keys,
                     mealNumber: mealNumber
                 )
+                guard connectionGeneration == generation else { return }
+                finishDayWrite(write)
                 // The reply names only the meals written into, and applying to
                 // a day that had none also builds the ones before it. Each day
                 // is re-read whole so the screens learn about those too.
                 for key in keys {
-                    let meals = try await repository.openDay(key)
                     guard connectionGeneration == generation else { return }
-                    days[key] = meals
+                    guard let meals = await loadDay(key, using: repository) else { continue }
+                    guard connectionGeneration == generation else { return }
                     if let before = snapshots[key],
                        meals.indices.contains(mealNumber - 1) {
                         let appliedMeal = meals[mealNumber - 1]
@@ -551,9 +640,12 @@ final class FoodTrackingStore {
         let before = total(on: date)
         let beforeMealCount = loggedMealCount(on: date)
         let generation = connectionGeneration
+        let write = beginDayWrite([key])
         isSaving = true
         Task {
+            defer { finishDayWrite(write) }
             defer { if connectionGeneration == generation { isSaving = false } }
+            guard connectionGeneration == generation else { return }
             do {
                 let meals = try await repository.copyDay(from: sourceKey, to: key)
                 guard connectionGeneration == generation else { return }
@@ -627,9 +719,12 @@ final class FoodTrackingStore {
         guard let repository, !isSaving else { return }
         let key = dateKey(for: date)
         let generation = connectionGeneration
+        let write = beginDayWrite([key])
         isSaving = true
         Task {
+            defer { finishDayWrite(write) }
             defer { if connectionGeneration == generation { isSaving = false } }
+            guard connectionGeneration == generation else { return }
             do {
                 let result = try await send(repository)
                 guard connectionGeneration == generation else { return }
