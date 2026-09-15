@@ -1216,6 +1216,11 @@ private struct ProfileSettingsView: View {
 
                     settingsSection("ABOUT", timeOfDay: timeOfDay) {
                         VStack(spacing: 0) {
+                            Link(destination: URL(string: "mailto:\(LegalDocuments.contactEmail)")!) {
+                                settingsRow("Safety & support", detail: LegalDocuments.contactEmail,
+                                            symbol: "envelope")
+                            }
+                            .buttonStyle(RepbaseSettingsRowButtonStyle())
                             ForEach(LegalDocuments.all) { document in
                                 Button {
                                     legalDocument = document

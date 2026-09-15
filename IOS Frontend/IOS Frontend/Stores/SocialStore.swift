@@ -115,6 +115,7 @@ final class SocialStore {
         Task { await NotificationScheduler.shared.setBadge(0) }
         // One account's threads must never be shown to the next.
         comments = [:]
+        locallyBlockedAuthorIDs = []
         openedPosts = [:]
         authorPosts = [:]
         loadingCommentsFor = []
@@ -718,6 +719,7 @@ final class SocialStore {
         do {
             try await repository.block(userID: author.id)
             guard connectionGeneration == generation else { return }
+            locallyBlockedAuthorIDs.insert(author.id)
             feed.removeAll { $0.displayed.author.id == author.id }
             discoverPosts.removeAll { $0.displayed.author.id == author.id }
             // Search results too, and for the same reason. Blocking somebody
@@ -758,6 +760,7 @@ final class SocialStore {
         do {
             try await repository.unblock(blockID: blocked.id)
             guard connectionGeneration == generation else { return }
+            locallyBlockedAuthorIDs.remove(blocked.person.id)
             blockedPeople.removeAll { $0.id == blocked.id }
         } catch {
             guard connectionGeneration == generation else { return }
@@ -801,11 +804,16 @@ final class SocialStore {
     /// Threads by post, kept so returning to a post shows what was there while
     /// the fresh copy loads.
     private(set) var comments: [Int: [PostComment]] = [:]
+    private var locallyBlockedAuthorIDs: Set<Int> = []
     private(set) var loadingCommentsFor: Set<Int> = []
     private(set) var isSendingComment = false
 
     func comments(for postID: Int) -> [PostComment] {
-        comments[postID] ?? []
+        (comments[postID] ?? []).filter { !locallyBlockedAuthorIDs.contains($0.author.id) }.map { comment in
+            var filtered = comment
+            filtered.replies.removeAll { locallyBlockedAuthorIDs.contains($0.author.id) }
+            return filtered
+        }
     }
 
     func isLoadingComments(for postID: Int) -> Bool {

@@ -25,6 +25,7 @@ cp "$repo/IOS Frontend/IOS Frontend/Services/PendingWorkoutSaves.swift" "$test_p
 cp "$repo/Tests/AccountSafety/NavigationRoutingTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/IOS Frontend/IOS Frontend/Models/Weekday.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/Views/Navigation/RepbaseRoute.swift" "$test_package/Sources/AccountSafety/"
+cp "$repo/IOS Frontend/IOS Frontend/Services/ModerationConsent.swift" "$test_package/Sources/AccountSafety/"
 for name in AuthenticationStore APIConfiguration KeychainTokenStore; do
     cp "$repo/IOS Frontend/IOS Frontend/API/$name.swift" "$test_package/Sources/AccountSafety/"
 done

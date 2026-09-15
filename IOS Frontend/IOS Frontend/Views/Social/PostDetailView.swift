@@ -155,6 +155,7 @@ struct CommentThread: View {
 }
 
 struct CommentRow: View {
+    @Environment(SocialStore.self) private var store
     let comment: PostComment
     let timeOfDay: HomeTimeOfDay
     let onReply: () -> Void
@@ -190,12 +191,33 @@ struct CommentRow: View {
                         Button("Delete", action: onDelete)
                             .font(.community(.caption, weight: .semibold))
                             .foregroundStyle(RepbaseDesign.danger)
+                    } else {
+                        Menu {
+                            Link("Report comment by email", destination: reportURL)
+                            Button("Block user", role: .destructive) {
+                                Task { await store.block(comment.author) }
+                            }
+                            Text(LegalDocuments.contactEmail)
+                        } label: {
+                            Label("Safety", systemImage: "ellipsis")
+                                .font(.community(.caption))
+                                .foregroundStyle(timeOfDay.secondaryText)
+                        }
                     }
                 }
                 .buttonStyle(.plain)
                 .padding(.top, 1)
             }
         }
+    }
+
+    private var reportURL: URL {
+        var components = URLComponents()
+        components.scheme = "mailto"
+        components.path = LegalDocuments.contactEmail
+        components.queryItems = [URLQueryItem(name: "subject", value: "Rytivo comment report #\(comment.id)"),
+                                URLQueryItem(name: "body", value: "Please review comment #\(comment.id). Reason: ")]
+        return components.url!
     }
 
     private var avatar: some View {

@@ -24,7 +24,7 @@ enum LegalDocuments {
     /// - Important: Must be a real, monitored mailbox before submission. App
     ///   Review checks that a privacy contact works, and a person asking for
     ///   their data deleted has a right to reach somebody.
-    static let contactEmail = "support@repbase.app"
+    static let contactEmail = "aaronpio18@gmail.com"
 
     /// The entity the documents are published by.
     ///
@@ -34,7 +34,7 @@ enum LegalDocuments {
 
     /// The date the current wording took effect. Update it whenever the text
     /// below changes in substance, not for typographical fixes.
-    static let effectiveDate = "27 August 2026"
+    static let effectiveDate = "15 September 2026"
 
     static let all: [LegalDocument] = [privacyPolicy, termsOfService, licence]
 
@@ -119,9 +119,21 @@ enum LegalDocuments {
 
         No advertising. No analytics or crash-tracking software that reports \
         your behaviour to a third party. No sale of data. No sharing with data \
-        brokers, advertisers, or partners. No profiling for marketing. Nothing \
-        you log -- not a workout, a meal, a weight, or a post -- leaves \
-        Rytivo.
+        brokers or advertisers. No profiling for marketing.
+
+        SAFETY REVIEW
+
+        With your permission before submission, public-facing text and uploaded \
+        photos are sent to OpenAI for automated safety checks. This includes \
+        profile names, bios, prompt answers, comments, captions, and titles or \
+        instructions in content you choose to share. Passwords, email addresses, \
+        private measurements and unshared logs are not sent for this review. \
+        A review copy of an image has its embedded metadata removed. OpenAI's \
+        API data controls govern its processing; see \
+        https://developers.openai.com/api/docs/guides/your-data. \
+        You may cancel a submission instead of permitting review. Automated \
+        checks can make mistakes; contact \(contactEmail) to appeal. Human \
+        moderators also review reports. Do not email sensitive or illegal images.
 
         EMAIL
 

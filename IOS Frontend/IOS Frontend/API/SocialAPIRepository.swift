@@ -160,6 +160,7 @@ actor SocialAPIRepository {
             contentType = accepted
         }
 
+        try await ModerationConsent.require()
         let output = try await client.socialPostsCreate(
             body: .json(
                 Components.Schemas.CreatePostRequest(
@@ -200,6 +201,7 @@ actor SocialAPIRepository {
             throw APIServiceError.malformedResponse
         }
 
+        try await ModerationConsent.require()
         let output = try await client.socialPostsPartialUpdate(
             path: .init(id: postID),
             body: .json(
@@ -463,6 +465,7 @@ actor SocialAPIRepository {
         toPost postID: Int,
         replyingTo parentID: Int?
     ) async throws -> PostComment {
+        try await ModerationConsent.require()
         let output = try await client.socialCommentsCreate(
             body: .json(
                 Components.Schemas.PostCommentRequest(

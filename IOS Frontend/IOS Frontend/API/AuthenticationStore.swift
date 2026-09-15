@@ -169,6 +169,7 @@ final class AuthenticationStore {
     ) async {
         await authenticate {
             let client = try anonymousClient()
+            try await ModerationConsent.require()
             let output = try await client.authRegisterCreate(
                 body: .json(
                     Components.Schemas.RegisterRequest(

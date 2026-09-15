@@ -156,6 +156,7 @@ actor ProfileAPIRepository {
     /// elsewhere in the meantime.
     @discardableResult
     func save(_ profile: RemoteProfile) async throws -> RemoteProfile {
+        try await ModerationConsent.require()
         let output = try await client.mePartialUpdate(
             body: .json(
                 Components.Schemas.PatchedRepbaseUserRequest(
@@ -210,6 +211,7 @@ actor ProfileAPIRepository {
 
     @discardableResult
     func uploadPhoto(_ data: Data, contentType: String) async throws -> RemoteProfile {
+        try await ModerationConsent.require()
         guard let type = Components.Schemas.ContentTypeEnum(rawValue: contentType) else {
             throw APIServiceError.malformedResponse
         }
@@ -380,6 +382,7 @@ actor ProfileAPIRepository {
             return .init(question: question, answer: answer.answer)
         }
 
+        try await ModerationConsent.require()
         let output = try await client.mePromptsUpdate(
             body: .json(Components.Schemas.ProfilePromptsRequestRequest(prompts: written))
         )
