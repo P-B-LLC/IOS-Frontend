@@ -1,7 +1,7 @@
 # Beta readiness
 
 Audit item 4: stale food-day refresh protection is implemented; see
-[food synchronization verification](FOOD_DAY_SYNC_GATE.md) for scope and tests.
+[write-ordering gates](GATES.md) for scope and tests.
 
 September 13 follow-up: audit fixes 1–3 (default gear, partial photo posts,
 social likes) are implemented. See [implementation and verification notes](BETA_AUDIT_FIXES_1_3.md).
@@ -267,13 +267,13 @@ when the host exists.
   more. Create it, confirm mail arrives, and confirm somebody is actually
   watching it before a stranger is invited in; App Review checks that a privacy
   contact works.
-- **Documentation has outgrown anyone reading it.** 3,100 lines across
-  seventeen files between the two repositories, of which `CLAUDE_HANDOFF.md`
-  is 1,526 on its own. `SAVE_RECOVERY.md` exists in *both* repositories
-  describing one feature from two sides, alongside `WORKOUT_SAVE_GATE.md`,
-  `PLANNER_COMPLETION_GATE.md` and an `ACCOUNT_SAFETY.md` that is also in
-  both — five documents for one area of work. The gate documents were written
-  to be read once, by whoever took the next shift, and that has happened.
+- **Documentation is still long, though no longer duplicated.** The four
+  write-ordering gate documents are now one [GATES.md](GATES.md), keeping what
+  the code and tests cannot say — what each guarantees and what nobody has
+  verified — and dropping the build narration `git log` holds better.
+  `CLAUDE_HANDOFF.md` is still 1,526 lines, read at the start of every session,
+  and is deliberately left alone: other sessions treat it as the handoff
+  contract, and gutting it unilaterally would break them rather than help.
 - **Backups.** Nothing is backed up today. Once a stranger's data is in there,
   losing it is a different kind of problem.
 - ~~**Build numbers.**~~ *Handled, `0defe8a`.*
