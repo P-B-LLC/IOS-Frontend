@@ -259,9 +259,14 @@ when the host exists.
 - ~~**`CFBundleName` is "IOS Frontend".**~~ *Done, `0f56899`.* Both the
   display name and the bundle name are Rytivo, and CI reads the latter back
   out of a built Release app rather than trusting the build setting.
-- **`LegalDocuments.contactEmail` is `support@repbase.app`**, and the privacy
-  copy tells users to write there to have data removed. If nobody reads that
-  mailbox, the legal text promises something no one answers.
+- **`support@rytivo.app` does not exist yet, and four things now promise it
+  does.** It is the privacy contact for data deletion, the address for
+  reporting a child's account, the moderation appeal route, and the App Review
+  privacy contact. It replaced a personal Gmail — which was at least a mailbox
+  somebody read, so until this one exists the product is *less* reachable, not
+  more. Create it, confirm mail arrives, and confirm somebody is actually
+  watching it before a stranger is invited in; App Review checks that a privacy
+  contact works.
 - **Documentation has outgrown anyone reading it.** 3,100 lines across
   seventeen files between the two repositories, of which `CLAUDE_HANDOFF.md`
   is 1,526 on its own. `SAVE_RECOVERY.md` exists in *both* repositories

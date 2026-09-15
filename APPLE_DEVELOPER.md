@@ -63,7 +63,7 @@ Review first, and that review needs:
   specifically; answer from `PrivacyInfo.xcprivacy` and the usage strings in
   `Info.plist`, which are the same claims.
 - **A privacy policy URL that resolves.** `LegalDocuments.contactEmail` is
-  `support@repbase.app`, and the privacy copy tells people to write there to
+  `support@rytivo.app`, and the privacy copy tells people to write there to
   have their data deleted. Somebody has to actually read that mailbox before a
   stranger is invited to use it.
 - A beta description and a feedback email.

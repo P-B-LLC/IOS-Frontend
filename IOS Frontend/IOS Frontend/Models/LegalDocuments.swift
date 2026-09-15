@@ -24,7 +24,7 @@ enum LegalDocuments {
     /// - Important: Must be a real, monitored mailbox before submission. App
     ///   Review checks that a privacy contact works, and a person asking for
     ///   their data deleted has a right to reach somebody.
-    static let contactEmail = "aaronpio18@gmail.com"
+    static let contactEmail = "support@rytivo.app"
 
     /// The entity the documents are published by.
     ///
