@@ -375,6 +375,18 @@ actor SocialAPIRepository {
     }
 
     /// Blocks somebody. The server drops any following in either direction.
+    func reportComment(commentID: Int, reason: PostReportReason, detail: String) async throws {
+        let output = try await client.socialCommentsReportCreate(
+            path: .init(id: commentID),
+            body: .json(Components.Schemas.ReportPostRequest(
+                reason: Components.Schemas.ReasonEnum(rawValue: reason.rawValue) ?? .other,
+                detail: detail.trimmingCharacters(in: .whitespacesAndNewlines))))
+        switch output {
+        case .created, .ok: return
+        case .undocumented(let status, _): throw APIServiceError.undocumentedStatus(status)
+        }
+    }
+
     func block(userID: Int) async throws {
         let output = try await client.socialBlocksCreate(
             body: .json(Components.Schemas.BlockRequest(blocked: userID))

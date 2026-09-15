@@ -737,6 +737,21 @@ final class SocialStore {
         }
     }
 
+    func reportComment(_ comment: PostComment, reason: PostReportReason, detail: String) async -> Bool {
+        guard let repository else { return false }
+        let generation = connectionGeneration
+        do {
+            try await repository.reportComment(commentID: comment.id, reason: reason, detail: detail)
+            guard connectionGeneration == generation else { return false }
+            lastModerationMessage = "Thanks. Your comment report was sent to our moderators."
+            return true
+        } catch {
+            guard connectionGeneration == generation else { return false }
+            errorMessage = error.userFacingMessage
+            return false
+        }
+    }
+
     func loadBlocks() async {
         guard let repository else { return }
         let generation = connectionGeneration

@@ -156,6 +156,7 @@ struct CommentThread: View {
 
 struct CommentRow: View {
     @Environment(SocialStore.self) private var store
+    @State private var showingReport = false
     let comment: PostComment
     let timeOfDay: HomeTimeOfDay
     let onReply: () -> Void
@@ -193,7 +194,8 @@ struct CommentRow: View {
                             .foregroundStyle(RepbaseDesign.danger)
                     } else {
                         Menu {
-                            Link("Report comment by email", destination: reportURL)
+                            Button("Report comment") { showingReport = true }
+                            Link("Contact safety team", destination: reportURL)
                             Button("Block user", role: .destructive) {
                                 Task { await store.block(comment.author) }
                             }
@@ -208,6 +210,9 @@ struct CommentRow: View {
                 .buttonStyle(.plain)
                 .padding(.top, 1)
             }
+        }
+        .sheet(isPresented: $showingReport) {
+            CommentReportSheet(comment: comment)
         }
     }
 

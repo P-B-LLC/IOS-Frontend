@@ -12,6 +12,55 @@
 
 import SwiftUI
 
+struct CommentReportSheet: View {
+    let comment: PostComment
+    @Environment(SocialStore.self) private var store
+    @Environment(\.dismiss) private var dismiss
+    @State private var reason: PostReportReason = .other
+    @State private var detail = ""
+    @State private var sending = false
+    @State private var failure: String?
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("What happened?") {
+                    Picker("Reason", selection: $reason) {
+                        ForEach(PostReportReason.allCases) { value in
+                            Text(value.title).tag(value)
+                        }
+                    }
+                    TextField("Details (optional)", text: $detail, axis: .vertical)
+                        .onChange(of: detail) { _, value in detail = String(value.prefix(500)) }
+                }
+                Section {
+                    Text("Only moderators can read your report. It is not sent to the automated safety provider.")
+                    Text("Safety contact: \(LegalDocuments.contactEmail)")
+                    if let failure { Text(failure).foregroundStyle(.red) }
+                    Button {
+                        sending = true
+                        failure = nil
+                        Task {
+                            let sent = await store.reportComment(comment, reason: reason, detail: detail)
+                            sending = false
+                            if sent { dismiss() }
+                            else { failure = "The report was not confirmed. Please try again." }
+                        }
+                    } label: {
+                        if sending { ProgressView() }
+                        else { Text("Send report") }
+                    }
+                    .disabled(sending)
+                }
+            }
+            .font(.community(.body))
+            .navigationTitle("Report comment")
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() }.disabled(sending) } }
+        }
+        .interactiveDismissDisabled(sending)
+    }
+}
+
 /// The reasons, and the box for anything they do not cover.
 struct PostReportSheet: View {
     let post: FeedPost

@@ -799,6 +799,16 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/social/comments/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/social/comments/{id}//delete(social_comments_destroy)`.
     func socialCommentsDestroy(_ input: Operations.SocialCommentsDestroy.Input) async throws -> Operations.SocialCommentsDestroy.Output
+    /// Comments on a post.
+    ///
+    /// Reading is governed by the post, not by the comment: if you may see the
+    /// post you may read what people said about it, and if you may not, its
+    /// comments are a 404 for the same reason the post is. Writing and deleting
+    /// belong to the comment's own author.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/comments/{id}/report/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/comments/{id}/report//post(social_comments_report_create)`.
+    func socialCommentsReportCreate(_ input: Operations.SocialCommentsReportCreate.Input) async throws -> Operations.SocialCommentsReportCreate.Output
     /// What the people you follow have posted, newest first.
     ///
     /// Fanned out on read: a page is one indexed walk over the posts of everyone
@@ -2819,6 +2829,26 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//api/v1/social/comments/{id}//delete(social_comments_destroy)`.
     public func socialCommentsDestroy(path: Operations.SocialCommentsDestroy.Input.Path) async throws -> Operations.SocialCommentsDestroy.Output {
         try await socialCommentsDestroy(Operations.SocialCommentsDestroy.Input(path: path))
+    }
+    /// Comments on a post.
+    ///
+    /// Reading is governed by the post, not by the comment: if you may see the
+    /// post you may read what people said about it, and if you may not, its
+    /// comments are a 404 for the same reason the post is. Writing and deleting
+    /// belong to the comment's own author.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/comments/{id}/report/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/comments/{id}/report//post(social_comments_report_create)`.
+    public func socialCommentsReportCreate(
+        path: Operations.SocialCommentsReportCreate.Input.Path,
+        headers: Operations.SocialCommentsReportCreate.Input.Headers = .init(),
+        body: Operations.SocialCommentsReportCreate.Input.Body
+    ) async throws -> Operations.SocialCommentsReportCreate.Output {
+        try await socialCommentsReportCreate(Operations.SocialCommentsReportCreate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
     }
     /// What the people you follow have posted, newest first.
     ///
@@ -28057,6 +28087,201 @@ public enum Operations {
             ///
             /// A response with a code that is not documented in the OpenAPI document.
             case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// Comments on a post.
+    ///
+    /// Reading is governed by the post, not by the comment: if you may see the
+    /// post you may read what people said about it, and if you may not, its
+    /// comments are a 404 for the same reason the post is. Writing and deleting
+    /// belong to the comment's own author.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/comments/{id}/report/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/comments/{id}/report//post(social_comments_report_create)`.
+    public enum SocialCommentsReportCreate {
+        public static let id: Swift.String = "social_comments_report_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/comments/{id}/report/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this post comment.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/comments/{id}/report/POST/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this post comment.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialCommentsReportCreate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/social/comments/{id}/report/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialCommentsReportCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialCommentsReportCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialCommentsReportCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/social/comments/{id}/report/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/comments/{id}/report/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.ReportPostRequest)
+            }
+            public var body: Operations.SocialCommentsReportCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.SocialCommentsReportCreate.Input.Path,
+                headers: Operations.SocialCommentsReportCreate.Input.Headers = .init(),
+                body: Operations.SocialCommentsReportCreate.Input.Body
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/comments/{id}/report/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/comments/{id}/report/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PostReportResult)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PostReportResult {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialCommentsReportCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialCommentsReportCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/comments/{id}/report//post(social_comments_report_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialCommentsReportCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialCommentsReportCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct Created: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/comments/{id}/report/POST/responses/201/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/comments/{id}/report/POST/responses/201/content/application\/json`.
+                    case json(Components.Schemas.PostReportResult)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PostReportResult {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialCommentsReportCreate.Output.Created.Body
+                /// Creates a new `Created`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialCommentsReportCreate.Output.Created.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/comments/{id}/report//post(social_comments_report_create)/responses/201`.
+            ///
+            /// HTTP response code: `201 created`.
+            case created(Operations.SocialCommentsReportCreate.Output.Created)
+            /// The associated value of the enum case if `self` is `.created`.
+            ///
+            /// - Throws: An error if `self` is not `.created`.
+            /// - SeeAlso: `.created`.
+            public var created: Operations.SocialCommentsReportCreate.Output.Created {
+                get throws {
+                    switch self {
+                    case let .created(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "created",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
         }
     }
     /// What the people you follow have posted, newest first.

@@ -332,6 +332,7 @@ actor ProfileAPIRepository {
     /// comes back is what was stored, not what was sent.
     @discardableResult
     func saveSocialLinks(_ links: [ProfileSocialLinkDraft]) async throws -> [ProfileSocialLink] {
+        try await ModerationConsent.require()
         let output = try await client.meSocialLinksUpdate(
             body: .json(
                 Components.Schemas.ProfileSocialLinksRequestRequest(
@@ -494,6 +495,7 @@ actor ProfileAPIRepository {
     }
 
     func createGym(name: String, city: String, country: String) async throws -> RemoteGym {
+        try await ModerationConsent.require()
         let output = try await client.gymsCreate(
             body: .json(
                 Components.Schemas.GymRequest(name: name, city: city, country: country)

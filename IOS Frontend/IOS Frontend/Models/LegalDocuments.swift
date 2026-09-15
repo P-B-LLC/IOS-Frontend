@@ -125,9 +125,10 @@ enum LegalDocuments {
 
         With your permission before submission, public-facing text and uploaded \
         photos are sent to OpenAI for automated safety checks. This includes \
-        profile names, bios, prompt answers, comments, captions, and titles or \
-        instructions in content you choose to share. Passwords, email addresses, \
-        private measurements and unshared logs are not sent for this review. \
+        profile names, bios, prompt answers, social handles, public gym details, \
+        comments, captions, and titles or instructions in content you choose to \
+        share. Account credentials, private measurements and unshared logs are \
+        excluded. Avoid including sensitive information in public text. \
         A review copy of an image has its embedded metadata removed. OpenAI's \
         API data controls govern its processing; see \
         https://developers.openai.com/api/docs/guides/your-data. \
