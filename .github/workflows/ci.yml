@@ -10,16 +10,41 @@ on:
 
 jobs:
   build:
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
 
-      # The deployment target is iOS 26.5, so the default Xcode on the runner
-      # image is not always new enough. Pinned rather than left to drift,
-      # because a runner image bump silently changing the compiler is the
-      # kind of failure that looks like the code broke.
+      # The deployment target is iOS 26.5, so this needs an Xcode 26 SDK.
+      #
+      # This used to be `xcode-select -s /Applications/Xcode_26.app`, pinned
+      # so a runner image bump could not silently change the compiler. The
+      # pin did the opposite: the image stopped shipping that exact path, the
+      # step failed, every later step was skipped, and the run reported a red
+      # build having compiled nothing at all. Thirty consecutive runs did
+      # that before anybody read the step names rather than the verdict.
+      #
+      # So take the newest Xcode the image actually has, print what was
+      # there, and fail on the version rather than on a path -- a message
+      # naming what it found is repairable, "invalid developer directory" is
+      # a guessing game.
       - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_26.app
+        run: |
+          echo "Xcodes on this image:"
+          ls -d /Applications/Xcode*.app 2>/dev/null || echo "  none"
+          newest=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$newest" ]; then
+            echo "No Xcode on this runner image."
+            exit 1
+          fi
+          echo "Selecting $newest"
+          sudo xcode-select -s "$newest"
+          major=$(xcodebuild -version | sed -n 's/^Xcode \([0-9][0-9]*\).*/\1/p')
+          if [ "${major:-0}" -lt 26 ]; then
+            echo "This project targets iOS 26.5 and needs Xcode 26 or newer."
+            echo "The newest on this image is Xcode ${major:-unknown}."
+            echo "Change runs-on to an image that ships one."
+            exit 1
+          fi
 
       - name: Show versions
         run: |
