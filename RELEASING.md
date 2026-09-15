@@ -19,8 +19,13 @@ rather than from either working machine.
 
 | | commit | verified by |
 |---|---|---|
-| `P-B-LLC/IOS-Frontend` | `87a5991` | CI `build` green: Debug and Release builds, Release plist readback, generated client matches the contract, stable decoded ids, 50 account-safety tests |
+| `P-B-LLC/IOS-Frontend` | `309a49c` | CI `build` green: Debug and Release builds, Release plist readback, generated client matches the contract, stable decoded ids, 50 account-safety tests |
 | `P-B-LLC/repbase` | `4dfdec4` | CI `test` green on SQLite (339 tests, 3 skipped) and CI `postgres` green on PostgreSQL 17 (**339 tests, 0 skipped**) |
+
+A record cannot name the commit that contains it, so the line above names the
+last commit CI has verified. Anything after it here is documentation, which
+changes nothing that is built — `87a5991` is the most recent commit that
+touches the build at all, and `309a49c` is that plus this file.
 
 The three tests SQLite skips are the row-lock concurrency tests, which skip
 themselves unless the database is PostgreSQL. Zero skips on the `postgres` job
