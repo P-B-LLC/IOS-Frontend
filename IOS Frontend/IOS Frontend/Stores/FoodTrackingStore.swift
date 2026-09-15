@@ -263,7 +263,7 @@ final class FoodTrackingStore {
             return nil
         }
         if let request = dayRequests[key] { return await request.value }
-        guard let read = daySync.beginRead("day:\(key)") else { return nil }
+        guard let read = daySync.beginEnsureDay(key) else { return nil }
         let generation = connectionGeneration
         let request = Task { () -> [FoodMeal]? in
             defer {

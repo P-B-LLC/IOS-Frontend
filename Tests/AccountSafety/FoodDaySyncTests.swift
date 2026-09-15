@@ -2,6 +2,58 @@ import XCTest
 @testable import AccountSafety
 
 final class FoodDaySyncTests: XCTestCase {
+    @MainActor func testEnsureDaySlotsCannotBeDiscardedByNewerEmptyMonth() throws {
+        let sync = FoodDaySyncCoordinator()
+        var slots: [Int] = []
+        let ensure = try XCTUnwrap(sync.beginEnsureDay("day"))
+        let month = try XCTUnwrap(sync.beginRead("month:x"))
+        XCTAssertFalse(sync.accept(month, day: "day"))
+        XCTAssertTrue(sync.accept(month, day: "other"))
+        if sync.accept(ensure, day: "day") { slots = [1, 2, 3, 4] }
+        sync.endRead(ensure)
+        // Even a month response arriving AFTER ensure-day must not erase slots.
+        if sync.accept(month, day: "day") { slots = [] }
+        XCTAssertEqual(slots, [1, 2, 3, 4])
+        sync.endRead(month)
+        let fresh = try XCTUnwrap(sync.beginRead("month:new"))
+        XCTAssertTrue(sync.accept(fresh, day: "day"))
+    }
+
+    @MainActor func testFailedEnsureReleasesBarrierButRejectsOverlappingSnapshots() throws {
+        let sync = FoodDaySyncCoordinator()
+        let ensure = try XCTUnwrap(sync.beginEnsureDay("day"))
+        XCTAssertNil(sync.beginEnsureDay("day"))
+        let month = try XCTUnwrap(sync.beginRead("month:x"))
+        sync.endRead(ensure) // A failed or uncertain request.
+        XCTAssertFalse(sync.accept(month, day: "day"))
+        let retry = try XCTUnwrap(sync.beginEnsureDay("day"))
+        XCTAssertTrue(sync.accept(retry, day: "day"))
+    }
+
+    @MainActor func testExplicitWriteSupersedesEnsureWithoutLeavingBarrierBehind() throws {
+        let sync = FoodDaySyncCoordinator()
+        let ensure = try XCTUnwrap(sync.beginEnsureDay("day"))
+        let write = sync.beginWrite(days: ["day"])
+        XCTAssertFalse(sync.accept(ensure, day: "day"))
+        XCTAssertNil(sync.beginEnsureDay("day"))
+        sync.endWrite(write)
+        let fresh = try XCTUnwrap(sync.beginEnsureDay("day"))
+        XCTAssertFalse(sync.endRead(ensure))
+        XCTAssertTrue(sync.accept(fresh, day: "day"))
+        sync.endRead(fresh)
+        let month = try XCTUnwrap(sync.beginRead("month:x"))
+        XCTAssertTrue(sync.accept(month, day: "day"))
+    }
+
+    @MainActor func testAccountResetClearsEnsureBarrier() throws {
+        let sync = FoodDaySyncCoordinator()
+        let old = try XCTUnwrap(sync.beginEnsureDay("day"))
+        sync.reset()
+        let fresh = try XCTUnwrap(sync.beginEnsureDay("day"))
+        XCTAssertFalse(sync.endRead(old))
+        XCTAssertTrue(sync.accept(fresh, day: "day"))
+    }
+
     @MainActor func testDelayedDayCannotOverwriteConfirmedFood() throws {
         let sync = FoodDaySyncCoordinator()
         let read = try XCTUnwrap(sync.beginRead("day:2026-09-13"))
