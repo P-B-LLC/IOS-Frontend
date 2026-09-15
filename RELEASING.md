@@ -12,6 +12,29 @@ theoretical worry. Commit `18487ff` failed to compile the app target and
 reached `main` regardless, because a red CI run on a push has nothing attached
 to it.
 
+## The current release candidate
+
+Recorded 2026-09-15. Both repositories, verified from a clean CI checkout
+rather than from either working machine.
+
+| | commit | verified by |
+|---|---|---|
+| `P-B-LLC/IOS-Frontend` | `87a5991` | CI `build` green: Debug and Release builds, Release plist readback, generated client matches the contract, stable decoded ids, 50 account-safety tests |
+| `P-B-LLC/repbase` | `4dfdec4` | CI `test` green on SQLite (339 tests, 3 skipped) and CI `postgres` green on PostgreSQL 17 (**339 tests, 0 skipped**) |
+
+The three tests SQLite skips are the row-lock concurrency tests, which skip
+themselves unless the database is PostgreSQL. Zero skips on the `postgres` job
+is what says they actually ran.
+
+Also checked for this candidate: no migration drift, `openapi.yaml` matches the
+serializers, the backend and iOS copies of the contract are byte-identical, and
+regenerating the Swift client produces no diff.
+
+**What this candidate still cannot do** is run anywhere but a simulator and a
+laptop. It is a dependable build, not a shippable one — see
+[BETA_READINESS.md](BETA_READINESS.md) for the five blockers, none of which are
+code.
+
 ## Cutting a release
 
 1. Make sure `main` is green in both repositories.

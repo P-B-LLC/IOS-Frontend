@@ -192,11 +192,13 @@ fixed and are recorded below so nobody re-finds them.
   right and quietly deletes the outage fallback, and nothing would say so
   until an outage. Two tests fail if anyone makes that change.
 
-  `SaveReceipt` keeps 30 days, which is long enough for the retries that
-  realistically happen given the app holds pending saves in a file across
-  relaunches. A retry older than that creates a duplicate rather than
-  replaying — the behaviour from before receipts existed, so the tail case
-  degrades to the old normal.
+  `SaveReceipt` expires the **payload**, not the key, which is a correction to
+  the first version of this: deleting the row after thirty days let a late
+  retry create a duplicate, and a phone holds an uncertain save in a file
+  indefinitely, so the late retry is exactly the one that has been waiting.
+  The row now becomes a compact 409 saying the save happened and its replay
+  answer is gone. Rows live until the account is deleted — small, and still
+  refusing to create anything twice.
 
   **This needs a scheduler**, which is part of blocker 4 above. Until
   something runs the command daily, "expires" still means "would expire".
@@ -311,10 +313,22 @@ Worth knowing before trusting a green run:
   And none of this replaces someone recording a real run outdoors with the
   screen locked — background location, signal loss and battery are all
   untouched by it.
-- **The PostgreSQL job has never executed.** It now runs the full suite (see
-  the database-move section), but no run has happened: the build Mac has no
-  PostgreSQL and no container runtime, so this could not be checked before
-  pushing it.
+- ~~**The PostgreSQL job has never executed.**~~ *Run, 2026-09-15.* It runs the
+  whole suite on PostgreSQL 17 and passes: **339 tests, zero skipped**, against
+  339 with three skipped on SQLite. Those three are the row-lock concurrency
+  tests, which skip themselves on any other database — zero skips is what says
+  they finally ran for real.
+- ~~**iOS CI had never built the app.**~~ *Fixed, `87a5991`.* Worth recording
+  because it was invisible for a month: the workflow selected Xcode by exact
+  path, the runner image stopped shipping that path, and `xcode-select` failed
+  as the first step of every run. Each later step was skipped and the run went
+  red — which reads like the code being broken, so nobody looked past the
+  verdict. **Thirty consecutive runs compiled nothing.** It now picks the
+  newest Xcode present and fails on the version, naming what it found.
+
+  The reason this mattered more than a red badge: the branch-protection ruleset
+  requires the `build` check, and that check had never once passed. Importing
+  the ruleset before this fix would have blocked every merge.
 - **The photo-test teardown fix was never reproduced.** The failure is a
   Windows file-handle case; the suite is clean on macOS, CI is Linux, and there
   is no Python on the Windows checkout. It was fixed by reading the code.
