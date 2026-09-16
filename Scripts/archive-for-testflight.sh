@@ -15,6 +15,14 @@
 #                      App Store Connect refuses a build number it has seen
 #                      before for the same version.
 #   OUTPUT_DIR         defaults to .build/testflight
+#   ALLOW_PROVISIONING_UPDATES
+#                      "true" lets Apple issue a distribution certificate and
+#                      an App Store profile when none exists, which is what a
+#                      machine archiving this app for the first time needs.
+#                      Off by default: it changes the developer account, and
+#                      the certificate's private key stays in the login
+#                      keychain of whichever machine asked for it. Run it on a
+#                      machine you are willing to keep that key on.
 #
 # Usage:
 #   DEVELOPMENT_TEAM=ABCDE12345 REPBASE_API_URL=https://api.rytivo.app/ \
@@ -46,9 +54,32 @@ esac
 
 build_number="${BUILD_NUMBER:-$(git -C "$repo" rev-list --count HEAD)}"
 
+# A machine that has never signed this app has no provisioning profile, and
+# xcodebuild says so in a way that does not say what to do next:
+#
+#     error: No profiles for 'com.pbllc.rytivo' were found
+#
+# Getting one means asking Apple to issue a distribution certificate and an
+# App Store profile. That is a change to the developer account, and the
+# certificate's private key stays in the login keychain of whichever machine
+# asked -- so it is opt-in, not something this script does because it happened
+# to run on a machine that was missing one.
+# A plain string rather than an array: macOS still ships bash 3.2, where
+# "${array[@]}" on an empty array is an unbound variable under `set -u`. The
+# value is one literal word with no spaces, so leaving it unquoted below
+# expands to nothing when it is empty and to the flag when it is not.
+if [ "${ALLOW_PROVISIONING_UPDATES:-false}" = "true" ]; then
+    provisioning="-allowProvisioningUpdates"
+    signing_note="will ask Apple to issue a certificate/profile if none exists"
+else
+    provisioning=""
+    signing_note="existing profiles only (ALLOW_PROVISIONING_UPDATES=true to issue)"
+fi
+
 echo "Team           $DEVELOPMENT_TEAM"
 echo "Server         $REPBASE_API_URL"
 echo "Build number   $build_number"
+echo "Provisioning   $signing_note"
 echo
 
 rm -rf "$archive"
@@ -60,6 +91,7 @@ xcodebuild archive \
   -configuration Release \
   -destination "generic/platform=iOS" \
   -archivePath "$archive" \
+  $provisioning \
   DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM" \
   CODE_SIGN_STYLE=Automatic \
   CURRENT_PROJECT_VERSION="$build_number" \
@@ -118,6 +150,7 @@ PLIST
 
 xcodebuild -exportArchive \
   -archivePath "$archive" \
+  $provisioning \
   -exportOptionsPlist "$output/ExportOptions.plist" \
   -exportPath "$output"
 

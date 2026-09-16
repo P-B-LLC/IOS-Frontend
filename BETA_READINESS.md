@@ -181,9 +181,27 @@ defaults read com.apple.dt.Xcode IDEProvisioningTeamByIdentifier
   without it. The simulator does not enforce provisioning, which is why no
   build here has ever caught this.
 - Create the App Store Connect record.
-- Then run `Scripts/archive-for-testflight.sh` with `DEVELOPMENT_TEAM` set to
-  the Team ID the command above prints. Automatic signing issues the
-  certificate on the first archive; none has to be made by hand.
+- Then archive. **On your own Mac, not the hosted one** — see below.
+
+```bash
+DEVELOPMENT_TEAM=<team id> REPBASE_API_URL=https://<host>/ \
+  ALLOW_PROVISIONING_UPDATES=true \
+  bash Scripts/archive-for-testflight.sh
+```
+
+`ALLOW_PROVISIONING_UPDATES` is off by default and needed only the first time:
+without it xcodebuild says `No profiles for 'com.pbllc.rytivo' were found` and
+stops, which is the right default because issuing a certificate changes the
+developer account. With it, Apple issues an Apple Distribution certificate and
+an App Store profile.
+
+**Where that runs decides where the signing key lives.** The certificate's
+private key stays in the login keychain of whichever machine asked for it, and
+the hosted build Mac is administered by somebody else. Decided 2026-09-16:
+archive from a personal machine, and leave the hosted Mac for CI, which needs
+no signing at all. Verified on the hosted Mac that everything up to signing
+works there — team resolves, the build runs, and it stops exactly at the
+missing profile — so nothing about that choice is guesswork.
 
 **Decided, and not reversible:** the enrolment is `teamType = Individual`, so
 the App Store seller name will be the individual's legal name rather than
