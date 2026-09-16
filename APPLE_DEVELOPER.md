@@ -34,8 +34,12 @@ step with a queue in front of it. Everything else here takes minutes.
 
 Once the membership is active, at <https://developer.apple.com/account>:
 
-- **Team ID** — ten characters, under Membership details. Copy it; the archive
-  script needs it and nothing in the repository stores it.
+- **Team ID** — ten characters, under Membership details. It is committed in
+  `project.pbxproj` as `DEVELOPMENT_TEAM`, so Xcode keeps the team selected on
+  a fresh checkout. It is not a secret: Apple embeds it in every distributed
+  binary, so it is readable from any `.ipa`. `Scripts/archive-for-testflight.sh`
+  still takes it as an environment variable, which is what lets somebody archive
+  under a different team without editing the project.
 - **App ID** — Identifiers → +, bundle ID `com.pbllc.rytivo`. It has to match
   `PRODUCT_BUNDLE_IDENTIFIER` character for character.
 
@@ -89,10 +93,58 @@ Nothing in this list needs revisiting when the membership arrives.
 ## 5. The first upload
 
 ```bash
-DEVELOPMENT_TEAM=<ten characters> \
-REPBASE_API_URL=https://<the deployed backend>/ \
+DEVELOPMENT_TEAM=ABCDE12345 \
+REPBASE_API_URL=https://api.example.com/ \
+ALLOW_PROVISIONING_UPDATES=true \
   bash Scripts/archive-for-testflight.sh
 ```
+
+Substitute your own Team ID and host. The values above are examples rather
+than `<placeholders>` on purpose: `<` and `>` are shell redirection operators,
+so a pasted `https://<host>/` makes bash try to open a file called `host` and
+the command dies before the script starts — `bash: host: No such file or
+directory`, which says nothing about what was actually wrong. That is not
+hypothetical; it happened here on 2026-09-16.
+
+`ALLOW_PROVISIONING_UPDATES=true` is needed only the first time a machine
+signs this app, and it asks Apple to issue a distribution certificate. **Run
+it where you are willing to keep the private key** — the certificate's key
+stays in the login keychain of whichever machine asked, so a shared or hosted
+Mac is a decision, not a detail.
+
+### This cannot be run over SSH
+
+Not on the hosted Mac, and probably not on any Mac. Xcode keeps the signed-in
+account's credentials in the login keychain, and an SSH session cannot open
+that keychain — `security` says so plainly:
+
+```
+SecKeychainCopySettings: User interaction is not allowed.
+```
+
+So `xcodebuild` over SSH reports no account at all, on a machine whose Xcode is
+signed in perfectly well:
+
+```
+error: No Accounts: Add a new account in Accounts settings.
+error: No profiles for 'com.pbllc.rytivo' were found
+```
+
+Both lines are misleading if read literally — the account exists and the App ID
+exists. They mean "this session cannot see your keychain". Run the archive from
+a Terminal window **on the Mac's own desktop**, where the login keychain is
+unlocked by having logged in.
+
+The same limit is why `security find-identity` over SSH answers
+`0 valid identities found` on a fully configured machine. It is not evidence of
+anything. Ask Xcode's preferences instead, which are plain files:
+
+```bash
+defaults read com.apple.dt.Xcode IDEProvisioningTeamByIdentifier
+```
+
+None of this affects CI: simulator builds need no signing, which is why every
+green run so far has been silent about all of it.
 
 It refuses to run without both, refuses a non-https URL, and after building it
 reads the server, the name and the build number back out of the archive before
