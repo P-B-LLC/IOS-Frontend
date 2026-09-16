@@ -99,7 +99,10 @@ public enum RepbaseAPIClientFactory {
         return Client(
             serverURL: serverURL,
             configuration: configuration,
-            transport: URLSessionTransport()
+            transport: URLSessionTransport(),
+            // Registration is a submission too: a username and a display name
+            // are public text, and they go through review like anything else.
+            middlewares: [ModerationConsentMiddleware(), ModerationErrorMiddleware()]
         )
     }
 
@@ -123,7 +126,7 @@ public enum RepbaseAPIClientFactory {
             serverURL: serverURL,
             configuration: configuration,
             transport: URLSessionTransport(),
-            middlewares: [TokenAuthenticationMiddleware(token: token)]
+            middlewares: [TokenAuthenticationMiddleware(token: token), ModerationConsentMiddleware(), ModerationErrorMiddleware()]
         )
     }
 
@@ -178,4 +181,105 @@ private struct TokenAuthenticationMiddleware: ClientMiddleware {
         request.headerFields[.authorization] = authorizationValue
         return try await next(request, body, baseURL)
     }
+}
+
+/// Says which disclosure this build implements.
+///
+/// The server refuses to send anything for review without it, and refuses a
+/// version it does not recognise. That is a gate on the *client*, which is the
+/// only thing a server can actually check: whether a particular human tapped
+/// Allow is not provable over HTTP, since any caller can send any header. What
+/// this does rule out is a build from before the consent flow existed, and a
+/// script that never had one -- which is what could previously cause
+/// third-party processing with nobody asked.
+///
+/// The per-submission question is still real and still enforced, one layer up:
+/// `ModerationConsent.require()` throws when somebody cancels, so the request
+/// is never made and the header never gets the chance to matter.
+///
+/// Bump this with the server when the wording changes. Agreement to the old
+/// disclosure is not agreement to a new one, and an old build should stop
+/// being able to submit rather than quietly keep going.
+enum ModerationDisclosure {
+    static let version = "2026-09-15"
+}
+
+private struct ModerationConsentMiddleware: ClientMiddleware {
+    func intercept(
+        _ request: HTTPRequest,
+        body: HTTPBody?,
+        baseURL: URL,
+        operationID: String,
+        next: (HTTPRequest, HTTPBody?, URL) async throws -> (HTTPResponse, HTTPBody?)
+    ) async throws -> (HTTPResponse, HTTPBody?) {
+        var request = request
+        request.headerFields[.init("X-Moderation-Consent")!] = ModerationDisclosure.version
+        return try await next(request, body, baseURL)
+    }
+}
+
+/// A refusal the server explained, rather than a status code.
+///
+/// The backend already sends something a person can act on -- why the content
+/// was refused, where to appeal, or that safety checks are down and the
+/// content was not published. Every one of those was arriving as "unexpected
+/// response (HTTP 400)", because the generated client folds anything the
+/// contract does not enumerate into `.undocumented` and the call sites throw
+/// the number.
+///
+/// Fixing that at 128 call sites would be 128 chances to do it differently.
+/// This reads the body once, in one place, and throws something the UI can
+/// show and decide about: `isTemporary` is the difference between "try again
+/// in a minute" and "this will not work until you change it".
+public struct ModerationError: LocalizedError, Sendable {
+    public let code: String
+    public let detail: String
+    public let isTemporary: Bool
+
+    public var errorDescription: String? { detail }
+
+    /// Only an outage is worth offering a retry for. Offering one after a
+    /// refusal invites somebody to press it until it works, and it will not.
+    public var isRetryable: Bool { isTemporary }
+}
+
+private struct ModerationErrorMiddleware: ClientMiddleware {
+    private static let known: [String: Bool] = [
+        "moderation_rejected": false,
+        "moderation_consent_required": false,
+        "moderation_unavailable": true,
+    ]
+
+    func intercept(
+        _ request: HTTPRequest,
+        body: HTTPBody?,
+        baseURL: URL,
+        operationID: String,
+        next: (HTTPRequest, HTTPBody?, URL) async throws -> (HTTPResponse, HTTPBody?)
+    ) async throws -> (HTTPResponse, HTTPBody?) {
+        let (response, responseBody) = try await next(request, body, baseURL)
+        guard response.status.code >= 400, let responseBody else {
+            return (response, responseBody)
+        }
+        // Buffered rather than consumed: anything this does not recognise has
+        // to reach the caller unread and unchanged.
+        guard let bytes = try? await Data(collecting: responseBody, upTo: 64 * 1024) else {
+            return (response, responseBody)
+        }
+        if let payload = try? JSONDecoder().decode(ServerRefusal.self, from: bytes),
+           let code = payload.code,
+           let isTemporary = Self.known[code] {
+            throw ModerationError(
+                code: code,
+                detail: payload.detail ?? "This could not be published.",
+                isTemporary: isTemporary
+            )
+        }
+        return (response, HTTPBody(bytes))
+    }
+}
+
+private struct ServerRefusal: Decodable {
+    let detail: String?
+    let code: String?
 }
