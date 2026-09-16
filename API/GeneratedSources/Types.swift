@@ -11828,12 +11828,21 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/api/v1/auth/register/POST/header`.
             public struct Headers: Sendable, Hashable {
+                /// Agreement to the current safety-review disclosure, as the version string the server publishes in MODERATION_CONSENT_VERSION. Required when moderation is enabled and the submission carries public-facing text or a photo; the content is not sent for review without it, and the submission is refused with 403 and code `moderation_consent_required`. A value from an older disclosure is refused the same way, because agreement to previous wording is not agreement to this one.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/auth/register/POST/header/X-Moderation-Consent`.
+                public var xModerationConsent: Swift.String?
                 public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.AuthRegisterCreate.AcceptableContentType>]
                 /// Creates a new `Headers`.
                 ///
                 /// - Parameters:
+                ///   - xModerationConsent: Agreement to the current safety-review disclosure, as the version string the server publishes in MODERATION_CONSENT_VERSION. Required when moderation is enabled and the submission carries public-facing text or a photo; the content is not sent for review without it, and the submission is refused with 403 and code `moderation_consent_required`. A value from an older disclosure is refused the same way, because agreement to previous wording is not agreement to this one.
                 ///   - accept:
-                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.AuthRegisterCreate.AcceptableContentType>] = .defaultValues()) {
+                public init(
+                    xModerationConsent: Swift.String? = nil,
+                    accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.AuthRegisterCreate.AcceptableContentType>] = .defaultValues()
+                ) {
+                    self.xModerationConsent = xModerationConsent
                     self.accept = accept
                 }
             }
@@ -18816,12 +18825,21 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/api/v1/gyms/POST/header`.
             public struct Headers: Sendable, Hashable {
+                /// Agreement to the current safety-review disclosure, as the version string the server publishes in MODERATION_CONSENT_VERSION. Required when moderation is enabled and the submission carries public-facing text or a photo; the content is not sent for review without it, and the submission is refused with 403 and code `moderation_consent_required`. A value from an older disclosure is refused the same way, because agreement to previous wording is not agreement to this one.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/gyms/POST/header/X-Moderation-Consent`.
+                public var xModerationConsent: Swift.String?
                 public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GymsCreate.AcceptableContentType>]
                 /// Creates a new `Headers`.
                 ///
                 /// - Parameters:
+                ///   - xModerationConsent: Agreement to the current safety-review disclosure, as the version string the server publishes in MODERATION_CONSENT_VERSION. Required when moderation is enabled and the submission carries public-facing text or a photo; the content is not sent for review without it, and the submission is refused with 403 and code `moderation_consent_required`. A value from an older disclosure is refused the same way, because agreement to previous wording is not agreement to this one.
                 ///   - accept:
-                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GymsCreate.AcceptableContentType>] = .defaultValues()) {
+                public init(
+                    xModerationConsent: Swift.String? = nil,
+                    accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GymsCreate.AcceptableContentType>] = .defaultValues()
+                ) {
+                    self.xModerationConsent = xModerationConsent
                     self.accept = accept
                 }
             }
@@ -19090,12 +19108,21 @@ public enum Operations {
             public var path: Operations.GymsPartialUpdate.Input.Path
             /// - Remark: Generated from `#/paths/api/v1/gyms/{id}/PATCH/header`.
             public struct Headers: Sendable, Hashable {
+                /// Agreement to the current safety-review disclosure, as the version string the server publishes in MODERATION_CONSENT_VERSION. Required when moderation is enabled and the submission carries public-facing text or a photo; the content is not sent for review without it, and the submission is refused with 403 and code `moderation_consent_required`. A value from an older disclosure is refused the same way, because agreement to previous wording is not agreement to this one.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/gyms/{id}/PATCH/header/X-Moderation-Consent`.
+                public var xModerationConsent: Swift.String?
                 public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GymsPartialUpdate.AcceptableContentType>]
                 /// Creates a new `Headers`.
                 ///
                 /// - Parameters:
+                ///   - xModerationConsent: Agreement to the current safety-review disclosure, as the version string the server publishes in MODERATION_CONSENT_VERSION. Required when moderation is enabled and the submission carries public-facing text or a photo; the content is not sent for review without it, and the submission is refused with 403 and code `moderation_consent_required`. A value from an older disclosure is refused the same way, because agreement to previous wording is not agreement to this one.
                 ///   - accept:
-                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GymsPartialUpdate.AcceptableContentType>] = .defaultValues()) {
+                public init(
+                    xModerationConsent: Swift.String? = nil,
+                    accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GymsPartialUpdate.AcceptableContentType>] = .defaultValues()
+                ) {
+                    self.xModerationConsent = xModerationConsent
                     self.accept = accept
                 }
             }
@@ -19233,12 +19260,21 @@ public enum Operations {
             public var path: Operations.GymsUpdate.Input.Path
             /// - Remark: Generated from `#/paths/api/v1/gyms/{id}/PUT/header`.
             public struct Headers: Sendable, Hashable {
+                /// Agreement to the current safety-review disclosure, as the version string the server publishes in MODERATION_CONSENT_VERSION. Required when moderation is enabled and the submission carries public-facing text or a photo; the content is not sent for review without it, and the submission is refused with 403 and code `moderation_consent_required`. A value from an older disclosure is refused the same way, because agreement to previous wording is not agreement to this one.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/gyms/{id}/PUT/header/X-Moderation-Consent`.
+                public var xModerationConsent: Swift.String?
                 public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GymsUpdate.AcceptableContentType>]
                 /// Creates a new `Headers`.
                 ///
                 /// - Parameters:
+                ///   - xModerationConsent: Agreement to the current safety-review disclosure, as the version string the server publishes in MODERATION_CONSENT_VERSION. Required when moderation is enabled and the submission carries public-facing text or a photo; the content is not sent for review without it, and the submission is refused with 403 and code `moderation_consent_required`. A value from an older disclosure is refused the same way, because agreement to previous wording is not agreement to this one.
                 ///   - accept:
-                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GymsUpdate.AcceptableContentType>] = .defaultValues()) {
+                public init(
+                    xModerationConsent: Swift.String? = nil,
+                    accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GymsUpdate.AcceptableContentType>] = .defaultValues()
+                ) {
+                    self.xModerationConsent = xModerationConsent
                     self.accept = accept
                 }
             }
@@ -19669,12 +19705,21 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/api/v1/me/PATCH/header`.
             public struct Headers: Sendable, Hashable {
+                /// Agreement to the current safety-review disclosure, as the version string the server publishes in MODERATION_CONSENT_VERSION. Required when moderation is enabled and the submission carries public-facing text or a photo; the content is not sent for review without it, and the submission is refused with 403 and code `moderation_consent_required`. A value from an older disclosure is refused the same way, because agreement to previous wording is not agreement to this one.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/me/PATCH/header/X-Moderation-Consent`.
+                public var xModerationConsent: Swift.String?
                 public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MePartialUpdate.AcceptableContentType>]
                 /// Creates a new `Headers`.
                 ///
                 /// - Parameters:
+                ///   - xModerationConsent: Agreement to the current safety-review disclosure, as the version string the server publishes in MODERATION_CONSENT_VERSION. Required when moderation is enabled and the submission carries public-facing text or a photo; the content is not sent for review without it, and the submission is refused with 403 and code `moderation_consent_required`. A value from an older disclosure is refused the same way, because agreement to previous wording is not agreement to this one.
                 ///   - accept:
-                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MePartialUpdate.AcceptableContentType>] = .defaultValues()) {
+                public init(
+                    xModerationConsent: Swift.String? = nil,
+                    accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MePartialUpdate.AcceptableContentType>] = .defaultValues()
+                ) {
+                    self.xModerationConsent = xModerationConsent
                     self.accept = accept
                 }
             }
@@ -19788,12 +19833,21 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/api/v1/me/PUT/header`.
             public struct Headers: Sendable, Hashable {
+                /// Agreement to the current safety-review disclosure, as the version string the server publishes in MODERATION_CONSENT_VERSION. Required when moderation is enabled and the submission carries public-facing text or a photo; the content is not sent for review without it, and the submission is refused with 403 and code `moderation_consent_required`. A value from an older disclosure is refused the same way, because agreement to previous wording is not agreement to this one.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/me/PUT/header/X-Moderation-Consent`.
+                public var xModerationConsent: Swift.String?
                 public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MeUpdate.AcceptableContentType>]
                 /// Creates a new `Headers`.
                 ///
                 /// - Parameters:
+                ///   - xModerationConsent: Agreement to the current safety-review disclosure, as the version string the server publishes in MODERATION_CONSENT_VERSION. Required when moderation is enabled and the submission carries public-facing text or a photo; the content is not sent for review without it, and the submission is refused with 403 and code `moderation_consent_required`. A value from an older disclosure is refused the same way, because agreement to previous wording is not agreement to this one.
                 ///   - accept:
-                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MeUpdate.AcceptableContentType>] = .defaultValues()) {
+                public init(
+                    xModerationConsent: Swift.String? = nil,
+                    accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MeUpdate.AcceptableContentType>] = .defaultValues()
+                ) {
+                    self.xModerationConsent = xModerationConsent
                     self.accept = accept
                 }
             }
@@ -20425,12 +20479,21 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/api/v1/me/photo/PUT/header`.
             public struct Headers: Sendable, Hashable {
+                /// Agreement to the current safety-review disclosure, as the version string the server publishes in MODERATION_CONSENT_VERSION. Required when moderation is enabled and the submission carries public-facing text or a photo; the content is not sent for review without it, and the submission is refused with 403 and code `moderation_consent_required`. A value from an older disclosure is refused the same way, because agreement to previous wording is not agreement to this one.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/me/photo/PUT/header/X-Moderation-Consent`.
+                public var xModerationConsent: Swift.String?
                 public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MePhotoUpdate.AcceptableContentType>]
                 /// Creates a new `Headers`.
                 ///
                 /// - Parameters:
+                ///   - xModerationConsent: Agreement to the current safety-review disclosure, as the version string the server publishes in MODERATION_CONSENT_VERSION. Required when moderation is enabled and the submission carries public-facing text or a photo; the content is not sent for review without it, and the submission is refused with 403 and code `moderation_consent_required`. A value from an older disclosure is refused the same way, because agreement to previous wording is not agreement to this one.
                 ///   - accept:
-                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MePhotoUpdate.AcceptableContentType>] = .defaultValues()) {
+                public init(
+                    xModerationConsent: Swift.String? = nil,
+                    accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MePhotoUpdate.AcceptableContentType>] = .defaultValues()
+                ) {
+                    self.xModerationConsent = xModerationConsent
                     self.accept = accept
                 }
             }
@@ -20766,12 +20829,21 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/api/v1/me/prompts/PUT/header`.
             public struct Headers: Sendable, Hashable {
+                /// Agreement to the current safety-review disclosure, as the version string the server publishes in MODERATION_CONSENT_VERSION. Required when moderation is enabled and the submission carries public-facing text or a photo; the content is not sent for review without it, and the submission is refused with 403 and code `moderation_consent_required`. A value from an older disclosure is refused the same way, because agreement to previous wording is not agreement to this one.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/me/prompts/PUT/header/X-Moderation-Consent`.
+                public var xModerationConsent: Swift.String?
                 public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MePromptsUpdate.AcceptableContentType>]
                 /// Creates a new `Headers`.
                 ///
                 /// - Parameters:
+                ///   - xModerationConsent: Agreement to the current safety-review disclosure, as the version string the server publishes in MODERATION_CONSENT_VERSION. Required when moderation is enabled and the submission carries public-facing text or a photo; the content is not sent for review without it, and the submission is refused with 403 and code `moderation_consent_required`. A value from an older disclosure is refused the same way, because agreement to previous wording is not agreement to this one.
                 ///   - accept:
-                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MePromptsUpdate.AcceptableContentType>] = .defaultValues()) {
+                public init(
+                    xModerationConsent: Swift.String? = nil,
+                    accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MePromptsUpdate.AcceptableContentType>] = .defaultValues()
+                ) {
+                    self.xModerationConsent = xModerationConsent
                     self.accept = accept
                 }
             }
@@ -21001,12 +21073,21 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/api/v1/me/social-links/PUT/header`.
             public struct Headers: Sendable, Hashable {
+                /// Agreement to the current safety-review disclosure, as the version string the server publishes in MODERATION_CONSENT_VERSION. Required when moderation is enabled and the submission carries public-facing text or a photo; the content is not sent for review without it, and the submission is refused with 403 and code `moderation_consent_required`. A value from an older disclosure is refused the same way, because agreement to previous wording is not agreement to this one.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/me/social-links/PUT/header/X-Moderation-Consent`.
+                public var xModerationConsent: Swift.String?
                 public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MeSocialLinksUpdate.AcceptableContentType>]
                 /// Creates a new `Headers`.
                 ///
                 /// - Parameters:
+                ///   - xModerationConsent: Agreement to the current safety-review disclosure, as the version string the server publishes in MODERATION_CONSENT_VERSION. Required when moderation is enabled and the submission carries public-facing text or a photo; the content is not sent for review without it, and the submission is refused with 403 and code `moderation_consent_required`. A value from an older disclosure is refused the same way, because agreement to previous wording is not agreement to this one.
                 ///   - accept:
-                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MeSocialLinksUpdate.AcceptableContentType>] = .defaultValues()) {
+                public init(
+                    xModerationConsent: Swift.String? = nil,
+                    accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.MeSocialLinksUpdate.AcceptableContentType>] = .defaultValues()
+                ) {
+                    self.xModerationConsent = xModerationConsent
                     self.accept = accept
                 }
             }
@@ -27621,12 +27702,21 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/api/v1/social/comments/POST/header`.
             public struct Headers: Sendable, Hashable {
+                /// Agreement to the current safety-review disclosure, as the version string the server publishes in MODERATION_CONSENT_VERSION. Required when moderation is enabled and the submission carries public-facing text or a photo; the content is not sent for review without it, and the submission is refused with 403 and code `moderation_consent_required`. A value from an older disclosure is refused the same way, because agreement to previous wording is not agreement to this one.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/comments/POST/header/X-Moderation-Consent`.
+                public var xModerationConsent: Swift.String?
                 public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialCommentsCreate.AcceptableContentType>]
                 /// Creates a new `Headers`.
                 ///
                 /// - Parameters:
+                ///   - xModerationConsent: Agreement to the current safety-review disclosure, as the version string the server publishes in MODERATION_CONSENT_VERSION. Required when moderation is enabled and the submission carries public-facing text or a photo; the content is not sent for review without it, and the submission is refused with 403 and code `moderation_consent_required`. A value from an older disclosure is refused the same way, because agreement to previous wording is not agreement to this one.
                 ///   - accept:
-                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialCommentsCreate.AcceptableContentType>] = .defaultValues()) {
+                public init(
+                    xModerationConsent: Swift.String? = nil,
+                    accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialCommentsCreate.AcceptableContentType>] = .defaultValues()
+                ) {
+                    self.xModerationConsent = xModerationConsent
                     self.accept = accept
                 }
             }
@@ -27897,12 +27987,21 @@ public enum Operations {
             public var path: Operations.SocialCommentsPartialUpdate.Input.Path
             /// - Remark: Generated from `#/paths/api/v1/social/comments/{id}/PATCH/header`.
             public struct Headers: Sendable, Hashable {
+                /// Agreement to the current safety-review disclosure, as the version string the server publishes in MODERATION_CONSENT_VERSION. Required when moderation is enabled and the submission carries public-facing text or a photo; the content is not sent for review without it, and the submission is refused with 403 and code `moderation_consent_required`. A value from an older disclosure is refused the same way, because agreement to previous wording is not agreement to this one.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/comments/{id}/PATCH/header/X-Moderation-Consent`.
+                public var xModerationConsent: Swift.String?
                 public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialCommentsPartialUpdate.AcceptableContentType>]
                 /// Creates a new `Headers`.
                 ///
                 /// - Parameters:
+                ///   - xModerationConsent: Agreement to the current safety-review disclosure, as the version string the server publishes in MODERATION_CONSENT_VERSION. Required when moderation is enabled and the submission carries public-facing text or a photo; the content is not sent for review without it, and the submission is refused with 403 and code `moderation_consent_required`. A value from an older disclosure is refused the same way, because agreement to previous wording is not agreement to this one.
                 ///   - accept:
-                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialCommentsPartialUpdate.AcceptableContentType>] = .defaultValues()) {
+                public init(
+                    xModerationConsent: Swift.String? = nil,
+                    accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialCommentsPartialUpdate.AcceptableContentType>] = .defaultValues()
+                ) {
+                    self.xModerationConsent = xModerationConsent
                     self.accept = accept
                 }
             }
@@ -29251,12 +29350,21 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/api/v1/social/posts/POST/header`.
             public struct Headers: Sendable, Hashable {
+                /// Agreement to the current safety-review disclosure, as the version string the server publishes in MODERATION_CONSENT_VERSION. Required when moderation is enabled and the submission carries public-facing text or a photo; the content is not sent for review without it, and the submission is refused with 403 and code `moderation_consent_required`. A value from an older disclosure is refused the same way, because agreement to previous wording is not agreement to this one.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/POST/header/X-Moderation-Consent`.
+                public var xModerationConsent: Swift.String?
                 public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsCreate.AcceptableContentType>]
                 /// Creates a new `Headers`.
                 ///
                 /// - Parameters:
+                ///   - xModerationConsent: Agreement to the current safety-review disclosure, as the version string the server publishes in MODERATION_CONSENT_VERSION. Required when moderation is enabled and the submission carries public-facing text or a photo; the content is not sent for review without it, and the submission is refused with 403 and code `moderation_consent_required`. A value from an older disclosure is refused the same way, because agreement to previous wording is not agreement to this one.
                 ///   - accept:
-                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsCreate.AcceptableContentType>] = .defaultValues()) {
+                public init(
+                    xModerationConsent: Swift.String? = nil,
+                    accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsCreate.AcceptableContentType>] = .defaultValues()
+                ) {
+                    self.xModerationConsent = xModerationConsent
                     self.accept = accept
                 }
             }
@@ -29523,12 +29631,21 @@ public enum Operations {
             public var path: Operations.SocialPostsPartialUpdate.Input.Path
             /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/PATCH/header`.
             public struct Headers: Sendable, Hashable {
+                /// Agreement to the current safety-review disclosure, as the version string the server publishes in MODERATION_CONSENT_VERSION. Required when moderation is enabled and the submission carries public-facing text or a photo; the content is not sent for review without it, and the submission is refused with 403 and code `moderation_consent_required`. A value from an older disclosure is refused the same way, because agreement to previous wording is not agreement to this one.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/PATCH/header/X-Moderation-Consent`.
+                public var xModerationConsent: Swift.String?
                 public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsPartialUpdate.AcceptableContentType>]
                 /// Creates a new `Headers`.
                 ///
                 /// - Parameters:
+                ///   - xModerationConsent: Agreement to the current safety-review disclosure, as the version string the server publishes in MODERATION_CONSENT_VERSION. Required when moderation is enabled and the submission carries public-facing text or a photo; the content is not sent for review without it, and the submission is refused with 403 and code `moderation_consent_required`. A value from an older disclosure is refused the same way, because agreement to previous wording is not agreement to this one.
                 ///   - accept:
-                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsPartialUpdate.AcceptableContentType>] = .defaultValues()) {
+                public init(
+                    xModerationConsent: Swift.String? = nil,
+                    accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsPartialUpdate.AcceptableContentType>] = .defaultValues()
+                ) {
+                    self.xModerationConsent = xModerationConsent
                     self.accept = accept
                 }
             }
