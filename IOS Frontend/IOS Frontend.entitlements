@@ -6,13 +6,21 @@
 	  HealthKit. Reading only: Rytivo never writes to Health.
 
 	  On a real device this also needs the HealthKit capability granted on the
-	  App ID. The membership exists now and the build Mac is signed in to it,
-	  but the App ID does not, so a device build still refuses:
+	  App ID, and it is: the membership is bought, the build Mac is signed in,
+	  and com.pbllc.rytivo is registered with HealthKit enabled.
 
-	      error: No profiles for 'com.pbllc.rytivo' were found
+	  A device build still refuses, for a reason that has nothing to do with
+	  HealthKit -- the team has no registered devices, so Xcode's automatic
+	  signing cannot create the development provisioning profile it wants:
 
-	  The simulator does not enforce provisioning, which is why every build in
-	  CI passes without any of this existing.
+	      Communication with Apple failed
+	      Your team has no devices from which to generate a provisioning profile
+
+	  Registering one device UDID clears it. TestFlight does not need one at
+	  all, because App Store distribution profiles carry no device list.
+
+	  None of this touches the simulator, which does not enforce provisioning
+	  -- which is why every build in CI passes without any of it existing.
 
 	  The access array is deliberately empty. It is where clinical health
 	  records would be requested, and this app reads steps and workouts only --
