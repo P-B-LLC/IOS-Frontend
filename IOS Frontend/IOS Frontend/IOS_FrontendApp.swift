@@ -2,7 +2,7 @@
 //  IOS_FrontendApp.swift
 //  IOS Frontend
 //
-//  Created by user299988 on 8/9/26.
+//  Created by the Rytivo project on 8/9/26.
 //
 
 import RepbaseAPI

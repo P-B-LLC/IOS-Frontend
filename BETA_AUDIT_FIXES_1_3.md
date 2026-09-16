@@ -34,7 +34,7 @@ Implemented: atomic default gear switching and safe photo publication in
   this Mac. Physical-device UI/VoiceOver testing remains outstanding.
 
 Validation artifacts: Mac
-`/Users/user299988/Documents/RytivoBetaValidation/audit-fixes.sj2HeA/`.
+`/Users/<mac-user>/Documents/RytivoBetaValidation/audit-fixes.sj2HeA/`.
 
 No live deployment or Git push was performed by this implementation pass.
 Other audit gates remain open; this is not a whole-app beta approval.

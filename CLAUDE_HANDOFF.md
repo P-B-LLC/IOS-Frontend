@@ -79,8 +79,8 @@ session and both are described below.
 ```text
 Windows laptop  (iOS, pushes)   D:\IOS-Frontend Folder on Laptop\IOS-Frontend
 Windows desktop (iOS, pushes)   C:\IOS Frontend\IOS-Frontend
-Mac (iOS build/test copy)       /Volumes/Macintosh_HD/Users/user299988/Documents/IOS-Frontend
-Mac (Django backend)            /Volumes/Macintosh_HD/Users/user299988/Documents/repbase
+Mac (iOS build/test copy)       /Volumes/Macintosh_HD/Users/<mac-user>/Documents/IOS-Frontend
+Mac (Django backend)            /Volumes/Macintosh_HD/Users/<mac-user>/Documents/repbase
 ```
 
 **There are two Windows machines, and they are not interchangeable.** Each has
@@ -98,11 +98,21 @@ cloned to Windows, except transiently when pushing (see below).
 
 ## SSH into the Mac
 
+The placeholders below are deliberate. This repository is public, and a
+hostname next to a username is an SSH target anyone can start guessing at.
+The real values are with the machine's owner and in the assistant's local
+memory for this project; they are not written down here.
+
+They are still in this repository's git history, which publishing cannot
+undo. This stops casual discovery, not a determined search — so the Mac
+should be on key-only authentication, and the key itself has never been in
+source control.
+
 ```powershell
-ssh -i "C:\Users\Aaron\.ssh\codex_macincloud_tx087_ed25519" -o UserKnownHostsFile="C:\Users\Aaron\.ssh\known_hosts_codex_tx087" user299988@TX087.macincloud.com
+ssh -i "C:\Users\Aaron\.ssh\<mac-ssh-key>" -o UserKnownHostsFile="C:\Users\Aaron\.ssh\<mac-known-hosts>" <mac-user>@<mac-host>
 ```
 
-Expect `whoami` = `user299988`, `hostname` = `TX087-I`. Adding
+Expect `whoami` to match `<mac-user>`. Adding
 `-o BatchMode=yes -o ConnectTimeout=25` makes one-shot commands fail fast rather
 than hang. The private key stays on Windows and must never reach source control,
 chat, or logs.
@@ -160,7 +170,7 @@ Deployment: iOS 26.5
 ```
 
 ```bash
-cd '/Volumes/Macintosh_HD/Users/user299988/Documents/IOS-Frontend'
+cd '/Volumes/Macintosh_HD/Users/<mac-user>/Documents/IOS-Frontend'
 xcodebuild -project 'IOS Frontend/IOS Frontend.xcodeproj' \
   -scheme 'IOS Frontend' -configuration Debug -sdk iphonesimulator \
   -destination 'platform=iOS Simulator,id=498BF02E-6003-408B-BBB6-262EB87627E8' \
@@ -254,7 +264,7 @@ scratch files disappeared mid-session. Assume nothing in `/tmp` survives.
 Started by hand instead, the old way still works:
 
 ```bash
-cd '/Volumes/Macintosh_HD/Users/user299988/Documents/repbase'
+cd '/Volumes/Macintosh_HD/Users/<mac-user>/Documents/repbase'
 source .venv/bin/activate
 nohup python manage.py runserver 127.0.0.1:5000 > /tmp/django.log 2>&1 < /dev/null &
 ```
