@@ -3,12 +3,22 @@
 <plist version="1.0">
 <dict>
 	<!--
-	  HealthKit. Reading only: Repbase never writes to Health.
+	  HealthKit. Reading only: Rytivo never writes to Health.
 
-	  On a real device this also needs the HealthKit capability on the App ID,
-	  which needs a paid Apple Developer membership. There is none, so device
-	  builds will refuse to sign until there is. The simulator does not enforce
-	  provisioning, so this file is enough there.
+	  On a real device this also needs the HealthKit capability granted on the
+	  App ID. The membership exists now and the build Mac is signed in to it,
+	  but the App ID does not, so a device build still refuses:
+
+	      error: No profiles for 'com.pbllc.rytivo' were found
+
+	  The simulator does not enforce provisioning, which is why every build in
+	  CI passes without any of this existing.
+
+	  The access array is deliberately empty. It is where clinical health
+	  records would be requested, and this app reads steps and workouts only --
+	  so "Clinical Health Records" must stay switched off on the App ID too, or
+	  the entitlements and the App ID would disagree about what is being asked
+	  for.
 	-->
 	<key>com.apple.developer.healthkit</key>
 	<true/>
