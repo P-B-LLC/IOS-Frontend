@@ -1,13 +1,16 @@
 # Getting Rytivo onto a tester's phone
 
 Everything an Apple Developer membership unlocks, in the order it has to
-happen, with the parts that are slow marked as slow. Written 2026-09-13,
-before the membership was bought, so the repository side is done and the
-account side is not.
+happen, with the parts that are slow marked as slow. Written 2026-09-13
+before the membership existed; revised 2026-09-16, when it did.
+
+**The membership is bought.** Step 1 below is kept as a record of the decision
+it contained, not as work to do. Steps 2 onward are what remains, and none of
+them have a queue in front of them.
 
 ---
 
-## 1. Buy the membership — and decide one thing first
+## 1. Buy the membership — *done* — and the decision inside it
 
 $99 a year, at <https://developer.apple.com/programs/enroll/>. Two-factor
 authentication has to be on for the Apple ID you enrol with.

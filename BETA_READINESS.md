@@ -19,9 +19,10 @@ the source. Where something is inferred rather than observed, it says so.
 ## Blockers
 
 A beta tester hits these on day one. Roughly in dependency order: 1, 3 and 7
-all need the host that 4 produces, so 4 is the one to start, and 6 is the one
-to start *today* because it is the only item with somebody else's queue in
-front of it.
+all need the host that 4 produces, so **4 is the one to start**. Nothing here
+now has somebody else's queue in front of it — the D-U-N-S wait that used to
+make item 6 urgent is gone, and what is left of that item is clicking rather
+than waiting.
 
 ### 1. Give release builds a server URL
 
@@ -148,19 +149,46 @@ Note this became possible on `repbase` only when it was made public on
 plan — the API answered *"Upgrade to GitHub Pro or make this repository
 public"* until then.
 
-### 6. Buy an Apple Developer membership
+### 6. Apple Developer membership — *bought 2026-09-16; account side not set up*
 
-**State:** not bought. `DEVELOPMENT_TEAM` appears zero times in the project,
-there is no distribution certificate and no App Store Connect record, so there
-is no way to put a build on a phone that is not plugged into this Mac.
+**Was:** not bought, and the D-U-N-S lookup in front of it was the longest
+queue in the whole beta. That is gone.
 
-**Do:** [APPLE_DEVELOPER.md](APPLE_DEVELOPER.md) is the ordered list. The one
-thing worth starting today is the **D-U-N-S lookup**, if the LLC rather than a
-person should be the seller: it is free, it can take five business days, it
-gates the enrolment, and it cannot be changed afterwards without transferring
-the account. Everything else on that list takes minutes, and everything the
-repository can do in advance — bundle name, entitlements, privacy manifest,
-export-compliance declaration, archive and export script — is done.
+**State:** the membership exists and nothing else about it does. On the build
+Mac, checked 2026-09-16:
+
+```
+code-signing identities        0 valid identities found
+provisioning profiles          none
+Apple account in Xcode         none
+```
+
+So a build still cannot go on a phone, but the reason is now half an hour of
+clicking rather than five business days of waiting.
+
+**Do**, from [APPLE_DEVELOPER.md](APPLE_DEVELOPER.md), steps 2 onward:
+
+- Sign Xcode on the build Mac into the account. Signing is automatic after
+  that; no certificate has to be made by hand.
+- Register the App ID `com.pbllc.rytivo` — character for character with
+  `PRODUCT_BUNDLE_IDENTIFIER` — and **enable HealthKit on it**. The
+  entitlements file asks for HealthKit and a device build refuses to sign
+  without it. The simulator does not enforce provisioning, which is why no
+  build here has ever caught this.
+- Create the App Store Connect record.
+
+**Not a thing to do:** wiring the Team ID into the project. Nothing in this
+repository stores it, deliberately — `Scripts/archive-for-testflight.sh` takes
+`DEVELOPMENT_TEAM` as an environment variable and refuses to run without one.
+`DEVELOPMENT_TEAM` appearing zero times in `project.pbxproj` is the design, not
+an omission. Xcode will write a team into the project the first time somebody
+selects one for a device build; that is fine, and it is not a prerequisite for
+archiving.
+
+**Worth knowing:** the build Mac is a shared hosted machine. An Apple account
+signed in there, and the signing identity it installs, live on hardware
+somebody else administers. That is a decision to make deliberately rather than
+by default.
 
 ### 7. Configure moderation — *repbase* — *code done, nothing configured*
 
