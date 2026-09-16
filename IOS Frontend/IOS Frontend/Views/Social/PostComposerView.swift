@@ -118,7 +118,7 @@ struct PostComposerView: View {
                         )
                     }
                     if let message = social.errorMessage {
-                        notice(message, timeOfDay: timeOfDay)
+                        notice(message, timeOfDay: timeOfDay, retry: retryAfterFailure)
                     }
 
                     composerIntroduction(timeOfDay: timeOfDay)
@@ -735,15 +735,31 @@ struct PostComposerView: View {
 
     // MARK: - Pieces
 
+    /// A failure, and a way out of it when there is one.
+    ///
+    /// `retry` is offered only for failures that can pass on a second attempt
+    /// — a safety-review outage, where nothing was published and the same
+    /// content may well go through in a minute. A refusal under community
+    /// standards gets no button: the same words will be refused again, and a
+    /// retry in front of one is an invitation to press it until it works.
     private func notice(
         _ message: String,
-        timeOfDay: HomeTimeOfDay
+        timeOfDay: HomeTimeOfDay,
+        retry: (() -> Void)? = nil
     ) -> some View {
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .foregroundStyle(timeOfDay.accent)
-            Text(message)
-                .fixedSize(horizontal: false, vertical: true)
+            VStack(alignment: .leading, spacing: 6) {
+                Text(message)
+                    .fixedSize(horizontal: false, vertical: true)
+                if let retry {
+                    Button("Try again", action: retry)
+                        .font(.community(.caption).weight(.semibold))
+                        .foregroundStyle(timeOfDay.accent)
+                        .disabled(social.isPosting)
+                }
+            }
             Spacer(minLength: 0)
         }
         .font(.community(.caption))
@@ -794,6 +810,21 @@ struct PostComposerView: View {
 
     private var canPost: Bool {
         selection != nil && social.isConnected && !social.isPosting
+    }
+
+    /// A way out of the failure on screen, when trying again could work.
+    ///
+    /// Only a safety-review outage qualifies: nothing was published, and the
+    /// same post may well go through in a minute. A refusal under community
+    /// standards gets nothing, because the same words will be refused again.
+    ///
+    /// Written out rather than inlined as a ternary. `post` is a method value
+    /// and the other branch is `nil`, and SwiftUI answers a failed inference
+    /// inside a ViewBuilder with "ambiguous use of 'init'" pointed at the
+    /// enclosing container — which is how this cost a build.
+    private var retryAfterFailure: (() -> Void)? {
+        guard social.errorIsRetryable else { return nil }
+        return { post() }
     }
 
     private func post() {
