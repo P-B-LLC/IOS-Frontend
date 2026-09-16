@@ -27,7 +27,25 @@ cp "$repo/Tests/AccountSafety/ModerationTransportTests.swift" "$test_package/Tes
 cp "$repo/IOS Frontend/IOS Frontend/Models/Weekday.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/Views/Navigation/RepbaseRoute.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/Services/ModerationConsent.swift" "$test_package/Sources/AccountSafety/"
+cp "$repo/Tests/AccountSafety/ModerationConsentTests.swift" "$test_package/Tests/AccountSafetyTests/"
 for name in AuthenticationStore APIConfiguration KeychainTokenStore; do
     cp "$repo/IOS Frontend/IOS Frontend/API/$name.swift" "$test_package/Sources/AccountSafety/"
 done
+
+# Every test file has to appear in the list above, and the list is by hand
+# because the sources beside it are: a file that compiles alone goes in, one
+# that needs SwiftUI cannot. The failure mode of forgetting is silence -- the
+# tests are simply never run, the job stays green, and nothing says which
+# ones are missing. So it is asked rather than assumed.
+missing=""
+for path in "$repo"/Tests/AccountSafety/*Tests.swift; do
+    name="$(basename "$path")"
+    [ -f "$test_package/Tests/AccountSafetyTests/$name" ] || missing="$missing $name"
+done
+if [ -n "$missing" ]; then
+    echo "These test files are not copied, so they would never run:$missing" >&2
+    echo "Add them to $(basename "$0")." >&2
+    exit 1
+fi
+
 swift test --package-path "$test_package"

@@ -28,6 +28,10 @@ final class SocialStore {
     private(set) var isLoadingMore = false
     private(set) var isPosting = false
     private(set) var errorMessage: String?
+    /// Whether the failure behind `errorMessage` is worth offering a retry
+    /// for. An outage is; a refusal under community standards is not, and a
+    /// retry button in front of one invites pressing it until it works.
+    private(set) var errorIsRetryable = false
     /// Set when a post goes out, so a screen can say so and move on.
     private(set) var lastPosted: FeedPost?
     private(set) var followersByUser: [Int: [PostAuthor]] = [:]
@@ -54,6 +58,25 @@ final class SocialStore {
 
     init() {}
 
+    // MARK: - Failures
+
+    /// The one place a failure becomes something a screen can show.
+    ///
+    /// Two things travel together: what to say, and whether offering a retry
+    /// would be honest. Set apart, `errorIsRetryable` ends up describing the
+    /// failure before last — which is how a refusal acquires a retry button.
+    private func showFailure(_ error: Error) {
+        errorMessage = error.userFacingMessage
+        errorIsRetryable = error.isRetryableFailure
+    }
+
+    /// For the few failures the store states itself rather than catching.
+    /// None of them are worth retrying by the same route.
+    private func showFailure(message: String) {
+        errorMessage = message
+        errorIsRetryable = false
+    }
+
     // MARK: - The server
 
     func connect(configuration: APIConfiguration, token: String) async {
@@ -61,7 +84,7 @@ final class SocialStore {
         let generation = UUID()
         connectionGeneration = generation
         isLoading = true
-        errorMessage = nil
+        clearError()
         defer { if connectionGeneration == generation { isLoading = false } }
 
         do {
@@ -79,7 +102,7 @@ final class SocialStore {
         } catch {
             guard connectionGeneration == generation else { return }
             repository = nil
-            errorMessage = error.userFacingMessage
+            showFailure(error)
         }
     }
 
@@ -93,7 +116,7 @@ final class SocialStore {
         isLoading = false
         isLoadingMore = false
         isPosting = false
-        errorMessage = nil
+        clearError()
         lastPosted = nil
         // Results name real people and are answered per reader — a block is
         // applied against whoever asked — so they belong to the account that
@@ -134,7 +157,7 @@ final class SocialStore {
     func refresh() async {
         guard let repository else { return }
         let generation = connectionGeneration
-        errorMessage = nil
+        clearError()
         do {
             let page = try await repository.feed()
             guard connectionGeneration == generation else { return }
@@ -143,7 +166,7 @@ final class SocialStore {
             hasReachedEnd = page.nextCursor == nil
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.userFacingMessage
+            showFailure(error)
         }
     }
 
@@ -175,7 +198,7 @@ final class SocialStore {
             hasReachedEnd = page.nextCursor == nil
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.userFacingMessage
+            showFailure(error)
         }
     }
 
@@ -191,7 +214,7 @@ final class SocialStore {
             followingByUser[userID] = values.1
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.userFacingMessage
+            showFailure(error)
         }
     }
 
@@ -221,7 +244,7 @@ final class SocialStore {
             applyToAuthor(user.id) { $0.viewerFollowsAuthor = follows }
             if let viewerID { await loadRelationships(for: viewerID) }
         } catch {
-            errorMessage = error.userFacingMessage
+            showFailure(error)
         }
     }
 
@@ -249,7 +272,7 @@ final class SocialStore {
             }
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.userFacingMessage
+            showFailure(error)
         }
     }
 
@@ -286,7 +309,7 @@ final class SocialStore {
             await NotificationScheduler.shared.setBadge(0)
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.userFacingMessage
+            showFailure(error)
         }
     }
 
@@ -301,7 +324,7 @@ final class SocialStore {
             followRequests = loaded
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.userFacingMessage
+            showFailure(error)
         }
     }
 
@@ -328,7 +351,7 @@ final class SocialStore {
             followRequests.removeAll { $0.id == request.id }
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.userFacingMessage
+            showFailure(error)
         }
     }
 
@@ -350,13 +373,13 @@ final class SocialStore {
         cookingInstructions: String = ""
     ) async -> Bool {
         guard let repository else {
-            errorMessage = "Connect to Rytivo before posting."
+            showFailure(message: "Connect to Rytivo before posting.")
             return false
         }
 
         let generation = connectionGeneration
         isPosting = true
-        errorMessage = nil
+        clearError()
         defer { if connectionGeneration == generation { isPosting = false } }
 
         do {
@@ -379,7 +402,7 @@ final class SocialStore {
             return true
         } catch {
             guard connectionGeneration == generation else { return false }
-            errorMessage = error.userFacingMessage
+            showFailure(error)
             return false
         }
     }
@@ -394,7 +417,7 @@ final class SocialStore {
                 feed.removeAll { $0.id == post.id }
             } catch {
                 guard connectionGeneration == generation else { return }
-                errorMessage = error.userFacingMessage
+                showFailure(error)
             }
         }
     }
@@ -422,7 +445,7 @@ final class SocialStore {
             applyLike(saved, originalID: originalID)
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.userFacingMessage
+            showFailure(error)
         }
     }
 
@@ -475,7 +498,7 @@ final class SocialStore {
             }
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.userFacingMessage
+            showFailure(error)
         }
     }
 
@@ -504,7 +527,7 @@ final class SocialStore {
             discoverPosts = loaded
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.userFacingMessage
+            showFailure(error)
         }
     }
 
@@ -569,7 +592,7 @@ final class SocialStore {
             searchedPosts = found.1
         } catch {
             guard connectionGeneration == generation, searchQuery == trimmed else { return }
-            errorMessage = error.userFacingMessage
+            showFailure(error)
         }
     }
 
@@ -612,7 +635,7 @@ final class SocialStore {
             authorPosts[authorID] = loaded
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.userFacingMessage
+            showFailure(error)
         }
     }
 
@@ -677,7 +700,7 @@ final class SocialStore {
             await onSavedMealsChanged?()
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.userFacingMessage
+            showFailure(error)
         }
     }
 
@@ -705,7 +728,7 @@ final class SocialStore {
                 : "Thanks. We will take a look at this post."
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.userFacingMessage
+            showFailure(error)
         }
     }
 
@@ -733,7 +756,7 @@ final class SocialStore {
                 "Blocked \(author.displayName). You will not see each other's posts."
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.userFacingMessage
+            showFailure(error)
         }
     }
 
@@ -747,7 +770,7 @@ final class SocialStore {
             return true
         } catch {
             guard connectionGeneration == generation else { return false }
-            errorMessage = error.userFacingMessage
+            showFailure(error)
             return false
         }
     }
@@ -763,7 +786,7 @@ final class SocialStore {
             blockedPeople = loaded
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.userFacingMessage
+            showFailure(error)
         }
     }
 
@@ -779,7 +802,7 @@ final class SocialStore {
             blockedPeople.removeAll { $0.id == blocked.id }
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.userFacingMessage
+            showFailure(error)
         }
     }
 
@@ -810,7 +833,7 @@ final class SocialStore {
             await onSavedWorkoutsChanged?()
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.userFacingMessage
+            showFailure(error)
         }
     }
 
@@ -853,7 +876,7 @@ final class SocialStore {
             apply(to: postID) { $0.commentCount = loaded.reduce(0) { $0 + $1.totalCount } }
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.userFacingMessage
+            showFailure(error)
         }
     }
 
@@ -877,7 +900,7 @@ final class SocialStore {
             await loadComments(for: postID)
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.userFacingMessage
+            showFailure(error)
         }
     }
 
@@ -890,7 +913,7 @@ final class SocialStore {
             await loadComments(for: comment.postID)
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.userFacingMessage
+            showFailure(error)
         }
     }
 
@@ -995,12 +1018,17 @@ final class SocialStore {
             openedPosts[id] = loaded
         } catch {
             guard connectionGeneration == generation else { return }
-            errorMessage = error.userFacingMessage
+            showFailure(error)
         }
     }
 
+    /// Dismisses whatever the last failure was.
+    ///
+    /// Clears the retry flag with it: leaving that set would put a "Try again"
+    /// button in front of the *next* failure, whatever it turned out to be.
     func clearError() {
         errorMessage = nil
+        errorIsRetryable = false
     }
 }
 
