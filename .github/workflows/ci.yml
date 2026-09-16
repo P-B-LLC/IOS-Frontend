@@ -8,11 +8,65 @@ on:
   # second copy of them that can drift away from the ones that matter.
   workflow_call:
 
+# Only the newest run for a branch matters; an older one is grading a commit
+# nobody will merge. This repository builds on macOS, where minutes bill at ten
+# times the Linux rate, so a superseded build is an expensive way to learn
+# nothing -- three pushes in ten minutes used to mean three full builds.
+#
+# Tags get their own group because github.ref differs, so a release gate can
+# never be cancelled by ordinary work on main.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Needed to diff against the previous commit below.
+          fetch-depth: 0
+
+      # A commit that only edits documentation still cost a full macOS build,
+      # billed at ten times the Linux rate. Several did exactly that today.
+      #
+      # The job still runs and still reports, rather than being filtered out
+      # by `paths-ignore`: a required status check that never reports blocks a
+      # pull request forever, which would be a worse problem than the one this
+      # solves.
+      #
+      # It defaults to building. Anything uncertain -- no base commit, a force
+      # push, a shallow history, a diff that errors -- is treated as code. A
+      # check that skips the build and reports success is exactly the failure
+      # this repository has already had once, and it must not be reachable by
+      # getting a diff wrong.
+      - name: Is there anything here but documentation?
+        id: scope
+        run: |
+          base="${{ github.event.pull_request.base.sha || github.event.before }}"
+          if [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            echo "Cannot see what changed; building."
+            echo "code=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          changed=$(git diff --name-only "$base" HEAD) || {
+            echo "Diff failed; building."
+            echo "code=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          }
+          if [ -z "$changed" ]; then
+            echo "Nothing changed; building anyway."
+            echo "code=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "$changed"
+          if printf '%s\n' "$changed" | grep -qvE '\.md$'; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Documentation only; skipping the build."
+            echo "code=false" >> "$GITHUB_OUTPUT"
+          fi
 
       # The deployment target is iOS 26.5, so this needs an Xcode 26 SDK.
       #
@@ -28,6 +82,7 @@ jobs:
       # naming what it found is repairable, "invalid developer directory" is
       # a guessing game.
       - name: Select Xcode
+        if: steps.scope.outputs.code == 'true'
         run: |
           echo "Xcodes on this image:"
           ls -d /Applications/Xcode*.app 2>/dev/null || echo "  none"
@@ -47,6 +102,7 @@ jobs:
           fi
 
       - name: Show versions
+        if: steps.scope.outputs.code == 'true'
         run: |
           xcodebuild -version
           swift --version
@@ -55,6 +111,7 @@ jobs:
       # with no certificates fails for a reason that has nothing to do with
       # the code.
       - name: Build
+        if: steps.scope.outputs.code == 'true'
         run: |
           xcodebuild \
             -project "IOS Frontend/IOS Frontend.xcodeproj" \
@@ -72,6 +129,7 @@ jobs:
       # release build died on launch. This builds Release and reads the key
       # back out, which is the only way to see that it survived the build.
       - name: A release build carries the name and server it was given
+        if: steps.scope.outputs.code == 'true'
         run: |
           xcodebuild \
             -project "IOS Frontend/IOS Frontend.xcodeproj" \
@@ -111,6 +169,7 @@ jobs:
       # app talking to a server it no longer matches -- which is how a saved
       # meal came back as a number the client had been told was a string.
       - name: Generated client matches the contract
+        if: steps.scope.outputs.code == 'true'
         run: |
           bash Scripts/generate-api-client.sh
           if ! git diff --quiet -- API/GeneratedSources; then
@@ -126,7 +185,9 @@ jobs:
       # That shipped as "Meal Not Found" over a meal that was still there,
       # and as flicker everywhere else it happened.
       - name: Decoded models have stable ids
+        if: steps.scope.outputs.code == 'true'
         run: python3 Scripts/check-stable-ids.py
 
       - name: Account safety regression tests
+        if: steps.scope.outputs.code == 'true'
         run: bash Scripts/test-account-safety.sh
