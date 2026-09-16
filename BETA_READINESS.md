@@ -149,33 +149,50 @@ Note this became possible on `repbase` only when it was made public on
 plan — the API answered *"Upgrade to GitHub Pro or make this repository
 public"* until then.
 
-### 6. Apple Developer membership — *bought 2026-09-16; account side not set up*
+### 6. Apple Developer membership — *bought and signed in 2026-09-16*
 
 **Was:** not bought, and the D-U-N-S lookup in front of it was the longest
 queue in the whole beta. That is gone.
 
-**State:** the membership exists and nothing else about it does. On the build
-Mac, checked 2026-09-16:
+**State:** bought, and the build Mac is signed in to it. From Xcode's own
+preferences on that machine, 2026-09-16: a paid team
+(`isFreeProvisioningTeam = 0`, so not a personal one), `teamType = Individual`,
+and zero provisioning profiles — consistent with nothing having been built for
+a device yet. The Team ID itself is deliberately not written down here; see
+below.
 
+**Do not check this with `security find-identity` over SSH.** It answers
+"0 valid identities found" on a machine that is signed in perfectly well,
+because the login keychain refuses to open without a GUI session —
+`SecKeychainCopySettings: User interaction is not allowed`. An earlier
+revision of this document recorded that zero as evidence the account was not
+set up. It was evidence of nothing. Xcode's preference domain is readable over
+SSH and is where the answer actually is:
+
+```bash
+defaults read com.apple.dt.Xcode IDEProvisioningTeamByIdentifier
 ```
-code-signing identities        0 valid identities found
-provisioning profiles          none
-Apple account in Xcode         none
-```
 
-So a build still cannot go on a phone, but the reason is now half an hour of
-clicking rather than five business days of waiting.
+**Do**, from [APPLE_DEVELOPER.md](APPLE_DEVELOPER.md):
 
-**Do**, from [APPLE_DEVELOPER.md](APPLE_DEVELOPER.md), steps 2 onward:
-
-- Sign Xcode on the build Mac into the account. Signing is automatic after
-  that; no certificate has to be made by hand.
 - Register the App ID `com.pbllc.rytivo` — character for character with
   `PRODUCT_BUNDLE_IDENTIFIER` — and **enable HealthKit on it**. The
   entitlements file asks for HealthKit and a device build refuses to sign
   without it. The simulator does not enforce provisioning, which is why no
   build here has ever caught this.
 - Create the App Store Connect record.
+- Then run `Scripts/archive-for-testflight.sh` with `DEVELOPMENT_TEAM` set to
+  the Team ID the command above prints. Automatic signing issues the
+  certificate on the first archive; none has to be made by hand.
+
+**Decided, and not reversible:** the enrolment is `teamType = Individual`, so
+the App Store seller name will be the individual's legal name rather than
+P&B LLC. Apple does not let this be flipped — it is an account transfer. The
+bundle identifier, the GitHub organisation and the company name all say the
+LLC, so this is worth confirming as intended *before* the App Store Connect
+record exists, because that record is where the seller becomes a published
+fact. Nothing in the legal documents names an entity either way, so nothing
+there contradicts it.
 
 **Not a thing to do:** wiring the Team ID into the project. Nothing in this
 repository stores it, deliberately — `Scripts/archive-for-testflight.sh` takes
