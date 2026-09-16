@@ -34,8 +34,12 @@ step with a queue in front of it. Everything else here takes minutes.
 
 Once the membership is active, at <https://developer.apple.com/account>:
 
-- **Team ID** — ten characters, under Membership details. Copy it; the archive
-  script needs it and nothing in the repository stores it.
+- **Team ID** — ten characters, under Membership details. It is committed in
+  `project.pbxproj` as `DEVELOPMENT_TEAM`, so Xcode keeps the team selected on
+  a fresh checkout. It is not a secret: Apple embeds it in every distributed
+  binary, so it is readable from any `.ipa`. `Scripts/archive-for-testflight.sh`
+  still takes it as an environment variable, which is what lets somebody archive
+  under a different team without editing the project.
 - **App ID** — Identifiers → +, bundle ID `com.pbllc.rytivo`. It has to match
   `PRODUCT_BUNDLE_IDENTIFIER` character for character.
 

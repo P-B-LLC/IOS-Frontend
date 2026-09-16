@@ -158,8 +158,8 @@ queue in the whole beta. That is gone.
 preferences on that machine, 2026-09-16: a paid team
 (`isFreeProvisioningTeam = 0`, so not a personal one), `teamType = Individual`,
 and zero provisioning profiles — consistent with nothing having been built for
-a device yet. The Team ID itself is deliberately not written down here; see
-below.
+a device yet. Selecting the team in Xcode wrote `DEVELOPMENT_TEAM` into
+`project.pbxproj`, which is committed.
 
 **Do not check this with `security find-identity` over SSH.** It answers
 "0 valid identities found" on a machine that is signed in perfectly well,
@@ -216,13 +216,17 @@ record exists, because that record is where the seller becomes a published
 fact. Nothing in the legal documents names an entity either way, so nothing
 there contradicts it.
 
-**Not a thing to do:** wiring the Team ID into the project. Nothing in this
-repository stores it, deliberately — `Scripts/archive-for-testflight.sh` takes
-`DEVELOPMENT_TEAM` as an environment variable and refuses to run without one.
-`DEVELOPMENT_TEAM` appearing zero times in `project.pbxproj` is the design, not
-an omission. Xcode will write a team into the project the first time somebody
-selects one for a device build; that is fine, and it is not a prerequisite for
-archiving.
+**The Team ID is committed**, in `project.pbxproj` as `DEVELOPMENT_TEAM`, put
+there by Xcode when the team was selected. An earlier revision of this document
+said the repository deliberately did not store it. That was true when nobody
+had opened the project with an account attached, and it stopped being true the
+moment somebody did — keeping it out would have meant re-selecting the team on
+every fresh checkout, to protect a value Apple embeds in every distributed
+binary and that is readable from any `.ipa`.
+
+`Scripts/archive-for-testflight.sh` still takes `DEVELOPMENT_TEAM` as an
+environment variable and refuses to run without one, which is what lets
+somebody archive under a different team without editing the project.
 
 **Worth knowing:** the build Mac is a shared hosted machine. An Apple account
 signed in there, and the signing identity it installs, live on hardware
