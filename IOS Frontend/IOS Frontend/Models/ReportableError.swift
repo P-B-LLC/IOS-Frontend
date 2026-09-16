@@ -18,6 +18,7 @@
 //
 
 import Foundation
+import RepbaseAPI
 
 extension Error {
     /// Whether this is the app cancelling its own work rather than a failure.
@@ -48,8 +49,33 @@ extension Error {
         return false
     }
 
+    /// Whether the person declined something they were asked, rather than
+    /// something failing.
+    ///
+    /// Pressing Cancel on the safety-review dialog used to produce an error
+    /// alert, which states a decision back to the person who just made it, in
+    /// the voice the app keeps for things going wrong.
+    ///
+    /// `ModerationConsent.CannotAsk` is deliberately *not* included. That one
+    /// is a fault — the question could not be put at all — and silencing it
+    /// would hide a submission that did not happen for a reason nobody chose.
+    var isDeclinedByPerson: Bool {
+        self is ModerationConsent.NotGranted
+    }
+
+    /// Whether offering a retry would be honest.
+    ///
+    /// Only an outage is. A refusal under community standards will refuse the
+    /// same content again, and a retry button in front of one invites pressing
+    /// it until it works — which it will not. The server distinguishes the two
+    /// by code and `ModerationErrorMiddleware` turns that into `isRetryable`;
+    /// this is where it stops being a property nobody reads.
+    var isRetryableFailure: Bool {
+        (self as? ModerationError)?.isRetryable ?? false
+    }
+
     /// What to show, or nil when the failure is not the user's business.
     var userFacingMessage: String? {
-        isCancellation ? nil : localizedDescription
+        (isCancellation || isDeclinedByPerson) ? nil : localizedDescription
     }
 }

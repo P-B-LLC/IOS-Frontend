@@ -213,3 +213,20 @@ jobs:
       - name: Account safety regression tests
         if: steps.scope.outputs.code == 'true'
         run: bash Scripts/test-account-safety.sh
+
+      # Legal/*.html is generated from the Swift the app renders, so the two
+      # can drift, and one of them is published. The privacy policy is what
+      # App Store Connect points at and what MODERATION_DISCLOSURE_CONFIRMED
+      # asserts is true, so a stale copy is not a formatting problem -- it is
+      # the product promising something it no longer says. Deliberately not
+      # behind the docs-only gate: the pages are documentation, and editing
+      # them by hand is one of the ways they go stale.
+      - name: Legal pages match the documents the app shows
+        run: |
+          python3 Scripts/generate-legal-pages.py
+          if ! git diff --quiet -- Legal; then
+            echo "Legal/*.html is stale. Regenerate and commit:"
+            echo "  python3 Scripts/generate-legal-pages.py"
+            git diff --stat -- Legal
+            exit 1
+          fi
