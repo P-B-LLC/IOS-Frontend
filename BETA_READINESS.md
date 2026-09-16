@@ -8,8 +8,8 @@ social likes) are implemented. See [implementation and verification notes](BETA_
 Remaining production and verification gates below are not automatically closed.
 
 What stands between today's `main` and a real person using Rytivo. Written
-2026-09-12, revised 2026-09-13 after a full audit. Covers both repositories;
-`repbase` items are marked.
+2026-09-12, revised 2026-09-13 and again 2026-09-16 after a full audit. Covers
+both repositories; `repbase` items are marked.
 
 Everything below was checked against a running build or server, not read off
 the source. Where something is inferred rather than observed, it says so.
@@ -18,10 +18,10 @@ the source. Where something is inferred rather than observed, it says so.
 
 ## Blockers
 
-A beta tester hits these on day one. Roughly in dependency order: 1 and 3 both
-need the host that 4 produces, so 4 is the one to start, and 6 is the one to
-start *today* because it is the only item with somebody else's queue in front
-of it.
+A beta tester hits these on day one. Roughly in dependency order: 1, 3 and 7
+all need the host that 4 produces, so 4 is the one to start, and 6 is the one
+to start *today* because it is the only item with somebody else's queue in
+front of it.
 
 ### 1. Give release builds a server URL
 
@@ -120,20 +120,33 @@ cannot reach it.
   on an empty database, and interrupted. Until something runs them, two tables
   that now have an expiry policy still never actually shrink.
 
-### 5. Turn on branch protection — *ruleset committed `ca93235`/`8415cf4`*
+### 5. Turn on branch protection — *done 2026-09-16*
 
-**State:** both repos run CI on every push and pull request, and nothing
-depends on the result. That is how `18487ff` — which did not compile — reached
-`main` and sat there for a week.
+**Was:** both repos ran CI on every push and pull request, and nothing depended
+on the result. That is how `18487ff` — which did not compile — reached `main`
+and sat there for a week.
 
-**Do:** Settings → Rules → Rulesets → New ruleset → **Import a ruleset**, and
-pick `.github/rulesets/protect-main.json` from that repository. Once each. The
-two files differ because the job lists do.
+Both rulesets are now imported and enforcing. Confirmed by asking GitHub what
+applies to `main` rather than by reading the create response:
 
-Be ready for what it costs: a required check cannot have passed for a commit
-that is not on GitHub yet, so direct pushes to `main` stop working and the
-flow becomes branch → push → pull request → merge. Details in
-[RELEASING.md](RELEASING.md).
+| repo | required checks | also |
+|---|---|---|
+| `repbase` | `test`, `postgres` | no deletion, no force-push |
+| `IOS-Frontend` | `build` | no deletion, no force-push |
+
+`bypass_actors` is empty in both, so the rules apply to everyone including the
+owner. The required contexts were checked against the names GitHub actually
+records on a finished run — `test`, `postgres`, `build` — because a context
+that never matches is not protection, it is a branch nobody can ever merge to.
+
+A required check cannot have passed for a commit that is not on GitHub yet, so
+**direct pushes to `main` no longer work**; the flow is branch → push → pull
+request → merge. Details in [RELEASING.md](RELEASING.md).
+
+Note this became possible on `repbase` only when it was made public on
+2026-09-16. Rulesets are not available for private repositories on the free
+plan — the API answered *"Upgrade to GitHub Pro or make this repository
+public"* until then.
 
 ### 6. Buy an Apple Developer membership
 
@@ -148,6 +161,58 @@ gates the enrolment, and it cannot be changed afterwards without transferring
 the account. Everything else on that list takes minutes, and everything the
 repository can do in advance — bundle name, entitlements, privacy manifest,
 export-compliance declaration, archive and export script — is done.
+
+### 7. Configure moderation — *repbase* — *code done, nothing configured*
+
+**State:** the code is finished and enforcing; the configuration does not
+exist, and it **blocks deployment outright**. `check --deploy` against
+`config.production` fails:
+
+```
+?: (core.E006) Production social publishing requires configured automated
+   moderation.
+   HINT: Configure MODERATION_API_KEY and enable moderation. Do not bypass
+   it to ship.
+```
+
+That is an `ERROR`, and `config.deploy` runs `check --fail-level ERROR`, so
+this is not a warning to get to later — the deploy stops here. Observed, not
+inferred: the same command passes once the four values below are set.
+
+**Do**, all on the host from item 4:
+
+- **`MODERATION_API_KEY`** — an OpenAI key, in secret storage, never in Git.
+  Without it every submission fails *closed* with 503, so an unset key is not
+  "moderation off", it is "publishing off".
+- **`MODERATION_DISCLOSURE_CONFIRMED=true`** — an operator assertion that the
+  published privacy policy says content goes to OpenAI. It does: the wording
+  is in `LegalDocuments.swift` and in `Legal/privacy.html`, and the two were
+  confirmed in sync on 2026-09-16. Set it only once that page is served from a
+  public URL.
+- **`MODERATION_CONSENT_VERSION`** — must equal the app's
+  `ModerationDisclosure.version`, today `2026-09-15`. **These two move
+  together or every submission 403s.** Bumping the server's value is how an
+  older build is cut off after the wording changes; bumping it by accident is
+  how a shipped build is cut off for nothing.
+- **A mailbox at `support@rytivo.app`** — the appeal address the refusal text
+  hands people. Shared with the item in *Should do before strangers use it*
+  below, and blocking here for the same reason: a refusal that names an
+  address nobody reads is worse than no address.
+
+`MODERATION_ENABLED` needs no attention — it defaults false for development
+and `config/production.py` forces it true, which is why nothing is checked
+against a local `runserver` no matter what else is set.
+
+**Verify** (2026-09-16, against a running server): with moderation enabled and
+the disclosure flag still false, every one of the nine moderated endpoints —
+register, profile update, profile photo, prompts, social links, gym create,
+comment create, post update, post create — answered **403
+`moderation_consent_required`** without the consent header and **503
+`moderation_unavailable`** with it. That ordering is the useful test: it
+reaches the consent gate without contacting the provider, so it can be re-run
+on any host without sending anyone's content anywhere. Anything answering 403
+*with* the header is the serializer-context bug, and it would refuse every
+real user.
 
 ---
 ## Carry these into the database move
@@ -266,7 +331,8 @@ when the host exists.
   somebody read, so until this one exists the product is *less* reachable, not
   more. Create it, confirm mail arrives, and confirm somebody is actually
   watching it before a stranger is invited in; App Review checks that a privacy
-  contact works.
+  contact works. This is also part of blocker 7 above: it is the address a
+  moderation refusal tells people to appeal to.
 - **Documentation is still long, though no longer duplicated.** The four
   write-ordering gate documents are now one [GATES.md](GATES.md), keeping what
   the code and tests cannot say — what each guarantees and what nobody has
