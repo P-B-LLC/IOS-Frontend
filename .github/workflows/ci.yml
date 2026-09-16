@@ -110,6 +110,14 @@ jobs:
       # A simulator build needs no signing, and asking for it on a runner
       # with no certificates fails for a reason that has nothing to do with
       # the code.
+      # ARCHS=arm64 below is pinned rather than load-bearing. It was added
+      # expecting to halve the build: a clean build on the development Mac
+      # compiled 778 tasks for `generic/platform=iOS Simulator` and 389 with
+      # it set, because that Mac builds every simulator architecture. The
+      # runner does not -- its image is macos-26-arm64, and it compiled 355
+      # arm64 tasks and nothing else both before and after. The measurement
+      # was real and did not transfer. It stays only so a future runner image
+      # cannot quietly start building two.
       - name: Build
         if: steps.scope.outputs.code == 'true'
         run: |
