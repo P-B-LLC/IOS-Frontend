@@ -17,6 +17,11 @@ let package = Package(
             .product(name: "RepbaseAPI", package: "RepbaseAPI"),
             .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime")
         ]),
-        .testTarget(name: "AccountSafetyTests", dependencies: ["AccountSafety"])
+        .testTarget(name: "AccountSafetyTests", dependencies: [
+            "AccountSafety",
+            // Direct, so the transport tests can reach the middlewares with
+            // @testable. They live in the API client rather than in the app.
+            .product(name: "RepbaseAPI", package: "RepbaseAPI")
+        ])
     ]
 )

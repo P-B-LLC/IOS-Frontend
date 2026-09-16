@@ -204,7 +204,7 @@ enum ModerationDisclosure {
     static let version = "2026-09-15"
 }
 
-private struct ModerationConsentMiddleware: ClientMiddleware {
+struct ModerationConsentMiddleware: ClientMiddleware {
     func intercept(
         _ request: HTTPRequest,
         body: HTTPBody?,
@@ -243,7 +243,7 @@ public struct ModerationError: LocalizedError, Sendable {
     public var isRetryable: Bool { isTemporary }
 }
 
-private struct ModerationErrorMiddleware: ClientMiddleware {
+struct ModerationErrorMiddleware: ClientMiddleware {
     private static let known: [String: Bool] = [
         "moderation_rejected": false,
         "moderation_consent_required": false,
@@ -279,7 +279,7 @@ private struct ModerationErrorMiddleware: ClientMiddleware {
     }
 }
 
-private struct ServerRefusal: Decodable {
+struct ServerRefusal: Decodable {
     let detail: String?
     let code: String?
 }

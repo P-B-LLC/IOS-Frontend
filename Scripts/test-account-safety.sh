@@ -23,6 +23,7 @@ cp "$repo/IOS Frontend/IOS Frontend/Services/PendingWorkoutSaves.swift" "$test_p
 # RepbaseTab and Weekday were lifted out of the view and the workout models --
 # a file that needs SwiftUI, or ImperialUnits, cannot be copied in here alone.
 cp "$repo/Tests/AccountSafety/NavigationRoutingTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/Tests/AccountSafety/ModerationTransportTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/IOS Frontend/IOS Frontend/Models/Weekday.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/Views/Navigation/RepbaseRoute.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/Services/ModerationConsent.swift" "$test_package/Sources/AccountSafety/"
