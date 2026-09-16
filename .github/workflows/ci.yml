@@ -119,6 +119,7 @@ jobs:
             -destination "generic/platform=iOS Simulator" \
             -derivedDataPath .build/DerivedData \
             CODE_SIGNING_ALLOWED=NO \
+            ARCHS=arm64 \
             build
 
       # A release build reads its server from REPBASE_API_URL in the bundle
@@ -138,6 +139,7 @@ jobs:
             -destination "generic/platform=iOS Simulator" \
             -derivedDataPath .build/DerivedDataRelease \
             CODE_SIGNING_ALLOWED=NO \
+            ARCHS=arm64 \
             REPBASE_API_URL="https://ci.invalid/" \
             build
           plist=".build/DerivedDataRelease/Build/Products/Release-iphonesimulator/Rytivo.app/Info.plist"
@@ -168,6 +170,18 @@ jobs:
       # API/openapi.yaml. A contract updated without regenerating leaves the
       # app talking to a server it no longer matches -- which is how a saved
       # meal came back as a number the client had been told was a string.
+      # The contract check builds swift-openapi-generator from source, which
+      # was about a minute of every run for a tool that changes only when
+      # Package.resolved does. Keyed on that file, so a dependency bump
+      # rebuilds and nothing else does.
+      - name: Cache the OpenAPI generator
+        if: steps.scope.outputs.code == 'true'
+        uses: actions/cache@v4
+        with:
+          path: .swiftpm-build
+          key: swiftpm-${{ runner.os }}-${{ hashFiles('Package.resolved', '**/Package.resolved') }}
+          restore-keys: swiftpm-${{ runner.os }}-
+
       - name: Generated client matches the contract
         if: steps.scope.outputs.code == 'true'
         run: |
