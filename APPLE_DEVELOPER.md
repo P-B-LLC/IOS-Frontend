@@ -89,10 +89,24 @@ Nothing in this list needs revisiting when the membership arrives.
 ## 5. The first upload
 
 ```bash
-DEVELOPMENT_TEAM=<ten characters> \
-REPBASE_API_URL=https://<the deployed backend>/ \
+DEVELOPMENT_TEAM=ABCDE12345 \
+REPBASE_API_URL=https://api.example.com/ \
+ALLOW_PROVISIONING_UPDATES=true \
   bash Scripts/archive-for-testflight.sh
 ```
+
+Substitute your own Team ID and host. The values above are examples rather
+than `<placeholders>` on purpose: `<` and `>` are shell redirection operators,
+so a pasted `https://<host>/` makes bash try to open a file called `host` and
+the command dies before the script starts — `bash: host: No such file or
+directory`, which says nothing about what was actually wrong. That is not
+hypothetical; it happened here on 2026-09-16.
+
+`ALLOW_PROVISIONING_UPDATES=true` is needed only the first time a machine
+signs this app, and it asks Apple to issue a distribution certificate. **Run
+it where you are willing to keep the private key** — the certificate's key
+stays in the login keychain of whichever machine asked, so a shared or hosted
+Mac is a decision, not a detail.
 
 It refuses to run without both, refuses a non-https URL, and after building it
 reads the server, the name and the build number back out of the archive before

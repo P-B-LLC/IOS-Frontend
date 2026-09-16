@@ -184,10 +184,14 @@ defaults read com.apple.dt.Xcode IDEProvisioningTeamByIdentifier
 - Then archive. **On your own Mac, not the hosted one** — see below.
 
 ```bash
-DEVELOPMENT_TEAM=<team id> REPBASE_API_URL=https://<host>/ \
+DEVELOPMENT_TEAM=ABCDE12345 REPBASE_API_URL=https://api.example.com/ \
   ALLOW_PROVISIONING_UPDATES=true \
   bash Scripts/archive-for-testflight.sh
 ```
+
+Example values, not `<placeholders>`: `<` and `>` are shell redirection
+operators, so pasting `https://<host>/` dies with `bash: host: No such file or
+directory` before the script runs at all.
 
 `ALLOW_PROVISIONING_UPDATES` is off by default and needed only the first time:
 without it xcodebuild says `No profiles for 'com.pbllc.rytivo' were found` and

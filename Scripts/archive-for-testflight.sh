@@ -158,9 +158,12 @@ echo
 echo "Exported to $output"
 ls -1 "$output"/*.ipa 2>/dev/null || true
 echo
+# Example values rather than <placeholders>: these lines get pasted, and the
+# angle brackets are shell redirection, so a pasted <the .ipa> opens a file
+# called "the" and reports nothing useful about why.
 echo "To upload, either open Transporter.app and drop the .ipa in, or:"
-echo "  xcrun altool --upload-app -f <the .ipa> -t ios \\"
-echo "    --apiKey <key id> --apiIssuer <issuer id>"
+echo "  xcrun altool --upload-app -f Rytivo.ipa -t ios \\"
+echo "    --apiKey ABCD123456 --apiIssuer 11111111-2222-3333-4444-555555555555"
 echo
 echo "The API key comes from App Store Connect -> Users and Access -> Keys."
 echo "Do not put it in this repository."
