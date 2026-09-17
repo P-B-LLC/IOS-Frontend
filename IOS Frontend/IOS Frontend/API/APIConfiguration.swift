@@ -20,9 +20,13 @@ struct APIConfiguration: Hashable, Sendable {
         // backend now runs on the DigitalOcean droplet against the hosted
         // PostgreSQL database, and the Mac holds nothing the app should read.
         //
-        // The droplet's certificate is a real Let's Encrypt one issued for the
-        // IP itself, so App Transport Security accepts this with no exception
-        // and no arbitrary-loads escape hatch.
+        // A name rather than the droplet's address, because a shipped build
+        // cannot be corrected. An installed app holds whatever origin it was
+        // built with for ever, so an IP here means a rebuilt, resized or
+        // migrated server permanently breaks every copy already on a phone;
+        // a hostname moves with one DNS record. The certificate is a real
+        // Let's Encrypt one, so App Transport Security accepts this with no
+        // exception and no arbitrary-loads escape hatch.
         //
         // To point a build somewhere else -- a dev server on this machine, or a
         // Mac's address on the network when running on a physical iPhone --
@@ -45,7 +49,7 @@ struct APIConfiguration: Hashable, Sendable {
         // resolver does not match, producing a 404 that looks like a missing
         // endpoint rather than a malformed URL.
         return APIConfiguration(
-            serverURL: URL(string: "https://157.230.188.173")!,
+            serverURL: URL(string: "https://rytivo.app")!,
             allowsInsecureLocalhost: false
         )
 #else
