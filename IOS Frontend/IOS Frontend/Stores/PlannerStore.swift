@@ -46,6 +46,16 @@ final class PlannerStore {
     private(set) var pastDue: [PlannerEntry] = []
     /// Events after today, soonest first, within `upcomingHorizonDays`.
     private(set) var upcomingEvents: [PlannerEntry] = []
+    /// Everything the phone should be able to remind about, from today forward.
+    ///
+    /// Separate from `entriesByDate` on purpose, and this is the whole point of
+    /// it. The month collection is replaced wholesale every time the calendar
+    /// is paged, so driving reminders off it meant that looking at March 2027
+    /// rebuilt the schedule out of March 2027 -- and tomorrow's reminder, which
+    /// had been pending a moment earlier, was removed and not put back. What
+    /// the user browses cannot be allowed to decide what the phone remembers,
+    /// so this is fetched against today and never against `visibleMonth`.
+    private(set) var reminderEntries: [PlannerEntry] = []
     private(set) var isLoading = false
     private(set) var isSaving = false
     private(set) var persistenceError: String?
@@ -58,6 +68,14 @@ final class PlannerStore {
     /// How far ahead "upcoming" looks. Stated rather than assumed, so the list
     /// being short means the diary is empty and not that it was truncated.
     static let upcomingHorizonDays = 60
+
+    /// How far ahead reminders are loaded.
+    ///
+    /// Comfortably past what the scheduler can actually use -- it takes the ten
+    /// soonest entries and seven days of workouts, against the 64 pending
+    /// notifications iOS allows -- so the horizon is never the reason something
+    /// went unreminded.
+    static let reminderHorizonDays = 30
 
     /// How far back "past due" looks.
     ///
@@ -124,6 +142,7 @@ final class PlannerStore {
         } catch {
             self.repository = nil
             entriesByDate = [:]
+            reminderEntries = []
             persistenceError = error.userFacingMessage
         }
     }
@@ -136,6 +155,7 @@ final class PlannerStore {
         entriesByDate = [:]
         pastDue = []
         upcomingEvents = []
+        reminderEntries = []
         persistenceError = nil
         latestCompletionEvent = nil
         isLoading = false
@@ -230,11 +250,32 @@ final class PlannerStore {
                 if !known {
                     entriesByDate[entry.date, default: []].append(entry)
                 }
+                rememberForReminders(entry)
             }
         } catch {
             guard connectionGeneration == generation else { return }
             persistenceError = "Scheduled workouts could not be added to the planner: \(error.localizedDescription)"
         }
+    }
+
+    /// Adds a newly created entry to the reminder list if it falls inside the
+    /// horizon.
+    ///
+    /// Scheduled workouts are materialised into planner tasks in the
+    /// background, so they appear without any read that would have refreshed
+    /// the reminder list. Without this, a workout planned for tomorrow was not
+    /// remindable until something else happened to trigger a reload.
+    private func rememberForReminders(_ entry: PlannerEntry) {
+        let today = Self.dateString(Calendar.current.startOfDay(for: Date()))
+        guard let last = Calendar.current.date(
+            byAdding: .day,
+            value: Self.reminderHorizonDays,
+            to: Date()
+        ) else { return }
+        // ISO-8601 day strings compare lexically, so no parsing back.
+        guard entry.date >= today, entry.date <= Self.dateString(last) else { return }
+        guard !reminderEntries.contains(where: { $0.isSameEntry(as: entry) }) else { return }
+        reminderEntries.append(entry)
     }
 
     // MARK: - Navigation
@@ -371,6 +412,7 @@ final class PlannerStore {
                 entriesByDate[entry.date]?.removeAll { $0.isSameEntry(as: entry) }
                 pastDue.removeAll { $0.isSameEntry(as: entry) }
                 upcomingEvents.removeAll { $0.isSameEntry(as: entry) }
+                reminderEntries.removeAll { $0.isSameEntry(as: entry) }
             } catch {
                 guard connectionGeneration == generation else { return }
                 persistenceError = error.userFacingMessage
@@ -443,6 +485,11 @@ final class PlannerStore {
                 byAdding: .day,
                 value: Self.upcomingHorizonDays,
                 to: today
+              ),
+              let reminderHorizon = calendar.date(
+                byAdding: .day,
+                value: Self.reminderHorizonDays,
+                to: today
               )
         else { return }
 
@@ -456,7 +503,16 @@ final class PlannerStore {
                 from: Self.dateString(tomorrow),
                 to: Self.dateString(horizon)
             )
-            let (loadedOverdue, loadedAhead) = try await (overdue, ahead)
+            // From today, not tomorrow: today's remaining tasks are the ones
+            // most worth a countdown, and `upcomingEvents` cannot stand in for
+            // this because it asks for `kind: .event` and so never returns a
+            // task at all.
+            async let remindable = repository.entries(
+                from: Self.dateString(today),
+                to: Self.dateString(reminderHorizon)
+            )
+            let (loadedOverdue, loadedAhead, loadedRemindable) =
+                try await (overdue, ahead, remindable)
             guard connectionGeneration == generation else { return }
             // High first, then oldest first. Something marked high has been
             // waiting *and* matters, and sorting by age alone filed it behind
@@ -485,6 +541,7 @@ final class PlannerStore {
             upcomingEvents = loadedAhead.sorted {
                 ($0.date, $0.time ?? "") < ($1.date, $1.time ?? "")
             }
+            reminderEntries = loadedRemindable
         } catch {
             guard connectionGeneration == generation else { return }
             persistenceError = error.userFacingMessage
@@ -517,6 +574,11 @@ final class PlannerStore {
         }
         if let index = upcomingEvents.firstIndex(where: { $0.isSameEntry(as: entry) }) {
             mutation(&upcomingEvents[index])
+        }
+        // Ticking a task off has to reach the reminder list too, or the next
+        // rebuild schedules a countdown for something already done.
+        if let index = reminderEntries.firstIndex(where: { $0.isSameEntry(as: entry) }) {
+            mutation(&reminderEntries[index])
         }
     }
 

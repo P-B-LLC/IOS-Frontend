@@ -690,7 +690,12 @@ private struct AppRootView: View {
         // waiting on the phone. Without this the reminders only caught up on
         // the next sign-in, so a task written for this evening was never
         // reminded about at all.
-        .task(id: plannerStore.entriesByDate) {
+        //
+        // Keyed on the reminder list rather than the month on screen. Keyed on
+        // the month, simply paging the calendar rebuilt the whole schedule out
+        // of whatever month was being looked at, which silently dropped
+        // tomorrow's reminders on the way past.
+        .task(id: plannerStore.reminderEntries) {
 #if DEBUG
             guard Self.isPreviewing == false else { return }
 #endif
@@ -709,7 +714,7 @@ private struct AppRootView: View {
     /// a timed workout being reminded about twice.
     private func rescheduleReminders() async {
         guard authentication.token != nil, !Task.isCancelled else { return }
-        let entries = plannerStore.entriesByDate.values.flatMap { $0 }
+        let entries = plannerStore.reminderEntries
         await NotificationScheduler.shared.reschedule(
             entries: entries,
             untimedWorkouts: entries.filter {
