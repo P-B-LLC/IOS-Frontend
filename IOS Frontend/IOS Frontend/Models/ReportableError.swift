@@ -22,6 +22,54 @@ import OpenAPIRuntime
 import RepbaseAPI
 
 extension Error {
+    /// This error with the generated client's wrapper taken off.
+    ///
+    /// `ClientError` is an envelope: it carries the operation, the request and
+    /// what actually went wrong, and everything worth deciding from lives in
+    /// that last part. Bounded, because an envelope that contained itself
+    /// would otherwise spin here forever.
+    var transportRoot: any Error {
+        var root: any Error = self
+        var depth = 0
+        while let client = root as? ClientError, depth < 8 {
+            root = client.underlyingError
+            depth += 1
+        }
+        return root
+    }
+
+    /// Whether the request failed before it ever reached Rytivo, said in
+    /// words worth reading, or nil when it is not that kind of failure.
+    ///
+    /// Only reached when the app wrapped the call, so a message the server
+    /// sent -- which repositories decode into `RepbaseAPIHTTPError` and which
+    /// is already a sentence -- passes through untouched.
+    var networkFailureMessage: String? {
+        guard self is ClientError else { return nil }
+        let nsError = transportRoot as NSError
+        guard nsError.domain == NSURLErrorDomain else { return nil }
+        switch nsError.code {
+        case NSURLErrorNotConnectedToInternet,
+             NSURLErrorNetworkConnectionLost,
+             NSURLErrorDataNotAllowed:
+            return "You appear to be offline. Check your connection and try again."
+        case NSURLErrorTimedOut:
+            return "Rytivo took too long to answer. Try again."
+        case NSURLErrorCannotFindHost,
+             NSURLErrorCannotConnectToHost,
+             NSURLErrorDNSLookupFailed:
+            return "Couldn't reach Rytivo. Try again in a moment."
+        case NSURLErrorSecureConnectionFailed,
+             NSURLErrorServerCertificateUntrusted,
+             NSURLErrorServerCertificateHasBadDate,
+             NSURLErrorServerCertificateNotYetValid,
+             NSURLErrorServerCertificateHasUnknownRoot:
+            return "Couldn't make a secure connection to Rytivo."
+        default:
+            return "Couldn't reach Rytivo. Check your connection and try again."
+        }
+    }
+
     /// Whether this is the app cancelling its own work rather than a failure.
     ///
     /// Checked at every depth: the generated client wraps what URLSession
@@ -42,14 +90,8 @@ extension Error {
         //     Client encountered an error invoking the operation
         //     "sessions_list" … underlying error: CancellationError()
         //
-        // next to a Retry button, for having navigated away. Bounded for the
-        // same reason as the loop below.
-        var root: any Error = self
-        var unwrapped = 0
-        while let client = root as? ClientError, unwrapped < 8 {
-            root = client.underlyingError
-            unwrapped += 1
-        }
+        // next to a Retry button, for having navigated away.
+        let root = transportRoot
         if root is CancellationError { return true }
 
         let nsError = root as NSError
@@ -98,7 +140,21 @@ extension Error {
     }
 
     /// What to show, or nil when the failure is not the user's business.
+    ///
+    /// `localizedDescription` was being returned for everything, and for a
+    /// `ClientError` that is written for whoever is debugging it. It names the
+    /// operation, the transport, the NSError domain and code, the full URL
+    /// twice, and the internal `LocalDataTask <720DC09A-…>` handle -- all of
+    /// it going straight onto the screen, in an app people who are not us are
+    /// meant to use. Even a phone simply being offline read as a crash report.
+    ///
+    /// So a request that never arrived is said plainly. Anything the server
+    /// actually answered still speaks for itself: those arrive as
+    /// `RepbaseAPIHTTPError`, which is a sentence already, and are not
+    /// wrapped.
     var userFacingMessage: String? {
-        (isCancellation || isDeclinedByPerson) ? nil : localizedDescription
+        if isCancellation || isDeclinedByPerson { return nil }
+        if let networkFailureMessage { return networkFailureMessage }
+        return transportRoot.localizedDescription
     }
 }
