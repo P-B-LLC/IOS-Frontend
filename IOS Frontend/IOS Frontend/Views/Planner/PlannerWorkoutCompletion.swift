@@ -15,13 +15,12 @@
 //  afterwards should not be trapped — but the consequence is on screen rather
 //  than discovered weeks later when the streak is wrong.
 //
-//  Unticking a workout that *was* trained has the same shape and the opposite
-//  cause. The checkbox owns the plan; the session owns the training, and no
-//  amount of unticking removes it. Left silent, the calendar reads "not done"
-//  while Training still shows the session, its sets and its volume — the two
-//  screens disagreeing, which is the thing this file exists to prevent. So it
-//  says what the tick can and cannot reach, and names Undo, which is the one
-//  control that removes the training itself.
+//  Unticking a workout that *was* trained is refused outright, by the server
+//  and so by every client. The session is the record; the tick is only the
+//  plan's account of it, and while they were allowed to differ the app told
+//  somebody to start a workout it was showing as finished on the next screen.
+//  So the tick gives, and this explains that rather than leaving a checkbox
+//  that looks broken, and names Undo, which is what removes the training.
 //
 
 import SwiftUI
@@ -33,9 +32,9 @@ enum PlannerWorkoutCompletion {
     ///
     /// - ticking a workout with no session behind it, which marks the plan
     ///   done while the training counts for nothing; and
-    /// - unticking one that *was* trained, where the checkbox cannot take the
-    ///   session back and pretending otherwise leaves the calendar saying one
-    ///   thing and Training another.
+    /// - unticking one that *was* trained, which the server refuses outright,
+    ///   so this is where the person finds out why and where to undo it
+    ///   properly rather than watching a checkbox refuse to move.
     ///
     /// When they agree there is nothing to say, and a question with an obvious
     /// answer is just an obstacle. Ordinary tasks never ask.
@@ -113,8 +112,13 @@ extension View {
                     onOpen(day)
                 }
             }
-            Button(pending.isComplete ? "Untick anyway" : "Just tick it off") {
-                onProceedAnyway(pending)
+            // No "untick anyway" for a trained workout. The server refuses
+            // it -- the session is the record and the tick is only the plan's
+            // account of it -- so the button would fail every time it was
+            // pressed. Undo above is the way out, and it is offered alone
+            // rather than beside something that cannot work.
+            if !pending.isComplete {
+                Button("Just tick it off") { onProceedAnyway(pending) }
             }
             Button("Cancel", role: .cancel) {}
         } message: { pending in
@@ -131,18 +135,18 @@ extension View {
         return base + " Open the workout to finish it properly."
     }
 
-    /// What unticking a trained workout does, and does not do.
+    /// Why a trained workout will not untick.
     ///
-    /// The checkbox owns the plan, not the training. Clearing it here leaves
-    /// the session, its sets and everything counted from them exactly where
-    /// they are -- so the calendar would say the day was not trained while
-    /// Training still says it was. Undo is the one thing that removes the
-    /// session, which is why it is offered first and named.
+    /// The session is the record of the training; the tick is only the plan's
+    /// account of it. They were allowed to differ, and the app ended up
+    /// telling somebody to start a workout it was simultaneously showing as
+    /// finished. So the tick gives, and this says why rather than leaving a
+    /// checkbox that appears to do nothing.
     private func untickMessage(canOpen: Bool) -> String {
-        let base = "A session was recorded for this day. Unticking it here "
-            + "clears the plan only — the session, its sets and everything "
-            + "counted from them stay."
-        guard canOpen else { return base }
+        let base = "A session was recorded for this day, so this stays done."
+        guard canOpen else {
+            return base + " Remove the session to change that."
+        }
         return base + " To remove the training itself, use Undo in Training."
     }
 }
