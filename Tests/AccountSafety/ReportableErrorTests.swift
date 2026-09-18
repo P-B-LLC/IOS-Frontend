@@ -63,3 +63,68 @@ final class ReportableErrorTests: XCTestCase {
         XCTAssertNotNil(wrapped.userFacingMessage)
     }
 }
+
+/// What a failure says to somebody who is not us.
+///
+/// `userFacingMessage` returned `localizedDescription` for everything, and a
+/// `ClientError`'s description is written for whoever is debugging it. A phone
+/// with no signal produced, on screen, in the app itself:
+///
+///     Client encountered an error invoking the operation
+///     "sessions_training_stats_retrieve", caused by "Transport threw an
+///     error.", underlying error: Error Domain=NSURLErrorDomain Code=-999
+///     … _NSURLErrorRelatedURLSessionTaskErrorKey=("LocalDataTask
+///     <720DC09A-4549-4EA0-B3C5-A95E05EC2423>.<104>") …
+///
+/// -- the operation name, both URLs, and an internal task handle. Nobody can
+/// act on any of it, and it reads as the app having crashed rather than the
+/// network being down.
+final class NetworkFailureWordingTests: XCTestCase {
+    private func clientError(_ code: Int) -> ClientError {
+        ClientError(
+            operationID: "sessions_training_stats_retrieve",
+            operationInput: "input",
+            causeDescription: "Transport threw an error.",
+            underlyingError: NSError(domain: NSURLErrorDomain, code: code)
+        )
+    }
+
+    func testBeingOfflineSaysSo() {
+        let message = clientError(NSURLErrorNotConnectedToInternet).userFacingMessage
+        XCTAssertEqual(message, "You appear to be offline. Check your connection and try again.")
+    }
+
+    func testEveryNetworkFailureIsASentence() {
+        // The specific codes matter less than the guarantee: nothing that
+        // failed in transport may reach the screen as a client dump.
+        for code in [
+            NSURLErrorTimedOut,
+            NSURLErrorCannotConnectToHost,
+            NSURLErrorDNSLookupFailed,
+            NSURLErrorSecureConnectionFailed,
+            NSURLErrorNetworkConnectionLost,
+            NSURLErrorBadServerResponse,
+            NSURLErrorUnknown,
+        ] {
+            let message = clientError(code).userFacingMessage ?? ""
+            XCTAssertFalse(message.isEmpty, "code \(code) said nothing")
+            XCTAssertFalse(
+                message.contains("Client encountered an error")
+                    || message.contains("NSURLErrorDomain")
+                    || message.contains("operationID")
+                    || message.contains("LocalDataTask"),
+                "code \(code) leaked the client's own description: \(message)"
+            )
+        }
+    }
+
+    /// The counterpart, and the more important one. Replacing what the server
+    /// said with "check your connection" would be a lie about a request that
+    /// arrived and was answered -- and would have hidden today's 400.
+    func testAMessageFromTheServerIsLeftAlone() {
+        struct ServerSaid: LocalizedError {
+            var errorDescription: String? { "Give the task a name." }
+        }
+        XCTAssertEqual(ServerSaid().userFacingMessage, "Give the task a name.")
+    }
+}
