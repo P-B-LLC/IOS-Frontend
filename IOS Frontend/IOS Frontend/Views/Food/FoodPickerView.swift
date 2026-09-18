@@ -236,7 +236,7 @@ struct FoodPickerView: View {
             on: date
         )
         guard saved else {
-            saveError = store.errorMessage ?? "Couldn't save. Your changes are still here; please try again."
+            saveError = store.errorMessage ?? SaveFailure.unexplained
             return
         }
         draftSaved = true

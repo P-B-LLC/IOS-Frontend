@@ -27,7 +27,7 @@ struct WorkoutEditorView: View {
     /// Existing workout names, passed in rather than read from the
     /// environment so previews stand alone.
     var suggestions: [WorkoutSummary] = []
-    var onSaved: ((Workout) async -> Bool)?
+    var onSaved: ((Workout) async -> String?)?
 
     @State private var isSaving = false
     @State private var saveError: String?
@@ -39,7 +39,7 @@ struct WorkoutEditorView: View {
         mode: Mode,
         suggestions: [WorkoutSummary] = [],
         recoveryContext: String = "library",
-        onSaved: ((Workout) async -> Bool)? = nil
+        onSaved: ((Workout) async -> String?)? = nil
     ) {
         self.mode = mode
         self.suggestions = suggestions
@@ -191,8 +191,8 @@ struct WorkoutEditorView: View {
         let savedDraft = draft
         Task {
             defer { isSaving = false }
-            if await onSaved(savedDraft) { draftSaved = true; dismiss() }
-            else { saveError = "Couldn't save this workout. Your changes are still here; please try again." }
+            if let problem = await onSaved(savedDraft) { saveError = problem }
+            else { draftSaved = true; dismiss() }
         }
     }
 }

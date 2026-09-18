@@ -109,14 +109,24 @@ final class PlannerStore {
     /// Why editing is off, or nil when it is available. Shown rather than
     /// leaving a dead control with no explanation.
     var editingBlockedReason: String? {
-        if repository == nil {
-            return "Not connected to Rytivo, so tasks cannot be saved yet."
-        }
+        if repository == nil { return SaveFailure.notConnected }
         if isSaving { return "Saving..." }
         return nil
     }
 
     var isEditingEnabled: Bool { editingBlockedReason == nil }
+
+    /// `nil` when it saved, and otherwise why it did not.
+    ///
+    /// An editor has the store's word for what went wrong -- a refused field,
+    /// a dropped connection -- and used to replace it with "please try again",
+    /// which is only ever right by accident. This is what an editor calls so
+    /// the reason reaches the screen; `save` keeps returning a Bool for the
+    /// callers that act on success alone.
+    func saveReportingFailure(_ draft: PlannerEntry) async -> String? {
+        await save(draft) ? nil : (persistenceError ?? SaveFailure.unexplained)
+    }
+
 
     init() {}
 
@@ -308,7 +318,23 @@ final class PlannerStore {
     // MARK: - Writing
 
     func save(_ draft: PlannerEntry) async -> Bool {
-        guard let repository, !isSaving, !isCompletionPending(draft) else { return false }
+        // Each of these used to be one arm of a single `guard ... else { return
+        // false }`. A bare false is indistinguishable from a server that said
+        // no, so the editor could only offer "please try again" -- advice that
+        // is wrong for all three of them, and that hid which one had happened
+        // from the person trying and from anyone they reported it to.
+        guard let repository else {
+            persistenceError = SaveFailure.notConnected
+            return false
+        }
+        guard !isSaving else {
+            persistenceError = SaveFailure.alreadySaving
+            return false
+        }
+        guard !isCompletionPending(draft) else {
+            persistenceError = "This task is still being ticked off. Try again in a moment."
+            return false
+        }
         let generation = connectionGeneration
         var draft = draft
         // The editor may have opened before a checkbox was confirmed elsewhere.
@@ -319,7 +345,10 @@ final class PlannerStore {
             draft.isComplete = current.isComplete
         }
         draft.title = draft.title.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !draft.title.isEmpty else { return false }
+        guard !draft.title.isEmpty else {
+            persistenceError = "A task needs a title."
+            return false
+        }
         // An event is not something to finish, so it never carries completion.
         if !draft.isCompletable { draft.isComplete = false }
         // Tasks and events draw from different halves of the category list.
