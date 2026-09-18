@@ -18,6 +18,7 @@
 //
 
 import Foundation
+import OpenAPIRuntime
 import RepbaseAPI
 
 extension Error {
@@ -29,7 +30,29 @@ extension Error {
     var isCancellation: Bool {
         if self is CancellationError { return true }
 
-        let nsError = self as NSError
+        // Unwrap the generated client's own wrapper first.
+        //
+        // The walk below follows NSUnderlyingErrorKey, which only reaches
+        // errors that are NSErrors. A Swift `CancellationError` is not one,
+        // and swift-openapi-runtime puts it in `ClientError.underlyingError`
+        // rather than in any userInfo, so cancelling a `.task` on a screen
+        // that was still loading produced an error this could not recognise
+        // and the person got the full
+        //
+        //     Client encountered an error invoking the operation
+        //     "sessions_list" … underlying error: CancellationError()
+        //
+        // next to a Retry button, for having navigated away. Bounded for the
+        // same reason as the loop below.
+        var root: any Error = self
+        var unwrapped = 0
+        while let client = root as? ClientError, unwrapped < 8 {
+            root = client.underlyingError
+            unwrapped += 1
+        }
+        if root is CancellationError { return true }
+
+        let nsError = root as NSError
         if nsError.domain == NSURLErrorDomain,
            nsError.code == NSURLErrorCancelled {
             return true

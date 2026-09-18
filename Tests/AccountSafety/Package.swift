@@ -21,7 +21,11 @@ let package = Package(
             "AccountSafety",
             // Direct, so the transport tests can reach the middlewares with
             // @testable. They live in the API client rather than in the app.
-            .product(name: "RepbaseAPI", package: "RepbaseAPI")
+            .product(name: "RepbaseAPI", package: "RepbaseAPI"),
+            // Also direct: the cancellation tests build the `ClientError` the
+            // generated client would have thrown, so they need the type
+            // rather than only the code that inspects it.
+            .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime")
         ])
     ]
 )
