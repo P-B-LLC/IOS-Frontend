@@ -629,7 +629,7 @@ struct PlannerEntryRow: View {
             entry: $confirming,
             openableDay: { PlannerWorkoutCompletion.openableDay($0, workouts: workouts) },
             onOpen: { onOpenWorkout?($0) },
-            onTickAnyway: { store.setComplete($0, true) }
+            onProceedAnyway: { store.setComplete($0, !$0.isComplete) }
         )
         // Fades and collapses when it leaves, which is what a finished overdue
         // task does once its line has been drawn.
