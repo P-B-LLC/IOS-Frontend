@@ -513,11 +513,11 @@ private struct GuidedDayFlow: View {
                     navigate(workoutRoute)
                 } label: {
                     RepbaseTonalActionLabel(
-                        title: workout == nil ? "Plan" : (activeSession == nil ? "Start" : "Continue"),
-                        systemImage: workout == nil ? "calendar.badge.plus" : "play.fill"
+                        title: workoutActionTitle,
+                        systemImage: workoutActionSymbol
                     )
                 }
-                .buttonStyle(RepbaseTonalButtonStyle(tone: .primary))
+                .buttonStyle(RepbaseTonalButtonStyle(tone: isTrained ? .sage : .primary))
             }
 
             Text(workoutDetail)
@@ -759,6 +759,33 @@ private struct GuidedDayFlow: View {
         isToday ? workouts.activeSession : nil
     }
 
+    /// Whether the day's workout has already been trained.
+    ///
+    /// The card knew only about a session *in progress*, so the moment one
+    /// finished it fell back to offering "Start" — inviting somebody to do
+    /// again the workout the very next screen was showing as done, with its
+    /// sets and its volume. The same session the planner reads; asked the
+    /// same way, so Home and the calendar cannot come to different views of
+    /// one day.
+    private var isTrained: Bool {
+        guard let workout else { return false }
+        return workouts.isCompleted(workoutName: workout.name, on: selectedDate)
+    }
+
+    /// A session already finished wins over one in progress: starting a second
+    /// one is possible, but "Start" is the wrong thing for the card to lead
+    /// with on a day that has been trained.
+    private var workoutActionTitle: String {
+        if workout == nil { return "Plan" }
+        if isTrained { return "View" }
+        return activeSession == nil ? "Start" : "Continue"
+    }
+
+    private var workoutActionSymbol: String {
+        if workout == nil { return "calendar.badge.plus" }
+        return isTrained ? "checkmark" : "play.fill"
+    }
+
     private var workoutMetadata: String {
         guard let workout else { return "Choose a plan or build something new" }
         let exercises = workout.exercises.count
@@ -769,6 +796,10 @@ private struct GuidedDayFlow: View {
         if let activeSession {
             return "Session in progress · \(activeSession.workoutName)"
         }
+        // Said before the exercise list, because "Incline Chest and 2 more"
+        // beside a Start button is what made a finished day read as an
+        // unstarted one.
+        if isTrained { return "Trained · view the session" }
         guard let workout else { return "Your training plan for this day is open" }
         if let first = workout.exercises.first {
             let remaining = max(workout.exercises.count - 1, 0)

@@ -56,6 +56,16 @@ struct DayWorkoutView: View {
 
     var body: some View {
         styledContent
+        // The bar is a safeAreaInset, so the keyboard lifts it and parks it
+        // on top of the row being typed into -- which during a session is the
+        // weight and reps of the set being logged, and its Log button. Asking
+        // for the bottom of the window while a session is open is what
+        // `hidesBottomBar` was written for; nothing had ever asked.
+        //
+        // Only while a session is live. The rest of this screen is read, and
+        // taking the navigation away from a page somebody is only looking at
+        // would cost more than it saved.
+        .hidesBottomBar(activeSession != nil)
         .task {
             // Only when nothing has been read yet. The dashboard loads the
             // same history, so arriving from the workouts page already has it,
