@@ -108,7 +108,7 @@ struct DayWorkoutView: View {
                 suggestions: store.knownWorkouts,
                 recoveryContext: WorkoutStore.dateString(store.workoutDate(for: day))
             ) { savedWorkout in
-                await store.saveWorkout(savedWorkout, on: day)
+                await store.saveWorkoutReportingFailure(savedWorkout, on: day)
             }
         }
         .fullScreenCover(item: $sharedWorkout) { shared in

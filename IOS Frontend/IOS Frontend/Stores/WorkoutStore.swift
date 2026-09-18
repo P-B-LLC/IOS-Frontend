@@ -521,7 +521,14 @@ final class WorkoutStore {
     /// rather than closing as though it had worked.
     @discardableResult
     func scheduleKnownWorkout(_ summary: WorkoutSummary, on date: Date) async -> Bool {
-        guard let repository, !isSaving else { return false }
+        guard let repository else {
+            persistenceError = SaveFailure.notConnected
+            return false
+        }
+        guard !isSaving else {
+            persistenceError = SaveFailure.alreadySaving
+            return false
+        }
         let generation = connectionGeneration
         isSaving = true
         persistenceError = nil
@@ -567,7 +574,14 @@ final class WorkoutStore {
     /// else. A name already in use resolves to that workout rather than a
     /// second copy of it.
     func createTemplate(_ workout: Workout) async -> Int? {
-        guard let repository, !isSaving else { return nil }
+        guard let repository else {
+            persistenceError = SaveFailure.notConnected
+            return nil
+        }
+        guard !isSaving else {
+            persistenceError = SaveFailure.alreadySaving
+            return nil
+        }
         let generation = connectionGeneration
         isSaving = true
         persistenceError = nil
@@ -591,8 +605,21 @@ final class WorkoutStore {
         }
     }
 
+    /// `nil` when it saved, and otherwise why it did not, for the editor to
+    /// show instead of a sentence it made up. See `PlannerStore`'s equivalent.
+    func saveWorkoutReportingFailure(_ workout: Workout, on day: Weekday) async -> String? {
+        await saveWorkout(workout, on: day) ? nil : (persistenceError ?? SaveFailure.unexplained)
+    }
+
     func saveWorkout(_ workout: Workout, on day: Weekday) async -> Bool {
-        guard let repository, !isSaving else { return false }
+        guard let repository else {
+            persistenceError = SaveFailure.notConnected
+            return false
+        }
+        guard !isSaving else {
+            persistenceError = SaveFailure.alreadySaving
+            return false
+        }
         let generation = connectionGeneration
         // Only an edit of a workout already on this day replaces it; anything
         // else is scheduled alongside whatever is already planned.

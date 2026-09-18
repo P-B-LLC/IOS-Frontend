@@ -363,8 +363,20 @@ final class FoodTrackingStore {
         on date: Date,
         celebrates: Bool = true
     ) async -> Bool {
-        guard let repository, !isSaving,
-              let serverID = mealServerID(mealID, on: date) else { return false }
+        guard let repository else {
+            errorMessage = SaveFailure.notConnected
+            return false
+        }
+        guard !isSaving else {
+            errorMessage = SaveFailure.alreadySaving
+            return false
+        }
+        // The meal has no server id yet, so there is nothing to attach food to.
+        // Naming it beats "please try again", which never fixes this one.
+        guard let serverID = mealServerID(mealID, on: date) else {
+            errorMessage = "That meal hasn't finished being created yet. Try again in a moment."
+            return false
+        }
         let generation = connectionGeneration
         let before = total(on: date)
         let beforeMealCount = loggedMealCount(on: date)
@@ -417,7 +429,14 @@ final class FoodTrackingStore {
     // MARK: - Recipes
 
     func saveReusableMeal(_ savedMeal: SavedFoodMeal) async -> Bool {
-        guard let repository, !isSaving else { return false }
+        guard let repository else {
+            errorMessage = SaveFailure.notConnected
+            return false
+        }
+        guard !isSaving else {
+            errorMessage = SaveFailure.alreadySaving
+            return false
+        }
         let generation = connectionGeneration
         isSaving = true
         errorMessage = nil
@@ -674,7 +693,14 @@ final class FoodTrackingStore {
     // MARK: - Goals
 
     func updateGoals(_ goals: NutritionGoals) async -> Bool {
-        guard let repository, !isSaving else { return false }
+        guard let repository else {
+            errorMessage = SaveFailure.notConnected
+            return false
+        }
+        guard !isSaving else {
+            errorMessage = SaveFailure.alreadySaving
+            return false
+        }
         let generation = connectionGeneration
         isSaving = true
         errorMessage = nil

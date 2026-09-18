@@ -27,7 +27,10 @@ struct PlannerEntryEditorView: View {
     /// Workouts the user already has, passed in rather than read from the
     /// environment so previews stand alone.
     var workouts: [WorkoutSummary] = []
-    var onSaved: ((PlannerEntry) async -> Bool)?
+    /// `nil` when the entry saved, and otherwise the reason to put on screen.
+    /// It returned a Bool until a save started failing in the field and the
+    /// only thing anyone could report was the sentence this view had made up.
+    var onSaved: ((PlannerEntry) async -> String?)?
     var onDeleted: ((PlannerEntry) -> Void)?
 
     @Environment(\.dismiss) private var dismiss
@@ -55,7 +58,7 @@ struct PlannerEntryEditorView: View {
     init(
         mode: Mode,
         workouts: [WorkoutSummary] = [],
-        onSaved: ((PlannerEntry) async -> Bool)? = nil,
+        onSaved: ((PlannerEntry) async -> String?)? = nil,
         onDeleted: ((PlannerEntry) -> Void)? = nil
     ) {
         self.mode = mode
@@ -399,8 +402,8 @@ struct PlannerEntryEditorView: View {
         saveError = nil
         Task {
             defer { isSaving = false }
-            if await onSaved(saved) { draftSaved = true; dismiss() }
-            else { saveError = "Couldn't save. Your changes are still here; please try again." }
+            if let problem = await onSaved(saved) { saveError = problem }
+            else { draftSaved = true; dismiss() }
         }
     }
 

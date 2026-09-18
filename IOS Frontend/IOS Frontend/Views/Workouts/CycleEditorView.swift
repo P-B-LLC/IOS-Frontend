@@ -280,13 +280,20 @@ struct CycleEditorView: View {
     /// The workout has to exist on the server before a slot can name it, and
     /// the id it gets back is the only thing that identifies it — so the day
     /// stays on rest if the save fails, rather than pointing at nothing.
-    private func assign(_ built: Workout, at position: Int) async -> Bool {
-        guard let id = await workoutStore.createTemplate(built) else { return false }
-        guard let index = draft.slots.firstIndex(where: { $0.position == position })
-        else { return false }
+    /// `nil` when the built workout took the slot, and otherwise why it did
+    /// not -- the editor shows this rather than inventing a reason.
+    private func assign(_ built: Workout, at position: Int) async -> String? {
+        guard let id = await workoutStore.createTemplate(built) else {
+            return workoutStore.persistenceError ?? SaveFailure.unexplained
+        }
+        // The rotation changed under the editor, so there is no longer a slot
+        // to put this in. The workout itself was created and is not lost.
+        guard let index = draft.slots.firstIndex(where: { $0.position == position }) else {
+            return "Day \(position) is no longer part of this rotation. The workout was saved and is in your list."
+        }
         draft.slots[index].workoutID = id
         draft.slots[index].workoutName = built.name
-        return true
+        return nil
     }
 
     private func clear(at position: Int) {
