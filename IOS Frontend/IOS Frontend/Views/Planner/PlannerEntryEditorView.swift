@@ -514,6 +514,17 @@ struct PlannerEntryEditorView: View {
         stepDraft = ""
     }
 
+    /// The steps to save, including one still being typed.
+    ///
+    /// A step only joined the list when Add was pressed, so typing one and
+    /// going straight to Save threw it away without saying so. Text somebody
+    /// wrote in a box is text they meant, and a field is not a commitment
+    /// ceremony.
+    private var stepsToSave: [String] {
+        let pending = stepDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        return pending.isEmpty ? newSteps : newSteps + [pending]
+    }
+
     /// How often a task comes back.
     ///
     /// Offered on creation only. Changing the rule behind days already written
@@ -668,7 +679,7 @@ struct PlannerEntryEditorView: View {
         saveError = nil
         Task {
             defer { isSaving = false }
-            if let problem = await onSaved(saved, newSteps) { saveError = problem }
+            if let problem = await onSaved(saved, stepsToSave) { saveError = problem }
             else { draftSaved = true; dismiss() }
         }
     }
