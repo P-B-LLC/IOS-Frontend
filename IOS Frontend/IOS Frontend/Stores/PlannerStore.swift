@@ -425,6 +425,85 @@ final class PlannerStore {
         if accepted { persistenceError = nil }
     }
 
+    // MARK: - Steps
+    //
+    // Each of these answers nil when it worked and the reason when it did not,
+    // which is how every other save in this store reports itself now. A caller
+    // shows what came back rather than inventing "please try again".
+    //
+    // All three take the server's copy of the *parent* back. A task with steps
+    // does not own its completion -- the server derives it from them -- so
+    // ticking a step can finish or reopen the heading above it, and guessing
+    // locally would put the two back into disagreement.
+
+    func addSubtask(to entry: PlannerEntry, title: String) async -> String? {
+        guard let repository else { return SaveFailure.notConnected }
+        guard let parentID = entry.serverID else {
+            return "This task has not finished saving yet."
+        }
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return "Give the step a name." }
+
+        let generation = connectionGeneration
+        do {
+            let fresh = try await repository.addSubtask(
+                toParent: parentID, title: trimmed, on: entry.date
+            )
+            guard connectionGeneration == generation else { return nil }
+            applyServerCopy(fresh, to: entry)
+            persistenceError = nil
+            return nil
+        } catch {
+            return error.userFacingMessage ?? SaveFailure.unexplained
+        }
+    }
+
+    func setSubtaskComplete(
+        _ subtask: PlannerSubtask,
+        in entry: PlannerEntry,
+        _ isComplete: Bool
+    ) async -> String? {
+        guard let repository else { return SaveFailure.notConnected }
+        guard let parentID = entry.serverID else { return SaveFailure.unexplained }
+
+        let generation = connectionGeneration
+        do {
+            let fresh = try await repository.setSubtaskComplete(
+                subtask, isComplete, parentID: parentID
+            )
+            guard connectionGeneration == generation else { return nil }
+            withAnimation(.easeOut(duration: 0.25)) {
+                applyServerCopy(fresh, to: entry)
+            }
+            persistenceError = nil
+            return nil
+        } catch {
+            return error.userFacingMessage ?? SaveFailure.unexplained
+        }
+    }
+
+    func deleteSubtask(_ subtask: PlannerSubtask, in entry: PlannerEntry) async -> String? {
+        guard let repository else { return SaveFailure.notConnected }
+        guard let parentID = entry.serverID else { return SaveFailure.unexplained }
+
+        let generation = connectionGeneration
+        do {
+            let fresh = try await repository.deleteSubtask(subtask, parentID: parentID)
+            guard connectionGeneration == generation else { return nil }
+            applyServerCopy(fresh, to: entry)
+            persistenceError = nil
+            return nil
+        } catch {
+            return error.userFacingMessage ?? SaveFailure.unexplained
+        }
+    }
+
+    /// Take the server's copy of a row, keeping the local identity the lists
+    /// already know it by -- the same reason `identified(as:)` exists.
+    private func applyServerCopy(_ fresh: PlannerEntry, to entry: PlannerEntry) {
+        apply(to: entry) { $0 = fresh.identified(as: $0.id) }
+    }
+
     func delete(_ entry: PlannerEntry) {
         guard let repository, !isSaving, !isCompletionPending(entry) else { return }
         let generation = connectionGeneration

@@ -126,7 +126,8 @@ actor PlannerAPIRepository {
                     durationMinutes: draft.durationMinutes,
                     isComplete: draft.isCompletable ? draft.isComplete : nil,
                     workout: draft.workoutID,
-                    notes: draft.notes
+                    notes: draft.notes,
+                    parent: draft.parentID
                 )
             )
         )
@@ -211,6 +212,80 @@ actor PlannerAPIRepository {
         }
     }
 
+    // MARK: - Steps
+    //
+    // A step is an ordinary planner row with a parent, so these are the same
+    // three calls by server id. They are separate because the day holds steps
+    // as `PlannerSubtask` rather than as whole entries — the server nests them
+    // and leaves them out of the list, so the app never has a full row for one.
+    //
+    // Each answers with the *parent*, because the parent's own completion is
+    // derived from its steps and changing one can finish or reopen it. Taking
+    // the server's copy is what keeps the heading honest.
+
+    func addSubtask(toParent parentID: Int, title: String, on date: String) async throws -> PlannerEntry {
+        let output = try await client.plannerCreate(
+            headers: .init(idempotencyKey: UUID().uuidString),
+            body: .json(
+                Components.Schemas.PlannerEntryRequest(
+                    kind: Self.kindPayload(.task),
+                    title: title,
+                    category: Self.categoryPayload(.other),
+                    priority: Self.priorityPayload(.normal),
+                    // The server overwrites this with the parent's day; the
+                    // contract requires it regardless.
+                    scheduledDate: date,
+                    parent: parentID
+                )
+            )
+        )
+        switch output {
+        case .created:
+            return try await entry(withServerID: parentID)
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    func setSubtaskComplete(
+        _ subtask: PlannerSubtask,
+        _ isComplete: Bool,
+        parentID: Int
+    ) async throws -> PlannerEntry {
+        let output = try await client.plannerPartialUpdate(
+            path: .init(id: subtask.serverID),
+            body: .json(
+                Components.Schemas.PatchedPlannerEntryRequest(isComplete: isComplete)
+            )
+        )
+        switch output {
+        case .ok:
+            return try await entry(withServerID: parentID)
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    func deleteSubtask(_ subtask: PlannerSubtask, parentID: Int) async throws -> PlannerEntry {
+        let output = try await client.plannerDestroy(path: .init(id: subtask.serverID))
+        switch output {
+        case .noContent:
+            return try await entry(withServerID: parentID)
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    private func entry(withServerID serverID: Int) async throws -> PlannerEntry {
+        let output = try await client.plannerRetrieve(path: .init(id: serverID))
+        switch output {
+        case .ok(let response):
+            return Self.entry(from: try response.body.json)
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
     func delete(_ entry: PlannerEntry) async throws {
         guard let serverID = entry.serverID else {
             throw APIServiceError.missingServerIdentifier("Planner entry")
@@ -247,7 +322,20 @@ actor PlannerAPIRepository {
             isComplete: payload.isComplete ?? false,
             workoutID: payload.workout,
             workoutName: payload.workoutName,
-            notes: payload.notes ?? ""
+            notes: payload.notes ?? "",
+            parentID: payload.parent,
+            subtasks: payload.subtasks.map(subtask(from:))
+        )
+    }
+
+    private static func subtask(
+        from payload: Components.Schemas.PlannerSubtask
+    ) -> PlannerSubtask {
+        PlannerSubtask(
+            id: .stable(forServerID: payload.id),
+            serverID: payload.id,
+            title: payload.title,
+            isComplete: payload.isComplete
         )
     }
 

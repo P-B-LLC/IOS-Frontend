@@ -527,7 +527,16 @@ struct SocialProfileView: View {
                         )
                     }
                 }
-                .padding(.horizontal, 15)
+                // Full width, as the feed draws the same card.
+                //
+                // PostCard carries its own 16pt and ends in a Divider: it is
+                // built to be a row of a list, and the feed gives it no
+                // horizontal padding at all. Here it was getting the page
+                // inset and another 15 on top, so the same post sat 49pt in
+                // from each edge instead of 16 — a fifth of the screen spent
+                // on margin, and a photo noticeably smaller than the identical
+                // one in the feed.
+                .padding(.horizontal, -RepbaseDesign.pageInset)
             } else if isLoading {
                 ProgressView()
                     .frame(maxWidth: .infinity)
