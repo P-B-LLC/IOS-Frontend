@@ -2154,8 +2154,14 @@ extension APIProtocol {
     ///
     /// - Remark: HTTP `DELETE /api/v1/planner/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/planner/{id}//delete(planner_destroy)`.
-    public func plannerDestroy(path: Operations.PlannerDestroy.Input.Path) async throws -> Operations.PlannerDestroy.Output {
-        try await plannerDestroy(Operations.PlannerDestroy.Input(path: path))
+    public func plannerDestroy(
+        path: Operations.PlannerDestroy.Input.Path,
+        query: Operations.PlannerDestroy.Input.Query = .init()
+    ) async throws -> Operations.PlannerDestroy.Output {
+        try await plannerDestroy(Operations.PlannerDestroy.Input(
+            path: path,
+            query: query
+        ))
     }
     /// - Remark: HTTP `GET /api/v1/progress/exercises/{exercise_id}/`.
     /// - Remark: Generated from `#/paths//api/v1/progress/exercises/{exercise_id}//get(progress_exercises_list)`.
@@ -21346,6 +21352,10 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/planner/GET/query/end`.
                 public var end: Swift.String?
+                /// Include steps as rows of the list in their own right.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/planner/GET/query/include_subtasks`.
+                public var includeSubtasks: Swift.Bool?
                 /// Return only finished tasks, or only unfinished ones. Events are never complete, so this excludes them when true.
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/planner/GET/query/is_complete`.
@@ -21363,6 +21373,10 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/planner/GET/query/page`.
                 public var page: Swift.Int?
+                /// Return the steps of this task. Omitted, the list carries headings only: a step is drawn under its parent, and one listed beside it would be counted twice.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/planner/GET/query/parent`.
+                public var parent: Swift.Int?
                 /// Return only entries on or after this date.
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/planner/GET/query/start`.
@@ -21372,23 +21386,29 @@ public enum Operations {
                 /// - Parameters:
                 ///   - category: Return only entries in this category.
                 ///   - end: Return only entries on or before this date.
+                ///   - includeSubtasks: Include steps as rows of the list in their own right.
                 ///   - isComplete: Return only finished tasks, or only unfinished ones. Events are never complete, so this excludes them when true.
                 ///   - kind: Return only tasks, or only events.
                 ///   - page: A page number within the paginated result set.
+                ///   - parent: Return the steps of this task. Omitted, the list carries headings only: a step is drawn under its parent, and one listed beside it would be counted twice.
                 ///   - start: Return only entries on or after this date.
                 public init(
                     category: Operations.PlannerList.Input.Query.CategoryPayload? = nil,
                     end: Swift.String? = nil,
+                    includeSubtasks: Swift.Bool? = nil,
                     isComplete: Swift.Bool? = nil,
                     kind: Operations.PlannerList.Input.Query.KindPayload? = nil,
                     page: Swift.Int? = nil,
+                    parent: Swift.Int? = nil,
                     start: Swift.String? = nil
                 ) {
                     self.category = category
                     self.end = end
+                    self.includeSubtasks = includeSubtasks
                     self.isComplete = isComplete
                     self.kind = kind
                     self.page = page
+                    self.parent = parent
                     self.start = start
                 }
             }
@@ -22076,12 +22096,36 @@ public enum Operations {
                 }
             }
             public var path: Operations.PlannerDestroy.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/planner/{id}/DELETE/query`.
+            public struct Query: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/planner/{id}/DELETE/query/scope`.
+                @frozen public enum ScopePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case following = "following"
+                }
+                /// `following` ends a repeating task from this day on, clearing the unfinished days after it. Omitted, only this day is removed -- a delete that quietly took a year of tasks with it is the worst kind of surprise, so the wider act has to be asked for. Days already ticked off are kept either way: ending a habit is not saying it never happened.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/planner/{id}/DELETE/query/scope`.
+                public var scope: Operations.PlannerDestroy.Input.Query.ScopePayload?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - scope: `following` ends a repeating task from this day on, clearing the unfinished days after it. Omitted, only this day is removed -- a delete that quietly took a year of tasks with it is the worst kind of surprise, so the wider act has to be asked for. Days already ticked off are kept either way: ending a habit is not saying it never happened.
+                public init(scope: Operations.PlannerDestroy.Input.Query.ScopePayload? = nil) {
+                    self.scope = scope
+                }
+            }
+            public var query: Operations.PlannerDestroy.Input.Query
             /// Creates a new `Input`.
             ///
             /// - Parameters:
             ///   - path:
-            public init(path: Operations.PlannerDestroy.Input.Path) {
+            ///   - query:
+            public init(
+                path: Operations.PlannerDestroy.Input.Path,
+                query: Operations.PlannerDestroy.Input.Query = .init()
+            ) {
                 self.path = path
+                self.query = query
             }
         }
         @frozen public enum Output: Sendable, Hashable {
