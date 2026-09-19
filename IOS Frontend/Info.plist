@@ -2,6 +2,11 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <key>CFBundleURLTypes</key>
+    <array><dict>
+        <key>CFBundleURLName</key><string>com.pbllc.rytivo.widgets</string>
+        <key>CFBundleURLSchemes</key><array><string>rytivo</string></array>
+    </dict></array>
 	<!--
 	  Export compliance. Without this key every single TestFlight and App
 	  Store upload stops and asks the same question by hand before the build
@@ -10,7 +15,7 @@
 	  false is the answer because the only cryptography here is the system's:
 	  HTTPS through URLSession, and the Keychain holding the session token.
 	  Apple exempts both. It would have to become true if the app ever did
-	  its own encryption -- shipped its own algorithm, or encrypted files
+	  its own encryption: shipped its own algorithm, or encrypted files
 	  itself before storing or sending them.
 
 	  This is a declaration to a regulator, not a build setting. Re-read it
@@ -25,7 +30,7 @@
 
 	    - written in this file, it loses the merge. Xcode's generated plist
 	      carries CFBundleName = $(PRODUCT_NAME) and overwrites the value.
-	    - written as INFOPLIST_KEY_CFBundleName, it is silently dropped --
+	    - written as INFOPLIST_KEY_CFBundleName, it is silently dropped;
 	      the same trap that made every release build die on launch, because
 	      INFOPLIST_KEY_ only works for the keys Xcode knows, and it does not
 	      know that one.

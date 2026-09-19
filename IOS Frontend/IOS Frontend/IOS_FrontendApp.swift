@@ -176,6 +176,8 @@ struct IOS_FrontendApp: App {
 
 private struct AppRootView: View {
     @Environment(\.scenePhase) private var scenePhase
+    @State private var widgetSessionToken: String?
+    @AppStorage("widgets.pendingDestination") private var widgetDestination = ""
 #if DEBUG
     /// Whether the app was launched to look at one page with sample data,
     /// rather than as the real signed-in app.
@@ -577,9 +579,18 @@ private struct AppRootView: View {
         }
         .font(.community(.body))
         .repbaseCelebrationOverlay()
+        .onOpenURL { url in
+            guard url.scheme == "rytivo", url.host == "widget",
+                  ["day", "workout", "food", "planner"].contains(url.lastPathComponent) else { return }
+            widgetDestination = url.lastPathComponent
+        }
+        .onChange(of: widgetSnapshot) { _, snapshot in
+            if let snapshot { WidgetPublisher.publish(snapshot) }
+        }
         .onChange(of: scenePhase) { _, phase in
             if phase != .active { workoutStore.checkpointActiveSession() }
             if phase == .active {
+                if let snapshot = widgetSnapshot { WidgetPublisher.publish(snapshot) }
                 Task { await workoutStore.retryPendingWorkoutSaves() }
             }
         }
@@ -611,6 +622,8 @@ private struct AppRootView: View {
             guard case .signedIn(let user) = authentication.phase else { return }
             EditorDraftRecovery.shared.scope = .init(ownerID: user.id, origin: authentication.configuration.serverURL.absoluteString)
             NotificationScheduler.shared.setAccount(user.id)
+            widgetSessionToken = nil
+            WidgetPublisher.clear()
             await socialProfileStore.connect(
                 configuration: authentication.configuration,
                 token: token
@@ -670,6 +683,7 @@ private struct AppRootView: View {
             guard authentication.token == token, !Task.isCancelled else { return }
             await plannerStore.syncScheduledWorkouts(workoutStore.currentWeekWorkouts)
             guard authentication.token == token, !Task.isCancelled else { return }
+            widgetSessionToken = token
             await rescheduleReminders()
             // So the icon is right from launch rather than only after the
             // Social tab has been opened once.
@@ -724,6 +738,8 @@ private struct AppRootView: View {
     }
 
     private func clearAccountState() {
+        widgetSessionToken = nil
+        WidgetPublisher.clear()
         EditorDraftRecovery.shared.scope = nil
         NotificationScheduler.shared.setAccount(nil)
         workoutStore.disconnect()
@@ -735,6 +751,33 @@ private struct AppRootView: View {
         cycleStore.disconnect()
         foodTrackingStore.reset()
         RemoteImageCache.shared.clear()
+    }
+
+    private var widgetSnapshot: WidgetSnapshot? {
+        guard let token = authentication.token, widgetSessionToken == token,
+              case .signedIn = authentication.phase,
+              !plannerStore.isSaving, !foodTrackingStore.isSaving else { return nil }
+        let now = Date()
+        let entries = plannerStore.entriesByDate[PlannerStore.dateString(now)]
+        guard !(entries ?? []).contains(where: { plannerStore.isCompletionPending($0) }) else { return nil }
+        let total = foodTrackingStore.total(on: now)
+        let goals = foodTrackingStore.goals
+        let foodLoaded = foodTrackingStore.days[foodTrackingStore.dateKey(for: now)] != nil
+        return WidgetSnapshot(
+            updatedAt: Calendar.current.startOfDay(for: now),
+            day: WidgetSnapshot.dayKey(now),
+            tasks: entries?.map {
+                .init(title: $0.title, complete: $0.isComplete, workout: $0.workoutID != nil,
+                      completable: $0.isCompletable, stepsDone: $0.completedSubtaskCount,
+                      stepsTotal: $0.subtasks.count)
+            },
+            nutrition: foodLoaded ? .init(
+                calories: total.calories, calorieGoal: goals.calories,
+                protein: total.proteinGrams, proteinGoal: goals.proteinGrams,
+                carbs: total.carbohydrateGrams, carbsGoal: goals.carbohydrateGrams,
+                fat: total.fatGrams, fatGoal: goals.fatGrams
+            ) : nil
+        )
     }
 
     @ViewBuilder

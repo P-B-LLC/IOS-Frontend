@@ -103,6 +103,7 @@ private struct MinimizesBottomBarOnScroll: ViewModifier {
 /// took a trip back through it. Each tab keeps its own navigation stack, so
 /// coming back to one returns to where it was left.
 struct RepbaseRootView: View {
+    @AppStorage("widgets.pendingDestination") private var widgetDestination = ""
     @State private var tab: RepbaseTab
     /// Which half of the Training tab is showing, and how deep into it we
     /// are. Both live here because Home sends people there: opening Food or
@@ -170,6 +171,19 @@ struct RepbaseRootView: View {
                 .tag(RepbaseTab.account)
         }
         .environment(chrome)
+        .onChange(of: widgetDestination, initial: true) { _, destination in
+            guard !destination.isEmpty else { return }
+            switch destination {
+            case "food", "workout":
+                trainingPath = NavigationPath()
+                trainingHalf = destination == "food" ? .food : .workouts
+                tab = .training
+            case "planner": tab = .planner
+            case "day": tab = .home
+            default: break
+            }
+            widgetDestination = ""
+        }
         // Which tab a destination selects, which half it shows and whether it
         // clears the stack first is worked out by RepbaseRoute, and tested
         // there. This applies the answer and owns the state; it decides

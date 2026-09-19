@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <key>com.apple.security.application-groups</key>
+    <array><string>group.com.pbllc.rytivo</string></array>
 	<!--
 	  HealthKit. Reading only: Rytivo never writes to Health.
 
@@ -10,7 +12,7 @@
 	  and com.pbllc.rytivo is registered with HealthKit enabled.
 
 	  A device build still refuses, for a reason that has nothing to do with
-	  HealthKit -- the team has no registered devices, so Xcode's automatic
+	  HealthKit: the team has no registered devices, so Xcode's automatic
 	  signing cannot create the development provisioning profile it wants:
 
 	      Communication with Apple failed
@@ -20,10 +22,10 @@
 	  all, because App Store distribution profiles carry no device list.
 
 	  None of this touches the simulator, which does not enforce provisioning
-	  -- which is why every build in CI passes without any of it existing.
+	  (which is why every build in CI passes without any of it existing).
 
 	  The access array is deliberately empty. It is where clinical health
-	  records would be requested, and this app reads steps and workouts only --
+	  records would be requested, and this app reads steps and workouts only;
 	  so "Clinical Health Records" must stay switched off on the App ID too, or
 	  the entitlements and the App ID would disagree about what is being asked
 	  for.

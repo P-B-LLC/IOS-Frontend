@@ -9,6 +9,8 @@ cp "$repo/Tests/AccountSafety/AuthenticationSafetyTests.swift" "$test_package/Te
 cp "$repo/Tests/AccountSafety/WorkoutRecoveryTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/Tests/AccountSafety/EditorDraftRecoveryTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/Tests/AccountSafety/PlannerCompletionTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/Tests/AccountSafety/WidgetSnapshotTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/IOS Frontend/IOS Frontend/Models/WidgetSnapshot.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/Tests/AccountSafety/SocialLikeTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/Tests/AccountSafety/FoodDaySyncTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/IOS Frontend/IOS Frontend/Services/FoodDaySyncCoordinator.swift" "$test_package/Sources/AccountSafety/"
