@@ -64,6 +64,27 @@ struct PlannerEntryEditorView: View {
     @State private var repeatDays = 0
     @State private var repeatHasEnd = false
     @State private var repeatEnds = Date()
+    /// Sentinel for "a number I will type", kept out of the range of real
+    /// intervals so it can never be mistaken for one.
+    private let customRepeatTag = -1
+    @State private var customRepeatDays = 4
+
+    /// How often the task actually repeats, whichever way it was chosen.
+    private var repeatInterval: Int {
+        repeatDays == customRepeatTag ? customRepeatDays : repeatDays
+    }
+
+    /// Matches the server's bounds, which is what actually refuses anything
+    /// outside them.
+    private var isCustomRepeatValid: Bool {
+        (1...365).contains(customRepeatDays)
+    }
+
+    /// The soonest a repeat may end: the day after it starts. A repeat that
+    /// ends on the day it begins covers nothing.
+    private var earliestEnd: Date {
+        Calendar.current.date(byAdding: .day, value: 1, to: date) ?? date
+    }
 
     init(
         mode: Mode,
@@ -483,20 +504,58 @@ struct PlannerEntryEditorView: View {
                 Text("Every 3 days").tag(3)
                 Text("Every week").tag(7)
                 Text("Every 2 weeks").tag(14)
+                // The menu covers the common answers; this is for the ones it
+                // does not. Every four days is a real interval and a fixed
+                // list has no room for it.
+                Text("Every…").tag(customRepeatTag)
             }
             .pickerStyle(.menu)
             .tint(timeOfDay.accent)
+
+            if repeatDays == customRepeatTag {
+                HStack(spacing: 8) {
+                    Text("Every")
+                        .font(.community(.subheadline))
+                    TextField("", value: $customRepeatDays, format: .number)
+                        .font(.community(.subheadline, weight: .semibold))
+                        .keyboardType(.numberPad)
+                        .multilineTextAlignment(.center)
+                        .frame(width: 58)
+                        .padding(.vertical, 7)
+                        .repbaseInsetSurface()
+                    Text(customRepeatDays == 1 ? "day" : "days")
+                        .font(.community(.subheadline))
+                }
+
+                if !isCustomRepeatValid {
+                    Text("Between 1 and 365 days.")
+                        .font(.community(.footnote, weight: .semibold))
+                        .foregroundStyle(RepbaseDesign.danger)
+                }
+            }
 
             if repeatDays > 0 {
                 Toggle("Give it an end date", isOn: $repeatHasEnd)
                     .font(.community(.subheadline))
                     .tint(timeOfDay.accent)
+                    // A DatePicker clamps what it *draws* to its range but
+                    // leaves the binding alone, so an end date nobody touched
+                    // stayed on today and was sent as the day the task starts
+                    // -- which the server refuses, because a repeat has to end
+                    // after it begins. The value is put in range here instead
+                    // of being left for the picker to appear to fix.
+                    .onChange(of: repeatHasEnd) { _, isOn in
+                        if isOn { repeatEnds = max(repeatEnds, earliestEnd) }
+                    }
+                    .onChange(of: date) { _, _ in
+                        repeatEnds = max(repeatEnds, earliestEnd)
+                    }
 
                 if repeatHasEnd {
                     DatePicker(
                         "Until",
                         selection: $repeatEnds,
-                        in: (date.addingTimeInterval(86_400))...,
+                        in: earliestEnd...,
                         displayedComponents: .date
                     )
                     .font(.community(.subheadline))
@@ -549,7 +608,11 @@ struct PlannerEntryEditorView: View {
     }
 
     private var canSave: Bool {
-        !draft.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        guard !draft.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
+        // A custom interval outside the bounds is refused by the server, so
+        // Save is not offered for one.
+        if repeatDays == customRepeatTag, !isCustomRepeatValid { return false }
+        return true
     }
 
     private func save() {
@@ -564,8 +627,8 @@ struct PlannerEntryEditorView: View {
         // Create-only, and only for a task. Sent as the day after the last one
         // wanted, because the server treats the end as the first day it no
         // longer applies.
-        if saved.kind == .task, !isEditing, repeatDays > 0 {
-            saved.repeatEveryDays = repeatDays
+        if saved.kind == .task, !isEditing, repeatInterval > 0 {
+            saved.repeatEveryDays = repeatInterval
             saved.repeatEndsOn = repeatHasEnd ? PlannerStore.dateString(repeatEnds) : nil
         }
         if saved.kind == .event { saved.isComplete = false }

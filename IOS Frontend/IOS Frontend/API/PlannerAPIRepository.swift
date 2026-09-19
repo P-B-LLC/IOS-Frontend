@@ -23,6 +23,13 @@ actor PlannerAPIRepository {
         )
     }
 
+    // Every `.undocumented` case below decodes the response rather than
+    // throwing the bare status. The server names the field it refused and
+    // says why; discarding that turned "the repeat has to end after the day
+    // it starts" into "HTTP 400", which the one person who could act on it
+    // could not see. `RepbaseAPIHTTPError.decode` reads 400, 409 and 422 and
+    // falls back to the generic wording for everything else.
+
     // MARK: - Reading
 
     /// Every task and event between two dates, inclusive.
@@ -71,8 +78,8 @@ actor PlannerAPIRepository {
             switch output {
             case .ok(let success):
                 response = try success.body.json
-            case .undocumented(let statusCode, _):
-                throw APIServiceError.undocumentedStatus(statusCode)
+            case .undocumented(let statusCode, let payload):
+                throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload)
             }
             values.append(contentsOf: response.results.map(Self.entry(from:)))
             page = try nextPage(response.next, visited: &visited)
@@ -100,8 +107,8 @@ actor PlannerAPIRepository {
         switch output {
         case .ok(let response):
             return try response.body.json.map(Self.entry(from:))
-        case .undocumented(let statusCode, _):
-            throw APIServiceError.undocumentedStatus(statusCode)
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload)
         }
     }
 
@@ -143,9 +150,9 @@ actor PlannerAPIRepository {
             }
             if let recoveryScope { try await EditorDraftRecovery.shared.remove(key: operationKey, scope: recoveryScope) }
             return saved
-        case .undocumented(let statusCode, _):
+        case .undocumented(let statusCode, let payload):
             if statusCode == 400, let recoveryScope { try await EditorDraftRecovery.shared.remove(key: operationKey, scope: recoveryScope) }
-            throw APIServiceError.undocumentedStatus(statusCode)
+            throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload)
         }
     }
 
@@ -187,8 +194,8 @@ actor PlannerAPIRepository {
         switch output {
         case .ok(let response):
             return Self.entry(from: try response.body.json)
-        case .undocumented(let statusCode, _):
-            throw APIServiceError.undocumentedStatus(statusCode)
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload)
         }
     }
 
@@ -209,8 +216,8 @@ actor PlannerAPIRepository {
         switch output {
         case .ok(let response):
             return Self.entry(from: try response.body.json)
-        case .undocumented(let statusCode, _):
-            throw APIServiceError.undocumentedStatus(statusCode)
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload)
         }
     }
 
@@ -244,8 +251,8 @@ actor PlannerAPIRepository {
         switch output {
         case .created:
             return try await entry(withServerID: parentID)
-        case .undocumented(let statusCode, _):
-            throw APIServiceError.undocumentedStatus(statusCode)
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload)
         }
     }
 
@@ -263,8 +270,8 @@ actor PlannerAPIRepository {
         switch output {
         case .ok:
             return try await entry(withServerID: parentID)
-        case .undocumented(let statusCode, _):
-            throw APIServiceError.undocumentedStatus(statusCode)
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload)
         }
     }
 
@@ -273,8 +280,8 @@ actor PlannerAPIRepository {
         switch output {
         case .noContent:
             return try await entry(withServerID: parentID)
-        case .undocumented(let statusCode, _):
-            throw APIServiceError.undocumentedStatus(statusCode)
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload)
         }
     }
 
@@ -283,8 +290,8 @@ actor PlannerAPIRepository {
         switch output {
         case .ok(let response):
             return Self.entry(from: try response.body.json)
-        case .undocumented(let statusCode, _):
-            throw APIServiceError.undocumentedStatus(statusCode)
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload)
         }
     }
 
@@ -305,8 +312,8 @@ actor PlannerAPIRepository {
         switch output {
         case .noContent:
             return
-        case .undocumented(let statusCode, _):
-            throw APIServiceError.undocumentedStatus(statusCode)
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload)
         }
     }
 
