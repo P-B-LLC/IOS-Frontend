@@ -131,7 +131,9 @@ struct PlannerView: View {
                 onSaved: { entry, steps in
                     await store.saveReportingFailure(entry, steps: steps)
                 },
-                onDeleted: { store.delete($0) }
+                onDeleted: { entry, endsRepeat in
+                    store.delete(entry, endsRepeat: endsRepeat)
+                }
             )
         }
         .navigationDestination(item: $openingDay) { day in

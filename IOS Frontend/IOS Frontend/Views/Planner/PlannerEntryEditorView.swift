@@ -33,7 +33,9 @@ struct PlannerEntryEditorView: View {
     /// The steps written beside the task travel with it, because they can only
     /// be created once the task has an id to hang them on.
     var onSaved: ((PlannerEntry, [String]) async -> String?)?
-    var onDeleted: ((PlannerEntry) -> Void)?
+    /// The second argument says whether the whole repeat should end, which a
+    /// repeating task asks about before it is answered.
+    var onDeleted: ((PlannerEntry, Bool) -> Void)?
 
     @Environment(\.dismiss) private var dismiss
     @State private var isSaving = false
@@ -68,6 +70,7 @@ struct PlannerEntryEditorView: View {
     /// intervals so it can never be mistaken for one.
     private let customRepeatTag = -1
     @State private var customRepeatDays = 4
+    @State private var isChoosingDeleteScope = false
 
     /// How often the task actually repeats, whichever way it was chosen.
     private var repeatInterval: Int {
@@ -90,7 +93,7 @@ struct PlannerEntryEditorView: View {
         mode: Mode,
         workouts: [WorkoutSummary] = [],
         onSaved: ((PlannerEntry, [String]) async -> String?)? = nil,
-        onDeleted: ((PlannerEntry) -> Void)? = nil
+        onDeleted: ((PlannerEntry, Bool) -> Void)? = nil
     ) {
         self.mode = mode
         self.workouts = workouts
@@ -208,8 +211,14 @@ struct PlannerEntryEditorView: View {
                         }
 
                         Button(role: .destructive) {
-                            onDeleted?(entry)
-                            dismiss()
+                            // A repeating task has two honest answers, so it
+                            // asks rather than picking the wider one silently.
+                            if entry.repeatIntervalDays != nil {
+                                isChoosingDeleteScope = true
+                            } else {
+                                onDeleted?(entry, false)
+                                dismiss()
+                            }
                         } label: {
                             Label("Delete \(draft.kind.title)", systemImage: "trash")
                                 .font(.community(.subheadline, weight: .semibold))
@@ -217,6 +226,26 @@ struct PlannerEntryEditorView: View {
                         .buttonStyle(.plain)
                         .foregroundStyle(Color.red)
                         .frame(maxWidth: .infinity, alignment: .center)
+                        .confirmationDialog(
+                            "This task repeats",
+                            isPresented: $isChoosingDeleteScope,
+                            titleVisibility: .visible
+                        ) {
+                            Button("Delete this day only", role: .destructive) {
+                                onDeleted?(entry, false)
+                                dismiss()
+                            }
+                            Button("Delete this and stop repeating", role: .destructive) {
+                                onDeleted?(entry, true)
+                                dismiss()
+                            }
+                            Button("Cancel", role: .cancel) {}
+                        } message: {
+                            Text(
+                                "Days you have already ticked off stay either way — "
+                                + "ending a habit is not saying it never happened."
+                            )
+                        }
                     }
                 }
                 .padding(.horizontal, 24)
