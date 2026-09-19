@@ -563,6 +563,7 @@ struct PlannerEntryRow: View {
     @Environment(PlannerStore.self) private var store
     @Environment(WorkoutStore.self) private var workouts
     @Environment(\.homeTimeOfDay) private var timeOfDay
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     let entry: PlannerEntry
     /// Shown for entries that are not on the day being looked at, where "when"
@@ -587,8 +588,11 @@ struct PlannerEntryRow: View {
             header
             if entry.completionIsDerived {
                 stepProgress
-                if showingSteps { stepList }
-                stepControls
+                if showingSteps {
+                    stepList
+                    stepControls
+                        .disabled(busyStep != nil)
+                }
             }
             if let stepFailure {
                 Text(stepFailure)
@@ -754,7 +758,12 @@ struct PlannerEntryRow: View {
     private var stepProgress: some View {
         let total = max(entry.subtasks.count, 1)
         let done = entry.completedSubtaskCount
-        return HStack(spacing: 8) {
+        return Button {
+            withAnimation(reduceMotion ? nil : .easeOut(duration: 0.18)) {
+                showingSteps.toggle()
+            }
+        } label: {
+            HStack(spacing: 8) {
             GeometryReader { proxy in
                 ZStack(alignment: .leading) {
                     Capsule().fill(timeOfDay.selectorSurface)
@@ -765,24 +774,22 @@ struct PlannerEntryRow: View {
             }
             .frame(height: 3)
 
-            Text("\(done) of \(entry.subtasks.count)")
+            Text("\(done) of \(entry.subtasks.count) subtasks")
                 .font(.community(.caption2, weight: .semibold))
                 .foregroundStyle(timeOfDay.secondaryText)
                 .monospacedDigit()
 
-            Button {
-                withAnimation(.easeOut(duration: 0.18)) { showingSteps.toggle() }
-            } label: {
                 Image(systemName: "chevron.down")
                     .font(.community(.caption2, weight: .bold))
                     .rotationEffect(.degrees(showingSteps ? 180 : 0))
                     .foregroundStyle(timeOfDay.secondaryText)
-                    .frame(width: 28, height: 28)
-                    .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel(showingSteps ? "Hide steps" : "Show steps")
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
+        .accessibilityLabel(showingSteps ? "Hide subtasks" : "Show subtasks")
+        .accessibilityValue("\(done) of \(entry.subtasks.count) completed, \(showingSteps ? "expanded" : "collapsed")")
         .padding(.leading, 45)
     }
 
@@ -793,6 +800,7 @@ struct PlannerEntryRow: View {
                     Button {
                         Task { await toggle(step) }
                     } label: {
+                        Group {
                         if busyStep == step.serverID {
                             ProgressView().controlSize(.small).frame(width: 18, height: 18)
                         } else {
@@ -804,10 +812,13 @@ struct PlannerEntryRow: View {
                                         : timeOfDay.secondaryText.opacity(0.5)
                                 )
                         }
+                        }
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .disabled(busyStep != nil)
-                    .accessibilityLabel(step.isComplete ? "Mark not done" : "Mark done")
+                    .accessibilityLabel("\(step.title), \(step.isComplete ? "mark not done" : "mark done")")
 
                     Text(step.title)
                         .font(.community(.subheadline))
@@ -824,6 +835,7 @@ struct PlannerEntryRow: View {
                     Button("Delete step", systemImage: "trash", role: .destructive) {
                         Task { await remove(step) }
                     }
+                    .disabled(busyStep != nil)
                 }
             }
         }
@@ -860,6 +872,9 @@ struct PlannerEntryRow: View {
     }
 
     private func addStep() async {
+        guard busyStep == nil else { return }
+        busyStep = -1
+        defer { busyStep = nil }
         let title = stepDraft
         stepFailure = await store.addSubtask(to: entry, title: title)
         if stepFailure == nil {
@@ -869,12 +884,14 @@ struct PlannerEntryRow: View {
     }
 
     private func toggle(_ step: PlannerSubtask) async {
+        guard busyStep == nil else { return }
         busyStep = step.serverID
         stepFailure = await store.setSubtaskComplete(step, in: entry, !step.isComplete)
         busyStep = nil
     }
 
     private func remove(_ step: PlannerSubtask) async {
+        guard busyStep == nil else { return }
         busyStep = step.serverID
         stepFailure = await store.deleteSubtask(step, in: entry)
         busyStep = nil

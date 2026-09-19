@@ -187,6 +187,15 @@ struct PlannerDaySchedule: View {
                 .padding(.leading, 2)
 
             ForEach(untimed) { entry in
+                if entry.completionIsDerived {
+                    // Use the same checklist as the task lists. A separate
+                    // compact row here used to hide all of a parent's steps.
+                    PlannerEntryRow(
+                        entry: entry,
+                        onEdit: { onSelect(entry) },
+                        onOpenWorkout: onOpenWorkout
+                    )
+                } else {
                 HStack(spacing: 10) {
                     Image(systemName: entry.category.symbolName)
                         .font(.community(size: 11, weight: .semibold))
@@ -227,6 +236,7 @@ struct PlannerDaySchedule: View {
                 )
                 .contentShape(Rectangle())
                 .onTapGesture { onSelect(entry) }
+                }
             }
         }
     }
