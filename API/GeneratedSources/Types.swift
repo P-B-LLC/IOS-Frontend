@@ -6464,6 +6464,8 @@ public enum Components {
             public var workout: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/notes`.
             public var notes: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/parent`.
+            public var parent: Swift.Int?
             /// Creates a new `PatchedPlannerEntryRequest`.
             ///
             /// - Parameters:
@@ -6477,6 +6479,7 @@ public enum Components {
             ///   - isComplete:
             ///   - workout:
             ///   - notes:
+            ///   - parent:
             public init(
                 kind: Components.Schemas.PatchedPlannerEntryRequest.KindPayload? = nil,
                 title: Swift.String? = nil,
@@ -6487,7 +6490,8 @@ public enum Components {
                 durationMinutes: Swift.Int? = nil,
                 isComplete: Swift.Bool? = nil,
                 workout: Swift.Int? = nil,
-                notes: Swift.String? = nil
+                notes: Swift.String? = nil,
+                parent: Swift.Int? = nil
             ) {
                 self.kind = kind
                 self.title = title
@@ -6499,6 +6503,7 @@ public enum Components {
                 self.isComplete = isComplete
                 self.workout = workout
                 self.notes = notes
+                self.parent = parent
             }
             public enum CodingKeys: String, CodingKey {
                 case kind
@@ -6511,6 +6516,7 @@ public enum Components {
                 case isComplete = "is_complete"
                 case workout
                 case notes
+                case parent
             }
         }
         /// A comment, and the replies hanging off it.
@@ -7239,6 +7245,14 @@ public enum Components {
             public var workoutName: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PlannerEntry/notes`.
             public var notes: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/parent`.
+            public var parent: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/subtasks`.
+            public var subtasks: [Components.Schemas.PlannerSubtask]
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/subtask_count`.
+            public var subtaskCount: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/completed_subtask_count`.
+            public var completedSubtaskCount: Swift.Int
             /// - Remark: Generated from `#/components/schemas/PlannerEntry/created_at`.
             public var createdAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/PlannerEntry/updated_at`.
@@ -7260,6 +7274,10 @@ public enum Components {
             ///   - workout:
             ///   - workoutName:
             ///   - notes:
+            ///   - parent:
+            ///   - subtasks:
+            ///   - subtaskCount:
+            ///   - completedSubtaskCount:
             ///   - createdAt:
             ///   - updatedAt:
             public init(
@@ -7277,6 +7295,10 @@ public enum Components {
                 workout: Swift.Int? = nil,
                 workoutName: Swift.String? = nil,
                 notes: Swift.String? = nil,
+                parent: Swift.Int? = nil,
+                subtasks: [Components.Schemas.PlannerSubtask],
+                subtaskCount: Swift.Int,
+                completedSubtaskCount: Swift.Int,
                 createdAt: Foundation.Date,
                 updatedAt: Foundation.Date
             ) {
@@ -7294,6 +7316,10 @@ public enum Components {
                 self.workout = workout
                 self.workoutName = workoutName
                 self.notes = notes
+                self.parent = parent
+                self.subtasks = subtasks
+                self.subtaskCount = subtaskCount
+                self.completedSubtaskCount = completedSubtaskCount
                 self.createdAt = createdAt
                 self.updatedAt = updatedAt
             }
@@ -7312,6 +7338,10 @@ public enum Components {
                 case workout
                 case workoutName = "workout_name"
                 case notes
+                case parent
+                case subtasks
+                case subtaskCount = "subtask_count"
+                case completedSubtaskCount = "completed_subtask_count"
                 case createdAt = "created_at"
                 case updatedAt = "updated_at"
             }
@@ -7370,6 +7400,8 @@ public enum Components {
             public var workout: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/notes`.
             public var notes: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/parent`.
+            public var parent: Swift.Int?
             /// Creates a new `PlannerEntryRequest`.
             ///
             /// - Parameters:
@@ -7383,6 +7415,7 @@ public enum Components {
             ///   - isComplete:
             ///   - workout:
             ///   - notes:
+            ///   - parent:
             public init(
                 kind: Components.Schemas.PlannerEntryRequest.KindPayload? = nil,
                 title: Swift.String,
@@ -7393,7 +7426,8 @@ public enum Components {
                 durationMinutes: Swift.Int? = nil,
                 isComplete: Swift.Bool? = nil,
                 workout: Swift.Int? = nil,
-                notes: Swift.String? = nil
+                notes: Swift.String? = nil,
+                parent: Swift.Int? = nil
             ) {
                 self.kind = kind
                 self.title = title
@@ -7405,6 +7439,7 @@ public enum Components {
                 self.isComplete = isComplete
                 self.workout = workout
                 self.notes = notes
+                self.parent = parent
             }
             public enum CodingKeys: String, CodingKey {
                 case kind
@@ -7416,6 +7451,55 @@ public enum Components {
                 case durationMinutes = "duration_minutes"
                 case isComplete = "is_complete"
                 case workout
+                case notes
+                case parent
+            }
+        }
+        /// One step of a task, as it appears nested under its parent.
+        ///
+        /// Deliberately not the full serializer. Subtasks are one level deep, so a
+        /// step has no steps of its own, and nesting the full thing would advertise
+        /// a `subtasks` array that is always empty and invite a client to recurse
+        /// into it. The fields here are what a checklist row draws.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PlannerSubtask`.
+        public struct PlannerSubtask: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PlannerSubtask/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PlannerSubtask/title`.
+            public var title: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PlannerSubtask/is_complete`.
+            public var isComplete: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/PlannerSubtask/completed_at`.
+            public var completedAt: Foundation.Date?
+            /// - Remark: Generated from `#/components/schemas/PlannerSubtask/notes`.
+            public var notes: Swift.String
+            /// Creates a new `PlannerSubtask`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - title:
+            ///   - isComplete:
+            ///   - completedAt:
+            ///   - notes:
+            public init(
+                id: Swift.Int,
+                title: Swift.String,
+                isComplete: Swift.Bool,
+                completedAt: Foundation.Date? = nil,
+                notes: Swift.String
+            ) {
+                self.id = id
+                self.title = title
+                self.isComplete = isComplete
+                self.completedAt = completedAt
+                self.notes = notes
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case title
+                case isComplete = "is_complete"
+                case completedAt = "completed_at"
                 case notes
             }
         }

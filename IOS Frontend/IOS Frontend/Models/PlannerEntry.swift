@@ -262,6 +262,26 @@ nonisolated enum PlannerDuration {
 }
 
 /// One task or event on a day.
+/// One step of a task.
+///
+/// Deliberately not a `PlannerEntry`. Steps are one level deep — a step has no
+/// steps of its own — and reusing the full type would carry a `subtasks` array
+/// that is always empty and invite a view to recurse into it. What is here is
+/// what a checklist row draws.
+nonisolated struct PlannerSubtask: Identifiable, Hashable, Codable, Sendable {
+    let id: UUID
+    var serverID: Int
+    var title: String
+    var isComplete: Bool
+
+    init(id: UUID = UUID(), serverID: Int, title: String, isComplete: Bool = false) {
+        self.id = id
+        self.serverID = serverID
+        self.title = title
+        self.isComplete = isComplete
+    }
+}
+
 nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
     let id: UUID
     /// The backend identifier. Nil only for a draft that has not been saved.
@@ -285,6 +305,23 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
     var workoutID: Int?
     var workoutName: String?
     var notes: String
+    /// The task this one is a step of, when it is one. The day's list never
+    /// carries these — the server leaves them out and nests them below — so
+    /// this is here for the few places that hold a step on its own.
+    var parentID: Int?
+    /// The steps this task is made of, in the server's order. Empty on an
+    /// ordinary task.
+    var subtasks: [PlannerSubtask]
+
+    /// Whether this task's completion is the server's to decide.
+    ///
+    /// A task with steps does not own its checkbox: the steps are the record
+    /// of the work and the heading is only its account, so the server refuses
+    /// to tick it while any step is outstanding. Views ask this before drawing
+    /// a control, because a control that always fails is worse than none.
+    var completionIsDerived: Bool { !subtasks.isEmpty }
+
+    var completedSubtaskCount: Int { subtasks.filter(\.isComplete).count }
 
     init(
         id: UUID = UUID(),
@@ -299,7 +336,9 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
         isComplete: Bool = false,
         workoutID: Int? = nil,
         workoutName: String? = nil,
-        notes: String = ""
+        notes: String = "",
+        parentID: Int? = nil,
+        subtasks: [PlannerSubtask] = []
     ) {
         self.id = id
         self.serverID = serverID
@@ -314,6 +353,8 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
         self.workoutID = workoutID
         self.workoutName = workoutName
         self.notes = notes
+        self.parentID = parentID
+        self.subtasks = subtasks
     }
 
     /// The server's copy of this entry, under the identity the app already
@@ -339,7 +380,9 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
             isComplete: isComplete,
             workoutID: workoutID,
             workoutName: workoutName,
-            notes: notes
+            notes: notes,
+            parentID: parentID,
+            subtasks: subtasks
         )
     }
 

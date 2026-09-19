@@ -128,7 +128,9 @@ struct PlannerView: View {
             PlannerEntryEditorView(
                 mode: mode,
                 workouts: workoutStore.knownWorkouts,
-                onSaved: { await store.saveReportingFailure($0) },
+                onSaved: { entry, steps in
+                    await store.saveReportingFailure(entry, steps: steps)
+                },
                 onDeleted: { store.delete($0) }
             )
         }
@@ -568,8 +570,55 @@ struct PlannerEntryRow: View {
     var onOpenWorkout: ((Weekday) -> Void)?
 
     @State private var confirming: PlannerEntry?
+    // Open while there is unfinished work in it: a checklist you are partway
+    // through is the one worth seeing. Collapsed once it is done, because then
+    // the heading says everything.
+    @State private var showingSteps = false
+    @State private var addingStep = false
+    @State private var stepDraft = ""
+    @State private var busyStep: Int?
+    @State private var stepFailure: String?
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            header
+            if entry.completionIsDerived {
+                stepProgress
+                if showingSteps { stepList }
+                stepControls
+            }
+            if let stepFailure {
+                Text(stepFailure)
+                    .font(.community(.footnote, weight: .semibold))
+                    .foregroundStyle(RepbaseDesign.danger)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(.vertical, 2)
+        .repbaseCard(contentPadding: 12, cornerRadius: 16)
+        .plannerWorkoutCompletionDialog(
+            entry: $confirming,
+            openableDay: { PlannerWorkoutCompletion.openableDay($0, workouts: workouts) },
+            onOpen: { onOpenWorkout?($0) },
+            onProceedAnyway: { store.setComplete($0, !$0.isComplete) }
+        )
+        // Fades and collapses when it leaves, which is what a finished overdue
+        // task does once its line has been drawn.
+        .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))
+        // Long press rather than swipe: these rows sit in a scroll view, not a
+        // List, where swipe actions would never fire.
+        .contextMenu {
+            Button("Edit", systemImage: "pencil", action: onEdit)
+            Button("Delete", systemImage: "trash", role: .destructive) {
+                store.delete(entry)
+            }
+        }
+        .onAppear {
+            showingSteps = entry.completionIsDerived && !entry.isComplete
+        }
+    }
+
+    private var header: some View {
         HStack(spacing: 11) {
             categoryBadge
 
@@ -618,32 +667,18 @@ struct PlannerEntryRow: View {
 
             Spacer(minLength: 0)
 
-            if entry.isCompletable {
+            if entry.completionIsDerived {
+                derivedMark
+            } else if entry.isCompletable {
                 completionToggle
             }
         }
         .opacity(entry.isComplete ? 0.6 : 1)
-        .padding(.vertical, 2)
-        .repbaseCard(contentPadding: 12, cornerRadius: 16)
-        .plannerWorkoutCompletionDialog(
-            entry: $confirming,
-            openableDay: { PlannerWorkoutCompletion.openableDay($0, workouts: workouts) },
-            onOpen: { onOpenWorkout?($0) },
-            onProceedAnyway: { store.setComplete($0, !$0.isComplete) }
-        )
-        // Fades and collapses when it leaves, which is what a finished overdue
-        // task does once its line has been drawn.
-        .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))
+        // Only the heading opens the editor. The steps below carry their own
+        // buttons and a text field, and a tap gesture over the whole card
+        // would sit under all of them.
         .contentShape(Rectangle())
         .onTapGesture(perform: onEdit)
-        // Long press rather than swipe: these rows sit in a scroll view, not a
-        // List, where swipe actions would never fire.
-        .contextMenu {
-            Button("Edit", systemImage: "pencil", action: onEdit)
-            Button("Delete", systemImage: "trash", role: .destructive) {
-                store.delete(entry)
-            }
-        }
     }
 
     private var subtitle: String {
@@ -663,6 +698,155 @@ struct PlannerEntryRow: View {
             .foregroundStyle(entry.category.tint)
             .frame(width: 34, height: 34)
             .background(entry.category.tint.opacity(0.14), in: RoundedRectangle(cornerRadius: 11))
+    }
+
+    // MARK: - Steps
+
+    /// The heading's mark when it has steps.
+    ///
+    /// Not a button. The server refuses to tick a task while any step is
+    /// outstanding -- the steps are the record of the work and the heading is
+    /// only its account -- so a control here would fail every time it was
+    /// pressed, which is worse than no control.
+    private var derivedMark: some View {
+        Image(systemName: entry.isComplete ? "checkmark.circle.fill" : "circle.dotted")
+            .font(.community(.title3))
+            .foregroundStyle(
+                entry.isComplete ? Color(hex: 0x3FAE6A) : timeOfDay.secondaryText.opacity(0.5)
+            )
+            .accessibilityLabel(
+                "\(entry.completedSubtaskCount) of \(entry.subtasks.count) steps done"
+            )
+    }
+
+    /// How far through the checklist, readable without opening it.
+    private var stepProgress: some View {
+        let total = max(entry.subtasks.count, 1)
+        let done = entry.completedSubtaskCount
+        return HStack(spacing: 8) {
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(timeOfDay.selectorSurface)
+                    Capsule()
+                        .fill(timeOfDay.accent)
+                        .frame(width: proxy.size.width * CGFloat(done) / CGFloat(total))
+                }
+            }
+            .frame(height: 3)
+
+            Text("\(done) of \(entry.subtasks.count)")
+                .font(.community(.caption2, weight: .semibold))
+                .foregroundStyle(timeOfDay.secondaryText)
+                .monospacedDigit()
+
+            Button {
+                withAnimation(.easeOut(duration: 0.18)) { showingSteps.toggle() }
+            } label: {
+                Image(systemName: "chevron.down")
+                    .font(.community(.caption2, weight: .bold))
+                    .rotationEffect(.degrees(showingSteps ? 180 : 0))
+                    .foregroundStyle(timeOfDay.secondaryText)
+                    .frame(width: 28, height: 28)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(showingSteps ? "Hide steps" : "Show steps")
+        }
+        .padding(.leading, 45)
+    }
+
+    private var stepList: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(entry.subtasks) { step in
+                HStack(spacing: 9) {
+                    Button {
+                        Task { await toggle(step) }
+                    } label: {
+                        if busyStep == step.serverID {
+                            ProgressView().controlSize(.small).frame(width: 18, height: 18)
+                        } else {
+                            Image(systemName: step.isComplete ? "checkmark.circle.fill" : "circle")
+                                .font(.community(.subheadline))
+                                .foregroundStyle(
+                                    step.isComplete
+                                        ? Color(hex: 0x3FAE6A)
+                                        : timeOfDay.secondaryText.opacity(0.5)
+                                )
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(busyStep != nil)
+                    .accessibilityLabel(step.isComplete ? "Mark not done" : "Mark done")
+
+                    Text(step.title)
+                        .font(.community(.subheadline))
+                        .strikethrough(step.isComplete, color: timeOfDay.secondaryText)
+                        .foregroundStyle(
+                            step.isComplete ? timeOfDay.secondaryText : timeOfDay.primaryText
+                        )
+                        .lineLimit(2)
+
+                    Spacer(minLength: 0)
+                }
+                .padding(.vertical, 5)
+                .contextMenu {
+                    Button("Delete step", systemImage: "trash", role: .destructive) {
+                        Task { await remove(step) }
+                    }
+                }
+            }
+        }
+        .padding(.leading, 45)
+    }
+
+    @ViewBuilder
+    private var stepControls: some View {
+        if addingStep {
+            HStack(spacing: 8) {
+                TextField("What is the next step?", text: $stepDraft)
+                    .font(.community(.subheadline))
+                    .textFieldStyle(.plain)
+                    .submitLabel(.done)
+                    .onSubmit { Task { await addStep() } }
+
+                Button("Add") { Task { await addStep() } }
+                    .font(.community(.footnote, weight: .bold))
+                    .buttonStyle(.plain)
+                    .foregroundStyle(timeOfDay.accent)
+                    .disabled(stepDraft.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+            .padding(.leading, 45)
+        } else {
+            Button(entry.subtasks.isEmpty ? "Break this into steps" : "Add another step") {
+                addingStep = true
+                showingSteps = true
+            }
+            .font(.community(.footnote, weight: .semibold))
+            .buttonStyle(.plain)
+            .foregroundStyle(timeOfDay.accent)
+            .padding(.leading, 45)
+        }
+    }
+
+    private func addStep() async {
+        let title = stepDraft
+        stepFailure = await store.addSubtask(to: entry, title: title)
+        if stepFailure == nil {
+            stepDraft = ""
+            addingStep = false
+        }
+    }
+
+    private func toggle(_ step: PlannerSubtask) async {
+        busyStep = step.serverID
+        stepFailure = await store.setSubtaskComplete(step, in: entry, !step.isComplete)
+        busyStep = nil
+    }
+
+    private func remove(_ step: PlannerSubtask) async {
+        busyStep = step.serverID
+        stepFailure = await store.deleteSubtask(step, in: entry)
+        busyStep = nil
     }
 
     private var completionToggle: some View {

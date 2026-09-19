@@ -127,6 +127,47 @@ final class PlannerStore {
         await save(draft) ? nil : (persistenceError ?? SaveFailure.unexplained)
     }
 
+    /// Save a task and give it the steps written alongside it.
+    ///
+    /// Steps are created after the task, because each one carries the task's
+    /// id and a draft has none until the server answers. The order matters to
+    /// the reader as well: a task that saved and then lost a step is a worse
+    /// outcome than one that never saved, so the task is never at risk of the
+    /// steps failing.
+    ///
+    /// A step that fails is named rather than swallowed. The task is on the
+    /// calendar by then, so saying nothing would leave somebody believing they
+    /// had written down work that is not there.
+    func saveReportingFailure(_ draft: PlannerEntry, steps: [String]) async -> String? {
+        if let problem = await saveReportingFailure(draft) { return problem }
+
+        let wanted = steps
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        guard !wanted.isEmpty else { return nil }
+
+        // The saved row, which is the only copy carrying a server id.
+        guard let parent = entriesByDate[draft.date, default: []]
+            .first(where: { $0.title == draft.title && $0.serverID != nil })
+        else {
+            return "The task saved, but its steps could not be added to it."
+        }
+
+        var unsaved: [String] = []
+        for title in wanted {
+            // Read the parent back each time: adding a step returns a new copy
+            // of it, and the next add needs the id from the row as it stands.
+            let current = entriesByDate[draft.date, default: []]
+                .first(where: { $0.serverID == parent.serverID }) ?? parent
+            if await addSubtask(to: current, title: title) != nil { unsaved.append(title) }
+        }
+
+        guard !unsaved.isEmpty else { return nil }
+        return unsaved.count == 1
+            ? "The task saved, but the step “\(unsaved[0])” did not."
+            : "The task saved, but \(unsaved.count) of its steps did not."
+    }
+
 
     init() {}
 
@@ -423,6 +464,85 @@ final class PlannerStore {
                 persistenceError = error.userFacingMessage ?? "Couldn't confirm this task. Tap its checkbox to retry."
             })
         if accepted { persistenceError = nil }
+    }
+
+    // MARK: - Steps
+    //
+    // Each of these answers nil when it worked and the reason when it did not,
+    // which is how every other save in this store reports itself now. A caller
+    // shows what came back rather than inventing "please try again".
+    //
+    // All three take the server's copy of the *parent* back. A task with steps
+    // does not own its completion -- the server derives it from them -- so
+    // ticking a step can finish or reopen the heading above it, and guessing
+    // locally would put the two back into disagreement.
+
+    func addSubtask(to entry: PlannerEntry, title: String) async -> String? {
+        guard let repository else { return SaveFailure.notConnected }
+        guard let parentID = entry.serverID else {
+            return "This task has not finished saving yet."
+        }
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return "Give the step a name." }
+
+        let generation = connectionGeneration
+        do {
+            let fresh = try await repository.addSubtask(
+                toParent: parentID, title: trimmed, on: entry.date
+            )
+            guard connectionGeneration == generation else { return nil }
+            applyServerCopy(fresh, to: entry)
+            persistenceError = nil
+            return nil
+        } catch {
+            return error.userFacingMessage ?? SaveFailure.unexplained
+        }
+    }
+
+    func setSubtaskComplete(
+        _ subtask: PlannerSubtask,
+        in entry: PlannerEntry,
+        _ isComplete: Bool
+    ) async -> String? {
+        guard let repository else { return SaveFailure.notConnected }
+        guard let parentID = entry.serverID else { return SaveFailure.unexplained }
+
+        let generation = connectionGeneration
+        do {
+            let fresh = try await repository.setSubtaskComplete(
+                subtask, isComplete, parentID: parentID
+            )
+            guard connectionGeneration == generation else { return nil }
+            withAnimation(.easeOut(duration: 0.25)) {
+                applyServerCopy(fresh, to: entry)
+            }
+            persistenceError = nil
+            return nil
+        } catch {
+            return error.userFacingMessage ?? SaveFailure.unexplained
+        }
+    }
+
+    func deleteSubtask(_ subtask: PlannerSubtask, in entry: PlannerEntry) async -> String? {
+        guard let repository else { return SaveFailure.notConnected }
+        guard let parentID = entry.serverID else { return SaveFailure.unexplained }
+
+        let generation = connectionGeneration
+        do {
+            let fresh = try await repository.deleteSubtask(subtask, parentID: parentID)
+            guard connectionGeneration == generation else { return nil }
+            applyServerCopy(fresh, to: entry)
+            persistenceError = nil
+            return nil
+        } catch {
+            return error.userFacingMessage ?? SaveFailure.unexplained
+        }
+    }
+
+    /// Take the server's copy of a row, keeping the local identity the lists
+    /// already know it by -- the same reason `identified(as:)` exists.
+    private func applyServerCopy(_ fresh: PlannerEntry, to entry: PlannerEntry) {
+        apply(to: entry) { $0 = fresh.identified(as: $0.id) }
     }
 
     func delete(_ entry: PlannerEntry) {
