@@ -4,6 +4,19 @@ First version: My Day, Workout, Daily Nutrition, and Planner, in small and
 medium sizes. Tap to open the corresponding app tab. These are read-only
 summaries, not background task-completion or food-logging controls.
 
+Planner now has Previous/Next App Intent buttons: small shows one item per page,
+medium two, and the new large size seven. The range label includes tasks and
+events; the completion count includes only completable tasks. Page state is
+shared between planner widgets of the same size, separate across sizes, and
+resets whenever a new snapshot is published. Old-rendering taps are ignored
+after a snapshot change, logout, or midnight. Navigation does not write to the
+backend or change completion. iOS still controls timeline reload timing.
+
+Paging validation: check 0, 1, 2, 3 and 8 items; navigate both ends; remove items
+while on the final page; check all sizes and rapid repeated taps. Boundary tests
+are included in WidgetSnapshotTests. Native compilation and interaction testing
+for the paging addition are pending Mac validation.
+
 ## Apple setup (required for signed device/TestFlight builds)
 
 - Register App Group `group.com.pbllc.rytivo`.

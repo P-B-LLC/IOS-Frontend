@@ -3,6 +3,21 @@ import XCTest
 @testable import AccountSafety
 
 final class WidgetSnapshotTests: XCTestCase {
+    func testPagingReachesEveryTaskIncludingLastPartialPage() {
+        let pages = (0..<3).map { WidgetTaskPage(total: 5, size: 2, requested: $0) }
+        XCTAssertEqual(pages.flatMap { Array($0.range) }, Array(0..<5))
+        XCTAssertEqual(pages.last?.range, 4..<5)
+        XCTAssertEqual(pages.first?.count, 3)
+    }
+
+    func testPagingClampsAfterDeletionAndHandlesEmptyList() {
+        XCTAssertEqual(WidgetTaskPage(total: 3, size: 2, requested: 99).range, 2..<3)
+        XCTAssertEqual(WidgetTaskPage(total: 3, size: 2, requested: -1).range, 0..<2)
+        XCTAssertEqual(WidgetTaskPage(total: 0, size: 2, requested: 99).range, 0..<0)
+        XCTAssertEqual(WidgetTaskPage(total: 8, size: 7, requested: 1).range, 7..<8)
+        XCTAssertEqual(WidgetTaskPage(total: 3, size: 1, requested: 2).range, 2..<3)
+    }
+
     func testYesterdayIsNeverPresentedAsToday() throws {
         let now = Date()
         let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: now)!

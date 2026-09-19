@@ -1,5 +1,19 @@
 import Foundation
 
+nonisolated struct WidgetTaskPage: Equatable {
+    let index: Int
+    let count: Int
+    let range: Range<Int>
+    init(total: Int, size: Int, requested: Int) {
+        let total = max(0, total)
+        let size = max(1, size)
+        count = max(1, (total + size - 1) / size)
+        index = min(max(0, requested), count - 1)
+        let start = index * size
+        range = start..<min(start + size, total)
+    }
+}
+
 /// Deliberately contains no credentials, account identifiers, photos or HealthKit data.
 /// This file is compiled into both the app and its widget extension.
 nonisolated struct WidgetSnapshot: Codable, Equatable, Sendable {

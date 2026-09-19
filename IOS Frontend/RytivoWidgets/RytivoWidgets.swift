@@ -1,9 +1,11 @@
 import SwiftUI
 import WidgetKit
+import AppIntents
 
 struct TodayEntry: TimelineEntry {
     let date: Date
     let snapshot: WidgetSnapshot?
+    var plannerPages: [Int: Int] = [:]
 }
 
 struct TodayProvider: TimelineProvider {
@@ -22,7 +24,14 @@ struct TodayProvider: TimelineProvider {
     private func load() -> TodayEntry {
         let url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: WidgetSnapshot.group)?
             .appendingPathComponent(WidgetSnapshot.filename)
-        return TodayEntry(date: .now, snapshot: WidgetSnapshot.read(from: url))
+        let snapshot = WidgetSnapshot.read(from: url)
+        var pages: [Int: Int] = [:]
+        if let snapshot {
+            for size in [1, 2, 7] {
+                pages[size] = PlannerPageStorage.page(size: size, revision: snapshot.updatedAt.timeIntervalSince1970)
+            }
+        }
+        return TodayEntry(date: .now, snapshot: snapshot, plannerPages: pages)
     }
 }
 
@@ -70,11 +79,13 @@ struct TodayWidgetView: View {
                     }
                 }
                 Spacer(minLength: 0)
-                HStack(spacing: 3) {
+                if focus != .planner || snapshot.tasks?.isEmpty != false {
+                  HStack(spacing: 3) {
                     Text("Updated")
                     Text(snapshot.updatedAt, style: .time)
                 }
                 .font(font(9)).foregroundStyle(.secondary)
+                }
             } else {
                 Text("A fresh start.")
                     .font(font(21, bold: true))
@@ -104,11 +115,15 @@ struct TodayWidgetView: View {
                 Text(focus == .workout ? "No workout planned today." : "Nothing planned today. Open to add a task.")
                     .font(font(12)).foregroundStyle(.secondary)
             } else {
+              VStack(alignment: .leading, spacing: 4) {
                 Text("\(done) / \(counted.count) complete")
                     .font(font(20, bold: true)).minimumScaleFactor(0.75).lineLimit(1)
                 ProgressView(value: Double(done), total: Double(max(counted.count, 1))).tint(accent)
                 let ordered = filtered.filter { !$0.complete } + filtered.filter(\.complete)
-                ForEach(Array(ordered.prefix(family == .systemSmall || focus == .day ? 1 : 2).enumerated()), id: \.offset) { _, item in
+                let size = family == .systemLarge ? 7 : (family == .systemSmall || focus == .day ? 1 : 2)
+                let page = WidgetTaskPage(total: ordered.count, size: size,
+                                          requested: focus == .planner ? (entry.plannerPages[size] ?? 0) : 0)
+                ForEach(Array(ordered[page.range].enumerated()), id: \.offset) { _, item in
                     HStack(spacing: 6) {
                         Image(systemName: item.complete ? "checkmark.circle.fill" : (item.completable ? "circle" : "calendar"))
                             .foregroundStyle(item.complete ? Color.green : accent)
@@ -118,10 +133,41 @@ struct TodayWidgetView: View {
                         }
                     }.font(font(12))
                 }
+                if focus == .planner, let snapshot = entry.snapshot {
+                    HStack(spacing: 2) {
+                        pageButton("Previous", symbol: "chevron.left", page: page.index - 1,
+                                   size: size, revision: snapshot.updatedAt.timeIntervalSince1970,
+                                   disabled: page.index == 0)
+                        Spacer(minLength: 0)
+                        Text("\(page.range.lowerBound + 1)–\(page.range.upperBound) of \(ordered.count)")
+                            .font(font(10)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.8)
+                            .accessibilityLabel("Items \(page.range.lowerBound + 1) through \(page.range.upperBound) of \(ordered.count)")
+                        Spacer(minLength: 0)
+                        pageButton("Next", symbol: "chevron.right", page: page.index + 1,
+                                   size: size, revision: snapshot.updatedAt.timeIntervalSince1970,
+                                   disabled: page.index == page.count - 1)
+                    }
+                    .accessibilityValue("Updated \(snapshot.updatedAt.formatted(date: .omitted, time: .shortened))")
+                }
+              }
             }
         } else {
             Text("Open to update your plan.").font(font(16, bold: true))
         }
+    }
+
+    private func pageButton(_ title: String, symbol: String, page: Int,
+                            size: Int, revision: Double, disabled: Bool) -> some View {
+        Button(intent: PlannerPageIntent(page: page, size: size, revision: revision)) {
+            Image(systemName: symbol)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(disabled ? Color.secondary.opacity(0.3) : accent)
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(disabled)
+        .accessibilityLabel("\(title) tasks")
     }
 
     @ViewBuilder private func food(_ value: WidgetSnapshot.Nutrition?) -> some View {
@@ -172,7 +218,7 @@ struct RytivoWidget: Widget {
         }
         .configurationDisplayName(focus.title)
         .description("Your latest daily progress. Tap to continue in Rytivo.")
-        .supportedFamilies([.systemSmall, .systemMedium])
+        .supportedFamilies(focus == .planner ? [.systemSmall, .systemMedium, .systemLarge] : [.systemSmall, .systemMedium])
     }
 }
 
