@@ -1,5 +1,33 @@
 # Rytivo Home Screen widgets
 
+## Active lifting session (new, native validation pending)
+
+An Active Workout widget (medium/large) and a Lock Screen/Dynamic Island Live
+Activity now share the current set. Weight controls adjust by 2.5 kg, reps by 1;
+the kg label matches the current in-app lifting editor. Exact keyboard entry is
+via Edit in app. The elapsed timer uses the original start date, not a tick loop.
+
+Logging awaits the same existing WorkoutStore request used by the app. It never
+unlogs a set. Pending writes, old rendered revisions, and another session's taps
+are rejected. Successful saves advance to the first unfinished set in exercise
+order; failed saves stay on that set. The last set offers Review & finish, not
+automatic session termination. No APNs credentials or authentication tokens are
+shared with the extension. LiveActivityIntent routes actions to the app process.
+
+Lifecycle limitations: if the process was terminated and the authenticated
+session is not restored, actions report that Rytivo must be opened. This is not
+an independent offline extension save queue. Inactive data becomes stale after
+an hour without an update, or eight hours after workout start; opening the app
+refreshes it. Cardio sessions are not supported by these lifting controls. Live
+Activities require system permission and an active app when first requested.
+
+Required signed-device tests: adjust and log while foreground/background/locked;
+confirm single server set after rapid double-tap; disconnect networking and retry;
+edit values in the app then tap an old widget; finish/cancel/logout; force quit
+then tap; restore session; check Dynamic Island and medium widget error layout.
+Unit tests exercise set selection and decimal/rep controls, but do not replace
+these integration checks. Use simulator signing enabled, not an unsigned build.
+
 First version: My Day, Workout, Daily Nutrition, and Planner, in small and
 medium sizes. Tap to open the corresponding app tab. These are read-only
 summaries, not background task-completion or food-logging controls.

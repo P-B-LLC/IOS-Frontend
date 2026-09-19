@@ -103,6 +103,7 @@ private struct MinimizesBottomBarOnScroll: ViewModifier {
 /// took a trip back through it. Each tab keeps its own navigation stack, so
 /// coming back to one returns to where it was left.
 struct RepbaseRootView: View {
+    @Environment(WorkoutStore.self) private var workoutStore
     @AppStorage("widgets.pendingDestination") private var widgetDestination = ""
     @State private var tab: RepbaseTab
     /// Which half of the Training tab is showing, and how deep into it we
@@ -174,6 +175,11 @@ struct RepbaseRootView: View {
         .onChange(of: widgetDestination, initial: true) { _, destination in
             guard !destination.isEmpty else { return }
             switch destination {
+            case "activeWorkout":
+                trainingPath = NavigationPath()
+                trainingHalf = .workouts
+                tab = .training
+                if let session = workoutStore.activeSession { trainingPath.append(session.day) }
             case "food", "workout":
                 trainingPath = NavigationPath()
                 trainingHalf = destination == "food" ? .food : .workouts

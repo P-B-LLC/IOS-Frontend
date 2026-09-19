@@ -581,7 +581,7 @@ private struct AppRootView: View {
         .repbaseCelebrationOverlay()
         .onOpenURL { url in
             guard url.scheme == "rytivo", url.host == "widget",
-                  ["day", "workout", "food", "planner"].contains(url.lastPathComponent) else { return }
+                  ["day", "workout", "food", "planner", "activeWorkout"].contains(url.lastPathComponent) else { return }
             widgetDestination = url.lastPathComponent
         }
         .onChange(of: widgetSnapshot) { _, snapshot in
@@ -590,6 +590,7 @@ private struct AppRootView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase != .active { workoutStore.checkpointActiveSession() }
             if phase == .active {
+                ActiveWorkoutWidgetPublisher.refresh(workoutStore)
                 if let snapshot = widgetSnapshot { WidgetPublisher.publish(snapshot) }
                 Task { await workoutStore.retryPendingWorkoutSaves() }
             }

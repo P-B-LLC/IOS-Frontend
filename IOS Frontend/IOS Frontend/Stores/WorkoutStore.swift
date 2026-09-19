@@ -42,11 +42,18 @@ final class WorkoutStore {
     /// Current-week projection of concrete API WorkoutSchedule records. A date
     /// can hold more than one schedule, so each day maps to a list.
     private(set) var schedule: [Weekday: [Workout]]
-    private(set) var persistenceError: String?
+    private(set) var persistenceError: String? {
+        didSet { ActiveWorkoutWidgetPublisher.refresh(self) }
+    }
     private(set) var isLoading = false
-    private(set) var isSaving = false
+    private(set) var isSaving = false {
+        didSet { ActiveWorkoutWidgetPublisher.refresh(self) }
+    }
     private(set) var activeSession: ActiveWorkoutSession? {
-        didSet { checkpointActiveSession() }
+        didSet {
+            checkpointActiveSession()
+            ActiveWorkoutWidgetPublisher.refresh(self)
+        }
     }
     private(set) var recoveredActiveSession = false
     private var lastCheckpointAt = Date.distantPast
@@ -55,7 +62,9 @@ final class WorkoutStore {
         let points: [RoutePoint]
     }
     private(set) var completedSessions: [CompletedWorkoutSession] = []
-    private(set) var pendingSetIDs: Set<WorkoutSetDraft.ID> = []
+    private(set) var pendingSetIDs: Set<WorkoutSetDraft.ID> = [] {
+        didSet { ActiveWorkoutWidgetPublisher.refresh(self) }
+    }
     /// Records the GPS track for cardio sessions.
     let routeTracker = RouteTracker()
     /// Distance and pace for the last finished route, as computed by the server.
@@ -133,6 +142,10 @@ final class WorkoutStore {
     init(initialSchedule: [Weekday: [Workout]] = [:]) {
         schedule = initialSchedule
         routeTracker.onPointsChanged = { [weak self] in self?.checkpointActiveSession(force: false) }
+        WorkoutWidgetActionRouter.perform = { [weak self] revision, action in
+            guard let self else { throw WorkoutWidgetActionError.openApp }
+            try await self.performWidgetAction(revision: revision, action: action)
+        }
     }
 
     // MARK: - Connection
@@ -799,24 +812,25 @@ final class WorkoutStore {
         }
     }
 
+    @discardableResult
     func toggleSessionSetLogged(
         on day: Weekday,
         exerciseID: Exercise.ID,
         setID: WorkoutSetDraft.ID
-    ) {
+    ) -> Task<Void, Never>? {
         guard let repository,
               !pendingSetIDs.contains(setID),
               let session = activeSession(on: day),
               let exercise = sessionExercise(on: day, id: exerciseID),
               let set = exercise.sets.first(where: { $0.id == setID }) else {
-            return
+            return nil
         }
         let generation = connectionGeneration
         let workoutType = session.workoutType
 
         pendingSetIDs.insert(setID)
         persistenceError = nil
-        Task {
+        return Task {
             defer { if connectionGeneration == generation { pendingSetIDs.remove(setID) } }
             do {
                 if set.isLogged {
@@ -852,9 +866,50 @@ final class WorkoutStore {
                 }
             } catch {
                 guard connectionGeneration == generation else { return }
-                persistenceError = error.userFacingMessage
+                persistenceError = error.userFacingMessage ?? "This set could not be saved. Check your connection and try again."
             }
         }
+    }
+
+    private func performWidgetAction(revision: String, action: String) async throws {
+        guard isConnected, let session = activeSession, !session.tracksDistance else {
+            throw WorkoutWidgetActionError.openApp
+        }
+        guard !isSaving, pendingSetIDs.isEmpty,
+              let displayed = ActiveWorkoutWidgetPublisher.current,
+              displayed.revision == revision, displayed.sessionID == session.id.uuidString,
+              let position = WorkoutWidgetControls.nextSet(in: session.exercises.map { $0.sets.map(\.isLogged) }) else { return }
+        let exercise = session.exercises[position.exercise]
+        let set = exercise.sets[position.set]
+        guard set.id.uuidString == displayed.setID else { return }
+        switch action {
+        case "weightUp", "weightDown":
+            guard let next = WorkoutWidgetControls.weight(set.weightKilograms, increasing: action == "weightUp") else {
+                persistenceError = "Edit this weight in Rytivo before using the adjustment buttons."
+                await ActiveWorkoutWidgetPublisher.flush()
+                return
+            }
+            updateSessionSet(on: session.day, exerciseID: exercise.id, setID: set.id,
+                             weightKilograms: next)
+        case "repsUp", "repsDown":
+            guard let next = WorkoutWidgetControls.reps(set.reps, increasing: action == "repsUp") else {
+                persistenceError = "Edit these reps in Rytivo before using the adjustment buttons."
+                await ActiveWorkoutWidgetPublisher.flush()
+                return
+            }
+            updateSessionSet(on: session.day, exerciseID: exercise.id, setID: set.id, reps: next)
+        case "log":
+            guard set.canBeLogged else {
+                persistenceError = "Enter valid reps and weight before logging this set."
+                await ActiveWorkoutWidgetPublisher.flush()
+                return
+            }
+            // Await the exact task used by the app, retaining the existing
+            // idempotency/recovery behavior and never toggling a logged set off.
+            await toggleSessionSetLogged(on: session.day, exerciseID: exercise.id, setID: set.id)?.value
+        default: return
+        }
+        await ActiveWorkoutWidgetPublisher.flush()
     }
 
     func addSessionSet(on day: Weekday, exerciseID: Exercise.ID) {

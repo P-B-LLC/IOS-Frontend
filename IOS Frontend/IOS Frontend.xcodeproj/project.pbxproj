@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+        C10000000000000000000020 = {isa = PBXBuildFile; fileRef = C10000000000000000000021; };
         C10000000000000000000001 = {isa = PBXBuildFile; fileRef = C10000000000000000000002; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
         C10000000000000000000003 = {isa = PBXBuildFile; fileRef = C10000000000000000000004; };
         C10000000000000000000005 = {isa = PBXBuildFile; fileRef = C10000000000000000000006; };
@@ -25,6 +26,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+        C10000000000000000000021 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "IOS Frontend/Models/ActiveWorkoutWidgetState.swift"; sourceTree = SOURCE_ROOT; };
         C10000000000000000000002 = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; path = RytivoWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
         C10000000000000000000004 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "IOS Frontend/Models/WidgetSnapshot.swift"; sourceTree = SOURCE_ROOT; };
         C10000000000000000000006 = {isa = PBXFileReference; lastKnownFileType = file; path = "IOS Frontend/Resources/Fonts/NunitoSans-Regular.ttf"; sourceTree = SOURCE_ROOT; };
@@ -57,6 +59,7 @@
 			isa = PBXGroup;
 			children = (
 				C10000000000000000000009,
+				C10000000000000000000021,
 				C10000000000000000000004,
 				C10000000000000000000006,
 				C10000000000000000000008,
@@ -164,7 +167,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-        C10000000000000000000012 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (C10000000000000000000003, ); runOnlyForDeploymentPostprocessing = 0; };
+        C10000000000000000000012 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (C10000000000000000000003, C10000000000000000000020, ); runOnlyForDeploymentPostprocessing = 0; };
 		FA6A73D5302913740028C89A /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;

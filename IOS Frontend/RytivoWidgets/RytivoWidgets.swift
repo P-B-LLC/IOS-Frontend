@@ -229,5 +229,7 @@ struct RytivoWidgets: WidgetBundle {
         RytivoWidget(focus: .workout)
         RytivoWidget(focus: .food)
         RytivoWidget(focus: .planner)
+        ActiveWorkoutWidget()
+        WorkoutLiveActivity()
     }
 }
