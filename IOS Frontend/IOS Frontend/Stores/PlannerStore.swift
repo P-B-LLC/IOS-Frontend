@@ -545,7 +545,7 @@ final class PlannerStore {
         apply(to: entry) { $0 = fresh.identified(as: $0.id) }
     }
 
-    func delete(_ entry: PlannerEntry) {
+    func delete(_ entry: PlannerEntry, endsRepeat: Bool = false) {
         guard let repository, !isSaving, !isCompletionPending(entry) else { return }
         let generation = connectionGeneration
         isSaving = true
@@ -553,8 +553,16 @@ final class PlannerStore {
 
         Task {
             do {
-                try await repository.delete(entry)
+                try await repository.delete(entry, endsRepeat: endsRepeat)
                 guard connectionGeneration == generation else { return }
+                if endsRepeat {
+                    // Ending a repeat clears every unfinished day it wrote, not
+                    // just this one, so what is left is re-read rather than
+                    // guessed at from here.
+                    isSaving = false
+                    await reloadMonth(generation: generation, showsLoadingState: false)
+                    return
+                }
                 // Same reasoning as `apply`: the row is held under a different
                 // local id in each list, so deleting by that id left a copy
                 // behind in whichever list the delete was not made from.

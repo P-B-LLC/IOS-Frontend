@@ -33,7 +33,9 @@ struct PlannerEntryEditorView: View {
     /// The steps written beside the task travel with it, because they can only
     /// be created once the task has an id to hang them on.
     var onSaved: ((PlannerEntry, [String]) async -> String?)?
-    var onDeleted: ((PlannerEntry) -> Void)?
+    /// The second argument says whether the whole repeat should end, which a
+    /// repeating task asks about before it is answered.
+    var onDeleted: ((PlannerEntry, Bool) -> Void)?
 
     @Environment(\.dismiss) private var dismiss
     @State private var isSaving = false
@@ -60,12 +62,38 @@ struct PlannerEntryEditorView: View {
     /// task has an id, so they wait for it and are sent on straight after.
     @State private var newSteps: [String] = []
     @State private var stepDraft = ""
+    /// 0 means it happens once, which is what most tasks are.
+    @State private var repeatDays = 0
+    @State private var repeatHasEnd = false
+    @State private var repeatEnds = Date()
+    /// Sentinel for "a number I will type", kept out of the range of real
+    /// intervals so it can never be mistaken for one.
+    private let customRepeatTag = -1
+    @State private var customRepeatDays = 4
+    @State private var isChoosingDeleteScope = false
+
+    /// How often the task actually repeats, whichever way it was chosen.
+    private var repeatInterval: Int {
+        repeatDays == customRepeatTag ? customRepeatDays : repeatDays
+    }
+
+    /// Matches the server's bounds, which is what actually refuses anything
+    /// outside them.
+    private var isCustomRepeatValid: Bool {
+        (1...365).contains(customRepeatDays)
+    }
+
+    /// The soonest a repeat may end: the day after it starts. A repeat that
+    /// ends on the day it begins covers nothing.
+    private var earliestEnd: Date {
+        Calendar.current.date(byAdding: .day, value: 1, to: date) ?? date
+    }
 
     init(
         mode: Mode,
         workouts: [WorkoutSummary] = [],
         onSaved: ((PlannerEntry, [String]) async -> String?)? = nil,
-        onDeleted: ((PlannerEntry) -> Void)? = nil
+        onDeleted: ((PlannerEntry, Bool) -> Void)? = nil
     ) {
         self.mode = mode
         self.workouts = workouts
@@ -131,12 +159,26 @@ struct PlannerEntryEditorView: View {
                     }
 
                     editorialNameAndType(timeOfDay: timeOfDay)
-                    editorialDetails(timeOfDay: timeOfDay)
 
+                    // Above the schedule, because breaking the work up is part
+                    // of saying what the task *is* -- the same thought as
+                    // naming it. When it happens is a separate decision, made
+                    // once you know what you are scheduling.
+                    //
                     // Events do not have steps: they happen, and carry no
                     // checkbox for a step to tick off.
                     if draft.kind == .task {
                         editorialSteps(timeOfDay: timeOfDay)
+                    }
+
+                    editorialDetails(timeOfDay: timeOfDay)
+
+                    // Creation only. Changing the rule behind days already
+                    // written is a different act from editing one of them, and
+                    // offering both here would make it ambiguous which was
+                    // meant.
+                    if draft.kind == .task, !isEditing {
+                        editorialRepeat(timeOfDay: timeOfDay)
                     }
 
                     if !draft.notes.isEmpty || isEditing {
@@ -169,8 +211,14 @@ struct PlannerEntryEditorView: View {
                         }
 
                         Button(role: .destructive) {
-                            onDeleted?(entry)
-                            dismiss()
+                            // A repeating task has two honest answers, so it
+                            // asks rather than picking the wider one silently.
+                            if entry.repeatIntervalDays != nil {
+                                isChoosingDeleteScope = true
+                            } else {
+                                onDeleted?(entry, false)
+                                dismiss()
+                            }
                         } label: {
                             Label("Delete \(draft.kind.title)", systemImage: "trash")
                                 .font(.community(.subheadline, weight: .semibold))
@@ -178,6 +226,26 @@ struct PlannerEntryEditorView: View {
                         .buttonStyle(.plain)
                         .foregroundStyle(Color.red)
                         .frame(maxWidth: .infinity, alignment: .center)
+                        .confirmationDialog(
+                            "This task repeats",
+                            isPresented: $isChoosingDeleteScope,
+                            titleVisibility: .visible
+                        ) {
+                            Button("Delete this day only", role: .destructive) {
+                                onDeleted?(entry, false)
+                                dismiss()
+                            }
+                            Button("Delete this and stop repeating", role: .destructive) {
+                                onDeleted?(entry, true)
+                                dismiss()
+                            }
+                            Button("Cancel", role: .cancel) {}
+                        } message: {
+                            Text(
+                                "Days you have already ticked off stay either way — "
+                                + "ending a habit is not saying it never happened."
+                            )
+                        }
                     }
                 }
                 .padding(.horizontal, 24)
@@ -446,6 +514,104 @@ struct PlannerEntryEditorView: View {
         stepDraft = ""
     }
 
+    /// The steps to save, including one still being typed.
+    ///
+    /// A step only joined the list when Add was pressed, so typing one and
+    /// going straight to Save threw it away without saying so. Text somebody
+    /// wrote in a box is text they meant, and a field is not a commitment
+    /// ceremony.
+    private var stepsToSave: [String] {
+        let pending = stepDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        return pending.isEmpty ? newSteps : newSteps + [pending]
+    }
+
+    /// How often a task comes back.
+    ///
+    /// Offered on creation only. Changing the rule behind days already written
+    /// is a different act from editing one of them, and putting both on one
+    /// screen would make it ambiguous which was meant.
+    private func editorialRepeat(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            EditorialSectionTitle(
+                title: "Repeats",
+                detail: repeatDays == 0 ? "Optional" : nil
+            )
+
+            Picker("Repeats", selection: $repeatDays) {
+                Text("Does not repeat").tag(0)
+                Text("Every day").tag(1)
+                Text("Every other day").tag(2)
+                Text("Every 3 days").tag(3)
+                Text("Every week").tag(7)
+                Text("Every 2 weeks").tag(14)
+                // The menu covers the common answers; this is for the ones it
+                // does not. Every four days is a real interval and a fixed
+                // list has no room for it.
+                Text("Every…").tag(customRepeatTag)
+            }
+            .pickerStyle(.menu)
+            .tint(timeOfDay.accent)
+
+            if repeatDays == customRepeatTag {
+                HStack(spacing: 8) {
+                    Text("Every")
+                        .font(.community(.subheadline))
+                    TextField("", value: $customRepeatDays, format: .number)
+                        .font(.community(.subheadline, weight: .semibold))
+                        .keyboardType(.numberPad)
+                        .multilineTextAlignment(.center)
+                        .frame(width: 58)
+                        .padding(.vertical, 7)
+                        .repbaseInsetSurface()
+                    Text(customRepeatDays == 1 ? "day" : "days")
+                        .font(.community(.subheadline))
+                }
+
+                if !isCustomRepeatValid {
+                    Text("Between 1 and 365 days.")
+                        .font(.community(.footnote, weight: .semibold))
+                        .foregroundStyle(RepbaseDesign.danger)
+                }
+            }
+
+            if repeatDays > 0 {
+                Toggle("Give it an end date", isOn: $repeatHasEnd)
+                    .font(.community(.subheadline))
+                    .tint(timeOfDay.accent)
+                    // A DatePicker clamps what it *draws* to its range but
+                    // leaves the binding alone, so an end date nobody touched
+                    // stayed on today and was sent as the day the task starts
+                    // -- which the server refuses, because a repeat has to end
+                    // after it begins. The value is put in range here instead
+                    // of being left for the picker to appear to fix.
+                    .onChange(of: repeatHasEnd) { _, isOn in
+                        if isOn { repeatEnds = max(repeatEnds, earliestEnd) }
+                    }
+                    .onChange(of: date) { _, _ in
+                        repeatEnds = max(repeatEnds, earliestEnd)
+                    }
+
+                if repeatHasEnd {
+                    DatePicker(
+                        "Until",
+                        selection: $repeatEnds,
+                        in: earliestEnd...,
+                        displayedComponents: .date
+                    )
+                    .font(.community(.subheadline))
+                }
+
+                Text(
+                    repeatHasEnd
+                        ? "The last day it appears is the day before this."
+                        : "It keeps going until you stop it."
+                )
+                .font(.community(.footnote))
+                .foregroundStyle(timeOfDay.canvasSecondaryText)
+            }
+        }
+    }
+
     private var editorialNotes: some View {
         VStack(alignment: .leading, spacing: 13) {
             EditorialSectionTitle(title: "Notes", detail: "Optional")
@@ -482,7 +648,11 @@ struct PlannerEntryEditorView: View {
     }
 
     private var canSave: Bool {
-        !draft.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        guard !draft.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
+        // A custom interval outside the bounds is refused by the server, so
+        // Save is not offered for one.
+        if repeatDays == customRepeatTag, !isCustomRepeatValid { return false }
+        return true
     }
 
     private func save() {
@@ -494,6 +664,13 @@ struct PlannerEntryEditorView: View {
         // time off has to take the length with it rather than leaving one
         // behind for Save to be rejected over.
         if !hasTime { saved.durationMinutes = nil }
+        // Create-only, and only for a task. Sent as the day after the last one
+        // wanted, because the server treats the end as the first day it no
+        // longer applies.
+        if saved.kind == .task, !isEditing, repeatInterval > 0 {
+            saved.repeatEveryDays = repeatInterval
+            saved.repeatEndsOn = repeatHasEnd ? PlannerStore.dateString(repeatEnds) : nil
+        }
         if saved.kind == .event { saved.isComplete = false }
         if !saved.category.suits(saved.kind) { saved.category = .other }
         if saved.category != .workout { saved.workoutID = nil }
@@ -502,7 +679,7 @@ struct PlannerEntryEditorView: View {
         saveError = nil
         Task {
             defer { isSaving = false }
-            if let problem = await onSaved(saved, newSteps) { saveError = problem }
+            if let problem = await onSaved(saved, stepsToSave) { saveError = problem }
             else { draftSaved = true; dismiss() }
         }
     }

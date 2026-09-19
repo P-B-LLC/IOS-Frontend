@@ -2154,8 +2154,14 @@ extension APIProtocol {
     ///
     /// - Remark: HTTP `DELETE /api/v1/planner/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/planner/{id}//delete(planner_destroy)`.
-    public func plannerDestroy(path: Operations.PlannerDestroy.Input.Path) async throws -> Operations.PlannerDestroy.Output {
-        try await plannerDestroy(Operations.PlannerDestroy.Input(path: path))
+    public func plannerDestroy(
+        path: Operations.PlannerDestroy.Input.Path,
+        query: Operations.PlannerDestroy.Input.Query = .init()
+    ) async throws -> Operations.PlannerDestroy.Output {
+        try await plannerDestroy(Operations.PlannerDestroy.Input(
+            path: path,
+            query: query
+        ))
     }
     /// - Remark: HTTP `GET /api/v1/progress/exercises/{exercise_id}/`.
     /// - Remark: Generated from `#/paths//api/v1/progress/exercises/{exercise_id}//get(progress_exercises_list)`.
@@ -6466,6 +6472,10 @@ public enum Components {
             public var notes: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/parent`.
             public var parent: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/repeat_every_days`.
+            public var repeatEveryDays: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/repeat_ends_on`.
+            public var repeatEndsOn: Swift.String?
             /// Creates a new `PatchedPlannerEntryRequest`.
             ///
             /// - Parameters:
@@ -6480,6 +6490,8 @@ public enum Components {
             ///   - workout:
             ///   - notes:
             ///   - parent:
+            ///   - repeatEveryDays:
+            ///   - repeatEndsOn:
             public init(
                 kind: Components.Schemas.PatchedPlannerEntryRequest.KindPayload? = nil,
                 title: Swift.String? = nil,
@@ -6491,7 +6503,9 @@ public enum Components {
                 isComplete: Swift.Bool? = nil,
                 workout: Swift.Int? = nil,
                 notes: Swift.String? = nil,
-                parent: Swift.Int? = nil
+                parent: Swift.Int? = nil,
+                repeatEveryDays: Swift.Int? = nil,
+                repeatEndsOn: Swift.String? = nil
             ) {
                 self.kind = kind
                 self.title = title
@@ -6504,6 +6518,8 @@ public enum Components {
                 self.workout = workout
                 self.notes = notes
                 self.parent = parent
+                self.repeatEveryDays = repeatEveryDays
+                self.repeatEndsOn = repeatEndsOn
             }
             public enum CodingKeys: String, CodingKey {
                 case kind
@@ -6517,6 +6533,8 @@ public enum Components {
                 case workout
                 case notes
                 case parent
+                case repeatEveryDays = "repeat_every_days"
+                case repeatEndsOn = "repeat_ends_on"
             }
         }
         /// A comment, and the replies hanging off it.
@@ -7253,6 +7271,8 @@ public enum Components {
             public var subtaskCount: Swift.Int
             /// - Remark: Generated from `#/components/schemas/PlannerEntry/completed_subtask_count`.
             public var completedSubtaskCount: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/repeat_interval_days`.
+            public var repeatIntervalDays: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/PlannerEntry/created_at`.
             public var createdAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/PlannerEntry/updated_at`.
@@ -7278,6 +7298,7 @@ public enum Components {
             ///   - subtasks:
             ///   - subtaskCount:
             ///   - completedSubtaskCount:
+            ///   - repeatIntervalDays:
             ///   - createdAt:
             ///   - updatedAt:
             public init(
@@ -7299,6 +7320,7 @@ public enum Components {
                 subtasks: [Components.Schemas.PlannerSubtask],
                 subtaskCount: Swift.Int,
                 completedSubtaskCount: Swift.Int,
+                repeatIntervalDays: Swift.Int? = nil,
                 createdAt: Foundation.Date,
                 updatedAt: Foundation.Date
             ) {
@@ -7320,6 +7342,7 @@ public enum Components {
                 self.subtasks = subtasks
                 self.subtaskCount = subtaskCount
                 self.completedSubtaskCount = completedSubtaskCount
+                self.repeatIntervalDays = repeatIntervalDays
                 self.createdAt = createdAt
                 self.updatedAt = updatedAt
             }
@@ -7342,6 +7365,7 @@ public enum Components {
                 case subtasks
                 case subtaskCount = "subtask_count"
                 case completedSubtaskCount = "completed_subtask_count"
+                case repeatIntervalDays = "repeat_interval_days"
                 case createdAt = "created_at"
                 case updatedAt = "updated_at"
             }
@@ -7402,6 +7426,10 @@ public enum Components {
             public var notes: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/parent`.
             public var parent: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/repeat_every_days`.
+            public var repeatEveryDays: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/repeat_ends_on`.
+            public var repeatEndsOn: Swift.String?
             /// Creates a new `PlannerEntryRequest`.
             ///
             /// - Parameters:
@@ -7416,6 +7444,8 @@ public enum Components {
             ///   - workout:
             ///   - notes:
             ///   - parent:
+            ///   - repeatEveryDays:
+            ///   - repeatEndsOn:
             public init(
                 kind: Components.Schemas.PlannerEntryRequest.KindPayload? = nil,
                 title: Swift.String,
@@ -7427,7 +7457,9 @@ public enum Components {
                 isComplete: Swift.Bool? = nil,
                 workout: Swift.Int? = nil,
                 notes: Swift.String? = nil,
-                parent: Swift.Int? = nil
+                parent: Swift.Int? = nil,
+                repeatEveryDays: Swift.Int? = nil,
+                repeatEndsOn: Swift.String? = nil
             ) {
                 self.kind = kind
                 self.title = title
@@ -7440,6 +7472,8 @@ public enum Components {
                 self.workout = workout
                 self.notes = notes
                 self.parent = parent
+                self.repeatEveryDays = repeatEveryDays
+                self.repeatEndsOn = repeatEndsOn
             }
             public enum CodingKeys: String, CodingKey {
                 case kind
@@ -7453,6 +7487,8 @@ public enum Components {
                 case workout
                 case notes
                 case parent
+                case repeatEveryDays = "repeat_every_days"
+                case repeatEndsOn = "repeat_ends_on"
             }
         }
         /// One step of a task, as it appears nested under its parent.
@@ -21316,6 +21352,10 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/planner/GET/query/end`.
                 public var end: Swift.String?
+                /// Include steps as rows of the list in their own right.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/planner/GET/query/include_subtasks`.
+                public var includeSubtasks: Swift.Bool?
                 /// Return only finished tasks, or only unfinished ones. Events are never complete, so this excludes them when true.
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/planner/GET/query/is_complete`.
@@ -21333,6 +21373,10 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/planner/GET/query/page`.
                 public var page: Swift.Int?
+                /// Return the steps of this task. Omitted, the list carries headings only: a step is drawn under its parent, and one listed beside it would be counted twice.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/planner/GET/query/parent`.
+                public var parent: Swift.Int?
                 /// Return only entries on or after this date.
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/planner/GET/query/start`.
@@ -21342,23 +21386,29 @@ public enum Operations {
                 /// - Parameters:
                 ///   - category: Return only entries in this category.
                 ///   - end: Return only entries on or before this date.
+                ///   - includeSubtasks: Include steps as rows of the list in their own right.
                 ///   - isComplete: Return only finished tasks, or only unfinished ones. Events are never complete, so this excludes them when true.
                 ///   - kind: Return only tasks, or only events.
                 ///   - page: A page number within the paginated result set.
+                ///   - parent: Return the steps of this task. Omitted, the list carries headings only: a step is drawn under its parent, and one listed beside it would be counted twice.
                 ///   - start: Return only entries on or after this date.
                 public init(
                     category: Operations.PlannerList.Input.Query.CategoryPayload? = nil,
                     end: Swift.String? = nil,
+                    includeSubtasks: Swift.Bool? = nil,
                     isComplete: Swift.Bool? = nil,
                     kind: Operations.PlannerList.Input.Query.KindPayload? = nil,
                     page: Swift.Int? = nil,
+                    parent: Swift.Int? = nil,
                     start: Swift.String? = nil
                 ) {
                     self.category = category
                     self.end = end
+                    self.includeSubtasks = includeSubtasks
                     self.isComplete = isComplete
                     self.kind = kind
                     self.page = page
+                    self.parent = parent
                     self.start = start
                 }
             }
@@ -22046,12 +22096,36 @@ public enum Operations {
                 }
             }
             public var path: Operations.PlannerDestroy.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/planner/{id}/DELETE/query`.
+            public struct Query: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/planner/{id}/DELETE/query/scope`.
+                @frozen public enum ScopePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case following = "following"
+                }
+                /// `following` ends a repeating task from this day on, clearing the unfinished days after it. Omitted, only this day is removed -- a delete that quietly took a year of tasks with it is the worst kind of surprise, so the wider act has to be asked for. Days already ticked off are kept either way: ending a habit is not saying it never happened.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/planner/{id}/DELETE/query/scope`.
+                public var scope: Operations.PlannerDestroy.Input.Query.ScopePayload?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - scope: `following` ends a repeating task from this day on, clearing the unfinished days after it. Omitted, only this day is removed -- a delete that quietly took a year of tasks with it is the worst kind of surprise, so the wider act has to be asked for. Days already ticked off are kept either way: ending a habit is not saying it never happened.
+                public init(scope: Operations.PlannerDestroy.Input.Query.ScopePayload? = nil) {
+                    self.scope = scope
+                }
+            }
+            public var query: Operations.PlannerDestroy.Input.Query
             /// Creates a new `Input`.
             ///
             /// - Parameters:
             ///   - path:
-            public init(path: Operations.PlannerDestroy.Input.Path) {
+            ///   - query:
+            public init(
+                path: Operations.PlannerDestroy.Input.Path,
+                query: Operations.PlannerDestroy.Input.Query = .init()
+            ) {
                 self.path = path
+                self.query = query
             }
         }
         @frozen public enum Output: Sendable, Hashable {

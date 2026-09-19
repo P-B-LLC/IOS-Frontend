@@ -131,7 +131,9 @@ struct PlannerView: View {
                 onSaved: { entry, steps in
                     await store.saveReportingFailure(entry, steps: steps)
                 },
-                onDeleted: { store.delete($0) }
+                onDeleted: { entry, endsRepeat in
+                    store.delete(entry, endsRepeat: endsRepeat)
+                }
             )
         }
         .navigationDestination(item: $openingDay) { day in
@@ -578,6 +580,7 @@ struct PlannerEntryRow: View {
     @State private var stepDraft = ""
     @State private var busyStep: Int?
     @State private var stepFailure: String?
+    @State private var endingRepeat = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -609,9 +612,36 @@ struct PlannerEntryRow: View {
         // List, where swipe actions would never fire.
         .contextMenu {
             Button("Edit", systemImage: "pencil", action: onEdit)
-            Button("Delete", systemImage: "trash", role: .destructive) {
-                store.delete(entry)
+            if entry.repeatIntervalDays != nil {
+                // Two answers, because removing today and stopping the habit
+                // are different intentions and the wider one must never happen
+                // by accident.
+                Button("Delete this day", systemImage: "trash", role: .destructive) {
+                    store.delete(entry)
+                }
+                Button("Stop repeating", systemImage: "repeat.slash", role: .destructive) {
+                    endingRepeat = true
+                }
+            } else {
+                Button("Delete", systemImage: "trash", role: .destructive) {
+                    store.delete(entry)
+                }
             }
+        }
+        .confirmationDialog(
+            "Stop this repeating task?",
+            isPresented: $endingRepeat,
+            titleVisibility: .visible
+        ) {
+            Button("Stop repeating", role: .destructive) {
+                store.delete(entry, endsRepeat: true)
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text(
+                "This day and every one after it goes. Days you have already "
+                + "ticked off stay — ending a habit is not saying it never happened."
+            )
         }
         .onAppear {
             showingSteps = entry.completionIsDerived && !entry.isComplete
@@ -689,6 +719,7 @@ struct PlannerEntryRow: View {
         parts.append(entry.category.title)
         if let when = entry.displayTimeRange { parts.append(when) }
         if entry.kind == .event { parts.append("Event") }
+        if let every = entry.repeatIntervalDays { parts.append(Self.repeatLabel(every)) }
         return parts.joined(separator: " · ")
     }
 
@@ -881,5 +912,19 @@ struct PlannerEntryRow: View {
         return Calendar.current.date(
             from: DateComponents(year: parts[0], month: parts[1], day: parts[2])
         )
+    }
+}
+
+extension PlannerEntryRow {
+    /// "every other day" reads better than "every 2 days", and "every week"
+    /// better than "every 7". The rest fall back to the count.
+    static func repeatLabel(_ days: Int) -> String {
+        switch days {
+        case 1: return "Every day"
+        case 2: return "Every other day"
+        case 7: return "Every week"
+        case 14: return "Every 2 weeks"
+        default: return "Every \(days) days"
+        }
     }
 }

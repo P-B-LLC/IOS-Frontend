@@ -5297,6 +5297,13 @@ public struct Client: APIProtocol {
                     in: &request,
                     style: .form,
                     explode: true,
+                    name: "include_subtasks",
+                    value: input.query.includeSubtasks
+                )
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
                     name: "is_complete",
                     value: input.query.isComplete
                 )
@@ -5313,6 +5320,13 @@ public struct Client: APIProtocol {
                     explode: true,
                     name: "page",
                     value: input.query.page
+                )
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "parent",
+                    value: input.query.parent
                 )
                 try converter.setQueryItemAsURI(
                     in: &request,
@@ -5678,6 +5692,13 @@ public struct Client: APIProtocol {
                     method: .delete
                 )
                 suppressMutabilityWarning(&request)
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "scope",
+                    value: input.query.scope
+                )
                 return (request, nil)
             },
             deserializer: { response, responseBody in
