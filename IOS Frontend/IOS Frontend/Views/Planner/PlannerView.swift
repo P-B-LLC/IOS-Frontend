@@ -128,7 +128,9 @@ struct PlannerView: View {
             PlannerEntryEditorView(
                 mode: mode,
                 workouts: workoutStore.knownWorkouts,
-                onSaved: { await store.saveReportingFailure($0) },
+                onSaved: { entry, steps in
+                    await store.saveReportingFailure(entry, steps: steps)
+                },
                 onDeleted: { store.delete($0) }
             )
         }

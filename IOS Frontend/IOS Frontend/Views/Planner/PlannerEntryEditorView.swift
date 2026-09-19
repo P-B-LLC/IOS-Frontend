@@ -30,7 +30,9 @@ struct PlannerEntryEditorView: View {
     /// `nil` when the entry saved, and otherwise the reason to put on screen.
     /// It returned a Bool until a save started failing in the field and the
     /// only thing anyone could report was the sentence this view had made up.
-    var onSaved: ((PlannerEntry) async -> String?)?
+    /// The steps written beside the task travel with it, because they can only
+    /// be created once the task has an id to hang them on.
+    var onSaved: ((PlannerEntry, [String]) async -> String?)?
     var onDeleted: ((PlannerEntry) -> Void)?
 
     @Environment(\.dismiss) private var dismiss
@@ -54,11 +56,15 @@ struct PlannerEntryEditorView: View {
     @State private var hasTime: Bool
     /// The saved entry being shared, if Share was tapped.
     @State private var sharedEntry: SharedPostSource?
+    /// Steps written here but not yet saved. They cannot be created until the
+    /// task has an id, so they wait for it and are sent on straight after.
+    @State private var newSteps: [String] = []
+    @State private var stepDraft = ""
 
     init(
         mode: Mode,
         workouts: [WorkoutSummary] = [],
-        onSaved: ((PlannerEntry) async -> String?)? = nil,
+        onSaved: ((PlannerEntry, [String]) async -> String?)? = nil,
         onDeleted: ((PlannerEntry) -> Void)? = nil
     ) {
         self.mode = mode
@@ -126,6 +132,12 @@ struct PlannerEntryEditorView: View {
 
                     editorialNameAndType(timeOfDay: timeOfDay)
                     editorialDetails(timeOfDay: timeOfDay)
+
+                    // Events do not have steps: they happen, and carry no
+                    // checkbox for a step to tick off.
+                    if draft.kind == .task {
+                        editorialSteps(timeOfDay: timeOfDay)
+                    }
 
                     if !draft.notes.isEmpty || isEditing {
                         editorialNotes
@@ -346,6 +358,94 @@ struct PlannerEntryEditorView: View {
         }
     }
 
+    /// Breaking a task into the steps it is made of.
+    ///
+    /// Written here rather than only on the finished row, because this is the
+    /// screen somebody is on when they realise a task is really six things.
+    /// They cannot be created yet — a step carries its task's id and the task
+    /// has none until it saves — so they are held and sent on straight after.
+    private func editorialSteps(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            EditorialSectionTitle(
+                title: "Steps",
+                detail: draft.subtasks.isEmpty && newSteps.isEmpty ? "Optional" : nil
+            )
+
+            Text("A task with steps is done when they all are.")
+                .font(.community(.footnote))
+                .foregroundStyle(timeOfDay.canvasSecondaryText)
+
+            // Steps this task already has, when an existing one is open. Shown
+            // rather than edited: they are ticked off on the task's own row,
+            // and a checkbox here would be a second place to get it wrong.
+            ForEach(draft.subtasks) { step in
+                HStack(spacing: 9) {
+                    Image(systemName: step.isComplete ? "checkmark.circle.fill" : "circle")
+                        .font(.community(.subheadline))
+                        .foregroundStyle(
+                            step.isComplete
+                                ? Color(hex: 0x3FAE6A)
+                                : timeOfDay.canvasSecondaryText.opacity(0.5)
+                        )
+                    Text(step.title)
+                        .font(.community(.subheadline))
+                        .strikethrough(step.isComplete, color: timeOfDay.canvasSecondaryText)
+                        .foregroundStyle(
+                            step.isComplete
+                                ? timeOfDay.canvasSecondaryText
+                                : timeOfDay.canvasPrimaryText
+                        )
+                    Spacer(minLength: 0)
+                }
+            }
+
+            ForEach(Array(newSteps.enumerated()), id: \.offset) { index, step in
+                HStack(spacing: 9) {
+                    Image(systemName: "circle")
+                        .font(.community(.subheadline))
+                        .foregroundStyle(timeOfDay.canvasSecondaryText.opacity(0.5))
+                    Text(step)
+                        .font(.community(.subheadline))
+                        .foregroundStyle(timeOfDay.canvasPrimaryText)
+                    Spacer(minLength: 0)
+                    Button {
+                        newSteps.remove(at: index)
+                    } label: {
+                        Image(systemName: "minus.circle.fill")
+                            .font(.community(.subheadline))
+                            .foregroundStyle(timeOfDay.canvasSecondaryText.opacity(0.6))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Remove step \(step)")
+                }
+            }
+
+            HStack(spacing: 10) {
+                TextField("Add a step", text: $stepDraft)
+                    .font(.community(.subheadline))
+                    .textFieldStyle(.plain)
+                    .submitLabel(.next)
+                    .onSubmit(addStep)
+
+                Button("Add", action: addStep)
+                    .font(.community(.footnote, weight: .bold))
+                    .buttonStyle(.plain)
+                    .foregroundStyle(timeOfDay.accent)
+                    .disabled(stepDraft.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+            .padding(.vertical, 10)
+            .padding(.horizontal, 14)
+            .repbaseInsetSurface()
+        }
+    }
+
+    private func addStep() {
+        let title = stepDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !title.isEmpty else { return }
+        newSteps.append(title)
+        stepDraft = ""
+    }
+
     private var editorialNotes: some View {
         VStack(alignment: .leading, spacing: 13) {
             EditorialSectionTitle(title: "Notes", detail: "Optional")
@@ -402,7 +502,7 @@ struct PlannerEntryEditorView: View {
         saveError = nil
         Task {
             defer { isSaving = false }
-            if let problem = await onSaved(saved) { saveError = problem }
+            if let problem = await onSaved(saved, newSteps) { saveError = problem }
             else { draftSaved = true; dismiss() }
         }
     }
