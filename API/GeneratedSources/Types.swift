@@ -6466,6 +6466,10 @@ public enum Components {
             public var notes: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/parent`.
             public var parent: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/repeat_every_days`.
+            public var repeatEveryDays: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/repeat_ends_on`.
+            public var repeatEndsOn: Swift.String?
             /// Creates a new `PatchedPlannerEntryRequest`.
             ///
             /// - Parameters:
@@ -6480,6 +6484,8 @@ public enum Components {
             ///   - workout:
             ///   - notes:
             ///   - parent:
+            ///   - repeatEveryDays:
+            ///   - repeatEndsOn:
             public init(
                 kind: Components.Schemas.PatchedPlannerEntryRequest.KindPayload? = nil,
                 title: Swift.String? = nil,
@@ -6491,7 +6497,9 @@ public enum Components {
                 isComplete: Swift.Bool? = nil,
                 workout: Swift.Int? = nil,
                 notes: Swift.String? = nil,
-                parent: Swift.Int? = nil
+                parent: Swift.Int? = nil,
+                repeatEveryDays: Swift.Int? = nil,
+                repeatEndsOn: Swift.String? = nil
             ) {
                 self.kind = kind
                 self.title = title
@@ -6504,6 +6512,8 @@ public enum Components {
                 self.workout = workout
                 self.notes = notes
                 self.parent = parent
+                self.repeatEveryDays = repeatEveryDays
+                self.repeatEndsOn = repeatEndsOn
             }
             public enum CodingKeys: String, CodingKey {
                 case kind
@@ -6517,6 +6527,8 @@ public enum Components {
                 case workout
                 case notes
                 case parent
+                case repeatEveryDays = "repeat_every_days"
+                case repeatEndsOn = "repeat_ends_on"
             }
         }
         /// A comment, and the replies hanging off it.
@@ -7253,6 +7265,8 @@ public enum Components {
             public var subtaskCount: Swift.Int
             /// - Remark: Generated from `#/components/schemas/PlannerEntry/completed_subtask_count`.
             public var completedSubtaskCount: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/repeat_interval_days`.
+            public var repeatIntervalDays: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/PlannerEntry/created_at`.
             public var createdAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/PlannerEntry/updated_at`.
@@ -7278,6 +7292,7 @@ public enum Components {
             ///   - subtasks:
             ///   - subtaskCount:
             ///   - completedSubtaskCount:
+            ///   - repeatIntervalDays:
             ///   - createdAt:
             ///   - updatedAt:
             public init(
@@ -7299,6 +7314,7 @@ public enum Components {
                 subtasks: [Components.Schemas.PlannerSubtask],
                 subtaskCount: Swift.Int,
                 completedSubtaskCount: Swift.Int,
+                repeatIntervalDays: Swift.Int? = nil,
                 createdAt: Foundation.Date,
                 updatedAt: Foundation.Date
             ) {
@@ -7320,6 +7336,7 @@ public enum Components {
                 self.subtasks = subtasks
                 self.subtaskCount = subtaskCount
                 self.completedSubtaskCount = completedSubtaskCount
+                self.repeatIntervalDays = repeatIntervalDays
                 self.createdAt = createdAt
                 self.updatedAt = updatedAt
             }
@@ -7342,6 +7359,7 @@ public enum Components {
                 case subtasks
                 case subtaskCount = "subtask_count"
                 case completedSubtaskCount = "completed_subtask_count"
+                case repeatIntervalDays = "repeat_interval_days"
                 case createdAt = "created_at"
                 case updatedAt = "updated_at"
             }
@@ -7402,6 +7420,10 @@ public enum Components {
             public var notes: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/parent`.
             public var parent: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/repeat_every_days`.
+            public var repeatEveryDays: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/repeat_ends_on`.
+            public var repeatEndsOn: Swift.String?
             /// Creates a new `PlannerEntryRequest`.
             ///
             /// - Parameters:
@@ -7416,6 +7438,8 @@ public enum Components {
             ///   - workout:
             ///   - notes:
             ///   - parent:
+            ///   - repeatEveryDays:
+            ///   - repeatEndsOn:
             public init(
                 kind: Components.Schemas.PlannerEntryRequest.KindPayload? = nil,
                 title: Swift.String,
@@ -7427,7 +7451,9 @@ public enum Components {
                 isComplete: Swift.Bool? = nil,
                 workout: Swift.Int? = nil,
                 notes: Swift.String? = nil,
-                parent: Swift.Int? = nil
+                parent: Swift.Int? = nil,
+                repeatEveryDays: Swift.Int? = nil,
+                repeatEndsOn: Swift.String? = nil
             ) {
                 self.kind = kind
                 self.title = title
@@ -7440,6 +7466,8 @@ public enum Components {
                 self.workout = workout
                 self.notes = notes
                 self.parent = parent
+                self.repeatEveryDays = repeatEveryDays
+                self.repeatEndsOn = repeatEndsOn
             }
             public enum CodingKeys: String, CodingKey {
                 case kind
@@ -7453,6 +7481,8 @@ public enum Components {
                 case workout
                 case notes
                 case parent
+                case repeatEveryDays = "repeat_every_days"
+                case repeatEndsOn = "repeat_ends_on"
             }
         }
         /// One step of a task, as it appears nested under its parent.
