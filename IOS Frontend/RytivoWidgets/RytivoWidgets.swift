@@ -156,6 +156,16 @@ struct TodayWidgetView: View {
 
 struct RytivoWidget: Widget {
     let focus: WidgetFocus
+
+    // Widget requires init(); the bundle also supplies a focus for each entry.
+    init() {
+        self.focus = .day
+    }
+
+    init(focus: WidgetFocus) {
+        self.focus = focus
+    }
+
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: "com.pbllc.rytivo.\(focus.rawValue)", provider: TodayProvider()) { entry in
             TodayWidgetView(entry: entry, focus: focus)
