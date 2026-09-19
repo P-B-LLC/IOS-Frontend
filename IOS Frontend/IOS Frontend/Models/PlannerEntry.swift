@@ -312,6 +312,17 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
     /// The steps this task is made of, in the server's order. Empty on an
     /// ordinary task.
     var subtasks: [PlannerSubtask]
+    /// How often this task comes back, or nil when it happens once.
+    ///
+    /// Read from the rule behind it rather than stored on the row, so ending a
+    /// repeat does not have to rewrite every day it already wrote.
+    var repeatIntervalDays: Int?
+    /// Create-only: make this task repeat. Never comes back from the server —
+    /// `repeatIntervalDays` is what it answers with.
+    var repeatEveryDays: Int?
+    /// Create-only: the first day the repeat no longer applies. Nil means it
+    /// runs until it is stopped, which is what most habits are.
+    var repeatEndsOn: String?
 
     /// Whether this task's completion is the server's to decide.
     ///
@@ -338,7 +349,10 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
         workoutName: String? = nil,
         notes: String = "",
         parentID: Int? = nil,
-        subtasks: [PlannerSubtask] = []
+        subtasks: [PlannerSubtask] = [],
+        repeatIntervalDays: Int? = nil,
+        repeatEveryDays: Int? = nil,
+        repeatEndsOn: String? = nil
     ) {
         self.id = id
         self.serverID = serverID
@@ -355,6 +369,9 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
         self.notes = notes
         self.parentID = parentID
         self.subtasks = subtasks
+        self.repeatIntervalDays = repeatIntervalDays
+        self.repeatEveryDays = repeatEveryDays
+        self.repeatEndsOn = repeatEndsOn
     }
 
     /// The server's copy of this entry, under the identity the app already
@@ -382,7 +399,10 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
             workoutName: workoutName,
             notes: notes,
             parentID: parentID,
-            subtasks: subtasks
+            subtasks: subtasks,
+            repeatIntervalDays: repeatIntervalDays,
+            repeatEveryDays: repeatEveryDays,
+            repeatEndsOn: repeatEndsOn
         )
     }
 

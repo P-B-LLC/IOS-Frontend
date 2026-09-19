@@ -127,7 +127,9 @@ actor PlannerAPIRepository {
                     isComplete: draft.isCompletable ? draft.isComplete : nil,
                     workout: draft.workoutID,
                     notes: draft.notes,
-                    parent: draft.parentID
+                    parent: draft.parentID,
+                    repeatEveryDays: draft.repeatEveryDays,
+                    repeatEndsOn: draft.repeatEndsOn
                 )
             )
         )
@@ -286,12 +288,20 @@ actor PlannerAPIRepository {
         }
     }
 
-    func delete(_ entry: PlannerEntry) async throws {
+    /// Remove one entry, or end the repeat it belongs to.
+    ///
+    /// `endsRepeat` is the wider act and is never the default: a delete that
+    /// quietly took a year of tasks with it is the worst kind of surprise, so
+    /// the caller has to ask for it.
+    func delete(_ entry: PlannerEntry, endsRepeat: Bool = false) async throws {
         guard let serverID = entry.serverID else {
             throw APIServiceError.missingServerIdentifier("Planner entry")
         }
 
-        let output = try await client.plannerDestroy(path: .init(id: serverID))
+        let output = try await client.plannerDestroy(
+            path: .init(id: serverID),
+            query: .init(scope: endsRepeat ? .following : nil)
+        )
         switch output {
         case .noContent:
             return
@@ -324,7 +334,8 @@ actor PlannerAPIRepository {
             workoutName: payload.workoutName,
             notes: payload.notes ?? "",
             parentID: payload.parent,
-            subtasks: payload.subtasks.map(subtask(from:))
+            subtasks: payload.subtasks.map(subtask(from:)),
+            repeatIntervalDays: payload.repeatIntervalDays
         )
     }
 

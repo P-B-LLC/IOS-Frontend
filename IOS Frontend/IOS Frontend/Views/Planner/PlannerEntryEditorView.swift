@@ -60,6 +60,10 @@ struct PlannerEntryEditorView: View {
     /// task has an id, so they wait for it and are sent on straight after.
     @State private var newSteps: [String] = []
     @State private var stepDraft = ""
+    /// 0 means it happens once, which is what most tasks are.
+    @State private var repeatDays = 0
+    @State private var repeatHasEnd = false
+    @State private var repeatEnds = Date()
 
     init(
         mode: Mode,
@@ -131,12 +135,26 @@ struct PlannerEntryEditorView: View {
                     }
 
                     editorialNameAndType(timeOfDay: timeOfDay)
-                    editorialDetails(timeOfDay: timeOfDay)
 
+                    // Above the schedule, because breaking the work up is part
+                    // of saying what the task *is* -- the same thought as
+                    // naming it. When it happens is a separate decision, made
+                    // once you know what you are scheduling.
+                    //
                     // Events do not have steps: they happen, and carry no
                     // checkbox for a step to tick off.
                     if draft.kind == .task {
                         editorialSteps(timeOfDay: timeOfDay)
+                    }
+
+                    editorialDetails(timeOfDay: timeOfDay)
+
+                    // Creation only. Changing the rule behind days already
+                    // written is a different act from editing one of them, and
+                    // offering both here would make it ambiguous which was
+                    // meant.
+                    if draft.kind == .task, !isEditing {
+                        editorialRepeat(timeOfDay: timeOfDay)
                     }
 
                     if !draft.notes.isEmpty || isEditing {
@@ -446,6 +464,55 @@ struct PlannerEntryEditorView: View {
         stepDraft = ""
     }
 
+    /// How often a task comes back.
+    ///
+    /// Offered on creation only. Changing the rule behind days already written
+    /// is a different act from editing one of them, and putting both on one
+    /// screen would make it ambiguous which was meant.
+    private func editorialRepeat(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            EditorialSectionTitle(
+                title: "Repeats",
+                detail: repeatDays == 0 ? "Optional" : nil
+            )
+
+            Picker("Repeats", selection: $repeatDays) {
+                Text("Does not repeat").tag(0)
+                Text("Every day").tag(1)
+                Text("Every other day").tag(2)
+                Text("Every 3 days").tag(3)
+                Text("Every week").tag(7)
+                Text("Every 2 weeks").tag(14)
+            }
+            .pickerStyle(.menu)
+            .tint(timeOfDay.accent)
+
+            if repeatDays > 0 {
+                Toggle("Give it an end date", isOn: $repeatHasEnd)
+                    .font(.community(.subheadline))
+                    .tint(timeOfDay.accent)
+
+                if repeatHasEnd {
+                    DatePicker(
+                        "Until",
+                        selection: $repeatEnds,
+                        in: (date.addingTimeInterval(86_400))...,
+                        displayedComponents: .date
+                    )
+                    .font(.community(.subheadline))
+                }
+
+                Text(
+                    repeatHasEnd
+                        ? "The last day it appears is the day before this."
+                        : "It keeps going until you stop it."
+                )
+                .font(.community(.footnote))
+                .foregroundStyle(timeOfDay.canvasSecondaryText)
+            }
+        }
+    }
+
     private var editorialNotes: some View {
         VStack(alignment: .leading, spacing: 13) {
             EditorialSectionTitle(title: "Notes", detail: "Optional")
@@ -494,6 +561,13 @@ struct PlannerEntryEditorView: View {
         // time off has to take the length with it rather than leaving one
         // behind for Save to be rejected over.
         if !hasTime { saved.durationMinutes = nil }
+        // Create-only, and only for a task. Sent as the day after the last one
+        // wanted, because the server treats the end as the first day it no
+        // longer applies.
+        if saved.kind == .task, !isEditing, repeatDays > 0 {
+            saved.repeatEveryDays = repeatDays
+            saved.repeatEndsOn = repeatHasEnd ? PlannerStore.dateString(repeatEnds) : nil
+        }
         if saved.kind == .event { saved.isComplete = false }
         if !saved.category.suits(saved.kind) { saved.category = .other }
         if saved.category != .workout { saved.workoutID = nil }
