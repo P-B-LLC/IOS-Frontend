@@ -501,6 +501,9 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /api/v1/progress/exercises/{exercise_id}/`.
     /// - Remark: Generated from `#/paths//api/v1/progress/exercises/{exercise_id}//get(progress_exercises_list)`.
     func progressExercisesList(_ input: Operations.ProgressExercisesList.Input) async throws -> Operations.ProgressExercisesList.Output
+    /// - Remark: HTTP `POST /api/v1/push/devices/`.
+    /// - Remark: Generated from `#/paths//api/v1/push/devices//post(registerPushDevice)`.
+    func registerPushDevice(_ input: Operations.RegisterPushDevice.Input) async throws -> Operations.RegisterPushDevice.Output
     /// Workouts that repeat weekly.
     ///
     /// There is deliberately no update endpoint. Changing a repeat means ending
@@ -2175,6 +2178,11 @@ extension APIProtocol {
             query: query,
             headers: headers
         ))
+    }
+    /// - Remark: HTTP `POST /api/v1/push/devices/`.
+    /// - Remark: Generated from `#/paths//api/v1/push/devices//post(registerPushDevice)`.
+    public func registerPushDevice(body: Operations.RegisterPushDevice.Input.Body) async throws -> Operations.RegisterPushDevice.Output {
+        try await registerPushDevice(Operations.RegisterPushDevice.Input(body: body))
     }
     /// Workouts that repeat weekly.
     ///
@@ -4087,6 +4095,14 @@ public enum Components {
             public enum CodingKeys: String, CodingKey {
                 case date
             }
+        }
+        /// * `sandbox` - sandbox
+        /// * `production` - production
+        ///
+        /// - Remark: Generated from `#/components/schemas/EnvironmentEnum`.
+        @frozen public enum EnvironmentEnum: String, Codable, Hashable, Sendable, CaseIterable {
+            case sandbox = "sandbox"
+            case production = "production"
         }
         /// - Remark: Generated from `#/components/schemas/Exercise`.
         public struct Exercise: Codable, Hashable, Sendable {
@@ -9037,6 +9053,35 @@ public enum Components {
                 case showsWeight = "shows_weight"
                 case showsTargetWeight = "shows_target_weight"
                 case isProfilePublic = "is_profile_public"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PushDeviceRegistrationRequest`.
+        public struct PushDeviceRegistrationRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PushDeviceRegistrationRequest/token`.
+            public var token: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PushDeviceRegistrationRequest/environment`.
+            public var environment: Components.Schemas.EnvironmentEnum
+            /// - Remark: Generated from `#/components/schemas/PushDeviceRegistrationRequest/community_enabled`.
+            public var communityEnabled: Swift.Bool
+            /// Creates a new `PushDeviceRegistrationRequest`.
+            ///
+            /// - Parameters:
+            ///   - token:
+            ///   - environment:
+            ///   - communityEnabled:
+            public init(
+                token: Swift.String,
+                environment: Components.Schemas.EnvironmentEnum,
+                communityEnabled: Swift.Bool
+            ) {
+                self.token = token
+                self.environment = environment
+                self.communityEnabled = communityEnabled
+            }
+            public enum CodingKeys: String, CodingKey {
+                case token
+                case environment
+                case communityEnabled = "community_enabled"
             }
         }
         /// * `why_i_train` - Why I train
@@ -22312,6 +22357,67 @@ public enum Operations {
                     .json
                 ]
             }
+        }
+    }
+    /// - Remark: HTTP `POST /api/v1/push/devices/`.
+    /// - Remark: Generated from `#/paths//api/v1/push/devices//post(registerPushDevice)`.
+    public enum RegisterPushDevice {
+        public static let id: Swift.String = "registerPushDevice"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/push/devices/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/push/devices/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.PushDeviceRegistrationRequest)
+            }
+            public var body: Operations.RegisterPushDevice.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - body:
+            public init(body: Operations.RegisterPushDevice.Input.Body) {
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct NoContent: Sendable, Hashable {
+                /// Creates a new `NoContent`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/push/devices//post(registerPushDevice)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            case noContent(Operations.RegisterPushDevice.Output.NoContent)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/push/devices//post(registerPushDevice)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            public static var noContent: Self {
+                .noContent(.init())
+            }
+            /// The associated value of the enum case if `self` is `.noContent`.
+            ///
+            /// - Throws: An error if `self` is not `.noContent`.
+            /// - SeeAlso: `.noContent`.
+            public var noContent: Operations.RegisterPushDevice.Output.NoContent {
+                get throws {
+                    switch self {
+                    case let .noContent(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "noContent",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
         }
     }
     /// Workouts that repeat weekly.
