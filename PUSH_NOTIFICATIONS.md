@@ -1,4 +1,4 @@
-# Push notifications: work-in-progress validation checkpoint
+# Push notifications: pre-deployment validation checkpoint
 
 Community activity now has an APNs registration coordinator, opt-out sync,
 account-checked tap routing, cold-launch inbox loading and foreground filtering.
@@ -7,10 +7,10 @@ signing key is server-side only; no key was added to this repository.
 
 ## Required on the Mac
 
-The Mac's SSH connection is blocked. **The generated client is intentionally
-not hand-edited and is currently stale. This checkpoint cannot compile until
-client generation runs.** CI's generated-client gate will correctly fail until
-the regenerated files are committed.
+The Mac's SSH connection is blocked. The user successfully completed the Mac
+validation script and reported a successful simulator build/launch. The generated
+client was committed and verified on GitHub as `59ab18a`; it is no longer stale.
+The commands below remain available to repeat validation after further changes.
 
 From the repository, with the desired simulator booted:
 
@@ -24,7 +24,7 @@ simulator app, and installs/launches it if a simulator is booted. It preserves
 its unique temporary build directory. If Git reports local changes, preserve
 and inspect them instead of resetting the project file.
 
-After successful build and reviewing the generated diff:
+If a future generation run changes the client, review and commit that diff:
 
 ```bash
 git diff --stat -- API/GeneratedSources
@@ -60,6 +60,13 @@ about possible continued generic alerts. Already accepted APNs alerts cannot be
 recalled. Payloads contain generic text and account/routing IDs, not usernames,
 messages, meals, health data or photos. Never promise exactly-once delivery.
 
-Do not treat simulator success as a passing TestFlight/APNs test. Native build,
-generated-client commit, PostgreSQL concurrency tests and real-device delivery
-are still outstanding at this checkpoint.
+Do not treat simulator success as a passing TestFlight/APNs test. Signed physical
+device delivery is still outstanding. Backend deployment is blocked by the
+existing `core.E006` moderation gate: the user confirmed no automated moderation
+provider API key has been obtained yet. The Apple APNs key is a separate
+credential and does not satisfy this requirement. Do not bypass the gate.
+
+Backend follow-up: all 56 targeted PostgreSQL tests passed with no skips,
+including both push concurrency tests. The isolated test cluster was stopped;
+production remains unchanged. See backend `deploy/PUSH_NOTIFICATIONS.md` for
+the verified commit, reproducible test script and deployment blocker.
