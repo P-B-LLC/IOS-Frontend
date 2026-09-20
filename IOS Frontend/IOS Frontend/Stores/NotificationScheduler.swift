@@ -4,12 +4,7 @@
 //
 //  Every local notification the app raises, in one place.
 //
-//  Local rather than pushed, and that is a constraint rather than a choice:
-//  these builds carry no APNs entitlement, so anything that arrives while the
-//  app is closed has to have been scheduled on the device beforehand. That
-//  works for reminders, which are all about a time already known. It does not
-//  work for anything another person does, which is why the social side is a
-//  page you open rather than something that buzzes.
+//  Timed reminders are local and independent of community APNs delivery.
 //
 //  Two different words that are easy to confuse:
 //
@@ -80,6 +75,9 @@ final class NotificationScheduler: NSObject {
     private let centre = UNUserNotificationCenter.current()
     private var accountID: Int?
     private var generation = UUID()
+    private var accountGeneration = UUID()
+    private let rebuildQueue = ReminderRebuildQueue()
+    private(set) var lastSchedulingError: String?
     @TaskLocal private static var schedulingGeneration: UUID?
 
     /// Invalidates all in-flight schedule writes before removing account data.
@@ -88,6 +86,9 @@ final class NotificationScheduler: NSObject {
         let previousOwner = defaults.object(forKey: Key.owner) as? Int
         accountID = id
         generation = UUID()
+        accountGeneration = UUID()
+        rebuildQueue.discardPending()
+        lastSchedulingError = nil
         if id == nil || previousOwner != id {
             centre.removeAllPendingNotificationRequests()
             centre.removeAllDeliveredNotifications()
@@ -160,6 +161,19 @@ final class NotificationScheduler: NSObject {
         now: Date = Date()
     ) async {
         guard accountID != nil, !Task.isCancelled else { return }
+        let owner = accountGeneration
+        let job = rebuildQueue.enqueue { [self] in
+            guard accountGeneration == owner else { return }
+            await rebuildSchedule(entries: entries, untimedWorkouts: untimedWorkouts, now: now)
+        }
+        // Cancelling this caller must not cancel the write after its clear step.
+        await job.value
+    }
+
+    private func rebuildSchedule(
+        entries: [PlannerEntry], untimedWorkouts: [PlannerEntry], now: Date
+    ) async {
+        guard accountID != nil else { return }
         let run = UUID()
         generation = run
         let settings = await centre.notificationSettings()
@@ -170,6 +184,7 @@ final class NotificationScheduler: NSObject {
         guard settings.authorizationStatus == .authorized
             || settings.authorizationStatus == .provisional
         else { return }
+        lastSchedulingError = nil
         centre.removeAllPendingNotificationRequests()
 
         await Self.$schedulingGeneration.withValue(run) {
@@ -434,7 +449,12 @@ final class NotificationScheduler: NSObject {
             content: content,
             trigger: UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)
         )
-        try? await centre.add(request)
+        do { try await centre.add(request) }
+        catch {
+            if generation == run {
+                lastSchedulingError = "Some reminders could not be scheduled. Check notification permission and retry."
+            }
+        }
         if generation != run || Task.isCancelled {
             centre.removePendingNotificationRequests(withIdentifiers: [request.identifier])
         }
@@ -464,7 +484,12 @@ final class NotificationScheduler: NSObject {
                 repeats: true
             )
         )
-        try? await centre.add(request)
+        do { try await centre.add(request) }
+        catch {
+            if generation == run {
+                lastSchedulingError = "Some reminders could not be scheduled. Check notification permission and retry."
+            }
+        }
         if generation != run || Task.isCancelled {
             centre.removePendingNotificationRequests(withIdentifiers: [request.identifier])
         }

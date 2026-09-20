@@ -56,6 +56,8 @@ final class PlannerStore {
     /// the user browses cannot be allowed to decide what the phone remembers,
     /// so this is fetched against today and never against `visibleMonth`.
     private(set) var reminderEntries: [PlannerEntry] = []
+    /// Empty after a successful read is different from not loaded yet.
+    private(set) var hasLoadedReminders = false
     private(set) var isLoading = false
     private(set) var isSaving = false
     private(set) var persistenceError: String?
@@ -174,6 +176,7 @@ final class PlannerStore {
     // MARK: - Connection
 
     func connect(configuration: APIConfiguration, token: String) async {
+        hasLoadedReminders = false
         let generation = UUID()
         connectionGeneration = generation
         completions.reset()
@@ -199,6 +202,7 @@ final class PlannerStore {
     }
 
     func disconnect() {
+        hasLoadedReminders = false
         completions.reset()
         connectionGeneration = UUID()
         repository = nil
@@ -699,6 +703,7 @@ final class PlannerStore {
                 ($0.date, $0.time ?? "") < ($1.date, $1.time ?? "")
             }
             reminderEntries = loadedRemindable
+            hasLoadedReminders = true
         } catch {
             guard connectionGeneration == generation else { return }
             persistenceError = error.userFacingMessage

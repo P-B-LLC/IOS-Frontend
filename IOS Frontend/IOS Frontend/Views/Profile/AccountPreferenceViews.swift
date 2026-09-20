@@ -101,6 +101,7 @@ struct NotificationPreferencesView: View {
     @Environment(PlannerStore.self) private var planner_
     @State private var authorizationStatus: UNAuthorizationStatus = .notDetermined
     @State private var notificationError: String?
+    @State private var scheduledTaskReminderCount: Int?
     /// Changed to redraw the muted summary after clearing it. The mutes live
     /// in UserDefaults rather than in any observable object, so nothing else
     /// would tell this view they had gone.
@@ -163,6 +164,16 @@ struct NotificationPreferencesView: View {
                         detail: "Phone alerts for follows, likes, reposts and replies. Activity remains available in Social when alerts are off.",
                         value: $social
                     )
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    if let count = scheduledTaskReminderCount {
+                        Text("\(count) task countdown alerts scheduled on this device")
+                            .font(.community(.subheadline))
+                    }
+                    Text("Countdowns need a saved task with a specific time. Anytime and muted tasks do not get countdown alerts.")
+                        .font(.community(.caption)).foregroundStyle(.secondary)
+                    Button("Refresh reminders") { Task { await refreshPermissionAndSchedules() } }
                 }
 
                 if PushNotificationCoordinator.shared.isSyncing {
@@ -236,6 +247,9 @@ struct NotificationPreferencesView: View {
         .onChange(of: nutrition) { _, _ in Task { await synchronizeSchedules() } }
         .onChange(of: planner) { _, _ in Task { await synchronizeSchedules() } }
         .onChange(of: social) { _, _ in PushNotificationCoordinator.shared.synchronize() }
+        .onChange(of: planner_.hasLoadedReminders) { _, loaded in
+            if loaded { Task { await refreshPermissionAndSchedules() } }
+        }
     }
 
     /// What is currently silenced, in words, or empty when nothing is.
@@ -296,6 +310,8 @@ struct NotificationPreferencesView: View {
         if authorizationStatus == .authorized || authorizationStatus == .provisional {
             await synchronizeSchedules()
         }
+        let pending = await UNUserNotificationCenter.current().pendingNotificationRequests()
+        scheduledTaskReminderCount = pending.filter { $0.content.categoryIdentifier == NotificationScheduler.Category.task }.count
     }
 
     /// Rebuilds the reminders to match the switches.
@@ -319,15 +335,15 @@ struct NotificationPreferencesView: View {
         // Which is exactly what happened: this is the page somebody opens to
         // grant permission, and opening it before signing in silently emptied
         // the schedule while leaving food behind to make it look fine.
-        guard planner_.isConnected else { return }
-        let entries = planner_.entriesByDate.values.flatMap { $0 }
+        guard planner_.isConnected, planner_.hasLoadedReminders else { return }
+        let entries = planner_.reminderEntries
         await NotificationScheduler.shared.reschedule(
             entries: entries,
             untimedWorkouts: entries.filter {
                 $0.workoutID != nil && $0.time == nil
             }
         )
-        notificationError = nil
+        notificationError = NotificationScheduler.shared.lastSchedulingError
     }
 
     private func schedule(

@@ -592,6 +592,7 @@ private struct AppRootView: View {
             if phase != .active { workoutStore.checkpointActiveSession() }
             if phase == .active {
                 PushNotificationCoordinator.shared.refresh()
+                Task { await rescheduleReminders() }
                 ActiveWorkoutWidgetPublisher.refresh(workoutStore)
                 if let snapshot = widgetSnapshot { WidgetPublisher.publish(snapshot) }
                 Task { await workoutStore.retryPendingWorkoutSaves() }
@@ -720,6 +721,9 @@ private struct AppRootView: View {
             guard authentication.token != nil else { return }
             await rescheduleReminders()
         }
+        .task(id: plannerStore.hasLoadedReminders) {
+            if plannerStore.hasLoadedReminders { await rescheduleReminders() }
+        }
     }
 
     /// Rebuilds every reminder the device raises on its own.
@@ -731,7 +735,8 @@ private struct AppRootView: View {
     /// single morning nudge instead. Deriving both from one list is what stops
     /// a timed workout being reminded about twice.
     private func rescheduleReminders() async {
-        guard authentication.token != nil, !Task.isCancelled else { return }
+        guard authentication.token != nil, plannerStore.hasLoadedReminders,
+              !Task.isCancelled else { return }
         let entries = plannerStore.reminderEntries
         await NotificationScheduler.shared.reschedule(
             entries: entries,

@@ -70,3 +70,30 @@ Backend follow-up: all 56 targeted PostgreSQL tests passed with no skips,
 including both push concurrency tests. The isolated test cluster was stopped;
 production remains unchanged. See backend `deploy/PUSH_NOTIFICATIONS.md` for
 the verified commit, reproducible test script and deployment blocker.
+
+## Local task-reminder regression follow-up
+
+Local task countdowns do not require APNs or the moderation provider. Following
+a report of missing reminders, source review found three scheduling gaps:
+screen-task cancellation could interrupt rebuilding after clearing requests;
+startup could rebuild before reminder data loaded; and notification preferences
+used the visible calendar month instead of the upcoming reminder collection.
+
+The patch adds a serialized, coalescing rebuild queue owned by the scheduler,
+a successful-load guard, foreground rebuilding, and the correct reminder list
+in preferences. OS scheduling failures are no longer silently swallowed. The
+notification settings page now offers Refresh reminders and a pending task-alert
+count. Account changes still invalidate active writes and discard queued work.
+
+Three regression tests cover caller cancellation, coalesced writes and discarding
+queued work on account changes. They are wired into `test-account-safety.sh` but
+have not been executed here (Windows has no Swift compiler and Mac SSH is blocked).
+Diff and shell syntax checks passed. The exact cause on the reporting device is
+not confirmed; native build and device delivery remain required.
+
+After building with `Scripts/validate-push-notifications.sh`, allow notifications,
+enable Tasks & events, and save an unmuted task with a time six minutes ahead.
+Refresh reminders in settings: the 5-minute and 1-minute alerts should be pending.
+Background the app and verify both deliveries. Repeat with a task 17 minutes
+ahead to check the 15-minute alert, and with another calendar month visible to
+verify that opening notification settings no longer drops upcoming reminders.
