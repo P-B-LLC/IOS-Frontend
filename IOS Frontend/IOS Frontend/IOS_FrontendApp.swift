@@ -11,6 +11,7 @@ import UIKit
 
 @main
 struct IOS_FrontendApp: App {
+    @UIApplicationDelegateAdaptor(PushAppDelegate.self) private var pushDelegate
     @AppStorage(RepbaseAppearancePreference.storageKey)
     private var appearanceRawValue = RepbaseAppearancePreference.light.rawValue
 
@@ -590,6 +591,7 @@ private struct AppRootView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase != .active { workoutStore.checkpointActiveSession() }
             if phase == .active {
+                PushNotificationCoordinator.shared.refresh()
                 ActiveWorkoutWidgetPublisher.refresh(workoutStore)
                 if let snapshot = widgetSnapshot { WidgetPublisher.publish(snapshot) }
                 Task { await workoutStore.retryPendingWorkoutSaves() }
@@ -623,6 +625,7 @@ private struct AppRootView: View {
             guard case .signedIn(let user) = authentication.phase else { return }
             EditorDraftRecovery.shared.scope = .init(ownerID: user.id, origin: authentication.configuration.serverURL.absoluteString)
             NotificationScheduler.shared.setAccount(user.id)
+            PushNotificationCoordinator.shared.connect(configuration: authentication.configuration, token: token, accountID: user.id)
             widgetSessionToken = nil
             WidgetPublisher.clear()
             await socialProfileStore.connect(
@@ -743,6 +746,7 @@ private struct AppRootView: View {
         WidgetPublisher.clear()
         EditorDraftRecovery.shared.scope = nil
         NotificationScheduler.shared.setAccount(nil)
+        PushNotificationCoordinator.shared.disconnect()
         workoutStore.disconnect()
         plannerStore.disconnect()
         socialProfileStore.disconnect()

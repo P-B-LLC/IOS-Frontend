@@ -209,10 +209,18 @@ final class AuthenticationStore {
         if let outgoingToken {
             do {
                 let client = try authenticatedClient(token: outgoingToken)
-                _ = try await client.authLogoutCreate()
+                let response = try await client.authLogoutCreate()
+                switch response {
+                case .noContent: break
+                case .undocumented(let statusCode, let payload):
+                    if statusCode != 401 {
+                        throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload)
+                    }
+                }
             } catch {
-                // Local credentials are still cleared if the server is offline
-                // or the token has already expired.
+                if sessionGeneration == generation {
+                    errorMessage = "Signed out on this device, but the server could not be reached. Community alerts may continue; turn off Rytivo notifications in iOS Settings until you reconnect."
+                }
             }
         }
     }

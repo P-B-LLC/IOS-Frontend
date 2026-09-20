@@ -106,6 +106,7 @@ struct RepbaseRootView: View {
     @Environment(WorkoutStore.self) private var workoutStore
     @AppStorage("widgets.pendingDestination") private var widgetDestination = ""
     @State private var tab: RepbaseTab
+    @State private var showsPushInbox = false
     /// Which half of the Training tab is showing, and how deep into it we
     /// are. Both live here because Home sends people there: opening Food or
     /// a particular day has to select the tab as well as the page, or the
@@ -172,6 +173,15 @@ struct RepbaseRootView: View {
                 .tag(RepbaseTab.account)
         }
         .environment(chrome)
+        .onChange(of: PushNotificationCoordinator.shared.routeID, initial: true) { _, route in
+            guard route != nil else { return }
+            tab = .social
+            showsPushInbox = true
+            PushNotificationCoordinator.shared.clearRoute()
+        }
+        .sheet(isPresented: $showsPushInbox) {
+            NavigationStack { NotificationsView() }
+        }
         .onChange(of: widgetDestination, initial: true) { _, destination in
             guard !destination.isEmpty else { return }
             switch destination {

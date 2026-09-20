@@ -492,6 +492,12 @@ extension NotificationScheduler: UNUserNotificationCenterDelegate {
         let action = response.actionIdentifier
         let info = response.notification.request.content.userInfo
         Task { @MainActor in
+            if action == UNNotificationDefaultActionIdentifier,
+               info["route"] as? String == "community", let owner = info["accountID"] as? Int {
+                PushNotificationCoordinator.shared.openCommunity(accountID: owner)
+                completionHandler()
+                return
+            }
             guard let owner = self.accountID, info["accountID"] as? Int == owner else {
                 completionHandler()
                 return
@@ -523,8 +529,10 @@ extension NotificationScheduler: UNUserNotificationCenterDelegate {
             @escaping (UNNotificationPresentationOptions) -> Void
     ) {
         let owner = notification.request.content.userInfo["accountID"] as? Int
+        let isCommunity = notification.request.content.userInfo["route"] as? String == "community"
         Task { @MainActor in
-            completionHandler(owner != nil && owner == self.accountID ? [.banner, .sound] : [])
+            let communityAllowed = !isCommunity || (UserDefaults.standard.object(forKey: "notifications.social") as? Bool ?? true)
+            completionHandler(owner != nil && owner == self.accountID && communityAllowed ? [.banner, .sound] : [])
         }
     }
 

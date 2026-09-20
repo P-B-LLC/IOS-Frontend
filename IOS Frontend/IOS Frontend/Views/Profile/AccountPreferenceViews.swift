@@ -160,9 +160,19 @@ struct NotificationPreferencesView: View {
                     Divider()
                     preference(
                         "Community",
-                        detail: "Follows, likes, reposts and replies. Shown on the notifications page in Social rather than sent to your phone.",
+                        detail: "Phone alerts for follows, likes, reposts and replies. Activity remains available in Social when alerts are off.",
                         value: $social
                     )
+                }
+
+                if PushNotificationCoordinator.shared.isSyncing {
+                    ProgressView("Syncing community alerts…")
+                }
+                if let message = PushNotificationCoordinator.shared.errorMessage {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(message).font(.community(.caption)).foregroundStyle(.secondary)
+                        Button("Retry community alerts") { PushNotificationCoordinator.shared.refresh() }
+                    }
                 }
 
                 if !mutedTaskCount.isEmpty {
@@ -225,6 +235,7 @@ struct NotificationPreferencesView: View {
         .onChange(of: training) { _, _ in Task { await synchronizeSchedules() } }
         .onChange(of: nutrition) { _, _ in Task { await synchronizeSchedules() } }
         .onChange(of: planner) { _, _ in Task { await synchronizeSchedules() } }
+        .onChange(of: social) { _, _ in PushNotificationCoordinator.shared.synchronize() }
     }
 
     /// What is currently silenced, in words, or empty when nothing is.
@@ -279,6 +290,7 @@ struct NotificationPreferencesView: View {
     }
 
     private func refreshPermissionAndSchedules() async {
+        PushNotificationCoordinator.shared.refresh()
         let settings = await UNUserNotificationCenter.current().notificationSettings()
         authorizationStatus = settings.authorizationStatus
         if authorizationStatus == .authorized || authorizationStatus == .provisional {

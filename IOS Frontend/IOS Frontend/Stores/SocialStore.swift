@@ -250,12 +250,12 @@ final class SocialStore {
 
     // MARK: - What has happened to you
 
-    func loadNotifications() async {
-        guard let repository else { return }
+    func loadNotifications() async -> Bool {
+        guard let repository else { return false }
         let generation = connectionGeneration
         do {
             let loaded = try await repository.notifications()
-            guard connectionGeneration == generation else { return }
+            guard connectionGeneration == generation, !Task.isCancelled else { return false }
             notifications = loaded
             // An approval is the answer to a request this device is still
             // drawing as pending. The button reads a profile snapshot that
@@ -270,9 +270,11 @@ final class SocialStore {
             for row in loaded where row.kind == .followApproved {
                 requestedUserIDs.remove(row.actorID)
             }
+            return true
         } catch {
-            guard connectionGeneration == generation else { return }
+            guard connectionGeneration == generation else { return false }
             showFailure(error)
+            return false
         }
     }
 

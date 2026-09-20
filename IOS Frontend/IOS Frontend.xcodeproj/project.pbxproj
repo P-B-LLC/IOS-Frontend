@@ -346,6 +346,8 @@
 		FA6A73E5302913750028C89A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+                APNS_ENTITLEMENT_ENVIRONMENT = development;
+                APNS_SERVER_ENVIRONMENT = sandbox;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "IOS Frontend.entitlements";
@@ -382,6 +384,8 @@
 		FA6A73E6302913750028C89A /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+                APNS_ENTITLEMENT_ENVIRONMENT = production;
+                APNS_SERVER_ENVIRONMENT = production;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "IOS Frontend.entitlements";

@@ -4,26 +4,28 @@
 //
 //  What other people have done: follows, requests, likes, reposts and replies.
 //
-//  A page rather than a stream of alerts, and that is a constraint being
-//  honest about itself. Anything another person does happens on the server,
-//  and reaching a closed phone from there needs a push these builds cannot
-//  send -- no Apple Developer membership behind them, no entitlement in them.
-//  So this is read when it is opened. The reminders that *can* arrive on their
-//  own are the ones the device schedules for itself, which is a different
-//  thing entirely and lives in NotificationScheduler.
+//  The inbox remains authoritative whether remote alerts are enabled or not.
+//  A push tap may reach this view before the account stores finish connecting.
 //
 
 import SwiftUI
 
 struct NotificationsView: View {
     @Environment(SocialStore.self) private var social
+    @State private var isLoading = false
+    @State private var loadFailed = false
 
     var body: some View {
         let timeOfDay = HomeTimeOfDay.current
 
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 0) {
-                if social.notifications.isEmpty {
+                if isLoading || !social.isConnected {
+                    ProgressView("Loading activity…").padding(.vertical, 18)
+                } else if loadFailed {
+                    Button("Couldn't load activity. Retry") { Task { await refreshInbox() } }
+                        .padding(.vertical, 18)
+                } else if social.notifications.isEmpty {
                     Text("Nothing yet. Follows, likes, reposts and replies land here.")
                         .font(.community(.subheadline))
                         .foregroundStyle(timeOfDay.secondaryText)
@@ -44,12 +46,18 @@ struct NotificationsView: View {
         .navigationTitle("Notifications")
         .navigationBarTitleDisplayMode(.inline)
         .homeTimeScreen(timeOfDay)
-        .task {
-            await social.loadNotifications()
-            // Opening the page is what seeing them means, so the badge clears
-            // here rather than needing a button that says "I have read these".
-            await social.markNotificationsRead()
-        }
+        .task(id: social.isConnected) { await refreshInbox() }
+        .refreshable { await refreshInbox() }
+    }
+
+    private func refreshInbox() async {
+        guard social.isConnected, !isLoading else { return }
+        isLoading = true
+        defer { isLoading = false }
+        let loaded = await social.loadNotifications()
+        guard !Task.isCancelled else { return }
+        loadFailed = !loaded
+        if loaded { await social.markNotificationsRead() }
     }
 
     private func row(
