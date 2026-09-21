@@ -5,6 +5,12 @@ workspace inside SFSafariViewController. This is a backend-rendered administrati
 screen, not a new native role editor. It supports role assignment, analytics,
 and report review after a separate authorized sign-in.
 
+The server-rendered screen also enforces the Superowner hierarchy: only the
+Superowner appoints Owners, Owners manage lower-level roles, and no in-app
+form can change or assign the protected Superowner. The requested first account
+is `Rytivo_Official` / `admin@rytivo.app`; activation remains a verified server
+operator step after the role migrations, not an app-side default.
+
 No app token is copied to a web view, cookie, JavaScript context, or URL. The
 server owns the grants and checks each operation. A standard user who opens
 this settings row cannot grant themself access. The portal shows the username

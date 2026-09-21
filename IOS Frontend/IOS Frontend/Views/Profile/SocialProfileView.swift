@@ -1034,7 +1034,7 @@ private struct ProfileSettingsView: View {
                         Button { showingAdministration = true } label: {
                             settingsRow(
                                 "Roles & permissions",
-                                detail: "Secure Owner, analytics, and moderator workspace. Separate staff sign-in required.",
+                                detail: "Secure Superowner, Owner, analytics, and moderator workspace. Separate staff sign-in required.",
                                 symbol: "lock.shield"
                             )
                         }
