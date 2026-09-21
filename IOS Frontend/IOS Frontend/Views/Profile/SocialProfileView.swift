@@ -944,6 +944,7 @@ private struct ProfileSettingsView: View {
     let profile: SocialProfile
     @State private var editorDestination: ProfileEditorDestination?
     @State private var showingPersonalization = false
+    @State private var showingAdministration = false
     @State private var showingDeleteConfirmation = false
     @State private var deleteError: String?
     @State private var securityMessage: String?
@@ -1024,6 +1025,17 @@ private struct ProfileSettingsView: View {
                                 "Your Rytivo",
                                 detail: "Training types, weekly goal, and what home leads with",
                                 symbol: "slider.horizontal.3"
+                            )
+                        }
+                        .buttonStyle(RepbaseSettingsRowButtonStyle())
+                    }
+
+                    settingsSection("ADMINISTRATION", timeOfDay: timeOfDay) {
+                        Button { showingAdministration = true } label: {
+                            settingsRow(
+                                "Roles & permissions",
+                                detail: "Secure Owner, analytics, and moderator workspace. Separate staff sign-in required.",
+                                symbol: "lock.shield"
                             )
                         }
                         .buttonStyle(RepbaseSettingsRowButtonStyle())
@@ -1283,6 +1295,10 @@ private struct ProfileSettingsView: View {
                 )
                     .environment(store)
             }
+        }
+        .sheet(isPresented: $showingAdministration) {
+            AdministrationView()
+                .environment(authentication)
         }
         .fullScreenCover(item: $legalDocument) { document in
             NavigationStack {
