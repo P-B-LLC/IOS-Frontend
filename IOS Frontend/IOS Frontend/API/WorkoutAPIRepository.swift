@@ -893,10 +893,15 @@ actor WorkoutAPIRepository {
     /// The server returns each set; they are grouped into days here so a
     /// chart shows one point per training day rather than one per set. The
     /// weights and volumes themselves are the server's numbers.
+    /// `workoutName` narrows the history to sets performed in workouts of that
+    /// name; nil asks for the lift's whole history. The first is what a
+    /// finished session wants to show, the second what somebody browsing a
+    /// lift wants, and the contract has always allowed both -- the parameter
+    /// is optional there and was simply never passed as absent.
     func liftProgress(
         exerciseID: Int,
         exerciseName: String,
-        workoutName: String
+        workoutName: String?
     ) async throws -> LiftProgressSeries {
         let output = try await client.progressExercisesList(
             path: .init(exerciseId: exerciseID),
