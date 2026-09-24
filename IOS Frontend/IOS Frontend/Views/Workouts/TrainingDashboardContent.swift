@@ -282,6 +282,7 @@ struct TrainingDashboardContent: View {
 
             totalsCard
             trendCard
+            liftProgressRow
             milestoneCard
 
             if store.isLoadingDashboardSessions && store.dashboardSessions.isEmpty {
@@ -289,6 +290,47 @@ struct TrainingDashboardContent: View {
                     .font(.community(.footnote))
                     .frame(maxWidth: .infinity)
             }
+        }
+    }
+
+    /// The way in to a lift's whole history.
+    ///
+    /// Sits under the weekly trend because it answers the next question. The
+    /// bars above say how often you trained; this says whether any of it is
+    /// making you stronger, which is the one the bars cannot.
+    ///
+    /// Hidden until there is a saved exercise to plot, so it never opens onto
+    /// an empty page.
+    @ViewBuilder
+    private var liftProgressRow: some View {
+        if !store.trainedExercises.isEmpty {
+            NavigationLink {
+                ExerciseProgressView()
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "chart.xyaxis.line")
+                        .font(.community(.title3, weight: .semibold))
+                        .foregroundStyle(RepbaseDesign.warning)
+                        .frame(width: 38, height: 38)
+                        .background(RepbaseDesign.warning.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Lift progress")
+                            .font(.community(.headline))
+                            .foregroundStyle(phase.primaryText)
+                        Text("\(store.trainedExercises.count) \(store.trainedExercises.count == 1 ? "lift" : "lifts") · every session, not just the last one")
+                            .font(.community(.caption))
+                            .foregroundStyle(phase.secondaryText)
+                    }
+                    Spacer(minLength: 8)
+                    Image(systemName: "chevron.right")
+                        .font(.community(.footnote, weight: .semibold))
+                        .foregroundStyle(phase.secondaryText)
+                }
+                .padding(.vertical, 16)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .overlay(alignment: .bottom) { Divider() }
         }
     }
 
