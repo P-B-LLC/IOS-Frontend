@@ -253,11 +253,12 @@ struct BlockedAccountsView: View {
     private func avatar(_ person: PostAuthor, timeOfDay: HomeTimeOfDay) -> some View {
         Group {
             if let photo = person.photoURL, let url = URL(string: photo) {
-                AsyncImage(url: url) { image in
-                    image.resizable().scaledToFill()
-                } placeholder: {
+                RemoteImage(url: url, maxPixel: 102) {
+                    initials(person, timeOfDay: timeOfDay)
+                } failure: {
                     initials(person, timeOfDay: timeOfDay)
                 }
+                .scaledToFill()
             } else {
                 initials(person, timeOfDay: timeOfDay)
             }

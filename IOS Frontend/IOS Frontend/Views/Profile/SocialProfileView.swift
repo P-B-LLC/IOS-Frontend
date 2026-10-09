@@ -2423,13 +2423,12 @@ private struct ProfileAvatarView: View {
                     .scaledToFill()
             } else if let photo = profile.profilePhotoURL,
                       let url = URL(string: photo) {
-                AsyncImage(url: url) { phase in
-                    if let image = phase.image {
-                        image.resizable().scaledToFill()
-                    } else {
-                        avatarFallback
-                    }
+                RemoteImage(url: url, maxPixel: size * 3) {
+                    avatarFallback
+                } failure: {
+                    avatarFallback
                 }
+                .scaledToFill()
             } else {
                 avatarFallback
             }

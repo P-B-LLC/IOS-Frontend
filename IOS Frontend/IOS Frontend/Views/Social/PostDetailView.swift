@@ -228,11 +228,12 @@ struct CommentRow: View {
     private var avatar: some View {
         Group {
             if let photo = comment.author.photoURL, let url = URL(string: photo) {
-                AsyncImage(url: url) { image in
-                    image.resizable().scaledToFill()
-                } placeholder: {
+                RemoteImage(url: url, maxPixel: 84) {
+                    initials
+                } failure: {
                     initials
                 }
+                .scaledToFill()
             } else {
                 initials
             }

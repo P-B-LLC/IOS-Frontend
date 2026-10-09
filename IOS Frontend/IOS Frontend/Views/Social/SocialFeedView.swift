@@ -997,11 +997,12 @@ struct PostCard: View {
     @ViewBuilder
     private var authorAvatar: some View {
         if let photo = shown.author.photoURL, let url = URL(string: photo) {
-            AsyncImage(url: url) { image in
-                image.resizable().scaledToFill()
-            } placeholder: {
+            RemoteImage(url: url, maxPixel: 108) {
+                avatarInitials
+            } failure: {
                 avatarInitials
             }
+            .scaledToFill()
             .frame(width: 36, height: 36)
             .clipShape(Circle())
         } else {

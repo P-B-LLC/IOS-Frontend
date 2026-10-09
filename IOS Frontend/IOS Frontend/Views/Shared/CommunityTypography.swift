@@ -82,9 +82,15 @@ enum RepbaseTypography {
             }
         }
 
-        Bundle.main.urls(forResourcesWithExtension: "ttf", subdirectory: nil)?
-            .filter { resourceNames.contains($0.deletingPathExtension().lastPathComponent) }
-            .forEach { fontURLs.insert($0) }
+        // The targeted lookups above already found every font in the common
+        // case. Enumerating the whole bundle's .ttf resources is only worth
+        // doing when one is still missing.
+        let foundNames = Set(fontURLs.map { $0.deletingPathExtension().lastPathComponent })
+        if !resourceNames.allSatisfy(foundNames.contains) {
+            Bundle.main.urls(forResourcesWithExtension: "ttf", subdirectory: nil)?
+                .filter { resourceNames.contains($0.deletingPathExtension().lastPathComponent) }
+                .forEach { fontURLs.insert($0) }
+        }
 
         for url in fontURLs {
             CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
