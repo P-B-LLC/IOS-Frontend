@@ -14,9 +14,15 @@ nonisolated struct PostVideoDraft: Transferable, Sendable {
 
     static var transferRepresentation: some TransferRepresentation {
         FileRepresentation(importedContentType: .movie) { received in
-            let size = try received.file.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
+            try copyFrom(received.file)
+        }
+    }
+
+    /// Camera URLs are system-owned too; keep our own copy before dismissal.
+    static func copyFrom(_ file: URL) throws -> PostVideoDraft {
+            let size = try file.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
             guard size > 0, size <= VideoBetaLimits.maximumBytes else { throw VideoBetaLimits.ValidationError.size }
-            let ext = received.file.pathExtension.lowercased()
+            let ext = file.pathExtension.lowercased()
             guard ["mp4", "mov", "m4v"].contains(ext) else { throw VideoBetaLimits.ValidationError.format }
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
             let oldDrafts = (try? FileManager.default.contentsOfDirectory(at: directory,
@@ -29,9 +35,8 @@ nonisolated struct PostVideoDraft: Transferable, Sendable {
                 }
             }
             let destination = directory.appendingPathComponent(UUID().uuidString).appendingPathExtension(ext)
-            try FileManager.default.copyItem(at: received.file, to: destination)
+            try FileManager.default.copyItem(at: file, to: destination)
             return PostVideoDraft(fileURL: destination, contentType: ext == "mov" ? "video/quicktime" : "video/mp4", sizeBytes: size)
-        }
     }
 
     func validate() async throws {

@@ -44,3 +44,24 @@ before playback rather than relying on an expired feed URL.
 
 Temporary moderation bypass is confined to the explicitly authorized limited
 beta; this is not a declaration that unreviewed UGC meets public launch rules.
+
+## Camera-first posting
+
+Every existing post entry point uses the same media-first composer. On a device
+with a camera it requests camera access and opens system photo/video capture.
+Camera roll is available from capture and from the fallback screen. Selecting
+media continues to the existing framing, caption, logged source and visibility
+controls; fixed meal/workout/planner references are preserved. Media remains
+optional via an explicit Continue without media action.
+
+The simulator has no camera: use Choose from camera roll there. A microphone
+denial leaves photo capture available; video capture requires microphone access.
+Captured videos are copied to the owned draft directory before camera dismissal,
+then pass the same file-size/codec/duration/resolution checks as library videos.
+Posting is disabled during imports and photo framing. Failed imports have an
+explicit remove/continue path; video upload retries keep the saved post ID.
+
+Validation still required for this change: Xcode build, simulator library
+selection/crop/cancel, and physical-device photo/video capture, permission denial,
+camera-roll switching, front/rear camera, backgrounding and repeated opens.
+Windows source checks and plist parsing are not native compile/runtime results.
