@@ -65,3 +65,11 @@ Validation still required for this change: Xcode build, simulator library
 selection/crop/cancel, and physical-device photo/video capture, permission denial,
 camera-roll switching, front/rear camera, backgrounding and repeated opens.
 Windows source checks and plist parsing are not native compile/runtime results.
+
+The entry screen now uses the app's Nunito typography, caramel accent and
+appearance-aware action colors. Its capture-access panel shows camera and
+microphone authorization separately, links to the app's Apple Settings page
+on devices with a camera, and refreshes status when returning from Settings.
+Simulator capture is explicitly unavailable instead of offering a nonfunctional
+camera button. Verify denied-microphone recovery as well as denied-camera
+recovery on an iPhone, and check the scrollable layout with large Dynamic Type.

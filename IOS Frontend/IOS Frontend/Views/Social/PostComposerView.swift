@@ -145,43 +145,14 @@ struct PostComposerView: View {
     }
 
     private var mediaEntry: some View {
-        VStack(spacing: 22) {
-            HStack {
-                Button("Cancel") { dismiss() }
-                Spacer()
-            }
-            Spacer()
-            Image(systemName: "camera.fill").font(.system(size: 52))
-                .foregroundStyle(Color.accentColor)
-            Text("Start with the moment.").font(.title.bold())
-            Text("Take a photo or video, then add your caption and the details of your day.")
-                .foregroundStyle(.secondary).multilineTextAlignment(.center)
-            Button { Task { await openCamera() } } label: {
-                Label("Open camera", systemImage: "camera")
-                    .frame(maxWidth: .infinity).padding(10)
-            }.buttonStyle(.borderedProminent).disabled(isOpeningCamera)
-            Button { showingLibrary = true } label: {
-                Label("Choose from camera roll", systemImage: "photo.on.rectangle")
-                    .frame(maxWidth: .infinity).padding(10)
-            }.buttonStyle(.bordered)
-            if let cameraMessage {
-                Text(cameraMessage).font(.footnote).foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                if AVCaptureDevice.authorizationStatus(for: .video) == .denied {
-                    Button("Open Settings") {
-                        if let url = URL(string: UIApplication.openSettingsURLString) {
-                            UIApplication.shared.open(url)
-                        }
-                    }
-                }
-            }
-            Button("Continue without media") { choosingMedia = false }
-                .font(.footnote)
-            Spacer()
-        }
-        .padding(24)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(.systemBackground))
+        PostMediaEntryView(
+            isOpeningCamera: isOpeningCamera,
+            message: cameraMessage,
+            onCamera: { Task { await openCamera() } },
+            onLibrary: { showingLibrary = true },
+            onContinue: { choosingMedia = false },
+            onCancel: { dismiss() }
+        )
     }
 
     @MainActor private func openCamera() async {
@@ -190,6 +161,10 @@ struct PostComposerView: View {
         defer { isOpeningCamera = false }
         guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
             cameraMessage = "Camera capture is unavailable here. Choose a photo or video from your camera roll."
+            return
+        }
+        guard AVCaptureDevice.authorizationStatus(for: .video) != .restricted else {
+            cameraMessage = "Camera access is restricted on this device. You can still choose from your camera roll."
             return
         }
         let cameraAllowed = await AVCaptureDevice.requestAccess(for: .video)
