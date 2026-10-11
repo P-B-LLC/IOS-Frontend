@@ -21,6 +21,8 @@ jobs:
           xcodebuild -version
       - name: Generate wire client
         run: bash Scripts/generate-api-client.sh
+      - name: Ensure committed generated sources are current
+        run: git diff --exit-code -- API/GeneratedSources
       - uses: actions/upload-artifact@v4
         with:
           name: video-generated-client

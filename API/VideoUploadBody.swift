@@ -22,6 +22,7 @@ public enum VideoUploadBody {
             init(url: URL, remaining: Int) { self.url = url; self.remaining = remaining }
 
             mutating func next() async throws -> Element? {
+                guard #available(macOS 10.15.4, *) else { throw CocoaError(.fileReadUnknown) }
                 try Task.checkCancellation()
                 if reader == nil { reader = try Reader(url: url) }
                 guard let reader else { return nil }
