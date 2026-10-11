@@ -59,7 +59,7 @@ struct PostVideoView: View {
             guard let replacement else { return }
             loading = true
             var draft: PostVideoDraft?
-            defer { draft?.discard(); loading = false }
+            defer { draft?.discard(); loading = false; self.replacement = nil }
             do {
                 draft = try await replacement.loadTransferable(type: PostVideoDraft.self)
                 guard let draft else { throw VideoBetaLimits.ValidationError.format }
