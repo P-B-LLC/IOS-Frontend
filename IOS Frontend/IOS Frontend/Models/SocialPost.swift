@@ -169,6 +169,18 @@ nonisolated struct PostPhoto: Equatable, Hashable, Sendable {
 /// struct cannot do. It carries no engagement figures because none are its
 /// own: liking a repost likes the repost, and the counts shown belong to
 /// whichever card is on screen.
+nonisolated struct PostVideoMedia: Equatable, Hashable, Sendable {
+    var url: URL?
+    var thumbnailURL: URL?
+    var status: String
+    var processingState: String
+    var width: Int
+    var height: Int
+    var durationMilliseconds: Int
+    var canPlay: Bool { status == "approved" && processingState == "ready" && url != nil }
+    var failed: Bool { processingState == "failed" }
+}
+
 nonisolated struct RepostedPost: Equatable, Hashable, Sendable {
     let id: Int
     var author: PostAuthor
@@ -182,6 +194,7 @@ nonisolated struct RepostedPost: Equatable, Hashable, Sendable {
     var workout: PostWorkoutSnapshot?
     var meal: PostMealSnapshot?
     var planner: PostPlannerSnapshot?
+    var video: PostVideoMedia? = nil
 }
 
 nonisolated struct FeedPost: Identifiable, Equatable, Hashable, Sendable {
@@ -232,6 +245,7 @@ nonisolated struct FeedPost: Identifiable, Equatable, Hashable, Sendable {
     var viewerIsAuthor: Bool = false
     /// The original, when this is a repost.
     var repostOf: RepostedPost?
+    var video: PostVideoMedia? = nil
 
     /// Whether this post offers a workout the reader could take for
     /// themselves. Their own is already theirs, and a workout with no
@@ -278,7 +292,8 @@ nonisolated struct FeedPost: Identifiable, Equatable, Hashable, Sendable {
             createdAt: createdAt,
             workout: workout,
             meal: meal,
-            planner: planner
+            planner: planner,
+            video: video
         )
     }
 }

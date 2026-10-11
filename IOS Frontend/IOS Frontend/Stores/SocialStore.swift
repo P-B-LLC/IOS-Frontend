@@ -370,8 +370,10 @@ final class SocialStore {
         visibility: PostVisibility,
         showsWeights: Bool = true,
         photo: PostPhoto? = nil,
-        cookingInstructions: String = ""
+        cookingInstructions: String = "",
+        video: PostVideoDraft? = nil
     ) async -> Bool {
+        guard !isPosting else { return false }
         guard let repository else {
             showFailure(message: "Connect to Rytivo before posting.")
             return false
@@ -379,10 +381,12 @@ final class SocialStore {
 
         let generation = connectionGeneration
         isPosting = true
+        lastPosted = nil
         clearError()
         defer { if connectionGeneration == generation { isPosting = false } }
 
         do {
+            if let video { try await video.validate() }
             let posted = try await repository.post(
                 kind: kind,
                 sourceID: sourceID,
@@ -399,6 +403,12 @@ final class SocialStore {
                 feed.insert(posted, at: 0)
             }
             lastPosted = posted
+            if let video {
+                let updated = try await repository.uploadVideo(postID: posted.id, draft: video)
+                guard connectionGeneration == generation else { return false }
+                replace(updated)
+                lastPosted = updated
+            }
             return true
         } catch {
             guard connectionGeneration == generation else { return false }
@@ -420,6 +430,34 @@ final class SocialStore {
                 showFailure(error)
             }
         }
+    }
+
+    func retryVideo(postID: Int, draft: PostVideoDraft) async -> Bool {
+        guard let repository, !isPosting else { return false }
+        let generation = connectionGeneration
+        isPosting = true
+        clearError()
+        defer { if generation == connectionGeneration { isPosting = false } }
+        do {
+            let updated = try await repository.retryVideo(postID: postID, draft: draft)
+            guard generation == connectionGeneration else { return false }
+            replace(updated)
+            lastPosted = updated
+            return true
+        } catch {
+            guard generation == connectionGeneration else { return false }
+            showFailure(error)
+            return false
+        }
+    }
+
+    func refreshVideo(postID: Int) async throws -> PostVideoMedia? {
+        guard let repository else { throw CancellationError() }
+        let generation = connectionGeneration
+        let updated = try await repository.post(withID: postID)
+        guard generation == connectionGeneration else { throw CancellationError() }
+        replace(updated)
+        return updated.video
     }
 
     // MARK: - Liking and reposting
@@ -984,12 +1022,14 @@ final class SocialStore {
             authorPosts[author]![index] = post
         }
         for index in feed.indices where feed[index].repostOf?.id == post.id {
+            feed[index].repostOf?.video = post.video
             feed[index].likeCount = post.likeCount
             feed[index].commentCount = post.commentCount
             feed[index].repostCount = post.repostCount
         }
         for index in discoverPosts.indices
         where discoverPosts[index].repostOf?.id == post.id {
+            discoverPosts[index].repostOf?.video = post.video
             discoverPosts[index].likeCount = post.likeCount
             discoverPosts[index].commentCount = post.commentCount
             discoverPosts[index].repostCount = post.repostCount

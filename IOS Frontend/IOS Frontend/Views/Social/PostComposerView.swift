@@ -37,6 +37,13 @@ struct PostComposerView: View {
     /// numbers is the unusual case.
     @State private var showsWeights = true
     @State private var pickedPhoto: PhotosPickerItem?
+    @State private var pickedVideo: PhotosPickerItem?
+    @State private var videoDraft: PostVideoDraft?
+    @State private var videoError: String?
+    @State private var isImportingVideo = false
+    @State private var videoImportTask: Task<Void, Never>?
+    @State private var videoImportGeneration = UUID()
+    @State private var pendingVideoPostID: Int?
     /// The chosen picture, already encoded. Held as bytes as well so the sheet
     /// can show what is about to be posted.
     @State private var photoData: Data?
@@ -102,9 +109,9 @@ struct PostComposerView: View {
             EditorialFormHeader(
                 title: composerTitle,
                 leadingAction: .cancel,
-                saveTitle: "Post",
+                saveTitle: pendingVideoPostID == nil ? "Post" : "Retry video",
                 canSave: canPost,
-                onDismiss: { dismiss() },
+                onDismiss: { if !social.isPosting { dismiss() } },
                 onSave: { post() }
             )
             .padding(.horizontal, RepbaseDesign.pageInset)
@@ -134,6 +141,7 @@ struct PostComposerView: View {
                         candidateSection(timeOfDay: timeOfDay)
                     }
                     photoSection(timeOfDay: timeOfDay)
+                    videoSection
                     captionSection(timeOfDay: timeOfDay)
                     // Only for food. A recipe has nothing to say about a
                     // workout, and an empty box asking for one is a question
@@ -153,6 +161,13 @@ struct PostComposerView: View {
             .scrollIndicators(.hidden)
         }
         .homeTimeScreen(timeOfDay)
+        .interactiveDismissDisabled(social.isPosting)
+        .onChange(of: pickedVideo) { importVideo() }
+        .onDisappear {
+            videoImportGeneration = UUID()
+            videoImportTask?.cancel()
+            videoDraft?.discard()
+        }
         .overlay {
             if social.isPosting {
                 postingOverlay(timeOfDay: timeOfDay)
@@ -809,7 +824,56 @@ struct PostComposerView: View {
     }
 
     private var canPost: Bool {
-        selection != nil && social.isConnected && !social.isPosting
+        selection != nil && social.isConnected && !social.isPosting && !isImportingVideo
+            && (pendingVideoPostID == nil || videoDraft != nil)
+    }
+
+    private var videoSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            PhotosPicker(selection: $pickedVideo, matching: .videos, preferredItemEncoding: .current) {
+                Label(videoDraft == nil ? "Add a video" : "Replace video", systemImage: "video.badge.plus")
+            }
+            .disabled(social.isPosting || isImportingVideo)
+            Text("Video beta: up to 30 seconds, 15 MB, 1080p. Processing continues after upload.")
+                .font(.caption).foregroundStyle(.secondary)
+            if isImportingVideo { ProgressView("Checking video…") }
+            if videoDraft != nil {
+                Label("Video attached", systemImage: "checkmark.circle")
+                Button("Remove video", role: .destructive) {
+                    videoDraft?.discard(); videoDraft = nil; pickedVideo = nil
+                }.disabled(social.isPosting)
+            }
+            if pendingVideoPostID != nil {
+                Text("Your post is saved. Retry attaches the video to that same post.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            if let videoError { Text(videoError).font(.caption).foregroundStyle(.red) }
+        }
+    }
+
+    private func importVideo() {
+        videoImportTask?.cancel()
+        let generation = UUID()
+        videoImportGeneration = generation
+        guard let pickedVideo else { isImportingVideo = false; return }
+        isImportingVideo = true
+        videoError = nil
+        videoImportTask = Task {
+            var imported: PostVideoDraft?
+            do {
+                imported = try await pickedVideo.loadTransferable(type: PostVideoDraft.self)
+                guard let draft = imported else { throw VideoBetaLimits.ValidationError.format }
+                try await draft.validate()
+                guard !Task.isCancelled, generation == videoImportGeneration else { draft.discard(); return }
+                videoDraft?.discard()
+                videoDraft = draft
+            } catch {
+                imported?.discard()
+                guard !Task.isCancelled, generation == videoImportGeneration else { return }
+                videoError = error.localizedDescription
+            }
+            if generation == videoImportGeneration { isImportingVideo = false }
+        }
     }
 
     /// A way out of the failure on screen, when trying again could work.
@@ -830,6 +894,10 @@ struct PostComposerView: View {
     private func post() {
         guard let selection else { return }
         Task {
+            if let pendingVideoPostID, let videoDraft {
+                if await social.retryVideo(postID: pendingVideoPostID, draft: videoDraft) { dismiss() }
+                return
+            }
             let sent = await social.post(
                 kind: selection.kind,
                 sourceID: selection.sourceID,
@@ -841,11 +909,13 @@ struct PostComposerView: View {
                 // Filtering here as well would mean two places deciding the
                 // same thing, and they would eventually disagree.
                 cookingInstructions: cookingInstructions
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                    .trimmingCharacters(in: .whitespacesAndNewlines),
+                video: videoDraft
             )
             // Left open when it failed, so the error is read beside the post it
             // belongs to and the caption is not lost.
             if sent { dismiss() }
+            else if videoDraft != nil, let saved = social.lastPosted { pendingVideoPostID = saved.id }
         }
     }
 

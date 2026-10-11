@@ -32,7 +32,7 @@ public enum VideoUploadBody {
                     }
                     return nil
                 }
-                guard let bytes = try reader.handle.read(upToCount: min(65_536, remaining)), !bytes.isEmpty else {
+                guard let bytes = try reader.handle.read(upToCount: Swift.min(65_536, remaining)), !bytes.isEmpty else {
                     throw CocoaError(.fileReadCorruptFile)
                 }
                 remaining -= bytes.count

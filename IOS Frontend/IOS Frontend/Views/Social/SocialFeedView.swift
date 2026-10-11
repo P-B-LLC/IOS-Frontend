@@ -767,6 +767,10 @@ struct PostCard: View {
                     }
                 }
 
+                if let video = shown.video {
+                    PostVideoView(postID: shown.id, video: video)
+                }
+
                 if let imageURL = drawnPhotoURL(shown) {
                     photo(imageURL, meal: shown.meal)
 
