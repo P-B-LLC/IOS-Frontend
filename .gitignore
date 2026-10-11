@@ -8,3 +8,5 @@ DerivedData/
 build/
 .build/
 .swiftpm-build/
+# Xcode writes a workspace here when Package.swift is opened in it.
+.swiftpm/
