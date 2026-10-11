@@ -54,6 +54,9 @@ faster, targeted lookups.
 - `WorkoutStore.reloadWeek` downloads the entire history of schedules and
   workouts every time it needs just the current week, because the backend
   API has no date filter yet. Needs a backend change, not just a frontend fix.
+  *The backend side is done (2026-10-10, repbase branch
+  `for-you-video-security`): `GET /api/v1/schedules/?start=&end=`. What is
+  left is here: copy the contract, regenerate the client, and pass the week.*
 - Separate from this round of work: your last Xcode build surfaced 18
   pre-existing compiler warnings. 6 of them are real concurrency-safety
   issues that will become hard errors if the project moves to Swift 6
