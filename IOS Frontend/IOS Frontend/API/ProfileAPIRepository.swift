@@ -541,12 +541,19 @@ actor ProfileAPIRepository {
     /// profile over one link. The server stores them already canonical, so a
     /// value that does not parse here means the two ends disagree about what a
     /// URL is -- which is worth losing one icon over, not somebody's profile.
+    ///
+    /// Only https. These are tapped and handed to `openURL`, which follows
+    /// any scheme -- `tel:`, `sms:`, another app's deep link. The server
+    /// already refuses anything else; this keeps a server that has been
+    /// tampered with, or impersonated, from making a profile icon dial a
+    /// number or open some other app.
     private static func socialLinks(
         from payload: [Components.Schemas.ProfileSocialLink]
     ) -> [ProfileSocialLink] {
         payload.compactMap { link in
             guard let platform = ProfileSocialLink.Platform(rawValue: link.platform.rawValue),
-                  let url = URL(string: link.url) else { return nil }
+                  let url = URL(string: link.url),
+                  url.scheme?.lowercased() == "https" else { return nil }
             return ProfileSocialLink(platform: platform, url: url)
         }
     }

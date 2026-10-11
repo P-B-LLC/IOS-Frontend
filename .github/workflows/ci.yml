@@ -19,6 +19,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Read-only. Nothing here pushes, comments or publishes, so the job token
+# gets no more than a checkout needs, whatever the repository default is.
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: macos-26
