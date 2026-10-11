@@ -1,10 +1,12 @@
 import AVKit
+import PhotosUI
 import SwiftUI
 
 /// Creating the player is a deliberate action, never a side effect of feed rendering.
 struct PostVideoView: View {
     let postID: Int
     let video: PostVideoMedia
+    let canReplace: Bool
     @Environment(SocialStore.self) private var social
     @Environment(\.scenePhase) private var scenePhase
     @State private var player: AVPlayer?
@@ -13,6 +15,7 @@ struct PostVideoView: View {
     @State private var refreshed: PostVideoMedia?
     @State private var observation: NSKeyValueObservation?
     @State private var requestGeneration = UUID()
+    @State private var replacement: PhotosPickerItem?
 
     private var current: PostVideoMedia { refreshed ?? video }
 
@@ -38,6 +41,11 @@ struct PostVideoView: View {
                       systemImage: current.failed ? "exclamationmark.triangle" : "video")
                     .foregroundStyle(.secondary)
                 Button("Refresh status") { refresh() }.disabled(loading)
+                if current.failed && canReplace {
+                    PhotosPicker(selection: $replacement, matching: .videos, preferredItemEncoding: .current) {
+                        Label("Choose another video", systemImage: "video.badge.plus")
+                    }.disabled(loading || social.isPosting)
+                }
             }
             if loading && player == nil { ProgressView("Loading video…") }
             if let failure {
@@ -47,8 +55,27 @@ struct PostVideoView: View {
         }
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .onDisappear { requestGeneration = UUID(); stop() }
-        .onChange(of: scenePhase) { if scenePhase != .active { player?.pause() } }
-        .onScrollVisibilityChange(threshold: 0.25) { visible in if !visible { player?.pause() } }
+        .task(id: replacement) {
+            guard let replacement else { return }
+            loading = true
+            var draft: PostVideoDraft?
+            defer { draft?.discard(); loading = false }
+            do {
+                draft = try await replacement.loadTransferable(type: PostVideoDraft.self)
+                guard let draft else { throw VideoBetaLimits.ValidationError.format }
+                try await draft.validate()
+                try Task.checkCancellation()
+                if await social.retryVideo(postID: postID, draft: draft) {
+                    refreshed = social.lastPosted?.video
+                    failure = nil
+                } else { failure = "Could not attach this video. Try again." }
+            } catch {
+                if !Task.isCancelled { failure = error.localizedDescription }
+            }
+        }
+        .onChange(of: social.isConnected) { if !social.isConnected { stop() } }
+        .onChange(of: scenePhase) { if scenePhase != .active { stop() } }
+        .onScrollVisibilityChange(threshold: 0.25) { visible in if !visible { stop() } }
     }
 
     private func refresh() {
@@ -89,10 +116,14 @@ struct PostVideoView: View {
                     let status = item.status
                     Task { @MainActor in
                         guard generation == requestGeneration else { return }
-                        if status == .readyToPlay { loading = false }
+                        if status == .readyToPlay {
+                            loading = false
+                            await social.recordVideoPlayback(postID: postID, failed: false)
+                        }
                         if status == .failed {
                             loading = false
                             failure = "This video could not play. Please try again."
+                            await social.recordVideoPlayback(postID: postID, failed: true)
                         }
                     }
                 }

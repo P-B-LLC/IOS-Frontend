@@ -19,6 +19,15 @@ nonisolated struct PostVideoDraft: Transferable, Sendable {
             let ext = received.file.pathExtension.lowercased()
             guard ["mp4", "mov", "m4v"].contains(ext) else { throw VideoBetaLimits.ValidationError.format }
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            let oldDrafts = (try? FileManager.default.contentsOfDirectory(at: directory,
+                includingPropertiesForKeys: [.contentModificationDateKey, .isRegularFileKey])) ?? []
+            for file in oldDrafts {
+                let values = try? file.resourceValues(forKeys: [.contentModificationDateKey, .isRegularFileKey])
+                if values?.isRegularFile == true, let modified = values?.contentModificationDate,
+                   modified < Date().addingTimeInterval(-86_400) {
+                    try? FileManager.default.removeItem(at: file)
+                }
+            }
             let destination = directory.appendingPathComponent(UUID().uuidString).appendingPathExtension(ext)
             try FileManager.default.copyItem(at: received.file, to: destination)
             return PostVideoDraft(fileURL: destination, contentType: ext == "mov" ? "video/quicktime" : "video/mp4", sizeBytes: size)
