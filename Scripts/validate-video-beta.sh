@@ -15,6 +15,6 @@ xcodebuild -project 'IOS Frontend/IOS Frontend.xcodeproj' -scheme 'IOS Frontend'
     -derivedDataPath .build/video-beta CODE_SIGNING_ALLOWED=NO ARCHS=arm64 \
     REPBASE_API_URL="$REPBASE_API_URL" build 2>&1 | tee .build/video-beta-build.log
 if [ "${INSTALL_SIMULATOR:-0}" = 1 ]; then
-    xcrun simctl install booted '.build/video-beta/Build/Products/Release-iphonesimulator/IOS Frontend.app'
+    xcrun simctl install booted '.build/video-beta/Build/Products/Release-iphonesimulator/Rytivo.app'
     xcrun simctl launch booted com.pbllc.rytivo
 fi
