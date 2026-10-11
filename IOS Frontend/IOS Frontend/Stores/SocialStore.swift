@@ -462,7 +462,7 @@ final class SocialStore {
 
     func recordVideoPlayback(postID: Int, failed: Bool) async {
         guard let repository else { return }
-        await repository.recordVideoEvent(postID: postID, event: failed ? .playbackError : .playbackStarted)
+        await repository.recordVideoPlayback(postID: postID, failed: failed)
     }
 
     // MARK: - Liking and reposting

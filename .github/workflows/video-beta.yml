@@ -19,9 +19,18 @@ jobs:
           xcode=$(find /Applications -maxdepth 1 -name 'Xcode*.app' | sort -V | tail -1)
           sudo xcode-select -s "$xcode/Contents/Developer"
           xcodebuild -version
+      - uses: actions/cache/restore@v4
+        id: generator-cache
+        with:
+          path: .swiftpm-build
+          key: video-generator-${{ runner.os }}-${{ hashFiles('Package.resolved', 'Package.swift') }}
       - name: Generate wire client
-        # Preserve the repository-pinned generator across subsequent validations.
         run: bash Scripts/generate-api-client.sh
+      - uses: actions/cache/save@v4
+        if: steps.generator-cache.outputs.cache-hit != 'true'
+        with:
+          path: .swiftpm-build
+          key: ${{ steps.generator-cache.outputs.cache-primary-key }}
       - name: Ensure committed generated sources are current
         run: git diff --exit-code -- API/GeneratedSources
       - uses: actions/upload-artifact@v4

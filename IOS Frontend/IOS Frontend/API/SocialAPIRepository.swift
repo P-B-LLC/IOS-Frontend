@@ -462,9 +462,10 @@ actor SocialAPIRepository {
     }
 
     /// A lost upload reply must not create another post or replace a running job.
-    func recordVideoEvent(postID: Int, event: Components.Schemas.EventEnum) async {
+    func recordVideoPlayback(postID: Int, failed: Bool) async {
         // Best effort: telemetry must not make playback fail, and contains no media URL.
-        _ = try? await client.videoEventsCreate(body: .json(.init(postId: postID, event: event)))
+        _ = try? await client.videoEventsCreate(body: .json(.init(postId: postID,
+            event: failed ? .playbackError : .playbackStarted)))
     }
 
     func retryVideo(postID: Int, draft: PostVideoDraft) async throws -> FeedPost {

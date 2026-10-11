@@ -137,22 +137,29 @@ struct PostComposerView: View {
                         // page it was opened from has already answered.
                         if lockedSource == nil {
                             sourcePicker(timeOfDay: timeOfDay)
+                                .disabled(pendingVideoPostID != nil || social.isPosting)
                         }
                         candidateSection(timeOfDay: timeOfDay)
+                            .disabled(pendingVideoPostID != nil || social.isPosting)
                     }
                     photoSection(timeOfDay: timeOfDay)
+                        .disabled(pendingVideoPostID != nil || social.isPosting)
                     videoSection
                     captionSection(timeOfDay: timeOfDay)
+                        .disabled(pendingVideoPostID != nil || social.isPosting)
                     // Only for food. A recipe has nothing to say about a
                     // workout, and an empty box asking for one is a question
                     // the poster has to decide not to answer.
                     if source == .meal {
                         instructionsSection(timeOfDay: timeOfDay)
+                            .disabled(pendingVideoPostID != nil || social.isPosting)
                     }
                     if source == .workout {
                         weightsSection(timeOfDay: timeOfDay)
+                            .disabled(pendingVideoPostID != nil || social.isPosting)
                     }
                     visibilitySection(timeOfDay: timeOfDay)
+                        .disabled(pendingVideoPostID != nil || social.isPosting)
                 }
                 .padding(.horizontal, RepbaseDesign.pageInset)
                 .padding(.top, 4)

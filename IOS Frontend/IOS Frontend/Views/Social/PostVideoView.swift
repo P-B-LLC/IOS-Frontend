@@ -14,6 +14,8 @@ struct PostVideoView: View {
     @State private var failure: String?
     @State private var refreshed: PostVideoMedia?
     @State private var observation: NSKeyValueObservation?
+    @State private var playbackObservation: NSKeyValueObservation?
+    @State private var didRecordStart = false
     @State private var requestGeneration = UUID()
     @State private var replacement: PhotosPickerItem?
 
@@ -112,18 +114,29 @@ struct PostVideoView: View {
                 item.preferredMaximumResolution = CGSize(width: 854, height: 854)
                 let next = AVPlayer(playerItem: item)
                 player = next
+                didRecordStart = false
                 observation = item.observe(\.status, options: [.initial, .new]) { item, _ in
                     let status = item.status
                     Task { @MainActor in
                         guard generation == requestGeneration else { return }
                         if status == .readyToPlay {
                             loading = false
-                            await social.recordVideoPlayback(postID: postID, failed: false)
                         }
                         if status == .failed {
                             loading = false
                             failure = "This video could not play. Please try again."
                             await social.recordVideoPlayback(postID: postID, failed: true)
+                        }
+                    }
+                }
+                playbackObservation = next.observe(\.timeControlStatus, options: [.new]) { next, _ in
+                    let status = next.timeControlStatus
+                    Task { @MainActor in
+                        guard generation == requestGeneration else { return }
+                        loading = status == .waitingToPlayAtSpecifiedRate
+                        if status == .playing && !didRecordStart {
+                            didRecordStart = true
+                            await social.recordVideoPlayback(postID: postID, failed: false)
                         }
                     }
                 }
@@ -139,6 +152,7 @@ struct PostVideoView: View {
     private func stop() {
         requestGeneration = UUID()
         observation?.invalidate(); observation = nil
+        playbackObservation?.invalidate(); playbackObservation = nil
         player?.pause(); player?.replaceCurrentItem(with: nil); player = nil
         loading = false
     }
