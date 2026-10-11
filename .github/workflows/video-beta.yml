@@ -1,0 +1,38 @@
+name: Video beta native validation
+on:
+  push:
+    branches: [feat/video-beta]
+permissions:
+  contents: read
+concurrency:
+  group: video-beta-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  native:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Select Xcode
+        run: |
+          xcode=$(find /Applications -maxdepth 1 -name 'Xcode*.app' | sort -V | tail -1)
+          sudo xcode-select -s "$xcode/Contents/Developer"
+          xcodebuild -version
+      - name: Generate wire client
+        run: bash Scripts/generate-api-client.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: video-generated-client
+          path: API/GeneratedSources
+      - name: Build simulator
+        run: |
+          set -o pipefail
+          xcodebuild -project 'IOS Frontend/IOS Frontend.xcodeproj' -scheme 'IOS Frontend' -configuration Release -destination 'generic/platform=iOS Simulator' -derivedDataPath .build/DerivedData CODE_SIGNING_ALLOWED=NO ARCHS=arm64 REPBASE_API_URL=https://ci.invalid/ build 2>&1 | tee .build/video-build.log
+      - name: Safety tests
+        run: bash Scripts/test-account-safety.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: video-native-build-log
+          path: .build/video-build.log
