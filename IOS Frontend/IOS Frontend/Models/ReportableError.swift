@@ -155,6 +155,9 @@ extension Error {
     var userFacingMessage: String? {
         if isCancellation || isDeclinedByPerson { return nil }
         if let networkFailureMessage { return networkFailureMessage }
+        if transportRoot is DecodingError {
+            return "Rytivo couldn't load this information. Please try again later."
+        }
         return transportRoot.localizedDescription
     }
 }
