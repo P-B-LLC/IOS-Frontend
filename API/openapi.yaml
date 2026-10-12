@@ -4,6 +4,184 @@ info:
   version: 1.0.0
   description: Versioned API for the Repbase iOS application.
 paths:
+  /api/v1/administration/reports/:
+    get:
+      operationId: moderation_reports_list
+      parameters:
+      - in: query
+        name: kind
+        schema:
+          type: string
+          enum:
+          - comment
+          - post
+        required: true
+      - in: query
+        name: page
+        schema:
+          type: integer
+      tags:
+      - administration
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportPage'
+          description: ''
+  /api/v1/administration/reports/{kind}/{report_id}/decision/:
+    post:
+      operationId: moderation_decision_create
+      parameters:
+      - in: path
+        name: kind
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: report_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - administration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModerationDecisionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ModerationDecisionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ModerationDecisionRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DecisionResult'
+          description: ''
+  /api/v1/administration/users/:
+    get:
+      operationId: access_users_list
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Username or name, at least 2 characters.
+        required: true
+      tags:
+      - administration
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessUserPage'
+          description: ''
+  /api/v1/administration/users/{profile_id}/access/:
+    get:
+      operationId: user_access_retrieve
+      parameters:
+      - in: path
+        name: profile_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - administration
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessUser'
+          description: ''
+    put:
+      operationId: user_access_update
+      parameters:
+      - in: path
+        name: profile_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - administration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeAccessRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ChangeAccessRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ChangeAccessRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessUser'
+          description: ''
+  /api/v1/administration/users/{profile_id}/status/:
+    put:
+      operationId: user_status_update
+      parameters:
+      - in: path
+        name: profile_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - administration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeAccountStatusRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ChangeAccountStatusRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ChangeAccountStatusRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessUser'
+          description: ''
   /api/v1/auth/login/:
     post:
       operationId: auth_login_create
@@ -1917,7 +2095,14 @@ paths:
   /api/v1/gyms/{id}/members/:
     get:
       operationId: gyms_members_list
-      description: Who trains here. This is what makes a shared gym worth having.
+      description: |-
+        Who trains here. This is what makes a shared gym worth having.
+
+        Only the people whose profile the reader could open. A closed profile
+        hides its gym, and listing the person here said where they train to
+        any stranger who asked -- including somebody they had blocked, for
+        whom that is the one thing worth knowing. The count on the gym still
+        includes everybody; a number names nobody.
       parameters:
       - in: path
         name: id
@@ -2039,6 +2224,21 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/me/access/:
+    get:
+      operationId: my_access_retrieve
+      tags:
+      - me
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyAccess'
+          description: ''
   /api/v1/me/highlights/:
     get:
       operationId: me_highlights_list
@@ -2607,6 +2807,28 @@ paths:
                 items:
                   $ref: '#/components/schemas/ExerciseProgressPoint'
           description: ''
+  /api/v1/push/devices/:
+    post:
+      operationId: registerPushDevice
+      tags:
+      - push
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PushDeviceRegistrationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PushDeviceRegistrationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PushDeviceRegistrationRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/recurrences/:
     get:
       operationId: recurrences_list
@@ -2737,13 +2959,36 @@ paths:
   /api/v1/schedules/:
     get:
       operationId: schedules_list
+      description: |-
+        Workouts placed on days.
+
+        `start` and `end` let a client draw one week without downloading every
+        day it has ever scheduled, the way the planner and meals already do.
       parameters:
+      - in: query
+        name: end
+        schema:
+          type: string
+          format: date
+        description: Return only workouts scheduled on or before this date.
       - name: page
         required: false
         in: query
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - in: query
+        name: scheduled_date
+        schema:
+          type: string
+          format: date
+        description: Return only workouts scheduled on this date.
+      - in: query
+        name: start
+        schema:
+          type: string
+          format: date
+        description: Return only workouts scheduled on or after this date.
       tags:
       - schedules
       security:
@@ -2758,6 +3003,11 @@ paths:
           description: ''
     post:
       operationId: schedules_create
+      description: |-
+        Workouts placed on days.
+
+        `start` and `end` let a client draw one week without downloading every
+        day it has ever scheduled, the way the planner and meals already do.
       tags:
       - schedules
       requestBody:
@@ -2785,6 +3035,11 @@ paths:
   /api/v1/schedules/{id}/:
     get:
       operationId: schedules_retrieve
+      description: |-
+        Workouts placed on days.
+
+        `start` and `end` let a client draw one week without downloading every
+        day it has ever scheduled, the way the planner and meals already do.
       parameters:
       - in: path
         name: id
@@ -2806,6 +3061,11 @@ paths:
           description: ''
     put:
       operationId: schedules_update
+      description: |-
+        Workouts placed on days.
+
+        `start` and `end` let a client draw one week without downloading every
+        day it has ever scheduled, the way the planner and meals already do.
       parameters:
       - in: path
         name: id
@@ -2839,6 +3099,11 @@ paths:
           description: ''
     patch:
       operationId: schedules_partial_update
+      description: |-
+        Workouts placed on days.
+
+        `start` and `end` let a client draw one week without downloading every
+        day it has ever scheduled, the way the planner and meals already do.
       parameters:
       - in: path
         name: id
@@ -2871,6 +3136,11 @@ paths:
           description: ''
     delete:
       operationId: schedules_destroy
+      description: |-
+        Workouts placed on days.
+
+        `start` and `end` let a client draw one week without downloading every
+        day it has ever scheduled, the way the planner and meals already do.
       parameters:
       - in: path
         name: id
@@ -4247,6 +4517,72 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/social/for-you/:
+    get:
+      operationId: social_for_you_list
+      description: |-
+        Posts picked for the reader, from everyone, best first.
+
+        The first page ranks from scratch, so it always reflects what the reader
+        did a moment ago. Later pages read the ranking that first page made, by
+        position, so paging never repeats or skips a post. Each page is checked
+        against the visibility rules again as it is served: a post hidden,
+        deleted, dismissed or blocked since the ranking was made does not appear.
+      parameters:
+      - in: query
+        name: cursor
+        schema:
+          type: string
+        description: The position carried by the previous page's `next` link. Absent
+          means rank afresh and start at the top.
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+        description: How many posts to return, at most 50. Asking for more is refused
+          rather than reduced.
+      tags:
+      - social
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForYouPage'
+          description: ''
+  /api/v1/social/impressions/:
+    post:
+      operationId: social_impressions_create
+      description: Record a batch of views. Posts the reader cannot see, and their
+        own posts, are ignored rather than refused, so a client does not need to know
+        which of the posts it showed have since gone.
+      tags:
+      - social
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImpressionBatchRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ImpressionBatchRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ImpressionBatchRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '202':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImpressionResult'
+          description: ''
   /api/v1/social/notifications/:
     get:
       operationId: social_notifications_list
@@ -4552,6 +4888,47 @@ paths:
               schema:
                 $ref: '#/components/schemas/Post'
           description: ''
+  /api/v1/social/posts/{id}/not-interested/:
+    post:
+      operationId: social_posts_not_interested_create
+      description: 'Say you are not interested in this post. It leaves your For You
+        page at once, and posts like it -- its topics, and to a lesser degree its
+        author -- are shown less from then on. It stays in your following feed: this
+        is about recommendations, not about people you chose to follow. Saying it
+        twice is not an error.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this post.
+        required: true
+      tags:
+      - social
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+    delete:
+      operationId: social_posts_not_interested_destroy
+      description: Take back "not interested" on this post.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this post.
+        required: true
+      tags:
+      - social
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/social/posts/{id}/report/:
     post:
       operationId: social_posts_report_create
@@ -4704,6 +5081,116 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SavedWorkoutResult'
+          description: ''
+  /api/v1/social/posts/{id}/video/:
+    post:
+      operationId: social_posts_video_create
+      description: |-
+        Attach a clip to your own post, replacing any clip already on it. Send the file itself as the request body with a video Content-Type -- not base64, not multipart.
+
+        Accepted: MP4 or QuickTime with H.264 or HEVC video, within the server's size, length and dimension limits. What the file is, and how it is stored, is read from its bytes; the Content-Type only has to say it is a video. Location and device metadata are removed before the clip is stored.
+
+        Where moderation is on, a new clip waits for review: the response shows it to you with status `pending`, and nobody else sees it until a moderator approves it.
+
+        Refusals: 400 with a sentence under `video`; 413 when the file is too large; 415 for a Content-Type that is not a video.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this post.
+        required: true
+      tags:
+      - social
+      requestBody:
+        content:
+          video/mp4:
+            schema:
+              type: string
+              format: binary
+          video/quicktime:
+            schema:
+              type: string
+              format: binary
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+          description: ''
+    delete:
+      operationId: social_posts_video_destroy
+      description: Remove the clip from your post. Answers with the post.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this post.
+        required: true
+      tags:
+      - social
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+          description: ''
+  /api/v1/social/posts/{post_id}/video-upload/:
+    post:
+      operationId: social_posts_video_upload_create
+      parameters:
+      - in: path
+        name: post_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - social
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UploadRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UploadRequestRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResponse'
+          description: ''
+  /api/v1/social/spotlight/:
+    get:
+      operationId: community_spotlight_retrieve
+      tags:
+      - social
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommunitySpotlight'
           description: ''
   /api/v1/step-counts/:
     get:
@@ -4964,6 +5451,135 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ProfileHighlight'
+          description: ''
+  /api/v1/video-events/:
+    post:
+      operationId: video_events_create
+      tags:
+      - video-events
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaybackEventRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PlaybackEventRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PlaybackEventRequestRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/video-uploads/{job_id}/complete/:
+    post:
+      operationId: video_uploads_complete_create
+      parameters:
+      - in: path
+        name: job_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - video-uploads
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '202':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResponse'
+          description: ''
+  /api/v1/web/login/:
+    post:
+      operationId: web_login_create
+      tags:
+      - web
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrowserSession'
+          description: ''
+  /api/v1/web/logout/:
+    post:
+      operationId: web_logout_create
+      tags:
+      - web
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrowserSession'
+          description: ''
+  /api/v1/web/register/:
+    post:
+      operationId: web_register_create
+      tags:
+      - web
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrowserSession'
+          description: ''
+  /api/v1/web/session/:
+    get:
+      operationId: web_session_retrieve
+      tags:
+      - web
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrowserSession'
           description: ''
   /api/v1/workout-exercises/:
     get:
@@ -5281,6 +5897,75 @@ paths:
           description: No response body
 components:
   schemas:
+    AccessUser:
+      type: object
+      properties:
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppRoleEnum'
+        version:
+          type: integer
+          minimum: 0
+        id:
+          type: integer
+          description: Public profile ID, as used by /users/.
+        username:
+          type: string
+        display_name:
+          type: string
+        editable:
+          type: boolean
+        controllable:
+          type: boolean
+        active:
+          type: boolean
+        disabled_by_admin:
+          type: boolean
+      required:
+      - active
+      - controllable
+      - disabled_by_admin
+      - display_name
+      - editable
+      - id
+      - roles
+      - username
+      - version
+    AccessUserPage:
+      type: object
+      properties:
+        count:
+          type: integer
+        next:
+          type: string
+          format: uri
+          nullable: true
+        previous:
+          type: string
+          format: uri
+          nullable: true
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccessUser'
+      required:
+      - count
+      - next
+      - previous
+      - results
+    AppRoleEnum:
+      enum:
+      - superowner
+      - owner
+      - analytics
+      - moderator
+      type: string
+      description: |-
+        * `superowner` - superowner
+        * `owner` - owner
+        * `analytics` - analytics
+        * `moderator` - moderator
     ApplySavedMealRequest:
       type: object
       description: |-
@@ -5309,6 +5994,16 @@ components:
       required:
       - dates
       - position
+    AssignableAppRoleEnum:
+      enum:
+      - owner
+      - analytics
+      - moderator
+      type: string
+      description: |-
+        * `owner` - owner
+        * `analytics` - analytics
+        * `moderator` - moderator
     AuthResponse:
       type: object
       properties:
@@ -5416,6 +6111,34 @@ components:
           maxLength: 300
       required:
       - weight_kg
+    BrowserSession:
+      type: object
+      properties:
+        user:
+          allOf:
+          - $ref: '#/components/schemas/RepbaseUser'
+          nullable: true
+        csrf_token:
+          type: string
+      required:
+      - csrf_token
+      - user
+    Capabilities:
+      type: object
+      properties:
+        manage_roles:
+          type: boolean
+        manage_owners:
+          type: boolean
+        view_analytics:
+          type: boolean
+        moderate:
+          type: boolean
+      required:
+      - manage_owners
+      - manage_roles
+      - moderate
+      - view_analytics
     CardioMachineEnum:
       enum:
       - treadmill
@@ -5470,6 +6193,44 @@ components:
         * `travel` - Travel
         * `social` - Social
         * `other` - Other
+    ChangeAccessRequest:
+      type: object
+      properties:
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssignableAppRoleEnum'
+        version:
+          type: integer
+          minimum: 0
+        reason:
+          type: string
+          default: ''
+          maxLength: 500
+      required:
+      - roles
+      - version
+    ChangeAccountStatusRequest:
+      type: object
+      properties:
+        active:
+          type: boolean
+        version:
+          type: integer
+          minimum: 0
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+        confirm_username:
+          type: string
+          minLength: 1
+          maxLength: 150
+      required:
+      - active
+      - confirm_username
+      - reason
+      - version
     ClearScheduleResult:
       type: object
       description: How many planned days were cleared.
@@ -5479,6 +6240,18 @@ components:
           readOnly: true
       required:
       - cleared
+    CommunitySpotlight:
+      type: object
+      properties:
+        announcement:
+          type: string
+        featured_post:
+          allOf:
+          - $ref: '#/components/schemas/Post'
+          nullable: true
+      required:
+      - announcement
+      - featured_post
     ContentTypeEnum:
       enum:
       - image/heic
@@ -5515,13 +6288,11 @@ components:
       - workout
       - meal
       - planner
-      - repost
       type: string
       description: |-
         * `workout` - Workout
         * `meal` - Meal
         * `planner` - Planner
-        * `repost` - Repost
     CreatePostRequest:
       type: object
       description: |-
@@ -5653,6 +6424,7 @@ components:
           format: date
         steps:
           type: integer
+          maximum: 1000000
           minimum: 0
       required:
       - day
@@ -5672,6 +6444,21 @@ components:
             $ref: '#/components/schemas/DailyStepCountEntryRequest'
       required:
       - days
+    DecisionEnum:
+      enum:
+      - hide
+      - no_action
+      type: string
+      description: |-
+        * `hide` - hide
+        * `no_action` - no_action
+    DecisionResult:
+      type: object
+      properties:
+        resolved:
+          type: boolean
+      required:
+      - resolved
     DisciplinesEnum:
       enum:
       - powerlifting
@@ -5709,6 +6496,24 @@ components:
           format: date
       required:
       - date
+    EnvironmentEnum:
+      enum:
+      - sandbox
+      - production
+      type: string
+      description: |-
+        * `sandbox` - sandbox
+        * `production` - production
+    EventEnum:
+      enum:
+      - upload_failed
+      - playback_error
+      - playback_started
+      type: string
+      description: |-
+        * `upload_failed` - upload_failed
+        * `playback_error` - playback_error
+        * `playback_started` - playback_started
     Exercise:
       type: object
       properties:
@@ -6059,6 +6864,150 @@ components:
       - protein_grams
       - serving_description
       - source_id
+    ForYouPage:
+      type: object
+      description: One page of the For You feed, in the shape every cursor page has.
+      properties:
+        next:
+          type: string
+          readOnly: true
+          nullable: true
+        previous:
+          type: string
+          readOnly: true
+          nullable: true
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ForYouPost'
+          readOnly: true
+      required:
+      - next
+      - previous
+      - results
+    ForYouPost:
+      type: object
+      description: 'A post on the For You page: the ordinary card, plus why it is
+        there.'
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        author:
+          allOf:
+          - $ref: '#/components/schemas/PublicRepbaseUser'
+          readOnly: true
+        kind:
+          type: string
+          readOnly: true
+        image_url:
+          type: string
+          nullable: true
+          readOnly: true
+        feed_image_url:
+          type: string
+          nullable: true
+          readOnly: true
+        video:
+          allOf:
+          - $ref: '#/components/schemas/PostVideo'
+          nullable: true
+          readOnly: true
+        caption:
+          type: string
+          readOnly: true
+        visibility:
+          type: string
+          readOnly: true
+        workout:
+          allOf:
+          - $ref: '#/components/schemas/PostWorkout'
+          readOnly: true
+          nullable: true
+        meal:
+          allOf:
+          - $ref: '#/components/schemas/PostMeal'
+          readOnly: true
+          nullable: true
+        planner:
+          allOf:
+          - $ref: '#/components/schemas/PostPlannerEntry'
+          readOnly: true
+          nullable: true
+        source_id:
+          type: integer
+          nullable: true
+          readOnly: true
+        viewer_follows_author:
+          type: boolean
+          readOnly: true
+        shows_weights:
+          type: boolean
+          readOnly: true
+        viewer_is_author:
+          type: boolean
+          readOnly: true
+        like_count:
+          type: integer
+          readOnly: true
+        comment_count:
+          type: integer
+          readOnly: true
+        repost_count:
+          type: integer
+          readOnly: true
+        viewer_has_liked:
+          type: boolean
+          readOnly: true
+        viewer_has_reposted:
+          type: boolean
+          readOnly: true
+        viewer_saved:
+          type: boolean
+          readOnly: true
+        repost_of:
+          allOf:
+          - $ref: '#/components/schemas/RepostedPost'
+          nullable: true
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        recommendation:
+          allOf:
+          - $ref: '#/components/schemas/Recommendation'
+          readOnly: true
+      required:
+      - author
+      - caption
+      - comment_count
+      - created_at
+      - feed_image_url
+      - id
+      - image_url
+      - kind
+      - like_count
+      - meal
+      - planner
+      - recommendation
+      - repost_count
+      - repost_of
+      - shows_weights
+      - source_id
+      - updated_at
+      - video
+      - viewer_follows_author
+      - viewer_has_liked
+      - viewer_has_reposted
+      - viewer_is_author
+      - viewer_saved
+      - visibility
+      - workout
     Gear:
       type: object
       properties:
@@ -6276,6 +7225,55 @@ components:
       - ended_at
       - external_id
       - started_at
+    ImpressionBatchRequest:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImpressionRequest'
+      required:
+      - events
+    ImpressionRequest:
+      type: object
+      description: |-
+        One post having been on somebody's screen.
+
+        Every figure is bounded. These are the client's own report, and a client
+        is free to claim it lingered for a year; the claim is capped here and its
+        reach is limited to the reporter's own recommendations and to rates that
+        are smoothed over everybody else's views.
+      properties:
+        post:
+          type: integer
+          minimum: 1
+        dwell_ms:
+          type: integer
+          maximum: 600000
+          minimum: 0
+          default: 0
+        watch_ms:
+          type: integer
+          maximum: 3600000
+          minimum: 0
+          nullable: true
+        completed:
+          type: boolean
+          default: false
+        surface:
+          allOf:
+          - $ref: '#/components/schemas/SurfaceEnum'
+          default: other
+      required:
+      - post
+    ImpressionResult:
+      type: object
+      properties:
+        recorded:
+          type: integer
+          readOnly: true
+      required:
+      - recorded
     InitialWorkoutExercise:
       type: object
       properties:
@@ -6354,13 +7352,81 @@ components:
         username:
           type: string
           minLength: 1
+          maxLength: 150
         password:
           type: string
           writeOnly: true
           minLength: 1
+          maxLength: 4096
       required:
       - password
       - username
+    ModerationDecisionRequest:
+      type: object
+      properties:
+        decision:
+          $ref: '#/components/schemas/DecisionEnum'
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+      required:
+      - decision
+      - reason
+    ModerationReport:
+      type: object
+      properties:
+        id:
+          type: integer
+        kind:
+          $ref: '#/components/schemas/ModerationReportKindEnum'
+        author:
+          type: string
+        content:
+          type: string
+        image_url:
+          type: string
+          nullable: true
+        reason:
+          type: string
+        detail:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - author
+      - content
+      - created_at
+      - detail
+      - id
+      - image_url
+      - kind
+      - reason
+    ModerationReportKindEnum:
+      enum:
+      - post
+      - comment
+      type: string
+      description: |-
+        * `post` - post
+        * `comment` - comment
+    MyAccess:
+      type: object
+      properties:
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppRoleEnum'
+        version:
+          type: integer
+          minimum: 0
+        capabilities:
+          $ref: '#/components/schemas/Capabilities'
+      required:
+      - capabilities
+      - roles
+      - version
     Notification:
       type: object
       description: |-
@@ -7029,6 +8095,7 @@ components:
           type: string
           writeOnly: true
           minLength: 8
+          maxLength: 256
       required:
       - code
       - email
@@ -7204,6 +8271,7 @@ components:
             type: string
             minLength: 1
             maxLength: 60
+          maxItems: 20
         weekly_target:
           type: integer
           maximum: 9223372036854775807
@@ -7350,6 +8418,11 @@ components:
           type: boolean
         is_profile_public:
           type: boolean
+        current_password:
+          type: string
+          writeOnly: true
+          description: The account's password. Required when changing email.
+          maxLength: 4096
     PatchedSavedFoodMealRequest:
       type: object
       description: |-
@@ -7599,6 +8672,7 @@ components:
           items:
             type: string
             maxLength: 60
+          maxItems: 20
         weekly_target:
           type: integer
           maximum: 9223372036854775807
@@ -7842,6 +8916,17 @@ components:
         * `youtube` - YouTube
         * `x` - X
         * `website` - Website
+    PlaybackEventRequestRequest:
+      type: object
+      properties:
+        post_id:
+          type: integer
+          minimum: 1
+        event:
+          $ref: '#/components/schemas/EventEnum'
+      required:
+      - event
+      - post_id
     Post:
       type: object
       description: |-
@@ -7876,6 +8961,11 @@ components:
           readOnly: true
         feed_image_url:
           type: string
+          nullable: true
+          readOnly: true
+        video:
+          allOf:
+          - $ref: '#/components/schemas/PostVideo'
           nullable: true
           readOnly: true
         caption:
@@ -7960,6 +9050,7 @@ components:
       - shows_weights
       - source_id
       - updated_at
+      - video
       - viewer_follows_author
       - viewer_has_liked
       - viewer_has_reposted
@@ -8260,6 +9351,66 @@ components:
       required:
       - already_reported
       - reason
+    PostVideo:
+      type: object
+      description: |-
+        A post's clip, as its reader may see it.
+
+        `status` and `content_type` go out as plain strings, as `kind` does on a
+        post. A choice field would add a `status` enum to the contract, and
+        drf-spectacular resolves two enums of the same field name by renaming
+        both -- so the session status enum the generated clients already use
+        would change its name because of a field on a different object.
+      properties:
+        url:
+          type: string
+          nullable: true
+          readOnly: true
+        content_type:
+          type: string
+          readOnly: true
+        duration_ms:
+          type: integer
+          readOnly: true
+        width:
+          type: integer
+          readOnly: true
+        height:
+          type: integer
+          readOnly: true
+        has_audio:
+          type: boolean
+          readOnly: true
+        status:
+          type: string
+          readOnly: true
+        processing_state:
+          type: string
+          readOnly: true
+        processing_error:
+          type: string
+          readOnly: true
+        thumbnail_url:
+          type: string
+          nullable: true
+          readOnly: true
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/VideoVariant'
+          readOnly: true
+      required:
+      - content_type
+      - duration_ms
+      - has_audio
+      - height
+      - processing_error
+      - processing_state
+      - status
+      - thumbnail_url
+      - url
+      - variants
+      - width
     PostWorkout:
       type: object
       description: |-
@@ -8514,6 +9665,7 @@ components:
           nullable: true
         manual_reps:
           type: integer
+          maximum: 1000
           minimum: 1
           nullable: true
       required:
@@ -8678,6 +9830,18 @@ components:
     PublicRepbaseUser:
       type: object
       properties:
+        community_label:
+          type: string
+          readOnly: true
+          default: ''
+        community_badge:
+          type: string
+          readOnly: true
+          default: ''
+        community_color:
+          type: string
+          readOnly: true
+          default: '#F65A18'
         id:
           type: integer
           readOnly: true
@@ -8761,6 +9925,9 @@ components:
           format: date-time
           readOnly: true
       required:
+      - community_badge
+      - community_color
+      - community_label
       - created_at
       - disciplines
       - first_name
@@ -8795,6 +9962,23 @@ components:
           type: boolean
         is_profile_public:
           type: boolean
+    PushDeviceRegistrationRequest:
+      type: object
+      properties:
+        token:
+          type: string
+          writeOnly: true
+          minLength: 32
+          maxLength: 512
+          pattern: ^[0-9a-fA-F]{32,512}$
+        environment:
+          $ref: '#/components/schemas/EnvironmentEnum'
+        community_enabled:
+          type: boolean
+      required:
+      - community_enabled
+      - environment
+      - token
     QuestionEnum:
       enum:
       - why_i_train
@@ -8900,6 +10084,25 @@ components:
       - name
       - protein_grams
       - servings
+    Recommendation:
+      type: object
+      description: |-
+        Why the For You page put a post where it did.
+
+        `reason` is a short code -- following, interest, popular, discovery or
+        fresh -- sent as a plain string so a reason added later is a value the
+        client does not recognise rather than a decoding error. `label` is a
+        sentence fit to show under the post as it is.
+      properties:
+        reason:
+          type: string
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+      required:
+      - label
+      - reason
     RegisterRequest:
       type: object
       properties:
@@ -8915,6 +10118,7 @@ components:
           type: string
           writeOnly: true
           minLength: 8
+          maxLength: 256
         first_name:
           type: string
           minLength: 1
@@ -8987,6 +10191,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DisciplinesEnum'
+        can_view_insights:
+          type: boolean
+          readOnly: true
         gym:
           type: integer
           nullable: true
@@ -9020,6 +10227,7 @@ components:
           format: date-time
           readOnly: true
       required:
+      - can_view_insights
       - created_at
       - email
       - first_name
@@ -9097,11 +10305,38 @@ components:
           type: boolean
         is_profile_public:
           type: boolean
+        current_password:
+          type: string
+          writeOnly: true
+          description: The account's password. Required when changing email.
+          maxLength: 4096
       required:
       - email
       - first_name
       - last_name
       - username
+    ReportPage:
+      type: object
+      properties:
+        count:
+          type: integer
+        next:
+          type: string
+          format: uri
+          nullable: true
+        previous:
+          type: string
+          format: uri
+          nullable: true
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModerationReport'
+      required:
+      - count
+      - next
+      - previous
+      - results
     ReportPostRequest:
       type: object
       description: |-
@@ -9147,6 +10382,11 @@ components:
           type: string
           nullable: true
           readOnly: true
+        video:
+          allOf:
+          - $ref: '#/components/schemas/PostVideo'
+          nullable: true
+          readOnly: true
         caption:
           type: string
           readOnly: true
@@ -9179,6 +10419,7 @@ components:
       - kind
       - meal
       - planner
+      - video
       - workout
     SavedFoodIngredient:
       type: object
@@ -9374,6 +10615,7 @@ components:
           $ref: '#/components/schemas/CardioMachineEnum'
         seconds:
           type: integer
+          maximum: 604800
           minimum: 1
         distance_km:
           type: string
@@ -9619,6 +10861,20 @@ components:
         * `planned` - Planned
         * `active` - Active
         * `completed` - Completed
+    SurfaceEnum:
+      enum:
+      - for_you
+      - following
+      - discover
+      - profile
+      - other
+      type: string
+      description: |-
+        * `for_you` - For You
+        * `following` - Following
+        * `discover` - Discover
+        * `profile` - Profile
+        * `other` - Other
     TrainingStats:
       type: object
       description: |-
@@ -9670,6 +10926,63 @@ components:
           readOnly: true
       required:
       - unread
+    UploadRequestRequest:
+      type: object
+      properties:
+        size_bytes:
+          type: integer
+          maximum: 104857600
+          minimum: 1
+        content_type:
+          $ref: '#/components/schemas/VideoUploadContentTypeEnum'
+      required:
+      - content_type
+      - size_bytes
+    UploadResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        state:
+          type: string
+        upload_url:
+          type: string
+          format: uri
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - id
+      - state
+    VideoUploadContentTypeEnum:
+      enum:
+      - video/mp4
+      - video/quicktime
+      - video/x-m4v
+      type: string
+      description: |-
+        * `video/mp4` - video/mp4
+        * `video/quicktime` - video/quicktime
+        * `video/x-m4v` - video/x-m4v
+    VideoVariant:
+      type: object
+      properties:
+        width:
+          type: integer
+        height:
+          type: integer
+        size_bytes:
+          type: integer
+        url:
+          type: string
+          nullable: true
+      required:
+      - height
+      - size_bytes
+      - url
+      - width
     VisibilityEnum:
       enum:
       - public

@@ -44,6 +44,7 @@ let package = Package(
                 "openapi-generator-config.yaml",
                 "openapi.yaml"
             ]
-        )
+        ),
+        .testTarget(name: "VideoTransportTests", dependencies: ["RepbaseAPI"], path: "Tests/VideoTransport")
     ]
 )

@@ -11,8 +11,10 @@
 //
 
 import Foundation
+import AVFoundation
 import PhotosUI
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct PostComposerView: View {
     @Environment(\.dismiss) private var dismiss
@@ -37,16 +39,34 @@ struct PostComposerView: View {
     /// numbers is the unusual case.
     @State private var showsWeights = true
     @State private var pickedPhoto: PhotosPickerItem?
+    @State private var pickedVideo: PhotosPickerItem?
+    @State private var videoDraft: PostVideoDraft?
+    @State private var videoError: String?
+    @State private var isImportingVideo = false
+    @State private var videoImportTask: Task<Void, Never>?
+    @State private var videoImportGeneration = UUID()
+    @State private var pendingVideoPostID: Int?
     /// The chosen picture, already encoded. Held as bytes as well so the sheet
     /// can show what is about to be posted.
     @State private var photoData: Data?
     @State private var photoContentType: String?
     @State private var photoError: String?
+    @State private var isImportingPhoto = false
+    @State private var photoImportGeneration = UUID()
     /// The photo being framed, if the cropper is open.
     @State private var framing: PendingPhoto?
     /// The picture as it was picked, kept so Reframe starts from the whole
     /// photo rather than cropping a crop.
     @State private var pickedImage: UIImage?
+    @State private var choosingMedia = true
+    @State private var didOpenCamera = false
+    @State private var showingCamera = false
+    @State private var cameraAllowsVideo = false
+    @State private var cameraResult: PostCameraView.Result?
+    @State private var cameraMessage: String?
+    @State private var showingLibrary = false
+    @State private var pickedMedia: PhotosPickerItem?
+    @State private var isOpeningCamera = false
 
     /// Set when the sheet was opened from a particular thing's page, which is
     /// then the only thing it can post. Nil when opened from the feed, where
@@ -95,6 +115,105 @@ struct PostComposerView: View {
 
     var body: some View {
         screen(timeOfDay: HomeTimeOfDay.current)
+            .overlay {
+                if choosingMedia {
+                    mediaEntry
+                }
+            }
+            .task {
+                guard !didOpenCamera else { return }
+                didOpenCamera = true
+                await openCamera()
+            }
+            .fullScreenCover(isPresented: $showingCamera, onDismiss: finishCamera) {
+                PostCameraView(allowsVideo: cameraAllowsVideo) { result in
+                    cameraResult = result
+                    showingCamera = false
+                }.ignoresSafeArea()
+            }
+            .photosPicker(isPresented: $showingLibrary, selection: $pickedMedia,
+                         matching: .any(of: [.images, .videos]), preferredItemEncoding: .current)
+            .onChange(of: pickedMedia) { _, item in
+                guard let item else { return }
+                choosingMedia = false
+                if item.supportedContentTypes.contains(where: { $0.conforms(to: .movie) }) {
+                    pickedVideo = item
+                } else {
+                    pickedPhoto = item
+                }
+            }
+    }
+
+    private var mediaEntry: some View {
+        PostMediaEntryView(
+            isOpeningCamera: isOpeningCamera,
+            message: cameraMessage,
+            onCamera: { Task { await openCamera() } },
+            onLibrary: { showingLibrary = true },
+            onContinue: { choosingMedia = false },
+            onCancel: { dismiss() }
+        )
+    }
+
+    @MainActor private func openCamera() async {
+        guard !isOpeningCamera else { return }
+        isOpeningCamera = true
+        defer { isOpeningCamera = false }
+        guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
+            cameraMessage = "Camera capture is unavailable here. Choose a photo or video from your camera roll."
+            return
+        }
+        guard AVCaptureDevice.authorizationStatus(for: .video) != .restricted else {
+            cameraMessage = "Camera access is restricted on this device. You can still choose from your camera roll."
+            return
+        }
+        let cameraAllowed = await AVCaptureDevice.requestAccess(for: .video)
+        guard !Task.isCancelled else { return }
+        guard cameraAllowed else {
+            cameraMessage = "Allow camera access in Settings, or choose from your camera roll."
+            return
+        }
+        cameraAllowsVideo = await AVCaptureDevice.requestAccess(for: .audio)
+        guard !Task.isCancelled else { return }
+        cameraMessage = cameraAllowsVideo ? nil : "Microphone access is off. You can still take a photo or choose a video from your camera roll."
+        showingCamera = true
+    }
+
+    @MainActor private func finishCamera() {
+        guard let result = cameraResult else { return }
+        cameraResult = nil
+        switch result {
+        case .library:
+            showingLibrary = true
+        case .cancelled:
+            break
+        case .failure(let message):
+            cameraMessage = message
+        case .photo(let image):
+            choosingMedia = false
+            pickedImage = image
+            framing = PendingPhoto(image: image)
+        case .video(let draft):
+            choosingMedia = false
+            videoImportTask?.cancel()
+            let generation = UUID()
+            videoImportGeneration = generation
+            isImportingVideo = true
+            videoError = nil
+            videoImportTask = Task {
+                do {
+                    try await draft.validate()
+                    guard !Task.isCancelled, generation == videoImportGeneration else { draft.discard(); return }
+                    videoDraft?.discard()
+                    videoDraft = draft
+                } catch {
+                    draft.discard()
+                    guard !Task.isCancelled, generation == videoImportGeneration else { return }
+                    videoError = error.localizedDescription
+                }
+                if generation == videoImportGeneration { isImportingVideo = false }
+            }
+        }
     }
 
     private func screen(timeOfDay: HomeTimeOfDay) -> some View {
@@ -102,9 +221,9 @@ struct PostComposerView: View {
             EditorialFormHeader(
                 title: composerTitle,
                 leadingAction: .cancel,
-                saveTitle: "Post",
+                saveTitle: pendingVideoPostID == nil ? "Post" : "Retry video",
                 canSave: canPost,
-                onDismiss: { dismiss() },
+                onDismiss: { if !social.isPosting { dismiss() } },
                 onSave: { post() }
             )
             .padding(.horizontal, RepbaseDesign.pageInset)
@@ -130,21 +249,29 @@ struct PostComposerView: View {
                         // page it was opened from has already answered.
                         if lockedSource == nil {
                             sourcePicker(timeOfDay: timeOfDay)
+                                .disabled(pendingVideoPostID != nil || social.isPosting)
                         }
                         candidateSection(timeOfDay: timeOfDay)
+                            .disabled(pendingVideoPostID != nil || social.isPosting)
                     }
                     photoSection(timeOfDay: timeOfDay)
+                        .disabled(pendingVideoPostID != nil || social.isPosting)
+                    videoSection
                     captionSection(timeOfDay: timeOfDay)
+                        .disabled(pendingVideoPostID != nil || social.isPosting)
                     // Only for food. A recipe has nothing to say about a
                     // workout, and an empty box asking for one is a question
                     // the poster has to decide not to answer.
                     if source == .meal {
                         instructionsSection(timeOfDay: timeOfDay)
+                            .disabled(pendingVideoPostID != nil || social.isPosting)
                     }
                     if source == .workout {
                         weightsSection(timeOfDay: timeOfDay)
+                            .disabled(pendingVideoPostID != nil || social.isPosting)
                     }
                     visibilitySection(timeOfDay: timeOfDay)
+                        .disabled(pendingVideoPostID != nil || social.isPosting)
                 }
                 .padding(.horizontal, RepbaseDesign.pageInset)
                 .padding(.top, 4)
@@ -153,6 +280,14 @@ struct PostComposerView: View {
             .scrollIndicators(.hidden)
         }
         .homeTimeScreen(timeOfDay)
+        .interactiveDismissDisabled(social.isPosting)
+        .onChange(of: pickedVideo) { importVideo() }
+        .onDisappear {
+            photoImportGeneration = UUID()
+            videoImportGeneration = UUID()
+            videoImportTask?.cancel()
+            videoDraft?.discard()
+        }
         .overlay {
             if social.isPosting {
                 postingOverlay(timeOfDay: timeOfDay)
@@ -466,7 +601,9 @@ struct PostComposerView: View {
                     .font(.community(.caption))
                     .foregroundStyle(.red)
                     .fixedSize(horizontal: false, vertical: true)
+                Button("Continue without photo") { clearPhoto() }
             }
+            if isImportingPhoto { ProgressView("Loading photo…") }
         }
         .onChange(of: pickedPhoto) { _, item in
             Task { await load(item) }
@@ -516,16 +653,23 @@ struct PostComposerView: View {
     /// well even where the server cannot.
     private func load(_ item: PhotosPickerItem?) async {
         guard let item else { return }
+        let generation = UUID()
+        photoImportGeneration = generation
+        isImportingPhoto = true
+        defer { if generation == photoImportGeneration { isImportingPhoto = false } }
         photoError = nil
         do {
             guard let data = try await item.loadTransferable(type: Data.self),
                   let image = await PhotoDecoding.decoded(data) else {
+                guard !Task.isCancelled, generation == photoImportGeneration else { return }
                 photoError = "That photo could not be read."
                 return
             }
+            guard !Task.isCancelled, generation == photoImportGeneration else { return }
             pickedImage = image
             framing = PendingPhoto(image: image)
         } catch {
+            guard !Task.isCancelled, generation == photoImportGeneration else { return }
             photoError = error.localizedDescription
         }
     }
@@ -548,6 +692,8 @@ struct PostComposerView: View {
     }
 
     private func clearPhoto() {
+        photoImportGeneration = UUID()
+        isImportingPhoto = false
         pickedPhoto = nil
         pickedImage = nil
         framing = nil
@@ -809,7 +955,62 @@ struct PostComposerView: View {
     }
 
     private var canPost: Bool {
-        selection != nil && social.isConnected && !social.isPosting
+        selection != nil && social.isConnected && !social.isPosting && !isImportingVideo
+            && !isImportingPhoto && !choosingMedia && framing == nil
+            && photoError == nil && videoError == nil
+            && (pendingVideoPostID == nil || videoDraft != nil)
+    }
+
+    private var videoSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            PhotosPicker(selection: $pickedVideo, matching: .videos, preferredItemEncoding: .current) {
+                Label(videoDraft == nil ? "Add a video" : "Replace video", systemImage: "video.badge.plus")
+            }
+            .disabled(social.isPosting || isImportingVideo)
+            Text("Video beta: up to 30 seconds, 15 MB, 1080p. Processing continues after upload.")
+                .font(.caption).foregroundStyle(.secondary)
+            if isImportingVideo { ProgressView("Checking video…") }
+            if videoDraft != nil {
+                Label("Video attached", systemImage: "checkmark.circle")
+                Button("Remove video", role: .destructive) {
+                    videoDraft?.discard(); videoDraft = nil; pickedVideo = nil; videoError = nil
+                }.disabled(social.isPosting)
+            }
+            if pendingVideoPostID != nil {
+                Text("Your post is saved. Retry attaches the video to that same post.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            if let videoError { Text(videoError).font(.caption).foregroundStyle(.red) }
+            if videoError != nil && videoDraft == nil {
+                Button("Continue without video") { videoError = nil; pickedVideo = nil }
+                    .disabled(social.isPosting || pendingVideoPostID != nil)
+            }
+        }
+    }
+
+    private func importVideo() {
+        videoImportTask?.cancel()
+        let generation = UUID()
+        videoImportGeneration = generation
+        guard let pickedVideo else { isImportingVideo = false; return }
+        isImportingVideo = true
+        videoError = nil
+        videoImportTask = Task {
+            var imported: PostVideoDraft?
+            do {
+                imported = try await pickedVideo.loadTransferable(type: PostVideoDraft.self)
+                guard let draft = imported else { throw VideoBetaLimits.ValidationError.format }
+                try await draft.validate()
+                guard !Task.isCancelled, generation == videoImportGeneration else { draft.discard(); return }
+                videoDraft?.discard()
+                videoDraft = draft
+            } catch {
+                imported?.discard()
+                guard !Task.isCancelled, generation == videoImportGeneration else { return }
+                videoError = error.localizedDescription
+            }
+            if generation == videoImportGeneration { isImportingVideo = false }
+        }
     }
 
     /// A way out of the failure on screen, when trying again could work.
@@ -830,6 +1031,10 @@ struct PostComposerView: View {
     private func post() {
         guard let selection else { return }
         Task {
+            if let pendingVideoPostID, let videoDraft {
+                if await social.retryVideo(postID: pendingVideoPostID, draft: videoDraft) { dismiss() }
+                return
+            }
             let sent = await social.post(
                 kind: selection.kind,
                 sourceID: selection.sourceID,
@@ -841,11 +1046,13 @@ struct PostComposerView: View {
                 // Filtering here as well would mean two places deciding the
                 // same thing, and they would eventually disagree.
                 cookingInstructions: cookingInstructions
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                    .trimmingCharacters(in: .whitespacesAndNewlines),
+                video: videoDraft
             )
             // Left open when it failed, so the error is read beside the post it
             // belongs to and the caption is not lost.
             if sent { dismiss() }
+            else if videoDraft != nil, let saved = social.lastPosted { pendingVideoPostID = saved.id }
         }
     }
 

@@ -450,6 +450,36 @@ actor SocialAPIRepository {
     }
 
     /// Every thread on a post, oldest first, replies nested inside each.
+    func uploadVideo(postID: Int, draft: PostVideoDraft) async throws -> FeedPost {
+        try await draft.validate()
+        let bytes = VideoUploadBody.file(draft.fileURL, size: draft.sizeBytes)
+        let body: Operations.SocialPostsVideoCreate.Input.Body = draft.contentType == "video/quicktime"
+            ? .videoQuicktime(bytes) : .videoMp4(bytes)
+        switch try await client.socialPostsVideoCreate(path: .init(id: postID), body: body) {
+        case .ok(let response): return Self.post(from: try response.body.json)
+        case .undocumented(let statusCode, _): throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// A lost upload reply must not create another post or replace a running job.
+    func recordVideoPlayback(postID: Int, failed: Bool) async {
+        // Best effort: telemetry must not make playback fail, and contains no media URL.
+        _ = try? await client.videoEventsCreate(body: .json(.init(postId: postID,
+            event: failed ? .playbackError : .playbackStarted)))
+    }
+
+    func retryVideo(postID: Int, draft: PostVideoDraft) async throws -> FeedPost {
+        let current = try await post(withID: postID)
+        if let video = current.video {
+            if !video.failed { return current }
+            switch try await client.socialPostsVideoDestroy(path: .init(id: postID)) {
+            case .ok: break
+            case .undocumented(let statusCode, _): throw APIServiceError.undocumentedStatus(statusCode)
+            }
+        }
+        return try await uploadVideo(postID: postID, draft: draft)
+    }
+
     func comments(forPost postID: Int) async throws -> [PostComment] {
         var page: Int?
         var visited: Set<Int> = []
@@ -707,6 +737,14 @@ actor SocialAPIRepository {
 
     // MARK: - Mapping
 
+    private static func video(from payload: Components.Schemas.PostVideo) -> PostVideoMedia {
+        PostVideoMedia(url: payload.url.flatMap { URL(string: $0) },
+                       thumbnailURL: payload.thumbnailUrl.flatMap { URL(string: $0) },
+                       status: payload.status, processingState: payload.processingState,
+                       width: payload.width, height: payload.height,
+                       durationMilliseconds: payload.durationMs)
+    }
+
     private static func post(from payload: Components.Schemas.Post) -> FeedPost {
         FeedPost(
             id: payload.id,
@@ -739,7 +777,8 @@ actor SocialAPIRepository {
             viewerHasSaved: payload.viewerSaved,
             showsWeights: payload.showsWeights,
             viewerIsAuthor: payload.viewerIsAuthor,
-            repostOf: payload.repostOf.map { reposted(from: $0.value1) }
+            repostOf: payload.repostOf.map { reposted(from: $0.value1) },
+            video: payload.video.map { video(from: $0.value1) }
         )
     }
 
@@ -757,7 +796,8 @@ actor SocialAPIRepository {
             createdAt: payload.createdAt,
             workout: payload.workout.map { workout(from: $0.value1) },
             meal: payload.meal.map { meal(from: $0.value1) },
-            planner: payload.planner.map { planner(from: $0.value1) }
+            planner: payload.planner.map { planner(from: $0.value1) },
+            video: payload.video.map { video(from: $0.value1) }
         )
     }
 
