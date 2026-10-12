@@ -12,6 +12,13 @@ Everything in that document still worth keeping has been folded in here.
 
 ## August 23 UI context — custom activity icons
 
+> **Superseded.** `58bb5e8` (August 27) moved `ActivityIconKind` to SF Symbols
+> (`systemName`), and the `Activity*`, `WorkoutInk*`, `RepbaseSpeedSole`,
+> `RepbasePlan`, `RepbasePost` and `RepbaseSaved` image sets were removed in
+> October once nothing referenced them. The reference image and
+> `Scripts/build-activity-icon-assets.ps1` are kept; rerunning the script
+> brings the PNGs back. The rest of this section is history.
+
 The user rejected the previous hand-drawn `Canvas` workout figures and approved
 the compact sports-pictogram family shown in:
 

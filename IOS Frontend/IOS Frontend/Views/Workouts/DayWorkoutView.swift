@@ -2205,24 +2205,6 @@ private struct LiveSetSparkBurst: View {
     }
 }
 
-private struct PlanStat: View {
-    let value: Int
-    let label: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text("\(value)")
-                .font(.community(.title3, weight: .bold))
-            Text(label)
-                .font(.community(.caption))
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 12))
-    }
-}
-
 private struct PlannedExerciseRow: View {
     let position: Int
     let exercise: Exercise
