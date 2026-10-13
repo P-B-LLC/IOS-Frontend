@@ -756,8 +756,8 @@ final class SocialStore {
         _ post: FeedPost,
         reason: PostReportReason,
         detail: String
-    ) async {
-        guard let repository else { return }
+    ) async -> Bool {
+        guard let repository else { return false }
         let generation = connectionGeneration
         do {
             let already = try await repository.report(
@@ -765,13 +765,15 @@ final class SocialStore {
                 reason: reason,
                 detail: detail
             )
-            guard connectionGeneration == generation else { return }
+            guard connectionGeneration == generation else { return false }
             lastModerationMessage = already
-                ? "You had already reported this post. We are looking at it."
-                : "Thanks. We will take a look at this post."
+                ? "A report for this reason has already been submitted."
+                : "Report received. Thank you for helping keep Rytivo safe."
+            return true
         } catch {
-            guard connectionGeneration == generation else { return }
+            guard connectionGeneration == generation else { return false }
             showFailure(error)
+            return false
         }
     }
 
