@@ -197,6 +197,17 @@ nonisolated struct RepostedPost: Equatable, Hashable, Sendable {
     var video: PostVideoMedia? = nil
 }
 
+/// Why the For You page put a post in front of somebody.
+///
+/// Plain strings, as the server sends them: a reason added after this build
+/// shipped is one it does not recognise, and its label still reads.
+nonisolated struct PostRecommendation: Equatable, Hashable, Sendable {
+    /// following, interest, similar, discovery, new_creator, popular or fresh.
+    var reason: String
+    /// The sentence to show on the card, as written by the server.
+    var label: String
+}
+
 nonisolated struct FeedPost: Identifiable, Equatable, Hashable, Sendable {
     let id: Int
     var author: PostAuthor
@@ -246,6 +257,10 @@ nonisolated struct FeedPost: Identifiable, Equatable, Hashable, Sendable {
     /// The original, when this is a repost.
     var repostOf: RepostedPost?
     var video: PostVideoMedia? = nil
+    /// Why For You showed it. Nil everywhere else -- the following feed,
+    /// Discover, a profile -- where a post is there because of who wrote it
+    /// or when, and needs no explaining.
+    var recommendation: PostRecommendation? = nil
 
     /// Whether this post offers a workout the reader could take for
     /// themselves. Their own is already theirs, and a workout with no

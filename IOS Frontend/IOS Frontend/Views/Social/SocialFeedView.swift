@@ -2,7 +2,7 @@
 //  SocialFeedView.swift
 //  IOS Frontend
 //
-//  What the people you follow have posted.
+//  For You, the people you follow, and everybody else.
 //
 
 import SwiftUI
@@ -19,7 +19,7 @@ private struct VisitedPerson: Identifiable, Hashable {
 }
 
 struct SocialFeedView: View {
-    /// What a discover load depends on: which tab is showing, and whether
+    /// What a tab's first load depends on: which tab is showing, and whether
     /// there is a connection to load it through.
     ///
     /// Keyed on both because keying on the tab alone lost the first load
@@ -28,7 +28,7 @@ struct SocialFeedView: View {
     /// and -- the tab never having changed -- is never asked again. The feed
     /// then sits on "Nothing here yet" while the server has posts to give
     /// it, which reads as an empty account rather than a dropped request.
-    private struct DiscoverLoad: Equatable {
+    private struct FeedLoad: Equatable {
         let mode: FeedMode
         let isConnected: Bool
     }
@@ -45,17 +45,21 @@ struct SocialFeedView: View {
         let isConnected: Bool
     }
 
-    /// The two tabs.
+    /// The three tabs.
     ///
-    /// There used to be a Following tab beside this one, holding the people
-    /// you follow and nothing else. It is folded into For You now — the
-    /// people you follow are simply what For You opens with — because a tab
-    /// that only ever shows a subset of the tab next to it makes the reader
-    /// do the merging.
+    /// For You is ranked for the reader by the server -- everybody's posts,
+    /// best first, each saying why it is there. Following is the people the
+    /// reader chose, newest first, and nothing else. It was folded into For
+    /// You once, when For You was only that feed with strangers appended and
+    /// a Following tab beside it showed nothing For You did not. Now that For
+    /// You is ranked, the plain list of the people you follow is something
+    /// only its own tab gives.
     private enum FeedMode: String, CaseIterable, Identifiable {
-        /// The following feed, then everybody else once it runs out.
+        /// Picked by the server, best first.
         case forYou = "For you"
-        /// Search, and the people you do not follow yet.
+        /// The people you follow, newest first.
+        case following = "Following"
+        /// Search, people worth following, and everybody's latest.
         case discover = "Discover"
         var id: String { rawValue }
     }
@@ -63,6 +67,7 @@ struct SocialFeedView: View {
     @Environment(SocialStore.self) private var store
     @Environment(SocialProfileStore.self) private var profileStore
     @Environment(\.repbaseNavigate) private var navigate
+    @Environment(\.scenePhase) private var scenePhase
 
     /// Opens straight onto a post's thread. Only set by the preview launch
     /// mode: `simctl` cannot tap, so pushing on arrival is the only way to
@@ -79,6 +84,8 @@ struct SocialFeedView: View {
     @State private var commenting: CommentedPost?
     @State private var feedMode: FeedMode = .forYou
     @State private var searchText = ""
+    /// Whether the For You tuning sheet is up.
+    @State private var isTuning = false
     /// Whose profile is open, if anyone's.
     @State private var visiting: VisitedPerson?
 
@@ -146,6 +153,10 @@ struct SocialFeedView: View {
                     // not reach anybody who was not already on the page.
                     if store.isShowingSearchResults && !store.searchedPeople.isEmpty {
                         peopleSection(timeOfDay: timeOfDay)
+                    } else if !store.isShowingSearchResults && !store.suggestedPeople.isEmpty {
+                        // Before anything is typed: people the server thinks
+                        // are worth following, each saying why.
+                        suggestionsSection(timeOfDay: timeOfDay)
                     }
                 }
 
@@ -192,43 +203,59 @@ struct SocialFeedView: View {
                 } else if displayedPosts.isEmpty {
                     emptyState(timeOfDay: timeOfDay)
                 } else {
-                    ForEach(Array(displayedPosts.enumerated()), id: \.element.id) { position, post in
-                        // Where the people you follow end and the rest begin.
-                        // Without it the change of subject is only visible as
-                        // names you do not recognise, which reads as the feed
-                        // having gone wrong rather than having moved on.
-                        if position == followedPostCount, position > 0 {
-                            caughtUpDivider(timeOfDay: timeOfDay)
-                        }
-                        // The card is not itself a button: the action bar
-                        // inside it has four of its own, and a button holding
-                        // buttons swallows their taps. A tap anywhere else
-                        // opens the post.
-                        PostCard(
-                            post: post,
-                            timeOfDay: timeOfDay,
-                            // The button raises the threads over the feed so
-                            // a comment can be left without losing your place
-                            // in it; tapping the card itself opens the post.
-                            openComments: { commenting = CommentedPost(id: post.id) },
-                            openAuthor: { visiting = VisitedPerson(id: $0) }
-                        )
-                            .contentShape(Rectangle())
-                            .onTapGesture { opened = post.id }
-                            .task {
-                                // The last card asks for the next page as it
-                                // comes into view, so the feed keeps going
-                                // without a button to press. Only For You
-                                // pages: Discover is a capped read, not a
-                                // cursor walk, and has no next page to ask for.
-                                if feedMode == .forYou, post.id == store.feed.last?.id {
-                                    await store.loadMore()
+                    ForEach(displayedPosts) { post in
+                        if feedMode == .forYou, store.dismissedPostIDs.contains(post.id) {
+                            dismissedRow(post, timeOfDay: timeOfDay)
+                        } else {
+                            // The card is not itself a button: the action bar
+                            // inside it has four of its own, and a button
+                            // holding buttons swallows their taps. A tap
+                            // anywhere else opens the post.
+                            PostCard(
+                                post: post,
+                                timeOfDay: timeOfDay,
+                                // The button raises the threads over the feed
+                                // so a comment can be left without losing your
+                                // place in it; tapping the card opens the post.
+                                openComments: { commenting = CommentedPost(id: post.id) },
+                                openAuthor: { visiting = VisitedPerson(id: $0) }
+                            )
+                                .contentShape(Rectangle())
+                                .onTapGesture { opened = post.id }
+                                // What was on screen, and for how long, is
+                                // how For You tells a post somebody stopped
+                                // on from one they flicked past. Mostly on
+                                // screen counts, as on the web.
+                                .onScrollVisibilityChange(threshold: 0.6) { visible in
+                                    guard feedMode == .forYou else { return }
+                                    if visible {
+                                        store.impressionShown(post.id)
+                                    } else {
+                                        store.impressionHidden(post.id)
+                                    }
                                 }
-                            }
+                                .task {
+                                    // The last card asks for the next page as
+                                    // it comes into view, so the feed keeps
+                                    // going without a button to press.
+                                    // Discover is a capped read, not a cursor
+                                    // walk, and has no next page to ask for.
+                                    switch feedMode {
+                                    case .forYou where post.id == store.forYou.last?.id:
+                                        await store.loadMoreForYou()
+                                    case .following where post.id == store.feed.last?.id:
+                                        await store.loadMore()
+                                    default:
+                                        break
+                                    }
+                                }
+                        }
                     }
 
-                    if store.isLoadingMore {
+                    if isLoadingMore {
                         ProgressView().padding(.vertical, 12)
+                    } else if feedMode == .following, store.hasReachedEnd {
+                        caughtUpDivider(timeOfDay: timeOfDay)
                     }
                 }
             }
@@ -237,10 +264,18 @@ struct SocialFeedView: View {
         .scrollIndicators(.hidden)
         .minimizesBottomBarOnScroll()
         // Pulls down on whichever list the tab is actually showing. For You
-        // reloads both, because it draws both.
+        // ranks again from the top, which is what a pull means there: what
+        // was just seen moves down, and what was just liked counts.
         .refreshable {
-            if feedMode == .forYou { await store.refresh() }
-            await store.loadDiscover()
+            switch feedMode {
+            case .forYou:
+                await store.loadForYou()
+            case .following:
+                await store.refresh()
+            case .discover:
+                await store.loadDiscover()
+                await store.loadSuggestedPeople()
+            }
         }
         .toolbar(.hidden, for: .navigationBar)
         .homeTimeScreen(timeOfDay)
@@ -253,16 +288,46 @@ struct SocialFeedView: View {
         .sheet(item: $commenting) { target in
             PostCommentsSheet(postID: target.id, timeOfDay: timeOfDay)
         }
-        .task(id: DiscoverLoad(mode: feedMode, isConnected: store.isConnected)) {
-            // Both tabs need this list now, not just Discover: For You ends
-            // with it once the following feed runs out, and a reader who
-            // follows nobody would otherwise reach the bottom of an empty
-            // tab with the posts that would fill it never requested.
+        // Ranks again once the sheet is gone, if anything in it changed, so
+        // the page under it is never the one the old choices made.
+        .sheet(isPresented: $isTuning, onDismiss: {
+            if store.forYouNeedsReranking {
+                Task { await store.loadForYou() }
+            }
+        }) {
+            ForYouSettingsView(timeOfDay: timeOfDay)
+        }
+        .task(id: FeedLoad(mode: feedMode, isConnected: store.isConnected)) {
             guard store.isConnected else { return }
-            await store.loadDiscover()
+            switch feedMode {
+            case .forYou:
+                // Once per connection. Coming back to the tab keeps the page
+                // somebody was reading; pulling down is how to rank again.
+                if !store.hasLoadedForYou { await store.loadForYou() }
+            case .following:
+                // Loaded on connecting, and refreshed by pulling down.
+                break
+            case .discover:
+                await store.loadDiscover()
+                if !store.hasLoadedSuggestions { await store.loadSuggestedPeople() }
+            }
             if let viewerID = profileStore.viewerID {
                 await store.loadRelationships(for: viewerID)
             }
+        }
+        // Viewings still open when the page goes -- another tab, a pushed
+        // post, the app to the background -- are closed and sent then, or
+        // they would describe a reader staring at a post for an hour.
+        .onChange(of: scenePhase) {
+            if scenePhase != .active {
+                Task { await store.finishImpressions() }
+            }
+        }
+        .onChange(of: feedMode) {
+            Task { await store.finishImpressions() }
+        }
+        .onDisappear {
+            Task { await store.finishImpressions() }
         }
         .task(id: SearchRequest(text: searchText, isConnected: store.isConnected)) {
             let typed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -289,6 +354,20 @@ struct SocialFeedView: View {
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
 
             Spacer(minLength: 4)
+
+            if feedMode == .forYou {
+                Button {
+                    isTuning = true
+                } label: {
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.community(.headline))
+                        .foregroundStyle(timeOfDay.canvasPrimaryText)
+                        .frame(width: 34, height: 34)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Tune For You")
+                .accessibilityHint("See what For You has picked up, hide topics, or start fresh")
+            }
 
             NavigationLink {
                 NotificationsView()
@@ -489,50 +568,46 @@ struct SocialFeedView: View {
     private var isListLoading: Bool {
         switch feedMode {
         case .forYou:
-            // The following feed is what this tab opens with, so it is the
-            // one whose arrival the spinner is waiting on.
+            // Also before the first load has started, so the tab opens on a
+            // spinner rather than flashing "nothing here" -- unless that load
+            // failed, when the message above says why and a pull retries.
+            return store.isLoadingForYou
+                || (!store.hasLoadedForYou && store.isConnected && store.errorMessage == nil)
+        case .following:
             return store.isLoading
         case .discover:
             return store.isShowingSearchResults ? store.isSearching : store.isLoadingDiscover
         }
     }
 
-    /// What the list shows, which is a different question per tab.
-    ///
-    /// For You is the following feed and then everybody else. The second half
-    /// is held back until the first has no more pages, so the reader is never
-    /// scrolling through strangers while their own people are still arriving
-    /// — paging in above where somebody is reading moves the page under them.
-    ///
-    /// Discover is the other half on its own, or the search results when
-    /// there are any. Search is deliberately not narrowed to strangers:
-    /// looking somebody up should find them whether or not you follow them.
-    ///
-    /// Results arrive already narrowed by a server that also decided what
-    /// this reader may see. Nothing is filtered here beyond the overlap guard
-    /// below: a second pass could only ever remove rows the server allowed.
-    private var displayedPosts: [FeedPost] {
+    private var isLoadingMore: Bool {
         switch feedMode {
-        case .forYou:
-            guard store.hasReachedEnd else { return store.feed }
-            // The two halves are disjoint as the server sends them, but
-            // following somebody mid-session puts their post in both until
-            // whichever list reloads second catches up, and a duplicate id in
-            // a ForEach is a crash rather than a cosmetic fault.
-            let alreadyShown = Set(store.feed.map(\.id))
-            return store.feed + store.discoverPosts.filter { !alreadyShown.contains($0.id) }
-        case .discover:
-            return store.isShowingSearchResults ? store.searchedPosts : store.discoverPosts
+        case .forYou: return store.isLoadingMoreForYou
+        case .following: return store.isLoadingMore
+        case .discover: return false
         }
     }
 
-    /// How many of the displayed posts came from the following feed.
+    /// What the list shows, which is a different question per tab.
     ///
-    /// Only used to put a line under them, so the change of subject from
-    /// "people you follow" to "people you might" is visible rather than
-    /// something the reader has to infer from unfamiliar names.
-    private var followedPostCount: Int {
-        feedMode == .forYou ? store.feed.count : 0
+    /// For You is the server's ranking for this reader. Following is the
+    /// people they follow, newest first. Discover is everybody else's latest,
+    /// or the search results when there are any -- search is deliberately not
+    /// narrowed to strangers: looking somebody up should find them whether or
+    /// not you follow them.
+    ///
+    /// Results arrive already narrowed by a server that also decided what
+    /// this reader may see, so nothing is filtered here: a second pass could
+    /// only ever remove rows the server allowed.
+    private var displayedPosts: [FeedPost] {
+        switch feedMode {
+        case .forYou:
+            return store.forYou
+        case .following:
+            return store.feed
+        case .discover:
+            return store.isShowingSearchResults ? store.searchedPosts : store.discoverPosts
+        }
     }
 
     /// Opens the composer. Kept beside the title rather than floating over the
@@ -555,7 +630,137 @@ struct SocialFeedView: View {
         .accessibilityLabel("New post")
     }
 
-    /// The line between the people you follow and the people you might.
+    /// A post the reader said "not interested" to, held in place with the way
+    /// back. The card goes; the space it was in says what happened.
+    private func dismissedRow(_ post: FeedPost, timeOfDay: HomeTimeOfDay) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "eye.slash")
+                .foregroundStyle(timeOfDay.canvasSecondaryText)
+            Text("Hidden. You will see fewer posts like this.")
+                .font(.community(.caption))
+                .foregroundStyle(timeOfDay.canvasSecondaryText)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 8)
+            Button("Undo") {
+                Task { await store.setNotInterested(false, post: post) }
+            }
+            .font(.community(.caption, weight: .bold))
+            .foregroundStyle(timeOfDay.accent)
+            .buttonStyle(.plain)
+            .accessibilityHint("Shows this post again")
+        }
+        .padding(.horizontal, RepbaseDesign.pageInset)
+        .padding(.vertical, 16)
+        .overlay(alignment: .bottom) { Divider() }
+    }
+
+    /// People the server suggests following, on Discover before a search.
+    private func suggestionsSection(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("SUGGESTED FOR YOU")
+                .font(.community(.caption2, weight: .bold))
+                .tracking(1.2)
+                .foregroundStyle(timeOfDay.accent)
+                .padding(.bottom, 8)
+
+            ForEach(Array(store.suggestedPeople.enumerated()), id: \.element.id) { index, suggestion in
+                if store.dismissedSuggestionIDs.contains(suggestion.id) {
+                    HStack(spacing: 10) {
+                        Text("You will not see @\(suggestion.person.username) suggested for a while.")
+                            .font(.community(.caption))
+                            .foregroundStyle(timeOfDay.canvasSecondaryText)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Spacer(minLength: 8)
+                        Button("Undo") {
+                            Task { await store.setSuggestionDismissed(false, person: suggestion) }
+                        }
+                        .font(.community(.caption, weight: .bold))
+                        .foregroundStyle(timeOfDay.accent)
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.vertical, 12)
+                } else {
+                    suggestionRow(suggestion, timeOfDay: timeOfDay)
+                }
+                if index < store.suggestedPeople.count - 1 { Divider() }
+            }
+        }
+        .padding(.vertical, 12)
+        .padding(.horizontal, RepbaseDesign.pageInset)
+        .overlay(alignment: .top) { Divider() }
+        .overlay(alignment: .bottom) { Divider() }
+    }
+
+    private func suggestionRow(_ suggestion: SuggestedPerson, timeOfDay: HomeTimeOfDay) -> some View {
+        let person = suggestion.person
+        return HStack(spacing: 12) {
+            Circle()
+                .fill(timeOfDay.accent.opacity(0.12))
+                .frame(width: 38, height: 38)
+                .overlay {
+                    Text(person.initials)
+                        .font(.community(.caption, weight: .bold))
+                        .foregroundStyle(timeOfDay.accent)
+                }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(person.displayName)
+                    .font(.community(.subheadline, weight: .semibold))
+                    .foregroundStyle(timeOfDay.canvasPrimaryText)
+                    .lineLimit(1)
+                // Why, rather than the handle alone: "followed by 2 people you
+                // follow" is the reason to tap Follow, and the handle is one
+                // tap away on their profile.
+                Text(suggestion.label)
+                    .font(.community(.caption))
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 4)
+                // The gap is part of the row, so the whole line opens the
+                // profile rather than just the name.
+                .contentShape(Rectangle())
+            Button(followTitle(person)) {
+                Task {
+                    await store.setFollowing(
+                        !isFollowing(person),
+                        user: person,
+                        viewerID: profileStore.viewerID
+                    )
+                }
+            }
+            .font(.community(.caption, weight: .bold))
+            .buttonStyle(.bordered)
+            .buttonBorderShape(.capsule)
+            .disabled(store.changingFollowFor.contains(person.id))
+
+            Button {
+                Task { await store.setSuggestionDismissed(true, person: suggestion) }
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.community(size: 11, weight: .bold))
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+                    .frame(width: 28, height: 28)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Not interested in \(person.displayName)")
+        }
+        .padding(.vertical, 10)
+        .contentShape(Rectangle())
+        // Not a Button wrapping the row: it holds two buttons of its own.
+        .onTapGesture { visiting = VisitedPerson(id: person.id) }
+    }
+
+    /// "Requested" for a closed profile asked to, which the follow list alone
+    /// cannot say.
+    private func followTitle(_ person: PostAuthor) -> String {
+        if isFollowing(person) { return "Following" }
+        if store.requestedUserIDs.contains(person.id) { return "Requested" }
+        return "Follow"
+    }
+
+    /// The line at the end of the people you follow.
     private func caughtUpDivider(timeOfDay: HomeTimeOfDay) -> some View {
         HStack(spacing: 10) {
             Rectangle()
@@ -613,11 +818,7 @@ struct SocialFeedView: View {
             Text(feedMode == .discover ? "Nobody new right now" : "Nothing here yet")
                 .font(.community(.headline))
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
-            Text(
-                feedMode == .discover
-                    ? "Posts from people you don't follow yet show up here. Search above to find somebody by name."
-                    : "The people you follow come first here, then everybody else. Share a workout, a meal, or something off your calendar to start your own."
-            )
+            Text(emptyExplanation)
                 .font(.community(.subheadline))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(timeOfDay.canvasSecondaryText)
@@ -636,6 +837,17 @@ struct SocialFeedView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 44)
         .padding(.horizontal, 22)
+    }
+
+    private var emptyExplanation: String {
+        switch feedMode {
+        case .forYou:
+            return "Nothing to recommend yet. As people post, the best of it shows up here -- and what you like teaches it what to pick."
+        case .following:
+            return "Posts from the people you follow show up here, newest first. Share a workout, a meal, or something off your calendar to start your own."
+        case .discover:
+            return "Posts from people you don't follow yet show up here. Search above to find somebody by name."
+        }
     }
 
     /// What to say over the page after a save, and how to stop saying it.
@@ -757,6 +969,17 @@ struct PostCard: View {
 
                     VStack(alignment: .leading, spacing: 10) {
                         authorLine
+
+                        // Why For You picked it. Quiet: it explains the card,
+                        // it is not the card. Feed only -- on the post's own
+                        // page the question has already been answered.
+                        if presentation == .feed, let recommendation = post.recommendation {
+                            Text(recommendation.label)
+                                .font(.community(.caption, weight: .semibold))
+                                .foregroundStyle(timeOfDay.canvasSecondaryText)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .padding(.top, -6)
+                        }
 
                         if !shown.caption.isEmpty {
                             Text(shown.caption)
@@ -970,6 +1193,16 @@ struct PostCard: View {
                                 Label("Delete post", systemImage: "trash")
                             }
                         } else {
+                            // Only on For You, the one list the server picks.
+                            // Elsewhere a post is there because of who wrote it,
+                            // and the answer to that is unfollowing.
+                            if post.recommendation != nil {
+                                Button {
+                                    Task { await store.setNotInterested(true, post: post) }
+                                } label: {
+                                    Label("Not interested", systemImage: "eye.slash")
+                                }
+                            }
                             // Report asks a question, so it opens a sheet.
                             // Block does not: it acts on the tap, the way
                             // every destructive control in this app does.

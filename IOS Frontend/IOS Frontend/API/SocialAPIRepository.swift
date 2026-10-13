@@ -49,6 +49,144 @@ actor SocialAPIRepository {
         }
     }
 
+    // MARK: - For You
+
+    /// A page of For You: posts the server picked for this reader, best
+    /// first, each saying why.
+    ///
+    /// Without a cursor the server ranks afresh, so the first page always
+    /// reflects what the reader just did. Each later page is ranked from what
+    /// the first left, re-scored for whatever the reader liked, dismissed or
+    /// scrolled past since -- and never repeats a post an earlier page served.
+    func forYou(after cursor: String? = nil) async throws -> FeedPage {
+        let output = try await client.socialForYouList(query: .init(cursor: cursor))
+        switch output {
+        case .ok(let response):
+            let body = try response.body.json
+            return FeedPage(
+                posts: body.results.map(Self.post(from:)),
+                nextCursor: try nextCursor(body.next)
+            )
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// What was on screen in For You, and for how long. At most fifty per
+    /// call -- the tracker batches them -- and posts the reader can no longer
+    /// see are ignored by the server rather than refused, so a batch never
+    /// fails because something in it was deleted meanwhile.
+    func recordImpressions(_ events: [ImpressionEvent]) async throws {
+        guard !events.isEmpty else { return }
+        let output = try await client.socialImpressionsCreate(
+            body: .json(Components.Schemas.ImpressionBatchRequest(
+                events: events.map { event in
+                    Components.Schemas.ImpressionRequest(
+                        post: event.postID,
+                        dwellMs: event.dwellMilliseconds,
+                        watchMs: event.watchMilliseconds,
+                        completed: event.completed,
+                        surface: .init(value1: .forYou)
+                    )
+                }
+            ))
+        )
+        switch output {
+        case .accepted:
+            return
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// "Not interested", and taking it back. Both are idempotent.
+    func setNotInterested(_ notInterested: Bool, postID: Int) async throws {
+        if notInterested {
+            switch try await client.socialPostsNotInterestedCreate(path: .init(id: postID)) {
+            case .noContent:
+                return
+            case .undocumented(let statusCode, _):
+                throw APIServiceError.undocumentedStatus(statusCode)
+            }
+        }
+        switch try await client.socialPostsNotInterestedDestroy(path: .init(id: postID)) {
+        case .noContent:
+            return
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// What For You has picked up about the reader, the topics they hid, and
+    /// whether it is personalised at all.
+    func forYouPreferences() async throws -> ForYouPreferences {
+        switch try await client.socialForYouPreferencesRetrieve() {
+        case .ok(let response):
+            return Self.preferences(from: try response.body.json)
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// Changes either choice, or both. Nil leaves one as it is. Answers with
+    /// the preferences as they now stand, interests included.
+    func updateForYouPreferences(
+        personalized: Bool? = nil,
+        hiddenTopics: [String]? = nil
+    ) async throws -> ForYouPreferences {
+        let output = try await client.socialForYouPreferencesPartialUpdate(
+            body: .json(Components.Schemas.PatchedUpdateForYouPreferencesRequest(
+                personalized: personalized,
+                hiddenTopics: hiddenTopics
+            ))
+        )
+        switch output {
+        case .ok(let response):
+            return Self.preferences(from: try response.body.json)
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// Starts For You fresh: what the reader did before now stops counting,
+    /// and their viewing history is deleted on the server.
+    func startForYouFresh() async throws -> ForYouPreferences {
+        switch try await client.socialForYouHistoryDestroy() {
+        case .ok(let response):
+            return Self.preferences(from: try response.body.json)
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// People worth following, each with why.
+    func suggestedPeople(limit: Int = 10) async throws -> [SuggestedPerson] {
+        switch try await client.socialSuggestedPeopleList(query: .init(limit: limit)) {
+        case .ok(let response):
+            return try response.body.json.map(Self.suggested(from:))
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// "Not this person", for six months, and taking it back.
+    func setSuggestionDismissed(_ dismissed: Bool, userID: Int) async throws {
+        if dismissed {
+            switch try await client.socialSuggestedPeopleDismissCreate(path: .init(id: userID)) {
+            case .noContent:
+                return
+            case .undocumented(let statusCode, _):
+                throw APIServiceError.undocumentedStatus(statusCode)
+            }
+        }
+        switch try await client.socialSuggestedPeopleDismissDestroy(path: .init(id: userID)) {
+        case .noContent:
+            return
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
     /// One person's posts, already narrowed by the server to what the reader
     /// is allowed to see.
     /// Everyone's posts, newest first — what Discover shows.
@@ -779,6 +917,76 @@ actor SocialAPIRepository {
             viewerIsAuthor: payload.viewerIsAuthor,
             repostOf: payload.repostOf.map { reposted(from: $0.value1) },
             video: payload.video.map { video(from: $0.value1) }
+        )
+    }
+
+    /// A For You post: the same card as any other, plus why it is there.
+    ///
+    /// The contract gives For You its own post type, field for field the
+    /// same as `Post` with `recommendation` beside them, so it is mapped here
+    /// rather than squeezed through the other.
+    private static func post(from payload: Components.Schemas.ForYouPost) -> FeedPost {
+        FeedPost(
+            id: payload.id,
+            author: author(from: payload.author.value1),
+            kind: PostKind(payload.kind),
+            caption: payload.caption,
+            imageURL: payload.imageUrl.flatMap { URL(string: $0) },
+            feedImageURL: payload.feedImageUrl.flatMap { URL(string: $0) }
+                ?? payload.imageUrl.flatMap { URL(string: $0) },
+            visibility: PostVisibility(rawValue: payload.visibility) ?? .privateToMe,
+            createdAt: payload.createdAt,
+            viewerFollowsAuthor: payload.viewerFollowsAuthor,
+            sourceID: payload.sourceId,
+            workout: payload.workout.map { workout(from: $0.value1) },
+            meal: payload.meal.map { meal(from: $0.value1) },
+            planner: payload.planner.map { planner(from: $0.value1) },
+            likeCount: payload.likeCount,
+            commentCount: payload.commentCount,
+            repostCount: payload.repostCount,
+            viewerHasLiked: payload.viewerHasLiked,
+            viewerHasReposted: payload.viewerHasReposted,
+            viewerHasSaved: payload.viewerSaved,
+            showsWeights: payload.showsWeights,
+            viewerIsAuthor: payload.viewerIsAuthor,
+            repostOf: payload.repostOf.map { reposted(from: $0.value1) },
+            video: payload.video.map { video(from: $0.value1) },
+            recommendation: PostRecommendation(
+                reason: payload.recommendation.value1.reason,
+                label: payload.recommendation.value1.label
+            )
+        )
+    }
+
+    private static func preferences(
+        from payload: Components.Schemas.ForYouPreferences
+    ) -> ForYouPreferences {
+        ForYouPreferences(
+            personalized: payload.personalized,
+            hiddenTopics: payload.hiddenTopics,
+            historyClearedAt: payload.historyClearedAt,
+            interests: payload.interests.map {
+                ForYouInterest(
+                    topic: $0.topic,
+                    label: $0.label,
+                    // Clamped, so a bar can never be drawn past its track.
+                    strength: min(max($0.strength, 0), 1),
+                    declared: $0.declared
+                )
+            },
+            hideableTopics: payload.hideableTopics.map {
+                ForYouTopic(topic: $0.topic, label: $0.label)
+            }
+        )
+    }
+
+    private static func suggested(
+        from payload: Components.Schemas.SuggestedPerson
+    ) -> SuggestedPerson {
+        SuggestedPerson(
+            person: author(from: payload.person.value1),
+            reason: payload.reason,
+            label: payload.label
         )
     }
 

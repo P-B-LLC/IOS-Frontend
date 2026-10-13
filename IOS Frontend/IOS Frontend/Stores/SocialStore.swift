@@ -17,10 +17,8 @@ final class SocialStore {
     private let likes = SocialLikeCoordinator()
     /// Where the next page starts. Nil once the feed has been read to the end.
     private var nextCursor: String?
-    /// Whether the following feed has no more pages.
-    ///
-    /// Read by the For You tab, which holds back the people you do not follow
-    /// until the ones you do have run out.
+    /// Whether the following feed has no more pages, so the Following tab can
+    /// say the reader is caught up.
     private(set) var hasReachedEnd = false
 
     private(set) var feed: [FeedPost] = []
@@ -150,6 +148,27 @@ final class SocialStore {
         blockedPeople = []
         savingMealFor = []
         savingWorkoutFor = []
+        // What For You knows is about whoever was signed in: their page,
+        // what they dismissed, what they have looked at, who is suggested to
+        // them. None of it may reach the next account, the unsent viewings
+        // least of all.
+        forYou = []
+        forYouCursor = nil
+        hasReachedEndOfForYou = false
+        hasLoadedForYou = false
+        isLoadingForYou = false
+        isLoadingMoreForYou = false
+        dismissedPostIDs = []
+        impressionFlush?.cancel()
+        impressionFlush = nil
+        impressions.reset()
+        forYouPreferences = nil
+        forYouPreferencesError = nil
+        isSavingForYouPreferences = false
+        forYouNeedsReranking = false
+        suggestedPeople = []
+        dismissedSuggestionIDs = []
+        hasLoadedSuggestions = false
     }
 
     // MARK: - Reading
@@ -499,6 +518,7 @@ final class SocialStore {
             post.likeCount = max(0, saved.count)
         }
         for index in feed.indices { update(&feed[index]) }
+        for index in forYou.indices { update(&forYou[index]) }
         for index in discoverPosts.indices { update(&discoverPosts[index]) }
         for id in Array(openedPosts.keys) {
             if var post = openedPosts[id] { update(&post); openedPosts[id] = post }
@@ -545,16 +565,298 @@ final class SocialStore {
         }
     }
 
+    // MARK: - For You
+
+    /// Posts the server picked for the reader, best first, each carrying why.
+    ///
+    /// Its own list rather than a view over `feed`: the server ranks it, the
+    /// following feed is the people chosen in the order they posted, and the
+    /// two answer different questions.
+    private(set) var forYou: [FeedPost] = []
+    private(set) var isLoadingForYou = false
+    private(set) var isLoadingMoreForYou = false
+    private(set) var hasReachedEndOfForYou = false
+    /// Whether a first page has been asked for on this connection, so opening
+    /// the tab ranks once rather than on every appearance.
+    private(set) var hasLoadedForYou = false
+    private var forYouCursor: String?
+    /// Posts the reader said "not interested" to here. Kept in the list and
+    /// drawn as a line with an undo: a mis-tap should cost one more tap, not
+    /// the post.
+    private(set) var dismissedPostIDs: Set<Int> = []
+
+    /// Ranks afresh and replaces the page. What is on screen is sent first,
+    /// so the ranking about to be made already knows it was seen.
+    func loadForYou() async {
+        guard let repository, !isLoadingForYou else { return }
+        let generation = connectionGeneration
+        isLoadingForYou = true
+        defer { if connectionGeneration == generation { isLoadingForYou = false } }
+        await finishImpressions()
+        do {
+            let page = try await repository.forYou()
+            guard connectionGeneration == generation else { return }
+            forYou = page.posts
+            forYouCursor = page.nextCursor
+            hasReachedEndOfForYou = page.nextCursor == nil
+            hasLoadedForYou = true
+            dismissedPostIDs = []
+            forYouNeedsReranking = false
+        } catch {
+            guard connectionGeneration == generation else { return }
+            showFailure(error)
+        }
+    }
+
+    /// The next stretch, as the last card comes into view. Guarded against
+    /// being asked twice at once, like `loadMore`.
+    func loadMoreForYou() async {
+        guard let repository,
+              let cursor = forYouCursor,
+              !hasReachedEndOfForYou,
+              !isLoadingMoreForYou
+        else { return }
+
+        let generation = connectionGeneration
+        isLoadingMoreForYou = true
+        defer { if connectionGeneration == generation { isLoadingMoreForYou = false } }
+
+        // Sent first for the same reason as a refresh: the server re-ranks the
+        // rest of the session for what the reader has done, and what they
+        // scrolled past is part of that.
+        await flushImpressions()
+        do {
+            let page = try await repository.forYou(after: cursor)
+            guard connectionGeneration == generation else { return }
+            // The server never repeats a post within a session; a session that
+            // expired starts again from the top, and that can. A duplicate id
+            // in a ForEach is a crash, so it is filtered here.
+            let known = Set(forYou.map(\.id))
+            forYou.append(contentsOf: page.posts.filter { !known.contains($0.id) })
+            forYouCursor = page.nextCursor
+            hasReachedEndOfForYou = page.nextCursor == nil
+        } catch {
+            guard connectionGeneration == generation else { return }
+            showFailure(error)
+        }
+    }
+
+    /// "Not interested", and taking it back.
+    ///
+    /// Optimistic, unlike a repost: it changes nothing anybody else sees, and
+    /// the line that replaces the card is also the way to undo it.
+    func setNotInterested(_ notInterested: Bool, post: FeedPost) async {
+        guard let repository else { return }
+        let generation = connectionGeneration
+        if notInterested {
+            dismissedPostIDs.insert(post.id)
+        } else {
+            dismissedPostIDs.remove(post.id)
+        }
+        do {
+            try await repository.setNotInterested(notInterested, postID: post.id)
+        } catch {
+            guard connectionGeneration == generation else { return }
+            if notInterested {
+                dismissedPostIDs.remove(post.id)
+            } else {
+                dismissedPostIDs.insert(post.id)
+            }
+            showFailure(error)
+        }
+    }
+
+    // MARK: - What was on screen
+
+    /// Viewings waiting to be sent, and the open ones.
+    private var impressions = ImpressionTracker()
+    /// The pending send, so a burst of cards leaving the screen becomes one
+    /// request rather than one each.
+    private var impressionFlush: Task<Void, Never>?
+
+    /// A For You card is mostly on screen.
+    func impressionShown(_ postID: Int) {
+        impressions.shown(postID)
+    }
+
+    /// It is not any more: one viewing, queued.
+    func impressionHidden(_ postID: Int) {
+        impressions.hidden(postID)
+        if impressions.pending.count >= ImpressionTracker.maxBatch {
+            Task { await flushImpressions() }
+        } else if impressions.hasPending {
+            scheduleImpressionFlush()
+        }
+    }
+
+    /// How far into a post's clip playback got, and whether it finished.
+    func noteWatched(postID: Int, milliseconds: Int, completed: Bool) {
+        impressions.watched(postID, milliseconds: milliseconds, completed: completed)
+    }
+
+    /// Closes every open viewing and sends everything: the feed is leaving
+    /// the screen, or the app is going to the background.
+    func finishImpressions() async {
+        impressions.closeAll()
+        await flushImpressions()
+    }
+
+    /// Sends what is queued, now.
+    func flushImpressions() async {
+        impressionFlush?.cancel()
+        impressionFlush = nil
+        await sendImpressions()
+    }
+
+    private func scheduleImpressionFlush() {
+        guard impressionFlush == nil else { return }
+        impressionFlush = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(10))
+            guard let self, !Task.isCancelled else { return }
+            self.impressionFlush = nil
+            await self.sendImpressions()
+        }
+    }
+
+    private func sendImpressions() async {
+        guard let repository else {
+            impressions.reset()
+            return
+        }
+        while true {
+            let batch = impressions.nextBatch()
+            guard !batch.isEmpty else { return }
+            // Dropped on failure rather than retried: these are signals for
+            // ranking, and an old batch sent later would only describe a
+            // session that is over.
+            try? await repository.recordImpressions(batch)
+        }
+    }
+
+    // MARK: - Tuning For You
+
+    /// What For You has picked up and what the reader chose. Nil until the
+    /// tuning sheet first asks.
+    private(set) var forYouPreferences: ForYouPreferences?
+    private(set) var isSavingForYouPreferences = false
+    /// Said inside the sheet rather than on the feed, which the sheet covers.
+    private(set) var forYouPreferencesError: String?
+    /// Set when a choice was saved, so the feed ranks again once the sheet
+    /// has closed rather than leaving the old page under it.
+    private(set) var forYouNeedsReranking = false
+
+    func loadForYouPreferences() async {
+        guard let repository else { return }
+        let generation = connectionGeneration
+        forYouPreferencesError = nil
+        do {
+            let loaded = try await repository.forYouPreferences()
+            guard connectionGeneration == generation else { return }
+            forYouPreferences = loaded
+        } catch {
+            guard connectionGeneration == generation else { return }
+            forYouPreferencesError = error.userFacingMessage
+        }
+    }
+
+    func setPersonalized(_ personalized: Bool) async {
+        await saveForYouPreferences { repository in
+            try await repository.updateForYouPreferences(personalized: personalized)
+        }
+    }
+
+    /// Hides a topic or shows it again. The whole list is sent, as the
+    /// server wants it.
+    func setTopic(_ topic: String, hidden: Bool) async {
+        guard let current = forYouPreferences else { return }
+        var topics = current.hiddenTopics.filter { $0 != topic }
+        if hidden { topics.append(topic) }
+        await saveForYouPreferences { repository in
+            try await repository.updateForYouPreferences(hiddenTopics: topics)
+        }
+    }
+
+    /// Starts For You fresh. Returns whether it worked, for the sheet to say.
+    @discardableResult
+    func startForYouFresh() async -> Bool {
+        await saveForYouPreferences { repository in
+            try await repository.startForYouFresh()
+        }
+    }
+
+    @discardableResult
+    private func saveForYouPreferences(
+        _ change: (SocialAPIRepository) async throws -> ForYouPreferences
+    ) async -> Bool {
+        guard let repository, !isSavingForYouPreferences else { return false }
+        let generation = connectionGeneration
+        isSavingForYouPreferences = true
+        forYouPreferencesError = nil
+        defer { if connectionGeneration == generation { isSavingForYouPreferences = false } }
+        do {
+            let saved = try await change(repository)
+            guard connectionGeneration == generation else { return false }
+            forYouPreferences = saved
+            forYouNeedsReranking = true
+            return true
+        } catch {
+            guard connectionGeneration == generation else { return false }
+            forYouPreferencesError = error.userFacingMessage
+            return false
+        }
+    }
+
+    // MARK: - People to follow
+
+    /// Who the server suggests, each with why. Shown on Discover.
+    private(set) var suggestedPeople: [SuggestedPerson] = []
+    private(set) var hasLoadedSuggestions = false
+    /// People dismissed here, drawn as a line with an undo.
+    private(set) var dismissedSuggestionIDs: Set<Int> = []
+
+    func loadSuggestedPeople() async {
+        guard let repository else { return }
+        let generation = connectionGeneration
+        // Quietly. Suggestions are a bonus on top of Discover, and a failure
+        // to fetch them is not worth a message across the posts below.
+        guard let loaded = try? await repository.suggestedPeople(limit: 8),
+              connectionGeneration == generation
+        else { return }
+        suggestedPeople = loaded
+        dismissedSuggestionIDs = []
+        hasLoadedSuggestions = true
+    }
+
+    func setSuggestionDismissed(_ dismissed: Bool, person: SuggestedPerson) async {
+        guard let repository else { return }
+        let generation = connectionGeneration
+        if dismissed {
+            dismissedSuggestionIDs.insert(person.id)
+        } else {
+            dismissedSuggestionIDs.remove(person.id)
+        }
+        do {
+            try await repository.setSuggestionDismissed(dismissed, userID: person.id)
+        } catch {
+            guard connectionGeneration == generation else { return }
+            if dismissed {
+                dismissedSuggestionIDs.remove(person.id)
+            } else {
+                dismissedSuggestionIDs.insert(person.id)
+            }
+            showFailure(error)
+        }
+    }
+
     // MARK: - Discover
 
     /// Posts by people the reader does **not** follow. Kept apart from `feed`
     /// because they answer different questions and a reader switching tabs
     /// should not have to wait for the other one to reload.
     ///
-    /// Both tabs are built from this one list: Discover is it, and For You is
-    /// the following feed with it appended. Narrowed by the server rather than
-    /// here — see `allPosts(matching:fromFollowing:limitPages:)` for why a
-    /// capped list cannot be filtered after the fact.
+    /// Narrowed by the server rather than here — see
+    /// `allPosts(matching:fromFollowing:limitPages:)` for why a capped list
+    /// cannot be filtered after the fact.
     private(set) var discoverPosts: [FeedPost] = []
     private(set) var isLoadingDiscover = false
 
@@ -787,7 +1089,9 @@ final class SocialStore {
             guard connectionGeneration == generation else { return }
             locallyBlockedAuthorIDs.insert(author.id)
             feed.removeAll { $0.displayed.author.id == author.id }
+            forYou.removeAll { $0.displayed.author.id == author.id }
             discoverPosts.removeAll { $0.displayed.author.id == author.id }
+            suggestedPeople.removeAll { $0.id == author.id }
             // Search results too, and for the same reason. Blocking somebody
             // found by searching for them leaves their row directly under the
             // box that found it, and the server will not return them again —
@@ -966,6 +1270,10 @@ final class SocialStore {
         if let index = feed.firstIndex(where: { $0.id == postID }) {
             change(&feed[index])
         }
+        // For You holds its own copy too, for the same reason Discover does.
+        if let index = forYou.firstIndex(where: { $0.id == postID }) {
+            change(&forYou[index])
+        }
         // Discover holds its own list, so a card looked at there is a
         // different copy from the one in the feed. Missing it meant liking,
         // reposting or saving from that tab changed nothing on screen: the
@@ -991,6 +1299,9 @@ final class SocialStore {
         for index in feed.indices where feed[index].author.id == authorID {
             change(&feed[index])
         }
+        for index in forYou.indices where forYou[index].author.id == authorID {
+            change(&forYou[index])
+        }
         for index in discoverPosts.indices
         where discoverPosts[index].author.id == authorID {
             change(&discoverPosts[index])
@@ -1014,6 +1325,13 @@ final class SocialStore {
     private func replace(_ post: FeedPost) {
         for index in feed.indices where feed[index].id == post.id {
             feed[index] = post
+        }
+        // Keeping the reason it was recommended for: the copy the server sent
+        // back answers a like or a save, and knows nothing about For You.
+        for index in forYou.indices where forYou[index].id == post.id {
+            let recommendation = forYou[index].recommendation
+            forYou[index] = post
+            forYou[index].recommendation = recommendation
         }
         for index in discoverPosts.indices where discoverPosts[index].id == post.id {
             discoverPosts[index] = post
@@ -1049,6 +1367,7 @@ final class SocialStore {
     /// it as counts change rather than freezing a copy.
     func post(withID id: Int) -> FeedPost? {
         feed.first { $0.id == id }
+            ?? forYou.first { $0.id == id }
             ?? discoverPosts.first { $0.id == id }
             ?? openedPosts[id]
     }
