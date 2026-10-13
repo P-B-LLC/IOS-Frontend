@@ -7916,6 +7916,10 @@ public enum Components {
             public var parent: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/repeat_every_days`.
             public var repeatEveryDays: Swift.Int?
+            /// Repeat weekly on selected days: Monday=0 through Sunday=6. Exclusive with repeat_every_days. The first task is on or after scheduled_date.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/repeat_on_weekdays`.
+            public var repeatOnWeekdays: [Swift.Int]?
             /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/repeat_ends_on`.
             public var repeatEndsOn: Swift.String?
             /// Creates a new `PatchedPlannerEntryRequest`.
@@ -7933,6 +7937,7 @@ public enum Components {
             ///   - notes:
             ///   - parent:
             ///   - repeatEveryDays:
+            ///   - repeatOnWeekdays: Repeat weekly on selected days: Monday=0 through Sunday=6. Exclusive with repeat_every_days. The first task is on or after scheduled_date.
             ///   - repeatEndsOn:
             public init(
                 kind: Components.Schemas.PatchedPlannerEntryRequest.KindPayload? = nil,
@@ -7947,6 +7952,7 @@ public enum Components {
                 notes: Swift.String? = nil,
                 parent: Swift.Int? = nil,
                 repeatEveryDays: Swift.Int? = nil,
+                repeatOnWeekdays: [Swift.Int]? = nil,
                 repeatEndsOn: Swift.String? = nil
             ) {
                 self.kind = kind
@@ -7961,6 +7967,7 @@ public enum Components {
                 self.notes = notes
                 self.parent = parent
                 self.repeatEveryDays = repeatEveryDays
+                self.repeatOnWeekdays = repeatOnWeekdays
                 self.repeatEndsOn = repeatEndsOn
             }
             public enum CodingKeys: String, CodingKey {
@@ -7976,6 +7983,7 @@ public enum Components {
                 case notes
                 case parent
                 case repeatEveryDays = "repeat_every_days"
+                case repeatOnWeekdays = "repeat_on_weekdays"
                 case repeatEndsOn = "repeat_ends_on"
             }
         }
@@ -8750,6 +8758,8 @@ public enum Components {
             public var subtaskCount: Swift.Int
             /// - Remark: Generated from `#/components/schemas/PlannerEntry/completed_subtask_count`.
             public var completedSubtaskCount: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/repeat_weekdays`.
+            public var repeatWeekdays: [Swift.Int]
             /// - Remark: Generated from `#/components/schemas/PlannerEntry/repeat_interval_days`.
             public var repeatIntervalDays: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/PlannerEntry/created_at`.
@@ -8777,6 +8787,7 @@ public enum Components {
             ///   - subtasks:
             ///   - subtaskCount:
             ///   - completedSubtaskCount:
+            ///   - repeatWeekdays:
             ///   - repeatIntervalDays:
             ///   - createdAt:
             ///   - updatedAt:
@@ -8799,6 +8810,7 @@ public enum Components {
                 subtasks: [Components.Schemas.PlannerSubtask],
                 subtaskCount: Swift.Int,
                 completedSubtaskCount: Swift.Int,
+                repeatWeekdays: [Swift.Int],
                 repeatIntervalDays: Swift.Int? = nil,
                 createdAt: Foundation.Date,
                 updatedAt: Foundation.Date
@@ -8821,6 +8833,7 @@ public enum Components {
                 self.subtasks = subtasks
                 self.subtaskCount = subtaskCount
                 self.completedSubtaskCount = completedSubtaskCount
+                self.repeatWeekdays = repeatWeekdays
                 self.repeatIntervalDays = repeatIntervalDays
                 self.createdAt = createdAt
                 self.updatedAt = updatedAt
@@ -8844,6 +8857,7 @@ public enum Components {
                 case subtasks
                 case subtaskCount = "subtask_count"
                 case completedSubtaskCount = "completed_subtask_count"
+                case repeatWeekdays = "repeat_weekdays"
                 case repeatIntervalDays = "repeat_interval_days"
                 case createdAt = "created_at"
                 case updatedAt = "updated_at"
@@ -8907,6 +8921,10 @@ public enum Components {
             public var parent: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/repeat_every_days`.
             public var repeatEveryDays: Swift.Int?
+            /// Repeat weekly on selected days: Monday=0 through Sunday=6. Exclusive with repeat_every_days. The first task is on or after scheduled_date.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/repeat_on_weekdays`.
+            public var repeatOnWeekdays: [Swift.Int]?
             /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/repeat_ends_on`.
             public var repeatEndsOn: Swift.String?
             /// Creates a new `PlannerEntryRequest`.
@@ -8924,6 +8942,7 @@ public enum Components {
             ///   - notes:
             ///   - parent:
             ///   - repeatEveryDays:
+            ///   - repeatOnWeekdays: Repeat weekly on selected days: Monday=0 through Sunday=6. Exclusive with repeat_every_days. The first task is on or after scheduled_date.
             ///   - repeatEndsOn:
             public init(
                 kind: Components.Schemas.PlannerEntryRequest.KindPayload? = nil,
@@ -8938,6 +8957,7 @@ public enum Components {
                 notes: Swift.String? = nil,
                 parent: Swift.Int? = nil,
                 repeatEveryDays: Swift.Int? = nil,
+                repeatOnWeekdays: [Swift.Int]? = nil,
                 repeatEndsOn: Swift.String? = nil
             ) {
                 self.kind = kind
@@ -8952,6 +8972,7 @@ public enum Components {
                 self.notes = notes
                 self.parent = parent
                 self.repeatEveryDays = repeatEveryDays
+                self.repeatOnWeekdays = repeatOnWeekdays
                 self.repeatEndsOn = repeatEndsOn
             }
             public enum CodingKeys: String, CodingKey {
@@ -8967,6 +8988,7 @@ public enum Components {
                 case notes
                 case parent
                 case repeatEveryDays = "repeat_every_days"
+                case repeatOnWeekdays = "repeat_on_weekdays"
                 case repeatEndsOn = "repeat_ends_on"
             }
         }

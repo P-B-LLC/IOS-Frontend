@@ -1,0 +1,26 @@
+name: Generate API client artifact
+on:
+  workflow_dispatch:
+  push:
+    branches: [feat/task-weekdays]
+    paths: [API/openapi.yaml, .github/workflows/generate-api-client.yml]
+permissions:
+  contents: read
+jobs:
+  generate:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Select Xcode
+        run: sudo xcode-select -s "$(ls -d /Applications/Xcode*.app | sort -V | tail -1)"
+      - uses: actions/cache@v4
+        with:
+          path: .swiftpm-build
+          key: swiftpm-${{ runner.os }}-${{ hashFiles('Package.resolved', '**/Package.resolved') }}
+      - run: bash Scripts/generate-api-client.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: generated-api-client
+          path: API/GeneratedSources

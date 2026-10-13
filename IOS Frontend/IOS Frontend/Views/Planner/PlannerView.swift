@@ -612,7 +612,7 @@ struct PlannerEntryRow: View {
         // List, where swipe actions would never fire.
         .contextMenu {
             Button("Edit", systemImage: "pencil", action: onEdit)
-            if entry.repeatIntervalDays != nil {
+            if entry.isRepeating {
                 // Two answers, because removing today and stopping the habit
                 // are different intentions and the wider one must never happen
                 // by accident.
@@ -719,7 +719,9 @@ struct PlannerEntryRow: View {
         parts.append(entry.category.title)
         if let when = entry.displayTimeRange { parts.append(when) }
         if entry.kind == .event { parts.append("Event") }
-        if let every = entry.repeatIntervalDays { parts.append(Self.repeatLabel(every)) }
+        if let weekdays = entry.repeatWeekdays, !weekdays.isEmpty {
+            parts.append(PlannerRepeatWeekday.summary(weekdays))
+        } else if let every = entry.repeatIntervalDays { parts.append(Self.repeatLabel(every)) }
         return parts.joined(separator: " · ")
     }
 

@@ -320,6 +320,10 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
     /// Create-only: make this task repeat. Never comes back from the server —
     /// `repeatIntervalDays` is what it answers with.
     var repeatEveryDays: Int?
+    /// Monday=0 ... Sunday=6. Optional for drafts saved by older app versions.
+    var repeatWeekdays: [Int]?
+    var repeatOnWeekdays: [Int]?
+    var isRepeating: Bool { repeatIntervalDays != nil || !(repeatWeekdays ?? []).isEmpty }
     /// Create-only: the first day the repeat no longer applies. Nil means it
     /// runs until it is stopped, which is what most habits are.
     var repeatEndsOn: String?
@@ -352,7 +356,9 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
         subtasks: [PlannerSubtask] = [],
         repeatIntervalDays: Int? = nil,
         repeatEveryDays: Int? = nil,
-        repeatEndsOn: String? = nil
+        repeatEndsOn: String? = nil,
+        repeatWeekdays: [Int]? = nil,
+        repeatOnWeekdays: [Int]? = nil
     ) {
         self.id = id
         self.serverID = serverID
@@ -371,6 +377,8 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
         self.subtasks = subtasks
         self.repeatIntervalDays = repeatIntervalDays
         self.repeatEveryDays = repeatEveryDays
+        self.repeatWeekdays = repeatWeekdays
+        self.repeatOnWeekdays = repeatOnWeekdays
         self.repeatEndsOn = repeatEndsOn
     }
 
@@ -402,7 +410,9 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
             subtasks: subtasks,
             repeatIntervalDays: repeatIntervalDays,
             repeatEveryDays: repeatEveryDays,
-            repeatEndsOn: repeatEndsOn
+            repeatEndsOn: repeatEndsOn,
+            repeatWeekdays: repeatWeekdays,
+            repeatOnWeekdays: repeatOnWeekdays
         )
     }
 

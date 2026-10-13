@@ -51,6 +51,23 @@ final class ReportableErrorTests: XCTestCase {
         )
     }
 
+    func testDecodingFailuresHaveSafeWordingWithoutHidingTheFailure() {
+        let context = DecodingError.Context(codingPath: [], debugDescription: "Private response details")
+        let failures: [DecodingError] = [
+            .valueNotFound(String.self, context),
+            .typeMismatch(String.self, context),
+            .dataCorrupted(context)
+        ]
+        for failure in failures {
+            let errors: [any Error] = [failure, clientError(wrapping: failure)]
+            for error in errors {
+                XCTAssertEqual(error.userFacingMessage,
+                    "Rytivo couldn't load this information. Please try again later.")
+                XCTAssertFalse(error.isCancellation)
+            }
+        }
+    }
+
     /// The point of the guard is that it stays narrow. A server that is down
     /// is reported, wrapped or not -- silencing this would hide an outage.
     func testARealFailureIsStillReported() {

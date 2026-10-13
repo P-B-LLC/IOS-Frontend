@@ -72,6 +72,7 @@ struct PostReportSheet: View {
     @State private var reason: PostReportReason?
     @State private var detail = ""
     @State private var isSending = false
+    @State private var failure: String?
 
     var body: some View {
         NavigationStack {
@@ -120,11 +121,9 @@ struct PostReportSheet: View {
                         }
                     }
 
-                    // Asked for only where the list ran out. Making someone
-                    // explain a plain "spam" would be a form where a tap does.
-                    if reason?.invitesDetail == true {
+                    if reason != nil {
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("What happened?")
+                            Text("Additional details (optional)")
                                 .font(.community(.caption, weight: .semibold))
                                 .foregroundStyle(timeOfDay.secondaryText)
                             TextField(
@@ -133,13 +132,23 @@ struct PostReportSheet: View {
                                 axis: .vertical
                             )
                             .lineLimit(3...6)
+                            .onChange(of: detail) { _, value in
+                                detail = String(value.prefix(500))
+                            }
                             .textFieldStyle(.plain)
                             .padding(12)
                             .background(
                                 timeOfDay.primaryText.opacity(0.06),
                                 in: RoundedRectangle(cornerRadius: 12, style: .continuous)
                             )
+                            Text("Please don’t include passwords, contact details, or other unnecessary personal information.")
+                                .font(.community(.caption))
+                                .foregroundStyle(timeOfDay.secondaryText)
                         }
+                    }
+
+                    if let failure {
+                        Text(failure).foregroundStyle(.red)
                     }
 
                     Button {
@@ -162,21 +171,23 @@ struct PostReportSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button("Cancel") { dismiss() }.disabled(isSending)
                 }
             }
         }
         .presentationDetents([.large])
+        .interactiveDismissDisabled(isSending)
     }
 
     private func send() {
-        guard let reason else { return }
+        guard let reason, !isSending else { return }
         isSending = true
+        failure = nil
         Task {
-            await store.report(post, reason: reason, detail: detail)
-            // Closed either way. The feed says what happened, and holding the
-            // sheet open over a report already sent invites a second one.
-            dismiss()
+            let sent = await store.report(post, reason: reason, detail: detail)
+            isSending = false
+            if sent { dismiss() }
+            else { failure = "Your report was not confirmed. Please try again." }
         }
     }
 }

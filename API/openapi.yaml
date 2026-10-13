@@ -8515,6 +8515,17 @@ components:
           maximum: 365
           minimum: 1
           writeOnly: true
+        repeat_on_weekdays:
+          type: array
+          items:
+            type: integer
+            maximum: 6
+            minimum: 0
+          writeOnly: true
+          description: 'Repeat weekly on selected days: Monday=0 through Sunday=6.
+            Exclusive with repeat_every_days. The first task is on or after scheduled_date.'
+          maxItems: 7
+          minItems: 1
         repeat_ends_on:
           type: string
           format: date
@@ -8964,6 +8975,13 @@ components:
         completed_subtask_count:
           type: integer
           readOnly: true
+        repeat_weekdays:
+          type: array
+          items:
+            type: integer
+            maximum: 6
+            minimum: 0
+          readOnly: true
         repeat_interval_days:
           type: integer
           nullable: true
@@ -8983,6 +9001,7 @@ components:
       - id
       - owner
       - repeat_interval_days
+      - repeat_weekdays
       - scheduled_date
       - subtask_count
       - subtasks
@@ -9046,6 +9065,17 @@ components:
           maximum: 365
           minimum: 1
           writeOnly: true
+        repeat_on_weekdays:
+          type: array
+          items:
+            type: integer
+            maximum: 6
+            minimum: 0
+          writeOnly: true
+          description: 'Repeat weekly on selected days: Monday=0 through Sunday=6.
+            Exclusive with repeat_every_days. The first task is on or after scheduled_date.'
+          maxItems: 7
+          minItems: 1
         repeat_ends_on:
           type: string
           format: date

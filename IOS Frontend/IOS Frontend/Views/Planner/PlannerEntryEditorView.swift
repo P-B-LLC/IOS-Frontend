@@ -69,6 +69,8 @@ struct PlannerEntryEditorView: View {
     /// Sentinel for "a number I will type", kept out of the range of real
     /// intervals so it can never be mistaken for one.
     private let customRepeatTag = -1
+    private let weekdayRepeatTag = -2
+    @State private var selectedRepeatWeekdays: Set<Int> = []
     @State private var customRepeatDays = 4
     @State private var isChoosingDeleteScope = false
 
@@ -86,7 +88,9 @@ struct PlannerEntryEditorView: View {
     /// The soonest a repeat may end: the day after it starts. A repeat that
     /// ends on the day it begins covers nothing.
     private var earliestEnd: Date {
-        Calendar.current.date(byAdding: .day, value: 1, to: date) ?? date
+        let first = repeatDays == weekdayRepeatTag
+            ? PlannerRepeatWeekday.firstDate(onOrAfter: date, days: selectedRepeatWeekdays) : date
+        return Calendar.current.date(byAdding: .day, value: 1, to: first) ?? first
     }
 
     init(
@@ -213,7 +217,7 @@ struct PlannerEntryEditorView: View {
                         Button(role: .destructive) {
                             // A repeating task has two honest answers, so it
                             // asks rather than picking the wider one silently.
-                            if entry.repeatIntervalDays != nil {
+                            if entry.isRepeating {
                                 isChoosingDeleteScope = true
                             } else {
                                 onDeleted?(entry, false)
@@ -544,6 +548,7 @@ struct PlannerEntryEditorView: View {
                 Text("Every 3 days").tag(3)
                 Text("Every week").tag(7)
                 Text("Every 2 weeks").tag(14)
+                Text("On selected weekdays…").tag(weekdayRepeatTag)
                 // The menu covers the common answers; this is for the ones it
                 // does not. Every four days is a real interval and a fixed
                 // list has no room for it.
@@ -551,6 +556,39 @@ struct PlannerEntryEditorView: View {
             }
             .pickerStyle(.menu)
             .tint(timeOfDay.accent)
+
+            if repeatDays == weekdayRepeatTag {
+                Text("Repeat each week on")
+                    .font(.community(.subheadline))
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 72))], spacing: 8) {
+                    ForEach(PlannerRepeatWeekday.allCases) { day in
+                        let selected = selectedRepeatWeekdays.contains(day.rawValue)
+                        Button {
+                            if selected { selectedRepeatWeekdays.remove(day.rawValue) }
+                            else { selectedRepeatWeekdays.insert(day.rawValue) }
+                            if repeatHasEnd { repeatEnds = max(repeatEnds, earliestEnd) }
+                        } label: {
+                            Text(day.shortTitle)
+                                .font(.community(.subheadline, weight: .semibold))
+                                .frame(maxWidth: .infinity, minHeight: 44)
+                                .foregroundStyle(selected ? timeOfDay.accent : timeOfDay.canvasSecondaryText)
+                                .background(timeOfDay.accent.opacity(selected ? 0.14 : 0.04), in: Capsule())
+                                .overlay(Capsule().strokeBorder(timeOfDay.accent.opacity(selected ? 1 : 0.2)))
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(day.title)
+                        .accessibilityAddTraits(selected ? .isSelected : [])
+                    }
+                }
+                Text(selectedRepeatWeekdays.isEmpty ? "Choose at least one day." : PlannerRepeatWeekday.summary(Array(selectedRepeatWeekdays)))
+                    .font(.community(.footnote))
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+                if !selectedRepeatWeekdays.isEmpty {
+                    Text("First task: \(PlannerRepeatWeekday.firstDate(onOrAfter: date, days: selectedRepeatWeekdays).formatted(date: .abbreviated, time: .omitted))")
+                        .font(.community(.footnote))
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                }
+            }
 
             if repeatDays == customRepeatTag {
                 HStack(spacing: 8) {
@@ -574,7 +612,7 @@ struct PlannerEntryEditorView: View {
                 }
             }
 
-            if repeatDays > 0 {
+            if repeatDays != 0 {
                 Toggle("Give it an end date", isOn: $repeatHasEnd)
                     .font(.community(.subheadline))
                     .tint(timeOfDay.accent)
@@ -651,7 +689,10 @@ struct PlannerEntryEditorView: View {
         guard !draft.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
         // A custom interval outside the bounds is refused by the server, so
         // Save is not offered for one.
-        if repeatDays == customRepeatTag, !isCustomRepeatValid { return false }
+        if draft.kind == .task, !isEditing {
+            if repeatDays == customRepeatTag, !isCustomRepeatValid { return false }
+            if repeatDays == weekdayRepeatTag, selectedRepeatWeekdays.isEmpty { return false }
+        }
         return true
     }
 
@@ -667,8 +708,9 @@ struct PlannerEntryEditorView: View {
         // Create-only, and only for a task. Sent as the day after the last one
         // wanted, because the server treats the end as the first day it no
         // longer applies.
-        if saved.kind == .task, !isEditing, repeatInterval > 0 {
-            saved.repeatEveryDays = repeatInterval
+        if saved.kind == .task, !isEditing, repeatDays != 0 {
+            saved.repeatEveryDays = repeatDays == weekdayRepeatTag ? nil : repeatInterval
+            saved.repeatOnWeekdays = repeatDays == weekdayRepeatTag ? selectedRepeatWeekdays.sorted() : nil
             saved.repeatEndsOn = repeatHasEnd ? PlannerStore.dateString(repeatEnds) : nil
         }
         if saved.kind == .event { saved.isComplete = false }
