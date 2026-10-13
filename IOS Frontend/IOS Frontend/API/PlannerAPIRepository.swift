@@ -136,6 +136,7 @@ actor PlannerAPIRepository {
                     notes: draft.notes,
                     parent: draft.parentID,
                     repeatEveryDays: draft.repeatEveryDays,
+                    repeatOnWeekdays: draft.repeatOnWeekdays,
                     repeatEndsOn: draft.repeatEndsOn
                 )
             )
@@ -342,7 +343,8 @@ actor PlannerAPIRepository {
             notes: payload.notes ?? "",
             parentID: payload.parent,
             subtasks: payload.subtasks.map(subtask(from:)),
-            repeatIntervalDays: payload.repeatIntervalDays
+            repeatIntervalDays: payload.repeatIntervalDays,
+            repeatWeekdays: payload.repeatWeekdays
         )
     }
 
