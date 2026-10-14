@@ -204,8 +204,8 @@ struct SocialFeedView: View {
                     emptyState(timeOfDay: timeOfDay)
                 } else {
                     ForEach(displayedPosts) { post in
-                        if feedMode == .forYou, store.dismissedPostIDs.contains(post.id) {
-                            dismissedRow(post, timeOfDay: timeOfDay)
+                        if feedMode == .forYou, let how = store.dismissals[post.id] {
+                            dismissedRow(post, how: how, timeOfDay: timeOfDay)
                         } else {
                             // The card is not itself a button: the action bar
                             // inside it has four of its own, and a button
@@ -630,19 +630,33 @@ struct SocialFeedView: View {
         .accessibilityLabel("New post")
     }
 
-    /// A post the reader said "not interested" to, held in place with the way
-    /// back. The card goes; the space it was in says what happened.
-    private func dismissedRow(_ post: FeedPost, timeOfDay: HomeTimeOfDay) -> some View {
+    /// A post the reader said "not interested" or "fewer like this" to, held
+    /// in place with the way back. The card goes; the space it was in says
+    /// what happened.
+    private func dismissedRow(
+        _ post: FeedPost,
+        how: ForYouDismissal,
+        timeOfDay: HomeTimeOfDay
+    ) -> some View {
         HStack(spacing: 10) {
-            Image(systemName: "eye.slash")
+            Image(systemName: how == .fewerLikeThis ? "hand.thumbsdown" : "eye.slash")
                 .foregroundStyle(timeOfDay.canvasSecondaryText)
-            Text("Hidden. You will see fewer posts like this.")
+            Text(how == .fewerLikeThis
+                 ? "Hidden. You will see less of this kind of post."
+                 : "Hidden. You will see fewer posts like this.")
                 .font(.community(.caption))
                 .foregroundStyle(timeOfDay.canvasSecondaryText)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 8)
             Button("Undo") {
-                Task { await store.setNotInterested(false, post: post) }
+                Task {
+                    switch how {
+                    case .notInterested:
+                        await store.setNotInterested(false, post: post)
+                    case .fewerLikeThis:
+                        await store.setFewerLikeThis(false, post: post)
+                    }
+                }
             }
             .font(.community(.caption, weight: .bold))
             .foregroundStyle(timeOfDay.accent)
@@ -1197,6 +1211,21 @@ struct PostCard: View {
                             // Elsewhere a post is there because of who wrote it,
                             // and the answer to that is unfollowing.
                             if post.recommendation != nil {
+                                // A toggle, so the menu shows the choice and
+                                // is the way to take it back; the card stays.
+                                Toggle(isOn: Binding(
+                                    get: { store.wantedPostIDs.contains(post.id) },
+                                    set: { more in
+                                        Task { await store.setMoreLikeThis(more, post: post) }
+                                    }
+                                )) {
+                                    Label("More like this", systemImage: "hand.thumbsup")
+                                }
+                                Button {
+                                    Task { await store.setFewerLikeThis(true, post: post) }
+                                } label: {
+                                    Label("Fewer like this", systemImage: "hand.thumbsdown")
+                                }
                                 Button {
                                     Task { await store.setNotInterested(true, post: post) }
                                 } label: {

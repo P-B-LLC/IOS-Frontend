@@ -99,6 +99,44 @@ actor SocialAPIRepository {
         }
     }
 
+    /// "More like this", and taking it back. Both are idempotent, and saying
+    /// it replaces any other choice on the same post.
+    func setMoreLikeThis(_ more: Bool, postID: Int) async throws {
+        if more {
+            switch try await client.socialPostsMoreLikeThisCreate(path: .init(id: postID)) {
+            case .noContent:
+                return
+            case .undocumented(let statusCode, _):
+                throw APIServiceError.undocumentedStatus(statusCode)
+            }
+        }
+        switch try await client.socialPostsMoreLikeThisDestroy(path: .init(id: postID)) {
+        case .noContent:
+            return
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// "Fewer like this", and taking it back. Both are idempotent, and saying
+    /// it replaces any other choice on the same post.
+    func setFewerLikeThis(_ fewer: Bool, postID: Int) async throws {
+        if fewer {
+            switch try await client.socialPostsFewerLikeThisCreate(path: .init(id: postID)) {
+            case .noContent:
+                return
+            case .undocumented(let statusCode, _):
+                throw APIServiceError.undocumentedStatus(statusCode)
+            }
+        }
+        switch try await client.socialPostsFewerLikeThisDestroy(path: .init(id: postID)) {
+        case .noContent:
+            return
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
     /// "Not interested", and taking it back. Both are idempotent.
     func setNotInterested(_ notInterested: Bool, postID: Int) async throws {
         if notInterested {
@@ -128,16 +166,19 @@ actor SocialAPIRepository {
         }
     }
 
-    /// Changes either choice, or both. Nil leaves one as it is. Answers with
-    /// the preferences as they now stand, interests included.
+    /// Changes any of the choices. Nil leaves one as it is. A topic cannot
+    /// be both hidden and added. Answers with the preferences as they now
+    /// stand, interests included.
     func updateForYouPreferences(
         personalized: Bool? = nil,
-        hiddenTopics: [String]? = nil
+        hiddenTopics: [String]? = nil,
+        addedTopics: [String]? = nil
     ) async throws -> ForYouPreferences {
         let output = try await client.socialForYouPreferencesPartialUpdate(
             body: .json(Components.Schemas.PatchedUpdateForYouPreferencesRequest(
                 personalized: personalized,
-                hiddenTopics: hiddenTopics
+                hiddenTopics: hiddenTopics,
+                addedTopics: addedTopics
             ))
         )
         switch output {
@@ -975,6 +1016,10 @@ actor SocialAPIRepository {
                 )
             },
             hideableTopics: payload.hideableTopics.map {
+                ForYouTopic(topic: $0.topic, label: $0.label)
+            },
+            addedTopics: payload.addedTopics,
+            addableTopics: payload.addableTopics.map {
                 ForYouTopic(topic: $0.topic, label: $0.label)
             }
         )

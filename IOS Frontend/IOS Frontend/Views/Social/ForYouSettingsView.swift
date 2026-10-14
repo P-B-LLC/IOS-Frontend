@@ -10,8 +10,10 @@ import SwiftUI
 /// What For You has picked up about the reader, and what they can do about it.
 ///
 /// In the order somebody needs them: what the page is working from -- so the
-/// controls below are informed rather than blind -- then topics to hide, then
-/// the two big switches, personalisation off and starting fresh.
+/// controls below are informed rather than blind -- then interests to add,
+/// topics to hide, then the two big switches, personalisation off and
+/// starting fresh. A topic is added or hidden, never both: choosing one takes
+/// it out of the other in the same change.
 ///
 /// Every change is saved as it is made, and the feed ranks again once the
 /// sheet closes, so there is no Save button to forget and no stale page left
@@ -24,6 +26,11 @@ struct ForYouSettingsView: View {
 
     @State private var confirmingFresh = false
     @State private var startedFresh = false
+    /// Exercises are the long part of the list; they open on asking.
+    @State private var showingAllExercises = false
+
+    /// The server's own limit on added interests.
+    private static let maxAdded = 30
 
     var body: some View {
         NavigationStack {
@@ -31,6 +38,7 @@ struct ForYouSettingsView: View {
                 VStack(alignment: .leading, spacing: 26) {
                     if let preferences = store.forYouPreferences {
                         interestsSection(preferences)
+                        addedTopicsSection(preferences)
                         hiddenTopicsSection(preferences)
                         personalisationSection(preferences)
                     } else if store.forYouPreferencesError == nil {
@@ -113,6 +121,44 @@ struct ForYouSettingsView: View {
         .accessibilityElement(children: .combine)
     }
 
+    private func addedTopicsSection(_ preferences: ForYouPreferences) -> some View {
+        let exercises = preferences.addableTopics.filter { $0.topic.hasPrefix("exercise:") }
+        let shown = preferences.addableTopics.filter {
+            showingAllExercises || !$0.topic.hasPrefix("exercise:") || preferences.isAdded($0.topic)
+        }
+        let full = preferences.addedTopics.count >= Self.maxAdded
+        return VStack(alignment: .leading, spacing: 12) {
+            heading("Show me more of")
+            LazyVGrid(
+                columns: [GridItem(.adaptive(minimum: 104), spacing: 8)],
+                alignment: .leading,
+                spacing: 8
+            ) {
+                ForEach(shown) { topic in
+                    let added = preferences.isAdded(topic.topic)
+                    chip(
+                        topic,
+                        on: added,
+                        symbol: "plus",
+                        hint: added ? "Stops counting it as one of your interests" : "Counts it as one of your interests"
+                    ) {
+                        Task { await store.setInterest(topic.topic, added: !added) }
+                    }
+                    .disabled(full && !added)
+                }
+            }
+            if !showingAllExercises, !exercises.isEmpty {
+                Button("Exercises…") { showingAllExercises = true }
+                    .font(.community(.subheadline, weight: .semibold))
+                    .foregroundStyle(timeOfDay.accent)
+                    .buttonStyle(.plain)
+            }
+            note(full
+                 ? "That is as many as can be added. Take one off to add another."
+                 : "An interest you add counts as one you chose. Tap it again to take it off.")
+        }
+    }
+
     private func hiddenTopicsSection(_ preferences: ForYouPreferences) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             heading("Never show me")
@@ -122,20 +168,33 @@ struct ForYouSettingsView: View {
                 spacing: 8
             ) {
                 ForEach(preferences.hideableTopics) { topic in
-                    topicChip(topic, hidden: preferences.isHidden(topic.topic))
+                    let hidden = preferences.isHidden(topic.topic)
+                    chip(
+                        topic,
+                        on: hidden,
+                        symbol: "eye.slash",
+                        hint: hidden ? "Shows these posts again" : "Hides these posts from For You"
+                    ) {
+                        Task { await store.setTopic(topic.topic, hidden: !hidden) }
+                    }
                 }
             }
             note("A hidden topic is left out of For You entirely. Tap it again to bring it back.")
         }
     }
 
-    private func topicChip(_ topic: ForYouTopic, hidden: Bool) -> some View {
-        Button {
-            Task { await store.setTopic(topic.topic, hidden: !hidden) }
-        } label: {
+    /// A topic as a chip that is on or off. `symbol` marks it when on.
+    private func chip(
+        _ topic: ForYouTopic,
+        on selected: Bool,
+        symbol: String,
+        hint: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
             HStack(spacing: 5) {
-                if hidden {
-                    Image(systemName: "eye.slash")
+                if selected {
+                    Image(systemName: symbol)
                         .font(.community(size: 10, weight: .bold))
                 }
                 Text(topic.label)
@@ -143,15 +202,15 @@ struct ForYouSettingsView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
-            .foregroundStyle(hidden ? timeOfDay.accent : timeOfDay.secondaryText)
+            .foregroundStyle(selected ? timeOfDay.accent : timeOfDay.secondaryText)
             .frame(maxWidth: .infinity)
             .frame(height: 34)
             .background(
-                Capsule().fill(hidden ? timeOfDay.accent.opacity(0.12) : Color.clear)
+                Capsule().fill(selected ? timeOfDay.accent.opacity(0.12) : Color.clear)
             )
             .overlay {
                 Capsule().strokeBorder(
-                    hidden ? timeOfDay.accent : timeOfDay.secondaryText.opacity(0.35),
+                    selected ? timeOfDay.accent : timeOfDay.secondaryText.opacity(0.35),
                     lineWidth: 1
                 )
             }
@@ -159,9 +218,9 @@ struct ForYouSettingsView: View {
         }
         .buttonStyle(.plain)
         .disabled(store.isSavingForYouPreferences)
-        .accessibilityLabel(hidden ? "\(topic.label), hidden" : topic.label)
-        .accessibilityHint(hidden ? "Shows these posts again" : "Hides these posts from For You")
-        .accessibilityAddTraits(hidden ? .isSelected : [])
+        .accessibilityLabel(topic.label)
+        .accessibilityHint(hint)
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
     private func personalisationSection(_ preferences: ForYouPreferences) -> some View {

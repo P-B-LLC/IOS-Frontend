@@ -14,14 +14,16 @@ nonisolated struct ForYouInterest: Identifiable, Equatable, Hashable, Sendable {
     var label: String
     /// From 0 to 1: how much it counts.
     var strength: Double
-    /// The reader picked it themselves -- in onboarding or on their profile --
-    /// rather than the page reading it into what they did.
+    /// The reader picked it themselves -- in onboarding, on their profile or
+    /// by adding it here -- rather than the page reading it into what they
+    /// did.
     var declared: Bool
 
     var id: String { topic }
 }
 
-/// A topic that can be hidden, by its code and the name to show for it.
+/// A topic that can be hidden or added, by its code and the name to show
+/// for it.
 nonisolated struct ForYouTopic: Identifiable, Equatable, Hashable, Sendable {
     let topic: String
     var label: String
@@ -42,10 +44,27 @@ nonisolated struct ForYouPreferences: Equatable, Sendable {
     var interests: [ForYouInterest]
     /// Every topic that may be hidden, in the order to offer them.
     var hideableTopics: [ForYouTopic]
+    /// Topic codes the reader added as interests, each one of
+    /// `addableTopics`. Never also hidden.
+    var addedTopics: [String]
+    /// Every topic that may be added, in the order to offer them: the broad
+    /// ones, kinds of athlete, then the exercises posted most lately.
+    var addableTopics: [ForYouTopic]
 
     func isHidden(_ topic: String) -> Bool {
         hiddenTopics.contains(topic)
     }
+
+    func isAdded(_ topic: String) -> Bool {
+        addedTopics.contains(topic)
+    }
+}
+
+/// How a post left For You on this screen. Both take the card off with an
+/// undo; they differ in how much of its author the page then shows.
+nonisolated enum ForYouDismissal: Equatable, Sendable {
+    case notInterested
+    case fewerLikeThis
 }
 
 /// Somebody the reader might want to follow, and why.

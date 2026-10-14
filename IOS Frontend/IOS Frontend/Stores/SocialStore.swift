@@ -158,7 +158,8 @@ final class SocialStore {
         hasLoadedForYou = false
         isLoadingForYou = false
         isLoadingMoreForYou = false
-        dismissedPostIDs = []
+        dismissals = [:]
+        wantedPostIDs = []
         impressionFlush?.cancel()
         impressionFlush = nil
         impressions.reset()
@@ -580,10 +581,13 @@ final class SocialStore {
     /// the tab ranks once rather than on every appearance.
     private(set) var hasLoadedForYou = false
     private var forYouCursor: String?
-    /// Posts the reader said "not interested" to here. Kept in the list and
-    /// drawn as a line with an undo: a mis-tap should cost one more tap, not
-    /// the post.
-    private(set) var dismissedPostIDs: Set<Int> = []
+    /// Posts the reader said "not interested" or "fewer like this" to here.
+    /// Kept in the list and drawn as a line with an undo: a mis-tap should
+    /// cost one more tap, not the post.
+    private(set) var dismissals: [Int: ForYouDismissal] = [:]
+    /// Posts the reader asked for more like here. The card stays; its menu
+    /// shows the choice, and is the way to take it back.
+    private(set) var wantedPostIDs: Set<Int> = []
 
     /// Ranks afresh and replaces the page. What is on screen is sent first,
     /// so the ranking about to be made already knows it was seen.
@@ -600,7 +604,8 @@ final class SocialStore {
             forYouCursor = page.nextCursor
             hasReachedEndOfForYou = page.nextCursor == nil
             hasLoadedForYou = true
-            dismissedPostIDs = []
+            dismissals = [:]
+            wantedPostIDs = []
             forYouNeedsReranking = false
         } catch {
             guard connectionGeneration == generation else { return }
@@ -646,22 +651,63 @@ final class SocialStore {
     /// Optimistic, unlike a repost: it changes nothing anybody else sees, and
     /// the line that replaces the card is also the way to undo it.
     func setNotInterested(_ notInterested: Bool, post: FeedPost) async {
+        await setDismissal(.notInterested, notInterested, post: post)
+    }
+
+    /// "Fewer like this", and taking it back. Optimistic, like "not
+    /// interested", and drawn the same way.
+    func setFewerLikeThis(_ fewer: Bool, post: FeedPost) async {
+        await setDismissal(.fewerLikeThis, fewer, post: post)
+    }
+
+    /// "More like this", and taking it back. The card stays where it is:
+    /// asking for more of something is no reason to lose it.
+    func setMoreLikeThis(_ more: Bool, post: FeedPost) async {
         guard let repository else { return }
         let generation = connectionGeneration
-        if notInterested {
-            dismissedPostIDs.insert(post.id)
+        let wasWanted = wantedPostIDs.contains(post.id)
+        if more {
+            wantedPostIDs.insert(post.id)
         } else {
-            dismissedPostIDs.remove(post.id)
+            wantedPostIDs.remove(post.id)
         }
         do {
-            try await repository.setNotInterested(notInterested, postID: post.id)
+            try await repository.setMoreLikeThis(more, postID: post.id)
         } catch {
             guard connectionGeneration == generation else { return }
-            if notInterested {
-                dismissedPostIDs.remove(post.id)
+            if wasWanted {
+                wantedPostIDs.insert(post.id)
             } else {
-                dismissedPostIDs.insert(post.id)
+                wantedPostIDs.remove(post.id)
             }
+            showFailure(error)
+        }
+    }
+
+    /// A post holds one choice on the server, so saying one here replaces
+    /// "more like this" on it too.
+    private func setDismissal(_ how: ForYouDismissal, _ on: Bool, post: FeedPost) async {
+        guard let repository else { return }
+        let generation = connectionGeneration
+        let before = dismissals[post.id]
+        let wasWanted = wantedPostIDs.contains(post.id)
+        if on {
+            dismissals[post.id] = how
+            wantedPostIDs.remove(post.id)
+        } else {
+            dismissals[post.id] = nil
+        }
+        do {
+            switch how {
+            case .notInterested:
+                try await repository.setNotInterested(on, postID: post.id)
+            case .fewerLikeThis:
+                try await repository.setFewerLikeThis(on, postID: post.id)
+            }
+        } catch {
+            guard connectionGeneration == generation else { return }
+            dismissals[post.id] = before
+            if wasWanted { wantedPostIDs.insert(post.id) }
             showFailure(error)
         }
     }
@@ -766,13 +812,31 @@ final class SocialStore {
     }
 
     /// Hides a topic or shows it again. The whole list is sent, as the
-    /// server wants it.
+    /// server wants it. Hiding an added interest takes it off the added
+    /// list in the same change: a topic is one or the other, never both.
     func setTopic(_ topic: String, hidden: Bool) async {
         guard let current = forYouPreferences else { return }
         var topics = current.hiddenTopics.filter { $0 != topic }
         if hidden { topics.append(topic) }
+        let added: [String]? = hidden && current.isAdded(topic)
+            ? current.addedTopics.filter { $0 != topic }
+            : nil
         await saveForYouPreferences { repository in
-            try await repository.updateForYouPreferences(hiddenTopics: topics)
+            try await repository.updateForYouPreferences(hiddenTopics: topics, addedTopics: added)
+        }
+    }
+
+    /// Adds an interest of the reader's own, or takes it off. Adding a
+    /// hidden topic shows it again in the same change.
+    func setInterest(_ topic: String, added: Bool) async {
+        guard let current = forYouPreferences else { return }
+        var topics = current.addedTopics.filter { $0 != topic }
+        if added { topics.append(topic) }
+        let hidden: [String]? = added && current.isHidden(topic)
+            ? current.hiddenTopics.filter { $0 != topic }
+            : nil
+        await saveForYouPreferences { repository in
+            try await repository.updateForYouPreferences(hiddenTopics: hidden, addedTopics: topics)
         }
     }
 
