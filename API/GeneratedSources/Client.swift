@@ -9901,10 +9901,11 @@ public struct Client: APIProtocol {
     /// Posts picked for the reader, from everyone, best first.
     ///
     /// The first page ranks from scratch, so it always reflects what the reader
-    /// did a moment ago. Later pages read the ranking that first page made, by
-    /// position, so paging never repeats or skips a post. Each page is checked
-    /// against the visibility rules again as it is served: a post hidden,
-    /// deleted, dismissed or blocked since the ranking was made does not appear.
+    /// did a moment ago. Each later page is ranked from what that first ranking
+    /// left, re-scored for what the reader has done since -- liked, dismissed,
+    /// scrolled past -- while what earlier pages served stays where it was, so
+    /// paging never repeats or skips a post. Each page is checked against the
+    /// visibility rules again as it is served.
     ///
     /// - Remark: HTTP `GET /api/v1/social/for-you/`.
     /// - Remark: Generated from `#/paths//api/v1/social/for-you//get(social_for_you_list)`.
@@ -9957,6 +9958,200 @@ public struct Client: APIProtocol {
                     case "application/json":
                         body = try await converter.getResponseBodyAsJSON(
                             Components.Schemas.ForYouPage.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Start the For You page fresh. Everything the reader did before now stops counting toward what they are shown, and their viewing history -- which posts were on screen, for how long, how much of a clip they watched -- is deleted. Likes, comments, follows and posts marked not interested stay: they are the reader's own actions, not a record kept about them. Answers with the preferences, not 204.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/for-you/history/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/for-you/history//delete(social_for_you_history_destroy)`.
+    public func socialForYouHistoryDestroy(_ input: Operations.SocialForYouHistoryDestroy.Input) async throws -> Operations.SocialForYouHistoryDestroy.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SocialForYouHistoryDestroy.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/social/for-you/history/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .delete
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SocialForYouHistoryDestroy.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.ForYouPreferences.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// The reader's say over their For You page.
+    ///
+    /// What the page has picked up about them (topics only, strongest first),
+    /// which topics they have hidden, and whether it is personalised at all.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/for-you/preferences/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/for-you/preferences//get(social_for_you_preferences_retrieve)`.
+    public func socialForYouPreferencesRetrieve(_ input: Operations.SocialForYouPreferencesRetrieve.Input) async throws -> Operations.SocialForYouPreferencesRetrieve.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SocialForYouPreferencesRetrieve.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/social/for-you/preferences/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .get
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SocialForYouPreferencesRetrieve.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.ForYouPreferences.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Turn personalisation on or off, replace the list of hidden topics, or replace the list of interests the reader added (each one of `addable_topics`). Any field may be left out. A topic is hidden or added, never both: replacing one list takes its topics out of the other, and a topic may not be in both when both are sent. Takes effect on the next page ranked.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/social/for-you/preferences/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/for-you/preferences//patch(social_for_you_preferences_partial_update)`.
+    public func socialForYouPreferencesPartialUpdate(_ input: Operations.SocialForYouPreferencesPartialUpdate.Input) async throws -> Operations.SocialForYouPreferencesPartialUpdate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SocialForYouPreferencesPartialUpdate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/social/for-you/preferences/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .patch
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                let body: OpenAPIRuntime.HTTPBody?
+                switch input.body {
+                case .none:
+                    body = nil
+                case let .json(value):
+                    body = try converter.setOptionalRequestBodyAsJSON(
+                        value,
+                        headerFields: &request.headerFields,
+                        contentType: "application/json; charset=utf-8"
+                    )
+                }
+                return (request, body)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SocialForYouPreferencesPartialUpdate.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.ForYouPreferences.self,
                             from: responseBody,
                             transforming: { value in
                                 .json(value)
@@ -10597,6 +10792,82 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// Ask for fewer posts like this one on your For You page. It leaves the page at once, and its kind of content -- its topics and the exercises in it -- is shown less from then on; its author only a little less, unlike "not interested". Replaces "not interested" or "more like this" on the same post. Saying it twice is not an error.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/fewer-like-this/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/fewer-like-this//post(social_posts_fewer_like_this_create)`.
+    public func socialPostsFewerLikeThisCreate(_ input: Operations.SocialPostsFewerLikeThisCreate.Input) async throws -> Operations.SocialPostsFewerLikeThisCreate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SocialPostsFewerLikeThisCreate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/social/posts/{}/fewer-like-this/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .post
+                )
+                suppressMutabilityWarning(&request)
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 204:
+                    return .noContent(.init())
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Take back "fewer like this" on this post. Nothing else is undone.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/fewer-like-this/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/fewer-like-this//delete(social_posts_fewer_like_this_destroy)`.
+    public func socialPostsFewerLikeThisDestroy(_ input: Operations.SocialPostsFewerLikeThisDestroy.Input) async throws -> Operations.SocialPostsFewerLikeThisDestroy.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SocialPostsFewerLikeThisDestroy.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/social/posts/{}/fewer-like-this/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .delete
+                )
+                suppressMutabilityWarning(&request)
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 204:
+                    return .noContent(.init())
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
     /// Like this post.
     ///
     /// - Remark: HTTP `POST /api/v1/social/posts/{id}/like/`.
@@ -10709,6 +10980,82 @@ public struct Client: APIProtocol {
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
                     return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Ask for more posts like this one on your For You page: its topics and the exercises in it, and to a lesser degree its author, are shown more from the next page on. Replaces "not interested" or "fewer like this" on the same post. Saying it twice is not an error.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/more-like-this/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/more-like-this//post(social_posts_more_like_this_create)`.
+    public func socialPostsMoreLikeThisCreate(_ input: Operations.SocialPostsMoreLikeThisCreate.Input) async throws -> Operations.SocialPostsMoreLikeThisCreate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SocialPostsMoreLikeThisCreate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/social/posts/{}/more-like-this/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .post
+                )
+                suppressMutabilityWarning(&request)
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 204:
+                    return .noContent(.init())
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Take back "more like this" on this post. Nothing else is undone.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/more-like-this/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/more-like-this//delete(social_posts_more_like_this_destroy)`.
+    public func socialPostsMoreLikeThisDestroy(_ input: Operations.SocialPostsMoreLikeThisDestroy.Input) async throws -> Operations.SocialPostsMoreLikeThisDestroy.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SocialPostsMoreLikeThisDestroy.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/social/posts/{}/more-like-this/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .delete
+                )
+                suppressMutabilityWarning(&request)
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 204:
+                    return .noContent(.init())
                 default:
                     return .undocumented(
                         statusCode: response.status.code,
@@ -11448,6 +11795,149 @@ public struct Client: APIProtocol {
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
                     return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// People the reader might want to follow, each with why.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/suggested-people/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/suggested-people//get(social_suggested_people_list)`.
+    public func socialSuggestedPeopleList(_ input: Operations.SocialSuggestedPeopleList.Input) async throws -> Operations.SocialSuggestedPeopleList.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SocialSuggestedPeopleList.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/social/suggested-people/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .get
+                )
+                suppressMutabilityWarning(&request)
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "limit",
+                    value: input.query.limit
+                )
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SocialSuggestedPeopleList.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            [Components.Schemas.SuggestedPerson].self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Stop suggesting this person, for six months. Nobody is told. Dismissing twice is not an error.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/suggested-people/{id}/dismiss/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/suggested-people/{id}/dismiss//post(social_suggested_people_dismiss_create)`.
+    public func socialSuggestedPeopleDismissCreate(_ input: Operations.SocialSuggestedPeopleDismissCreate.Input) async throws -> Operations.SocialSuggestedPeopleDismissCreate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SocialSuggestedPeopleDismissCreate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/social/suggested-people/{}/dismiss/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .post
+                )
+                suppressMutabilityWarning(&request)
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 204:
+                    return .noContent(.init())
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Take a dismissal back, so this person may be suggested again.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/suggested-people/{id}/dismiss/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/suggested-people/{id}/dismiss//delete(social_suggested_people_dismiss_destroy)`.
+    public func socialSuggestedPeopleDismissDestroy(_ input: Operations.SocialSuggestedPeopleDismissDestroy.Input) async throws -> Operations.SocialSuggestedPeopleDismissDestroy.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SocialSuggestedPeopleDismissDestroy.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/social/suggested-people/{}/dismiss/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .delete
+                )
+                suppressMutabilityWarning(&request)
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 204:
+                    return .noContent(.init())
                 default:
                     return .undocumented(
                         statusCode: response.status.code,

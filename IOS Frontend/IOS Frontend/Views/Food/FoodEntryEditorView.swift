@@ -264,24 +264,3 @@ struct FoodEntryEditorView: View {
         Decimal(string: value.trimmingCharacters(in: .whitespacesAndNewlines), locale: .current)
     }
 }
-
-struct FoodNutritionField: View {
-    let title: String
-    let unit: String
-    @Binding var text: String
-
-    var body: some View {
-        HStack {
-            Text(title)
-            Spacer()
-            TextField("0", text: $text)
-                .keyboardType(.decimalPad)
-                .multilineTextAlignment(.trailing)
-                .frame(maxWidth: 110)
-            Text(unit)
-                .font(.community(.caption))
-                .foregroundStyle(.secondary)
-                .frame(width: 25, alignment: .leading)
-        }
-    }
-}

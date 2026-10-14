@@ -36,6 +36,31 @@ Token rotation invalidates the token used for the request and returns a replacem
 
 List responses are paginated with `count`, `next`, `previous`, and `results` fields.
 
+## For You
+
+The For You tab is ranked by the server (see `RECOMMENDATIONS.md` in the
+backend repository). What the app does with it:
+
+- `GET /api/v1/social/for-you/` without a cursor on open and on pull to
+  refresh, then the `next` cursor as the last card appears. Each post carries
+  `recommendation.label`, shown under the byline; `reason` is a plain string,
+  so an unknown one still shows its label.
+- `POST /api/v1/social/impressions/`: which For You cards were at least 60% on
+  screen, for how long, and how far into a clip playback got. Batched by
+  `Services/ImpressionTracker.swift` (at most 50 a request, sent every ten
+  seconds, before every re-rank, and when the tab or app goes away). The
+  server records which reason each post was shown for; the app never sends it.
+- `POST`/`DELETE /api/v1/social/posts/{id}/not-interested/`: "Not interested"
+  in a For You card's menu, undone from the line that replaces the card.
+- `GET`/`PATCH /api/v1/social/for-you/preferences/` and
+  `DELETE /api/v1/social/for-you/history/`: the Tune sheet -- what For You has
+  picked up, hidden topics, personalisation off, start fresh.
+- `GET /api/v1/social/suggested-people/` and
+  `POST`/`DELETE /api/v1/social/suggested-people/{id}/dismiss/`: people worth
+  following, on Discover before a search.
+
+The Following tab is the chronological feed (`/api/v1/social/feed/`).
+
 ## Session lifecycle
 
 Create a planned session:

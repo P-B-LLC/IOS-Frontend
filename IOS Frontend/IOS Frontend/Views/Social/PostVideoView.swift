@@ -15,6 +15,10 @@ struct PostVideoView: View {
     @State private var refreshed: PostVideoMedia?
     @State private var observation: NSKeyValueObservation?
     @State private var playbackObservation: NSKeyValueObservation?
+    /// How far playback has got, reported to For You while it plays, so a
+    /// clip watched to the end reads differently from one abandoned at once.
+    @State private var progressObserver: Any?
+    @State private var endObserver: (any NSObjectProtocol)?
     @State private var didRecordStart = false
     @State private var requestGeneration = UUID()
     @State private var replacement: PhotosPickerItem?
@@ -140,6 +144,33 @@ struct PostVideoView: View {
                         }
                     }
                 }
+                // Once a second rather than continuously: what For You learns
+                // from is how far somebody got, not the frame they stopped on.
+                progressObserver = next.addPeriodicTimeObserver(
+                    forInterval: CMTime(seconds: 1, preferredTimescale: 2),
+                    queue: .main
+                ) { time in
+                    guard time.isValid, time.seconds.isFinite, time.seconds > 0 else { return }
+                    let milliseconds = Int((time.seconds * 1000).rounded())
+                    Task { @MainActor in
+                        guard generation == requestGeneration else { return }
+                        social.noteWatched(postID: postID, milliseconds: milliseconds, completed: false)
+                    }
+                }
+                endObserver = NotificationCenter.default.addObserver(
+                    forName: AVPlayerItem.didPlayToEndTimeNotification,
+                    object: item,
+                    queue: .main
+                ) { _ in
+                    Task { @MainActor in
+                        guard generation == requestGeneration else { return }
+                        social.noteWatched(
+                            postID: postID,
+                            milliseconds: current.durationMilliseconds,
+                            completed: true
+                        )
+                    }
+                }
                 next.play()
             } catch {
                 guard generation == requestGeneration else { return }
@@ -153,6 +184,22 @@ struct PostVideoView: View {
         requestGeneration = UUID()
         observation?.invalidate(); observation = nil
         playbackObservation?.invalidate(); playbackObservation = nil
+        if let player {
+            // The last of the progress, which the once-a-second report can
+            // be up to a second behind.
+            let seconds = player.currentTime().seconds
+            if seconds.isFinite, seconds > 0 {
+                social.noteWatched(
+                    postID: postID,
+                    milliseconds: Int((seconds * 1000).rounded()),
+                    completed: false
+                )
+            }
+            if let progressObserver { player.removeTimeObserver(progressObserver) }
+        }
+        progressObserver = nil
+        if let endObserver { NotificationCenter.default.removeObserver(endObserver) }
+        endObserver = nil
         player?.pause(); player?.replaceCurrentItem(with: nil); player = nil
         loading = false
     }

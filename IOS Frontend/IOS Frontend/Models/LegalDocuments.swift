@@ -34,7 +34,7 @@ enum LegalDocuments {
 
     /// The date the current wording took effect. Update it whenever the text
     /// below changes in substance, not for typographical fixes.
-    static let effectiveDate = "15 September 2026"
+    static let effectiveDate = "12 October 2026"
 
     static let all: [LegalDocument] = [privacyPolicy, termsOfService, licence]
 
@@ -105,6 +105,11 @@ enum LegalDocuments {
         you choose to attach to them, comments, likes, reposts, who you follow, \
         who you block, and reports you file about other people's posts.
 
+        Recommendations. Which posts were on your screen in the For You feed, \
+        for how long, and how much of a video you watched; posts you mark as \
+        not interested; your choices about For You; and people you dismiss \
+        from suggestions.
+
         WHO CAN SEE IT
 
         Most of what you log is visible only to you. What becomes visible to \
@@ -114,6 +119,23 @@ enum LegalDocuments {
         numbers.
 
         Blocking someone hides your posts from them and theirs from you.
+
+        RECOMMENDATIONS
+
+        The For You feed and the people suggested to you are chosen by \
+        Rytivo's own server, not by an outside service. It uses what you do \
+        in the app -- the posts you like, comment on, save, share or stay on, \
+        how much of a video you watch, what you mark as not interested, who \
+        you follow, and the interests you chose when you signed up -- to \
+        decide what to show you, and each post says why it is there. Nobody \
+        else can see this, and it is used for nothing but your own feed and \
+        suggestions. Totals across everybody, such as how often a post is \
+        liked or watched, help rank posts for everyone.
+
+        From the For You tab you can see the interests it has picked up, hide \
+        topics, start fresh -- which deletes your viewing history -- or turn \
+        personalised recommendations off, in which case For You shows what is \
+        popular and new instead of using your activity.
 
         WHAT IS NOT DONE
 
@@ -145,6 +167,10 @@ enum LegalDocuments {
 
         Your data is kept while your account exists. Deleting your account \
         from Settings removes your profile and the data associated with it.
+
+        Recommendation data is kept for less. Your For You viewing history \
+        and the posts you marked as not interested are deleted after 90 days, \
+        and suggestions you dismiss are forgotten after six months.
 
         One exception: if a post of yours is reported and a moderator hides it, \
         a record of the report and the decision is kept. A moderation queue \

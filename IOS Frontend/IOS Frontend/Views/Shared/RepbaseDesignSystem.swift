@@ -167,28 +167,6 @@ struct RepbaseScreenHeader: View {
     }
 }
 
-/// Small section heading used before lists and dashboard modules.
-struct RepbaseSectionHeader: View {
-    @Environment(\.homeTimeOfDay) private var timeOfDay
-
-    let title: String
-    var detail: String? = nil
-
-    var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 10) {
-            Text(title)
-                .font(.community(size: 16, weight: .bold))
-                .foregroundStyle(timeOfDay.canvasPrimaryText)
-            Spacer(minLength: 0)
-            if let detail {
-                Text(detail)
-                    .font(.community(size: 11, weight: .semibold))
-                    .foregroundStyle(timeOfDay.canvasSecondaryText)
-            }
-        }
-    }
-}
-
 struct RepbaseQuietButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
     @Environment(\.homeTimeOfDay) private var timeOfDay

@@ -748,50 +748,6 @@ private struct TrainingRewardToast: View {
     }
 }
 
-private struct DashboardDumbbell: View {
-    var body: some View {
-        ZStack {
-            Capsule()
-                .fill(
-                    LinearGradient(
-                        colors: [Color(hex: 0x0D0D0E), Color(hex: 0x404245), Color(hex: 0x09090A)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
-                .frame(width: 178, height: 16)
-            HStack(spacing: 132) { weight; weight }
-        }
-        .shadow(color: Color.black.opacity(0.26), radius: 12, x: 0, y: 10)
-        .overlay(alignment: .bottom) {
-            Ellipse()
-                .fill(Color.black.opacity(0.13))
-                .frame(width: 240, height: 16)
-                .blur(radius: 8)
-                .offset(y: 16)
-        }
-    }
-
-    private var weight: some View {
-        ZStack {
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [Color(hex: 0x3B3D40), Color(hex: 0x151617), Color(hex: 0x040405)],
-                        center: .center,
-                        startRadius: 2,
-                        endRadius: 38
-                    )
-                )
-                .frame(width: 76, height: 76)
-            Circle().stroke(Color.white.opacity(0.28), lineWidth: 2).frame(width: 54, height: 54)
-            Circle().fill(Color(hex: 0x080809)).frame(width: 18, height: 18)
-            Circle().fill(Color(hex: 0x8C969C)).frame(width: 8, height: 8)
-        }
-    }
-}
-
-
 private extension View {
     /// The dashboard's own card.
     ///
