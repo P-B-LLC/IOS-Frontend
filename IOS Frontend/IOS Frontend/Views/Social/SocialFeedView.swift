@@ -348,26 +348,55 @@ struct SocialFeedView: View {
     }
 
     private func socialHeader(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack(spacing: 12) {
-            Text("Social")
-                .font(.community(.title3, weight: .bold))
-                .foregroundStyle(timeOfDay.canvasPrimaryText)
-
-            Spacer(minLength: 4)
-
-            if feedMode == .forYou {
-                Button {
-                    isTuning = true
-                } label: {
-                    Image(systemName: "slider.horizontal.3")
-                        .font(.community(.headline))
-                        .foregroundStyle(timeOfDay.canvasPrimaryText)
-                        .frame(width: 34, height: 34)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Tune For You")
-                .accessibilityHint("See what For You has picked up, hide topics, or start fresh")
+        VStack(spacing: 0) {
+            // The same title row as every other tab.
+            HStack {
+                RytivoBrandLockup(size: 24)
+                Spacer()
+                Text("Social")
+                    .font(.community(.title3, weight: .bold))
+                    .foregroundStyle(timeOfDay.canvasPrimaryText)
             }
+            .padding(.top, 8)
+
+            socialActions(timeOfDay: timeOfDay)
+                .padding(.top, 10)
+                .padding(.bottom, 8)
+        }
+        .padding(.horizontal, RepbaseDesign.pageInset)
+    }
+
+    /// Tuning, notifications and posting, on a row of their own under the
+    /// title.
+    ///
+    /// They used to share the title's row with the wordmark centred over it
+    /// in an overlay, and on a phone the tuning button ran underneath the
+    /// wordmark. A third of the row each, so nothing can reach anything else,
+    /// and the bell stays in the middle whether or not tuning is showing.
+    private func socialActions(timeOfDay: HomeTimeOfDay) -> some View {
+        HStack(spacing: 8) {
+            // A ZStack rather than a Group: a Group hands its frame to its
+            // children, so with no button in it there was no third at all,
+            // and the bell slid left to the middle of what was left.
+            ZStack(alignment: .leading) {
+                if feedMode == .forYou {
+                    Button {
+                        isTuning = true
+                    } label: {
+                        // Flush left, under the wordmark's edge, with the
+                        // rest of the 44 points still tappable.
+                        Image(systemName: "slider.horizontal.3")
+                            .font(.community(.headline))
+                            .foregroundStyle(timeOfDay.canvasPrimaryText)
+                            .frame(width: 44, height: 44, alignment: .leading)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Tune For You")
+                    .accessibilityHint("See what For You has picked up, hide topics, or start fresh")
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             NavigationLink {
                 NotificationsView()
@@ -387,8 +416,12 @@ struct SocialFeedView: View {
                                 .offset(x: -3, y: 3)
                         }
                     }
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Notifications")
+            .frame(maxWidth: .infinity)
 
             Button {
                 isComposing = true
@@ -402,22 +435,13 @@ struct SocialFeedView: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Create post")
+            .frame(maxWidth: .infinity, alignment: .trailing)
         }
-        .overlay {
-            RytivoBrandLockup(size: 24)
-                .allowsHitTesting(false)
-        }
-        // The wordmark sits in an overlay, centred over this row, which works
-        // because the row leaves a gap in its middle. At the accessibility
-        // sizes "Social" and the Post button grew into that gap and ran
-        // underneath it -- three things overlapping, and the button's label
-        // cut to "+ Po...". Capped so the bar keeps its shape; both buttons
-        // carry their own accessibility labels, so nothing is lost to a
-        // reader who cannot see it.
+        // Capped, as the bar was when these shared the title's row, so the
+        // Post button's label still fits its third of a phone at the
+        // accessibility sizes. Every control carries its own accessibility
+        // label, so nothing is lost to a reader who cannot see it.
         .typeSizeCeiling()
-        .padding(.horizontal, RepbaseDesign.pageInset)
-        .padding(.top, 8)
-        .padding(.bottom, 10)
     }
 
     private var viewerInitials: String {
