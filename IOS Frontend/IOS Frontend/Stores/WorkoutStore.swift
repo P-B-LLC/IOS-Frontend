@@ -72,6 +72,66 @@ final class WorkoutStore {
     private(set) var personalRecords: [PersonalRecord] = []
     /// How each exercise in the finished lifting session has progressed.
     private(set) var liftProgress: [LiftProgressSeries] = []
+
+    // MARK: - Progress you can go and look at
+    //
+    // `liftProgress` above is built when a session ends and cleared when the
+    // next one starts, so the only way to see whether a lift is going
+    // anywhere was to finish a workout and not navigate away. The question
+    // "is my bench press moving" outlives the session that prompted it, and
+    // the endpoint behind it was already there.
+
+    /// The exercise whose history is on screen, if one has been asked for.
+    private(set) var browsedProgress: LiftProgressSeries?
+    private(set) var isLoadingBrowsedProgress = false
+    private(set) var browsedProgressError: String?
+
+    /// Every exercise the account has saved, once, in alphabetical order.
+    ///
+    /// Read off the saved workouts already loaded rather than fetched: the
+    /// catalogue endpoint lists exercises that exist, and what somebody wants
+    /// here is the ones they actually train. An exercise in three workouts is
+    /// still one lift with one history, so it appears once.
+    var trainedExercises: [Exercise] {
+        var seen: Set<Int> = []
+        var found: [Exercise] = []
+        for workout in knownWorkouts {
+            for exercise in workout.exercises {
+                guard let serverID = exercise.serverID, seen.insert(serverID).inserted else { continue }
+                found.append(exercise)
+            }
+        }
+        return found.sorted {
+            $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+        }
+    }
+
+    /// Loads one exercise's whole history, across every workout it appears in.
+    ///
+    /// No `workoutName`, unlike the post-session load above. There the
+    /// question is "how did today's workout go"; here it is "how is this lift
+    /// going", and filtering to one workout would silently drop the same lift
+    /// trained under another name.
+    func loadProgress(for exercise: Exercise) async {
+        guard let repository, let serverID = exercise.serverID else { return }
+        let generation = connectionGeneration
+        isLoadingBrowsedProgress = true
+        browsedProgressError = nil
+        defer { if connectionGeneration == generation { isLoadingBrowsedProgress = false } }
+        do {
+            let series = try await repository.liftProgress(
+                exerciseID: serverID,
+                exerciseName: exercise.name,
+                workoutName: nil
+            )
+            guard connectionGeneration == generation else { return }
+            browsedProgress = series
+        } catch {
+            guard connectionGeneration == generation else { return }
+            browsedProgress = nil
+            browsedProgressError = error.userFacingMessage
+        }
+    }
     /// Workouts the user has already created, offered when naming a new one so
     /// a workout's history is not split across two spellings.
     private(set) var knownWorkouts: [WorkoutSummary] = []

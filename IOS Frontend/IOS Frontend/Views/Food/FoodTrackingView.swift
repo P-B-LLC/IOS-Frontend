@@ -27,6 +27,9 @@ struct FoodTrackingView: View {
     @State private var isShowingSavedMeals = false
     /// The month grid, opened from the week range.
     @State private var isShowingMonth = false
+    /// The wider read: how the last week or month of eating actually went,
+    /// as against what is on the plate today.
+    @State private var isShowingTrend = false
     /// Opens the composer on this page's own kind, so it asks which meal
     /// rather than which feature.
     @State private var isSharingMeal = false
@@ -56,6 +59,11 @@ struct FoodTrackingView: View {
         .fullScreenCover(isPresented: $isShowingMonth) {
             NavigationStack {
                 FoodMonthView(selectedDate: $selectedDate)
+            }
+        }
+        .fullScreenCover(isPresented: $isShowingTrend) {
+            NavigationStack {
+                NutritionTrendView(referenceDate: selectedDate)
             }
         }
         .task {
@@ -125,6 +133,7 @@ struct FoodTrackingView: View {
 
                 mealsSection(timeOfDay: timeOfDay)
                 nutritionBreakdownLink(timeOfDay: timeOfDay)
+                nutritionTrendLink(timeOfDay: timeOfDay)
             }
             .padding(.horizontal, RepbaseDesign.pageInset)
             .padding(.top, 16)
@@ -505,6 +514,37 @@ struct FoodTrackingView: View {
                 .repbaseControlSurface(cornerRadius: 15)
             }
         }
+    }
+
+    /// The breakdown's counterpart: that one cuts a single day into its
+    /// macros, this one asks whether the days add up to anything.
+    ///
+    /// A cover rather than a push, matching the month grid beside it. Both
+    /// step outside the day being logged, and a pushed page under a tab bar
+    /// still pointing at Food reads as part of it.
+    private func nutritionTrendLink(timeOfDay: HomeTimeOfDay) -> some View {
+        Button {
+            isShowingTrend = true
+        } label: {
+            HStack(spacing: 11) {
+                Image(systemName: "chart.bar.xaxis")
+                    .font(.community(.title3))
+                    .foregroundStyle(timeOfDay.accent)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Nutrition trend")
+                        .font(.community(.headline))
+                    Text("The last week or month against your goal")
+                        .font(.community(.caption))
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                }
+                Spacer()
+                Image(systemName: "chevron.forward")
+                    .font(.community(.caption, weight: .bold))
+                    .foregroundStyle(.secondary)
+            }
+            .repbaseCard(contentPadding: 14, cornerRadius: 17)
+        }
+        .buttonStyle(.plain)
     }
 
     private func nutritionBreakdownLink(timeOfDay: HomeTimeOfDay) -> some View {
