@@ -10102,7 +10102,7 @@ public struct Client: APIProtocol {
             }
         )
     }
-    /// Turn personalisation on or off, or replace the list of hidden topics. Either field may be left out. Takes effect on the next page ranked.
+    /// Turn personalisation on or off, replace the list of hidden topics, or replace the list of interests the reader added (each one of `addable_topics`). Any field may be left out. A topic is hidden or added, never both: replacing one list takes its topics out of the other, and a topic may not be in both when both are sent. Takes effect on the next page ranked.
     ///
     /// - Remark: HTTP `PATCH /api/v1/social/for-you/preferences/`.
     /// - Remark: Generated from `#/paths//api/v1/social/for-you/preferences//patch(social_for_you_preferences_partial_update)`.
@@ -10792,6 +10792,82 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// Ask for fewer posts like this one on your For You page. It leaves the page at once, and its kind of content -- its topics and the exercises in it -- is shown less from then on; its author only a little less, unlike "not interested". Replaces "not interested" or "more like this" on the same post. Saying it twice is not an error.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/fewer-like-this/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/fewer-like-this//post(social_posts_fewer_like_this_create)`.
+    public func socialPostsFewerLikeThisCreate(_ input: Operations.SocialPostsFewerLikeThisCreate.Input) async throws -> Operations.SocialPostsFewerLikeThisCreate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SocialPostsFewerLikeThisCreate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/social/posts/{}/fewer-like-this/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .post
+                )
+                suppressMutabilityWarning(&request)
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 204:
+                    return .noContent(.init())
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Take back "fewer like this" on this post. Nothing else is undone.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/fewer-like-this/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/fewer-like-this//delete(social_posts_fewer_like_this_destroy)`.
+    public func socialPostsFewerLikeThisDestroy(_ input: Operations.SocialPostsFewerLikeThisDestroy.Input) async throws -> Operations.SocialPostsFewerLikeThisDestroy.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SocialPostsFewerLikeThisDestroy.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/social/posts/{}/fewer-like-this/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .delete
+                )
+                suppressMutabilityWarning(&request)
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 204:
+                    return .noContent(.init())
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
     /// Like this post.
     ///
     /// - Remark: HTTP `POST /api/v1/social/posts/{id}/like/`.
@@ -10904,6 +10980,82 @@ public struct Client: APIProtocol {
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
                     return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Ask for more posts like this one on your For You page: its topics and the exercises in it, and to a lesser degree its author, are shown more from the next page on. Replaces "not interested" or "fewer like this" on the same post. Saying it twice is not an error.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/more-like-this/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/more-like-this//post(social_posts_more_like_this_create)`.
+    public func socialPostsMoreLikeThisCreate(_ input: Operations.SocialPostsMoreLikeThisCreate.Input) async throws -> Operations.SocialPostsMoreLikeThisCreate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SocialPostsMoreLikeThisCreate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/social/posts/{}/more-like-this/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .post
+                )
+                suppressMutabilityWarning(&request)
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 204:
+                    return .noContent(.init())
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Take back "more like this" on this post. Nothing else is undone.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/more-like-this/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/more-like-this//delete(social_posts_more_like_this_destroy)`.
+    public func socialPostsMoreLikeThisDestroy(_ input: Operations.SocialPostsMoreLikeThisDestroy.Input) async throws -> Operations.SocialPostsMoreLikeThisDestroy.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SocialPostsMoreLikeThisDestroy.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/social/posts/{}/more-like-this/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .delete
+                )
+                suppressMutabilityWarning(&request)
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 204:
+                    return .noContent(.init())
                 default:
                     return .undocumented(
                         statusCode: response.status.code,

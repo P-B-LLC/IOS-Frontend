@@ -945,7 +945,7 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /api/v1/social/for-you/preferences/`.
     /// - Remark: Generated from `#/paths//api/v1/social/for-you/preferences//get(social_for_you_preferences_retrieve)`.
     func socialForYouPreferencesRetrieve(_ input: Operations.SocialForYouPreferencesRetrieve.Input) async throws -> Operations.SocialForYouPreferencesRetrieve.Output
-    /// Turn personalisation on or off, or replace the list of hidden topics. Either field may be left out. Takes effect on the next page ranked.
+    /// Turn personalisation on or off, replace the list of hidden topics, or replace the list of interests the reader added (each one of `addable_topics`). Any field may be left out. A topic is hidden or added, never both: replacing one list takes its topics out of the other, and a topic may not be in both when both are sent. Takes effect on the next page ranked.
     ///
     /// - Remark: HTTP `PATCH /api/v1/social/for-you/preferences/`.
     /// - Remark: Generated from `#/paths//api/v1/social/for-you/preferences//patch(social_for_you_preferences_partial_update)`.
@@ -1018,6 +1018,16 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}//delete(social_posts_destroy)`.
     func socialPostsDestroy(_ input: Operations.SocialPostsDestroy.Input) async throws -> Operations.SocialPostsDestroy.Output
+    /// Ask for fewer posts like this one on your For You page. It leaves the page at once, and its kind of content -- its topics and the exercises in it -- is shown less from then on; its author only a little less, unlike "not interested". Replaces "not interested" or "more like this" on the same post. Saying it twice is not an error.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/fewer-like-this/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/fewer-like-this//post(social_posts_fewer_like_this_create)`.
+    func socialPostsFewerLikeThisCreate(_ input: Operations.SocialPostsFewerLikeThisCreate.Input) async throws -> Operations.SocialPostsFewerLikeThisCreate.Output
+    /// Take back "fewer like this" on this post. Nothing else is undone.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/fewer-like-this/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/fewer-like-this//delete(social_posts_fewer_like_this_destroy)`.
+    func socialPostsFewerLikeThisDestroy(_ input: Operations.SocialPostsFewerLikeThisDestroy.Input) async throws -> Operations.SocialPostsFewerLikeThisDestroy.Output
     /// Like this post.
     ///
     /// - Remark: HTTP `POST /api/v1/social/posts/{id}/like/`.
@@ -1028,6 +1038,16 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/like/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/like//delete(social_posts_like_destroy)`.
     func socialPostsLikeDestroy(_ input: Operations.SocialPostsLikeDestroy.Input) async throws -> Operations.SocialPostsLikeDestroy.Output
+    /// Ask for more posts like this one on your For You page: its topics and the exercises in it, and to a lesser degree its author, are shown more from the next page on. Replaces "not interested" or "fewer like this" on the same post. Saying it twice is not an error.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/more-like-this/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/more-like-this//post(social_posts_more_like_this_create)`.
+    func socialPostsMoreLikeThisCreate(_ input: Operations.SocialPostsMoreLikeThisCreate.Input) async throws -> Operations.SocialPostsMoreLikeThisCreate.Output
+    /// Take back "more like this" on this post. Nothing else is undone.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/more-like-this/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/more-like-this//delete(social_posts_more_like_this_destroy)`.
+    func socialPostsMoreLikeThisDestroy(_ input: Operations.SocialPostsMoreLikeThisDestroy.Input) async throws -> Operations.SocialPostsMoreLikeThisDestroy.Output
     /// Say you are not interested in this post. It leaves your For You page at once, and posts like it -- its topics, and to a lesser degree its author -- are shown less from then on. It stays in your following feed: this is about recommendations, not about people you chose to follow. Saying it twice is not an error.
     ///
     /// - Remark: HTTP `POST /api/v1/social/posts/{id}/not-interested/`.
@@ -3242,7 +3262,7 @@ extension APIProtocol {
     public func socialForYouPreferencesRetrieve(headers: Operations.SocialForYouPreferencesRetrieve.Input.Headers = .init()) async throws -> Operations.SocialForYouPreferencesRetrieve.Output {
         try await socialForYouPreferencesRetrieve(Operations.SocialForYouPreferencesRetrieve.Input(headers: headers))
     }
-    /// Turn personalisation on or off, or replace the list of hidden topics. Either field may be left out. Takes effect on the next page ranked.
+    /// Turn personalisation on or off, replace the list of hidden topics, or replace the list of interests the reader added (each one of `addable_topics`). Any field may be left out. A topic is hidden or added, never both: replacing one list takes its topics out of the other, and a topic may not be in both when both are sent. Takes effect on the next page ranked.
     ///
     /// - Remark: HTTP `PATCH /api/v1/social/for-you/preferences/`.
     /// - Remark: Generated from `#/paths//api/v1/social/for-you/preferences//patch(social_for_you_preferences_partial_update)`.
@@ -3379,6 +3399,20 @@ extension APIProtocol {
     public func socialPostsDestroy(path: Operations.SocialPostsDestroy.Input.Path) async throws -> Operations.SocialPostsDestroy.Output {
         try await socialPostsDestroy(Operations.SocialPostsDestroy.Input(path: path))
     }
+    /// Ask for fewer posts like this one on your For You page. It leaves the page at once, and its kind of content -- its topics and the exercises in it -- is shown less from then on; its author only a little less, unlike "not interested". Replaces "not interested" or "more like this" on the same post. Saying it twice is not an error.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/fewer-like-this/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/fewer-like-this//post(social_posts_fewer_like_this_create)`.
+    public func socialPostsFewerLikeThisCreate(path: Operations.SocialPostsFewerLikeThisCreate.Input.Path) async throws -> Operations.SocialPostsFewerLikeThisCreate.Output {
+        try await socialPostsFewerLikeThisCreate(Operations.SocialPostsFewerLikeThisCreate.Input(path: path))
+    }
+    /// Take back "fewer like this" on this post. Nothing else is undone.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/fewer-like-this/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/fewer-like-this//delete(social_posts_fewer_like_this_destroy)`.
+    public func socialPostsFewerLikeThisDestroy(path: Operations.SocialPostsFewerLikeThisDestroy.Input.Path) async throws -> Operations.SocialPostsFewerLikeThisDestroy.Output {
+        try await socialPostsFewerLikeThisDestroy(Operations.SocialPostsFewerLikeThisDestroy.Input(path: path))
+    }
     /// Like this post.
     ///
     /// - Remark: HTTP `POST /api/v1/social/posts/{id}/like/`.
@@ -3404,6 +3438,20 @@ extension APIProtocol {
             path: path,
             headers: headers
         ))
+    }
+    /// Ask for more posts like this one on your For You page: its topics and the exercises in it, and to a lesser degree its author, are shown more from the next page on. Replaces "not interested" or "fewer like this" on the same post. Saying it twice is not an error.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/more-like-this/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/more-like-this//post(social_posts_more_like_this_create)`.
+    public func socialPostsMoreLikeThisCreate(path: Operations.SocialPostsMoreLikeThisCreate.Input.Path) async throws -> Operations.SocialPostsMoreLikeThisCreate.Output {
+        try await socialPostsMoreLikeThisCreate(Operations.SocialPostsMoreLikeThisCreate.Input(path: path))
+    }
+    /// Take back "more like this" on this post. Nothing else is undone.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/more-like-this/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/more-like-this//delete(social_posts_more_like_this_destroy)`.
+    public func socialPostsMoreLikeThisDestroy(path: Operations.SocialPostsMoreLikeThisDestroy.Input.Path) async throws -> Operations.SocialPostsMoreLikeThisDestroy.Output {
+        try await socialPostsMoreLikeThisDestroy(Operations.SocialPostsMoreLikeThisDestroy.Input(path: path))
     }
     /// Say you are not interested in this post. It leaves your For You page at once, and posts like it -- its topics, and to a lesser degree its author -- are shown less from then on. It stays in your following feed: this is about recommendations, not about people you chose to follow. Saying it twice is not an error.
     ///
@@ -5762,6 +5810,10 @@ public enum Components {
             public var interests: [Components.Schemas.Interest]
             /// - Remark: Generated from `#/components/schemas/ForYouPreferences/hideable_topics`.
             public var hideableTopics: [Components.Schemas.Topic]
+            /// - Remark: Generated from `#/components/schemas/ForYouPreferences/added_topics`.
+            public var addedTopics: [Swift.String]
+            /// - Remark: Generated from `#/components/schemas/ForYouPreferences/addable_topics`.
+            public var addableTopics: [Components.Schemas.Topic]
             /// Creates a new `ForYouPreferences`.
             ///
             /// - Parameters:
@@ -5770,18 +5822,24 @@ public enum Components {
             ///   - historyClearedAt:
             ///   - interests:
             ///   - hideableTopics:
+            ///   - addedTopics:
+            ///   - addableTopics:
             public init(
                 personalized: Swift.Bool,
                 hiddenTopics: [Swift.String],
                 historyClearedAt: Foundation.Date? = nil,
                 interests: [Components.Schemas.Interest],
-                hideableTopics: [Components.Schemas.Topic]
+                hideableTopics: [Components.Schemas.Topic],
+                addedTopics: [Swift.String],
+                addableTopics: [Components.Schemas.Topic]
             ) {
                 self.personalized = personalized
                 self.hiddenTopics = hiddenTopics
                 self.historyClearedAt = historyClearedAt
                 self.interests = interests
                 self.hideableTopics = hideableTopics
+                self.addedTopics = addedTopics
+                self.addableTopics = addableTopics
             }
             public enum CodingKeys: String, CodingKey {
                 case personalized
@@ -5789,6 +5847,8 @@ public enum Components {
                 case historyClearedAt = "history_cleared_at"
                 case interests
                 case hideableTopics = "hideable_topics"
+                case addedTopics = "added_topics"
+                case addableTopics = "addable_topics"
             }
         }
         /// - Remark: Generated from `#/components/schemas/Gear`.
@@ -8263,11 +8323,13 @@ public enum Components {
                 case completedAt = "completed_at"
             }
         }
-        /// A change to the reader's For You choices. Either field may be left out.
+        /// A change to the reader's For You choices. Any field may be left out.
         ///
         /// Topics are plain strings checked here rather than an enum in the
         /// contract, so a topic added later is not a value an older app cannot send
-        /// or decode.
+        /// or decode. A topic is hidden or added, never both: a change to one list
+        /// takes its topics out of the other, and a change to both at once may not
+        /// put a topic in each.
         ///
         /// - Remark: Generated from `#/components/schemas/PatchedUpdateForYouPreferencesRequest`.
         public struct PatchedUpdateForYouPreferencesRequest: Codable, Hashable, Sendable {
@@ -8275,21 +8337,27 @@ public enum Components {
             public var personalized: Swift.Bool?
             /// - Remark: Generated from `#/components/schemas/PatchedUpdateForYouPreferencesRequest/hidden_topics`.
             public var hiddenTopics: [Swift.String]?
+            /// - Remark: Generated from `#/components/schemas/PatchedUpdateForYouPreferencesRequest/added_topics`.
+            public var addedTopics: [Swift.String]?
             /// Creates a new `PatchedUpdateForYouPreferencesRequest`.
             ///
             /// - Parameters:
             ///   - personalized:
             ///   - hiddenTopics:
+            ///   - addedTopics:
             public init(
                 personalized: Swift.Bool? = nil,
-                hiddenTopics: [Swift.String]? = nil
+                hiddenTopics: [Swift.String]? = nil,
+                addedTopics: [Swift.String]? = nil
             ) {
                 self.personalized = personalized
                 self.hiddenTopics = hiddenTopics
+                self.addedTopics = addedTopics
             }
             public enum CodingKeys: String, CodingKey {
                 case personalized
                 case hiddenTopics = "hidden_topics"
+                case addedTopics = "added_topics"
             }
         }
         /// The two things about a post that can still change.
@@ -32388,7 +32456,7 @@ public enum Operations {
             }
         }
     }
-    /// Turn personalisation on or off, or replace the list of hidden topics. Either field may be left out. Takes effect on the next page ranked.
+    /// Turn personalisation on or off, replace the list of hidden topics, or replace the list of interests the reader added (each one of `addable_topics`). Any field may be left out. A topic is hidden or added, never both: replacing one list takes its topics out of the other, and a topic may not be in both when both are sent. Takes effect on the next page ranked.
     ///
     /// - Remark: HTTP `PATCH /api/v1/social/for-you/preferences/`.
     /// - Remark: Generated from `#/paths//api/v1/social/for-you/preferences//patch(social_for_you_preferences_partial_update)`.
@@ -33636,6 +33704,150 @@ public enum Operations {
             case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
         }
     }
+    /// Ask for fewer posts like this one on your For You page. It leaves the page at once, and its kind of content -- its topics and the exercises in it -- is shown less from then on; its author only a little less, unlike "not interested". Replaces "not interested" or "more like this" on the same post. Saying it twice is not an error.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/fewer-like-this/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/fewer-like-this//post(social_posts_fewer_like_this_create)`.
+    public enum SocialPostsFewerLikeThisCreate {
+        public static let id: Swift.String = "social_posts_fewer_like_this_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/fewer-like-this/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this post.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/fewer-like-this/POST/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this post.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialPostsFewerLikeThisCreate.Input.Path
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            public init(path: Operations.SocialPostsFewerLikeThisCreate.Input.Path) {
+                self.path = path
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct NoContent: Sendable, Hashable {
+                /// Creates a new `NoContent`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/fewer-like-this//post(social_posts_fewer_like_this_create)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            case noContent(Operations.SocialPostsFewerLikeThisCreate.Output.NoContent)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/fewer-like-this//post(social_posts_fewer_like_this_create)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            public static var noContent: Self {
+                .noContent(.init())
+            }
+            /// The associated value of the enum case if `self` is `.noContent`.
+            ///
+            /// - Throws: An error if `self` is not `.noContent`.
+            /// - SeeAlso: `.noContent`.
+            public var noContent: Operations.SocialPostsFewerLikeThisCreate.Output.NoContent {
+                get throws {
+                    switch self {
+                    case let .noContent(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "noContent",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// Take back "fewer like this" on this post. Nothing else is undone.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/fewer-like-this/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/fewer-like-this//delete(social_posts_fewer_like_this_destroy)`.
+    public enum SocialPostsFewerLikeThisDestroy {
+        public static let id: Swift.String = "social_posts_fewer_like_this_destroy"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/fewer-like-this/DELETE/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this post.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/fewer-like-this/DELETE/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this post.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialPostsFewerLikeThisDestroy.Input.Path
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            public init(path: Operations.SocialPostsFewerLikeThisDestroy.Input.Path) {
+                self.path = path
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct NoContent: Sendable, Hashable {
+                /// Creates a new `NoContent`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/fewer-like-this//delete(social_posts_fewer_like_this_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            case noContent(Operations.SocialPostsFewerLikeThisDestroy.Output.NoContent)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/fewer-like-this//delete(social_posts_fewer_like_this_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            public static var noContent: Self {
+                .noContent(.init())
+            }
+            /// The associated value of the enum case if `self` is `.noContent`.
+            ///
+            /// - Throws: An error if `self` is not `.noContent`.
+            /// - SeeAlso: `.noContent`.
+            public var noContent: Operations.SocialPostsFewerLikeThisDestroy.Output.NoContent {
+                get throws {
+                    switch self {
+                    case let .noContent(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "noContent",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
     /// Like this post.
     ///
     /// - Remark: HTTP `POST /api/v1/social/posts/{id}/like/`.
@@ -33894,6 +34106,150 @@ public enum Operations {
                     .json
                 ]
             }
+        }
+    }
+    /// Ask for more posts like this one on your For You page: its topics and the exercises in it, and to a lesser degree its author, are shown more from the next page on. Replaces "not interested" or "fewer like this" on the same post. Saying it twice is not an error.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/more-like-this/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/more-like-this//post(social_posts_more_like_this_create)`.
+    public enum SocialPostsMoreLikeThisCreate {
+        public static let id: Swift.String = "social_posts_more_like_this_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/more-like-this/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this post.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/more-like-this/POST/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this post.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialPostsMoreLikeThisCreate.Input.Path
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            public init(path: Operations.SocialPostsMoreLikeThisCreate.Input.Path) {
+                self.path = path
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct NoContent: Sendable, Hashable {
+                /// Creates a new `NoContent`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/more-like-this//post(social_posts_more_like_this_create)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            case noContent(Operations.SocialPostsMoreLikeThisCreate.Output.NoContent)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/more-like-this//post(social_posts_more_like_this_create)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            public static var noContent: Self {
+                .noContent(.init())
+            }
+            /// The associated value of the enum case if `self` is `.noContent`.
+            ///
+            /// - Throws: An error if `self` is not `.noContent`.
+            /// - SeeAlso: `.noContent`.
+            public var noContent: Operations.SocialPostsMoreLikeThisCreate.Output.NoContent {
+                get throws {
+                    switch self {
+                    case let .noContent(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "noContent",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// Take back "more like this" on this post. Nothing else is undone.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/more-like-this/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/more-like-this//delete(social_posts_more_like_this_destroy)`.
+    public enum SocialPostsMoreLikeThisDestroy {
+        public static let id: Swift.String = "social_posts_more_like_this_destroy"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/more-like-this/DELETE/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this post.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/more-like-this/DELETE/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this post.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialPostsMoreLikeThisDestroy.Input.Path
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            public init(path: Operations.SocialPostsMoreLikeThisDestroy.Input.Path) {
+                self.path = path
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct NoContent: Sendable, Hashable {
+                /// Creates a new `NoContent`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/more-like-this//delete(social_posts_more_like_this_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            case noContent(Operations.SocialPostsMoreLikeThisDestroy.Output.NoContent)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/more-like-this//delete(social_posts_more_like_this_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            public static var noContent: Self {
+                .noContent(.init())
+            }
+            /// The associated value of the enum case if `self` is `.noContent`.
+            ///
+            /// - Throws: An error if `self` is not `.noContent`.
+            /// - SeeAlso: `.noContent`.
+            public var noContent: Operations.SocialPostsMoreLikeThisDestroy.Output.NoContent {
+                get throws {
+                    switch self {
+                    case let .noContent(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "noContent",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
         }
     }
     /// Say you are not interested in this post. It leaves your For You page at once, and posts like it -- its topics, and to a lesser degree its author -- are shown less from then on. It stays in your following feed: this is about recommendations, not about people you chose to follow. Saying it twice is not an error.
