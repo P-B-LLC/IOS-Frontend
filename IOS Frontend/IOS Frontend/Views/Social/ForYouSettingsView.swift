@@ -139,6 +139,7 @@ struct ForYouSettingsView: View {
                     chip(
                         topic,
                         on: added,
+                        state: "added",
                         symbol: "plus",
                         hint: added ? "Stops counting it as one of your interests" : "Counts it as one of your interests"
                     ) {
@@ -172,6 +173,7 @@ struct ForYouSettingsView: View {
                     chip(
                         topic,
                         on: hidden,
+                        state: "hidden",
                         symbol: "eye.slash",
                         hint: hidden ? "Shows these posts again" : "Hides these posts from For You"
                     ) {
@@ -183,10 +185,13 @@ struct ForYouSettingsView: View {
         }
     }
 
-    /// A topic as a chip that is on or off. `symbol` marks it when on.
+    /// A topic as a chip that is on or off. `symbol` marks it when on, and
+    /// `state` says so to VoiceOver: "selected" alone would not say whether
+    /// a topic was hidden or added.
     private func chip(
         _ topic: ForYouTopic,
         on selected: Bool,
+        state: String,
         symbol: String,
         hint: String,
         action: @escaping () -> Void
@@ -218,7 +223,7 @@ struct ForYouSettingsView: View {
         }
         .buttonStyle(.plain)
         .disabled(store.isSavingForYouPreferences)
-        .accessibilityLabel(topic.label)
+        .accessibilityLabel(selected ? "\(topic.label), \(state)" : topic.label)
         .accessibilityHint(hint)
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
