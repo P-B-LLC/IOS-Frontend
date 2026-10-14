@@ -1094,6 +1094,23 @@ private struct ProfileSettingsView: View {
 
                             Rectangle().fill(timeOfDay.border).frame(height: 1)
 
+                            // Beside the profile's own weight and target,
+                            // which is where somebody looks having just seen
+                            // those two numbers and wondered what is between
+                            // them.
+                            NavigationLink {
+                                BodyWeightView()
+                            } label: {
+                                settingsRow(
+                                    "Body weight",
+                                    detail: "Weigh-ins over time, and which way they are going",
+                                    symbol: "scalemass"
+                                )
+                            }
+                            .buttonStyle(RepbaseSettingsRowButtonStyle())
+
+                            Rectangle().fill(timeOfDay.border).frame(height: 1)
+
                             NavigationLink {
                                 AppleHealthConnectionView()
                             } label: {

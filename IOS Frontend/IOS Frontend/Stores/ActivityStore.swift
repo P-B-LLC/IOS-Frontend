@@ -100,6 +100,92 @@ final class ActivityStore {
         return recentDays.reduce(0) { $0 + $1.steps } / recentDays.count
     }
 
+    // MARK: - Body weight
+    //
+    // The endpoints existed from the beginning and nothing had ever called
+    // them, so the profile could hold a weight and a target with no way to
+    // record a single reading between them or see whether the gap was
+    // closing.
+
+    private(set) var bodyWeights: [BodyWeightReading] = []
+    private(set) var isLoadingBodyWeights = false
+    private(set) var isSavingBodyWeight = false
+    private(set) var bodyWeightError: String?
+
+    var latestBodyWeight: BodyWeightReading? { bodyWeights.last }
+
+    /// Where the weight is going, in kilograms, or nil when it is too early
+    /// to say.
+    ///
+    /// The mean of the three most recent readings against the mean of the
+    /// three earliest, rather than last minus first. Weight is noisy enough
+    /// that two single readings can report a rise across a fortnight that
+    /// fell, and a trend that flips on one salty dinner is not a trend.
+    var bodyWeightTrend: Double? {
+        guard bodyWeights.count >= 4,
+              let recent = bodyWeights.average(last: 3),
+              let earliest = bodyWeights.average(first: 3) else { return nil }
+        return recent - earliest
+    }
+
+    func loadBodyWeights() async {
+        guard let repository else { return }
+        let generation = connectionGeneration
+        isLoadingBodyWeights = true
+        bodyWeightError = nil
+        defer { if connectionGeneration == generation { isLoadingBodyWeights = false } }
+        do {
+            let readings = try await repository.bodyWeightHistory()
+            guard connectionGeneration == generation else { return }
+            bodyWeights = readings
+        } catch {
+            guard connectionGeneration == generation else { return }
+            bodyWeightError = error.userFacingMessage
+        }
+    }
+
+    /// Records a weigh-in. `nil` when it saved, otherwise why it did not.
+    ///
+    /// Not optimistic. A number somebody typed on a scale is worth a moment's
+    /// wait, and showing it on the chart before the server has it would put a
+    /// point there that a failed save then has to take away again.
+    func recordBodyWeight(kilograms: Double, at moment: Date, notes: String = "") async -> String? {
+        guard let repository else { return SaveFailure.notConnected }
+        guard !isSavingBodyWeight else { return SaveFailure.alreadySaving }
+        let generation = connectionGeneration
+        isSavingBodyWeight = true
+        bodyWeightError = nil
+        defer { if connectionGeneration == generation { isSavingBodyWeight = false } }
+        do {
+            let saved = try await repository.recordBodyWeight(
+                kilograms: kilograms, at: moment, notes: notes)
+            guard connectionGeneration == generation else { return nil }
+            bodyWeights = (bodyWeights + [saved]).oldestFirst
+            return nil
+        } catch {
+            guard connectionGeneration == generation else { return nil }
+            return error.userFacingMessage ?? SaveFailure.unexplained
+        }
+    }
+
+    /// Removes a reading. A mistyped weigh-in otherwise bends the whole chart
+    /// and there would be no way to take it back.
+    func deleteBodyWeight(_ reading: BodyWeightReading) async {
+        guard let repository else { return }
+        let generation = connectionGeneration
+        let previous = bodyWeights
+        // Optimistic here, unlike recording: the row is already on screen and
+        // the user asked for it to go. A failure puts it back and says why.
+        bodyWeights.removeAll { $0.id == reading.id }
+        do {
+            try await repository.deleteBodyWeight(id: reading.id)
+        } catch {
+            guard connectionGeneration == generation else { return }
+            bodyWeights = previous
+            bodyWeightError = error.userFacingMessage
+        }
+    }
+
     /// Steps a day the user is aiming for. Eight thousand until the profile
     /// says otherwise, which is the figure the widget showed back when nobody
     /// could change it.
@@ -196,6 +282,11 @@ final class ActivityStore {
         // Back to the default, so one account's target is never the number
         // the next account is measured against.
         stepGoal = 8_000
+        // Somebody's weight is not the next person's business.
+        bodyWeights = []
+        bodyWeightError = nil
+        isLoadingBodyWeights = false
+        isSavingBodyWeight = false
         isSavingGoal = false
     }
 
