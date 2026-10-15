@@ -9,6 +9,13 @@
 import Foundation
 import Observation
 
+/// The two waits in sending a post with a clip: making the post, then
+/// putting the clip on it.
+nonisolated enum PostingStep: Equatable, Sendable {
+    case publishing
+    case uploadingVideo
+}
+
 @MainActor
 @Observable
 final class SocialStore {
@@ -25,6 +32,10 @@ final class SocialStore {
     private(set) var isLoading = false
     private(set) var isLoadingMore = false
     private(set) var isPosting = false
+    /// What a post on its way out is doing, so the sheet can say which wait
+    /// this is. A clip is the long one, and "Posting…" over a minute of it
+    /// reads as stuck.
+    private(set) var postingStep: PostingStep?
     private(set) var errorMessage: String?
     /// Whether the failure behind `errorMessage` is worth offering a retry
     /// for. An outage is; a refusal under community standards is not, and a
@@ -114,6 +125,7 @@ final class SocialStore {
         isLoading = false
         isLoadingMore = false
         isPosting = false
+        postingStep = nil
         clearError()
         lastPosted = nil
         // Results name real people and are answered per reader — a block is
@@ -377,7 +389,8 @@ final class SocialStore {
 
     // MARK: - Posting
 
-    /// Shares a workout, meal or planner entry the signed-in user owns.
+    /// Shares a workout, meal or planner entry the signed-in user owns, or --
+    /// as `.media`, with no source -- a photo or a video on its own.
     ///
     /// Returns whether it went out, so the sheet that called it knows whether
     /// to close. The new post is put at the top of the feed rather than the
@@ -385,7 +398,7 @@ final class SocialStore {
     @discardableResult
     func post(
         kind: PostKind,
-        sourceID: Int,
+        sourceID: Int?,
         caption: String,
         visibility: PostVisibility,
         showsWeights: Bool = true,
@@ -401,9 +414,15 @@ final class SocialStore {
 
         let generation = connectionGeneration
         isPosting = true
+        postingStep = .publishing
         lastPosted = nil
         clearError()
-        defer { if connectionGeneration == generation { isPosting = false } }
+        defer {
+            if connectionGeneration == generation {
+                isPosting = false
+                postingStep = nil
+            }
+        }
 
         do {
             if let video { try await video.validate() }
@@ -414,7 +433,8 @@ final class SocialStore {
                 visibility: visibility,
                 showsWeights: showsWeights,
                 photo: photo,
-                cookingInstructions: cookingInstructions
+                cookingInstructions: cookingInstructions,
+                expectsVideo: video != nil
             )
             guard connectionGeneration == generation else { return false }
             // A private post is deliberately kept out of the stream, exactly as
@@ -424,6 +444,7 @@ final class SocialStore {
             }
             lastPosted = posted
             if let video {
+                postingStep = .uploadingVideo
                 let updated = try await repository.uploadVideo(postID: posted.id, draft: video)
                 guard connectionGeneration == generation else { return false }
                 replace(updated)
@@ -452,12 +473,40 @@ final class SocialStore {
         }
     }
 
-    func retryVideo(postID: Int, draft: PostVideoDraft) async -> Bool {
+    /// Removes a post the sheet saved and is now giving up on, and says
+    /// whether it is gone. Awaited, unlike `delete`, because the sheet closes
+    /// on the answer.
+    func discard(postID: Int) async -> Bool {
         guard let repository, !isPosting else { return false }
         let generation = connectionGeneration
         isPosting = true
         clearError()
         defer { if generation == connectionGeneration { isPosting = false } }
+        do {
+            try await repository.delete(postID)
+            guard generation == connectionGeneration else { return false }
+            feed.removeAll { $0.id == postID }
+            if lastPosted?.id == postID { lastPosted = nil }
+            return true
+        } catch {
+            guard generation == connectionGeneration else { return false }
+            showFailure(error)
+            return false
+        }
+    }
+
+    func retryVideo(postID: Int, draft: PostVideoDraft) async -> Bool {
+        guard let repository, !isPosting else { return false }
+        let generation = connectionGeneration
+        isPosting = true
+        postingStep = .uploadingVideo
+        clearError()
+        defer {
+            if generation == connectionGeneration {
+                isPosting = false
+                postingStep = nil
+            }
+        }
         do {
             let updated = try await repository.retryVideo(postID: postID, draft: draft)
             guard generation == connectionGeneration else { return false }

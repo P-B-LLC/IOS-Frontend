@@ -18,9 +18,12 @@ nonisolated enum PostKind: Equatable, Hashable, Sendable {
     case workout
     case meal
     case planner
-    /// Someone else's post, passed on. The only kind carrying no snapshot of
-    /// its own: what it shows is the post it points at.
+    /// Someone else's post, passed on. Carries no snapshot of its own: what
+    /// it shows is the post it points at.
     case repost
+    /// A photo or a video and a caption, made from nothing recorded. No
+    /// snapshot either: the picture is the post.
+    case media
     case unknown(String)
 
     init(_ raw: String) {
@@ -29,6 +32,7 @@ nonisolated enum PostKind: Equatable, Hashable, Sendable {
         case "meal": self = .meal
         case "planner": self = .planner
         case "repost": self = .repost
+        case "media": self = .media
         default: self = .unknown(raw)
         }
     }
@@ -39,6 +43,7 @@ nonisolated enum PostKind: Equatable, Hashable, Sendable {
         case .meal: "meal"
         case .planner: "planner"
         case .repost: "repost"
+        case .media: "media"
         case .unknown(let raw): raw
         }
     }

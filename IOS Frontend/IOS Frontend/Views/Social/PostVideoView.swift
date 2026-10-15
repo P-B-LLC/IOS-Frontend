@@ -43,9 +43,9 @@ struct PostVideoView: View {
                     }.frame(height: 220).clipped()
                 }.buttonStyle(.plain).accessibilityLabel("Play video")
             } else {
-                Label(current.failed ? "Video processing failed" : "Video is being prepared",
-                      systemImage: current.failed ? "exclamationmark.triangle" : "video")
+                Label(statusText, systemImage: current.failed ? "exclamationmark.triangle" : "video")
                     .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
                 Button("Refresh status") { refresh() }.disabled(loading)
                 if current.failed && canReplace {
                     PhotosPicker(selection: $replacement, matching: .videos, preferredItemEncoding: .current) {
@@ -79,9 +79,38 @@ struct PostVideoView: View {
                 if !Task.isCancelled { failure = error.localizedDescription }
             }
         }
+        .task(id: current.processingState) {
+            // The author's own clip, still being encoded: check back until it
+            // is ready, rather than leaving them to tap Refresh to find out.
+            // Six minutes covers a full-length clip on the beta's one worker.
+            guard canReplace, Self.isEncoding(current.processingState) else { return }
+            for _ in 0..<72 {
+                try? await Task.sleep(for: .seconds(5))
+                guard !Task.isCancelled, player == nil else { return }
+                guard let latest = try? await social.refreshVideo(postID: postID) else { continue }
+                refreshed = latest
+                if !Self.isEncoding(latest.processingState) { return }
+            }
+        }
         .onChange(of: social.isConnected) { if !social.isConnected { stop() } }
         .onChange(of: scenePhase) { if scenePhase != .active { stop() } }
         .onScrollVisibilityChange(threshold: 0.25) { visible in if !visible { stop() } }
+    }
+
+    private static func isEncoding(_ state: String) -> Bool {
+        state == "uploading" || state == "processing"
+    }
+
+    /// Where the clip has got to, as its author is shown it. Nobody else is
+    /// sent a clip that cannot play. Encoding is said before review: a clip
+    /// still being encoded is also pending review, and saying it waits for a
+    /// moderator would be wrong.
+    private var statusText: String {
+        if current.failed { return "Video processing failed" }
+        if Self.isEncoding(current.processingState) { return "Video is being prepared" }
+        if current.status == "rejected" { return "Your video was not approved" }
+        if current.status != "approved" { return "Waiting for review. Others will see it once it is approved." }
+        return "Video is being prepared"
     }
 
     private func refresh() {
