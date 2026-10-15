@@ -988,6 +988,8 @@ public protocol APIProtocol: Sendable {
     func socialPostsList(_ input: Operations.SocialPostsList.Input) async throws -> Operations.SocialPostsList.Output
     /// Post a workout, meal or planner entry the requester owns. The server reads the source and builds the snapshot; the request names the object and never carries its contents.
     ///
+    /// Or post a photo or a clip on its own, with `kind` `media` and no `source_id`. Send the photo here; send a clip next to `posts/{id}/video/`, saying so with `expects_video`. A media post with nothing yet to show -- its clip uploading, processing or waiting for review -- is visible to its author alone.
+    ///
     /// - Remark: HTTP `POST /api/v1/social/posts/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts//post(social_posts_create)`.
     func socialPostsCreate(_ input: Operations.SocialPostsCreate.Input) async throws -> Operations.SocialPostsCreate.Output
@@ -3341,6 +3343,8 @@ extension APIProtocol {
     }
     /// Post a workout, meal or planner entry the requester owns. The server reads the source and builds the snapshot; the request names the object and never carries its contents.
     ///
+    /// Or post a photo or a clip on its own, with `kind` `media` and no `source_id`. Send the photo here; send a clip next to `posts/{id}/video/`, saying so with `expects_video`. A media post with nothing yet to show -- its clip uploading, processing or waiting for review -- is visible to its author alone.
+    ///
     /// - Remark: HTTP `POST /api/v1/social/posts/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts//post(social_posts_create)`.
     public func socialPostsCreate(
@@ -4589,12 +4593,14 @@ public enum Components {
         /// * `workout` - Workout
         /// * `meal` - Meal
         /// * `planner` - Planner
+        /// * `media` - Photo or video
         ///
         /// - Remark: Generated from `#/components/schemas/CreatePostKindEnum`.
         @frozen public enum CreatePostKindEnum: String, Codable, Hashable, Sendable, CaseIterable {
             case workout = "workout"
             case meal = "meal"
             case planner = "planner"
+            case media = "media"
         }
         /// What to post, and who may see it.
         ///
@@ -4603,12 +4609,17 @@ public enum Components {
         /// accepting the content here would be accepting a five-hundred-kilogram squat
         /// from anyone who could type one.
         ///
+        /// A `media` post references nothing: it is a photo or a clip and a caption,
+        /// and since it carries no snapshot it makes no claim to check.
+        ///
         /// - Remark: Generated from `#/components/schemas/CreatePostRequest`.
         public struct CreatePostRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/CreatePostRequest/kind`.
             public var kind: Components.Schemas.CreatePostKindEnum
+            /// The workout session, meal or planner entry to post. Required for those kinds; leave it out of a media post.
+            ///
             /// - Remark: Generated from `#/components/schemas/CreatePostRequest/source_id`.
-            public var sourceId: Swift.Int
+            public var sourceId: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/CreatePostRequest/caption`.
             public var caption: Swift.String?
             /// - Remark: Generated from `#/components/schemas/CreatePostRequest/shows_weights`.
@@ -4643,26 +4654,32 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CreatePostRequest/cooking_instructions`.
             public var cookingInstructions: Swift.String?
+            /// True when a clip will be uploaded to this post next. Required for a media post without a photo, which stays visible only to its author until the clip is ready to watch.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreatePostRequest/expects_video`.
+            public var expectsVideo: Swift.Bool?
             /// Creates a new `CreatePostRequest`.
             ///
             /// - Parameters:
             ///   - kind:
-            ///   - sourceId:
+            ///   - sourceId: The workout session, meal or planner entry to post. Required for those kinds; leave it out of a media post.
             ///   - caption:
             ///   - showsWeights:
             ///   - visibility:
             ///   - contentType:
             ///   - imageBase64: The image bytes, base64 encoded, without a data: prefix.
             ///   - cookingInstructions: How the meal was made, for a meal post. Ignored for other kinds.
+            ///   - expectsVideo: True when a clip will be uploaded to this post next. Required for a media post without a photo, which stays visible only to its author until the clip is ready to watch.
             public init(
                 kind: Components.Schemas.CreatePostKindEnum,
-                sourceId: Swift.Int,
+                sourceId: Swift.Int? = nil,
                 caption: Swift.String? = nil,
                 showsWeights: Swift.Bool? = nil,
                 visibility: Components.Schemas.CreatePostRequest.VisibilityPayload? = nil,
                 contentType: Components.Schemas.ContentTypeEnum? = nil,
                 imageBase64: Swift.String? = nil,
-                cookingInstructions: Swift.String? = nil
+                cookingInstructions: Swift.String? = nil,
+                expectsVideo: Swift.Bool? = nil
             ) {
                 self.kind = kind
                 self.sourceId = sourceId
@@ -4672,6 +4689,7 @@ public enum Components {
                 self.contentType = contentType
                 self.imageBase64 = imageBase64
                 self.cookingInstructions = cookingInstructions
+                self.expectsVideo = expectsVideo
             }
             public enum CodingKeys: String, CodingKey {
                 case kind
@@ -4682,6 +4700,7 @@ public enum Components {
                 case contentType = "content_type"
                 case imageBase64 = "image_base64"
                 case cookingInstructions = "cooking_instructions"
+                case expectsVideo = "expects_video"
             }
         }
         /// When the new rotation takes over.
@@ -33213,6 +33232,8 @@ public enum Operations {
         }
     }
     /// Post a workout, meal or planner entry the requester owns. The server reads the source and builds the snapshot; the request names the object and never carries its contents.
+    ///
+    /// Or post a photo or a clip on its own, with `kind` `media` and no `source_id`. Send the photo here; send a clip next to `posts/{id}/video/`, saying so with `expects_video`. A media post with nothing yet to show -- its clip uploading, processing or waiting for review -- is visible to its author alone.
     ///
     /// - Remark: HTTP `POST /api/v1/social/posts/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts//post(social_posts_create)`.
