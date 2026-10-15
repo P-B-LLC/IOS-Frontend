@@ -11,6 +11,13 @@ struct APIConfiguration: Hashable, Sendable {
     let serverURL: URL
     let allowsInsecureLocalhost: Bool
 
+    /// Rows per page for the lists read whole -- a week, a month, three weeks
+    /// of meals, a session's sets. At the server's default of fifty a month of
+    /// planner tasks was two pages, read one after the other on every launch.
+    /// The server caps it at this number, and one that predates the parameter
+    /// ignores it and pages as before.
+    nonisolated static let rangePageSize = 200
+
     static var current: APIConfiguration {
 #if DEBUG
         // An origin passed in at build time wins; otherwise the hosted backend.

@@ -71,6 +71,7 @@ actor PlannerAPIRepository {
                     isComplete: isComplete,
                     kind: kind,
                     page: page,
+                    pageSize: APIConfiguration.rangePageSize,
                     start: start
                 )
             )

@@ -64,7 +64,12 @@ actor WorkoutAPIRepository {
             try await planWeek(start: weekStart)
         }
 
-        async let schedulesRequest = fetchAllSchedules()
+        // Only the week on screen. This read every schedule the account had
+        // ever had, fifty a page and one page after another, to draw seven
+        // days of it: a year of training was half a dozen round trips before
+        // the week appeared, and each new week added to them.
+        let weekDates = dateByDay.values
+        async let schedulesRequest = fetchSchedules(start: weekDates.min(), end: weekDates.max())
         async let workoutsRequest = fetchAllWorkouts()
         async let recurrencesRequest = fetchAllRecurrences()
         let (schedules, templates, recurrences) = try await (
@@ -345,8 +350,8 @@ actor WorkoutAPIRepository {
                 Self.normalizedName($0.name) == Self.normalizedName(draft.name)
             }) {
                 if let initialDate {
-                    let schedules = try await fetchAllSchedules()
-                    if !schedules.contains(where: { $0.workout == existing.id && $0.scheduledDate == initialDate }) {
+                    let schedules = try await fetchSchedules(on: initialDate)
+                    if !schedules.contains(where: { $0.workout == existing.id }) {
                         try await scheduleWorkout(templateID: existing.id, scheduledDate: initialDate)
                     }
                 }
@@ -1321,7 +1326,7 @@ actor WorkoutAPIRepository {
         var values: [Components.Schemas.SetEntry] = []
         repeat {
             let output = try await client.setEntriesList(
-                query: .init(page: page, session: session)
+                query: .init(page: page, pageSize: APIConfiguration.rangePageSize, session: session)
             )
             let response: Components.Schemas.PaginatedSetEntryList
             switch output {
@@ -1401,12 +1406,32 @@ actor WorkoutAPIRepository {
         return values
     }
 
-    private func fetchAllSchedules() async throws -> [Components.Schemas.WorkoutSchedule] {
+    /// Schedules between two `yyyy-MM-dd` days, inclusive, every page of them.
+    /// An empty week has no range and nothing to draw, so it asks for nothing.
+    private func fetchSchedules(
+        start: String?,
+        end: String?
+    ) async throws -> [Components.Schemas.WorkoutSchedule] {
+        guard let start, let end else { return [] }
+        return try await fetchSchedules(query: .init(end: end, start: start))
+    }
+
+    /// Schedules on one `yyyy-MM-dd` day.
+    private func fetchSchedules(on date: String) async throws -> [Components.Schemas.WorkoutSchedule] {
+        try await fetchSchedules(query: .init(scheduledDate: date))
+    }
+
+    private func fetchSchedules(
+        query: Operations.SchedulesList.Input.Query
+    ) async throws -> [Components.Schemas.WorkoutSchedule] {
         var page: Int?
         var visited: Set<Int> = []
         var values: [Components.Schemas.WorkoutSchedule] = []
         repeat {
-            let output = try await client.schedulesList(query: .init(page: page))
+            var query = query
+            query.page = page
+            query.pageSize = APIConfiguration.rangePageSize
+            let output = try await client.schedulesList(query: query)
             let response: Components.Schemas.PaginatedWorkoutScheduleList
             switch output {
             case .ok(let success):

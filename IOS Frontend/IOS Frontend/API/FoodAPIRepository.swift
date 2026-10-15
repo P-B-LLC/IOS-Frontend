@@ -67,7 +67,7 @@ actor FoodAPIRepository {
         var days: [String: [FoodMeal]] = [:]
         repeat {
             let output = try await client.foodMealsList(
-                query: .init(end: end, page: page, start: start)
+                query: .init(end: end, page: page, pageSize: APIConfiguration.rangePageSize, start: start)
             )
             let response: Components.Schemas.PaginatedFoodMealList
             switch output {

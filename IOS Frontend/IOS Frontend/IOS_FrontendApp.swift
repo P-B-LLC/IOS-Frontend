@@ -611,23 +611,11 @@ private struct AppRootView: View {
             guard case .signedIn(let user) = authentication.phase else { return }
             EditorDraftRecovery.shared.scope = .init(ownerID: user.id, origin: authentication.configuration.serverURL.absoluteString)
             NotificationScheduler.shared.setAccount(user.id)
+            // First, and alone: this is also where the phone's time zone
+            // reaches the server, and the days the other stores are given --
+            // which day a workout lands on, where a rotation has got to -- are
+            // worked out in it.
             await socialProfileStore.connect(
-                configuration: authentication.configuration,
-                token: token
-            )
-            guard authentication.token == token, !Task.isCancelled else { return }
-            await workoutStore.connect(
-                configuration: authentication.configuration,
-                token: token,
-                accountID: user.id
-            )
-            guard authentication.token == token, !Task.isCancelled else { return }
-            await plannerStore.connect(
-                configuration: authentication.configuration,
-                token: token
-            )
-            guard authentication.token == token, !Task.isCancelled else { return }
-            await foodTrackingStore.connect(
                 configuration: authentication.configuration,
                 token: token
             )
@@ -642,31 +630,34 @@ private struct AppRootView: View {
             socialStore.onSavedMealsChanged = { [foodTrackingStore] in
                 await foodTrackingStore.reloadSavedMeals()
             }
-            await socialStore.connect(
-                configuration: authentication.configuration,
-                token: token
-            )
-            guard authentication.token == token, !Task.isCancelled else { return }
-            await activityStore.connect(
-                configuration: authentication.configuration,
-                token: token
-            )
-            guard authentication.token == token, !Task.isCancelled else { return }
-            await gearStore.connect(
-                configuration: authentication.configuration,
-                token: token
-            )
-            guard authentication.token == token, !Task.isCancelled else { return }
             // Starting or switching a rotation plans days on the server. The
             // week on screen belongs to the workout store, so it has to be
             // told to read them, or the rotation looks like it did nothing.
             cycleStore.onCalendarChanged = { [workoutStore] in
                 await workoutStore.reloadSchedule()
             }
-            await cycleStore.connect(
-                configuration: authentication.configuration,
-                token: token
-            )
+            // The rest load side by side. They used to connect one after
+            // another, so the last tab's data waited for every other tab's
+            // round trips first. Each store discards an answer that arrives
+            // after a sign-out (its own connection generation), so nothing
+            // here relies on the order they finish in.
+            //
+            // Except workouts then planner, which stay in that order: a new
+            // week of workouts is copied into the planner as it arrives, and
+            // copied into a planner still reading its month, the read can land
+            // second and leave the copies off the screen until the next one.
+            let configuration = authentication.configuration
+            async let training: Void = {
+                await workoutStore.connect(configuration: configuration, token: token, accountID: user.id)
+                guard !Task.isCancelled else { return }
+                await plannerStore.connect(configuration: configuration, token: token)
+            }()
+            async let food: Void = foodTrackingStore.connect(configuration: configuration, token: token)
+            async let social: Void = socialStore.connect(configuration: configuration, token: token)
+            async let activity: Void = activityStore.connect(configuration: configuration, token: token)
+            async let gear: Void = gearStore.connect(configuration: configuration, token: token)
+            async let cycles: Void = cycleStore.connect(configuration: configuration, token: token)
+            _ = await (training, food, social, activity, gear, cycles)
             guard authentication.token == token, !Task.isCancelled else { return }
             await plannerStore.syncScheduledWorkouts(workoutStore.currentWeekWorkouts)
             guard authentication.token == token, !Task.isCancelled else { return }

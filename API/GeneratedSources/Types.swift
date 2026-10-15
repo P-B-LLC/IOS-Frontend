@@ -18803,6 +18803,10 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/food/meals/GET/query/page`.
                 public var page: Swift.Int?
+                /// Number of results to return per page.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/meals/GET/query/page_size`.
+                public var pageSize: Swift.Int?
                 /// Return only meals on or after this date.
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/food/meals/GET/query/start`.
@@ -18812,14 +18816,17 @@ public enum Operations {
                 /// - Parameters:
                 ///   - end: Return only meals on or before this date.
                 ///   - page: A page number within the paginated result set.
+                ///   - pageSize: Number of results to return per page.
                 ///   - start: Return only meals on or after this date.
                 public init(
                     end: Swift.String? = nil,
                     page: Swift.Int? = nil,
+                    pageSize: Swift.Int? = nil,
                     start: Swift.String? = nil
                 ) {
                     self.end = end
                     self.page = page
+                    self.pageSize = pageSize
                     self.start = start
                 }
             }
@@ -24380,6 +24387,10 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/planner/GET/query/page`.
                 public var page: Swift.Int?
+                /// Number of results to return per page.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/planner/GET/query/page_size`.
+                public var pageSize: Swift.Int?
                 /// Return the steps of this task. Omitted, the list carries headings only: a step is drawn under its parent, and one listed beside it would be counted twice.
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/planner/GET/query/parent`.
@@ -24397,6 +24408,7 @@ public enum Operations {
                 ///   - isComplete: Return only finished tasks, or only unfinished ones. Events are never complete, so this excludes them when true.
                 ///   - kind: Return only tasks, or only events.
                 ///   - page: A page number within the paginated result set.
+                ///   - pageSize: Number of results to return per page.
                 ///   - parent: Return the steps of this task. Omitted, the list carries headings only: a step is drawn under its parent, and one listed beside it would be counted twice.
                 ///   - start: Return only entries on or after this date.
                 public init(
@@ -24406,6 +24418,7 @@ public enum Operations {
                     isComplete: Swift.Bool? = nil,
                     kind: Operations.PlannerList.Input.Query.KindPayload? = nil,
                     page: Swift.Int? = nil,
+                    pageSize: Swift.Int? = nil,
                     parent: Swift.Int? = nil,
                     start: Swift.String? = nil
                 ) {
@@ -24415,6 +24428,7 @@ public enum Operations {
                     self.isComplete = isComplete
                     self.kind = kind
                     self.page = page
+                    self.pageSize = pageSize
                     self.parent = parent
                     self.start = start
                 }
@@ -25887,6 +25901,10 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/schedules/GET/query/page`.
                 public var page: Swift.Int?
+                /// Number of results to return per page.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/schedules/GET/query/page_size`.
+                public var pageSize: Swift.Int?
                 /// Return only workouts scheduled on this date.
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/schedules/GET/query/scheduled_date`.
@@ -25900,16 +25918,19 @@ public enum Operations {
                 /// - Parameters:
                 ///   - end: Return only workouts scheduled on or before this date.
                 ///   - page: A page number within the paginated result set.
+                ///   - pageSize: Number of results to return per page.
                 ///   - scheduledDate: Return only workouts scheduled on this date.
                 ///   - start: Return only workouts scheduled on or after this date.
                 public init(
                     end: Swift.String? = nil,
                     page: Swift.Int? = nil,
+                    pageSize: Swift.Int? = nil,
                     scheduledDate: Swift.String? = nil,
                     start: Swift.String? = nil
                 ) {
                     self.end = end
                     self.page = page
+                    self.pageSize = pageSize
                     self.scheduledDate = scheduledDate
                     self.start = start
                 }
@@ -29746,6 +29767,10 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/set-entries/GET/query/page`.
                 public var page: Swift.Int?
+                /// Number of results to return per page.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/set-entries/GET/query/page_size`.
+                public var pageSize: Swift.Int?
                 /// Return every set logged in this session, across all of its exercises. Lets a client read one whole session in a single request instead of one request per exercise.
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/set-entries/GET/query/session`.
@@ -29758,14 +29783,17 @@ public enum Operations {
                 ///
                 /// - Parameters:
                 ///   - page: A page number within the paginated result set.
+                ///   - pageSize: Number of results to return per page.
                 ///   - session: Return every set logged in this session, across all of its exercises. Lets a client read one whole session in a single request instead of one request per exercise.
                 ///   - sessionExercise: Return only the sets logged against this session exercise.
                 public init(
                     page: Swift.Int? = nil,
+                    pageSize: Swift.Int? = nil,
                     session: Swift.Int? = nil,
                     sessionExercise: Swift.Int? = nil
                 ) {
                     self.page = page
+                    self.pageSize = pageSize
                     self.session = session
                     self.sessionExercise = sessionExercise
                 }
