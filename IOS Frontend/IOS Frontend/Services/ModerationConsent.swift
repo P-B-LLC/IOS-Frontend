@@ -77,7 +77,7 @@ enum ModerationConsent {
 
         return await withCheckedContinuation { (continuation: CheckedContinuation<Bool?, Never>) in
             let alert = UIAlertController(title: "Allow safety review?", message:
-                "Rytivo sends the public-facing text and photos in this submission to OpenAI to check for harmful content. This can include profile names, bios, social handles, public gym details, comments, and titles or instructions in shared meals/workouts. Account credentials, private measurements, and unshared logs are excluded. Automated checks can make mistakes; contact \(LegalDocuments.contactEmail) to appeal. Allow this submission?",
+                "Rytivo sends the public-facing text, photos, and extracted video frames in this submission to OpenAI for safety checks. This can include profile names, bios, social handles, public gym details, comments, and titles or instructions in shared meals/workouts. Audio, account credentials, private measurements, and unshared logs are excluded. Media stays unpublished while checks or moderator review are pending. Automated checks can make mistakes; contact \(LegalDocuments.contactEmail) to appeal. Allow this submission?",
                 preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "Cancel", style: .cancel) { _ in continuation.resume(returning: false) })
             alert.addAction(UIAlertAction(title: "Allow and continue", style: .default) { _ in continuation.resume(returning: true) })

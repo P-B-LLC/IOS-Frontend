@@ -139,6 +139,15 @@ actor ProfileAPIRepository {
 
     // MARK: - The profile
 
+    func canModerate() async throws -> Bool {
+        switch try await client.myAccessRetrieve() {
+        case .ok(let response):
+            return try response.body.json.capabilities.moderate
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
     func profile() async throws -> RemoteProfile {
         let output = try await client.meRetrieve()
         switch output {

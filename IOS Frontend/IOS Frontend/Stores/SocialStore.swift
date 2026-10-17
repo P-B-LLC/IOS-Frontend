@@ -419,7 +419,7 @@ final class SocialStore {
             guard connectionGeneration == generation else { return false }
             // A private post is deliberately kept out of the stream, exactly as
             // the server keeps it out of everyone else's.
-            if visibility != .privateToMe {
+            if visibility != .privateToMe && posted.isPublished && video == nil {
                 feed.insert(posted, at: 0)
             }
             lastPosted = posted
@@ -429,6 +429,7 @@ final class SocialStore {
                 replace(updated)
                 lastPosted = updated
             }
+            lastModerationMessage = lastPosted?.publicationMessage
             return true
         } catch {
             guard connectionGeneration == generation else { return false }
@@ -463,6 +464,7 @@ final class SocialStore {
             guard generation == connectionGeneration else { return false }
             replace(updated)
             lastPosted = updated
+            lastModerationMessage = updated.publicationMessage
             return true
         } catch {
             guard generation == connectionGeneration else { return false }
@@ -1389,6 +1391,12 @@ final class SocialStore {
     /// Puts a server copy over every card showing that post — the post itself,
     /// and any repost of it, which carries the same figures underneath.
     private func replace(_ post: FeedPost) {
+        if !post.isPublished {
+            feed.removeAll { $0.id == post.id || $0.repostOf?.id == post.id }
+            forYou.removeAll { $0.id == post.id || $0.repostOf?.id == post.id }
+            discoverPosts.removeAll { $0.id == post.id || $0.repostOf?.id == post.id }
+            searchedPosts.removeAll { $0.id == post.id || $0.repostOf?.id == post.id }
+        }
         for index in feed.indices where feed[index].id == post.id {
             feed[index] = post
         }

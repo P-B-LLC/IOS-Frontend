@@ -631,6 +631,7 @@ actor SocialAPIRepository {
     /// Every thread on a post, oldest first, replies nested inside each.
     func uploadVideo(postID: Int, draft: PostVideoDraft) async throws -> FeedPost {
         try await draft.validate()
+        try await ModerationConsent.require()
         let bytes = VideoUploadBody.file(draft.fileURL, size: draft.sizeBytes)
         let body: Operations.SocialPostsVideoCreate.Input.Body = draft.contentType == "video/quicktime"
             ? .videoQuicktime(bytes) : .videoMp4(bytes)
@@ -957,7 +958,9 @@ actor SocialAPIRepository {
             showsWeights: payload.showsWeights,
             viewerIsAuthor: payload.viewerIsAuthor,
             repostOf: payload.repostOf.map { reposted(from: $0.value1) },
-            video: payload.video.map { video(from: $0.value1) }
+            video: payload.video.map { video(from: $0.value1) },
+            publishedAt: payload.publishedAt,
+            moderationStatus: payload.moderationStatus
         )
     }
 
@@ -995,7 +998,9 @@ actor SocialAPIRepository {
             recommendation: PostRecommendation(
                 reason: payload.recommendation.value1.reason,
                 label: payload.recommendation.value1.label
-            )
+            ),
+            publishedAt: payload.publishedAt,
+            moderationStatus: payload.moderationStatus
         )
     }
 
@@ -1050,7 +1055,8 @@ actor SocialAPIRepository {
             workout: payload.workout.map { workout(from: $0.value1) },
             meal: payload.meal.map { meal(from: $0.value1) },
             planner: payload.planner.map { planner(from: $0.value1) },
-            video: payload.video.map { video(from: $0.value1) }
+            video: payload.video.map { video(from: $0.value1) },
+            publishedAt: payload.publishedAt
         )
     }
 
