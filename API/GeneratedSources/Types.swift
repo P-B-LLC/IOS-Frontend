@@ -5664,6 +5664,10 @@ public enum Components {
             public var repostOf: Components.Schemas.ForYouPost.RepostOfPayload?
             /// - Remark: Generated from `#/components/schemas/ForYouPost/created_at`.
             public var createdAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/published_at`.
+            public var publishedAt: Foundation.Date?
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/moderation_status`.
+            public var moderationStatus: Swift.String
             /// - Remark: Generated from `#/components/schemas/ForYouPost/updated_at`.
             public var updatedAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/ForYouPost/recommendation`.
@@ -5712,6 +5716,8 @@ public enum Components {
             ///   - viewerSaved:
             ///   - repostOf:
             ///   - createdAt:
+            ///   - publishedAt:
+            ///   - moderationStatus:
             ///   - updatedAt:
             ///   - recommendation:
             public init(
@@ -5738,6 +5744,8 @@ public enum Components {
                 viewerSaved: Swift.Bool,
                 repostOf: Components.Schemas.ForYouPost.RepostOfPayload? = nil,
                 createdAt: Foundation.Date,
+                publishedAt: Foundation.Date? = nil,
+                moderationStatus: Swift.String,
                 updatedAt: Foundation.Date,
                 recommendation: Components.Schemas.ForYouPost.RecommendationPayload
             ) {
@@ -5764,6 +5772,8 @@ public enum Components {
                 self.viewerSaved = viewerSaved
                 self.repostOf = repostOf
                 self.createdAt = createdAt
+                self.publishedAt = publishedAt
+                self.moderationStatus = moderationStatus
                 self.updatedAt = updatedAt
                 self.recommendation = recommendation
             }
@@ -5791,6 +5801,8 @@ public enum Components {
                 case viewerSaved = "viewer_saved"
                 case repostOf = "repost_of"
                 case createdAt = "created_at"
+                case publishedAt = "published_at"
+                case moderationStatus = "moderation_status"
                 case updatedAt = "updated_at"
                 case recommendation
             }
@@ -6616,6 +6628,8 @@ public enum Components {
             public var commentBody: Swift.String?
             /// - Remark: Generated from `#/components/schemas/Notification/is_read`.
             public var isRead: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/Notification/message`.
+            public var message: Swift.String?
             /// - Remark: Generated from `#/components/schemas/Notification/created_at`.
             public var createdAt: Foundation.Date
             /// Creates a new `Notification`.
@@ -6631,6 +6645,7 @@ public enum Components {
             ///   - post:
             ///   - commentBody:
             ///   - isRead:
+            ///   - message:
             ///   - createdAt:
             public init(
                 id: Swift.Int,
@@ -6643,6 +6658,7 @@ public enum Components {
                 post: Swift.Int? = nil,
                 commentBody: Swift.String? = nil,
                 isRead: Swift.Bool,
+                message: Swift.String? = nil,
                 createdAt: Foundation.Date
             ) {
                 self.id = id
@@ -6655,6 +6671,7 @@ public enum Components {
                 self.post = post
                 self.commentBody = commentBody
                 self.isRead = isRead
+                self.message = message
                 self.createdAt = createdAt
             }
             public enum CodingKeys: String, CodingKey {
@@ -6668,6 +6685,7 @@ public enum Components {
                 case post
                 case commentBody = "comment_body"
                 case isRead = "is_read"
+                case message
                 case createdAt = "created_at"
             }
         }
@@ -6677,6 +6695,7 @@ public enum Components {
         /// * `like` - Liked your post
         /// * `repost` - Reposted your post
         /// * `comment` - Commented on your post
+        /// * `moderation_rejected` - Your post was not published
         ///
         /// - Remark: Generated from `#/components/schemas/NotificationKindEnum`.
         @frozen public enum NotificationKindEnum: String, Codable, Hashable, Sendable, CaseIterable {
@@ -6686,6 +6705,7 @@ public enum Components {
             case like = "like"
             case repost = "repost"
             case comment = "comment"
+            case moderationRejected = "moderation_rejected"
         }
         /// - Remark: Generated from `#/components/schemas/NullEnum`.
         public typealias NullEnum = OpenAPIRuntime.OpenAPIValueContainer
@@ -9346,6 +9366,10 @@ public enum Components {
             public var repostOf: Components.Schemas.Post.RepostOfPayload?
             /// - Remark: Generated from `#/components/schemas/Post/created_at`.
             public var createdAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/Post/published_at`.
+            public var publishedAt: Foundation.Date?
+            /// - Remark: Generated from `#/components/schemas/Post/moderation_status`.
+            public var moderationStatus: Swift.String
             /// - Remark: Generated from `#/components/schemas/Post/updated_at`.
             public var updatedAt: Foundation.Date
             /// Creates a new `Post`.
@@ -9374,6 +9398,8 @@ public enum Components {
             ///   - viewerSaved:
             ///   - repostOf:
             ///   - createdAt:
+            ///   - publishedAt:
+            ///   - moderationStatus:
             ///   - updatedAt:
             public init(
                 id: Swift.Int,
@@ -9399,6 +9425,8 @@ public enum Components {
                 viewerSaved: Swift.Bool,
                 repostOf: Components.Schemas.Post.RepostOfPayload? = nil,
                 createdAt: Foundation.Date,
+                publishedAt: Foundation.Date? = nil,
+                moderationStatus: Swift.String,
                 updatedAt: Foundation.Date
             ) {
                 self.id = id
@@ -9424,6 +9452,8 @@ public enum Components {
                 self.viewerSaved = viewerSaved
                 self.repostOf = repostOf
                 self.createdAt = createdAt
+                self.publishedAt = publishedAt
+                self.moderationStatus = moderationStatus
                 self.updatedAt = updatedAt
             }
             public enum CodingKeys: String, CodingKey {
@@ -9450,6 +9480,8 @@ public enum Components {
                 case viewerSaved = "viewer_saved"
                 case repostOf = "repost_of"
                 case createdAt = "created_at"
+                case publishedAt = "published_at"
+                case moderationStatus = "moderation_status"
                 case updatedAt = "updated_at"
             }
         }
@@ -11458,6 +11490,8 @@ public enum Components {
             public var planner: Components.Schemas.RepostedPost.PlannerPayload?
             /// - Remark: Generated from `#/components/schemas/RepostedPost/created_at`.
             public var createdAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/published_at`.
+            public var publishedAt: Foundation.Date?
             /// Creates a new `RepostedPost`.
             ///
             /// - Parameters:
@@ -11472,6 +11506,7 @@ public enum Components {
             ///   - meal:
             ///   - planner:
             ///   - createdAt:
+            ///   - publishedAt:
             public init(
                 id: Swift.Int,
                 author: Components.Schemas.RepostedPost.AuthorPayload,
@@ -11483,7 +11518,8 @@ public enum Components {
                 workout: Components.Schemas.RepostedPost.WorkoutPayload? = nil,
                 meal: Components.Schemas.RepostedPost.MealPayload? = nil,
                 planner: Components.Schemas.RepostedPost.PlannerPayload? = nil,
-                createdAt: Foundation.Date
+                createdAt: Foundation.Date,
+                publishedAt: Foundation.Date? = nil
             ) {
                 self.id = id
                 self.author = author
@@ -11496,6 +11532,7 @@ public enum Components {
                 self.meal = meal
                 self.planner = planner
                 self.createdAt = createdAt
+                self.publishedAt = publishedAt
             }
             public enum CodingKeys: String, CodingKey {
                 case id
@@ -11509,6 +11546,7 @@ public enum Components {
                 case meal
                 case planner
                 case createdAt = "created_at"
+                case publishedAt = "published_at"
             }
         }
         /// - Remark: Generated from `#/components/schemas/SavedFoodIngredient`.
