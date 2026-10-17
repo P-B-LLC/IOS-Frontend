@@ -463,6 +463,12 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /api/v1/me/prompts/`.
     /// - Remark: Generated from `#/paths//api/v1/me/prompts//put(me_prompts_update)`.
     func mePromptsUpdate(_ input: Operations.MePromptsUpdate.Input) async throws -> Operations.MePromptsUpdate.Output
+    /// - Remark: HTTP `GET /api/v1/me/safety-consent/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/safety-consent//get(safetyConsentRetrieve)`.
+    func safetyConsentRetrieve(_ input: Operations.SafetyConsentRetrieve.Input) async throws -> Operations.SafetyConsentRetrieve.Output
+    /// - Remark: HTTP `PUT /api/v1/me/safety-consent/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/safety-consent//put(safetyConsentUpdate)`.
+    func safetyConsentUpdate(_ input: Operations.SafetyConsentUpdate.Input) async throws -> Operations.SafetyConsentUpdate.Output
     /// The outbound accounts on the signed-in user profile.
     ///
     /// Only ever this user own: the route carries no id, and the profile is read
@@ -2298,6 +2304,22 @@ extension APIProtocol {
         body: Operations.MePromptsUpdate.Input.Body
     ) async throws -> Operations.MePromptsUpdate.Output {
         try await mePromptsUpdate(Operations.MePromptsUpdate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// - Remark: HTTP `GET /api/v1/me/safety-consent/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/safety-consent//get(safetyConsentRetrieve)`.
+    public func safetyConsentRetrieve(headers: Operations.SafetyConsentRetrieve.Input.Headers = .init()) async throws -> Operations.SafetyConsentRetrieve.Output {
+        try await safetyConsentRetrieve(Operations.SafetyConsentRetrieve.Input(headers: headers))
+    }
+    /// - Remark: HTTP `PUT /api/v1/me/safety-consent/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/safety-consent//put(safetyConsentUpdate)`.
+    public func safetyConsentUpdate(
+        headers: Operations.SafetyConsentUpdate.Input.Headers = .init(),
+        body: Operations.SafetyConsentUpdate.Input.Body
+    ) async throws -> Operations.SafetyConsentUpdate.Output {
+        try await safetyConsentUpdate(Operations.SafetyConsentUpdate.Input(
             headers: headers,
             body: body
         ))
@@ -11547,6 +11569,52 @@ public enum Components {
                 case planner
                 case createdAt = "created_at"
                 case publishedAt = "published_at"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SafetyConsent`.
+        public struct SafetyConsent: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SafetyConsent/version`.
+            public var version: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SafetyConsent/granted`.
+            public var granted: Swift.Bool
+            /// Creates a new `SafetyConsent`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - granted:
+            public init(
+                version: Swift.String,
+                granted: Swift.Bool
+            ) {
+                self.version = version
+                self.granted = granted
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case granted
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SafetyConsentRequest`.
+        public struct SafetyConsentRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SafetyConsentRequest/version`.
+            public var version: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SafetyConsentRequest/granted`.
+            public var granted: Swift.Bool
+            /// Creates a new `SafetyConsentRequest`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - granted:
+            public init(
+                version: Swift.String,
+                granted: Swift.Bool
+            ) {
+                self.version = version
+                self.granted = granted
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case granted
             }
         }
         /// - Remark: Generated from `#/components/schemas/SavedFoodIngredient`.
@@ -24053,6 +24121,233 @@ public enum Operations {
             /// - Throws: An error if `self` is not `.ok`.
             /// - SeeAlso: `.ok`.
             public var ok: Operations.MePromptsUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// - Remark: HTTP `GET /api/v1/me/safety-consent/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/safety-consent//get(safetyConsentRetrieve)`.
+    public enum SafetyConsentRetrieve {
+        public static let id: Swift.String = "safetyConsentRetrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/me/safety-consent/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SafetyConsentRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SafetyConsentRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SafetyConsentRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            public init(headers: Operations.SafetyConsentRetrieve.Input.Headers = .init()) {
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/me/safety-consent/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/me/safety-consent/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.SafetyConsent)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.SafetyConsent {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SafetyConsentRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SafetyConsentRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/me/safety-consent//get(safetyConsentRetrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SafetyConsentRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SafetyConsentRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// - Remark: HTTP `PUT /api/v1/me/safety-consent/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/safety-consent//put(safetyConsentUpdate)`.
+    public enum SafetyConsentUpdate {
+        public static let id: Swift.String = "safetyConsentUpdate"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/me/safety-consent/PUT/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SafetyConsentUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SafetyConsentUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SafetyConsentUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/me/safety-consent/PUT/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/me/safety-consent/PUT/requestBody/content/application\/json`.
+                case json(Components.Schemas.SafetyConsentRequest)
+            }
+            public var body: Operations.SafetyConsentUpdate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.SafetyConsentUpdate.Input.Headers = .init(),
+                body: Operations.SafetyConsentUpdate.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/me/safety-consent/PUT/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/me/safety-consent/PUT/responses/200/content/application\/json`.
+                    case json(Components.Schemas.SafetyConsent)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.SafetyConsent {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SafetyConsentUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SafetyConsentUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/me/safety-consent//put(safetyConsentUpdate)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SafetyConsentUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SafetyConsentUpdate.Output.Ok {
                 get throws {
                     switch self {
                     case let .ok(response):
