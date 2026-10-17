@@ -339,7 +339,7 @@ actor SocialAPIRepository {
             contentType = accepted
         }
 
-        try await ModerationConsent.require()
+        try await AccountSafetyConsent.require(client: client)
         let output = try await client.socialPostsCreate(
             body: .json(
                 Components.Schemas.CreatePostRequest(
@@ -380,7 +380,7 @@ actor SocialAPIRepository {
             throw APIServiceError.malformedResponse
         }
 
-        try await ModerationConsent.require()
+        try await AccountSafetyConsent.require(client: client)
         let output = try await client.socialPostsPartialUpdate(
             path: .init(id: postID),
             body: .json(
@@ -631,7 +631,7 @@ actor SocialAPIRepository {
     /// Every thread on a post, oldest first, replies nested inside each.
     func uploadVideo(postID: Int, draft: PostVideoDraft) async throws -> FeedPost {
         try await draft.validate()
-        try await ModerationConsent.require()
+        try await AccountSafetyConsent.require(client: client)
         let bytes = VideoUploadBody.file(draft.fileURL, size: draft.sizeBytes)
         let body: Operations.SocialPostsVideoCreate.Input.Body = draft.contentType == "video/quicktime"
             ? .videoQuicktime(bytes) : .videoMp4(bytes)
@@ -687,7 +687,7 @@ actor SocialAPIRepository {
         toPost postID: Int,
         replyingTo parentID: Int?
     ) async throws -> PostComment {
-        try await ModerationConsent.require()
+        try await AccountSafetyConsent.require(client: client)
         let output = try await client.socialCommentsCreate(
             body: .json(
                 Components.Schemas.PostCommentRequest(

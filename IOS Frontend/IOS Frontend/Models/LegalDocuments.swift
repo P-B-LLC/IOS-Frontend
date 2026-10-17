@@ -145,8 +145,12 @@ enum LegalDocuments {
 
         SAFETY REVIEW
 
-        With your permission before submission, public-facing text and uploaded \
-        photos are sent to OpenAI for automated safety checks. This includes \
+        With your permission, public-facing text, uploaded photos and extracted \
+        video frames are sent to OpenAI for automated safety checks. Audio is \
+        excluded. Permission is saved for your account, not requested for every \
+        post. You can withdraw it in Settings under Safety review; queued checks \
+        stop, but content already sent cannot be recalled. Registration uses a \
+        separate one-submission permission before your account exists. This includes \
         profile names, bios, prompt answers, social handles, public gym details, \
         comments, captions, and titles or instructions in content you choose to \
         share. Account credentials, private measurements and unshared logs are \

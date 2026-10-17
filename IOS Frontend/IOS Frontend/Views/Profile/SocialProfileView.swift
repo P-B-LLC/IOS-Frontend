@@ -976,6 +976,7 @@ private struct ProfileSettingsView: View {
                     settingsHeader(timeOfDay: timeOfDay)
 
                     ModerationDashboardEntry()
+                    SafetyConsentSettings()
 
                     VStack(alignment: .leading, spacing: 5) {
                         HStack(spacing: 8) {

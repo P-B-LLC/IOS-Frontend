@@ -48,6 +48,7 @@ final class ModerationConsentTests: XCTestCase {
     override func tearDown() async throws {
         // Static, so it would otherwise outlive the test that set it.
         ModerationConsent.askForPermission = { nil }
+        ModerationConsent.askForAccountPermission = { nil }
     }
 
     func testASecondSubmissionWaitsRatherThanBeingRefused() async throws {
@@ -96,5 +97,17 @@ final class ModerationConsentTests: XCTestCase {
     func testPermissionLetsTheSubmissionThrough() async throws {
         ModerationConsent.askForPermission = { true }
         try await ModerationConsent.require()
+    }
+
+    func testAccountConsentIsSavedAndReused() async throws {
+        var granted = false
+        var asks = 0
+        ModerationConsent.askForAccountPermission = { asks += 1; return true }
+        try await ModerationConsent.requireAccount(read: { granted }, save: { granted = true })
+        try await ModerationConsent.requireAccount(read: { granted }, save: { granted = true })
+        XCTAssertEqual(asks, 1)
+        granted = false // withdrawal on another device must be observed
+        try await ModerationConsent.requireAccount(read: { granted }, save: { granted = true })
+        XCTAssertEqual(asks, 2)
     }
 }

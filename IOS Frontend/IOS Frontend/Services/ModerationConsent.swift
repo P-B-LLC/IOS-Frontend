@@ -36,6 +36,7 @@ enum ModerationConsent {
     /// for macOS without UIKit, and serialisation is exactly the sort of thing
     /// that looks obviously right and is not.
     static var askForPermission: () async -> Bool? = { await presentDialog() }
+    static var askForAccountPermission: () async -> Bool? = { await presentDialog(persistent: true) }
 
     /// The tail of the queue. Asks run one at a time.
     ///
@@ -45,6 +46,32 @@ enum ModerationConsent {
     /// blamed the permission they were never offered. Posting a photo while a
     /// comment was still in flight was enough to do it.
     private static var lastAsk: Task<Void, Never> = Task {}
+
+    /// Read the server each time: another device can withdraw this permission.
+    /// The queue includes reading and saving, so concurrent posts ask only once.
+    static func requireAccount(
+        read: @escaping @MainActor () async throws -> Bool,
+        save: @escaping @MainActor () async throws -> Void
+    ) async throws {
+        try Task.checkCancellation()
+        let predecessor = lastAsk
+        let operation = Task { @MainActor in
+            await predecessor.value
+            try Task.checkCancellation()
+            if try await read() { return }
+            guard let answer = await askForAccountPermission() else { throw CannotAsk() }
+            guard answer else { throw NotGranted() }
+            try Task.checkCancellation()
+            try await save()
+        }
+        lastAsk = Task { _ = try? await operation.value }
+        try await withTaskCancellationHandler {
+            try await operation.value
+        } onCancel: {
+            operation.cancel()
+        }
+        try Task.checkCancellation()
+    }
 
     static func require() async throws {
         try Task.checkCancellation()
@@ -65,7 +92,7 @@ enum ModerationConsent {
     }
 
 #if canImport(UIKit)
-    private static func presentDialog() async -> Bool? {
+    private static func presentDialog(persistent: Bool = false) async -> Bool? {
         guard let scene = UIApplication.shared.connectedScenes
                 .compactMap({ $0 as? UIWindowScene })
                 .first(where: { $0.activationState == .foregroundActive }),
@@ -77,7 +104,7 @@ enum ModerationConsent {
 
         return await withCheckedContinuation { (continuation: CheckedContinuation<Bool?, Never>) in
             let alert = UIAlertController(title: "Allow safety review?", message:
-                "Rytivo sends the public-facing text, photos, and extracted video frames in this submission to OpenAI for safety checks. This can include profile names, bios, social handles, public gym details, comments, and titles or instructions in shared meals/workouts. Audio, account credentials, private measurements, and unshared logs are excluded. Media stays unpublished while checks or moderator review are pending. Automated checks can make mistakes; contact \(LegalDocuments.contactEmail) to appeal. Allow this submission?",
+                "Rytivo sends the public-facing text, photos, and extracted video frames you submit to OpenAI for safety checks. This can include profile names, bios, social handles, public gym details, comments, and titles or instructions in shared meals/workouts. Audio, account credentials, private measurements, and unshared logs are excluded. Media stays unpublished while checks or moderator review are pending. Automated checks can make mistakes; contact \(LegalDocuments.contactEmail) to appeal. " + (persistent ? "Allow safety review for this account? Your choice is saved; you can withdraw it in Settings under Safety review." : "Allow this submission?"),
                 preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "Cancel", style: .cancel) { _ in continuation.resume(returning: false) })
             alert.addAction(UIAlertAction(title: "Allow and continue", style: .default) { _ in continuation.resume(returning: true) })
@@ -90,6 +117,6 @@ enum ModerationConsent {
     /// `nil` rather than `false`, because "could not ask" is not "was asked
     /// and declined" — and a headless build must not become the one path that
     /// submits content nobody agreed to have reviewed.
-    private static func presentDialog() async -> Bool? { nil }
+    private static func presentDialog(persistent: Bool = false) async -> Bool? { nil }
 #endif
 }

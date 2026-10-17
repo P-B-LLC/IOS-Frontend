@@ -1,5 +1,21 @@
 # Moderation integration — 15 September 2026
 
+## WIP update — 17 October 2026: account consent
+
+- Authenticated social/profile operations now use backend-saved safety consent
+  version `2026-10-17`, rather than a dialog for every submission. No local grant
+  cache; withdrawal on another device is respected. Registration still asks for
+  its own single submission because no authenticated account exists yet.
+- Settings → Safety review allows granting/withdrawing permission. Cancellation
+  and failed preference writes do not submit content. Privacy prose updated.
+- New backend contract: GET/PUT `/api/v1/me/safety-consent/`; deploy backend
+  migration 0079 first. Existing generated Swift does NOT yet include these
+  operations. Run `bash Scripts/generate-api-client.sh`, then account-safety tests
+  and the Xcode simulator build on Mac. Never hand-edit generated sources.
+- Previous Mac success at cbf6328 does not validate these new changes. This is a
+  WIP branch, not a main/release merge. New consent queue test added but not run
+  here (Windows has no Swift/Xcode).
+
 ## Release update — 14 October 2026
 
 - iOS PR #28 merged to `main` at `949be5cf3519f781b0635e7c5b82b981d2e22421`.
