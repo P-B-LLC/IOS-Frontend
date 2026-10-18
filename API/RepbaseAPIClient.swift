@@ -201,7 +201,7 @@ private struct TokenAuthenticationMiddleware: ClientMiddleware {
 /// disclosure is not agreement to a new one, and an old build should stop
 /// being able to submit rather than quietly keep going.
 enum ModerationDisclosure {
-    static let version = "2026-09-15"
+    static let version = "2026-10-16"
 }
 
 struct ModerationConsentMiddleware: ClientMiddleware {

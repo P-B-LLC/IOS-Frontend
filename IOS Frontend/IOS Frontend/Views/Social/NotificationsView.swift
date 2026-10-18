@@ -57,7 +57,11 @@ struct NotificationsView: View {
         timeOfDay: HomeTimeOfDay
     ) -> some View {
         NavigationLink {
-            PersonProfileView(userID: notification.actorID)
+            if notification.kind == .moderationRejected, let postID = notification.postID {
+                PostDetailView(postID: postID)
+            } else {
+                PersonProfileView(userID: notification.actorID)
+            }
         } label: {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: notification.symbol)

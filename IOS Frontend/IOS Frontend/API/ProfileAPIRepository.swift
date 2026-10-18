@@ -139,6 +139,15 @@ actor ProfileAPIRepository {
 
     // MARK: - The profile
 
+    func canModerate() async throws -> Bool {
+        switch try await client.myAccessRetrieve() {
+        case .ok(let response):
+            return try response.body.json.capabilities.moderate
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
     func profile() async throws -> RemoteProfile {
         let output = try await client.meRetrieve()
         switch output {
@@ -156,7 +165,7 @@ actor ProfileAPIRepository {
     /// elsewhere in the meantime.
     @discardableResult
     func save(_ profile: RemoteProfile) async throws -> RemoteProfile {
-        try await ModerationConsent.require()
+        try await AccountSafetyConsent.require(client: client)
         let output = try await client.mePartialUpdate(
             body: .json(
                 Components.Schemas.PatchedRepbaseUserRequest(
@@ -211,7 +220,7 @@ actor ProfileAPIRepository {
 
     @discardableResult
     func uploadPhoto(_ data: Data, contentType: String) async throws -> RemoteProfile {
-        try await ModerationConsent.require()
+        try await AccountSafetyConsent.require(client: client)
         guard let type = Components.Schemas.ContentTypeEnum(rawValue: contentType) else {
             throw APIServiceError.malformedResponse
         }
@@ -332,7 +341,7 @@ actor ProfileAPIRepository {
     /// comes back is what was stored, not what was sent.
     @discardableResult
     func saveSocialLinks(_ links: [ProfileSocialLinkDraft]) async throws -> [ProfileSocialLink] {
-        try await ModerationConsent.require()
+        try await AccountSafetyConsent.require(client: client)
         let output = try await client.meSocialLinksUpdate(
             body: .json(
                 Components.Schemas.ProfileSocialLinksRequestRequest(
@@ -383,7 +392,7 @@ actor ProfileAPIRepository {
             return .init(question: question, answer: answer.answer)
         }
 
-        try await ModerationConsent.require()
+        try await AccountSafetyConsent.require(client: client)
         let output = try await client.mePromptsUpdate(
             body: .json(Components.Schemas.ProfilePromptsRequestRequest(prompts: written))
         )
@@ -495,7 +504,7 @@ actor ProfileAPIRepository {
     }
 
     func createGym(name: String, city: String, country: String) async throws -> RemoteGym {
-        try await ModerationConsent.require()
+        try await AccountSafetyConsent.require(client: client)
         let output = try await client.gymsCreate(
             body: .json(
                 Components.Schemas.GymRequest(name: name, city: city, country: country)
