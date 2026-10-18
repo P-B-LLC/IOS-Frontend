@@ -1,5 +1,16 @@
 # Moderation integration — 15 September 2026
 
+## Main promotion — 17 October 2026
+
+- User approved promotion after successful Mac validation and reporting the
+  updated agreement flow works against the deployed backend.
+- Includes generated Swift updates through 1152ffb and dashboard discovery/retry
+  improvements through d32c2e2. Backend migration 0080 was subsequently deployed.
+- Dashboard opens within iOS in an embedded browser, with separate session login;
+  authorization remains server-enforced. No standalone native queue was added.
+- This Git promotion does not upload a TestFlight/App Store build. Historical
+  WIP and pending-deployment notes below are retained as development history.
+
 ## Dashboard discoverability follow-up
 
 - Settings now shows an explicit moderation-access loading state and retryable
