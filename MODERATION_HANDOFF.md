@@ -1,5 +1,17 @@
 # Moderation integration — 15 September 2026
 
+## Dashboard discoverability follow-up
+
+- Settings now shows an explicit moderation-access loading state and retryable
+  failure rather than treating network/API errors as a role denial. Confirmed
+  non-moderators still receive no dashboard entry. Authorized users see a labeled
+  card opening the existing session-authenticated dashboard inside the app.
+- Rechecks access on foreground/account changes; stale async responses cannot
+  update a different session. Backend enforcement remains unchanged.
+- This is an embedded browser dashboard, not a newly built native moderation
+  queue. Separate dashboard sign-in remains necessary. Mac build/manual access
+  tests are pending for this UI-only follow-up; no generated-client changes.
+
 ## Latest WIP — agreements at signup/sign-in (17 October 2026)
 
 - Supersedes the per-submission and account-dialog UI described below. Signup
