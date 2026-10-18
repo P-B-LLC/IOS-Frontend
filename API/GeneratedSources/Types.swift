@@ -419,6 +419,12 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /api/v1/me/access/`.
     /// - Remark: Generated from `#/paths//api/v1/me/access//get(my_access_retrieve)`.
     func myAccessRetrieve(_ input: Operations.MyAccessRetrieve.Input) async throws -> Operations.MyAccessRetrieve.Output
+    /// - Remark: HTTP `GET /api/v1/me/agreements/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/agreements//get(accountAgreementRetrieve)`.
+    func accountAgreementRetrieve(_ input: Operations.AccountAgreementRetrieve.Input) async throws -> Operations.AccountAgreementRetrieve.Output
+    /// - Remark: HTTP `PUT /api/v1/me/agreements/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/agreements//put(accountAgreementUpdate)`.
+    func accountAgreementUpdate(_ input: Operations.AccountAgreementUpdate.Input) async throws -> Operations.AccountAgreementUpdate.Output
     /// The lifts the signed-in user has chosen to show.
     ///
     /// - Remark: HTTP `GET /api/v1/me/highlights/`.
@@ -2223,6 +2229,22 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//api/v1/me/access//get(my_access_retrieve)`.
     public func myAccessRetrieve(headers: Operations.MyAccessRetrieve.Input.Headers = .init()) async throws -> Operations.MyAccessRetrieve.Output {
         try await myAccessRetrieve(Operations.MyAccessRetrieve.Input(headers: headers))
+    }
+    /// - Remark: HTTP `GET /api/v1/me/agreements/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/agreements//get(accountAgreementRetrieve)`.
+    public func accountAgreementRetrieve(headers: Operations.AccountAgreementRetrieve.Input.Headers = .init()) async throws -> Operations.AccountAgreementRetrieve.Output {
+        try await accountAgreementRetrieve(Operations.AccountAgreementRetrieve.Input(headers: headers))
+    }
+    /// - Remark: HTTP `PUT /api/v1/me/agreements/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/agreements//put(accountAgreementUpdate)`.
+    public func accountAgreementUpdate(
+        headers: Operations.AccountAgreementUpdate.Input.Headers = .init(),
+        body: Operations.AccountAgreementUpdate.Input.Body
+    ) async throws -> Operations.AccountAgreementUpdate.Output {
+        try await accountAgreementUpdate(Operations.AccountAgreementUpdate.Input(
+            headers: headers,
+            body: body
+        ))
     }
     /// The lifts the signed-in user has chosen to show.
     ///
@@ -4044,6 +4066,52 @@ public enum Components {
                 case next
                 case previous
                 case results
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/AccountAgreement`.
+        public struct AccountAgreement: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/AccountAgreement/version`.
+            public var version: Swift.String
+            /// - Remark: Generated from `#/components/schemas/AccountAgreement/accepted`.
+            public var accepted: Swift.Bool
+            /// Creates a new `AccountAgreement`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - accepted:
+            public init(
+                version: Swift.String,
+                accepted: Swift.Bool
+            ) {
+                self.version = version
+                self.accepted = accepted
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case accepted
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/AccountAgreementRequest`.
+        public struct AccountAgreementRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/AccountAgreementRequest/version`.
+            public var version: Swift.String
+            /// - Remark: Generated from `#/components/schemas/AccountAgreementRequest/accepted`.
+            public var accepted: Swift.Bool
+            /// Creates a new `AccountAgreementRequest`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - accepted:
+            public init(
+                version: Swift.String,
+                accepted: Swift.Bool
+            ) {
+                self.version = version
+                self.accepted = accepted
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case accepted
             }
         }
         /// * `superowner` - superowner
@@ -10994,6 +11062,10 @@ public enum Components {
         }
         /// - Remark: Generated from `#/components/schemas/RegisterRequest`.
         public struct RegisterRequest: Codable, Hashable, Sendable {
+            /// Version explicitly accepted using the signup Privacy Policy and agreements control. Omit for legacy clients; omission never records agreement acceptance.
+            ///
+            /// - Remark: Generated from `#/components/schemas/RegisterRequest/agreement_version`.
+            public var agreementVersion: Swift.String?
             /// - Remark: Generated from `#/components/schemas/RegisterRequest/username`.
             public var username: Swift.String
             /// - Remark: Generated from `#/components/schemas/RegisterRequest/email`.
@@ -11007,18 +11079,21 @@ public enum Components {
             /// Creates a new `RegisterRequest`.
             ///
             /// - Parameters:
+            ///   - agreementVersion: Version explicitly accepted using the signup Privacy Policy and agreements control. Omit for legacy clients; omission never records agreement acceptance.
             ///   - username:
             ///   - email:
             ///   - password:
             ///   - firstName:
             ///   - lastName:
             public init(
+                agreementVersion: Swift.String? = nil,
                 username: Swift.String,
                 email: Swift.String,
                 password: Swift.String,
                 firstName: Swift.String,
                 lastName: Swift.String
             ) {
+                self.agreementVersion = agreementVersion
                 self.username = username
                 self.email = email
                 self.password = password
@@ -11026,6 +11101,7 @@ public enum Components {
                 self.lastName = lastName
             }
             public enum CodingKeys: String, CodingKey {
+                case agreementVersion = "agreement_version"
                 case username
                 case email
                 case password
@@ -23175,6 +23251,233 @@ public enum Operations {
             /// - Throws: An error if `self` is not `.ok`.
             /// - SeeAlso: `.ok`.
             public var ok: Operations.MyAccessRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// - Remark: HTTP `GET /api/v1/me/agreements/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/agreements//get(accountAgreementRetrieve)`.
+    public enum AccountAgreementRetrieve {
+        public static let id: Swift.String = "accountAgreementRetrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/me/agreements/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.AccountAgreementRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.AccountAgreementRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.AccountAgreementRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            public init(headers: Operations.AccountAgreementRetrieve.Input.Headers = .init()) {
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/me/agreements/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/me/agreements/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.AccountAgreement)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.AccountAgreement {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.AccountAgreementRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.AccountAgreementRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/me/agreements//get(accountAgreementRetrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.AccountAgreementRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.AccountAgreementRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// - Remark: HTTP `PUT /api/v1/me/agreements/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/agreements//put(accountAgreementUpdate)`.
+    public enum AccountAgreementUpdate {
+        public static let id: Swift.String = "accountAgreementUpdate"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/me/agreements/PUT/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.AccountAgreementUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.AccountAgreementUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.AccountAgreementUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/me/agreements/PUT/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/me/agreements/PUT/requestBody/content/application\/json`.
+                case json(Components.Schemas.AccountAgreementRequest)
+            }
+            public var body: Operations.AccountAgreementUpdate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.AccountAgreementUpdate.Input.Headers = .init(),
+                body: Operations.AccountAgreementUpdate.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/me/agreements/PUT/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/me/agreements/PUT/responses/200/content/application\/json`.
+                    case json(Components.Schemas.AccountAgreement)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.AccountAgreement {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.AccountAgreementUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.AccountAgreementUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/me/agreements//put(accountAgreementUpdate)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.AccountAgreementUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.AccountAgreementUpdate.Output.Ok {
                 get throws {
                     switch self {
                     case let .ok(response):
