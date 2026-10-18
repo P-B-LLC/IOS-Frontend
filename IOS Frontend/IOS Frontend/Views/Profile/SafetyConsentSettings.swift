@@ -10,7 +10,7 @@ struct SafetyConsentSettings: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Safety review").font(.headline)
-            Text("OpenAI checks public-facing text, photos and video frames you submit. Audio and private logs are excluded. Your permission is saved for your account.")
+            Text("Manage safety review for content you share. Processing details are in the Privacy Policy you accepted.")
                 .font(.footnote).foregroundStyle(.secondary)
             if busy { ProgressView() }
             if let error { Text(error).font(.footnote).foregroundStyle(.red) }
@@ -57,7 +57,7 @@ struct SafetyConsentSettings: View {
         do {
             let api = try client(token)
             if withdraw { try await AccountSafetyConsent.set(false, client: api) }
-            else { try await AccountSafetyConsent.require(client: api) }
+            else { try await AccountSafetyConsent.set(true, client: api) }
             guard !Task.isCancelled, authentication.token == token else { return }
             granted = !withdraw
         } catch is ModerationConsent.NotGranted {

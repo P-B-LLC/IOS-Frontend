@@ -1,5 +1,23 @@
 # Moderation integration — 15 September 2026
 
+## Latest WIP — agreements at signup/sign-in (17 October 2026)
+
+- Supersedes the per-submission and account-dialog UI described below. Signup
+  now requires an unchecked Privacy Policy/agreements control with readable
+  document sheets. It submits `agreement_version`; there is no second dialog.
+- Existing accounts see AccountAgreementGate once per policy version after
+  sign-in. Server acceptance is not inferred from past login or old consent.
+  Failures offer retry/sign-out, and the authenticated root is withheld until
+  acceptance is confirmed. The gate is reset on account/token change.
+- Posting/profile writes only check the saved preference; they do not present
+  OpenAI prompts. Explicit withdrawal still prevents sharing, with a Settings
+  error. The provider disclosure remains inside the Privacy Policy.
+- Updated legal HTML generated from Swift, with copies in the web public/legal
+  directory. Backend migration 0080 and `/me/agreements/` must deploy first.
+- NOT Mac-validated yet: regenerate the client and run
+  `bash Scripts/validate-moderation-ios.sh`, then commit generated sources.
+  Added a signup-without-acceptance unit test; Xcode must compile the new gate.
+
 ## WIP update — 17 October 2026: account consent
 
 - Authenticated social/profile operations now use backend-saved safety consent

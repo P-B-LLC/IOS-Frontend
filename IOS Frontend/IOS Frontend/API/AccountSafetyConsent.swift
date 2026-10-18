@@ -30,9 +30,13 @@ enum AccountSafetyConsent {
     }
 
     static func require(client: Client) async throws {
-        try await ModerationConsent.requireAccount(
-            read: { try await granted(client: client) },
-            save: { try await set(true, client: client) }
-        )
+        // Never present a permission dialog from a posting/profile operation.
+        guard try await granted(client: client) else { throw ReviewDisabled() }
+    }
+
+    struct ReviewDisabled: LocalizedError {
+        var errorDescription: String? {
+            "Safety review is disabled for your account. Manage it in Settings before sharing."
+        }
     }
 }
