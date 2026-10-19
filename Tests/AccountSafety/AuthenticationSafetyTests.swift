@@ -19,6 +19,22 @@ private final class MemoryTokens: AuthenticationTokenStore {
 final class AuthenticationSafetyTests: XCTestCase {
     private let user = AuthenticatedUser(id: 1, username: "tester", firstName: "Test", lastName: "User")
 
+    @MainActor func testSignupWithoutAgreementDoesNotAuthenticate() async {
+        let tokens = MemoryTokens()
+        tokens.value = nil
+        let store = makeStore(tokens: tokens) { _ in
+            XCTFail("Declined agreement must not authenticate")
+            throw APIServiceError.malformedResponse
+        }
+        await store.register(username: "tester", email: "test@example.invalid",
+            password: "test-only-password", firstName: "Test", lastName: "User",
+            acceptedAgreements: false)
+        XCTAssertNil(store.token)
+        XCTAssertNil(tokens.value)
+        XCTAssertFalse(store.isWorking)
+        XCTAssertEqual(store.errorMessage, "Please accept the Privacy Policy and agreements to create your account.")
+    }
+
     @MainActor private func makeStore(
         tokens: MemoryTokens,
         defaults: UserDefaults? = nil,

@@ -1035,7 +1035,14 @@ struct PostCard: View {
                     }
                 }
 
-                if let video = shown.video {
+                if let message = post.publicationMessage {
+                    Label(message, systemImage: post.moderationStatus == "rejected" ? "exclamationmark.shield" : "clock")
+                        .font(.community(.footnote))
+                        .foregroundStyle(timeOfDay.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                if post.isPublished, let video = shown.video {
                     PostVideoView(postID: shown.id, video: video,
                                   canReplace: post.viewerIsAuthor && post.repostOf == nil)
                 }
@@ -1085,8 +1092,10 @@ struct PostCard: View {
                     unsupportedBody
                 }
 
-                PostActionBar(post: post, timeOfDay: timeOfDay, openComments: openComments)
-                    .padding(.top, 2)
+                if post.isPublished {
+                    PostActionBar(post: post, timeOfDay: timeOfDay, openComments: openComments)
+                        .padding(.top, 2)
+                }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
@@ -1227,7 +1236,7 @@ struct PostCard: View {
                     Text("·")
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
 
-                    Text(shown.createdAt, format: .relative(presentation: .numeric))
+                    Text(shown.displayDate, format: .relative(presentation: .numeric))
                         .font(.community(.caption))
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                         .lineLimit(1)

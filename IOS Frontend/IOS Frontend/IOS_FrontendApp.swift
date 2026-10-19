@@ -768,6 +768,7 @@ private struct AppRootView: View {
             case .signedOut:
                 AuthenticationView()
             case .signedIn:
+                AccountAgreementGate {
                 if authentication.needsOnboarding {
                     RepbaseOnboardingView {
                         authentication.completeOnboarding()
@@ -775,6 +776,7 @@ private struct AppRootView: View {
                 } else {
                     RepbaseRootView()
                 }
+                }.id(authentication.token)
             }
         }
     }

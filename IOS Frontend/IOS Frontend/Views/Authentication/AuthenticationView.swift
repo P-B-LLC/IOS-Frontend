@@ -380,6 +380,8 @@ private struct AccountRegistrationView: View {
     @State private var firstName = ""
     @State private var lastName = ""
     @State private var username = ""
+    @State private var acceptedAgreements = false
+    @State private var legalDocument: LegalDocument?
 
     var body: some View {
         let timeOfDay = HomeTimeOfDay.current
@@ -439,6 +441,15 @@ private struct AccountRegistrationView: View {
                         .foregroundStyle(.red)
                 }
 
+                Toggle("I agree to the Privacy Policy and agreements", isOn: $acceptedAgreements)
+                    .disabled(authentication.isWorking)
+                HStack {
+                    ForEach(LegalDocuments.all) { document in
+                        Button(document.title) { legalDocument = document }
+                            .font(.footnote)
+                    }
+                }
+
                 Button { register() } label: {
                     HStack {
                         if authentication.isWorking { ProgressView().tint(.white) }
@@ -463,6 +474,9 @@ private struct AccountRegistrationView: View {
         .scrollDismissesKeyboard(.interactively)
         .toolbar(.hidden, for: .navigationBar)
         .homeTimeScreen(timeOfDay)
+        .sheet(item: $legalDocument) { document in
+            NavigationStack { LegalDocumentView(document: document) }
+        }
     }
 
     private func registrationField(
@@ -491,6 +505,7 @@ private struct AccountRegistrationView: View {
             && !username.trimmed.isEmpty
             && email.contains("@")
             && password.count >= 8
+            && acceptedAgreements
     }
 
     private func register() {
@@ -500,7 +515,8 @@ private struct AccountRegistrationView: View {
                 email: email.trimmed,
                 password: password,
                 firstName: firstName.trimmed,
-                lastName: lastName.trimmed
+                lastName: lastName.trimmed,
+                acceptedAgreements: acceptedAgreements
             )
             if authentication.token != nil { dismiss() }
         }

@@ -975,6 +975,9 @@ private struct ProfileSettingsView: View {
                 VStack(alignment: .leading, spacing: 30) {
                     settingsHeader(timeOfDay: timeOfDay)
 
+                    ModerationDashboardEntry()
+                    SafetyConsentSettings()
+
                     VStack(alignment: .leading, spacing: 5) {
                         HStack(spacing: 8) {
                             Image("RytivoLogoMark")

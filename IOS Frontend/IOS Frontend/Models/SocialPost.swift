@@ -200,6 +200,8 @@ nonisolated struct RepostedPost: Equatable, Hashable, Sendable {
     var meal: PostMealSnapshot?
     var planner: PostPlannerSnapshot?
     var video: PostVideoMedia? = nil
+    var publishedAt: Date? = nil
+    var displayDate: Date { publishedAt ?? createdAt }
 }
 
 /// Why the For You page put a post in front of somebody.
@@ -266,6 +268,18 @@ nonisolated struct FeedPost: Identifiable, Equatable, Hashable, Sendable {
     /// Discover, a profile -- where a post is there because of who wrote it
     /// or when, and needs no explaining.
     var recommendation: PostRecommendation? = nil
+    var publishedAt: Date? = nil
+    var moderationStatus: String = "approved"
+
+    var isPublished: Bool { moderationStatus == "approved" }
+    var publicationMessage: String? {
+        switch moderationStatus {
+        case "approved": nil
+        case "rejected": "Not published after review. Contact support if you think this was a mistake."
+        case "flagged": "Awaiting moderator review. Only you can see this submission."
+        default: "Checking your post. It is not public yet. You can check its status on your profile."
+        }
+    }
 
     /// Whether this post offers a workout the reader could take for
     /// themselves. Their own is already theirs, and a workout with no
@@ -313,7 +327,8 @@ nonisolated struct FeedPost: Identifiable, Equatable, Hashable, Sendable {
             workout: workout,
             meal: meal,
             planner: planner,
-            video: video
+            video: video,
+            publishedAt: publishedAt
         )
     }
 }
@@ -366,6 +381,7 @@ nonisolated struct SocialNotification: Identifiable, Equatable, Hashable, Sendab
         case like
         case repost
         case comment
+        case moderationRejected = "moderation_rejected"
         case unknown
     }
 
@@ -387,6 +403,7 @@ nonisolated struct SocialNotification: Identifiable, Equatable, Hashable, Sendab
     var isRead: Bool
 
     var actorName: String {
+        if kind == .moderationRejected { return "Rytivo" }
         let full = "\(actorFirstName) \(actorLastName)"
             .trimmingCharacters(in: .whitespaces)
         return full.isEmpty ? actorUsername : full
@@ -401,6 +418,7 @@ nonisolated struct SocialNotification: Identifiable, Equatable, Hashable, Sendab
         case .like: return "liked your post"
         case .repost: return "reposted your post"
         case .comment: return "commented on your post"
+        case .moderationRejected: return "did not publish your post after review. You can check it on your profile or contact support."
         case .unknown: return "did something"
         }
     }
@@ -412,6 +430,7 @@ nonisolated struct SocialNotification: Identifiable, Equatable, Hashable, Sendab
         case .like: return "heart.fill"
         case .repost: return "arrow.2.squarepath"
         case .comment: return "bubble.left"
+        case .moderationRejected: return "exclamationmark.shield"
         case .unknown: return "bell"
         }
     }
