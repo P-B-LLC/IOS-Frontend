@@ -2,8 +2,8 @@
 //  GuidedHomeView.swift
 //  IOS Frontend
 //
-//  Home reads as one guided day rather than a stack of equally weighted
-//  widgets. Every value and destination below comes from an existing store.
+//  Connected-flow presentation. Every value and destination below continues
+//  to come from the existing stores and personalization settings.
 //
 
 import SwiftUI
@@ -101,14 +101,6 @@ private struct GuidedHomeHeader: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                RytivoBrandLockup(size: 24)
-                Spacer()
-                Text("Home")
-                    .font(.community(.title3, weight: .bold))
-                    .foregroundStyle(timeOfDay.canvasPrimaryText)
-            }
-
             // Two columns sharing one line is what tore the greeting apart at
             // the accessibility sizes: the name had about a third of the
             // width, so "Aaron" came out "Aaro / n" and the steps caption
@@ -117,13 +109,12 @@ private struct GuidedHomeHeader: View {
             AdaptiveRow(spacing: 16) {
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(greeting.uppercased())
-                        .font(.community(.caption2, weight: .bold))
-                        .tracking(0.7)
-                        .foregroundStyle(timeOfDay.accent)
+                    Text("\(greeting), \(firstName)")
+                        .font(.community(.footnote, weight: .semibold))
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
 
-                    Text(firstName)
-                        .font(.community(.largeTitle, weight: .bold))
+                    Text("Make today yours.")
+                        .font(.community(.title2, weight: .bold))
                         .tracking(-0.6)
                         .foregroundStyle(timeOfDay.canvasPrimaryText)
 
@@ -156,6 +147,12 @@ private struct GuidedHomeHeader: View {
                     }
                     .accessibilityElement(children: .combine)
                     .accessibilityLabel(stepAccessibilityLabel)
+                    .padding(16)
+                    .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 28, style: .continuous)
+                            .strokeBorder(timeOfDay.canvasBorder, lineWidth: 1)
+                    }
                 }
             }
         }
@@ -335,21 +332,21 @@ private struct GuidedDayFlow: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 14) {
             VStack(alignment: .leading, spacing: 0) {
-                flowHeader
                 upNextSection
             }
-            VStack(alignment: .leading, spacing: 4) {
+            .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .strokeBorder(timeOfDay.canvasBorder, lineWidth: 1)
+            }
+            VStack(alignment: .leading, spacing: 14) {
                 ForEach(Array(chapters.enumerated()), id: \.element) { index, chapter in
                     chapterView(chapter, number: index + 1)
                 }
             }
-            .overlay(alignment: .leading) {
-                GuidedHomeFlowRail(progress: flowRailProgress)
-                    .padding(.vertical, 8)
-                    .offset(x: -10)
-            }
+            dayAgenda
             momentumSection
         }
         .onAppear {
@@ -390,12 +387,16 @@ private struct GuidedDayFlow: View {
         }
     }
 
-    /// "01 · TRAINING", but the number follows where the chapter landed.
-    ///
-    /// Numbering them in place is the point: a page that opens on "02 · FUEL"
-    /// reads as though something is missing above it.
+    /// Personalization chooses the order; the labels remain conversational.
     private func stageNumber(_ number: Int, _ chapter: Chapter) -> String {
-        String(format: "%02d · %@", number, chapter.rawValue)
+        // Personalization still chooses the order; avoid making it read like
+        // numbered report sections.
+        switch chapter {
+        case .movement: "Your movement"
+        case .training: "A little stronger today"
+        case .fuel: "Fuel your day"
+        case .finish: "Still to do"
+        }
     }
 
     private func movementSection(number: Int) -> some View {
@@ -494,18 +495,18 @@ private struct GuidedDayFlow: View {
                 Spacer()
                 Text(workout?.type.title.uppercased() ?? "WORKOUT")
                     .font(.community(.caption2, weight: .bold))
-                    .foregroundStyle(timeOfDay.secondaryText)
+                    .foregroundStyle(Color.white.opacity(0.75))
             }
 
             HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(workout?.name ?? "Plan your workout")
                         .font(.community(.title2, weight: .bold))
-                        .foregroundStyle(timeOfDay.primaryText)
-                        .lineLimit(1)
+                        .foregroundStyle(Color.white)
+                        .fixedSize(horizontal: false, vertical: true)
                     Text(workoutMetadata)
                         .font(.community(.footnote))
-                        .foregroundStyle(timeOfDay.secondaryText)
+                        .foregroundStyle(Color.white.opacity(0.75))
                 }
                 Spacer(minLength: 8)
 
@@ -522,8 +523,8 @@ private struct GuidedDayFlow: View {
 
             Text(workoutDetail)
                 .font(.community(.caption))
-                .foregroundStyle(timeOfDay.secondaryText)
-                .lineLimit(1)
+                .foregroundStyle(Color.white.opacity(0.75))
+                .fixedSize(horizontal: false, vertical: true)
 
             // Only without a rotation. With one running the rotation is what
             // fills the calendar, so clearing would delete days it writes
@@ -535,7 +536,8 @@ private struct GuidedDayFlow: View {
                 } label: {
                     Label("Clear my schedule", systemImage: "calendar.badge.minus")
                         .font(.community(.caption, weight: .semibold))
-                        .foregroundStyle(timeOfDay.secondaryText)
+                        .foregroundStyle(Color.white.opacity(0.75))
+                        .frame(minHeight: 44)
                 }
                 .buttonStyle(.plain)
                 .disabled(workouts.isSaving)
@@ -546,7 +548,7 @@ private struct GuidedDayFlow: View {
         .padding(.vertical, 13)
         .background(
             trainingSurface,
-            in: RoundedRectangle(cornerRadius: 18, style: .continuous)
+            in: RoundedRectangle(cornerRadius: 28, style: .continuous)
         )
         // Asked about, unlike the destructive controls here that act on a tap:
         // this empties weeks of planning at once and cannot be undone.
@@ -681,6 +683,49 @@ private struct GuidedDayFlow: View {
         .padding(.vertical, 14)
     }
 
+    /// A read-only view of the same selected-day entries used by the planner.
+    /// No truncation: all-day and overlapping entries remain visible.
+    private var dayAgenda: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("Your day")
+                    .font(.community(.headline, weight: .bold))
+                Spacer()
+                Button { navigate(.planner) } label: {
+                    Label("Calendar", systemImage: "arrow.right")
+                        .font(.community(.footnote, weight: .semibold))
+                        .frame(minHeight: 44)
+                }
+                .buttonStyle(.plain)
+            }
+            Text(selectedDate.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))
+                .font(.community(.footnote))
+                .foregroundStyle(timeOfDay.canvasSecondaryText)
+            ForEach(planner.entries(on: selectedDate)) { entry in
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(entry.title)
+                        .font(.community(.subheadline, weight: .semibold))
+                    Text(entry.displayTime ?? "No time set")
+                        .font(.community(.caption))
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                }
+                .accessibilityElement(children: .combine)
+            }
+            if planner.entries(on: selectedDate).isEmpty {
+                Text("Nothing scheduled for this day.")
+                    .font(.community(.subheadline))
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+            }
+        }
+        .foregroundStyle(timeOfDay.canvasPrimaryText)
+        .padding(16)
+        .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .strokeBorder(timeOfDay.canvasBorder, lineWidth: 1)
+        }
+    }
+
     private var momentumSection: some View {
         HStack(spacing: 0) {
             momentumMetric(
@@ -712,7 +757,7 @@ private struct GuidedDayFlow: View {
                 .font(.community(.title3, weight: .bold))
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
             Text(label)
-                .font(.community(size: 8, weight: .bold))
+                .font(.community(.caption2, weight: .bold))
                 .tracking(0.25)
                 .foregroundStyle(timeOfDay.canvasSecondaryText)
         }
@@ -914,10 +959,7 @@ private struct GuidedDayFlow: View {
     }
 
     private var trainingSurface: Color {
-        .repbaseDynamic(
-            light: Color(hex: 0xE9E7DB),
-            dark: Color(hex: 0x24251D)
-        )
+        RepbasePalette.ink
     }
 
     private var momentumSurface: Color {
@@ -1031,7 +1073,7 @@ private struct GuidedMacroMetric: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label)
-                .font(.community(size: 8, weight: .bold))
+                .font(.community(.caption2, weight: .bold))
                 .foregroundStyle(timeOfDay.secondaryText)
             Text("\(value.nutritionText) / \(goal.nutritionText)g")
                 .font(.community(.caption, weight: .semibold))
@@ -1074,7 +1116,7 @@ private struct GuidedFoodLivingSurface: View {
     let isPulsing: Bool
 
     var body: some View {
-        RoundedRectangle(cornerRadius: 18, style: .continuous)
+        RoundedRectangle(cornerRadius: 28, style: .continuous)
             .fill(
                 LinearGradient(
                     colors: [surfaceStart, surfaceEnd],
@@ -1096,9 +1138,9 @@ private struct GuidedFoodLivingSurface: View {
                     .offset(x: 54, y: -58)
                     .scaleEffect(isPulsing && !reduceMotion ? 1.14 : 1)
             }
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
                     .strokeBorder(borderColor, lineWidth: 1)
             }
             .shadow(color: shadowColor, radius: 12, x: 0, y: 6)
@@ -1115,10 +1157,7 @@ private struct GuidedFoodLivingSurface: View {
                 Color(hex: 0x19231F), Color(hex: 0x1A2722)
             ][stage]
         }
-        return [
-            Color(hex: 0xE7EEE9), Color(hex: 0xE3EEE7),
-            Color(hex: 0xDFEBE5), Color(hex: 0xDCE9E2)
-        ][stage]
+        return .white
     }
 
     private var surfaceEnd: Color {
@@ -1128,10 +1167,7 @@ private struct GuidedFoodLivingSurface: View {
                 Color(hex: 0x29231D), Color(hex: 0x30261E)
             ][stage]
         }
-        return [
-            Color(hex: 0xEEE8DF), Color(hex: 0xF0E6DC),
-            Color(hex: 0xEFE1D4), Color(hex: 0xEDDACB)
-        ][stage]
+        return .white
     }
 
     private var warmHalo: Color {
@@ -1143,7 +1179,7 @@ private struct GuidedFoodLivingSurface: View {
     }
 
     private var borderColor: Color {
-        colorScheme == .dark ? Color.white.opacity(0.04) : Color.white.opacity(0.68)
+        colorScheme == .dark ? Color.white.opacity(0.08) : RepbasePalette.ink.opacity(0.08)
     }
 
     private var shadowColor: Color {

@@ -349,14 +349,15 @@ struct SocialFeedView: View {
 
     private func socialHeader(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(spacing: 0) {
-            // The same title row as every other tab.
-            HStack {
-                RytivoBrandLockup(size: 24)
-                Spacer()
+            VStack(alignment: .leading, spacing: 6) {
                 Text("Social")
-                    .font(.community(.title3, weight: .bold))
+                    .font(.community(.title, weight: .bold))
                     .foregroundStyle(timeOfDay.canvasPrimaryText)
+                Text("A little inspiration. A lot of you.")
+                    .font(.community(.footnote))
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.top, 8)
 
             socialActions(timeOfDay: timeOfDay)
@@ -428,10 +429,10 @@ struct SocialFeedView: View {
             } label: {
                 Label("Post", systemImage: "plus")
                     .font(.community(size: 13, weight: .semibold))
-                    .foregroundStyle(RepbaseDesign.onInk)
+                    .foregroundStyle(Color.white)
                     .padding(.horizontal, 12)
-                    .frame(height: 36)
-                    .background(RepbaseDesign.ink, in: Capsule())
+                    .frame(minHeight: 44)
+                    .background(timeOfDay.accent, in: Capsule())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Create post")
@@ -451,7 +452,7 @@ struct SocialFeedView: View {
     }
 
     private func modePicker(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack(spacing: 0) {
+        HStack(spacing: 8) {
             ForEach(FeedMode.allCases) { mode in
                 Button {
                     withAnimation(.easeOut(duration: 0.18)) {
@@ -462,24 +463,19 @@ struct SocialFeedView: View {
                         .font(.community(size: 14, weight: .semibold))
                         .foregroundStyle(
                             feedMode == mode
-                                ? timeOfDay.canvasPrimaryText
+                                ? timeOfDay.onPrimaryAction
                                 : timeOfDay.canvasSecondaryText
                         )
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
-                        .overlay(alignment: .bottom) {
-                            Rectangle()
-                                .fill(feedMode == mode ? timeOfDay.accent : Color.clear)
-                                .frame(width: 72, height: 2)
-                        }
+                        .background(feedMode == mode ? timeOfDay.primaryActionSurface : Color.clear, in: Capsule())
                 }
                 .buttonStyle(.plain)
+                .accessibilityAddTraits(feedMode == mode ? [.isSelected] : [])
             }
         }
-        .overlay(alignment: .top) { Divider() }
-        .overlay(alignment: .bottom) {
-            Divider()
-        }
+        .padding(.horizontal, RepbaseDesign.pageInset)
+        .padding(.vertical, 8)
     }
 
     private func searchField(timeOfDay: HomeTimeOfDay) -> some View {
@@ -1019,13 +1015,14 @@ struct PostCard: View {
                                 .padding(.top, -6)
                         }
 
-                        if !shown.caption.isEmpty {
-                            Text(shown.caption)
-                                .font(.community(.subheadline))
-                                .foregroundStyle(timeOfDay.primaryText)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
                     }
+                }
+
+                if !shown.caption.isEmpty {
+                    Text(shown.caption)
+                        .font(.community(.subheadline))
+                        .foregroundStyle(timeOfDay.primaryText)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 if let message = post.publicationMessage {
@@ -1074,9 +1071,8 @@ struct PostCard: View {
                 }
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-
-            Divider()
+            .padding(.top, 16)
+            .padding(.bottom, 24)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .sheet(item: $reportingPost) { target in
@@ -1177,9 +1173,9 @@ struct PostCard: View {
                 .background(Color.black.opacity(0.82))
             }
         }
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
                 .strokeBorder(timeOfDay.canvasBorder, lineWidth: 1)
         }
     }
@@ -1392,14 +1388,10 @@ struct PostCard: View {
                 }
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, imageAttached ? 9 : 11)
+        .padding(.horizontal, 16)
+        .padding(.vertical, imageAttached ? 12 : 20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(timeOfDay.accent.opacity(0.09), in: RoundedRectangle(cornerRadius: 11))
-        .overlay {
-            RoundedRectangle(cornerRadius: 11)
-                .strokeBorder(timeOfDay.canvasBorder, lineWidth: imageAttached ? 0 : 1)
-        }
+        .background(timeOfDay.accent.opacity(0.09), in: RoundedRectangle(cornerRadius: 28, style: .continuous))
     }
 
     private func compactMealAttachment(
@@ -1490,11 +1482,7 @@ struct PostCard: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RepbaseDesign.success.opacity(0.08), in: RoundedRectangle(cornerRadius: 16))
-        .overlay {
-            RoundedRectangle(cornerRadius: 16)
-                .strokeBorder(RepbaseDesign.success.opacity(0.22), lineWidth: 1)
-        }
+        .background(imageAttached ? Color.clear : RepbaseDesign.success.opacity(0.08), in: RoundedRectangle(cornerRadius: 28, style: .continuous))
     }
 
     private func macro(_ value: String, _ label: String, _ color: Color) -> some View {
