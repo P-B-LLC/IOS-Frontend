@@ -937,11 +937,13 @@ private struct ProfileSettingsView: View {
     @Environment(AuthenticationStore.self) private var authentication
     @Environment(WorkoutStore.self) private var workoutStore
     @Environment(SocialProfileStore.self) private var store
+    @Environment(AppGuideStore.self) private var guide: AppGuideStore?
     @Environment(\.openURL) private var openURL
     @AppStorage(RepbaseAppearancePreference.storageKey)
     private var appearanceRawValue = RepbaseAppearancePreference.light.rawValue
 
     let profile: SocialProfile
+    @State private var tipsBroughtBack = false
     @State private var editorDestination: ProfileEditorDestination?
     @State private var showingPersonalization = false
     @State private var showingDeleteConfirmation = false
@@ -1224,6 +1226,42 @@ private struct ProfileSettingsView: View {
                             .buttonStyle(RepbaseSettingsRowButtonStyle())
                         }
                         .disabled(authentication.isWorking)
+                    }
+
+                    if let guide {
+                        settingsSection("HELP", timeOfDay: timeOfDay) {
+                            VStack(spacing: 0) {
+                                // Settings closes first: the tour points at
+                                // the tab bar, which this page covers.
+                                Button {
+                                    Task { await guide.start() }
+                                    dismiss()
+                                } label: {
+                                    settingsRow(
+                                        "Take the app tour",
+                                        detail: "Where everything is, in about a minute",
+                                        symbol: "map"
+                                    )
+                                }
+                                .buttonStyle(RepbaseSettingsRowButtonStyle())
+
+                                Rectangle().fill(timeOfDay.border).frame(height: 1)
+
+                                Button {
+                                    guide.resetTips()
+                                    tipsBroughtBack = true
+                                } label: {
+                                    settingsRow(
+                                        "Show tips again",
+                                        detail: tipsBroughtBack
+                                            ? "Tips will appear again as you go"
+                                            : "The short notes on Home, Training, Calendar and Social",
+                                        symbol: "lightbulb"
+                                    )
+                                }
+                                .buttonStyle(RepbaseSettingsRowButtonStyle())
+                            }
+                        }
                     }
 
                     settingsSection("ABOUT", timeOfDay: timeOfDay) {

@@ -425,6 +425,14 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /api/v1/me/agreements/`.
     /// - Remark: Generated from `#/paths//api/v1/me/agreements//put(accountAgreementUpdate)`.
     func accountAgreementUpdate(_ input: Operations.AccountAgreementUpdate.Input) async throws -> Operations.AccountAgreementUpdate.Output
+    /// - Remark: HTTP `GET /api/v1/me/guide/{surface}/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/guide/{surface}//get(guideRetrieve)`.
+    func guideRetrieve(_ input: Operations.GuideRetrieve.Input) async throws -> Operations.GuideRetrieve.Output
+    /// Finishing or skipping the guide sends `completed: true`, after which it no longer opens by itself in that app. `false` clears that, but only a device or browser that has not shown the guide yet opens it again: each also keeps its own note. Replaying it from settings needs neither.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/me/guide/{surface}/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/guide/{surface}//put(guideUpdate)`.
+    func guideUpdate(_ input: Operations.GuideUpdate.Input) async throws -> Operations.GuideUpdate.Output
     /// The lifts the signed-in user has chosen to show.
     ///
     /// - Remark: HTTP `GET /api/v1/me/highlights/`.
@@ -2244,6 +2252,32 @@ extension APIProtocol {
         body: Operations.AccountAgreementUpdate.Input.Body
     ) async throws -> Operations.AccountAgreementUpdate.Output {
         try await accountAgreementUpdate(Operations.AccountAgreementUpdate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// - Remark: HTTP `GET /api/v1/me/guide/{surface}/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/guide/{surface}//get(guideRetrieve)`.
+    public func guideRetrieve(
+        path: Operations.GuideRetrieve.Input.Path,
+        headers: Operations.GuideRetrieve.Input.Headers = .init()
+    ) async throws -> Operations.GuideRetrieve.Output {
+        try await guideRetrieve(Operations.GuideRetrieve.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Finishing or skipping the guide sends `completed: true`, after which it no longer opens by itself in that app. `false` clears that, but only a device or browser that has not shown the guide yet opens it again: each also keeps its own note. Replaying it from settings needs neither.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/me/guide/{surface}/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/guide/{surface}//put(guideUpdate)`.
+    public func guideUpdate(
+        path: Operations.GuideUpdate.Input.Path,
+        headers: Operations.GuideUpdate.Input.Headers = .init(),
+        body: Operations.GuideUpdate.Input.Body
+    ) async throws -> Operations.GuideUpdate.Output {
+        try await guideUpdate(Operations.GuideUpdate.Input(
+            path: path,
             headers: headers,
             body: body
         ))
@@ -6144,6 +6178,44 @@ public enum Components {
                 case retireAtKm = "retire_at_km"
                 case isDefault = "is_default"
                 case retiredAt = "retired_at"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/Guide`.
+        public struct Guide: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/Guide/surface`.
+            public var surface: Swift.String
+            /// - Remark: Generated from `#/components/schemas/Guide/completed`.
+            public var completed: Swift.Bool
+            /// Creates a new `Guide`.
+            ///
+            /// - Parameters:
+            ///   - surface:
+            ///   - completed:
+            public init(
+                surface: Swift.String,
+                completed: Swift.Bool
+            ) {
+                self.surface = surface
+                self.completed = completed
+            }
+            public enum CodingKeys: String, CodingKey {
+                case surface
+                case completed
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/GuideRequest`.
+        public struct GuideRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/GuideRequest/completed`.
+            public var completed: Swift.Bool
+            /// Creates a new `GuideRequest`.
+            ///
+            /// - Parameters:
+            ///   - completed:
+            public init(completed: Swift.Bool) {
+                self.completed = completed
+            }
+            public enum CodingKeys: String, CodingKey {
+                case completed
             }
         }
         /// A gym, and how many people say they train there.
@@ -23504,6 +23576,283 @@ public enum Operations {
             /// - Throws: An error if `self` is not `.ok`.
             /// - SeeAlso: `.ok`.
             public var ok: Operations.AccountAgreementUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// - Remark: HTTP `GET /api/v1/me/guide/{surface}/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/guide/{surface}//get(guideRetrieve)`.
+    public enum GuideRetrieve {
+        public static let id: Swift.String = "guideRetrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/me/guide/{surface}/GET/path`.
+            public struct Path: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/me/guide/{surface}/GET/path/surface`.
+                @frozen public enum SurfacePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case ios = "ios"
+                    case web = "web"
+                }
+                /// Which app the guide is for. Each is laid out differently, so each has its own.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/me/guide/{surface}/GET/path/surface`.
+                public var surface: Operations.GuideRetrieve.Input.Path.SurfacePayload
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - surface: Which app the guide is for. Each is laid out differently, so each has its own.
+                public init(surface: Operations.GuideRetrieve.Input.Path.SurfacePayload) {
+                    self.surface = surface
+                }
+            }
+            public var path: Operations.GuideRetrieve.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/me/guide/{surface}/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GuideRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GuideRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.GuideRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.GuideRetrieve.Input.Path,
+                headers: Operations.GuideRetrieve.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/me/guide/{surface}/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/me/guide/{surface}/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Guide)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Guide {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.GuideRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.GuideRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/me/guide/{surface}//get(guideRetrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.GuideRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.GuideRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Finishing or skipping the guide sends `completed: true`, after which it no longer opens by itself in that app. `false` clears that, but only a device or browser that has not shown the guide yet opens it again: each also keeps its own note. Replaying it from settings needs neither.
+    ///
+    /// - Remark: HTTP `PUT /api/v1/me/guide/{surface}/`.
+    /// - Remark: Generated from `#/paths//api/v1/me/guide/{surface}//put(guideUpdate)`.
+    public enum GuideUpdate {
+        public static let id: Swift.String = "guideUpdate"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/me/guide/{surface}/PUT/path`.
+            public struct Path: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/me/guide/{surface}/PUT/path/surface`.
+                @frozen public enum SurfacePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case ios = "ios"
+                    case web = "web"
+                }
+                /// Which app the guide is for. Each is laid out differently, so each has its own.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/me/guide/{surface}/PUT/path/surface`.
+                public var surface: Operations.GuideUpdate.Input.Path.SurfacePayload
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - surface: Which app the guide is for. Each is laid out differently, so each has its own.
+                public init(surface: Operations.GuideUpdate.Input.Path.SurfacePayload) {
+                    self.surface = surface
+                }
+            }
+            public var path: Operations.GuideUpdate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/me/guide/{surface}/PUT/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GuideUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GuideUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.GuideUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/me/guide/{surface}/PUT/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/me/guide/{surface}/PUT/requestBody/content/application\/json`.
+                case json(Components.Schemas.GuideRequest)
+            }
+            public var body: Operations.GuideUpdate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.GuideUpdate.Input.Path,
+                headers: Operations.GuideUpdate.Input.Headers = .init(),
+                body: Operations.GuideUpdate.Input.Body
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/me/guide/{surface}/PUT/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/me/guide/{surface}/PUT/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Guide)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Guide {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.GuideUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.GuideUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/me/guide/{surface}//put(guideUpdate)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.GuideUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.GuideUpdate.Output.Ok {
                 get throws {
                     switch self {
                     case let .ok(response):

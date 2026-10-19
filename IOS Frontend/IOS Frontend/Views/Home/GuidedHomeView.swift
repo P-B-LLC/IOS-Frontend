@@ -45,6 +45,8 @@ struct GuidedHomeView: View {
                         showsSteps: emphasis != .movement
                     )
 
+                    GuideTipCard(.home)
+
                     GuidedHomeWeekStrip(
                         today: context.date,
                         selection: $selectedDate

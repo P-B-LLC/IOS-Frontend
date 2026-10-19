@@ -113,6 +113,7 @@ struct RepbaseRootView: View {
     /// Set while a screen is writing into something pinned to the bottom.
     @State private var isBarHidden = false
     @State private var chrome = BottomBarChrome()
+    @Environment(AppGuideStore.self) private var guide: AppGuideStore?
 #if DEBUG
     // The minimized bar only appears mid-scroll, and simctl has no gesture
     // to make one with. This is how it gets looked at.
@@ -207,6 +208,15 @@ struct RepbaseRootView: View {
         }
         .animation(.easeOut(duration: 0.18), value: isBarHidden)
         .animation(.easeOut(duration: 0.22), value: showsMinimizedBar)
+        // Outside the bar's inset, so the bar's buttons are inside what it
+        // covers and their positions reach it.
+        .overlayPreferenceValue(GuideTabAnchorKey.self) { anchors in
+            AppGuideOverlay(anchors: anchors, tab: $tab)
+        }
+        // The tour points at the bar, so the bar is shown at full size.
+        .onChange(of: guide?.isTouring) { _, touring in
+            if touring == true { chrome.isMinimized = false }
+        }
     }
 }
 
@@ -230,6 +240,7 @@ struct RepbaseBottomNavigation: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel(item.title)
                 .accessibilityAddTraits(item == tab ? [.isSelected] : [])
+                .guideAnchor(item)
             }
         }
         .padding(.horizontal, 8)

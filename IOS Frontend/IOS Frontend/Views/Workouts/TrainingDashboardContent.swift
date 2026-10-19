@@ -64,6 +64,8 @@ struct TrainingDashboardContent: View {
                     errorCard(persistenceError)
                 }
 
+                GuideTipCard(.training)
+
                 if store.isLoading {
                     ProgressView("Loading this week from Rytivo...")
                         .frame(maxWidth: .infinity)

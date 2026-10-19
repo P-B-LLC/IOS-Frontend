@@ -38,6 +38,7 @@ struct IOS_FrontendApp: App {
     @State private var gearStore = GearStore()
     @State private var cycleStore = CycleStore()
 #endif
+    @State private var appGuideStore = AppGuideStore()
 
     init() {
         Self.enlargeTheResponseCache()
@@ -127,6 +128,7 @@ struct IOS_FrontendApp: App {
                 .environment(activityStore)
                 .environment(gearStore)
                 .environment(cycleStore)
+                .environment(appGuideStore)
                 .environment(\.font, .community(.body))
                 .preferredColorScheme(appearance.colorScheme)
                 // preferredColorScheme reaches the nearest enclosing
@@ -209,6 +211,7 @@ private struct AppRootView: View {
     @Environment(ActivityStore.self) private var activityStore
     @Environment(GearStore.self) private var gearStore
     @Environment(CycleStore.self) private var cycleStore
+    @Environment(AppGuideStore.self) private var appGuideStore
 
     var body: some View {
         Group {
@@ -609,6 +612,9 @@ private struct AppRootView: View {
                 return
             }
             guard case .signedIn(let user) = authentication.phase else { return }
+            // Read now: finishing the sign-up questions clears it, and the
+            // guide needs to know this account was made a moment ago.
+            let justRegistered = authentication.needsOnboarding
             EditorDraftRecovery.shared.scope = .init(ownerID: user.id, origin: authentication.configuration.serverURL.absoluteString)
             NotificationScheduler.shared.setAccount(user.id)
             // First, and alone: this is also where the phone's time zone
@@ -657,7 +663,11 @@ private struct AppRootView: View {
             async let activity: Void = activityStore.connect(configuration: configuration, token: token)
             async let gear: Void = gearStore.connect(configuration: configuration, token: token)
             async let cycles: Void = cycleStore.connect(configuration: configuration, token: token)
-            _ = await (training, food, social, activity, gear, cycles)
+            async let guide: Void = appGuideStore.connect(
+                configuration: configuration, token: token,
+                accountID: user.id, justRegistered: justRegistered
+            )
+            _ = await (training, food, social, activity, gear, cycles, guide)
             guard authentication.token == token, !Task.isCancelled else { return }
             await plannerStore.syncScheduledWorkouts(workoutStore.currentWeekWorkouts)
             guard authentication.token == token, !Task.isCancelled else { return }
@@ -724,6 +734,7 @@ private struct AppRootView: View {
         activityStore.disconnect()
         gearStore.disconnect()
         cycleStore.disconnect()
+        appGuideStore.disconnect()
         foodTrackingStore.reset()
         RemoteImageCache.shared.clear()
     }

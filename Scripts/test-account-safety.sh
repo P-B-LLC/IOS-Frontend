@@ -32,6 +32,9 @@ cp "$repo/Tests/AccountSafety/NavigationRoutingTests.swift" "$test_package/Tests
 cp "$repo/Tests/AccountSafety/ModerationTransportTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/IOS Frontend/IOS Frontend/Models/Weekday.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/Views/Navigation/RepbaseRoute.swift" "$test_package/Sources/AccountSafety/"
+# The welcome guide's rules, which name tabs and so lean on RepbaseRoute.
+cp "$repo/Tests/AccountSafety/AppGuideTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/IOS Frontend/IOS Frontend/Models/AppGuide.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/Services/ModerationConsent.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/Tests/AccountSafety/ModerationConsentTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/Tests/AccountSafety/ReportableErrorTests.swift" "$test_package/Tests/AccountSafetyTests/"

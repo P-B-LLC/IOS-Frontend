@@ -145,6 +145,13 @@ struct SocialFeedView: View {
                 socialHeader(timeOfDay: timeOfDay)
                 modePicker(timeOfDay: timeOfDay)
 
+                // For You only: it explains the one list the server picks.
+                if feedMode == .forYou {
+                    GuideTipCard(.social)
+                        .padding(.horizontal, RepbaseDesign.pageInset)
+                        .padding(.vertical, 8)
+                }
+
                 if feedMode == .discover {
                     searchField(timeOfDay: timeOfDay)
                     // Only while searching. A permanent list of eight

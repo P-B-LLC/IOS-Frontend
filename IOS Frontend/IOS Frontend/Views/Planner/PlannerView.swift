@@ -92,6 +92,7 @@ struct PlannerView: View {
                     )
                 }
 
+                GuideTipCard(.calendar)
                 addButtons(timeOfDay: timeOfDay)
                 rotationStrip(timeOfDay: timeOfDay)
                 daySection(timeOfDay: timeOfDay)
