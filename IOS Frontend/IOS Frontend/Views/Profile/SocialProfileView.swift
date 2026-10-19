@@ -127,14 +127,20 @@ struct SocialProfileView: View {
         ScrollView {
             VStack(spacing: 0) {
                 HStack {
-                    RytivoBrandLockup(size: 24)
-                    Spacer()
-                    Text("Profile")
+                    Text(isCurrentUser ? "Your space" : "Profile")
                         .font(.community(.title3, weight: .bold))
                         .foregroundStyle(timeOfDay.canvasPrimaryText)
+                    Spacer()
+                    if isCurrentUser {
+                        settingsButton(timeOfDay: timeOfDay)
+                    }
                 }
                 profileHeader(timeOfDay: timeOfDay)
                 identityCard(timeOfDay: timeOfDay)
+                if isCurrentUser, let highlight = myHighlights.first {
+                    profileHighlight(highlight)
+                        .padding(.vertical, 16)
+                }
                 sectionPicker(timeOfDay: timeOfDay)
 
                 if selectedSection == .posts {
@@ -244,8 +250,7 @@ struct SocialProfileView: View {
     /// Your own needs neither.
     @ViewBuilder
     private func profileHeader(timeOfDay: HomeTimeOfDay) -> some View {
-        // Nothing for your own profile: the settings button sits on the name's
-        // line now, and there is nothing else a header would have carried.
+        // Own-profile settings live in the top bar; visited profiles need Back.
         if !isCurrentUser {
             HStack(alignment: .center, spacing: 12) {
                 Button { dismiss() } label: {
@@ -287,44 +292,33 @@ struct SocialProfileView: View {
         Button {
             showingSettings = true
         } label: {
-            Image(systemName: "line.3.horizontal")
+            Image(systemName: "gearshape")
                 .font(.community(size: 18, weight: .semibold))
-                .foregroundStyle(timeOfDay.accent)
+                .foregroundStyle(timeOfDay.canvasPrimaryText)
                 .frame(width: 44, height: 44)
-                .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 12))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(timeOfDay.border, lineWidth: 1)
-                }
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Profile and app settings")
     }
 
     private func identityCard(timeOfDay: HomeTimeOfDay) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .center, spacing: 14) {
-                ProfileAvatarView(profile: profile, size: 72, timeOfDay: timeOfDay)
+                ProfileAvatarView(profile: profile, size: 84, timeOfDay: timeOfDay)
 
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(alignment: .center, spacing: 10) {
                         Text(profile.displayName)
-                            .font(.community(.title2, weight: .bold))
+                            .font(.community(.largeTitle, weight: .bold))
                             .foregroundStyle(timeOfDay.canvasPrimaryText)
-                            .lineLimit(1)
+                            .fixedSize(horizontal: false, vertical: true)
 
                         Spacer(minLength: 0)
-
-                        if isCurrentUser {
-                            settingsButton(timeOfDay: timeOfDay)
-                        }
                     }
 
                     Text("@\(profile.username)")
                         .font(.community(.caption))
                         .foregroundStyle(timeOfDay.secondaryText)
-
-                    socialCounts(timeOfDay: timeOfDay)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -332,7 +326,7 @@ struct SocialProfileView: View {
             if !profile.bio.isEmpty {
                 Text(profile.bio)
                     .font(.community(.subheadline))
-                    .foregroundStyle(timeOfDay.secondaryText)
+                    .foregroundStyle(timeOfDay.canvasPrimaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
@@ -341,11 +335,28 @@ struct SocialProfileView: View {
             }
 
             if !identitySummary.isEmpty {
-                Text(identitySummary.uppercased())
-                    .font(.community(size: 10, weight: .bold))
-                    .tracking(0.8)
-                    .foregroundStyle(timeOfDay.accent)
-                    .lineLimit(1)
+                Text(identitySummary)
+                    .font(.community(.footnote, weight: .semibold))
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            socialCounts(timeOfDay: timeOfDay)
+
+            if isCurrentUser {
+                Button { editingProfile = true } label: {
+                    HStack {
+                        Text("Edit profile")
+                        Spacer()
+                        Image(systemName: "arrow.right")
+                    }
+                    .font(.community(.subheadline, weight: .semibold))
+                    .foregroundStyle(timeOfDay.canvasPrimaryText)
+                    .padding(.horizontal, 20)
+                    .frame(minHeight: 48)
+                    .background(timeOfDay.accent.opacity(0.09), in: Capsule())
+                }
+                .buttonStyle(.plain)
             }
 
             if !isCurrentUser {
@@ -368,7 +379,7 @@ struct SocialProfileView: View {
             Text("·").foregroundStyle(timeOfDay.secondaryText)
             profileCount(followingCount, label: "following", color: timeOfDay.canvasPrimaryText)
         }
-        .font(.community(size: 11, weight: .semibold))
+        .font(.community(.footnote, weight: .semibold))
         .lineLimit(1)
         .minimumScaleFactor(0.82)
         .accessibilityElement(children: .combine)
@@ -460,7 +471,7 @@ struct SocialProfileView: View {
     }
 
     private func sectionPicker(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack(spacing: 0) {
+        HStack(spacing: 12) {
             ForEach(ProfileSection.allCases) { section in
                 Button {
                     withAnimation(.easeInOut(duration: 0.18)) {
@@ -468,40 +479,30 @@ struct SocialProfileView: View {
                     }
                 } label: {
                     VStack(spacing: 9) {
-                        Text(section.rawValue.uppercased())
+                        Text(section.rawValue)
                             .font(
                                 .community(
                                     .caption,
                                     weight: selectedSection == section ? .bold : .semibold
                                 )
                             )
-                            .tracking(0.6)
                             .foregroundStyle(
                                 selectedSection == section
-                                    ? timeOfDay.accent
+                                    ? timeOfDay.onPrimaryAction
                                     : timeOfDay.secondaryText
                             )
-
-                        // A rail under every tab, not a bar under one. The bar
-                        // alone said which section was open; it said nothing
-                        // about the other one being openable. Running the line
-                        // under both makes it a track the accent moves along,
-                        // which is the whole hint -- no chrome, no chevron.
-                        Capsule()
-                            .fill(
-                                selectedSection == section
-                                    ? timeOfDay.accent
-                                    : timeOfDay.border
-                            )
-                            .frame(height: 2)
                     }
-                    .padding(.top, 2)
-                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 22)
+                    .frame(minHeight: 44)
+                    .background(selectedSection == section ? timeOfDay.primaryActionSurface : Color.clear, in: Capsule())
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityAddTraits(selectedSection == section ? [.isSelected] : [])
             }
+            Spacer(minLength: 0)
         }
+        .padding(.vertical, 12)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Profile section")
     }
@@ -711,6 +712,32 @@ struct SocialProfileView: View {
             }
         }
         .padding(.vertical, 13)
+    }
+
+    /// Reuses the owner's existing featured lift without fetching or exposing
+    /// additional profile data. The full collection remains in About.
+    private func profileHighlight(_ lift: HighlightLift) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("A moment worth keeping", systemImage: "sparkles")
+                .font(.community(.footnote, weight: .semibold))
+                .foregroundStyle(Color.white.opacity(0.75))
+            Text(lift.label)
+                .font(.community(.title2, weight: .bold))
+                .foregroundStyle(Color.white)
+            if let pounds = lift.displayPounds, let reps = lift.reps {
+                Text("\(pounds) lb × \(reps)")
+                    .font(.community(.headline, weight: .semibold))
+                    .foregroundStyle(Color.white)
+            } else {
+                Text("Not logged yet")
+                    .font(.community(.subheadline))
+                    .foregroundStyle(Color.white.opacity(0.75))
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(20)
+        .background(RepbasePalette.ink, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .accessibilityElement(children: .combine)
     }
 
     private func featuredLiftRow(

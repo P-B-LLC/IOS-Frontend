@@ -2,11 +2,37 @@
 //  GuidedHomeView.swift
 //  IOS Frontend
 //
-//  Home reads as one guided day rather than a stack of equally weighted
-//  widgets. Every value and destination below comes from an existing store.
+//  Connected-flow presentation. Every value and destination below continues
+//  to come from the existing stores and personalization settings.
 //
 
 import SwiftUI
+
+/// Scoped to Home: stronger night-mode contrast without changing other screens
+/// or the approved light appearance. Progress tracks are not card outlines.
+private enum HomeWidgetColors {
+    static var secondaryText: Color {
+        .repbaseDynamic(light: Color.secondary, dark: Color(hex: 0xC7C2BD))
+    }
+
+    static var border: Color {
+        .repbaseDynamic(
+            light: RepbasePalette.espresso.opacity(0.12),
+            dark: Color(hex: 0x605B56)
+        )
+    }
+
+    static var progressTrack: Color {
+        .repbaseDynamic(
+            light: RepbasePalette.espresso.opacity(0.12),
+            dark: Color(hex: 0x77716B)
+        )
+    }
+
+    static var fatProgress: Color {
+        .repbaseDynamic(light: RepbasePalette.cocoa, dark: Color(hex: 0xE5C5AC))
+    }
+}
 
 /// What home leads with.
 ///
@@ -36,14 +62,8 @@ struct GuidedHomeView: View {
             let timeOfDay = HomeTimeOfDay.current
 
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 14) {
-                    GuidedHomeHeader(
-                        date: context.date,
-                        // Steps become a chapter of their own when movement
-                        // leads, and two readings of the same number on one
-                        // page is one too many.
-                        showsSteps: emphasis != .movement
-                    )
+                LazyVStack(alignment: .leading, spacing: 12) {
+                    GuidedHomeHeader(date: context.date)
 
                     GuidedHomeWeekStrip(
                         today: context.date,
@@ -58,7 +78,7 @@ struct GuidedHomeView: View {
 
                     GuidedHomeErrors()
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 16)
                 .padding(.top, 12)
                 .padding(.bottom, RepbaseDesign.bottomBarClearance)
             }
@@ -93,73 +113,56 @@ struct GuidedHomeView: View {
 
 private struct GuidedHomeHeader: View {
     @Environment(AuthenticationStore.self) private var authentication
-    @Environment(ActivityStore.self) private var activity
+    @Environment(SocialProfileStore.self) private var profiles
     @Environment(\.homeTimeOfDay) private var timeOfDay
+    @Environment(\.repbaseNavigate) private var navigate
 
     let date: Date
-    var showsSteps = true
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                RytivoBrandLockup(size: 24)
-                Spacer()
-                Text("Home")
-                    .font(.community(.title3, weight: .bold))
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("\(greeting), \(firstName)")
+                    .font(.community(.footnote, weight: .semibold))
+                    .foregroundStyle(HomeWidgetColors.secondaryText)
+                Text("Make today yours.")
+                    .font(.community(size: 24, weight: .bold))
                     .foregroundStyle(timeOfDay.canvasPrimaryText)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-
-            // Two columns sharing one line is what tore the greeting apart at
-            // the accessibility sizes: the name had about a third of the
-            // width, so "Aaron" came out "Aaro / n" and the steps caption
-            // beside it read "NOT REPOR / TED". Stacked, each gets the width
-            // of the screen and neither has to break a word.
-            AdaptiveRow(spacing: 16) {
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(greeting.uppercased())
-                        .font(.community(.caption2, weight: .bold))
-                        .tracking(0.7)
-                        .foregroundStyle(timeOfDay.accent)
-
-                    Text(firstName)
-                        .font(.community(.largeTitle, weight: .bold))
-                        .tracking(-0.6)
-                        .foregroundStyle(timeOfDay.canvasPrimaryText)
-
-                    Text(date.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))
-                        .font(.community(.footnote))
-                        .foregroundStyle(timeOfDay.canvasSecondaryText)
-                }
-            } trailing: {
-                if showsSteps {
-                    VStack(alignment: .trailing, spacing: 4) {
-                        Text(stepCount)
-                            .font(.community(.title2, weight: .bold))
-                            .foregroundStyle(timeOfDay.canvasPrimaryText)
-
-                        Text(stepCaption)
-                            .font(.community(.caption2, weight: .bold))
-                            .tracking(0.35)
-                            .foregroundStyle(timeOfDay.canvasSecondaryText)
-
-                        GeometryReader { proxy in
-                            ZStack(alignment: .leading) {
-                                Capsule()
-                                    .fill(timeOfDay.canvasBorder)
-                                Capsule()
-                                    .fill(timeOfDay.accent)
-                                    .frame(width: proxy.size.width * stepProgress)
-                            }
+            Spacer(minLength: 0)
+            Button { navigate(.account) } label: {
+                Group {
+                    if let data = profiles.profile?.profileImageData,
+                       let image = UIImage(data: data) {
+                        Image(uiImage: image).resizable().scaledToFill()
+                    } else if let photo = profiles.profile?.profilePhotoURL,
+                              let url = URL(string: photo) {
+                        RemoteImage(url: url, maxPixel: 144) {
+                            initialsAvatar
+                        } failure: {
+                            initialsAvatar
                         }
-                        .frame(width: 88, height: 3)
+                        .scaledToFill()
+                    } else {
+                        initialsAvatar
                     }
-                    .accessibilityElement(children: .combine)
-                    .accessibilityLabel(stepAccessibilityLabel)
                 }
+                .frame(width: 48, height: 48)
+                .clipShape(Circle())
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Open your profile")
         }
-        .frame(minHeight: 116)
+        .frame(minHeight: 48)
+    }
+
+    private var initialsAvatar: some View {
+        Text(profiles.profile?.initials ?? String(firstName.prefix(1)))
+            .font(.community(.footnote, weight: .semibold))
+            .foregroundStyle(Color.white)
+            .frame(width: 48, height: 48)
+            .background(RepbasePalette.ink, in: Circle())
     }
 
     private var firstName: String {
@@ -176,24 +179,6 @@ private struct GuidedHomeHeader: View {
         }
     }
 
-    private var stepCount: String {
-        activity.stepsToday?.formatted() ?? "—"
-    }
-
-    private var stepProgress: Double {
-        guard let steps = activity.stepsToday, activity.stepGoal > 0 else { return 0 }
-        return min(max(Double(steps) / Double(activity.stepGoal), 0), 1)
-    }
-
-    private var stepCaption: String {
-        guard activity.stepsToday != nil else { return "STEPS · NOT REPORTED" }
-        return "STEPS · \(stepProgress.formatted(.percent.precision(.fractionLength(0))))"
-    }
-
-    private var stepAccessibilityLabel: String {
-        guard let steps = activity.stepsToday else { return "Steps have not been reported today" }
-        return "\(steps) steps today, \(stepProgress.formatted(.percent.precision(.fractionLength(0)))) of the daily goal"
-    }
 }
 
 // MARK: - Week selector
@@ -216,7 +201,7 @@ private struct GuidedHomeWeekStrip: View {
                     planner.select(day)
                 } label: {
                     VStack(spacing: 2) {
-                        Text(day.formatted(.dateTime.weekday(.narrow)).uppercased())
+                        Text(day.formatted(.dateTime.weekday(.abbreviated)))
                             .font(.community(.caption2, weight: .bold))
                         Text(day.formatted(.dateTime.day()))
                             .font(.community(.subheadline, weight: .bold))
@@ -226,9 +211,9 @@ private struct GuidedHomeWeekStrip: View {
                             .frame(width: 3, height: 3)
                     }
                     .foregroundStyle(isSelected(day) ? Color.white : timeOfDay.canvasPrimaryText)
-                    .frame(maxWidth: .infinity, minHeight: 48)
+                    .frame(maxWidth: .infinity, minHeight: 58)
                     .background {
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        Capsule()
                             .fill(isSelected(day) ? timeOfDay.accent : Color.clear)
                     }
                     .contentShape(Rectangle())
@@ -244,16 +229,6 @@ private struct GuidedHomeWeekStrip: View {
         // the label on each button, so nothing is lost by holding the glyphs
         // to a size that fits a seventh of the screen.
         .typeSizeCeiling()
-        .padding(5)
-        .background(
-            timeOfDay.surfaceRaised,
-            in: RoundedRectangle(cornerRadius: 18, style: .continuous)
-        )
-        .overlay {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(timeOfDay.border, lineWidth: 1)
-        }
-        .shadow(color: timeOfDay.shadow.opacity(0.55), radius: 14, x: 0, y: 5)
     }
 
     private var weekDates: [Date] {
@@ -287,6 +262,9 @@ private struct GuidedDayFlow: View {
     @Environment(PlannerStore.self) private var planner
     @Environment(FoodTrackingStore.self) private var food
     @Environment(CycleStore.self) private var cycles
+    @Environment(ActivityStore.self) private var activity
+    @Environment(\.dynamicTypeSize) private var typeSize
+    @ScaledMetric(relativeTo: .body) private var widgetHeight = 184
     @Environment(\.homeTimeOfDay) private var timeOfDay
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// Sends the app to another tab rather than pushing that tab's page onto
@@ -335,22 +313,31 @@ private struct GuidedDayFlow: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 0) {
-                flowHeader
                 upNextSection
             }
-            VStack(alignment: .leading, spacing: 4) {
-                ForEach(Array(chapters.enumerated()), id: \.element) { index, chapter in
-                    chapterView(chapter, number: index + 1)
+            .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .strokeBorder(HomeWidgetColors.border, lineWidth: 1)
+            }
+            if emphasis == .nutrition { fuelSection(number: 1) }
+            movementAndTraining
+            if emphasis != .nutrition { fuelSection(number: 2) }
+            dayAgenda
+            DisclosureGroup("More from your day") {
+                finishSection(number: 3)
+                if emphasis == .movement { movementSection(number: 1) }
+                momentumSection
+                if cycles.activeCycle == nil, workouts.hasAnythingScheduled {
+                    Button("Clear my schedule", role: .destructive) { isConfirmingClear = true }
+                        .disabled(workouts.isSaving)
+                        .frame(minHeight: 44)
                 }
             }
-            .overlay(alignment: .leading) {
-                GuidedHomeFlowRail(progress: flowRailProgress)
-                    .padding(.vertical, 8)
-                    .offset(x: -10)
-            }
-            momentumSection
+            .font(.community(.footnote, weight: .semibold))
+            .tint(HomeWidgetColors.secondaryText)
         }
         .onAppear {
             isHomeVisible = true
@@ -390,12 +377,16 @@ private struct GuidedDayFlow: View {
         }
     }
 
-    /// "01 · TRAINING", but the number follows where the chapter landed.
-    ///
-    /// Numbering them in place is the point: a page that opens on "02 · FUEL"
-    /// reads as though something is missing above it.
+    /// Personalization chooses the order; the labels remain conversational.
     private func stageNumber(_ number: Int, _ chapter: Chapter) -> String {
-        String(format: "%02d · %@", number, chapter.rawValue)
+        // Personalization still chooses the order; avoid making it read like
+        // numbered report sections.
+        switch chapter {
+        case .movement: "Your movement"
+        case .training: "A little stronger today"
+        case .fuel: "Fuel your day"
+        case .finish: "Still to do"
+        }
     }
 
     private func movementSection(number: Int) -> some View {
@@ -425,7 +416,7 @@ private struct GuidedDayFlow: View {
             Spacer()
             Text(selectedDate.formatted(.dateTime.weekday(.abbreviated).day()))
                 .font(.community(.caption, weight: .bold))
-                .foregroundStyle(timeOfDay.secondaryText)
+                .foregroundStyle(HomeWidgetColors.secondaryText)
                 .textCase(.uppercase)
         }
         .padding(.horizontal, 16)
@@ -433,121 +424,127 @@ private struct GuidedDayFlow: View {
         .padding(.bottom, 8)
     }
 
-    @ViewBuilder
-    private var upNextSection
-: some View {
-        if let entry = nextEntry {
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(nextEntryEyebrow(entry))
-                        .font(.community(.caption2, weight: .bold))
-                        .tracking(0.35)
-                        .foregroundStyle(timeOfDay.accent)
+    private var upNextSection: some View {
+        Button { navigate(.planner) } label: {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text("Next up")
+                    Spacer()
+                    Text(remainingTasks.isEmpty ? "Calendar →" : "\(remainingTasks.count) tasks →")
+                }
+                .font(.community(.footnote, weight: .semibold))
+                .foregroundStyle(HomeWidgetColors.secondaryText)
+                if let entry = nextEntry {
                     Text(entry.title)
-                        .font(.community(.headline))
-                        .foregroundStyle(timeOfDay.primaryText)
-                        .lineLimit(1)
-                }
-                Spacer(minLength: 8)
-                Button {
-                    navigate(.planner)
-                } label: {
-                    RepbaseTonalActionLabel(
-                        title: "Schedule",
-                        systemImage: "calendar.badge.plus"
-                    )
-                }
-                .buttonStyle(RepbaseTonalButtonStyle(tone: .warm))
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-        } else {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("UP NEXT")
-                        .font(.community(.caption2, weight: .bold))
-                        .foregroundStyle(timeOfDay.accent)
+                        .font(.community(.headline, weight: .bold))
+                        .foregroundStyle(timeOfDay.canvasPrimaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("\(entry.displayTime ?? "No time set") · \(entry.priority.title) priority")
+                        .font(.community(.footnote))
+                        .foregroundStyle(HomeWidgetColors.secondaryText)
+                } else {
                     Text("Your schedule is clear")
-                        .font(.community(.headline))
-                        .foregroundStyle(timeOfDay.primaryText)
+                        .font(.community(.headline, weight: .bold))
+                        .foregroundStyle(timeOfDay.canvasPrimaryText)
                 }
-                Spacer()
-                Button {
-                    navigate(.planner)
-                } label: {
-                    RepbaseTonalActionLabel(
-                        title: "Plan",
-                        systemImage: "calendar.badge.plus"
-                    )
+                if let following = planner.entries(on: selectedDate)
+                    .filter({ !$0.isComplete || !$0.isCompletable })
+                    .sorted(by: { ($0.time ?? "99:99:99") < ($1.time ?? "99:99:99") })
+                    .dropFirst().first {
+                    Text("Then: \(following.title) · \(following.displayTime ?? "No time set")")
+                        .font(.community(.caption2, weight: .semibold))
+                        .foregroundStyle(HomeWidgetColors.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                .buttonStyle(RepbaseTonalButtonStyle(tone: .warm))
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(16)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint("Opens your calendar")
+    }
+
+    @ViewBuilder
+    private var movementAndTraining: some View {
+        if typeSize.isAccessibilitySize {
+            VStack(spacing: 12) {
+                stepsCard
+                trainingSection(number: 1)
+            }
+        } else {
+            HStack(alignment: .top, spacing: 12) {
+                stepsCard.frame(width: 146)
+                trainingSection(number: 1)
+            }
+            .fixedSize(horizontal: false, vertical: true)
         }
     }
 
+    private var stepsCard: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Your steps")
+                .font(.community(.footnote, weight: .semibold))
+                .foregroundStyle(HomeWidgetColors.secondaryText)
+            ZStack {
+                Circle().stroke(HomeWidgetColors.progressTrack, lineWidth: 6)
+                Circle()
+                    .trim(from: 0, to: activity.stepGoal > 0
+                          ? min(max(Double(activity.stepsToday ?? 0) / Double(activity.stepGoal), 0), 1) : 0)
+                    .stroke(RepbasePalette.sage, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+            }
+            .frame(width: 52, height: 52)
+            .padding(7)
+            .accessibilityHidden(true)
+            Text(activity.stepsToday?.formatted() ?? "—")
+                .font(.community(size: 24, weight: .bold))
+            Text(activity.stepsToday == nil ? "Not reported today" : "of \(activity.stepGoal.formatted()) steps")
+                .font(.community(.caption2, weight: .semibold))
+                .foregroundStyle(HomeWidgetColors.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .frame(minHeight: widgetHeight, maxHeight: .infinity, alignment: .topLeading)
+        .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 28))
+        .overlay { RoundedRectangle(cornerRadius: 28).strokeBorder(HomeWidgetColors.border, lineWidth: 1) }
+        .accessibilityElement(children: .combine)
+    }
+
     private func trainingSection(number: Int) -> some View {
-        VStack(alignment: .leading, spacing: 9) {
-            HStack {
-                stageLabel(stageNumber(number, .training), color: timeOfDay.accent)
-                Spacer()
-                Text(workout?.type.title.uppercased() ?? "WORKOUT")
-                    .font(.community(.caption2, weight: .bold))
-                    .foregroundStyle(timeOfDay.secondaryText)
+        VStack(alignment: .leading, spacing: 8) {
+            Text("A little stronger today")
+                .font(.community(.caption2, weight: .semibold))
+                .foregroundStyle(Color.white)
+            Text(workout?.name ?? "Plan your workout")
+                .font(.community(size: 24, weight: .bold))
+                .foregroundStyle(Color.white)
+                .fixedSize(horizontal: false, vertical: true)
+            Text(workoutMetadata)
+                .font(.community(.footnote))
+                .foregroundStyle(Color.white.opacity(0.85))
+                .fixedSize(horizontal: false, vertical: true)
+            Button { navigate(workoutRoute) } label: {
+                Text("\(workoutActionTitle) workout →")
+                    .font(.community(.footnote, weight: .semibold))
+                    .foregroundStyle(RepbasePalette.ink)
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .background(Color.white, in: RoundedRectangle(cornerRadius: 16))
             }
-
-            HStack(alignment: .center, spacing: 12) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(workout?.name ?? "Plan your workout")
-                        .font(.community(.title2, weight: .bold))
-                        .foregroundStyle(timeOfDay.primaryText)
-                        .lineLimit(1)
-                    Text(workoutMetadata)
-                        .font(.community(.footnote))
-                        .foregroundStyle(timeOfDay.secondaryText)
-                }
-                Spacer(minLength: 8)
-
-                Button {
-                    navigate(workoutRoute)
-                } label: {
-                    RepbaseTonalActionLabel(
-                        title: workoutActionTitle,
-                        systemImage: workoutActionSymbol
-                    )
-                }
-                .buttonStyle(RepbaseTonalButtonStyle(tone: isTrained ? .sage : .primary))
-            }
-
-            Text(workoutDetail)
-                .font(.community(.caption))
-                .foregroundStyle(timeOfDay.secondaryText)
-                .lineLimit(1)
-
-            // Only without a rotation. With one running the rotation is what
-            // fills the calendar, so clearing would delete days it writes
-            // straight back -- the server refuses it for that reason, and a
-            // button that cannot work is worse than no button.
+            .buttonStyle(.plain)
+            .accessibilityHint(workoutDetail)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .frame(minHeight: widgetHeight, maxHeight: .infinity, alignment: .topLeading)
+        .background(trainingSurface, in: RoundedRectangle(cornerRadius: 28))
+        .contextMenu {
             if cycles.activeCycle == nil, workouts.hasAnythingScheduled {
-                Button {
-                    isConfirmingClear = true
-                } label: {
-                    Label("Clear my schedule", systemImage: "calendar.badge.minus")
-                        .font(.community(.caption, weight: .semibold))
-                        .foregroundStyle(timeOfDay.secondaryText)
-                }
-                .buttonStyle(.plain)
-                .disabled(workouts.isSaving)
-                .padding(.top, 3)
+                Button("Clear my schedule", role: .destructive) { isConfirmingClear = true }
+                    .disabled(workouts.isSaving)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 13)
-        .background(
-            trainingSurface,
-            in: RoundedRectangle(cornerRadius: 18, style: .continuous)
-        )
         // Asked about, unlike the destructive controls here that act on a tap:
         // this empties weeks of planning at once and cannot be undone.
         .confirmationDialog(
@@ -569,63 +566,58 @@ private struct GuidedDayFlow: View {
         let goals = food.goals
         let mealCount = displayedMealCount ?? food.loggedMealCount(on: selectedDate)
 
-        return VStack(alignment: .leading, spacing: 9) {
+        let calorieProgress = goals.calories > 0
+            ? min(max(total.calories.nutritionDouble / goals.calories.nutritionDouble, 0), 1) : 0
+
+        return VStack(alignment: .leading, spacing: 10) {
             HStack {
-                stageLabel(stageNumber(number, .fuel), color: fuelAccent)
+                Text("Fuel your day")
+                    .font(.community(.footnote, weight: .semibold))
+                    .foregroundStyle(HomeWidgetColors.secondaryText)
                 Spacer()
-                Button {
-                    navigate(.food)
-                } label: {
-                    RepbaseTonalActionLabel(
-                        title: "Log food",
-                        systemImage: "fork.knife"
-                    )
+                Button { navigate(.food) } label: {
+                    Text("Log food +")
+                        .font(.community(.footnote, weight: .semibold))
+                        .foregroundStyle(HomeWidgetColors.secondaryText)
+                        .frame(minHeight: 44)
                 }
-                .buttonStyle(RepbaseTonalButtonStyle(tone: .sage))
+                .buttonStyle(.plain)
             }
-
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text(total.calories.nutritionText)
-                    .font(.community(.title2, weight: .bold))
-                    .foregroundStyle(timeOfDay.primaryText)
-                    .contentTransition(.numericText(value: total.calories.nutritionDouble))
-                Text("of \(goals.calories.nutritionText) kcal")
-                    .font(.community(.footnote))
-                    .foregroundStyle(timeOfDay.secondaryText)
-
-                Spacer(minLength: 8)
-
-                HStack(spacing: 5) {
-                    Circle()
-                        .fill(foodWarmAccent)
-                        .frame(width: 5, height: 5)
-                    Text(mealCount == 0 ? "No meals yet" : "\(mealCount) meal\(mealCount == 1 ? "" : "s") logged")
-                        .font(.community(size: 9, weight: .semibold))
-                        .foregroundStyle(timeOfDay.secondaryText)
-                        .contentTransition(.numericText(value: Double(mealCount)))
+            Text("\(total.calories.nutritionText) / \(goals.calories.nutritionText) kcal")
+                .font(.community(size: 24, weight: .bold))
+                .foregroundStyle(timeOfDay.primaryText)
+                .contentTransition(.numericText(value: total.calories.nutritionDouble))
+                .fixedSize(horizontal: false, vertical: true)
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(HomeWidgetColors.progressTrack)
+                    Capsule().fill(RepbasePalette.sage)
+                        .frame(width: proxy.size.width * calorieProgress)
                 }
             }
+            .frame(height: 5)
+            .accessibilityHidden(true)
 
             HStack(spacing: 10) {
                 GuidedMacroMetric(
-                    label: "PROTEIN",
+                    label: "Protein",
                     value: total.proteinGrams,
                     goal: goals.proteinGrams,
-                    color: Color(hex: 0xF08B67),
+                    color: RepbasePalette.caramel,
                     animationDelay: 0.04
                 )
                 GuidedMacroMetric(
-                    label: "CARBS",
+                    label: "Carbs",
                     value: total.carbohydrateGrams,
                     goal: goals.carbohydrateGrams,
-                    color: Color(hex: 0x5FB8AC),
+                    color: RepbasePalette.sage,
                     animationDelay: 0.12
                 )
                 GuidedMacroMetric(
-                    label: "FAT",
+                    label: "Fat",
                     value: total.fatGrams,
                     goal: goals.fatGrams,
-                    color: Color(hex: 0xB879A7),
+                    color: HomeWidgetColors.fatProgress,
                     animationDelay: 0.20
                 )
             }
@@ -656,14 +648,14 @@ private struct GuidedDayFlow: View {
                         : stageNumber(number, .finish),
                     color: everythingLeftIsPastDue
                         ? Color(hex: 0xD8557A)
-                        : timeOfDay.secondaryText
+                        : HomeWidgetColors.secondaryText
                 )
                 Text(taskSummary)
                     .font(.community(.headline))
                     .foregroundStyle(timeOfDay.primaryText)
                 Text(taskDetail)
                     .font(.community(.caption))
-                    .foregroundStyle(timeOfDay.secondaryText)
+                    .foregroundStyle(HomeWidgetColors.secondaryText)
                     .lineLimit(1)
             }
             Spacer(minLength: 8)
@@ -679,6 +671,49 @@ private struct GuidedDayFlow: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
+    }
+
+    /// A read-only view of the same selected-day entries used by the planner.
+    /// No truncation: all-day and overlapping entries remain visible.
+    private var dayAgenda: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Your day")
+                    .font(.community(.headline, weight: .bold))
+                Spacer()
+                Button { navigate(.planner) } label: {
+                    Label("Calendar", systemImage: "arrow.right")
+                        .font(.community(.footnote, weight: .semibold))
+                        .frame(minHeight: 44)
+                }
+                .buttonStyle(.plain)
+            }
+            Text("\(selectedDate.formatted(.dateTime.weekday(.wide).month(.abbreviated).day())) · \(planner.entries(on: selectedDate).count) entries")
+                .font(.community(.footnote))
+                .foregroundStyle(HomeWidgetColors.secondaryText)
+            ForEach(planner.entries(on: selectedDate)) { entry in
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("\(entry.displayTime ?? "No time set") · \(entry.title)")
+                        .font(.community(.footnote, weight: .semibold))
+                    Text(entry.category.title)
+                        .font(.community(.caption))
+                        .foregroundStyle(HomeWidgetColors.secondaryText)
+                }
+                .accessibilityElement(children: .combine)
+            }
+            if planner.entries(on: selectedDate).isEmpty {
+                Text("Nothing scheduled for this day.")
+                    .font(.community(.subheadline))
+                    .foregroundStyle(HomeWidgetColors.secondaryText)
+            }
+        }
+        .foregroundStyle(timeOfDay.canvasPrimaryText)
+        .padding(16)
+        .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .strokeBorder(HomeWidgetColors.border, lineWidth: 1)
+        }
     }
 
     private var momentumSection: some View {
@@ -712,9 +747,9 @@ private struct GuidedDayFlow: View {
                 .font(.community(.title3, weight: .bold))
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
             Text(label)
-                .font(.community(size: 8, weight: .bold))
+                .font(.community(.caption2, weight: .bold))
                 .tracking(0.25)
-                .foregroundStyle(timeOfDay.canvasSecondaryText)
+                .foregroundStyle(HomeWidgetColors.secondaryText)
         }
         .frame(maxWidth: .infinity, minHeight: 52)
         .accessibilityElement(children: .combine)
@@ -722,7 +757,7 @@ private struct GuidedDayFlow: View {
 
     private var momentumDivider: some View {
         Rectangle()
-            .fill(timeOfDay.canvasBorder)
+            .fill(HomeWidgetColors.border)
             .frame(width: 1, height: 40)
     }
 
@@ -914,10 +949,7 @@ private struct GuidedDayFlow: View {
     }
 
     private var trainingSurface: Color {
-        .repbaseDynamic(
-            light: Color(hex: 0xE9E7DB),
-            dark: Color(hex: 0x24251D)
-        )
+        RepbasePalette.ink
     }
 
     private var momentumSurface: Color {
@@ -981,7 +1013,7 @@ private struct GuidedHomeFlowRail: View {
 
             ZStack(alignment: .top) {
                 Capsule()
-                    .fill(timeOfDay.canvasBorder.opacity(0.72))
+                    .fill(HomeWidgetColors.border.opacity(0.72))
 
                 Capsule()
                     .fill(
@@ -1031,9 +1063,9 @@ private struct GuidedMacroMetric: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label)
-                .font(.community(size: 8, weight: .bold))
-                .foregroundStyle(timeOfDay.secondaryText)
-            Text("\(value.nutritionText) / \(goal.nutritionText)g")
+                .font(.community(.caption2, weight: .bold))
+                .foregroundStyle(HomeWidgetColors.secondaryText)
+            Text("\(value.nutritionText) / \(goal.nutritionText) g")
                 .font(.community(.caption, weight: .semibold))
                 .foregroundStyle(timeOfDay.primaryText)
                 .lineLimit(1)
@@ -1041,7 +1073,7 @@ private struct GuidedMacroMetric: View {
 
             GeometryReader { proxy in
                 ZStack(alignment: .leading) {
-                    Capsule().fill(timeOfDay.canvasBorder)
+                    Capsule().fill(HomeWidgetColors.progressTrack)
                     Capsule()
                         .fill(color)
                         .frame(width: proxy.size.width * progress)
@@ -1074,7 +1106,7 @@ private struct GuidedFoodLivingSurface: View {
     let isPulsing: Bool
 
     var body: some View {
-        RoundedRectangle(cornerRadius: 18, style: .continuous)
+        RoundedRectangle(cornerRadius: 28, style: .continuous)
             .fill(
                 LinearGradient(
                     colors: [surfaceStart, surfaceEnd],
@@ -1096,12 +1128,11 @@ private struct GuidedFoodLivingSurface: View {
                     .offset(x: 54, y: -58)
                     .scaleEffect(isPulsing && !reduceMotion ? 1.14 : 1)
             }
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
                     .strokeBorder(borderColor, lineWidth: 1)
             }
-            .shadow(color: shadowColor, radius: 12, x: 0, y: 6)
             .animation(.easeInOut(duration: 0.68), value: stage)
             .animation(.easeOut(duration: 0.72), value: isPulsing)
     }
@@ -1115,10 +1146,7 @@ private struct GuidedFoodLivingSurface: View {
                 Color(hex: 0x19231F), Color(hex: 0x1A2722)
             ][stage]
         }
-        return [
-            Color(hex: 0xE7EEE9), Color(hex: 0xE3EEE7),
-            Color(hex: 0xDFEBE5), Color(hex: 0xDCE9E2)
-        ][stage]
+        return .white
     }
 
     private var surfaceEnd: Color {
@@ -1128,10 +1156,7 @@ private struct GuidedFoodLivingSurface: View {
                 Color(hex: 0x29231D), Color(hex: 0x30261E)
             ][stage]
         }
-        return [
-            Color(hex: 0xEEE8DF), Color(hex: 0xF0E6DC),
-            Color(hex: 0xEFE1D4), Color(hex: 0xEDDACB)
-        ][stage]
+        return .white
     }
 
     private var warmHalo: Color {
@@ -1143,7 +1168,7 @@ private struct GuidedFoodLivingSurface: View {
     }
 
     private var borderColor: Color {
-        colorScheme == .dark ? Color.white.opacity(0.04) : Color.white.opacity(0.68)
+        colorScheme == .dark ? Color(hex: 0x605B56) : RepbasePalette.ink.opacity(0.08)
     }
 
     private var shadowColor: Color {

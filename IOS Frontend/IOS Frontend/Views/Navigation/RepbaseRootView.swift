@@ -233,25 +233,23 @@ struct RepbaseBottomNavigation: View {
             }
         }
         .padding(.horizontal, 8)
-        .padding(.vertical, isMinimized ? 4 : 5)
-        .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .padding(.vertical, isMinimized ? 4 : 8)
+        .background(RepbasePalette.ink, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
                 .strokeBorder(timeOfDay.border, lineWidth: 1)
         }
         .shadow(color: timeOfDay.shadow, radius: 9, x: 0, y: 5)
         .animation(.easeOut(duration: 0.18), value: tab)
     }
 
-    /// Icons only. The names are still on the button as an accessibility
-    /// label, so VoiceOver reads "Calendar" even though nothing on screen
-    /// says it — dropping the text from the design should not drop it from
-    /// the app.
+    /// Keep the existing tab destinations and scroll behavior; only the
+    /// chrome changes to the connected-flow pill treatment.
     private func itemLabel(_ item: RepbaseTab, isSelected: Bool) -> some View {
         VStack(spacing: isMinimized ? 3 : 4) {
             Group {
                 if item == .training {
-                    Image(systemName: "dumbbell.fill")
+                    Image(systemName: "dumbbell")
                         .font(.system(size: isMinimized ? 18 : 20, weight: .medium))
                         .symbolRenderingMode(.monochrome)
                 } else {
@@ -260,27 +258,20 @@ struct RepbaseBottomNavigation: View {
                         .scaledToFit()
                 }
             }
-                .foregroundStyle(isSelected ? timeOfDay.accent : timeOfDay.secondaryText)
+                .foregroundStyle(Color.white)
                 .frame(width: isMinimized ? 21 : 24, height: isMinimized ? 21 : 24)
 
-            // Kept, and now doing more work: with the labels gone this and the
-            // colour are the only things saying which tab you are on.
-            Capsule()
-                .fill(timeOfDay.accent)
-                .frame(width: 14, height: 2)
-                .opacity(isSelected ? 1 : 0)
+            if !isMinimized {
+                Text(item.title)
+                    .font(.community(.caption2, weight: .bold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+            }
         }
-        .foregroundStyle(isSelected ? timeOfDay.accent : timeOfDay.secondaryText)
-        // 38 plus the bar's own padding puts the tap target back above Apple's
-        // 44pt minimum, which the 34 that briefly replaced it was under.
-        // Between the original height and the too-slim one.
-        //
-        // Minimized trades a little of that back: 32 and 4 is 40, under the
-        // guideline by four points. Each item is still about seventy wide, the
-        // state only lasts while a finger is actively dragging the page away
-        // from the bar, and any scroll the other way returns it. A bar that
-        // stood down by becoming untappable would be the worse trade.
-        .frame(maxWidth: .infinity, minHeight: isMinimized ? 32 : 38)
+        .foregroundStyle(Color.white)
+        // Keep every destination tappable even while scroll chrome is minimized.
+        .frame(maxWidth: .infinity, minHeight: isMinimized ? 44 : 52)
+        .background(isSelected ? timeOfDay.accent : Color.clear, in: Capsule())
         .contentShape(Rectangle())
     }
 
