@@ -8,6 +8,32 @@
 
 import SwiftUI
 
+/// Scoped to Home: stronger night-mode contrast without changing other screens
+/// or the approved light appearance. Progress tracks are not card outlines.
+private enum HomeWidgetColors {
+    static var secondaryText: Color {
+        .repbaseDynamic(light: Color.secondary, dark: Color(hex: 0xC7C2BD))
+    }
+
+    static var border: Color {
+        .repbaseDynamic(
+            light: RepbasePalette.espresso.opacity(0.12),
+            dark: Color(hex: 0x605B56)
+        )
+    }
+
+    static var progressTrack: Color {
+        .repbaseDynamic(
+            light: RepbasePalette.espresso.opacity(0.12),
+            dark: Color(hex: 0x77716B)
+        )
+    }
+
+    static var fatProgress: Color {
+        .repbaseDynamic(light: RepbasePalette.cocoa, dark: Color(hex: 0xE5C5AC))
+    }
+}
+
 /// What home leads with.
 ///
 /// The personalization flow asks this outright and calls it "home screen
@@ -98,7 +124,7 @@ private struct GuidedHomeHeader: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("\(greeting), \(firstName)")
                     .font(.community(.footnote, weight: .semibold))
-                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+                    .foregroundStyle(HomeWidgetColors.secondaryText)
                 Text("Make today yours.")
                     .font(.community(size: 24, weight: .bold))
                     .foregroundStyle(timeOfDay.canvasPrimaryText)
@@ -294,7 +320,7 @@ private struct GuidedDayFlow: View {
             .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .strokeBorder(timeOfDay.canvasBorder, lineWidth: 1)
+                    .strokeBorder(HomeWidgetColors.border, lineWidth: 1)
             }
             if emphasis == .nutrition { fuelSection(number: 1) }
             movementAndTraining
@@ -311,7 +337,7 @@ private struct GuidedDayFlow: View {
                 }
             }
             .font(.community(.footnote, weight: .semibold))
-            .tint(timeOfDay.canvasSecondaryText)
+            .tint(HomeWidgetColors.secondaryText)
         }
         .onAppear {
             isHomeVisible = true
@@ -390,7 +416,7 @@ private struct GuidedDayFlow: View {
             Spacer()
             Text(selectedDate.formatted(.dateTime.weekday(.abbreviated).day()))
                 .font(.community(.caption, weight: .bold))
-                .foregroundStyle(timeOfDay.secondaryText)
+                .foregroundStyle(HomeWidgetColors.secondaryText)
                 .textCase(.uppercase)
         }
         .padding(.horizontal, 16)
@@ -407,7 +433,7 @@ private struct GuidedDayFlow: View {
                     Text(remainingTasks.isEmpty ? "Calendar →" : "\(remainingTasks.count) tasks →")
                 }
                 .font(.community(.footnote, weight: .semibold))
-                .foregroundStyle(timeOfDay.canvasSecondaryText)
+                .foregroundStyle(HomeWidgetColors.secondaryText)
                 if let entry = nextEntry {
                     Text(entry.title)
                         .font(.community(.headline, weight: .bold))
@@ -415,7 +441,7 @@ private struct GuidedDayFlow: View {
                         .fixedSize(horizontal: false, vertical: true)
                     Text("\(entry.displayTime ?? "No time set") · \(entry.priority.title) priority")
                         .font(.community(.footnote))
-                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                        .foregroundStyle(HomeWidgetColors.secondaryText)
                 } else {
                     Text("Your schedule is clear")
                         .font(.community(.headline, weight: .bold))
@@ -427,7 +453,7 @@ private struct GuidedDayFlow: View {
                     .dropFirst().first {
                     Text("Then: \(following.title) · \(following.displayTime ?? "No time set")")
                         .font(.community(.caption2, weight: .semibold))
-                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                        .foregroundStyle(HomeWidgetColors.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -459,9 +485,9 @@ private struct GuidedDayFlow: View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Your steps")
                 .font(.community(.footnote, weight: .semibold))
-                .foregroundStyle(timeOfDay.canvasSecondaryText)
+                .foregroundStyle(HomeWidgetColors.secondaryText)
             ZStack {
-                Circle().stroke(timeOfDay.canvasBorder, lineWidth: 6)
+                Circle().stroke(HomeWidgetColors.progressTrack, lineWidth: 6)
                 Circle()
                     .trim(from: 0, to: activity.stepGoal > 0
                           ? min(max(Double(activity.stepsToday ?? 0) / Double(activity.stepGoal), 0), 1) : 0)
@@ -475,14 +501,14 @@ private struct GuidedDayFlow: View {
                 .font(.community(size: 24, weight: .bold))
             Text(activity.stepsToday == nil ? "Not reported today" : "of \(activity.stepGoal.formatted()) steps")
                 .font(.community(.caption2, weight: .semibold))
-                .foregroundStyle(timeOfDay.canvasSecondaryText)
+                .foregroundStyle(HomeWidgetColors.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
         .frame(minHeight: widgetHeight, maxHeight: .infinity, alignment: .topLeading)
         .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 28))
-        .overlay { RoundedRectangle(cornerRadius: 28).strokeBorder(timeOfDay.canvasBorder, lineWidth: 1) }
+        .overlay { RoundedRectangle(cornerRadius: 28).strokeBorder(HomeWidgetColors.border, lineWidth: 1) }
         .accessibilityElement(children: .combine)
     }
 
@@ -547,12 +573,12 @@ private struct GuidedDayFlow: View {
             HStack {
                 Text("Fuel your day")
                     .font(.community(.footnote, weight: .semibold))
-                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+                    .foregroundStyle(HomeWidgetColors.secondaryText)
                 Spacer()
                 Button { navigate(.food) } label: {
                     Text("Log food +")
                         .font(.community(.footnote, weight: .semibold))
-                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                        .foregroundStyle(HomeWidgetColors.secondaryText)
                         .frame(minHeight: 44)
                 }
                 .buttonStyle(.plain)
@@ -564,7 +590,7 @@ private struct GuidedDayFlow: View {
                 .fixedSize(horizontal: false, vertical: true)
             GeometryReader { proxy in
                 ZStack(alignment: .leading) {
-                    Capsule().fill(timeOfDay.canvasBorder)
+                    Capsule().fill(HomeWidgetColors.progressTrack)
                     Capsule().fill(RepbasePalette.sage)
                         .frame(width: proxy.size.width * calorieProgress)
                 }
@@ -591,7 +617,7 @@ private struct GuidedDayFlow: View {
                     label: "Fat",
                     value: total.fatGrams,
                     goal: goals.fatGrams,
-                    color: RepbasePalette.cocoa,
+                    color: HomeWidgetColors.fatProgress,
                     animationDelay: 0.20
                 )
             }
@@ -622,14 +648,14 @@ private struct GuidedDayFlow: View {
                         : stageNumber(number, .finish),
                     color: everythingLeftIsPastDue
                         ? Color(hex: 0xD8557A)
-                        : timeOfDay.secondaryText
+                        : HomeWidgetColors.secondaryText
                 )
                 Text(taskSummary)
                     .font(.community(.headline))
                     .foregroundStyle(timeOfDay.primaryText)
                 Text(taskDetail)
                     .font(.community(.caption))
-                    .foregroundStyle(timeOfDay.secondaryText)
+                    .foregroundStyle(HomeWidgetColors.secondaryText)
                     .lineLimit(1)
             }
             Spacer(minLength: 8)
@@ -664,21 +690,21 @@ private struct GuidedDayFlow: View {
             }
             Text("\(selectedDate.formatted(.dateTime.weekday(.wide).month(.abbreviated).day())) · \(planner.entries(on: selectedDate).count) entries")
                 .font(.community(.footnote))
-                .foregroundStyle(timeOfDay.canvasSecondaryText)
+                .foregroundStyle(HomeWidgetColors.secondaryText)
             ForEach(planner.entries(on: selectedDate)) { entry in
                 VStack(alignment: .leading, spacing: 4) {
                     Text("\(entry.displayTime ?? "No time set") · \(entry.title)")
                         .font(.community(.footnote, weight: .semibold))
                     Text(entry.category.title)
                         .font(.community(.caption))
-                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                        .foregroundStyle(HomeWidgetColors.secondaryText)
                 }
                 .accessibilityElement(children: .combine)
             }
             if planner.entries(on: selectedDate).isEmpty {
                 Text("Nothing scheduled for this day.")
                     .font(.community(.subheadline))
-                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+                    .foregroundStyle(HomeWidgetColors.secondaryText)
             }
         }
         .foregroundStyle(timeOfDay.canvasPrimaryText)
@@ -686,7 +712,7 @@ private struct GuidedDayFlow: View {
         .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .strokeBorder(timeOfDay.canvasBorder, lineWidth: 1)
+                .strokeBorder(HomeWidgetColors.border, lineWidth: 1)
         }
     }
 
@@ -723,7 +749,7 @@ private struct GuidedDayFlow: View {
             Text(label)
                 .font(.community(.caption2, weight: .bold))
                 .tracking(0.25)
-                .foregroundStyle(timeOfDay.canvasSecondaryText)
+                .foregroundStyle(HomeWidgetColors.secondaryText)
         }
         .frame(maxWidth: .infinity, minHeight: 52)
         .accessibilityElement(children: .combine)
@@ -731,7 +757,7 @@ private struct GuidedDayFlow: View {
 
     private var momentumDivider: some View {
         Rectangle()
-            .fill(timeOfDay.canvasBorder)
+            .fill(HomeWidgetColors.border)
             .frame(width: 1, height: 40)
     }
 
@@ -987,7 +1013,7 @@ private struct GuidedHomeFlowRail: View {
 
             ZStack(alignment: .top) {
                 Capsule()
-                    .fill(timeOfDay.canvasBorder.opacity(0.72))
+                    .fill(HomeWidgetColors.border.opacity(0.72))
 
                 Capsule()
                     .fill(
@@ -1038,7 +1064,7 @@ private struct GuidedMacroMetric: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label)
                 .font(.community(.caption2, weight: .bold))
-                .foregroundStyle(timeOfDay.secondaryText)
+                .foregroundStyle(HomeWidgetColors.secondaryText)
             Text("\(value.nutritionText) / \(goal.nutritionText) g")
                 .font(.community(.caption, weight: .semibold))
                 .foregroundStyle(timeOfDay.primaryText)
@@ -1047,7 +1073,7 @@ private struct GuidedMacroMetric: View {
 
             GeometryReader { proxy in
                 ZStack(alignment: .leading) {
-                    Capsule().fill(timeOfDay.canvasBorder)
+                    Capsule().fill(HomeWidgetColors.progressTrack)
                     Capsule()
                         .fill(color)
                         .frame(width: proxy.size.width * progress)
@@ -1142,7 +1168,7 @@ private struct GuidedFoodLivingSurface: View {
     }
 
     private var borderColor: Color {
-        colorScheme == .dark ? Color.white.opacity(0.08) : RepbasePalette.ink.opacity(0.08)
+        colorScheme == .dark ? Color(hex: 0x605B56) : RepbasePalette.ink.opacity(0.08)
     }
 
     private var shadowColor: Color {
