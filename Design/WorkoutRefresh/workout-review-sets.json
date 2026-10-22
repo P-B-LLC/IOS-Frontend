@@ -1,0 +1,14 @@
+{
+  "fileKey": "zavGrRPLRkrcKfcVlpDVcR",
+  "pageId": "574:2",
+  "board": "754:1431",
+  "screen": "754:1352",
+  "exerciseCard": "754:1328",
+  "screens": {
+    "light": "754:1434",
+    "dark": "754:1513"
+  },
+  "updatedPickerHelper": "751:1254",
+  "validation": "Light/dark composition visually reviewed. Editable components with Nunito Sans/SF Pro; no raster UI. Sample totals 3+4=7 sets. 44pt set/order controls, first-up and last-down visually disabled.",
+  "scope": "Figma visual design only, controls not wired, app unchanged. Native behavior must enforce minimum 1 set, update totals, preserve draft on save failure, provide undo for removal and scroll list above safe-area save footer. Saving a plan is not workout completion."
+}

@@ -1,0 +1,56 @@
+{
+  "runId": "workouts-momentum-2026-10-19",
+  "fileKey": "zavGrRPLRkrcKfcVlpDVcR",
+  "pageId": "574:2",
+  "reviewFrame": "720:38",
+  "components": {
+    "dashboard": "721:62",
+    "overview": "721:34",
+    "today": "721:44",
+    "day": "721:53",
+    "historyWeek": "721:57"
+  },
+  "scope": "Workout-first layout: lighter 44x80 day tiles, today's workout, compact 180pt steps card and goal prototype",
+  "stepsComponent": "726:395",
+  "stepsInstance": "726:419",
+  "prototypeFrame": "727:468",
+  "goalSheet": "727:444",
+  "darkGoalSheet": "732:646",
+  "darkPrototypeFrame": "732:665",
+  "goalPrototypeVariables": {
+    "goalLabel": "VariableID:726:391",
+    "percentLabel": "VariableID:726:392",
+    "remainingLabel": "VariableID:726:393",
+    "progressWidth": "VariableID:726:394"
+  },
+  "historyVariants": [
+    "722:368",
+    "722:374",
+    "722:380",
+    "722:386",
+    "722:392"
+  ],
+  "screenInstances": {
+    "light": "721:200",
+    "dark": "721:335"
+  },
+  "pendingValidation": [],
+  "validation": {
+    "editableTextNodes": 176,
+    "componentInstances": 32,
+    "imageFilledNodes": 0,
+    "fonts": [
+      "Nunito Sans",
+      "SF Pro"
+    ],
+    "visualReview": "Lighter 44x80 day tiles, outlined rotation control, today's workout before compact 180pt step card, and preserved goal interaction reviewed in light/dark",
+    "prototypeValidation": "Preset SET_VARIABLE/CLOSE actions structurally verified; progress-width binding checked at 5K and reset to 8K. Dark screen and dark prototype now target the matching dark goal overlay; dark overlay visually checked. Browser click-through not performed.",
+    "nightContrast": {
+      "primaryOnCanvas": 18.43,
+      "secondaryOnCanvas": 9.2,
+      "secondaryOnCard": 8.46,
+      "accentOnCanvas": 6.1,
+      "actionLabelOnAction": 18.14
+    }
+  }
+}

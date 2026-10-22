@@ -1,0 +1,12 @@
+{
+  "fileKey": "zavGrRPLRkrcKfcVlpDVcR",
+  "pageId": "574:2",
+  "board": "748:1136",
+  "screen": "748:1085",
+  "activityComponent": "748:1082",
+  "screens": {
+    "light": "748:1139",
+    "dark": "748:1190"
+  },
+  "scope": "Figma visual concept only. No app code changed or controls wired. Draft-name deferral is a proposed behavior, not implemented. Cardio next actions require activity-specific wording in implementation."
+}
