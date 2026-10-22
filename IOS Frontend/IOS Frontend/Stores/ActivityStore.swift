@@ -19,6 +19,7 @@ final class ActivityStore {
     private var repository: ActivityAPIRepository?
     private let health: HealthKitService
     private var connectionGeneration = UUID()
+    private var celebrationGate = StepGoalCelebrationGate()
 
     /// Days the server holds, newest first. The only thing the UI draws.
     private(set) var recentDays: [DailyStepCount] = []
@@ -117,6 +118,7 @@ final class ActivityStore {
         guard let loaded = try? await repository.stepGoal() else { return }
         guard connectionGeneration == generation else { return }
         stepGoal = loaded
+        celebrationGate.rebase(day: Calendar.current.startOfDay(for: Date()), steps: stepsToday, goal: loaded)
     }
 
     /// Sets the goal, and says so if the server refuses.
@@ -134,6 +136,7 @@ final class ActivityStore {
             let saved = try await repository.setStepGoal(steps)
             guard connectionGeneration == generation else { return }
             stepGoal = saved
+            celebrationGate.rebase(day: Calendar.current.startOfDay(for: Date()), steps: stepsToday, goal: saved)
             persistenceError = nil
         } catch {
             guard connectionGeneration == generation else { return }
@@ -151,6 +154,7 @@ final class ActivityStore {
     // MARK: - Connection
 
     func connect(configuration: APIConfiguration, token: String) async {
+        celebrationGate = StepGoalCelebrationGate()
         let generation = UUID()
         connectionGeneration = generation
 
@@ -184,6 +188,7 @@ final class ActivityStore {
     }
 
     func disconnect() {
+        celebrationGate = StepGoalCelebrationGate()
         connectionGeneration = UUID()
         repository = nil
         // One user's steps must never be shown to the next.
@@ -275,6 +280,9 @@ final class ActivityStore {
             let days = try await repository.steps(since: start)
             guard generation == connectionGeneration else { return }
             recentDays = days
+            if celebrationGate.observe(day: Calendar.current.startOfDay(for: Date()), steps: stepsToday, goal: stepGoal) {
+                RepbaseCelebrations.show(.stepGoal)
+            }
             persistenceError = nil
         } catch {
             guard generation == connectionGeneration else { return }

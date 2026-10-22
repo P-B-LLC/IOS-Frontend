@@ -37,6 +37,36 @@ nonisolated struct TrainingStats: Hashable, Sendable {
     )
 
     // MARK: - Wording
+
+    /// Scheduled sessions are a reference, not proof that particular planned
+    /// workouts were completed. Unscheduled sessions can count toward this too.
+    var weeklyPlanProgress: Double {
+        guard weeklyGoal > 0 else { return 0 }
+        return min(1, max(0, Double(completedThisWeek) / Double(weeklyGoal)))
+    }
+
+    var weeklyHeadline: String {
+        if completedThisWeek <= 0 { return "Make space for your next session." }
+        if weeklyGoal > 0 && completedThisWeek >= weeklyGoal { return "Your effort is adding up." }
+        return "One session at a time."
+    }
+
+    var weeklyEncouragement: String {
+        if completedThisWeek <= 0 {
+            return "Choose a workout that fits today. A lighter day or a rest day belongs in your plan, too."
+        }
+        if weeklyGoal <= 0 {
+            return "Your logged work counts, even without a schedule. Plan ahead whenever it helps."
+        }
+        if completedThisWeek >= weeklyGoal {
+            return "You’ve logged as many sessions as your weekly plan calls for. Leave room to recover, too."
+        }
+        return "Each logged session builds your training history. Keep a pace you can come back to."
+    }
+
+    var previousWeekCount: Int {
+        sixWeekCounts.count >= 2 ? sixWeekCounts[sixWeekCounts.count - 2] : 0
+    }
     //
     // Formatting is the one thing left to the device: turning a number into a
     // phrase is presentation, and shipping "3 weeks" from the server would put
@@ -95,6 +125,6 @@ nonisolated struct TrainingStats: Hashable, Sendable {
     /// Bar height for one week of the trend chart. Pure layout.
     func barHeight(for count: Int) -> CGFloat {
         let maximum = max(sixWeekCounts.max() ?? 0, 1)
-        return max(12, 82 * CGFloat(count) / CGFloat(maximum))
+        return count <= 0 ? 0 : max(4, 82 * CGFloat(count) / CGFloat(maximum))
     }
 }

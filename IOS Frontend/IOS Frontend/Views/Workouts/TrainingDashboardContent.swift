@@ -71,9 +71,11 @@ struct TrainingDashboardContent: View {
                         .workoutCard()
                 } else {
                     workoutPlanCard
-                    StepsWidget(explainsWhenEmpty: true, compact: true)
                     focusCard
-                    momentumSection
+                    StepsWidget(explainsWhenEmpty: true, compact: true)
+                    if metrics != .empty || (store.isConnected && store.persistenceError == nil) {
+                        momentumSection
+                    }
                 }
             }
             .padding(.horizontal, RepbaseDesign.pageInset)
@@ -110,7 +112,7 @@ struct TrainingDashboardContent: View {
             AdaptiveRow(spacing: 8) {
                 Text("Workout plan").font(.community(.headline))
             } trailing: {
-                Text("\(store.currentWeekWorkouts.count) planned")
+                Text("Tap a day")
                     .font(.community(.footnote))
                     .foregroundStyle(phase.secondaryText)
             }
@@ -122,6 +124,7 @@ struct TrainingDashboardContent: View {
                     } label: {
                         DashboardDayItem(
                             day: day,
+                            date: store.workoutDate(for: day),
                             workouts: store.workouts(on: day),
                             isToday: store.today == day,
                             isSessionActive: store.activeSession?.day == day,
@@ -235,7 +238,7 @@ struct TrainingDashboardContent: View {
             NavigationLink {
                 DayWorkoutView(day: session.day)
             } label: {
-                WorkoutDashboardHero(
+                WorkoutFocusCard(
                     eyebrow: "SESSION IN PROGRESS",
                     title: session.workoutName,
                     detail: "\(session.loggedSetCount) of \(session.totalSetCount) sets logged",
@@ -249,7 +252,7 @@ struct TrainingDashboardContent: View {
             NavigationLink {
                 DayWorkoutView(day: day)
             } label: {
-                WorkoutDashboardHero(
+                WorkoutFocusCard(
                     eyebrow: "TODAY",
                     title: store.workout(on: day)?.name ?? "Plan today’s workout",
                     detail: focusDescription(for: day),
@@ -272,10 +275,10 @@ struct TrainingDashboardContent: View {
     private var momentumSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             VStack(alignment: .leading, spacing: 3) {
-                Text(rewardIsVisible ? "Momentum gained." : "Momentum")
+                Text(rewardIsVisible ? "Momentum gained." : "The bigger picture")
                     .font(.community(.title2, weight: .bold))
                     .contentTransition(.opacity)
-                Text(rewardIsVisible ? "That session moved the whole week forward." : "Your consistency at a glance")
+                Text(rewardIsVisible ? "That session moved the whole week forward." : "Small efforts, seen over time.")
                     .font(.community(.footnote))
                     .foregroundStyle(phase.secondaryText)
             }
@@ -340,43 +343,47 @@ struct TrainingDashboardContent: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("TRAINING VOLUME")
+                    Text("SESSION RHYTHM")
                         .font(.community(.caption2, weight: .bold))
                         .tracking(1.1)
                         .foregroundStyle(phase.secondaryText)
-                    HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text(metrics.trendPercentText).font(.community(.title2, weight: .bold))
-                        Text("vs last week")
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("\(metrics.completedThisWeek) this week").font(.community(.title2, weight: .bold))
+                        Text("\(metrics.previousWeekCount) last week")
                             .font(.community(.caption))
                             .foregroundStyle(phase.secondaryText)
                     }
                 }
                 Spacer()
-                Label(metrics.trendLabel, systemImage: metrics.trendSymbol)
-                    .font(.community(.caption2, weight: .semibold))
-                    .foregroundStyle(phase.secondaryText)
             }
 
             HStack(alignment: .bottom, spacing: 12) {
                 ForEach(Array(metrics.sixWeekCounts.enumerated()), id: \.offset) { index, count in
                     VStack(spacing: 7) {
+                        Text("\(count)")
+                            .font(.community(.caption2, weight: .semibold))
+                            .foregroundStyle(phase.secondaryText)
                         ZStack(alignment: .bottom) {
                             Capsule()
-                                .fill(RepbasePalette.oatmeal.opacity(0.72))
+                                .fill(phase.secondaryText.opacity(0.08))
                                 .frame(height: 86)
                             Capsule()
-                                .fill(index == 5 ? RepbaseDesign.warning : RepbaseDesign.ink)
+                                .fill(index == 5 ? HomeTimeOfDay.current.accent : phase.secondaryText.opacity(0.6))
                                 .frame(height: metrics.barHeight(for: count))
                         }
-                        Text(index == 5 ? "NOW" : "W\(index + 1)")
+                        Text(index == 5 ? "NOW" : "−\(5 - index)W")
                             .font(.community(size: 9, weight: .bold))
                             .foregroundStyle(index == 5 ? RepbaseDesign.warning : phase.secondaryText)
                     }
                     .frame(maxWidth: .infinity)
                     .accessibilityElement(children: .ignore)
-                    .accessibilityLabel("Week \(index + 1), \(count) completed workouts")
+                    .accessibilityLabel(index == 5
+                        ? "This week, \(count) completed workouts"
+                        : "\(5 - index) weeks ago, \(count) completed workouts")
                 }
             }
+            Text("Completed sessions, not weight lifted. This week is still in progress.")
+                .font(.community(.caption)).foregroundStyle(phase.secondaryText)
         }
         .padding(.vertical, 18)
         .overlay(alignment: .bottom) { Divider() }
@@ -395,7 +402,7 @@ struct TrainingDashboardContent: View {
             Spacer(minLength: 6)
             VStack(alignment: .trailing, spacing: 7) {
                 ProgressView(value: metrics.milestoneProgress)
-                    .tint(RepbaseDesign.ink)
+                    .tint(HomeTimeOfDay.current.accent)
                     .frame(width: 78)
                 Text("\(metrics.totalWorkouts) / \(metrics.nextMilestone)")
                     .font(.community(.caption2, weight: .semibold))
@@ -435,7 +442,7 @@ struct TrainingDashboardContent: View {
                 rewardIsVisible = true
                 rewardToast = "\(reward.workoutName) complete · goal moved forward"
             }
-            RepbaseCelebrations.show(.workoutLogged)
+            // The saved-session summary already celebrates the confirmed finish.
 
             try? await Task.sleep(for: .seconds(2.8))
             guard !Task.isCancelled else { return }
@@ -474,6 +481,7 @@ struct TrainingDashboardContent: View {
 
 private struct DashboardDayItem: View {
     let day: Weekday
+    let date: Date
     let workouts: [Workout]
     let isToday: Bool
     let isSessionActive: Bool
@@ -487,17 +495,9 @@ private struct DashboardDayItem: View {
                 .font(.community(size: 9, weight: isToday ? .bold : .semibold))
                 .foregroundStyle(isToday ? RepbaseDesign.warning : Color.secondary)
 
-            ZStack {
-                Circle()
-                    .fill(dayMarkerColor)
-                Image(systemName: dayMarkerSymbol)
-                    .font(.community(size: 16, weight: .bold))
-                    .foregroundStyle(isPlanned || isSessionActive || isCompleted ? RepbaseDesign.onInk : Color.secondary)
-                    .contentTransition(.symbolEffect(.replace))
-            }
-            .frame(width: 34, height: 34)
-            .scaleEffect(isCompleted ? 1.06 : 1)
-            .animation(.spring(response: 0.48, dampingFraction: 0.68), value: isCompleted)
+            Text(date.formatted(.dateTime.day()))
+                .font(.community(.headline, weight: .bold))
+                .foregroundStyle(RepbaseDesign.ink)
             .overlay(alignment: .topTrailing) {
                 if workouts.count > 1 {
                     Text("\(workouts.count)")
@@ -509,22 +509,14 @@ private struct DashboardDayItem: View {
                 }
             }
 
-            Text(workouts.first?.name ?? " ")
-                .font(.community(size: 10, weight: isToday ? .semibold : .regular))
-                .foregroundStyle(isToday ? RepbaseDesign.warning : RepbaseDesign.ink)
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
-                .minimumScaleFactor(0.65)
-                .frame(height: 25, alignment: .top)
+            Image(systemName: dayMarkerSymbol)
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(isCompleted ? RepbaseDesign.success : RepbaseDesign.warning)
+                .frame(height: 16)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 6)
-        .background {
-            if isToday {
-                RoundedRectangle(cornerRadius: 15, style: .continuous)
-                    .fill(RepbasePalette.oatmeal.opacity(0.72))
-            }
-        }
+        .padding(.vertical, 10)
+        .workoutOutline(selected: isToday, radius: 12)
         .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel)
@@ -551,168 +543,38 @@ private struct DashboardDayItem: View {
     }
 }
 
-private struct WorkoutDashboardHero: View {
+private struct WorkoutFocusCard: View {
     let eyebrow: String
     let title: String
     let detail: String
     let completed: Int
     let goal: Int
     let workoutType: WorkoutType
-    /// Whether the day this card points at has already been trained, so the
-    /// pill can say what tapping it does rather than always saying Start.
     var isDayComplete = false
     var celebratesCompletion = false
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var sheenTravel: CGFloat = -1.2
-
-    private var remaining: Int { max(goal - completed, 0) }
-
-    /// What the chip says.
-    ///
-    /// It said "Goal met" whenever nothing was outstanding, and having no
-    /// goal counts as nothing outstanding -- so an account that had never set
-    /// one was congratulated for a week it had not trained in. Nought
-    /// remaining against nought asked for is not an achievement.
-    private var goalSummary: String {
-        guard goal > 0 else { return "No weekly goal" }
-        return remaining == 0 ? "Goal met" : "\(remaining) to go"
-    }
-
-    private var progress: Double { min(Double(completed) / Double(max(goal, 1)), 1) }
-
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("\(eyebrow)  ·  \(workoutType.title.uppercased())")
-                        .font(.community(.caption2, weight: .bold))
-                        .tracking(1.4)
-                        .foregroundStyle(Color.secondary)
-                    Text(title)
-                        .font(.community(.title2, weight: .bold))
-                        .tracking(-0.4)
-                        .foregroundStyle(RepbaseDesign.ink)
-                    Text(detail)
-                        .font(.community(.footnote))
-                        .foregroundStyle(.secondary)
-                }
-                Spacer(minLength: 12)
-                Label(
-                    isDayComplete ? "View" : "Start",
-                    systemImage: isDayComplete ? "checkmark" : "play.fill"
-                )
-                    .font(.community(.footnote, weight: .semibold))
-                    .foregroundStyle(RepbaseDesign.onInk)
-                    .padding(.horizontal, 13)
-                    .frame(height: 36)
-                    .background(RepbaseDesign.ink, in: Capsule())
-                    .shadow(color: Color.black.opacity(0.20), radius: 10, x: 0, y: 5)
-            }
-
-            HStack(spacing: 14) {
-                Image(systemName: "dumbbell.fill")
-                    .font(.system(size: 30, weight: .medium))
-                    .symbolRenderingMode(.monochrome)
-                    .foregroundStyle(RepbaseDesign.accent)
-                    .frame(width: 68, height: 68)
-                    .background(
-                        Color.repbaseDynamic(
-                            light: Color.white.opacity(0.78),
-                            dark: Color.white.opacity(0.08)
-                        ),
-                        in: RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    )
-
-                VStack(alignment: .leading, spacing: 5) {
-                    Text(workoutTypePrompt)
-                        .font(.community(.subheadline, weight: .semibold))
-                    Text(detail)
-                        .font(.community(.caption))
-                        .foregroundStyle(.secondary)
-                }
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text(eyebrow).font(.community(.caption2, weight: .bold))
                 Spacer()
-                Image(systemName: "arrow.up.right")
-                    .font(.community(.subheadline, weight: .semibold))
-                    .foregroundStyle(RepbaseDesign.accent)
+                Image(systemName: workoutType.builderSymbol).font(.system(size: 20))
+            }.foregroundStyle(RepbaseDesign.warning)
+            Text(title).font(.community(.title, weight: .bold))
+            Text(detail).font(.community(.caption)).foregroundStyle(.secondary)
+            HStack {
+                Text(eyebrow == "SESSION IN PROGRESS" ? "Resume workout" : isDayComplete ? "View workout" : "Open workout")
+                Spacer()
+                Image(systemName: "arrow.right")
             }
+            .font(.community(.subheadline, weight: .bold))
+            .foregroundStyle(WorkoutVisualPhase.prepare.onPrimaryAction)
             .padding(14)
-            .background(
-                LinearGradient(
-                    colors: celebratesCompletion
-                        ? [
-                            Color.repbaseDynamic(light: Color(hex: 0xE5F1EA), dark: Color(hex: 0x213128)),
-                            Color.repbaseDynamic(light: Color(hex: 0xF4E5DA), dark: Color(hex: 0x38251F))
-                        ]
-                        : [RepbaseDesign.accent.opacity(0.10), RepbaseDesign.accent.opacity(0.10)],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                ),
-                in: RoundedRectangle(cornerRadius: 20, style: .continuous)
-            )
-            .overlay {
-                if celebratesCompletion && !reduceMotion {
-                    GeometryReader { geometry in
-                        LinearGradient(
-                            colors: [.clear, Color.white.opacity(0.40), .clear],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                        .frame(width: geometry.size.width * 0.42)
-                        .rotationEffect(.degrees(-14))
-                        .offset(x: geometry.size.width * sheenTravel)
-                    }
-                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                    .allowsHitTesting(false)
-                }
-            }
-
-            VStack(alignment: .leading, spacing: 10) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("WEEKLY GOAL")
-                            .font(.community(.caption2, weight: .bold))
-                            .tracking(1.1)
-                            .foregroundStyle(.secondary)
-                        Text("\(completed) of \(goal) workouts")
-                            .font(.community(.headline))
-                            .foregroundStyle(RepbaseDesign.ink)
-                    }
-                    Spacer()
-                    Text(goalSummary)
-                        .font(.community(.caption, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 11)
-                        .padding(.vertical, 6)
-                        .background(
-                            Color.repbaseDynamic(light: Color.white, dark: Color(hex: 0x3A3634)),
-                            in: Capsule()
-                        )
-                }
-                ProgressView(value: progress)
-                    .tint(celebratesCompletion ? RepbasePalette.sage : RepbaseDesign.warning)
-                    .animation(.spring(response: 0.72, dampingFraction: 0.82), value: progress)
-            }
-            .padding(14)
-            .background(RepbasePalette.oatmeal, in: RoundedRectangle(cornerRadius: 17, style: .continuous))
-        }
-        .padding(18)
-        .dashboardSurface(radius: 24)
-        .scaleEffect(celebratesCompletion && !reduceMotion ? 1.008 : 1)
-        .animation(.spring(response: 0.55, dampingFraction: 0.76), value: celebratesCompletion)
-        .onChange(of: celebratesCompletion) { _, isCelebrating in
-            guard isCelebrating, !reduceMotion else { return }
-            sheenTravel = -1.2
-            withAnimation(.easeInOut(duration: 0.72)) {
-                sheenTravel = 2.5
-            }
-        }
-    }
-
-    private var workoutTypePrompt: String {
-        workoutType.sessionTitle
+            .background(WorkoutVisualPhase.prepare.primaryActionSurface, in: RoundedRectangle(cornerRadius: 12))
+        }.padding(20).workoutOutline(radius: 24)
     }
 }
+
 
 private struct TrainingRewardToast: View {
     let message: String
