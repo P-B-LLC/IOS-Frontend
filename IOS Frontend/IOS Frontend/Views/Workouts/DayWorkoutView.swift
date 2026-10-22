@@ -14,6 +14,8 @@ struct DayWorkoutView: View {
     @Environment(WorkoutStore.self) private var store
     @Environment(GearStore.self) private var gearStore
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dismiss) private var dismiss
+    @State private var confirmingPartialFinish = false
     @State private var setupDraft = Workout(name: "", exercises: [])
     @State private var editor: WorkoutEditorView.Mode?
     /// The workout awaiting a delete confirmation, if any.
@@ -66,6 +68,12 @@ struct DayWorkoutView: View {
         // taking the navigation away from a page somebody is only looking at
         // would cost more than it saved.
         .hidesBottomBar(activeSession != nil)
+        .confirmationDialog("Finish with unfinished sets?", isPresented: $confirmingPartialFinish, titleVisibility: .visible) {
+            Button("Finish and save logged sets") { finishSession() }
+            Button("Keep training", role: .cancel) {}
+        } message: {
+            Text("Only logged sets will count. You can keep training or switch to another exercise instead.")
+        }
         .task {
             // Only when nothing has been read yet. The dashboard loads the
             // same history, so arriving from the workouts page already has it,
@@ -185,20 +193,50 @@ struct DayWorkoutView: View {
     private var content: some View {
         VStack(alignment: .leading, spacing: 18) {
             if let completedSession {
-                recoveryWorkspace(completedSession)
+                if completedSession.session.tracksDistance {
+                    recoveryWorkspace(completedSession)
+                } else {
+                    WorkoutCompletionSummary(completed: completedSession) { dismiss() }
+                    CardioFinisherCard(
+                        plannedMachine: store.workout(on: day)?.cardioMachine,
+                        sessionID: completedSession.session.serverID,
+                        phase: .recover
+                    )
+                    Button("Share result") { sharedWorkout = SharedPostSource(id: completedSession.session.serverID) }
+                    if !store.personalRecords.isEmpty { personalRecordsSection(phase: .recover) }
+                    if !store.liftProgress.isEmpty { LiftProgressChart(series: store.liftProgress, phase: .recover) }
+                }
             } else {
-                dayHeader
+                if activeSession == nil && !plannedWorkouts.isEmpty { dayHeader }
 
                 if let persistenceError = store.persistenceError {
                     persistenceErrorCard(persistenceError)
                 }
 
                 if let activeSession {
-                    activeSessionWorkspace(activeSession)
+                    if activeSession.tracksDistance {
+                        activeSessionWorkspace(activeSession)
+                    } else {
+                        FocusedLiftingSession(day: day, onFinish: endSession)
+                        if isConfirmingEmptyFinish { emptyFinishNotice(phase: .focus) }
+                    }
                 } else if !plannedWorkouts.isEmpty {
                     plannedDay
                 } else {
-                    emptyDaySetup
+                    VStack(alignment: .leading, spacing: 18) {
+                        Text("Make room for\nyour next win.")
+                            .font(.community(.largeTitle, weight: .bold))
+                        Text("Start small. You can build as you go.")
+                            .font(.community(.subheadline)).foregroundStyle(.secondary)
+                        Button { editor = .build(setupDraft) } label: {
+                            Label("Create a workout", systemImage: "plus").frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(WorkoutPrimaryButtonStyle(phase: .prepare))
+                        .disabled(!store.isEditingEnabled)
+                        if let reason = store.editingBlockedReason {
+                            Text(reason).font(.community(.caption)).foregroundStyle(.secondary)
+                        }
+                    }.padding(.vertical, 24)
                 }
             }
         }
@@ -292,64 +330,6 @@ struct DayWorkoutView: View {
         )
     }
 
-    private var emptyDaySetup: some View {
-        VStack(alignment: .leading, spacing: 22) {
-            VStack(alignment: .leading, spacing: 5) {
-                Text("NO WORKOUT PLANNED")
-                    .font(.community(.caption2, weight: .bold))
-                    .tracking(1.1)
-                    .foregroundStyle(WorkoutVisualPhase.prepare.accent)
-                Text("Choose how you want to train.")
-                    .font(.community(.title2, weight: .bold))
-                Text("Reuse a plan to keep its history, or start fresh.")
-                    .font(.community(.subheadline))
-                    .foregroundStyle(.secondary)
-            }
-
-            WorkoutPlanFields(
-                draft: $setupDraft,
-                suggestions: store.knownWorkouts,
-                sections: .identity
-            )
-
-            Button {
-                editor = .build(setupDraft)
-            } label: {
-                Label("Build Custom Workout", systemImage: "plus")
-                    .font(.community(.headline))
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(WorkoutPrimaryButtonStyle(phase: .prepare))
-            .disabled(!canSaveSetup || !store.isEditingEnabled)
-
-            if !canSaveSetup && store.isEditingEnabled {
-                Text("Choose a previously used workout or give this one a name to continue.")
-                    .font(.community(.caption))
-                    .foregroundStyle(.secondary)
-            }
-
-            // A greyed-out button with no explanation reads as a broken app.
-            if let reason = store.editingBlockedReason {
-                HStack(spacing: 7) {
-                    Image(systemName: "exclamationmark.circle.fill")
-                        .foregroundStyle(Color.orange)
-                    Text(reason)
-                        .font(.community(.caption))
-                        .foregroundStyle(.secondary)
-                    Spacer(minLength: 0)
-                    if store.repositoryIsMissing {
-                        Button("Retry") { store.retryPersistence() }
-                            .font(.community(.caption, weight: .semibold))
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }
-    }
-
-    private var canSaveSetup: Bool {
-        !setupDraft.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-    }
 
     private func synchronizeLoggedSetIDs() {
         knownLoggedSetIDs = Set(
@@ -436,6 +416,11 @@ struct DayWorkoutView: View {
         // Logging a set after the notice appeared answers it, so it should not
         // still be sitting there.
         isConfirmingEmptyFinish = false
+        if let session = activeSession, !session.tracksDistance,
+           session.loggedSetCount < session.totalSetCount {
+            confirmingPartialFinish = true
+            return
+        }
         finishSession()
     }
 
@@ -502,6 +487,9 @@ struct DayWorkoutView: View {
         Task {
             if await store.endSession(on: day) != nil {
                 completedSession = store.completedSessions.last
+                if let completedSession, completedSession.session.loggedSetCount > 0 || completedSession.session.tracksDistance {
+                    RepbaseCelebrations.show(.workoutLogged)
+                }
             }
         }
     }

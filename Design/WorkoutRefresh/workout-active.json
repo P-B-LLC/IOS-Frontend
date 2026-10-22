@@ -1,0 +1,13 @@
+{
+  "fileKey": "zavGrRPLRkrcKfcVlpDVcR",
+  "pageId": "574:2",
+  "board": "757:1592",
+  "screen": "757:1533",
+  "numericInput": "757:1530",
+  "screens": {
+    "light": "757:1595",
+    "dark": "757:1654"
+  },
+  "validation": "Light/dark visual composition reviewed. Editable Nunito Sans/SF Pro and theme tokens, no raster UI. Sample state consistent: 1/7 sets logged, current bench set 2/3, next exercise has four sets.",
+  "scope": "Visual Figma concept only, controls not wired, app unchanged. Durable log before advancing, duplicate-submit protection, input-preserving retry, session retention on collapse, finish confirmation and quiet per-set feedback are implementation requirements, not completed behavior."
+}

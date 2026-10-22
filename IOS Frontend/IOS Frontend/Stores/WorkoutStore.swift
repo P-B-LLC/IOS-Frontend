@@ -37,6 +37,22 @@ final class WorkoutStore {
     /// restored. Their .task fires on appear, finds no repository, and
     /// returns -- and without something to key on, never runs again.
     var isConnected: Bool { repository != nil }
+
+    func preferredWeightUnit() async throws -> WorkoutWeightUnit {
+        guard let repository else { return .metric }
+        let generation = connectionGeneration
+        let unit = try await repository.preferredWeightUnit()
+        guard generation == connectionGeneration else { throw CancellationError() }
+        return unit
+    }
+
+    func exerciseChoices(page: Int = 1) async throws -> WorkoutExercisePage {
+        guard let repository else { throw APIServiceError.missingServerIdentifier("Account connection") }
+        let generation = connectionGeneration
+        let result = try await repository.exerciseChoices(page: page)
+        guard generation == connectionGeneration else { throw CancellationError() }
+        return result
+    }
     private var connectionGeneration = UUID()
 
     /// Current-week projection of concrete API WorkoutSchedule records. A date

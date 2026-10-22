@@ -1,0 +1,22 @@
+{
+  "fileKey": "zavGrRPLRkrcKfcVlpDVcR",
+  "pageId": "574:2",
+  "board": "736:1039",
+  "components": {
+    "reward": "736:819",
+    "quiet": "736:1033",
+    "button": "736:1037"
+  },
+  "prototypeHubs": {
+    "light": "736:1145",
+    "dark": "736:1263"
+  },
+  "confetti": {
+    "particles": 12,
+    "tracks": 48,
+    "durationSeconds": 1.35
+  },
+  "validation": "Light/dark composition visually reviewed; reactions and keyframes read back. Quiet component has zero animated descendants. Animated playback not visually verified; no local ffmpeg available.",
+  "scope": "Figma prototype only. No native implementation or actual workout/Health data changed.",
+  "productionRules": "Celebrate confirmed workout saves or genuine step-goal crossings once. Never reward page visits, retries or lowering goals. Quiet milestones; no confetti with Reduce Motion."
+}

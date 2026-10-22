@@ -507,6 +507,33 @@ actor WorkoutAPIRepository {
 
     // MARK: - Workout sessions
 
+    func preferredWeightUnit() async throws -> WorkoutWeightUnit {
+        switch try await client.meRetrieve() {
+        case .ok(let response):
+            return try response.body.json.unitPreference?.rawValue == "imperial" ? .imperial : .metric
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// Page on demand; the OAS exposes an exact-name filter, not substring
+    /// search. The picker searches loaded pages and explicitly offers more.
+    func exerciseChoices(page: Int = 1) async throws -> WorkoutExercisePage {
+        let output = try await client.exercisesList(query: .init(page: page))
+        switch output {
+        case .ok(let success):
+            let response = try success.body.json
+            var visited: Set<Int> = [page]
+            let next = try nextPage(response.next, visited: &visited)
+            guard next == nil || next! > page else { throw APIServiceError.untrustedPaginationURL }
+            return WorkoutExercisePage(items: response.results.map {
+                WorkoutExerciseChoice(id: $0.id, name: $0.name, muscleGroup: $0.muscleGroup ?? "")
+            }, nextPage: next)
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
     func startSession(
         for workout: Workout,
         on day: Weekday

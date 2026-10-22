@@ -11,6 +11,7 @@ import SwiftUI
 enum RepbaseCelebrationKind: String {
     case mealLogged
     case workoutLogged
+    case stepGoal
     case dayCleared
 
     var colors: [Color] {
@@ -22,7 +23,7 @@ enum RepbaseCelebrationKind: String {
                 Color(hex: 0xB847AD),
                 Color(hex: 0xF0D6C4)
             ]
-        case .workoutLogged:
+        case .workoutLogged, .stepGoal:
             return [
                 RepbasePalette.caramel,
                 RepbasePalette.sage,
@@ -66,6 +67,7 @@ private struct ActiveCelebration: Identifiable {
 }
 
 private struct RepbaseCelebrationOverlayModifier: ViewModifier {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var celebration: ActiveCelebration?
     @State private var removalTask: Task<Void, Never>?
 
@@ -79,6 +81,7 @@ private struct RepbaseCelebrationOverlayModifier: ViewModifier {
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: .repbaseCelebration)) { note in
+                guard !reduceMotion else { return }
                 guard let rawValue = note.object as? String,
                       let kind = RepbaseCelebrationKind(rawValue: rawValue) else {
                     return
