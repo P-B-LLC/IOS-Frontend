@@ -3,6 +3,14 @@ import XCTest
 @testable import AccountSafety
 
 final class WorkoutFlowTests: XCTestCase {
+    func testDayTurnsCompleteOnlyAfterEveryScheduledWorkoutAndNoActiveSession() {
+        XCTAssertFalse(WorkoutFocusPolicy.dayIsComplete(scheduledCompletions: [], hasActiveSession: false))
+        XCTAssertFalse(WorkoutFocusPolicy.dayIsComplete(scheduledCompletions: [true, false], hasActiveSession: false))
+        XCTAssertFalse(WorkoutFocusPolicy.dayIsComplete(scheduledCompletions: [true], hasActiveSession: true))
+        XCTAssertTrue(WorkoutFocusPolicy.dayIsComplete(scheduledCompletions: [true], hasActiveSession: false))
+        XCTAssertTrue(WorkoutFocusPolicy.dayIsComplete(scheduledCompletions: [true, true], hasActiveSession: false))
+    }
+
     func testWeightConversionPreservesKilogramWireValuesAndInvalidInput() {
         XCTAssertEqual(WorkoutWeightUnit.imperial.kilograms(display: "135"), "61.23")
         XCTAssertEqual(WorkoutWeightUnit.imperial.display(kilograms: "61.23"), "134.99")

@@ -2,6 +2,10 @@ import Foundation
 
 /// Chooses focus without modifying exercise order, inputs or completion.
 nonisolated enum WorkoutFocusPolicy {
+    static func dayIsComplete(scheduledCompletions: [Bool], hasActiveSession: Bool) -> Bool {
+        !hasActiveSession && !scheduledCompletions.isEmpty && scheduledCompletions.allSatisfy { $0 }
+    }
+
     struct Progress: Equatable, Sendable {
         let id: UUID
         let pendingSets: Int

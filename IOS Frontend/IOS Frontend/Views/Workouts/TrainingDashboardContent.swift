@@ -413,10 +413,11 @@ struct TrainingDashboardContent: View {
     }
 
     private func isCompleted(_ day: Weekday) -> Bool {
-        guard let workout = store.workout(on: day) else { return false }
-        return store.isCompleted(
-            workoutName: workout.name,
-            on: store.workoutDate(for: day)
+        WorkoutFocusPolicy.dayIsComplete(
+            scheduledCompletions: store.workouts(on: day).map {
+                store.isCompleted(workoutName: $0.name, on: store.workoutDate(for: day))
+            },
+            hasActiveSession: store.activeSession?.day == day
         )
     }
 
@@ -516,7 +517,11 @@ private struct DashboardDayItem: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 10)
-        .workoutOutline(selected: isToday, radius: 12)
+        .background(dayFill, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(isToday ? RepbaseDesign.warning : dayBorder, lineWidth: isToday ? 1.5 : 1)
+        }
         .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel)
@@ -534,12 +539,20 @@ private struct DashboardDayItem: View {
         return isPlanned ? "minus" : "plus"
     }
 
-    private var dayMarkerColor: Color {
+    private var dayFill: Color {
         if isCompleted {
-            return .repbaseDynamic(light: Color(hex: 0x5F806F), dark: Color(hex: 0x7BA890))
+            return .repbaseDynamic(light: Color(hex: 0xDBEFE2), dark: Color(hex: 0x233C2E))
         }
-        if isToday { return RepbaseDesign.warning }
-        return isPlanned ? RepbaseDesign.ink : RepbasePalette.oatmeal
+        if isPlanned {
+            return .repbaseDynamic(light: Color(hex: 0xFFE5D5), dark: Color(hex: 0x472C20))
+        }
+        return WorkoutVisualPhase.prepare.surfaceStart
+    }
+
+    private var dayBorder: Color {
+        if isCompleted { return RepbaseDesign.success.opacity(0.5) }
+        if isPlanned { return RepbaseDesign.warning.opacity(0.4) }
+        return WorkoutVisualPhase.prepare.cardBorder
     }
 }
 

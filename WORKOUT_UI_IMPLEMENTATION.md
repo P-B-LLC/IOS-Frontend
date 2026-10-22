@@ -1,9 +1,16 @@
 # Approved workout UI implementation
 
-Implementation branch: `work/ui-refresh-2026-10-19`. Published for Mac
-validation, not approved for merging into main until native checks pass.
+Implementation branch: `work/ui-refresh-2026-10-19`. Main promotion requested
+by the owner on October 21, 2026. Native build/test verification remains
+pending; promotion is not a claim that those checks passed.
+
+Pre-refresh code is preserved on `backup/pre-workout-refresh-2026-10-21`
+at `48db8b7`. Approved Figma references are preserved in Design/WorkoutRefresh.
 
 - Workout-first dashboard, light date tiles, compact daily walking trail.
+- Scheduled days use a warm orange tint; completed days use green. A day
+  with several scheduled workouts becomes green only after all are finished,
+  with no active session remaining. Today retains its orange outline.
 - Recoverable guided identity, real exercise picker, target-set review and save.
 - API exercise pages load on demand. Search and muscle filters cover loaded
   pages only, explicitly labeled; the OAS has no substring-search endpoint.
