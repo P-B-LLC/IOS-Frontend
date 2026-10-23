@@ -39,11 +39,41 @@ struct FoodTrackingView: View {
     @State private var lastHandledMealLogID: UUID?
     @State private var mealFeedbackTask: Task<Void, Never>?
     @State private var isFoodVisible = false
+    @State private var isChoosingMeal = false
+    @State private var isShowingMealPlan = false
+    @State private var showsDetailedTools = false
+    @State private var fuelDisplay: FuelDisplay = .logged
+
+    private enum FuelDisplay: String, CaseIterable {
+        case logged = "Logged"
+        case remaining = "Remaining"
+    }
 
     var body: some View {
         screen(timeOfDay: HomeTimeOfDay.current)
         .fullScreenCover(isPresented: $isEditingGoals) {
             NutritionGoalsView()
+        }
+        .fullScreenCover(isPresented: $isShowingMealPlan) {
+            NavigationStack { MealPlanView(initialDate: selectedDate) }
+        }
+        .sheet(isPresented: $isChoosingMeal) {
+            NavigationStack {
+                List(store.meals(on: selectedDate)) { meal in
+                    NavigationLink {
+                        MealDetailView(date: selectedDate, mealID: meal.id)
+                    } label: {
+                        MealRow(meal: meal, isRecentlyLogged: false)
+                    }
+                }
+                .navigationTitle("Choose a meal")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") { isChoosingMeal = false }
+                    }
+                }
+            }
         }
         .fullScreenCover(isPresented: $isShowingSavedMeals) {
             NavigationStack {
@@ -124,7 +154,35 @@ struct FoodTrackingView: View {
                 }
 
                 mealsSection(timeOfDay: timeOfDay)
-                nutritionBreakdownLink(timeOfDay: timeOfDay)
+                DisclosureGroup(isExpanded: $showsDetailedTools) {
+                    VStack(alignment: .leading, spacing: 14) {
+                        Text("Plan ahead or take a closer look at your logged nutrition.")
+                            .font(.community(.subheadline))
+                            .foregroundStyle(.secondary)
+                        Button { isShowingMealPlan = true } label: {
+                            Label("Plan meals", systemImage: "calendar.badge.plus")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .frame(minHeight: 44)
+                        }
+                        nutritionBreakdownLink(timeOfDay: timeOfDay)
+                        Button { isEditingGoals = true } label: {
+                            Label("Calorie & macro targets", systemImage: "slider.horizontal.3")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .frame(minHeight: 44)
+                        }
+                    }
+                    .padding(.top, 12)
+                } label: {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Planning & details")
+                            .font(.community(.headline))
+                        Text("Meal prep, targets and macro sources")
+                            .font(.community(.caption))
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.vertical, 10)
+                }
+                .tint(timeOfDay.accent)
             }
             .padding(.horizontal, RepbaseDesign.pageInset)
             .padding(.top, 16)
@@ -133,7 +191,7 @@ struct FoodTrackingView: View {
         .scrollIndicators(.hidden)
         .minimizesBottomBarOnScroll()
         .toolbar(.hidden, for: .navigationBar)
-        .homeTimeScreen(timeOfDay)
+        .background(Color(.systemBackground))
         .overlay(alignment: .bottom) {
             if let mealSuccessMessage {
                 FoodLogSuccessToast(message: mealSuccessMessage)
@@ -151,7 +209,7 @@ struct FoodTrackingView: View {
                 Button { dismiss() } label: {
                     Image(systemName: "chevron.left")
                         .font(.community(size: 17, weight: .semibold))
-                        .frame(width: 40, height: 40)
+                        .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -170,13 +228,13 @@ struct FoodTrackingView: View {
                     .tracking(1.35)
                     .foregroundStyle(timeOfDay.accent)
                 Button { isShowingMonth = true } label: {
-                    Text(selectedDate.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))
+                    Text("Good food. Your rhythm.")
                         .font(.community(.title, weight: .bold))
                         .tracking(-0.5)
                         .foregroundStyle(timeOfDay.canvasPrimaryText)
                 }
                 .buttonStyle(.plain)
-                Text("Build the day one meal at a time.")
+                Text(selectedDate.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))
                     .font(.community(.subheadline))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
             }
@@ -187,6 +245,7 @@ struct FoodTrackingView: View {
                 isEditingGoals = true
             } label: {
                 Text("Goals")
+                    .frame(minWidth: 44, minHeight: 44)
             }
             .font(.community(.caption, weight: .semibold))
             .buttonStyle(.plain)
@@ -219,7 +278,7 @@ struct FoodTrackingView: View {
                     changeWeek(by: -1)
                 } label: {
                     Image(systemName: "chevron.left")
-                        .frame(width: 28, height: 28)
+                        .frame(width: 44, height: 44)
                 }
                 .accessibilityLabel("Previous week")
 
@@ -245,7 +304,7 @@ struct FoodTrackingView: View {
                     changeWeek(by: 1)
                 } label: {
                     Image(systemName: "chevron.right")
-                        .frame(width: 28, height: 28)
+                        .frame(width: 44, height: 44)
                 }
                 .accessibilityLabel("Next week")
             }
@@ -293,6 +352,7 @@ struct FoodTrackingView: View {
                                 }
                         }
                         .frame(maxWidth: .infinity)
+                        .frame(minHeight: 44)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
@@ -301,7 +361,7 @@ struct FoodTrackingView: View {
                 }
             }
         }
-        .repbaseCard(contentPadding: 13, cornerRadius: RepbaseDesign.cardRadius)
+        .padding(.vertical, 4)
         // Anywhere that is not already a control opens the month. The buttons
         // inside — a day, the week arrows, Today — take their own taps first,
         // so this only catches the gaps between them.
@@ -312,19 +372,31 @@ struct FoodTrackingView: View {
     private func dailySummary(timeOfDay: HomeTimeOfDay) -> some View {
         let shown = displayedNutrition ?? total
 
-        return VStack(alignment: .leading, spacing: 10) {
+        return VStack(alignment: .leading, spacing: 20) {
+            HStack {
+                Text("Your daily fuel").font(.community(.headline))
+                Spacer()
+                Text("\(displayedLoggedMealCount ?? store.loggedMealCount(on: selectedDate)) meals logged")
+                    .font(.community(.caption)).foregroundStyle(.secondary)
+            }
             CalorieGoalCard(
                 value: shown.calories,
                 goal: store.goals.calories,
                 loggedFoodCount: loggedFoodCount,
                 isPulsing: nutritionPulse,
-                isDayComplete: selectedDayIsFullyLogged
+                isDayComplete: selectedDayIsFullyLogged,
+                showsRemaining: fuelDisplay == .remaining
             )
 
+            Picker("Nutrition display", selection: $fuelDisplay) {
+                ForEach(FuelDisplay.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+            }
+            .pickerStyle(.segmented)
+
             HStack(spacing: 12) {
-                MacroGoalCard(title: "Protein", value: shown.proteinGrams, goal: store.goals.proteinGrams, color: Color(hex: 0xD9824B), isPulsing: nutritionPulse, delay: 0.05)
-                MacroGoalCard(title: "Carbs", value: shown.carbohydrateGrams, goal: store.goals.carbohydrateGrams, color: Color(hex: 0x4AAFB3), isPulsing: nutritionPulse, delay: 0.14)
-                MacroGoalCard(title: "Fat", value: shown.fatGrams, goal: store.goals.fatGrams, color: Color(hex: 0xB76AA5), isPulsing: nutritionPulse, delay: 0.23)
+                MacroGoalCard(title: "Protein", value: shown.proteinGrams, goal: store.goals.proteinGrams, color: Macro.protein.color, isPulsing: nutritionPulse, delay: 0.05, showsRemaining: fuelDisplay == .remaining)
+                MacroGoalCard(title: "Carbs", value: shown.carbohydrateGrams, goal: store.goals.carbohydrateGrams, color: Macro.carbs.color, isPulsing: nutritionPulse, delay: 0.14, showsRemaining: fuelDisplay == .remaining)
+                MacroGoalCard(title: "Fat", value: shown.fatGrams, goal: store.goals.fatGrams, color: Macro.fat.color, isPulsing: nutritionPulse, delay: 0.23, showsRemaining: fuelDisplay == .remaining)
             }
         }
         .padding(18)
@@ -408,16 +480,40 @@ struct FoodTrackingView: View {
 
 
         return VStack(alignment: .leading, spacing: 10) {
+            if let nextMeal = meals.first(where: { $0.entries.isEmpty }) {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("UP NEXT · \(nextMeal.name.uppercased())")
+                        .font(.community(.caption2, weight: .semibold))
+                    Text("What’s on your plate?").font(.community(.title2, weight: .bold))
+                    Text("Add a food and see your day come together.")
+                        .font(.community(.subheadline))
+                    NavigationLink {
+                        MealDetailView(date: selectedDate, mealID: nextMeal.id)
+                    } label: {
+                        Text("Log \(nextMeal.name.lowercased())").frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(WorkoutPrimaryButtonStyle(phase: visualPhase))
+                }
+                .padding(20)
+                .foregroundStyle(RepbaseDesign.onInk)
+                .background(RepbaseDesign.ink, in: RoundedRectangle(cornerRadius: 24))
+            } else {
+                Button { isChoosingMeal = true } label: {
+                    Label("Log food", systemImage: "plus").frame(maxWidth: .infinity)
+                }
+                .buttonStyle(WorkoutPrimaryButtonStyle(phase: visualPhase))
+                .disabled(meals.isEmpty)
+            }
+
             HStack {
-                Text("MEALS")
+                Text("Your meals")
                     .font(.community(.caption2, weight: .bold))
                     .tracking(1)
                     .foregroundStyle(timeOfDay.canvasPrimaryText)
                 Spacer()
-                Text("\(displayedLoggedMealCount ?? meals.filter { !$0.entries.isEmpty }.count) of \(meals.count) logged")
+                Button("Plan your week →") { isShowingMealPlan = true }
                     .font(.community(.caption, weight: .semibold))
-                    .foregroundStyle(timeOfDay.canvasSecondaryText)
-                    .contentTransition(.numericText())
+                    .foregroundStyle(timeOfDay.accent)
             }
 
             VStack(spacing: 0) {
@@ -425,16 +521,18 @@ struct FoodTrackingView: View {
                     NavigationLink {
                         MealDetailView(date: selectedDate, mealID: meal.id)
                     } label: {
-                        MealRow(
-                            meal: meal,
-                            isRecentlyLogged: recentlyLoggedMealID == meal.id
-                        )
+                        HStack(alignment: .top, spacing: 12) {
+                            VStack(spacing: 5) {
+                                Circle().fill(meal.entries.isEmpty ? Color(.separator) : RepbaseDesign.success)
+                                    .frame(width: 8, height: 8)
+                                Rectangle().fill(Color(.separator)).frame(width: 1)
+                            }
+                            .frame(width: 12).padding(.top, 18)
+                            MealRow(meal: meal, isRecentlyLogged: recentlyLoggedMealID == meal.id)
+                        }
                     }
                     .buttonStyle(.plain)
 
-                    if index < meals.count - 1 {
-                        Divider().opacity(0.55)
-                    }
                 }
             }
             .padding(.horizontal, 6)
@@ -475,16 +573,6 @@ struct FoodTrackingView: View {
                 }
                 .repbaseControlSurface(cornerRadius: 15)
                 .disabled(store.isSaving)
-            }
-
-            if let firstMeal = meals.first {
-                NavigationLink {
-                    MealDetailView(date: selectedDate, mealID: firstMeal.id)
-                } label: {
-                    Label("Log Food", systemImage: "fork.knife")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(WorkoutPrimaryButtonStyle(phase: visualPhase))
             }
 
             // Sharing belongs to the page that lists the meals, not to each
@@ -668,19 +756,20 @@ private struct CalorieGoalCard: View {
     let loggedFoodCount: Int
     let isPulsing: Bool
     let isDayComplete: Bool
+    var showsRemaining = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("DAILY NUTRITION")
+                    Text(showsRemaining ? "REMAINING" : "LOGGED")
                         .font(.community(size: 9, weight: .bold))
                         .tracking(1.2)
                         .foregroundStyle(phase.secondaryText)
                 }
                 Spacer()
                 if isDayComplete {
-                    Text("DAY COMPLETE")
+                    Text("MEALS LOGGED")
                         .font(.community(size: 8, weight: .bold))
                         .tracking(0.9)
                         .foregroundStyle(
@@ -702,8 +791,9 @@ private struct CalorieGoalCard: View {
                 }
             }
 
-            HStack(alignment: .lastTextBaseline, spacing: 8) {
-                Text(value.nutritionText)
+            HStack(alignment: .center, spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text((showsRemaining ? max(0, goal - value) : value).nutritionText)
                     .font(.community(size: 36, weight: .bold, design: .rounded))
                     .contentTransition(.numericText())
                     .scaleEffect(isPulsing && !reduceMotion ? 1.025 : 1, anchor: .leading)
@@ -711,35 +801,40 @@ private struct CalorieGoalCard: View {
                         .spring(response: 0.48, dampingFraction: 0.68),
                         value: isPulsing
                     )
-                Text("OF \(goal.nutritionText) KCAL")
+                Text(showsRemaining ? "KCAL" : "OF \(goal.nutritionText) KCAL")
                     .font(.community(.caption2, weight: .bold))
                     .foregroundStyle(phase.secondaryText)
-            }
 
-            Text("\(remaining.nutritionText) kcal remaining")
+            Text(balanceText)
                 .font(.community(.subheadline, weight: .semibold))
                 .foregroundStyle(phase.accent)
-
-            GeometryReader { proxy in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(phase.secondaryText.opacity(0.20))
-                    Capsule().fill(phase.accent)
-                        .frame(width: proxy.size.width * progress)
-                        .animation(
-                            reduceMotion
-                                ? .easeOut(duration: 0.18)
-                                : .spring(response: 0.72, dampingFraction: 0.84),
-                            value: progress
-                        )
-                }
             }
-            .frame(height: 7)
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            ZStack {
+                Circle().trim(from: 0, to: 0.75)
+                    .stroke(phase.secondaryText.opacity(0.18), style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                Circle().trim(from: 0, to: 0.75 * progress)
+                    .stroke(phase.accent, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                VStack(spacing: 2) {
+                    Text(goal > 0 ? "\(Int(progress * 100))%" : "—").font(.community(.headline))
+                    Text("logged").font(.community(.caption2)).foregroundStyle(.secondary)
+                }.rotationEffect(.degrees(-135))
+            }
+            .rotationEffect(.degrees(135))
+            .frame(width: 96, height: 96)
+            }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Calories, \(value.nutritionText) of \(goal.nutritionText), \(remaining.nutritionText) remaining")
+        .accessibilityLabel("Calories, \(value.nutritionText) of \(goal.nutritionText). \(balanceText)")
     }
 
-    private var remaining: Decimal { max(goal - value, 0) }
+    private var balanceText: String {
+        guard goal > 0 else { return "Set a calorie target in Goals" }
+        if value > goal { return "\((value - goal).nutritionText) kcal above target" }
+        if value == goal { return "Calorie target reached" }
+        return "\((goal - value).nutritionText) kcal remaining"
+    }
 
     private var progress: CGFloat {
         guard goal > 0 else { return 0 }
@@ -757,17 +852,20 @@ private struct MacroGoalCard: View {
     let color: Color
     let isPulsing: Bool
     let delay: Double
+    var showsRemaining = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.community(.caption, weight: .medium))
                 .foregroundStyle(phase.secondaryText)
-            Text("\(value.nutritionText) / \(goal.nutritionText)g")
-                .font(.community(.subheadline, weight: .bold))
+            Text("\((showsRemaining ? max(0, goal - value) : value).nutritionText) g")
+                .font(.community(.title3, weight: .bold))
                 .lineLimit(1)
                 .minimumScaleFactor(0.65)
                 .contentTransition(.numericText())
+            Text("of \(goal.nutritionText) g")
+                .font(.community(.caption)).foregroundStyle(.secondary)
 
             GeometryReader { proxy in
                 ZStack(alignment: .leading) {
@@ -794,7 +892,7 @@ private struct MacroGoalCard: View {
         .padding(.horizontal, 8)
         .padding(.vertical, 10)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(title), \(value.nutritionText) of \(goal.nutritionText) grams")
+        .accessibilityLabel("\(title), \((showsRemaining ? max(0, goal - value) : value).nutritionText) grams \(showsRemaining ? "remaining" : "logged"), target \(goal.nutritionText) grams")
     }
 
     private var progress: CGFloat {
@@ -811,22 +909,31 @@ private struct MealRow: View {
 
     var body: some View {
         HStack(spacing: 11) {
-            Image(systemName: mealSymbol)
-                .font(.community(.subheadline, weight: .semibold))
-                .foregroundStyle(phase.accent)
-                .frame(width: 38, height: 38)
-                .background(phase.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 12))
-
             VStack(alignment: .leading, spacing: 3) {
-                Text(meal.name)
+                Text(isLogged ? meal.name : "Add \(meal.name.lowercased())")
                     .font(.community(.subheadline, weight: .semibold))
                 Text(subtitle)
                     .font(.community(.caption))
                     .foregroundStyle(phase.secondaryText)
                     .lineLimit(1)
+                if isLogged {
+                    Text("P \(meal.totalNutrition.proteinGrams.nutritionText) g · C \(meal.totalNutrition.carbohydrateGrams.nutritionText) g · F \(meal.totalNutrition.fatGrams.nutritionText) g")
+                        .font(.community(.caption2)).foregroundStyle(.secondary)
+                }
             }
 
             Spacer(minLength: 8)
+
+            if isLogged {
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(meal.totalNutrition.calories.nutritionText)
+                        .font(.community(.subheadline, weight: .semibold))
+                    Text("kcal")
+                        .font(.community(.caption2))
+                        .foregroundStyle(.secondary)
+                }
+                .accessibilityLabel("\(meal.totalNutrition.calories.nutritionText) kilocalories")
+            }
 
             Image(systemName: isLogged ? "checkmark" : "plus")
                 .font(.community(.caption, weight: .bold))
@@ -839,8 +946,8 @@ private struct MealRow: View {
                     value: isRecentlyLogged
                 )
         }
-        .padding(.horizontal, 3)
-        .padding(.vertical, 10)
+        .padding(14)
+        .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(isLogged ? Color(.separator) : .clear, lineWidth: 0.5))
         .background {
             if isRecentlyLogged {
                 RoundedRectangle(cornerRadius: 15, style: .continuous)
@@ -871,8 +978,8 @@ private struct MealRow: View {
     private var isLogged: Bool { !meal.entries.isEmpty }
 
     private var subtitle: String {
-        guard !meal.entries.isEmpty else { return "Nothing logged yet" }
-        return "\(meal.entries.map(\.name).joined(separator: ", ")) · \(meal.totalNutrition.calories.nutritionText) kcal"
+        guard !meal.entries.isEmpty else { return "What’s on your plate?" }
+        return meal.entries.map(\.name).joined(separator: ", ")
     }
 
     private var mealSymbol: String {
