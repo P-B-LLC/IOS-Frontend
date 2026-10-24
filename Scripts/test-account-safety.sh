@@ -7,6 +7,8 @@ mkdir -p "$test_package/Sources/AccountSafety" "$test_package/Tests/AccountSafet
 cp "$repo/Tests/AccountSafety/Package.swift" "$test_package/Package.swift"
 cp "$repo/Tests/AccountSafety/VideoBetaTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/Tests/AccountSafety/PlannerWeekdayTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/Tests/AccountSafety/PlannerCalendarTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/IOS Frontend/IOS Frontend/Services/PlannerCalendarPolicy.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/Tests/AccountSafety/TrainingInsightTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/Tests/AccountSafety/WorkoutFlowTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/IOS Frontend/IOS Frontend/Services/WorkoutFocusPolicy.swift" "$test_package/Sources/AccountSafety/"

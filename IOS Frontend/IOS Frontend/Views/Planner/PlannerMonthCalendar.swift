@@ -12,20 +12,15 @@ struct PlannerMonthCalendar: View {
     @Environment(\.homeTimeOfDay) private var timeOfDay
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    /// Closes the month, leaving the week strip. Absent when the calendar is
-    /// not something the user opened.
-    var onClose: (() -> Void)?
     var clearedDate: String?
     var completionPulse = false
 
     init(
         clearedDate: String? = nil,
-        completionPulse: Bool = false,
-        onClose: (() -> Void)? = nil
+        completionPulse: Bool = false
     ) {
         self.clearedDate = clearedDate
         self.completionPulse = completionPulse
-        self.onClose = onClose
     }
 
     private let calendar = Calendar.current
@@ -44,7 +39,6 @@ struct PlannerMonthCalendar: View {
         // anything is on. Capped because picking a day here opens that day's
         // own screen, and that one grows the whole way.
         .typeSizeCeiling()
-        .repbaseCard(contentPadding: 18, cornerRadius: 24)
         .background {
             if clearedDate != nil {
                 RoundedRectangle(cornerRadius: 24)
@@ -71,28 +65,24 @@ struct PlannerMonthCalendar: View {
 
     private var monthControls: some View {
         HStack(spacing: 10) {
-            Spacer(minLength: 0)
-
-            if !isShowingCurrentMonth {
-                Button("Today") { store.showToday() }
-                    .font(.community(.caption, weight: .semibold))
-                    .buttonStyle(.bordered)
-                    .buttonBorderShape(.capsule)
-                    .tint(timeOfDay.accent)
-            }
-
             stepper(systemImage: "chevron.left", label: "Previous month", months: -1)
+            Spacer(minLength: 0)
+            Button("Today") { store.showToday() }
+                .font(.community(.footnote, weight: .semibold))
+                .buttonStyle(.bordered)
+                .buttonBorderShape(.capsule)
+                .tint(PlannerStyle.accentText)
+                .frame(minHeight: 44)
+            Spacer(minLength: 0)
             stepper(systemImage: "chevron.right", label: "Next month", months: 1)
 
-            if let onClose { Button("Week", action: onClose).font(.community(.caption, weight: .semibold)) }
         }
     }
 
     private var legend: some View {
         HStack(spacing: 18) {
-            legendItem("Workout", color: Color(hex: 0xB96F4C))
-            legendItem("Meals", color: Color(hex: 0x4AAFB3))
-            legendItem("Complete", color: Color(hex: 0x356B5B))
+            legendItem("Items planned", color: PlannerStyle.accentText)
+            legendItem("Tasks complete", color: PlannerStyle.success)
             Spacer(minLength: 0)
         }
     }
@@ -100,7 +90,7 @@ struct PlannerMonthCalendar: View {
     private func legendItem(_ title: String, color: Color) -> some View {
         HStack(spacing: 4) {
             Circle().fill(color).frame(width: 6, height: 6)
-            Text(title).font(.community(size: 9, weight: .medium)).foregroundStyle(timeOfDay.secondaryText)
+            Text(title).font(.community(.caption)).foregroundStyle(timeOfDay.secondaryText)
         }
     }
 
@@ -110,7 +100,7 @@ struct PlannerMonthCalendar: View {
         } label: {
             Image(systemName: systemImage)
                 .font(.community(.footnote, weight: .bold))
-                .frame(width: 32, height: 32)
+                .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -148,7 +138,8 @@ struct PlannerMonthCalendar: View {
         let inMonth = PlannerStore.isSameMonth(date, store.visibleMonth)
         let isSelected = calendar.isDate(date, inSameDayAs: store.selectedDate)
         let isToday = calendar.isDateInToday(date)
-        let isCleared = clearedDate == PlannerStore.dateString(date)
+        let counts = store.taskCounts(on: date)
+        let isCleared = inMonth && counts.total > 0 && counts.done == counts.total
 
         return Button {
             store.select(date)
@@ -156,7 +147,7 @@ struct PlannerMonthCalendar: View {
             VStack(spacing: 3) {
                 Text("\(calendar.component(.day, from: date))")
                     .font(.community(size: 14, weight: isSelected || isToday ? .bold : .regular))
-                    .foregroundStyle(foreground(inMonth: inMonth, isSelected: isSelected || isCleared))
+                    .foregroundStyle(isCleared ? PlannerStyle.success : foreground(inMonth: inMonth, isSelected: isSelected))
                     .frame(width: 30, height: 30)
                     .background(background(isSelected: isSelected, isToday: isToday, isCleared: isCleared))
                     .overlay {
@@ -171,21 +162,22 @@ struct PlannerMonthCalendar: View {
                 markers(for: date, inMonth: inMonth)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 1)
+            .frame(minHeight: 48)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(accessibilityLabel(for: date))
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
-    /// A dot per category planned that day, up to three. Days outside the month
-    /// stay bare: marking them would make the grid read as denser than it is.
+    /// One planned-item dot. The legend describes this meaning, not categories
+    /// that may not actually be present on a given day.
     private func markers(for date: Date, inMonth: Bool) -> some View {
         HStack(spacing: 2) {
             if inMonth {
-                ForEach(store.categories(on: date).prefix(3), id: \.self) { category in
+                if store.hasEntries(on: date) {
                     Circle()
-                        .fill(category.tint)
+                        .fill(PlannerStyle.accentText)
                         .frame(width: 4, height: 4)
                 }
             }
@@ -196,16 +188,17 @@ struct PlannerMonthCalendar: View {
     @ViewBuilder
     private func background(isSelected: Bool, isToday: Bool, isCleared: Bool) -> some View {
         if isCleared {
-            Circle().fill(RepbasePalette.sage)
+            Circle().fill(PlannerStyle.success.opacity(0.14))
+                .overlay { Circle().strokeBorder(PlannerStyle.success, lineWidth: isSelected ? 2 : 0) }
         } else if isSelected {
-            Circle().fill(timeOfDay.accent)
+            Circle().fill(timeOfDay.primaryActionSurface)
         } else if isToday {
             Circle().strokeBorder(timeOfDay.accent, lineWidth: 1.5)
         }
     }
 
     private func foreground(inMonth: Bool, isSelected: Bool) -> Color {
-        if isSelected { return Color(hex: 0xFFFFFF) }
+        if isSelected { return timeOfDay.onPrimaryAction }
         return inMonth ? timeOfDay.primaryText : timeOfDay.secondaryText.opacity(0.4)
     }
 
@@ -230,18 +223,6 @@ struct PlannerMonthCalendar: View {
         return stride(from: 0, to: days.count, by: 7).map {
             Array(days[$0..<min($0 + 7, days.count)])
         }
-    }
-
-    private var isShowingCurrentMonth: Bool {
-        PlannerStore.isSameMonth(store.visibleMonth, Date())
-    }
-
-    private var monthName: String {
-        store.visibleMonth.formatted(.dateTime.month(.wide))
-    }
-
-    private var yearName: String {
-        store.visibleMonth.formatted(.dateTime.year())
     }
 
     private func accessibilityLabel(for date: Date) -> String {
