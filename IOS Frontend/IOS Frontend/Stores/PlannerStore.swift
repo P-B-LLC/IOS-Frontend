@@ -27,6 +27,7 @@ final class PlannerStore {
     private var repository: PlannerAPIRepository?
     private var connectionGeneration = UUID()
     private let completions = PlannerCompletionCoordinator()
+    private let monthReads = PlannerMonthReadGate()
 
     func isCompletionPending(_ entry: PlannerEntry) -> Bool {
         entry.serverID.map { completions.isPending($0) } ?? false
@@ -336,7 +337,7 @@ final class PlannerStore {
         selectedDate = day
         guard !Self.isSameMonth(day, visibleMonth) else { return }
         visibleMonth = day
-        Task { await reloadMonth(generation: connectionGeneration, showsLoadingState: false) }
+        Task { await reloadMonth(generation: connectionGeneration, showsLoadingState: true) }
     }
 
     func showMonth(offsetBy months: Int) {
@@ -344,7 +345,7 @@ final class PlannerStore {
         guard let moved = calendar.date(byAdding: .month, value: months, to: visibleMonth)
         else { return }
         visibleMonth = moved
-        Task { await reloadMonth(generation: connectionGeneration, showsLoadingState: false) }
+        Task { await reloadMonth(generation: connectionGeneration, showsLoadingState: true) }
     }
 
     func showToday() {
@@ -353,7 +354,7 @@ final class PlannerStore {
         selectedDate = today
         visibleMonth = today
         guard wasElsewhere else { return }
-        Task { await reloadMonth(generation: connectionGeneration, showsLoadingState: false) }
+        Task { await reloadMonth(generation: connectionGeneration, showsLoadingState: true) }
     }
 
     // MARK: - Writing
@@ -590,13 +591,14 @@ final class PlannerStore {
         // The grid shows a few days either side of the month, so the range is
         // padded rather than clipped to the first and last of the month.
         guard let range = Self.monthRange(around: visibleMonth) else { return }
+        let readID = monthReads.begin()
         if showsLoadingState { isLoading = true }
         persistenceError = nil
 
         defer {
-            // Cleared unconditionally: a stale return must not leave the page
-            // spinning with nothing on screen explaining it.
-            if showsLoadingState { isLoading = false }
+            // The latest read owns the spinner, including a background read
+            // that superseded a foreground load. Older reads cannot hide it.
+            if connectionGeneration == generation, monthReads.accepts(readID) { isLoading = false }
         }
 
         do {
@@ -615,10 +617,10 @@ final class PlannerStore {
             try? await repository.syncScheduledWorkouts(from: range.start, to: range.end)
             let read = completions.beginRead()
             let loaded = try await repository.entries(from: range.start, to: range.end)
-            guard connectionGeneration == generation else { return }
+            guard connectionGeneration == generation, monthReads.accepts(readID) else { return }
             entriesByDate = Dictionary(grouping: loaded.map { reconcileCompletion($0, read: read) }, by: \.date)
         } catch {
-            guard connectionGeneration == generation else { return }
+            guard connectionGeneration == generation, monthReads.accepts(readID) else { return }
             persistenceError = error.userFacingMessage
         }
 
