@@ -6,7 +6,7 @@ Daily light/dark: `73:1168` / `73:1288`; task: `73:1408`; event: `74:1325`; mont
 ## Implementation
 
 - Daily task list is the default. **View month** opens the month overview as a native sheet; selecting a date and **Open this day** returns to its agenda. Closing without a selection restores the selected day's month data.
-- Clear Add Task / Add Event actions, a completed-task disclosure, separate event rows, optional category filters and **View timeline** retain existing capabilities.
+- **Your day** is one agenda: scheduled tasks and events appear together in time order, then anytime items. Equal-time/anytime items retain existing ordering. Completed tasks remain accessible through their disclosure. No timeline switch or separate event section; events still have no completion checkbox. Add Task, Add Event, month access and optional category filters remain available.
 - Task title opens editing; the leading completion control and trailing Actions menu are separate 44pt targets. Subtask completion remains server-derived, not a local guess. Derived parents have a status mark, not a misleading completion button.
 - Editor keeps category, workout link, time, duration, priority, repeat rules/end dates, notes, sharing and deletion. Notification preferences use the existing preferences screen, not a new reminder API. Save remains visible above the keyboard/safe area. Recovery now includes unsaved steps and repeat selections; old checkpoints still decode.
 - Existing app typography, navigation and background tokens are reused. Planner-only soft, accessible-accent-text and success colors have light/dark asset variants. No screenshots, remote assets, API changes, or sample data are included in app UI.
@@ -25,7 +25,7 @@ open -a Simulator
 INSTALL_SIMULATOR=1 bash Scripts/validate-planner-refresh.sh
 ```
 
-The script runs all AccountSafety tests (including six new calendar/read-order tests), builds Debug, then installs/launches only if those steps succeed. It never deletes the installed app or its data.
+The script runs all AccountSafety tests (including calendar/read-order and unified-agenda ordering tests), builds Debug, then installs/launches only if those steps succeed. It never deletes the installed app or its data.
 
 ## Simulator acceptance checks
 
@@ -33,7 +33,7 @@ The script runs all AccountSafety tests (including six new calendar/read-order t
 2. View month → previous/next month rapidly → select a date → Open this day. Repeat across December/January, leap day and DST. Dismiss without selecting; the original day's data returns. Try network failure and Retry, not just a populated happy path.
 3. Add task/event for a non-today date; verify saved date, time and duration. Switch Task/Event before saving: event must not receive the task draft's unsaved subtasks. Add a typed-but-unsubmitted step and Save; it must not disappear.
 4. Complete/undo a task; expand completed items. Complete the final subtask and reopen it; parent state must match the server. Rapid taps while pending must not duplicate requests. Simulate failure and confirm recovery/error text.
-5. Expand/collapse subtasks; add/delete a step, use Actions → Edit/Delete; verify repeat deletion asks the correct scope. Exercise linked workout completion confirmation, filters and timeline.
+5. Expand/collapse subtasks; add/delete a step, use Actions → Edit/Delete; verify repeat deletion asks the correct scope. Exercise linked workout completion confirmation and filters. Mix timed events/tasks and anytime items: the single agenda must show chronological scheduled items first and preserve equal-time/anytime ordering. Completed-task disclosure must not hide events.
 6. Create custom/weekday repeats with end dates. Navigate to reminder preferences and back without losing the draft. Relaunch mid-draft; steps and repeat choices recover. Verify saving disables mutation and errors keep the draft visible.
 
 Do not declare beta readiness or visual parity until these native checks pass. No commit, push, merge or deployment is implied by this handoff.

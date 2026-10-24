@@ -1,5 +1,21 @@
 import Foundation
 
+/// API times are literal HH:mm:ss values, never localized AM/PM labels.
+/// Equal-time and anytime items retain their existing priority/server order.
+nonisolated enum PlannerAgendaOrder {
+    static func ordered<Entry>(_ entries: [Entry], time: (Entry) -> String?) -> [Entry] {
+        entries.enumerated().sorted { left, right in
+            let lhs = time(left.element), rhs = time(right.element)
+            switch (lhs, rhs) {
+            case let (a?, b?) where a != b: return a < b
+            case (_?, nil): return true
+            case (nil, _?): return false
+            default: return left.offset < right.offset
+            }
+        }.map(\.element)
+    }
+}
+
 /// Calendar arithmetic stays date-based across DST and year boundaries.
 nonisolated enum PlannerCalendarPolicy {
     static func week(containing date: Date, calendar: Calendar = .current) -> [Date] {

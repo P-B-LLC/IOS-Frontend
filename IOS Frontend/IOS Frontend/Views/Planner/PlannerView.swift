@@ -24,7 +24,6 @@ struct PlannerView: View {
     @State private var categoryFilter: PlannerCategory?
     @State private var isMonthShown = false
     @State private var showsCompleted = false
-    @State private var showsTimeline = false
     @State private var openingDay: Weekday?
     @State private var handledCompletionID: UUID?
     @State private var completedEntryID: PlannerEntry.ID?
@@ -128,9 +127,6 @@ struct PlannerView: View {
             categoryFilter = nil
             showsCompleted = false
         }
-        .onChange(of: categoryFilter) {
-            if categoryFilter != nil { showsTimeline = false }
-        }
         .onChange(of: store.latestCompletionEvent) { _, event in
             handleCompletion(event)
         }
@@ -230,7 +226,7 @@ struct PlannerView: View {
                     .font(.community(.headline, weight: .bold))
                     .foregroundStyle(timeOfDay.canvasPrimaryText)
                 Spacer(minLength: 0)
-                if !completedTasks.isEmpty, !showsTimeline {
+                if !completedTasks.isEmpty {
                     Button {
                         withAnimation(reduceMotion ? nil : .easeOut(duration: 0.2)) {
                             showsCompleted.toggle()
@@ -259,14 +255,7 @@ struct PlannerView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            if showsTimeline, categoryFilter == nil {
-                PlannerDaySchedule(
-                    onSelect: { editor = .edit($0) },
-                    onOpenWorkout: { openingDay = $0 },
-                    recentlyCompletedEntryID: completedEntryID,
-                    dayIsCleared: clearedDate == PlannerStore.dateString(store.selectedDate)
-                )
-            } else if store.isLoading {
+            if store.isLoading {
                 ProgressView("Loading your day…")
                     .frame(maxWidth: .infinity, minHeight: 80)
             } else if filtered.isEmpty {
@@ -276,7 +265,7 @@ struct PlannerView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .plannerSurface(soft: true)
             } else {
-                ForEach(openTasks) { entry in
+                ForEach(dayAgenda) { entry in
                     agendaRow(entry)
                 }
                 if openTasks.isEmpty, !completedTasks.isEmpty {
@@ -290,38 +279,17 @@ struct PlannerView: View {
                         agendaRow(entry)
                     }
                 }
-                if !dayEvents.isEmpty {
-                    HStack {
-                        Text("On the calendar").font(.community(.headline, weight: .bold))
-                        Spacer()
-                        Text("\(dayEvents.count) \(dayEvents.count == 1 ? "event" : "events")")
-                            .font(.community(.footnote))
-                            .foregroundStyle(timeOfDay.canvasSecondaryText)
-                    }
-                    .padding(.top, 8)
-                    ForEach(dayEvents) { entry in
-                        agendaRow(entry)
-                    }
-                }
             }
-
-            Button {
-                showsTimeline.toggle()
-                if showsTimeline { categoryFilter = nil }
-            } label: {
-                Label(showsTimeline ? "View task list" : "View timeline",
-                      systemImage: showsTimeline ? "list.bullet" : "clock")
-                    .font(.community(.footnote, weight: .semibold))
-                    .frame(minHeight: 44)
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(PlannerStyle.accentText)
         }
     }
 
     private var openTasks: [PlannerEntry] { filtered.filter { $0.kind == .task && !$0.isComplete } }
     private var completedTasks: [PlannerEntry] { filtered.filter { $0.kind == .task && $0.isComplete } }
-    private var dayEvents: [PlannerEntry] { filtered.filter { $0.kind == .event } }
+    /// One plan, not separate task/event modes. Events remain visible even
+    /// when the day's tasks are finished; only completed tasks are tucked away.
+    private var dayAgenda: [PlannerEntry] {
+        PlannerAgendaOrder.ordered(filtered.filter { $0.kind == .event || !$0.isComplete }, time: { $0.time })
+    }
 
     private func agendaRow(_ entry: PlannerEntry) -> some View {
         PlannerEntryRow(entry: entry, onEdit: { editor = .edit(entry) },
@@ -709,8 +677,8 @@ struct PlannerEntryRow: View {
         if showsDate, let day = Self.date(from: entry.date) {
             parts.append(day.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()))
         }
-        parts.append(entry.category.title)
         parts.append(entry.displayTimeRange ?? "Anytime")
+        parts.append(entry.category.title)
         if entry.kind == .event { parts.append("Event") }
         if let weekdays = entry.repeatWeekdays, !weekdays.isEmpty {
             parts.append(PlannerRepeatWeekday.summary(weekdays))

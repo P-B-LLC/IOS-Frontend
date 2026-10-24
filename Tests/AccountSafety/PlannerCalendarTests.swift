@@ -3,6 +3,24 @@ import XCTest
 @testable import AccountSafety
 
 final class PlannerCalendarTests: XCTestCase {
+    func testOneAgendaOrdersScheduledTimesBeforeAnytimeAndKeepsTiesStable() {
+        struct Item: Equatable { let title: String; let time: String? }
+        let items = [Item(title: "Pool laps", time: nil),
+                     Item(title: "Dinner", time: "18:00:00"),
+                     Item(title: "Appointment", time: "09:00:00"),
+                     Item(title: "Priority task", time: "09:00:00"),
+                     Item(title: "Groceries", time: nil)]
+        let result = PlannerAgendaOrder.ordered(items, time: { $0.time })
+        XCTAssertEqual(result.map(\.title), ["Appointment", "Priority task", "Dinner", "Pool laps", "Groceries"])
+        XCTAssertEqual(result.count, items.count)
+    }
+
+    func testEmptyAndUnscheduledAgendasKeepTheirOrder() {
+        let times: [String?] = [nil, nil]
+        XCTAssertEqual(PlannerAgendaOrder.ordered(times, time: { $0 }), times)
+        XCTAssertEqual(PlannerAgendaOrder.ordered([String](), time: { $0 }), [])
+    }
+
     private var calendar: Calendar {
         var value = Calendar(identifier: .gregorian)
         value.timeZone = TimeZone(identifier: "America/Chicago")!
