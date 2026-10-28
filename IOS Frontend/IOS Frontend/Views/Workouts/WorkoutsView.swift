@@ -5,6 +5,7 @@
 //  Compact day-first weekly workout dashboard.
 //
 
+import Foundation
 import SwiftUI
 
 struct WorkoutsView: View {
@@ -83,7 +84,7 @@ struct WorkoutsView: View {
                 WorkoutReferenceHero(
                     eyebrow: "SESSION IN PROGRESS",
                     title: session.workoutName,
-                    detail: "\(session.loggedSetCount) of \(session.totalSetCount) sets logged",
+                    detail: String(localized: "\(session.loggedSetCount) of \(session.totalSetCount) sets logged", bundle: .app, locale: .app),
                     isActive: true
                 )
             }
@@ -94,7 +95,7 @@ struct WorkoutsView: View {
             } label: {
                 WorkoutReferenceHero(
                     eyebrow: "TODAY",
-                    title: store.workout(on: focusDay)?.name ?? "Plan today's workout",
+                    title: store.workout(on: focusDay)?.name ?? String(localized: "Plan today's workout", bundle: .app, locale: .app),
                     detail: focusDescription(for: focusDay),
                     isActive: false
                 )
@@ -113,9 +114,9 @@ struct WorkoutsView: View {
                 .font(.community(.headline))
 
             HStack(spacing: 10) {
-                WeekStat(value: workouts.count, label: "Planned", icon: "calendar.badge.checkmark", accent: phase.accent)
-                WeekStat(value: exerciseCount, label: "Exercises", icon: "list.bullet", accent: phase.accent)
-                WeekStat(value: setCount, label: "Target Sets", icon: "checklist", accent: phase.accent)
+                WeekStat(value: workouts.count, label: String(localized: "Planned", bundle: .app, locale: .app, comment: "Count of workouts planned this week"), icon: "calendar.badge.checkmark", accent: phase.accent)
+                WeekStat(value: exerciseCount, label: String(localized: "Exercises", bundle: .app, locale: .app), icon: "list.bullet", accent: phase.accent)
+                WeekStat(value: setCount, label: String(localized: "Target Sets", bundle: .app, locale: .app), icon: "checklist", accent: phase.accent)
             }
         }
         .workoutCard()
@@ -138,16 +139,16 @@ struct WorkoutsView: View {
 
     private func focusDescription(for day: Weekday) -> String {
         guard let workout = store.workout(on: day) else {
-            return "Add a name, exercises, and target sets."
+            return String(localized: "Add a name, exercises, and target sets.", bundle: .app, locale: .app)
         }
-        return "\(workout.exercises.count) exercises | \(workout.totalSets) target sets"
+        return String(localized: "\(workout.exercises.count) exercises | \(workout.totalSets) target sets", bundle: .app, locale: .app)
     }
 }
 
 /// A data-backed version of the product centerpiece in the supplied vehicle
 /// reference: the workout is the object, while the rail exposes its states.
 private struct WorkoutReferenceHero: View {
-    let eyebrow: String
+    let eyebrow: LocalizedStringKey
     let title: String
     let detail: String
     let isActive: Bool

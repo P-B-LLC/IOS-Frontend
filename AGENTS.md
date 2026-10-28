@@ -62,6 +62,13 @@
 - Perform network work asynchronously and expose explicit loading, saving,
   empty, and retryable error states to SwiftUI.
 
+## Localization
+
+- Follow `LOCALIZATION.md`. Text built as a `String` uses
+  `String(localized: …, bundle: .app, locale: .app)`; SwiftUI literals need
+  nothing. New strings must be translated into all ten languages in
+  `Localizable.xcstrings` before the catalog tests pass.
+
 ## Validation
 
 - Validate that `API/openapi.yaml` still parses before committing contract

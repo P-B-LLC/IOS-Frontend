@@ -41,17 +41,27 @@ enum APIServiceError: LocalizedError {
         switch self {
         case .undocumentedStatus(let status):
             if status == 401 {
-                return "The username, password, or saved session is not valid."
+                return String(localized: "The username, password, or saved session is not valid.", bundle: .app, locale: .app)
             }
-            return "The server returned an unexpected response (HTTP \(status))."
+            return String(localized: "The server returned an unexpected response (HTTP \(status)).", bundle: .app, locale: .app)
         case .malformedResponse:
-            return "The server returned data the app could not understand."
+            return String(localized: "The server returned data the app could not understand.", bundle: .app, locale: .app)
         case .untrustedPaginationURL:
-            return "The server returned an invalid pagination link."
+            return String(localized: "The server returned an invalid pagination link.", bundle: .app, locale: .app)
         case .missingServerIdentifier(let item):
-            return "\(item) has not been saved to the server yet."
+            return String(
+                localized: "\(item) has not been saved to the server yet.",
+                bundle: .app,
+                locale: .app,
+                comment: "The placeholder names the thing not yet saved, such as a workout or a planner entry"
+            )
         case .partialWorkoutCreation(let detail):
-            return "The workout was only partially saved. \(detail)"
+            return String(
+                localized: "The workout was only partially saved. \(detail)",
+                bundle: .app,
+                locale: .app,
+                comment: "The placeholder is a further sentence explaining what was not saved"
+            )
         }
     }
 }
@@ -59,8 +69,11 @@ enum APIServiceError: LocalizedError {
 /// Too many reset codes asked for in too short a time.
 struct PasswordResetThrottled: LocalizedError {
     var errorDescription: String? {
-        "Too many reset attempts. Wait an hour and try again -- and check your "
-            + "spam folder in the meantime."
+        String(
+            localized: "Too many reset attempts. Wait an hour and try again -- and check your spam folder in the meantime.",
+            bundle: .app,
+            locale: .app
+        )
     }
 }
 
@@ -128,10 +141,14 @@ final class AuthenticationStore {
             guard sessionGeneration == generation, !Task.isCancelled else { return }
             if Self.isRejectedSession(error) {
                 clearLocalSession()
-                errorMessage = "Your session has expired. Please sign in again."
+                errorMessage = String(localized: "Your session has expired. Please sign in again.", bundle: .app, locale: .app)
             } else {
                 phase = .recoveryRequired
-                errorMessage = "We couldn't reconnect. Your saved login is safe. Check your connection and try again."
+                errorMessage = String(
+                    localized: "We couldn't reconnect. Your saved login is safe. Check your connection and try again.",
+                    bundle: .app,
+                    locale: .app
+                )
             }
         }
     }
@@ -169,7 +186,11 @@ final class AuthenticationStore {
         acceptedAgreements: Bool = false
     ) async {
         guard acceptedAgreements else {
-            errorMessage = "Please accept the Privacy Policy and agreements to create your account."
+            errorMessage = String(
+                localized: "Please accept the Privacy Policy and agreements to create your account.",
+                bundle: .app,
+                locale: .app
+            )
             return
         }
         await authenticate {

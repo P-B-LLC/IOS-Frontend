@@ -5,6 +5,7 @@
 //  Shared compact day tile used on Home and the workout dashboard.
 //
 
+import Foundation
 import SwiftUI
 
 /// A compact, glanceable entry point into one day's workout workspace.
@@ -50,7 +51,7 @@ struct WorkoutDayTile: View {
                             .foregroundStyle(WorkoutVisualPhase.focus.accent)
                     }
 
-                    Text(workout?.name ?? "Add")
+                    Text(workout?.name ?? String(localized: "Add", bundle: .app, locale: .app, comment: "Empty day tile: add a workout"))
                         .font(.community(.caption2, weight: workout == nil ? .regular : .semibold))
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
@@ -108,11 +109,21 @@ struct WorkoutDayTile: View {
         return WorkoutVisualPhase.prepare.accent.opacity(isToday ? 1 : 0)
     }
 
+    /// Each combination is its own phrase rather than suffixes appended to
+    /// the day, so a translation can order and join them its own way.
     private var accessibilityText: String {
-        var value = workout.map { "\(day.fullName): \($0.name)" } ?? "\(day.fullName): add a workout"
-        if isToday { value += ", today" }
-        if isSessionActive { value += ", session in progress" }
-        return value
+        let value = workout.map { "\(day.fullName): \($0.name)" }
+            ?? String(localized: "\(day.fullName): add a workout", bundle: .app, locale: .app)
+        switch (isToday, isSessionActive) {
+        case (false, false):
+            return value
+        case (true, false):
+            return String(localized: "\(value), today", bundle: .app, locale: .app, comment: "The placeholder is a weekday and its workout")
+        case (false, true):
+            return String(localized: "\(value), session in progress", bundle: .app, locale: .app, comment: "The placeholder is a weekday and its workout")
+        case (true, true):
+            return String(localized: "\(value), today, session in progress", bundle: .app, locale: .app, comment: "The placeholder is a weekday and its workout")
+        }
     }
 }
 

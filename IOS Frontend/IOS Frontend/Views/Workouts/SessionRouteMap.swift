@@ -6,6 +6,7 @@
 //
 
 import CoreLocation
+import Foundation
 import MapKit
 import SwiftUI
 
@@ -31,7 +32,9 @@ struct SessionRouteMap: View {
             }
 
             if let start = points.first {
-                Annotation("Start", coordinate: start.coordinate) {
+                // MapKit takes a literal title as a plain String, not a
+                // localization key, so the title is looked up here.
+                Annotation(String(localized: "Start", bundle: .app, locale: .app, comment: "Map pin where a route began"), coordinate: start.coordinate) {
                     endpointMarker(fill: .white)
                 }
                 .annotationTitles(.hidden)
@@ -41,7 +44,7 @@ struct SessionRouteMap: View {
             // began, and two markers stacked on one spot read as a mistake —
             // as do the two ends of a session that never moved.
             if let end = points.last, points.count >= 2, isLoop == false {
-                Annotation("Finish", coordinate: end.coordinate) {
+                Annotation(String(localized: "Finish", bundle: .app, locale: .app, comment: "Map pin where a route ended"), coordinate: end.coordinate) {
                     endpointMarker(fill: accent)
                 }
                 .annotationTitles(.hidden)

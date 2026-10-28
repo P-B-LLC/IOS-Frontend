@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 
 /// The same draft travels through every step; navigation never writes a plan.
@@ -86,14 +87,14 @@ struct GuidedWorkoutBuilder: View {
     private var intro: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top, spacing: 8) {
-                progressStep("Name", number: 1, step: .identity)
+                progressStep(stepTitle(.identity), number: 1, step: .identity)
                 if draft.type == .lifting {
-                    progressStep("Exercises", number: 2, step: .exercises)
+                    progressStep(stepTitle(.exercises), number: 2, step: .exercises)
                 }
-                progressStep("Review", number: draft.type == .lifting ? 3 : 2, step: .review)
+                progressStep(stepTitle(.review), number: draft.type == .lifting ? 3 : 2, step: .review)
             }
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Step \(stageNumber) of \(draft.type == .lifting ? 3 : 2): \(stage == .identity ? "Name" : stage == .exercises ? "Exercises" : "Review")")
+            .accessibilityLabel("Step \(stageNumber) of \(draft.type == .lifting ? 3 : 2): \(stepTitle(stage))")
 
             Text(stage == .identity ? "Name your workout. Add only what you want to train." : stage == .exercises ? "Every exercise you add appears in your workout below." : draft.type.tracksDistance ? "Review your workout, then save it when you’re ready." : "Check the order and target sets. These are the exercises you’ll train.")
                 .font(.community(.subheadline)).foregroundStyle(phase.secondaryText)
@@ -106,6 +107,14 @@ struct GuidedWorkoutBuilder: View {
         case .identity: 1
         case .exercises: 2
         case .review: draft.type == .lifting ? 3 : 2
+        }
+    }
+
+    private func stepTitle(_ step: Stage) -> String {
+        switch step {
+        case .identity: return String(localized: "Name", bundle: .app, locale: .app, comment: "Workout builder step: naming the workout")
+        case .exercises: return String(localized: "Exercises", bundle: .app, locale: .app, comment: "Workout builder step: choosing exercises")
+        case .review: return String(localized: "Review", bundle: .app, locale: .app, comment: "Workout builder step: checking before saving")
         }
     }
 
@@ -141,7 +150,7 @@ struct GuidedWorkoutBuilder: View {
                             HStack(spacing: 10) {
                                 Image(systemName: type.builderSymbol).font(.system(size: 20))
                                     .foregroundStyle(draft.type == type ? phase.accent : phase.secondaryText)
-                                Text(type == .biking ? "Cycling" : type.title).font(.community(.subheadline, weight: .bold))
+                                Text(type == .biking ? String(localized: "Cycling", bundle: .app, locale: .app) : type.title).font(.community(.subheadline, weight: .bold))
                                 Spacer(minLength: 0)
                             }
                             .padding(14).frame(maxWidth: .infinity, minHeight: 72)
@@ -161,7 +170,7 @@ struct GuidedWorkoutBuilder: View {
                             Text("Choose a saved plan to copy its exercises").font(.community(.caption2)).foregroundStyle(phase.secondaryText)
                         }
                         Spacer(minLength: 0)
-                        Image(systemName: "chevron.right").font(.caption)
+                        Image(systemName: "chevron.forward").font(.caption)
                     }.padding(14).workoutOutline()
                 }.buttonStyle(.plain).disabled(suggestions.isEmpty)
                 if suggestions.isEmpty { Text("Your saved workouts will appear here.").font(.community(.caption)).foregroundStyle(phase.secondaryText) }
@@ -191,7 +200,9 @@ struct GuidedWorkoutBuilder: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     ForEach(["All"] + Set(available.map(\.muscleGroup).filter { !$0.isEmpty && $0 != "All" }).sorted(), id: \.self) { group in
-                        Button(group) { muscle = group }
+                        // "All" is the app's own filter; every other chip is a
+                        // muscle group the server named.
+                        Button(group == "All" ? String(localized: "All", bundle: .app, locale: .app, comment: "Filter showing exercises for every muscle group") : group) { muscle = group }
                             .font(.community(.caption, weight: .semibold)).padding(.horizontal, 14).frame(minHeight: 44)
                             .foregroundStyle(muscle == group ? phase.onPrimaryAction : phase.primaryText)
                             .background(muscle == group ? phase.primaryActionSurface : phase.surfaceStart, in: RoundedRectangle(cornerRadius: 12))
@@ -211,7 +222,7 @@ struct GuidedWorkoutBuilder: View {
                         HStack(spacing: 12) {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(choice.name).font(.community(.headline))
-                                Text((choice.muscleGroup.isEmpty ? "Exercise" : choice.muscleGroup) + (selected ? " · Selected" : ""))
+                                Text(choiceDetail(choice, selected: selected))
                                     .font(.community(.caption)).foregroundStyle(phase.secondaryText)
                             }
                             Spacer(minLength: 0)
@@ -405,7 +416,7 @@ struct GuidedWorkoutBuilder: View {
                     if isSaving { ProgressView().tint(phase.onPrimaryAction) }
                     Text(isSaving ? "Saving workout…" : stage == .identity ? (draft.type == .lifting ? "Add exercises" : "Review workout") : stage == .exercises ? "Review \(draft.exercises.count) exercises" : "Save workout")
                     Spacer()
-                    if !isSaving { Image(systemName: stage == .review ? "checkmark" : "arrow.right") }
+                    if !isSaving { Image(systemName: stage == .review ? "checkmark" : "arrow.forward") }
                 }.frame(maxWidth: .infinity)
             }.buttonStyle(WorkoutPrimaryButtonStyle(phase: phase))
                 .disabled(isSaving || (stage == .exercises && draft.exercises.isEmpty) || (stage == .review && !canSave))
@@ -437,7 +448,20 @@ struct GuidedWorkoutBuilder: View {
             .fixedSize(horizontal: false, vertical: true)
     }
 
-    private func eyebrow(_ label: String) -> some View {
+    /// The muscle group under a catalog exercise, with "Selected" as part of
+    /// one phrase so a translation can put it where its language wants it.
+    private func choiceDetail(_ choice: WorkoutExerciseChoice, selected: Bool) -> String {
+        let group = choice.muscleGroup.isEmpty ? String(localized: "Exercise", bundle: .app, locale: .app) : choice.muscleGroup
+        guard selected else { return group }
+        return String(
+            localized: "\(group) · Selected",
+            bundle: .app,
+            locale: .app,
+            comment: "The placeholder is the exercise's muscle group, or the word Exercise"
+        )
+    }
+
+    private func eyebrow(_ label: LocalizedStringKey) -> some View {
         Text(label).font(.community(.caption2, weight: .bold)).foregroundStyle(phase.secondaryText)
     }
 

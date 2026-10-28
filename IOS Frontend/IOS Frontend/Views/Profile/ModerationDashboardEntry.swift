@@ -27,7 +27,7 @@ struct ModerationDashboardEntry: View {
                                 .font(.caption).foregroundStyle(.secondary)
                         }
                         Spacer()
-                        Image(systemName: "chevron.right").foregroundStyle(.secondary)
+                        Image(systemName: "chevron.forward").foregroundStyle(.secondary)
                     }
                     .padding(16)
                     .background(.quaternary, in: RoundedRectangle(cornerRadius: 16))

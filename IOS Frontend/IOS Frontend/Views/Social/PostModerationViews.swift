@@ -10,6 +10,7 @@
 //  needs somewhere to see the blocks from.
 //
 
+import Foundation
 import SwiftUI
 
 struct CommentReportSheet: View {
@@ -44,7 +45,7 @@ struct CommentReportSheet: View {
                             let sent = await store.reportComment(comment, reason: reason, detail: detail)
                             sending = false
                             if sent { dismiss() }
-                            else { failure = "The report was not confirmed. Please try again." }
+                            else { failure = String(localized: "The report was not confirmed. Please try again.", bundle: .app, locale: .app) }
                         }
                     } label: {
                         if sending { ProgressView() }
@@ -187,7 +188,7 @@ struct PostReportSheet: View {
             let sent = await store.report(post, reason: reason, detail: detail)
             isSending = false
             if sent { dismiss() }
-            else { failure = "Your report was not confirmed. Please try again." }
+            else { failure = String(localized: "Your report was not confirmed. Please try again.", bundle: .app, locale: .app) }
         }
     }
 }

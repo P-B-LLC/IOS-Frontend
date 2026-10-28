@@ -6,6 +6,7 @@
 //
 
 import Charts
+import Foundation
 import SwiftUI
 
 struct SessionProgressChart: View {
@@ -22,8 +23,11 @@ struct SessionProgressChart: View {
 
         func title(for type: WorkoutType) -> String {
             switch self {
-            case .distance: return "Distance"
-            case .pace: return type == .biking ? "Speed" : "Pace"
+            case .distance: return String(localized: "Distance", bundle: .app, locale: .app)
+            case .pace:
+                return type == .biking
+                    ? String(localized: "Speed", bundle: .app, locale: .app)
+                    : String(localized: "Pace", bundle: .app, locale: .app, comment: "Running pace: time per mile")
             }
         }
     }
@@ -181,25 +185,29 @@ struct SessionProgressChart: View {
         // and report a 1 mile gain as 0.62.
         let change = last.value - first.value
 
+        // Numbers are written out first, so each sentence is translated
+        // whole with the figure as its placeholder.
         switch metric {
         case .distance:
-            guard abs(change) >= 0.05 else { return "Distance is holding steady." }
+            guard abs(change) >= 0.05 else { return String(localized: "Distance is holding steady.", bundle: .app, locale: .app) }
+            let miles = String(format: "%.2f", abs(change))
             return change > 0
-                ? String(format: "Up %.2f mi since your first session.", change)
-                : String(format: "Down %.2f mi since your first session.", -change)
+                ? String(localized: "Up \(miles) mi since your first session.", bundle: .app, locale: .app, comment: "The placeholder is a number of miles")
+                : String(localized: "Down \(miles) mi since your first session.", bundle: .app, locale: .app, comment: "The placeholder is a number of miles")
         case .pace:
             if workoutType == .biking {
-                guard abs(change) >= 0.1 else { return "Speed is holding steady." }
+                guard abs(change) >= 0.1 else { return String(localized: "Speed is holding steady.", bundle: .app, locale: .app) }
+                let speed = String(format: "%.1f", abs(change))
                 return change > 0
-                    ? String(format: "Averaging %.1f mph faster than your first ride.", change)
-                    : String(format: "Averaging %.1f mph slower than your first ride.", -change)
+                    ? String(localized: "Averaging \(speed) mph faster than your first ride.", bundle: .app, locale: .app, comment: "The placeholder is a speed in miles per hour")
+                    : String(localized: "Averaging \(speed) mph slower than your first ride.", bundle: .app, locale: .app, comment: "The placeholder is a speed in miles per hour")
             }
-            guard abs(change) >= 1 else { return "Pace is holding steady." }
+            guard abs(change) >= 1 else { return String(localized: "Pace is holding steady.", bundle: .app, locale: .app) }
             let seconds = Int(abs(change).rounded())
             let text = String(format: "%d:%02d", seconds / 60, seconds % 60)
             return change < 0
-                ? "\(text) per mile faster than your first session."
-                : "\(text) per mile slower than your first session."
+                ? String(localized: "\(text) per mile faster than your first session.", bundle: .app, locale: .app, comment: "The placeholder is minutes and seconds, e.g. 0:12")
+                : String(localized: "\(text) per mile slower than your first session.", bundle: .app, locale: .app, comment: "The placeholder is minutes and seconds, e.g. 0:12")
         }
     }
 }

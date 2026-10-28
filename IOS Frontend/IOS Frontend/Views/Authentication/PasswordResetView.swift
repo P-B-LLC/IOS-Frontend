@@ -86,8 +86,7 @@ struct PasswordResetView: View {
             title(
                 eyebrow: "FORGOT YOUR PASSWORD",
                 headline: "We can email you a code.",
-                detail: "Enter the address on your account. The code is good "
-                    + "for 15 minutes.",
+                detail: "Enter the address on your account. The code is good for 15 minutes.",
                 timeOfDay: timeOfDay
             )
 
@@ -136,9 +135,7 @@ struct PasswordResetView: View {
                 headline: "Enter the code.",
                 // Deliberately conditional. The server does not say whether
                 // the address is registered, so neither can this.
-                detail: "If \(email.trimmedReset) has an account, a six digit "
-                    + "code is on its way. It works once and expires in 15 "
-                    + "minutes.",
+                detail: "If \(email.trimmedReset) has an account, a six digit code is on its way. It works once and expires in 15 minutes.",
                 timeOfDay: timeOfDay
             )
 
@@ -206,9 +203,9 @@ struct PasswordResetView: View {
     // MARK: - Shared pieces
 
     private func title(
-        eyebrow: String,
-        headline: String,
-        detail: String,
+        eyebrow: LocalizedStringKey,
+        headline: LocalizedStringKey,
+        detail: LocalizedStringKey,
         timeOfDay: HomeTimeOfDay
     ) -> some View {
         VStack(alignment: .leading, spacing: 7) {
@@ -242,7 +239,7 @@ struct PasswordResetView: View {
     }
 
     private func primaryButton(
-        _ title: String,
+        _ title: LocalizedStringKey,
         icon: String,
         enabled: Bool,
         timeOfDay: HomeTimeOfDay,

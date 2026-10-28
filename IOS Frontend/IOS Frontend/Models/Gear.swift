@@ -15,16 +15,16 @@ nonisolated enum GearKind: String, CaseIterable, Identifiable, Hashable, Sendabl
 
     var title: String {
         switch self {
-        case .shoe: "Shoes"
-        case .bike: "Bike"
+        case .shoe: String(localized: "Shoes", bundle: .app, locale: .app)
+        case .bike: String(localized: "Bike", bundle: .app, locale: .app)
         }
     }
 
     /// Singular, for talking about one of them.
     var singular: String {
         switch self {
-        case .shoe: "shoe"
-        case .bike: "bike"
+        case .shoe: String(localized: "shoe", bundle: .app, locale: .app, comment: "One running shoe, lowercase")
+        case .bike: String(localized: "bike", bundle: .app, locale: .app, comment: "One bicycle, lowercase")
         }
     }
 

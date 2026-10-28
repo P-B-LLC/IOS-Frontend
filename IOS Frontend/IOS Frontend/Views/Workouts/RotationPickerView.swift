@@ -10,6 +10,7 @@
 //  screen only asks the two questions.
 //
 
+import Foundation
 import SwiftUI
 
 struct RotationPickerView: View {
@@ -71,7 +72,7 @@ struct RotationPickerView: View {
     }
 
     private func section<Content: View>(
-        _ title: String,
+        _ title: LocalizedStringKey,
         timeOfDay: HomeTimeOfDay,
         @ViewBuilder content: () -> Content
     ) -> some View {
@@ -112,9 +113,11 @@ struct RotationPickerView: View {
                     Text("ON NOW")
                         .font(.community(size: 9, weight: .bold))
                         .tracking(0.6)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                         .foregroundStyle(timeOfDay.accent)
                 } else {
-                    Image(systemName: "chevron.right")
+                    Image(systemName: "chevron.forward")
                         .font(.community(.caption2))
                         .foregroundStyle(timeOfDay.secondaryText)
                 }
@@ -127,9 +130,12 @@ struct RotationPickerView: View {
     }
 
     private func summary(_ cycle: WorkoutCycle) -> String {
-        let days = cycle.length == 1 ? "1 day" : "\(cycle.length) days"
+        let days = cycle.length == 1
+            ? String(localized: "1 day", bundle: .app, locale: .app)
+            : String(localized: "\(cycle.length) days", bundle: .app, locale: .app)
         let trained = cycle.orderedSlots.filter { !$0.isRest }.count
-        return "\(days) · \(trained) training"
+        let training = String(localized: "\(trained) training", bundle: .app, locale: .app, comment: "Number of training days, as opposed to rest days, in a rotation")
+        return "\(days) · \(training)"
     }
 
     private func startSheet(
@@ -189,12 +195,12 @@ struct RotationPickerView: View {
 
     private var handoverExplanation: String {
         guard let active = store.activeCycle else {
-            return "It begins at day 1 on the date you pick."
+            return String(localized: "It begins at day 1 on the date you pick.", bundle: .app, locale: .app)
         }
         let calendar = Calendar.current
         if calendar.isDateInToday(startOn) {
-            return "\(active.displayName) ends today and this one begins at day 1."
+            return String(localized: "\(active.displayName) ends today and this one begins at day 1.", bundle: .app, locale: .app)
         }
-        return "\(active.displayName) keeps running until then, and this one begins at day 1 on the day you pick."
+        return String(localized: "\(active.displayName) keeps running until then, and this one begins at day 1 on the day you pick.", bundle: .app, locale: .app)
     }
 }

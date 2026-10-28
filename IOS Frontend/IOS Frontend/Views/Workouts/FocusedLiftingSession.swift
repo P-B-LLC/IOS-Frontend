@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 import UIKit
 
@@ -62,7 +63,7 @@ struct FocusedLiftingSession: View {
                                 Text(next.name).font(.community(.headline))
                             }
                             Spacer(minLength: 8)
-                            Image(systemName: "chevron.right").font(.caption)
+                            Image(systemName: "chevron.forward").font(.caption)
                         }.padding(16).workoutOutline(radius: 16)
                     }.buttonStyle(.plain).disabled(store.hasPendingSetChanges)
                 }
@@ -141,14 +142,14 @@ struct FocusedLiftingSession: View {
                 Text("YOUR NEXT SET").font(.community(.caption2, weight: .bold)).foregroundStyle(phase.accent)
             }
             inputLayout {
-                numberField("Weight · \(weightUnit.label)", value: Binding(
+                numberField("Weight · \(weightUnit.label)", placeholder: "Optional", value: Binding(
                     get: { weightInputs[set.id] ?? weightUnit.display(kilograms: currentSet(exercise.id, set.id)?.weightKilograms ?? "") },
                     set: {
                         weightInputs[set.id] = $0
                         store.updateSessionSet(on: day, exerciseID: exercise.id, setID: set.id, weightKilograms: weightUnit.kilograms(display: $0))
                     }
                 ), keyboard: .decimalPad)
-                numberField("Reps", value: Binding(
+                numberField("Reps", placeholder: "Reps", value: Binding(
                     get: { currentSet(exercise.id, set.id)?.reps ?? "" },
                     set: { store.updateSessionSet(on: day, exerciseID: exercise.id, setID: set.id, reps: $0) }
                 ), keyboard: .numberPad)
@@ -175,10 +176,12 @@ struct FocusedLiftingSession: View {
         .disabled(store.isSetPending(set.id) || !unitLoaded)
     }
 
-    private func numberField(_ title: String, value: Binding<String>, keyboard: UIKeyboardType) -> some View {
+    private func numberField(
+        _ title: LocalizedStringKey, placeholder: LocalizedStringKey, value: Binding<String>, keyboard: UIKeyboardType
+    ) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title).font(.community(.caption)).foregroundStyle(phase.secondaryText)
-            TextField(title == "Reps" ? "Reps" : "Optional", text: value)
+            TextField(placeholder, text: value)
                 .font(.community(.title, weight: .bold)).keyboardType(keyboard).focused($inputFocused)
                 .accessibilityLabel(title)
         }.padding(14).frame(maxWidth: .infinity, minHeight: 94, alignment: .leading).workoutOutline()
@@ -202,7 +205,9 @@ struct FocusedLiftingSession: View {
                 HStack(spacing: 12) {
                     Image(systemName: "checkmark.circle.fill").foregroundStyle(RepbaseDesign.success)
                     Text("Set \(set.setNumber)").font(.community(.subheadline, weight: .bold))
-                    Text((set.weightKilograms.isEmpty ? "Bodyweight" : "\(weightUnit.display(kilograms: set.weightKilograms)) \(weightUnit.label)") + " × \(set.reps)")
+                    Text(set.weightKilograms.isEmpty
+                         ? "Bodyweight × \(set.reps)"
+                         : "\(weightUnit.display(kilograms: set.weightKilograms)) \(weightUnit.label) × \(set.reps)")
                         .font(.community(.caption)).foregroundStyle(phase.secondaryText)
                     Spacer(minLength: 0)
                     Button("Edit") { editTarget = SetEditTarget(exerciseID: exercise.id, setID: set.id) }
@@ -231,6 +236,15 @@ struct FocusedLiftingSession: View {
         switching = false
     }
 
+    /// Each state is its own phrase rather than a suffix on the count, so a
+    /// translation is free to arrange the two.
+    private func switcherStatus(logged: Int, total: Int, current: Bool) -> LocalizedStringKey {
+        if current { return "\(logged) of \(total) sets logged · Current exercise" }
+        if logged == total { return "\(logged) of \(total) sets logged · Complete" }
+        if logged == 0 { return "\(logged) of \(total) sets logged · Not started" }
+        return "\(logged) of \(total) sets logged · In progress"
+    }
+
     private func switcher(_ session: ActiveWorkoutSession) -> some View {
         NavigationStack {
             ScrollView {
@@ -243,7 +257,7 @@ struct FocusedLiftingSession: View {
                         Button { switchTo(exercise.id) } label: {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text(exercise.name).font(.community(.headline))
-                                Text("\(logged) of \(exercise.sets.count) sets logged" + (current ? " · Current exercise" : logged == exercise.sets.count ? " · Complete" : logged == 0 ? " · Not started" : " · In progress"))
+                                Text(switcherStatus(logged: logged, total: exercise.sets.count, current: current))
                                     .font(.community(.caption)).foregroundStyle(phase.secondaryText)
                                 Text(current ? "Keep going here" : "Switch to this exercise →")
                                     .font(.community(.subheadline, weight: .bold)).foregroundStyle(phase.accent)
@@ -277,7 +291,7 @@ struct WorkoutCompletionSummary: View {
             }
             Image(systemName: "checkmark.seal.fill").font(.system(size: 42)).foregroundStyle(phase.accent)
             Text("You showed up.\nThat counts.").font(.community(.largeTitle, weight: .bold))
-            Text("\(session.workoutName) · \(session.startedAt.formatted(date: .abbreviated, time: .omitted))")
+            Text("\(session.workoutName) · \(session.startedAt.formatted(Date.FormatStyle(date: .abbreviated, time: .omitted).locale(.app)))")
                 .font(.community(.subheadline)).foregroundStyle(phase.secondaryText)
             HStack(spacing: 12) {
                 metric("Workout time", duration)
@@ -298,7 +312,7 @@ struct WorkoutCompletionSummary: View {
             Label("Workout saved to your history.", systemImage: "checkmark")
                 .font(.community(.caption)).foregroundStyle(phase.secondaryText)
             Button(action: onDone) {
-                HStack { Text("Back to workouts"); Spacer(); Image(systemName: "arrow.right") }
+                HStack { Text("Back to workouts"); Spacer(); Image(systemName: "arrow.forward") }
             }.buttonStyle(WorkoutPrimaryButtonStyle(phase: phase))
         }
     }
@@ -308,7 +322,7 @@ struct WorkoutCompletionSummary: View {
         return seconds >= 3600 ? String(format: "%d:%02d:%02d", seconds / 3600, seconds / 60 % 60, seconds % 60) : String(format: "%d:%02d", seconds / 60, seconds % 60)
     }
 
-    private func metric(_ title: String, _ value: String) -> some View {
+    private func metric(_ title: LocalizedStringKey, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(value).font(.community(.title2, weight: .bold)).monospacedDigit()
             Text(title).font(.community(.caption)).foregroundStyle(phase.secondaryText)

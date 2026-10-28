@@ -5,6 +5,7 @@
 //  The week widget above the day's list: which day, what is on it, how far in.
 //
 
+import Foundation
 import SwiftUI
 
 struct PlannerWeekStrip: View {
@@ -56,14 +57,14 @@ struct PlannerWeekStrip: View {
                     .font(.community(.footnote, weight: .semibold))
                     .frame(minHeight: 44)
             }
-            weekButton("chevron.left", label: "Previous week", offset: -1)
-            weekButton("chevron.right", label: "Next week", offset: 1)
+            weekButton("chevron.backward", label: "Previous week", offset: -1)
+            weekButton("chevron.forward", label: "Next week", offset: 1)
         }
         .buttonStyle(.plain)
         .foregroundStyle(timeOfDay.canvasPrimaryText)
     }
 
-    private func weekButton(_ symbol: String, label: String, offset: Int) -> some View {
+    private func weekButton(_ symbol: String, label: LocalizedStringKey, offset: Int) -> some View {
         Button {
             guard let date = PlannerCalendarPolicy.movingWeeks(offset, from: store.selectedDate) else { return }
             store.select(date)
@@ -99,11 +100,13 @@ struct PlannerWeekStrip: View {
             store.select(date)
         } label: {
             VStack(spacing: 4) {
-                Text(date.formatted(.dateTime.weekday(.abbreviated)))
+                Text(date.formatted(.dateTime.weekday(.abbreviated).locale(.app)))
                     .font(.community(size: 11, weight: .semibold))
                     .foregroundStyle(
                         isSelected ? timeOfDay.onPrimaryAction : timeOfDay.canvasSecondaryText
                     )
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
                 Text("\(calendar.component(.day, from: date))")
                     .font(.community(size: 18, weight: .bold))
                     .foregroundStyle(isSelected ? timeOfDay.onPrimaryAction : timeOfDay.canvasPrimaryText)
@@ -115,7 +118,7 @@ struct PlannerWeekStrip: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(date.formatted(.dateTime.weekday(.wide).month(.wide).day()))
+        .accessibilityLabel(date.formatted(.dateTime.weekday(.wide).month(.wide).day().locale(.app)))
         .accessibilityValue(store.hasEntries(on: date) ? "Items planned" : "Nothing planned")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
@@ -152,7 +155,11 @@ struct PlannerWeekStrip: View {
     private var categoryTabs: some View {
         ScrollView(.horizontal) {
             HStack(spacing: 6) {
-                chip(title: "All", tint: timeOfDay.accent, isSelected: categoryFilter == nil) {
+                chip(
+                    title: String(localized: "All", bundle: .app, locale: .app, comment: "Category filter chip that shows every category"),
+                    tint: timeOfDay.accent,
+                    isSelected: categoryFilter == nil
+                ) {
                     categoryFilter = nil
                 }
                 ForEach(categories) { category in

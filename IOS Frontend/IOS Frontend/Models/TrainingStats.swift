@@ -46,22 +46,22 @@ nonisolated struct TrainingStats: Hashable, Sendable {
     }
 
     var weeklyHeadline: String {
-        if completedThisWeek <= 0 { return "Make space for your next session." }
-        if weeklyGoal > 0 && completedThisWeek >= weeklyGoal { return "Your effort is adding up." }
-        return "One session at a time."
+        if completedThisWeek <= 0 { return String(localized: "Make space for your next session.", bundle: .app, locale: .app) }
+        if weeklyGoal > 0 && completedThisWeek >= weeklyGoal { return String(localized: "Your effort is adding up.", bundle: .app, locale: .app) }
+        return String(localized: "One session at a time.", bundle: .app, locale: .app)
     }
 
     var weeklyEncouragement: String {
         if completedThisWeek <= 0 {
-            return "Choose a workout that fits today. A lighter day or a rest day belongs in your plan, too."
+            return String(localized: "Choose a workout that fits today. A lighter day or a rest day belongs in your plan, too.", bundle: .app, locale: .app)
         }
         if weeklyGoal <= 0 {
-            return "Your logged work counts, even without a schedule. Plan ahead whenever it helps."
+            return String(localized: "Your logged work counts, even without a schedule. Plan ahead whenever it helps.", bundle: .app, locale: .app)
         }
         if completedThisWeek >= weeklyGoal {
-            return "You’ve logged as many sessions as your weekly plan calls for. Leave room to recover, too."
+            return String(localized: "You’ve logged as many sessions as your weekly plan calls for. Leave room to recover, too.", bundle: .app, locale: .app)
         }
-        return "Each logged session builds your training history. Keep a pace you can come back to."
+        return String(localized: "Each logged session builds your training history. Keep a pace you can come back to.", bundle: .app, locale: .app)
     }
 
     var previousWeekCount: Int {
@@ -73,15 +73,21 @@ nonisolated struct TrainingStats: Hashable, Sendable {
     // English in the database.
 
     var currentStreakText: String {
-        "\(currentStreakWeeks) \(currentStreakWeeks == 1 ? "week" : "weeks")"
+        currentStreakWeeks == 1
+            ? String(localized: "1 week", bundle: .app, locale: .app)
+            : String(localized: "\(currentStreakWeeks) weeks", bundle: .app, locale: .app)
     }
 
     var bestStreakText: String {
-        "\(bestStreakWeeks) \(bestStreakWeeks == 1 ? "week" : "weeks")"
+        bestStreakWeeks == 1
+            ? String(localized: "1 week", bundle: .app, locale: .app)
+            : String(localized: "\(bestStreakWeeks) weeks", bundle: .app, locale: .app)
     }
 
     var monthDetail: String {
-        completedThisMonth == 0 ? "None this month" : "+\(completedThisMonth) this month"
+        completedThisMonth == 0
+            ? String(localized: "None this month", bundle: .app, locale: .app)
+            : String(localized: "+\(completedThisMonth) this month", bundle: .app, locale: .app)
     }
 
     /// Change between the last full week and this one.
@@ -96,7 +102,11 @@ nonisolated struct TrainingStats: Hashable, Sendable {
     var trendPercentText: String { String(format: "%+d%%", trendPercent) }
 
     var trendLabel: String {
-        trendPercent > 0 ? "Improving" : trendPercent < 0 ? "Easing" : "Steady"
+        trendPercent > 0
+            ? String(localized: "Improving", bundle: .app, locale: .app, comment: "Training trend: more workouts this week than last")
+            : trendPercent < 0
+                ? String(localized: "Easing", bundle: .app, locale: .app, comment: "Training trend: fewer workouts this week than last")
+                : String(localized: "Steady", bundle: .app, locale: .app, comment: "Training trend: as many workouts this week as last")
     }
 
     var trendSymbol: String {
@@ -111,7 +121,9 @@ nonisolated struct TrainingStats: Hashable, Sendable {
     var workoutsToMilestone: Int { nextMilestone - totalWorkouts }
 
     var milestoneTitle: String {
-        "\(workoutsToMilestone) workout\(workoutsToMilestone == 1 ? "" : "s") to reach \(nextMilestone)"
+        workoutsToMilestone == 1
+            ? String(localized: "1 workout to reach \(nextMilestone)", bundle: .app, locale: .app)
+            : String(localized: "\(workoutsToMilestone) workouts to reach \(nextMilestone)", bundle: .app, locale: .app)
     }
 
     /// How far through the current block of ten, not how far from zero. The

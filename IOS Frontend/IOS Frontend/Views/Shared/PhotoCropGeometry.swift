@@ -1,4 +1,5 @@
 import CoreGraphics
+import Foundation
 
 /// A shape the cropper can cut to.
 ///
@@ -17,7 +18,7 @@ enum PhotoCropShape: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .original: "Original"
+        case .original: String(localized: "Original", bundle: .app, locale: .app, comment: "Photo crop shape that keeps the photo's own proportions")
         case .square: "1:1"
         case .portrait: "4:5"
         case .landscape: "4:3"

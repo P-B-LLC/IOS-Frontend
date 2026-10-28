@@ -196,7 +196,7 @@ struct SocialSearchView: View {
                 Button {
                     scope = option
                 } label: {
-                    Text(option.rawValue)
+                    Text(scopeTitle(option))
                         .font(.community(.subheadline, weight: .semibold))
                         .foregroundStyle(scope == option ? theme.onPrimaryAction : theme.canvasSecondaryText)
                         .frame(maxWidth: .infinity, minHeight: 44)
@@ -219,16 +219,22 @@ struct SocialSearchView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 36)
         } else if let error = store.searchErrorMessage {
-            explanation("Couldn’t complete this search", detail: error)
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Couldn’t complete this search")
+                    .font(.community(.headline, weight: .bold))
+                Text(error).font(.community(.subheadline))
+                    .foregroundStyle(theme.canvasSecondaryText)
+            }
+            .padding(.horizontal, RepbaseDesign.pageInset)
             Button("Retry search") { retry += 1 }
                 .buttonStyle(.bordered)
                 .padding(.horizontal, RepbaseDesign.pageInset)
         } else {
             VStack(alignment: .leading, spacing: 4) {
-                Text("\(scope.rawValue) matching \(normalizedQuery)")
+                Text(resultHeading)
                     .font(.community(.headline, weight: .bold))
                     .foregroundStyle(theme.canvasPrimaryText)
-                Text(scope == .posts ? "Find people by name or @handle, too." : "Try Posts to explore a #hashtag or words from a post.")
+                Text(resultHint)
                     .font(.community(.footnote))
                     .foregroundStyle(theme.canvasSecondaryText)
             }
@@ -259,7 +265,25 @@ struct SocialSearchView: View {
         }
     }
 
-    private func explanation(_ title: String, detail: String) -> some View {
+    private var resultHeading: LocalizedStringKey {
+        switch scope {
+        case .people: "People matching \(normalizedQuery)"
+        case .posts: "Posts matching \(normalizedQuery)"
+        }
+    }
+
+    private var resultHint: LocalizedStringKey {
+        scope == .posts ? "Find people by name or @handle, too." : "Try Posts to explore a #hashtag or words from a post."
+    }
+
+    private func scopeTitle(_ scope: SocialSearchScope) -> LocalizedStringKey {
+        switch scope {
+        case .people: "People"
+        case .posts: "Posts"
+        }
+    }
+
+    private func explanation(_ title: LocalizedStringKey, detail: LocalizedStringKey) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title).font(.community(.headline, weight: .bold))
                 .foregroundStyle(theme.canvasPrimaryText)
@@ -320,7 +344,7 @@ struct SocialSearchView: View {
         return store.followingByUser[viewerID]?.contains(where: { $0.id == person.id }) == true
     }
 
-    private func followTitle(_ person: PostAuthor) -> String {
+    private func followTitle(_ person: PostAuthor) -> LocalizedStringKey {
         if isFollowing(person) { return "Following" }
         return store.requestedUserIDs.contains(person.id) ? "Requested" : "Follow"
     }

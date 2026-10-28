@@ -15,9 +15,9 @@ enum KeychainTokenStoreError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unexpectedStatus(let status):
-            return "Keychain operation failed with status \(status)."
+            return String(localized: "Keychain operation failed with status \(status).", bundle: .app, locale: .app)
         case .invalidStoredValue:
-            return "The saved authentication token is invalid."
+            return String(localized: "The saved authentication token is invalid.", bundle: .app, locale: .app)
         }
     }
 }

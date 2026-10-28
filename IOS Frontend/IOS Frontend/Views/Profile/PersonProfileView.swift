@@ -5,6 +5,7 @@
 //  Somebody else's profile, opened by id.
 //
 
+import Foundation
 import SwiftUI
 
 /// Loads a person and hands them to the profile screen.
@@ -38,7 +39,7 @@ struct PersonProfileView: View {
                 ContentUnavailableView {
                     Label("Profile unavailable", systemImage: "person.crop.circle.badge.exclamationmark")
                 } description: {
-                    Text(store.errorMessage ?? "Rytivo could not load this profile.")
+                    Text(store.errorMessage ?? String(localized: "Rytivo could not load this profile.", bundle: .app, locale: .app))
                 }
             } else {
                 ProgressView()

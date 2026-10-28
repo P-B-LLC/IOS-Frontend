@@ -19,6 +19,15 @@ nonisolated struct ProfilePromptAnswer: Identifiable, Equatable, Hashable, Codab
     var answer: String
 
     var id: String { question }
+
+    /// The question in the app's language.
+    ///
+    /// The server's label is English. A question this build knows is named
+    /// from its own table so it follows the language chosen in Settings; one
+    /// it does not still reads correctly from the server's wording.
+    var displayLabel: String {
+        PromptQuestion(rawValue: question)?.label ?? questionLabel
+    }
 }
 
 /// What a question is about, so the library reads as sections rather than a
@@ -32,13 +41,24 @@ nonisolated enum PromptCategory: String, CaseIterable, Identifiable, Sendable {
 
     var id: String { rawValue }
 
+    /// The section heading. The raw value stays English as the identifier.
+    var title: String {
+        switch self {
+        case .why: String(localized: "Why you train", bundle: .app, locale: .app)
+        case .gym: String(localized: "In the gym", bundle: .app, locale: .app)
+        case .food: String(localized: "Food", bundle: .app, locale: .app, comment: "A section of profile questions about food")
+        case .life: String(localized: "Rest of your life", bundle: .app, locale: .app)
+        case .together: String(localized: "Training together", bundle: .app, locale: .app)
+        }
+    }
+
     var blurb: String {
         switch self {
-        case .why: "What got you here, and what you are chasing"
-        case .gym: "How you train, and what you have learned"
-        case .food: "What you eat, and what is worth it"
-        case .life: "The other six days"
-        case .together: "For anyone thinking of training with you"
+        case .why: String(localized: "What got you here, and what you are chasing", bundle: .app, locale: .app)
+        case .gym: String(localized: "How you train, and what you have learned", bundle: .app, locale: .app)
+        case .food: String(localized: "What you eat, and what is worth it", bundle: .app, locale: .app)
+        case .life: String(localized: "The other six days", bundle: .app, locale: .app)
+        case .together: String(localized: "For anyone thinking of training with you", bundle: .app, locale: .app)
         }
     }
 }
@@ -100,30 +120,30 @@ nonisolated enum PromptQuestion: String, CaseIterable, Identifiable, Sendable {
 
     var label: String {
         switch self {
-        case .whyITrain: "Why I train"
-        case .currentGoal: "What I am working towards"
-        case .proudest: "Proudest moment in the gym"
-        case .hardestPart: "The hardest part for me"
-        case .startedBecause: "I started training because"
-        case .trainingChanged: "Training changed this about me"
-        case .favouriteLift: "Favourite lift"
-        case .skippedLift: "The lift I skip if I can"
-        case .oneMoreRep: "What gets me one more rep"
-        case .bestAdvice: "Best advice I have been given"
-        case .trainingTo: "What I train to"
-        case .gymPetPeeve: "My gym pet peeve"
-        case .warmUp: "My warm-up is"
-        case .preWorkout: "What I eat before training"
-        case .postWorkout: "What I eat after"
-        case .worthIt: "Worth every calorie"
-        case .onRepeat: "The meal I make on repeat"
-        case .restDay: "A rest day looks like"
-        case .outsideGym: "Outside the gym you will find me"
-        case .recovery: "How I actually recover"
-        case .sunday: "My Sunday in three words"
-        case .trainingPartner: "Looking for a training partner who"
-        case .spotMe: "Ask me to spot you if"
-        case .partnerNever: "A training partner should never"
+        case .whyITrain: String(localized: "Why I train", bundle: .app, locale: .app)
+        case .currentGoal: String(localized: "What I am working towards", bundle: .app, locale: .app)
+        case .proudest: String(localized: "Proudest moment in the gym", bundle: .app, locale: .app)
+        case .hardestPart: String(localized: "The hardest part for me", bundle: .app, locale: .app)
+        case .startedBecause: String(localized: "I started training because", bundle: .app, locale: .app)
+        case .trainingChanged: String(localized: "Training changed this about me", bundle: .app, locale: .app)
+        case .favouriteLift: String(localized: "Favourite lift", bundle: .app, locale: .app)
+        case .skippedLift: String(localized: "The lift I skip if I can", bundle: .app, locale: .app)
+        case .oneMoreRep: String(localized: "What gets me one more rep", bundle: .app, locale: .app)
+        case .bestAdvice: String(localized: "Best advice I have been given", bundle: .app, locale: .app)
+        case .trainingTo: String(localized: "What I train to", bundle: .app, locale: .app)
+        case .gymPetPeeve: String(localized: "My gym pet peeve", bundle: .app, locale: .app)
+        case .warmUp: String(localized: "My warm-up is", bundle: .app, locale: .app)
+        case .preWorkout: String(localized: "What I eat before training", bundle: .app, locale: .app)
+        case .postWorkout: String(localized: "What I eat after", bundle: .app, locale: .app)
+        case .worthIt: String(localized: "Worth every calorie", bundle: .app, locale: .app)
+        case .onRepeat: String(localized: "The meal I make on repeat", bundle: .app, locale: .app)
+        case .restDay: String(localized: "A rest day looks like", bundle: .app, locale: .app)
+        case .outsideGym: String(localized: "Outside the gym you will find me", bundle: .app, locale: .app)
+        case .recovery: String(localized: "How I actually recover", bundle: .app, locale: .app)
+        case .sunday: String(localized: "My Sunday in three words", bundle: .app, locale: .app)
+        case .trainingPartner: String(localized: "Looking for a training partner who", bundle: .app, locale: .app)
+        case .spotMe: String(localized: "Ask me to spot you if", bundle: .app, locale: .app)
+        case .partnerNever: String(localized: "A training partner should never", bundle: .app, locale: .app)
         }
     }
 
@@ -131,30 +151,30 @@ nonisolated enum PromptQuestion: String, CaseIterable, Identifiable, Sendable {
     /// answer without putting words in anyone's mouth.
     var hint: String {
         switch self {
-        case .whyITrain: "So my kids never see me quit"
-        case .currentGoal: "A 500 lb deadlift before June"
-        case .proudest: "First unassisted pull-up at 41"
-        case .hardestPart: "Getting there on a Monday"
-        case .startedBecause: "A doctor said the word borderline"
-        case .trainingChanged: "I stopped apologising for taking up space"
-        case .favouriteLift: "Front squat, and it is not close"
-        case .skippedLift: "Walking lunges, every single time"
-        case .oneMoreRep: "Someone counting out loud"
-        case .bestAdvice: "Leave one in the tank"
-        case .trainingTo: "Old hardcore and podcasts"
-        case .gymPetPeeve: "Curling in the squat rack, obviously"
-        case .warmUp: "Ten minutes I pretend not to need"
-        case .preWorkout: "Rice and whatever is left over"
-        case .postWorkout: "Eggs, always eggs"
-        case .worthIt: "My mother's roast potatoes"
-        case .onRepeat: "Chicken, rice, too much hot sauce"
-        case .restDay: "A long walk and too much coffee"
-        case .outsideGym: "Out on a bike, or asleep"
-        case .recovery: "Badly. I am working on it"
-        case .sunday: "Slow, loud, full"
-        case .trainingPartner: "Turns up at six and does not chat"
-        case .spotMe: "You actually want the spot, not a lift-off"
-        case .partnerNever: "Count a rep I did not earn"
+        case .whyITrain: String(localized: "So my kids never see me quit", bundle: .app, locale: .app)
+        case .currentGoal: String(localized: "A 500 lb deadlift before June", bundle: .app, locale: .app)
+        case .proudest: String(localized: "First unassisted pull-up at 41", bundle: .app, locale: .app)
+        case .hardestPart: String(localized: "Getting there on a Monday", bundle: .app, locale: .app)
+        case .startedBecause: String(localized: "A doctor said the word borderline", bundle: .app, locale: .app)
+        case .trainingChanged: String(localized: "I stopped apologising for taking up space", bundle: .app, locale: .app)
+        case .favouriteLift: String(localized: "Front squat, and it is not close", bundle: .app, locale: .app)
+        case .skippedLift: String(localized: "Walking lunges, every single time", bundle: .app, locale: .app)
+        case .oneMoreRep: String(localized: "Someone counting out loud", bundle: .app, locale: .app)
+        case .bestAdvice: String(localized: "Leave one in the tank", bundle: .app, locale: .app)
+        case .trainingTo: String(localized: "Old hardcore and podcasts", bundle: .app, locale: .app)
+        case .gymPetPeeve: String(localized: "Curling in the squat rack, obviously", bundle: .app, locale: .app)
+        case .warmUp: String(localized: "Ten minutes I pretend not to need", bundle: .app, locale: .app)
+        case .preWorkout: String(localized: "Rice and whatever is left over", bundle: .app, locale: .app)
+        case .postWorkout: String(localized: "Eggs, always eggs", bundle: .app, locale: .app)
+        case .worthIt: String(localized: "My mother's roast potatoes", bundle: .app, locale: .app)
+        case .onRepeat: String(localized: "Chicken, rice, too much hot sauce", bundle: .app, locale: .app)
+        case .restDay: String(localized: "A long walk and too much coffee", bundle: .app, locale: .app)
+        case .outsideGym: String(localized: "Out on a bike, or asleep", bundle: .app, locale: .app)
+        case .recovery: String(localized: "Badly. I am working on it", bundle: .app, locale: .app)
+        case .sunday: String(localized: "Slow, loud, full", bundle: .app, locale: .app)
+        case .trainingPartner: String(localized: "Turns up at six and does not chat", bundle: .app, locale: .app)
+        case .spotMe: String(localized: "You actually want the spot, not a lift-off", bundle: .app, locale: .app)
+        case .partnerNever: String(localized: "Count a rep I did not earn", bundle: .app, locale: .app)
         }
     }
 
@@ -163,7 +183,7 @@ nonisolated enum PromptQuestion: String, CaseIterable, Identifiable, Sendable {
         let needle = search.trimmingCharacters(in: .whitespaces).lowercased()
         guard !needle.isEmpty else { return true }
         return label.lowercased().contains(needle)
-            || category.rawValue.lowercased().contains(needle)
+            || category.title.lowercased().contains(needle)
     }
 }
 
@@ -181,9 +201,9 @@ nonisolated enum FeaturedLift: String, CaseIterable, Identifiable, Codable, Send
 
     var label: String {
         switch self {
-        case .bench: "Bench Press"
-        case .squat: "Squat"
-        case .deadlift: "Deadlift"
+        case .bench: String(localized: "Bench Press", bundle: .app, locale: .app)
+        case .squat: String(localized: "Squat", bundle: .app, locale: .app, comment: "The barbell lift")
+        case .deadlift: String(localized: "Deadlift", bundle: .app, locale: .app)
         }
     }
 
@@ -225,6 +245,16 @@ nonisolated struct HighlightLift: Identifiable, Equatable, Hashable, Codable, Se
 
     var id: String { lift.rawValue }
 
+    /// The lift's name in the app's language.
+    ///
+    /// `label` is the server's English wording, so the lifts this build knows
+    /// are named from `FeaturedLift` instead. One it does not know arrives as
+    /// bench (see the repository) under a label that is not bench's, and keeps
+    /// the server's wording so the card still reads correctly.
+    var displayLabel: String {
+        lift == .bench && label != "Bench Press" ? label : lift.label
+    }
+
     /// Pounds, rounded, because every other weight the app shows is in pounds.
     static func pounds(_ kilograms: Decimal?) -> Int? {
         guard let kilograms else { return nil }
@@ -251,6 +281,6 @@ nonisolated struct HighlightLift: Identifiable, Equatable, Hashable, Codable, Se
     /// "265 lb × 3", or nil when there is nothing to show.
     var setSummary: String? {
         guard let pounds = displayPounds, let reps else { return nil }
-        return "\(pounds) lb × \(reps)"
+        return String(localized: "\(pounds) lb × \(reps)", bundle: .app, locale: .app, comment: "A set: weight in pounds × repetitions")
     }
 }

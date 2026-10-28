@@ -5,6 +5,7 @@
 //  Time-aware visual tokens for the Repbase home dashboard.
 //
 
+import Foundation
 import SwiftUI
 
 /// The one appearance choice used by every Repbase screen.
@@ -19,7 +20,12 @@ enum RepbaseAppearancePreference: String, CaseIterable, Identifiable {
     case dark
 
     var id: String { rawValue }
-    var title: String { rawValue.capitalized }
+    var title: String {
+        switch self {
+        case .light: return String(localized: "Light", bundle: .app, locale: .app, comment: "Appearance option: the light theme")
+        case .dark: return String(localized: "Dark", bundle: .app, locale: .app, comment: "Appearance option: the dark theme")
+        }
+    }
     var symbol: String { self == .light ? "sun.max.fill" : "moon.fill" }
     var colorScheme: ColorScheme { self == .light ? .light : .dark }
 

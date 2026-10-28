@@ -89,9 +89,9 @@ nonisolated enum PostSource: String, CaseIterable, Identifiable, Sendable {
     /// the user has already been rather than a new piece of vocabulary.
     var title: String {
         switch self {
-        case .workout: "Workout"
-        case .meal: "Food"
-        case .planner: "Calendar"
+        case .workout: String(localized: "Workout", bundle: .app, locale: .app)
+        case .meal: String(localized: "Food", bundle: .app, locale: .app)
+        case .planner: String(localized: "Calendar", bundle: .app, locale: .app)
         }
     }
 
@@ -103,25 +103,15 @@ nonisolated enum PostSource: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    /// What one of these is called, for a sheet opened already knowing the
-    /// kind: "Choose a meal" rather than "Choose something".
-    var itemNoun: String {
-        switch self {
-        case .workout: "workout"
-        case .meal: "meal"
-        case .planner: "calendar entry"
-        }
-    }
-
     /// Says what would put something here, rather than only that nothing is.
     var emptyMessage: String {
         switch self {
         case .workout:
-            "Finish a workout session and it will be here to share."
+            String(localized: "Finish a workout session and it will be here to share.", bundle: .app, locale: .app)
         case .meal:
-            "Log some food and the meal will be here to share."
+            String(localized: "Log some food and the meal will be here to share.", bundle: .app, locale: .app)
         case .planner:
-            "Add a task or an event to the calendar and it will be here to share."
+            String(localized: "Add a task or an event to the calendar and it will be here to share.", bundle: .app, locale: .app)
         }
     }
 }

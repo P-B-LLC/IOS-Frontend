@@ -29,6 +29,22 @@ enum AthleteDiscipline: String, Codable, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    /// The word shown on screen. The raw value stays English: it is this
+    /// discipline's `id` and what `Codable` writes.
+    var title: String {
+        switch self {
+        case .powerlifting: String(localized: "Powerlifter", bundle: .app, locale: .app)
+        case .bodybuilding: String(localized: "Bodybuilder", bundle: .app, locale: .app)
+        case .crossFit: "CrossFit"
+        case .rockClimbing: String(localized: "Rock Climber", bundle: .app, locale: .app)
+        case .triathlon: String(localized: "Triathlon Athlete", bundle: .app, locale: .app)
+        case .running: String(localized: "Runner", bundle: .app, locale: .app)
+        case .cycling: String(localized: "Cyclist", bundle: .app, locale: .app)
+        case .swimming: String(localized: "Swimmer", bundle: .app, locale: .app)
+        case .generalFitness: String(localized: "General Fitness", bundle: .app, locale: .app)
+        }
+    }
+
     /// What the API calls this discipline.
     ///
     /// Mapped explicitly rather than by `rawValue`: the raw values here are
@@ -205,7 +221,7 @@ struct ProfileSocialLink: Codable, Equatable, Identifiable {
             case .tiktok: "TikTok"
             case .youtube: "YouTube"
             case .x: "X"
-            case .website: "Website"
+            case .website: String(localized: "Website", bundle: .app, locale: .app)
             }
         }
 
@@ -291,7 +307,7 @@ final class SocialProfileStore {
     /// the phone never becomes a second source of truth for profile data.
     func save(_ profile: SocialProfile) async -> Bool {
         guard repository != nil else {
-            errorMessage = "Connect to Rytivo before saving profile changes."
+            errorMessage = String(localized: "Connect to Rytivo before saving profile changes.", bundle: .app, locale: .app)
             return false
         }
         return await push(profile)
@@ -470,7 +486,7 @@ final class SocialProfileStore {
     @discardableResult
     func savePrompts(_ answers: [ProfilePromptAnswer]) async -> Bool {
         guard let repository else {
-            errorMessage = "Connect to Rytivo before editing your profile."
+            errorMessage = String(localized: "Connect to Rytivo before editing your profile.", bundle: .app, locale: .app)
             return false
         }
         let generation = connectionGeneration
@@ -498,7 +514,7 @@ final class SocialProfileStore {
     @discardableResult
     func saveSocialLinks(_ links: [ProfileSocialLinkDraft]) async -> Bool {
         guard let repository else {
-            errorMessage = "Connect to Rytivo before editing your profile."
+            errorMessage = String(localized: "Connect to Rytivo before editing your profile.", bundle: .app, locale: .app)
             return false
         }
         let generation = connectionGeneration
@@ -521,7 +537,7 @@ final class SocialProfileStore {
     @discardableResult
     func saveHighlights(_ lifts: [HighlightLift]) async -> Bool {
         guard let repository else {
-            errorMessage = "Connect to Rytivo before editing your profile."
+            errorMessage = String(localized: "Connect to Rytivo before editing your profile.", bundle: .app, locale: .app)
             return false
         }
         let generation = connectionGeneration

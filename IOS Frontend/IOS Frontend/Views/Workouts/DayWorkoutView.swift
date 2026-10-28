@@ -124,7 +124,7 @@ struct DayWorkoutView: View {
                 let problem = await store.saveWorkoutReportingFailure(savedWorkout, on: day)
                 if problem == nil {
                     highlightedWorkoutID = store.lastSavedWorkoutID
-                    savedWorkoutMessage = "\(savedWorkout.name) saved for \(day.fullName)."
+                    savedWorkoutMessage = Self.savedMessage(savedWorkout.name, on: day)
                 }
                 return problem
             }
@@ -134,7 +134,8 @@ struct DayWorkoutView: View {
                 PostComposerView(
                     kind: .workout,
                     sourceID: shared.id,
-                    subject: completedSession?.session.workoutName ?? "Workout"
+                    subject: completedSession?.session.workoutName
+                        ?? String(localized: "Workout", bundle: .app, locale: .app, comment: "Stands in for a workout's name when there is none")
                 )
             }
         }
@@ -191,7 +192,9 @@ struct DayWorkoutView: View {
         }
         .repbaseScreen(visualPhase)
         .toolbar(visualPhase == .prepare ? .visible : .hidden, for: .navigationBar)
-        .navigationTitle(day.fullName)
+        // The day's name from the formatter, in the language chosen in
+        // Settings, rather than from a translated English name.
+        .navigationTitle(dayDate.formatted(.dateTime.weekday(.wide).locale(.app)))
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -269,7 +272,9 @@ struct DayWorkoutView: View {
 
     private var dayHeader: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("\(store.dateLabel(for: day).uppercased())\(store.today == day ? " · TODAY" : "")")
+            Text(store.today == day
+                 ? "\(store.dateLabel(for: day).uppercased()) · TODAY"
+                 : "\(store.dateLabel(for: day).uppercased())")
                 .font(.community(.caption2, weight: .bold))
                 .tracking(1)
                 .foregroundStyle(visualPhase.accent)
@@ -329,8 +334,10 @@ struct DayWorkoutView: View {
         recentlyCompletedExerciseID = completedExercise?.id
         showSessionReadyMoment = logged == session.totalSetCount && session.totalSetCount > 0
         setSuccessMessage = showSessionReadyMoment
-            ? "Every set is in. Finish strong."
-            : completedExercise.map { "\($0.name) complete" }
+            ? String(localized: "Every set is in. Finish strong.", bundle: .app, locale: .app)
+            : completedExercise.map {
+                String(localized: "\($0.name) complete", bundle: .app, locale: .app, comment: "The placeholder is the name of an exercise")
+            }
 
         setFeedbackTask = Task { @MainActor in
             try? await Task.sleep(for: .seconds(showSessionReadyMoment ? 2.4 : 1.45))
@@ -600,8 +607,8 @@ struct DayWorkoutView: View {
                             .font(.community(.headline))
                         Text(
                             workout.cardioTargetMinutes
-                                .map { "\($0) min target · start it after your last set" }
-                                ?? "Start it after your last set"
+                                .map { String(localized: "\($0) min target · start it after your last set", bundle: .app, locale: .app) }
+                                ?? String(localized: "Start it after your last set", bundle: .app, locale: .app)
                         )
                         .font(.community(.caption2))
                         .foregroundStyle(.secondary)
@@ -674,9 +681,13 @@ struct DayWorkoutView: View {
 
     private func planDescription(for workout: Workout) -> String {
         if workout.tracksDistance { return "\(workout.type.title) · \(day.fullName)" }
-        let exercise = workout.exercises.count == 1 ? "exercise" : "exercises"
-        let set = workout.totalSets == 1 ? "target set" : "target sets"
-        return "\(workout.exercises.count) \(exercise) · \(workout.totalSets) \(set)"
+        let exercises = workout.exercises.count == 1
+            ? String(localized: "1 exercise", bundle: .app, locale: .app)
+            : String(localized: "\(workout.exercises.count) exercises", bundle: .app, locale: .app)
+        let sets = workout.totalSets == 1
+            ? String(localized: "1 target set", bundle: .app, locale: .app)
+            : String(localized: "\(workout.totalSets) target sets", bundle: .app, locale: .app)
+        return "\(exercises) · \(sets)"
     }
 
     /// Keeps a workout on this weekday in the weeks ahead.
@@ -692,13 +703,9 @@ struct DayWorkoutView: View {
             )
         ) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Repeat every \(day.fullName)")
+                Text(repeatTitle)
                     .font(.community(.subheadline, weight: .semibold))
-                Text(
-                    workout.repeatsWeekly
-                        ? "Keep this workout on future \(day.fullName)s."
-                        : "Planned for this \(day.fullName) only."
-                )
+                Text(workout.repeatsWeekly ? repeatingDetail : notRepeatingDetail)
                 .font(.community(.caption2))
                 .foregroundStyle(.secondary)
             }
@@ -709,6 +716,60 @@ struct DayWorkoutView: View {
             Divider()
         }
         .disabled(!store.isEditingEnabled || workout.serverID == nil)
+    }
+
+    /// The confirmation after saving, one sentence per day for the same
+    /// reason as the repeat strings below.
+    private static func savedMessage(_ name: String, on day: Weekday) -> String {
+        switch day {
+        case .monday: return String(localized: "\(name) saved for Monday.", bundle: .app, locale: .app)
+        case .tuesday: return String(localized: "\(name) saved for Tuesday.", bundle: .app, locale: .app)
+        case .wednesday: return String(localized: "\(name) saved for Wednesday.", bundle: .app, locale: .app)
+        case .thursday: return String(localized: "\(name) saved for Thursday.", bundle: .app, locale: .app)
+        case .friday: return String(localized: "\(name) saved for Friday.", bundle: .app, locale: .app)
+        case .saturday: return String(localized: "\(name) saved for Saturday.", bundle: .app, locale: .app)
+        case .sunday: return String(localized: "\(name) saved for Sunday.", bundle: .app, locale: .app)
+        }
+    }
+
+    // The repeat toggle's sentences are written out for each day rather than
+    // built around `day.fullName`: other languages inflect a weekday, and the
+    // words beside it, by the day and by number -- and adding "s" only makes a
+    // plural in English.
+    private var repeatTitle: LocalizedStringKey {
+        switch day {
+        case .monday: return "Repeat every Monday"
+        case .tuesday: return "Repeat every Tuesday"
+        case .wednesday: return "Repeat every Wednesday"
+        case .thursday: return "Repeat every Thursday"
+        case .friday: return "Repeat every Friday"
+        case .saturday: return "Repeat every Saturday"
+        case .sunday: return "Repeat every Sunday"
+        }
+    }
+
+    private var repeatingDetail: LocalizedStringKey {
+        switch day {
+        case .monday: return "Keep this workout on future Mondays."
+        case .tuesday: return "Keep this workout on future Tuesdays."
+        case .wednesday: return "Keep this workout on future Wednesdays."
+        case .thursday: return "Keep this workout on future Thursdays."
+        case .friday: return "Keep this workout on future Fridays."
+        case .saturday: return "Keep this workout on future Saturdays."
+        case .sunday: return "Keep this workout on future Sundays."
+        }
+    }
+
+    private var notRepeatingDetail: LocalizedStringKey {
+        switch day {
+        case .monday: return "Planned for this Monday only."
+        case .tuesday: return "Planned for this Tuesday only."
+        case .wednesday: return "Planned for this Wednesday only."
+        case .thursday: return "Planned for this Thursday only."
+        case .friday: return "Planned for this Friday only."
+        case .saturday: return "Planned for this Saturday only."
+        case .sunday: return "Planned for this Sunday only."
+        }
     }
 
     /// Every saved workout is visible as its own named card. No hidden pages,
@@ -728,7 +789,7 @@ struct DayWorkoutView: View {
             } label: {
                 HStack(spacing: 8) {
                     Text("Add another workout")
-                    Image(systemName: "arrow.right")
+                    Image(systemName: "arrow.forward")
                         .font(.community(.caption, weight: .semibold))
                 }
                 .font(.community(.subheadline, weight: .semibold))
@@ -745,7 +806,7 @@ struct DayWorkoutView: View {
     private func sessionStartControl(for workout: Workout) -> some View {
         if let otherSession = store.activeSession, otherSession.day != day {
             VStack(alignment: .leading, spacing: 10) {
-                Label("A workout is already active on \(otherSession.day.fullName).", systemImage: "bolt.fill")
+                Label(alreadyActiveNotice(on: otherSession.day), systemImage: "bolt.fill")
                     .font(.community(.footnote))
                     .foregroundStyle(Color.orange)
                 NavigationLink {
@@ -753,7 +814,7 @@ struct DayWorkoutView: View {
                 } label: {
                     HStack(spacing: 8) {
                         Text("Continue \(otherSession.workoutName)")
-                        Image(systemName: "arrow.right")
+                        Image(systemName: "arrow.forward")
                             .font(.community(.subheadline, weight: .semibold))
                     }
                         .font(.community(.headline))
@@ -795,7 +856,7 @@ struct DayWorkoutView: View {
                 HStack(spacing: 8) {
                     Text("Start \(workout.name)")
                         .multilineTextAlignment(.leading)
-                    Image(systemName: "arrow.right")
+                    Image(systemName: "arrow.forward")
                         .font(.community(.subheadline, weight: .semibold))
                 }
                     .font(.community(.headline))
@@ -830,6 +891,20 @@ struct DayWorkoutView: View {
         }
     }
 
+    /// Per day for the same reason as the repeat toggle: the preposition and
+    /// the case of a weekday's name change with the day in other languages.
+    private func alreadyActiveNotice(on weekday: Weekday) -> LocalizedStringKey {
+        switch weekday {
+        case .monday: return "A workout is already active on Monday."
+        case .tuesday: return "A workout is already active on Tuesday."
+        case .wednesday: return "A workout is already active on Wednesday."
+        case .thursday: return "A workout is already active on Thursday."
+        case .friday: return "A workout is already active on Friday."
+        case .saturday: return "A workout is already active on Saturday."
+        case .sunday: return "A workout is already active on Sunday."
+        }
+    }
+
     private func activeSessionWorkspace(_ session: ActiveWorkoutSession) -> some View {
         let phase = WorkoutVisualPhase.focus
         let isFullyLogged = session.totalSetCount > 0
@@ -858,6 +933,8 @@ struct DayWorkoutView: View {
                             .frame(width: 7, height: 7)
                         Text("LIVE  \(elapsedTime(from: session.startedAt, to: context.date))")
                             .font(.community(.caption2, weight: .bold).monospacedDigit())
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                     }
                     .foregroundStyle(phase.onAccent)
                     .padding(.horizontal, 12)
@@ -912,7 +989,7 @@ struct DayWorkoutView: View {
 
                 Text(
                     session.tracksDistance
-                        ? "Timing your \(session.workoutType.title.lowercased()) — end the session to save it."
+                        ? timingNote(for: session.workoutType)
                         : "\(session.loggedSetCount) of \(session.totalSetCount) sets logged"
                 )
                 .font(.community(.caption))
@@ -1001,7 +1078,7 @@ struct DayWorkoutView: View {
             } label: {
                 HStack(spacing: 8) {
                     Text("Finish workout")
-                    Image(systemName: isFullyLogged ? "flag.checkered" : "arrow.right")
+                    Image(systemName: isFullyLogged ? "flag.checkered" : "arrow.forward")
                         .font(.community(.subheadline, weight: .semibold))
                         .contentTransition(.symbolEffect(.replace))
                 }
@@ -1038,6 +1115,17 @@ struct DayWorkoutView: View {
         .foregroundStyle(phase.primaryText)
     }
 
+    /// One sentence per type rather than one built around the type's name,
+    /// which other languages inflect differently for each.
+    private func timingNote(for type: WorkoutType) -> LocalizedStringKey {
+        switch type {
+        case .lifting: return "Timing your lifting — end the session to save it."
+        case .running: return "Timing your running — end the session to save it."
+        case .biking: return "Timing your biking — end the session to save it."
+        case .swimming: return "Timing your swimming — end the session to save it."
+        }
+    }
+
     private func recoveryWorkspace(_ completed: CompletedWorkoutSession) -> some View {
         let phase = WorkoutVisualPhase.recover
         let session = completed.session
@@ -1062,6 +1150,8 @@ struct DayWorkoutView: View {
                         .frame(width: 7, height: 7)
                     Text("COMPLETE")
                         .font(.community(.caption2, weight: .bold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                 }
                 .foregroundStyle(phase.accent)
                 .padding(.horizontal, 18)
@@ -1093,7 +1183,7 @@ struct DayWorkoutView: View {
                     .foregroundStyle(phase.accent)
                 Text("You showed up.")
                     .font(.community(.largeTitle, weight: .bold))
-                Text("\(session.workoutName) · \(dayDate.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))")
+                Text("\(session.workoutName) · \(dayDate.formatted(.dateTime.weekday(.wide).month(.abbreviated).day().locale(.app)))")
                     .font(.community(.subheadline))
                     .foregroundStyle(phase.secondaryText)
             }
@@ -1116,8 +1206,8 @@ struct DayWorkoutView: View {
                 Divider().overlay(phase.onHeroDivider)
 
                 HStack(spacing: 0) {
-                    summaryDatum("START", session.startedAt.formatted(date: .omitted, time: .shortened))
-                    summaryDatum("END", completed.endedAt.formatted(date: .omitted, time: .shortened))
+                    summaryDatum("START", session.startedAt.formatted(Date.FormatStyle(date: .omitted, time: .shortened).locale(.app)))
+                    summaryDatum("END", completed.endedAt.formatted(Date.FormatStyle(date: .omitted, time: .shortened).locale(.app)))
                     summaryDatum("COMPLETE", "\(completionPercentage)%")
                 }
             }
@@ -1171,19 +1261,18 @@ struct DayWorkoutView: View {
                 HStack(spacing: 10) {
                     RecoveryMetricCard(
                         title: "DISTANCE",
-                        value: store.routeSummary?.distanceText
-                            .map { $0.replacingOccurrences(of: " mi", with: "") } ?? "--",
+                        value: store.routeSummary?.distanceKilometers
+                            .map { ImperialUnits.distanceFigure(kilometers: $0) } ?? "--",
                         detail: "MILES",
                         isEmphasized: true
                     )
                     RecoveryMetricCard(
                         title: session.workoutType == .biking ? "AVG SPEED" : "AVG PACE",
                         value: session.workoutType == .biking
-                            ? (store.routeSummary?.averageSpeedText
-                                .map { $0.replacingOccurrences(of: " mph", with: "") } ?? "--")
-                            : (store.routeSummary?.movingPaceText
-                                ?? store.routeSummary?.paceText)?
-                                .replacingOccurrences(of: " /mi", with: "") ?? "--",
+                            ? (store.routeSummary?.averageSpeedKilometersPerHour
+                                .map { ImperialUnits.speedFigure(kilometersPerHour: $0) } ?? "--")
+                            : (SessionRouteSummary.paceFigure(store.routeSummary?.movingPaceSecondsPerKilometer)
+                                ?? SessionRouteSummary.paceFigure(store.routeSummary?.paceSecondsPerKilometer)) ?? "--",
                         detail: session.workoutType == .biking ? "MPH" : "PER MILE",
                         isEmphasized: false
                     )
@@ -1243,7 +1332,7 @@ struct DayWorkoutView: View {
                     Text("Share result")
                         .font(.community(.subheadline, weight: .semibold))
                     Spacer()
-                    Image(systemName: "chevron.right")
+                    Image(systemName: "chevron.forward")
                         .font(.community(.caption, weight: .semibold))
                         .foregroundStyle(phase.secondaryText)
                 }
@@ -1320,7 +1409,7 @@ struct DayWorkoutView: View {
         }
     }
 
-    private func summaryDatum(_ title: String, _ value: String) -> some View {
+    private func summaryDatum(_ title: LocalizedStringKey, _ value: String) -> some View {
         // The same phase its only caller draws under.
         let phase = WorkoutVisualPhase.recover
         return VStack(alignment: .leading, spacing: 5) {
@@ -1336,12 +1425,18 @@ struct DayWorkoutView: View {
 
     private func loggedSetSummary(_ exercise: SessionExerciseDraft) -> String {
         let logged = exercise.sets.filter(\.isLogged)
-        guard !logged.isEmpty else { return "No sets logged" }
+        guard !logged.isEmpty else { return String(localized: "No sets logged", bundle: .app, locale: .app) }
         return logged.map { set in
             let weight = set.weightKilograms.trimmingCharacters(in: .whitespacesAndNewlines)
             let reps = set.reps.trimmingCharacters(in: .whitespacesAndNewlines)
-            if weight.isEmpty { return reps.isEmpty ? "Logged" : "\(reps) reps" }
-            return reps.isEmpty ? "\(weight) kg" : "\(weight) × \(reps)"
+            if weight.isEmpty {
+                return reps.isEmpty
+                    ? String(localized: "Logged", bundle: .app, locale: .app, comment: "A set that was logged with no weight or reps")
+                    : String(localized: "\(reps) reps", bundle: .app, locale: .app)
+            }
+            return reps.isEmpty
+                ? String(localized: "\(weight) kg", bundle: .app, locale: .app, comment: "A weight; kg is the abbreviation for kilograms")
+                : "\(weight) × \(reps)"
         }.joined(separator: "  ·  ")
     }
 
@@ -1369,13 +1464,18 @@ struct DayWorkoutView: View {
 
             if let overview {
                 VStack(alignment: .leading, spacing: 12) {
-                    Label("Finished at \(overview.performedAt.formatted(date: .omitted, time: .shortened))", systemImage: "checkmark.seal")
+                    Label("Finished at \(overview.performedAt.formatted(Date.FormatStyle(date: .omitted, time: .shortened).locale(.app)))", systemImage: "checkmark.seal")
                         .font(.community(.caption, weight: .semibold))
                         .foregroundStyle(visualPhase.secondaryText)
                     HStack(spacing: 0) {
                         historyMetric("\(overview.loggedSetCount)", "SETS")
                         historyMetric("\(overview.lines.count)", "EXERCISES")
-                        historyMetric(overview.totalVolumeKilograms.map { "\($0.nutritionText) kg" } ?? "—", "VOLUME")
+                        historyMetric(
+                            overview.totalVolumeKilograms.map {
+                                String(localized: "\($0.nutritionText) kg", bundle: .app, locale: .app, comment: "A weight; kg is the abbreviation for kilograms")
+                            } ?? "—",
+                            "VOLUME"
+                        )
                     }
                 }
                 .padding(16)
@@ -1453,7 +1553,7 @@ struct DayWorkoutView: View {
         }
     }
 
-    private func historyMetric(_ value: String, _ title: String) -> some View {
+    private func historyMetric(_ value: String, _ title: LocalizedStringKey) -> some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(value)
                 .font(.community(.headline).monospacedDigit())
@@ -1469,10 +1569,15 @@ struct DayWorkoutView: View {
 
     /// What the day amounted to: when, how many sets, and how much was moved.
     private static func overviewSummary(_ overview: SessionOverview) -> String {
-        var parts = [overview.performedAt.formatted(date: .abbreviated, time: .shortened)]
-        parts.append("^[\(overview.loggedSetCount) set](inflect: true)")
+        var parts = [overview.performedAt.formatted(Date.FormatStyle(date: .abbreviated, time: .shortened).locale(.app))]
+        parts.append(String(localized: "^[\(overview.loggedSetCount) set](inflect: true)", bundle: .app, locale: .app))
         if let volume = overview.totalVolumeKilograms {
-            parts.append("\(volume.nutritionText) kg moved")
+            parts.append(String(
+                localized: "\(volume.nutritionText) kg moved",
+                bundle: .app,
+                locale: .app,
+                comment: "Total weight lifted in a session; kg is the abbreviation for kilograms"
+            ))
         }
         return parts.joined(separator: "  ·  ")
     }
@@ -1552,6 +1657,8 @@ struct DayWorkoutView: View {
                     .frame(width: 62)
             }
             .font(.community(.caption2, weight: .bold))
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
             .foregroundStyle(phase.secondaryText)
 
             ForEach(exercise.sets) { set in
@@ -1565,8 +1672,9 @@ struct DayWorkoutView: View {
                 // Labelled, because a faded "100" in a weight box reads as a
                 // value already entered rather than as last week's.
                 let weightHint = last?.weightKilograms
-                    .map { "Prev: \($0.nutritionText)" } ?? "0"
-                let repsHint = last?.reps.map { "Prev: \($0)" } ?? "0"
+                    .map { String(localized: "Prev: \($0.nutritionText)", bundle: .app, locale: .app, comment: "Hint in an empty weight field: the weight lifted last time") } ?? "0"
+                let repsHint = last?.reps
+                    .map { String(localized: "Prev: \($0)", bundle: .app, locale: .app, comment: "Hint in an empty reps field: the reps done last time") } ?? "0"
 
                 HStack(spacing: 8) {
                     Text("\(set.setNumber)")
@@ -1640,6 +1748,8 @@ struct DayWorkoutView: View {
                                     .contentTransition(.symbolEffect(.replace))
                             } else {
                                 Text("Log")
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.8)
                                     .frame(width: 62, height: 38)
                                     .background(
                                         Color.white.opacity(0.08),
@@ -1842,9 +1952,9 @@ private struct DayWorkoutCardSurface: ViewModifier {
 }
 
 private struct RecoveryMetricCard: View {
-    let title: String
+    let title: LocalizedStringKey
     let value: String
-    let detail: String
+    let detail: LocalizedStringKey
     let isEmphasized: Bool
 
     private let phase = WorkoutVisualPhase.recover
@@ -1948,11 +2058,17 @@ private struct SplitRow: View {
     private var label: String {
         split.isPartial
             ? String(
-                format: "mi %d (%.2f)",
-                split.number,
-                ImperialUnits.miles(fromKilometers: split.distanceKilometers)
+                localized: "mi \(split.number) (\(ImperialUnits.distanceFigure(kilometers: split.distanceKilometers)))",
+                bundle: .app,
+                locale: .app,
+                comment: "A part-mile split: the mile's number, then the miles it covered; mi is the abbreviation for mile"
               )
-            : "mi \(split.number)"
+            : String(
+                localized: "mi \(split.number)",
+                bundle: .app,
+                locale: .app,
+                comment: "A mile split: the mile's number; mi is the abbreviation for mile"
+              )
     }
 
     /// Bars are scaled by pace, not raw time, so a partial final mile is
@@ -1967,7 +2083,7 @@ private struct SplitRow: View {
 }
 
 private struct RouteStat: View {
-    let title: String
+    let title: LocalizedStringKey
     let value: String
     let icon: String
 
@@ -2103,7 +2219,7 @@ private struct PlannedExerciseRow: View {
             Text(exercise.name)
                 .font(.community(.body, weight: .medium))
             Spacer()
-            Text("\(exercise.sets) set\(exercise.sets == 1 ? "" : "s")")
+            Text(exercise.sets == 1 ? "1 set" : "\(exercise.sets) sets")
                 .font(.community(.subheadline))
                 .foregroundStyle(.secondary)
         }

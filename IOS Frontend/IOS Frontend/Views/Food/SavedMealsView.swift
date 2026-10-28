@@ -5,6 +5,7 @@
 //  Backend-backed reusable recipe library.
 //
 
+import Foundation
 import SwiftUI
 
 struct SavedMealsView: View {
@@ -190,8 +191,16 @@ extension SavedFoodMeal {
     /// each of them in turn, which is the opposite of what a library is for.
     fileprivate var librarySummary: String {
         let count = ingredients.count
-        let food = count == 1 ? "1 ingredient" : "\(count) ingredients"
-        return cookingInstructions.isEmpty ? food : "\(food) · recipe"
+        // Each combination whole, rather than "recipe" appended to a
+        // translated count.
+        if cookingInstructions.isEmpty {
+            return count == 1
+                ? String(localized: "1 ingredient", bundle: .app, locale: .app)
+                : String(localized: "\(count) ingredients", bundle: .app, locale: .app)
+        }
+        return count == 1
+            ? String(localized: "1 ingredient · recipe", bundle: .app, locale: .app)
+            : String(localized: "\(count) ingredients · recipe", bundle: .app, locale: .app)
     }
 }
 
@@ -286,7 +295,7 @@ private struct SavedMealRow: View {
 
     private func iconButton(
         _ systemImage: String,
-        label: String,
+        label: LocalizedStringKey,
         tint: Color? = nil,
         action: @escaping () -> Void
     ) -> some View {
@@ -437,7 +446,7 @@ private struct SavedMealEditorView: View {
             }
             .padding(22)
         }
-        .navigationTitle(draft.name.isEmpty ? "New Recipe" : draft.name)
+        .navigationTitle(draft.name.isEmpty ? String(localized: "New Recipe", bundle: .app, locale: .app) : draft.name)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
@@ -453,7 +462,10 @@ private struct SavedMealEditorView: View {
                     Task {
                         defer { isSaving = false }
                         if await store.saveReusableMeal(savedDraft) { draftSaved = true; dismiss() }
-                        else { saveError = store.errorMessage ?? "Couldn't save. Your recipe is still here; please try again." }
+                        else {
+                            saveError = store.errorMessage
+                                ?? String(localized: "Couldn't save. Your recipe is still here; please try again.", bundle: .app, locale: .app)
+                        }
                     }
                 }
                 .disabled(!isValid)
@@ -495,7 +507,9 @@ private struct IngredientRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(ingredient.name)
                     .foregroundStyle(.primary)
-                Text("\(ingredient.servings.nutritionText) serving\(ingredient.servings == 1 ? "" : "s")")
+                Text(ingredient.servings == 1
+                     ? "\(ingredient.servings.nutritionText) serving"
+                     : "\(ingredient.servings.nutritionText) servings")
                     .font(.community(.caption))
                     .foregroundStyle(.secondary)
             }
@@ -517,20 +531,22 @@ private struct NutritionTotalRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 18) {
-            metric("CALORIES", amount.calories, "kcal", tint: RepbasePalette.caramel)
-            metric("PROTEIN", amount.proteinGrams, "g", tint: Color(hex: 0xD9824B))
-            metric("CARBS", amount.carbohydrateGrams, "g", tint: Color(hex: 0x4AAFB3))
-            metric("FAT", amount.fatGrams, "g", tint: Color(hex: 0xB76AA5))
+            metric("CALORIES", "\(amount.calories.nutritionText) kcal", tint: RepbasePalette.caramel)
+            metric("PROTEIN", "\(amount.proteinGrams.nutritionText) g", tint: Color(hex: 0xD9824B))
+            metric("CARBS", "\(amount.carbohydrateGrams.nutritionText) g", tint: Color(hex: 0x4AAFB3))
+            metric("FAT", "\(amount.fatGrams.nutritionText) g", tint: Color(hex: 0xB76AA5))
         }
     }
 
-    private func metric(_ label: String, _ value: Decimal, _ unit: String, tint: Color) -> some View {
+    /// The figure arrives with its unit as one phrase, so the unit is
+    /// translated with the number it belongs to.
+    private func metric(_ label: LocalizedStringKey, _ value: LocalizedStringKey, tint: Color) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label)
                 .font(.community(size: 8, weight: .bold))
                 .tracking(0.6)
                 .foregroundStyle(.secondary)
-            Text("\(value.nutritionText) \(unit)")
+            Text(value)
                 .font(.community(.subheadline, weight: .semibold))
                 .lineLimit(1)
                 .minimumScaleFactor(0.65)
@@ -621,7 +637,7 @@ private struct RecipeIngredientEditorView: View {
             }
             .padding(22)
         }
-        .navigationTitle(name.isEmpty ? "Add Ingredient" : name)
+        .navigationTitle(name.isEmpty ? String(localized: "Add Ingredient", bundle: .app, locale: .app) : name)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
@@ -635,7 +651,7 @@ private struct RecipeIngredientEditorView: View {
         .repbaseScreen(phase)
     }
 
-    private func ingredientMacro(_ title: String, text: Binding<String>, tint: Color) -> some View {
+    private func ingredientMacro(_ title: LocalizedStringKey, text: Binding<String>, tint: Color) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.community(size: 9, weight: .bold))
@@ -810,7 +826,7 @@ private struct WeekApplicationSelector: View {
                     }
                 } label: {
                     VStack(spacing: 6) {
-                        Text(date.formatted(.dateTime.weekday(.narrow)))
+                        Text(date.formatted(.dateTime.weekday(.narrow).locale(.app)))
                             .font(.community(.caption2, weight: .semibold))
                             .foregroundStyle(.secondary)
                         ZStack {
@@ -828,7 +844,7 @@ private struct WeekApplicationSelector: View {
                             }
                         }
                         .frame(width: 26, height: 26)
-                        Text(date.formatted(.dateTime.day()))
+                        Text(date.formatted(.dateTime.day().locale(.app)))
                             .font(.community(.caption2))
                             .foregroundStyle(.secondary)
                     }
@@ -836,7 +852,7 @@ private struct WeekApplicationSelector: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(date.formatted(date: .complete, time: .omitted))
+                .accessibilityLabel(date.formatted(Date.FormatStyle(date: .complete, time: .omitted).locale(.app)))
                 .accessibilityValue(selectedDates.contains(date) ? "Selected" : "Not selected")
             }
         }

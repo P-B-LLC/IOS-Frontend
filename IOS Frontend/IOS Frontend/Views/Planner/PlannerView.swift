@@ -6,6 +6,7 @@
 //  overdue or coming.
 //
 
+import Foundation
 import SwiftUI
 
 struct PlannerView: View {
@@ -47,7 +48,7 @@ struct PlannerView: View {
                 HStack(alignment: .bottom) {
                     if showsBackButton {
                         Button { dismiss() } label: {
-                            Image(systemName: "chevron.left")
+                            Image(systemName: "chevron.backward")
                                 .font(.community(size: 17, weight: .semibold))
                                 .frame(width: 40, height: 40)
                                 .contentShape(Rectangle())
@@ -62,7 +63,7 @@ struct PlannerView: View {
                         Text("Make room for your day.")
                             .font(.community(.title2, weight: .bold))
                             .foregroundStyle(timeOfDay.canvasPrimaryText)
-                        Text(store.selectedDate.formatted(.dateTime.weekday(.wide).month(.wide).day()))
+                        Text(store.selectedDate.formatted(.dateTime.weekday(.wide).month(.wide).day().locale(.app)))
                             .font(.community(.subheadline))
                             .foregroundStyle(timeOfDay.canvasSecondaryText)
                     }
@@ -160,7 +161,7 @@ struct PlannerView: View {
     }
 
     private func addButton(
-        _ title: String,
+        _ title: LocalizedStringKey,
         systemImage: String,
         kind: PlannerKind,
         primary: Bool,
@@ -244,7 +245,10 @@ struct PlannerView: View {
             }
 
             if let categoryFilter {
-                Text("Showing \(categoryFilter.title.lowercased()) items. Choose All to see the whole day.")
+                Text(
+                    "Showing \(categoryFilter.title.lowercased(with: .app)) items. Choose All to see the whole day.",
+                    comment: "The placeholder is a planner category name in lower case, e.g. habit or birthday"
+                )
                     .font(.community(.caption))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
             }
@@ -300,7 +304,7 @@ struct PlannerView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    Text(store.visibleMonth.formatted(.dateTime.month(.wide).year()))
+                    Text(store.visibleMonth.formatted(.dateTime.month(.wide).year().locale(.app)))
                         .font(.community(.title2, weight: .bold))
                     Text("Choose a date to see its tasks and events.")
                         .font(.community(.subheadline))
@@ -310,7 +314,7 @@ struct PlannerView: View {
                         ProgressView("Loading this month…")
                             .frame(maxWidth: .infinity, minHeight: 80)
                     } else if PlannerStore.isSameMonth(store.selectedDate, store.visibleMonth) {
-                        Text(store.selectedDate.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))
+                        Text(store.selectedDate.formatted(.dateTime.weekday(.wide).month(.abbreviated).day().locale(.app)))
                             .font(.community(.headline, weight: .bold))
                         let counts = store.taskCounts(on: store.selectedDate)
                         Text("\(counts.total) tasks · \(store.entries(on: store.selectedDate).filter { $0.kind == .event }.count) events")
@@ -319,7 +323,7 @@ struct PlannerView: View {
                         ForEach(store.entries(on: store.selectedDate).prefix(3)) { entry in
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(entry.title).font(.community(.headline))
-                                Text(entry.displayTimeRange ?? "Anytime")
+                                Text(entry.displayTimeRange ?? String(localized: "Anytime", bundle: .app, locale: .app))
                                     .font(.community(.footnote))
                                     .foregroundStyle(timeOfDay.canvasSecondaryText)
                             }
@@ -378,8 +382,12 @@ struct PlannerView: View {
         withAnimation(reduceMotion ? .easeOut(duration: 0.18) : .spring(response: 0.42, dampingFraction: 0.72)) {
             completedEntryID = event.entryID
             completionMessage = event.clearedDay
-                ? "You cleared \(store.selectedDate.formatted(.dateTime.weekday(.wide))). Everything planned is done."
-                : "\(event.title) complete · \(event.completedTasks) of \(event.totalTasks)"
+                ? String(
+                    localized: "You cleared \(store.selectedDate.formatted(.dateTime.weekday(.wide).locale(.app))). Everything planned is done.",
+                    bundle: .app,
+                    locale: .app
+                )
+                : String(localized: "\(event.title) complete · \(event.completedTasks) of \(event.totalTasks)", bundle: .app, locale: .app)
             if event.clearedDay {
                 completionPulse.toggle()
             }
@@ -459,7 +467,7 @@ struct PlannerView: View {
             VStack(alignment: .leading, spacing: 8) {
                 sectionHeader(
                     "Upcoming events",
-                    detail: "next \(PlannerStore.upcomingHorizonDays) days",
+                    detail: String(localized: "next \(PlannerStore.upcomingHorizonDays) days", bundle: .app, locale: .app),
                     tint: timeOfDay.accent,
                     timeOfDay: timeOfDay
                 )
@@ -482,7 +490,7 @@ struct PlannerView: View {
     }
 
     private func sectionHeader(
-        _ title: String,
+        _ title: LocalizedStringKey,
         detail: String,
         tint: Color,
         timeOfDay: HomeTimeOfDay
@@ -594,10 +602,7 @@ struct PlannerEntryRow: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text(
-                "This day and every one after it goes. Days you have already "
-                + "ticked off stay — ending a habit is not saying it never happened."
-            )
+            Text("This day and every one after it goes. Days you have already ticked off stay — ending a habit is not saying it never happened.")
         }
         .onAppear {
             showingSteps = entry.completionIsDerived && !entry.isComplete
@@ -635,7 +640,7 @@ struct PlannerEntryRow: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityHint("Edit this \(entry.kind.title.lowercased())")
+            .accessibilityHint(entry.kind == .event ? "Edit this event" : "Edit this task")
 
             Menu {
                 entryActions
@@ -675,11 +680,11 @@ struct PlannerEntryRow: View {
     private var subtitle: String {
         var parts: [String] = []
         if showsDate, let day = Self.date(from: entry.date) {
-            parts.append(day.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()))
+            parts.append(day.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day().locale(.app)))
         }
-        parts.append(entry.displayTimeRange ?? "Anytime")
+        parts.append(entry.displayTimeRange ?? String(localized: "Anytime", bundle: .app, locale: .app))
         parts.append(entry.category.title)
-        if entry.kind == .event { parts.append("Event") }
+        if entry.kind == .event { parts.append(String(localized: "Event", bundle: .app, locale: .app)) }
         if let weekdays = entry.repeatWeekdays, !weekdays.isEmpty {
             parts.append(PlannerRepeatWeekday.summary(weekdays))
         } else if let every = entry.repeatIntervalDays { parts.append(Self.repeatLabel(every)) }
@@ -759,7 +764,7 @@ struct PlannerEntryRow: View {
                     .contentShape(Rectangle())
                     .buttonStyle(.plain)
                     .disabled(busyStep != nil || isAddingStep || !store.isEditingEnabled)
-                    .accessibilityLabel("\(step.isComplete ? "Mark not done" : "Mark done"): \(step.title)")
+                    .accessibilityLabel(step.isComplete ? "Mark not done: \(step.title)" : "Mark done: \(step.title)")
 
                     Text(step.title)
                         .font(.community(.subheadline))
@@ -883,11 +888,11 @@ extension PlannerEntryRow {
     /// better than "every 7". The rest fall back to the count.
     static func repeatLabel(_ days: Int) -> String {
         switch days {
-        case 1: return "Every day"
-        case 2: return "Every other day"
-        case 7: return "Every week"
-        case 14: return "Every 2 weeks"
-        default: return "Every \(days) days"
+        case 1: return String(localized: "Every day", bundle: .app, locale: .app)
+        case 2: return String(localized: "Every other day", bundle: .app, locale: .app)
+        case 7: return String(localized: "Every week", bundle: .app, locale: .app)
+        case 14: return String(localized: "Every 2 weeks", bundle: .app, locale: .app)
+        default: return String(localized: "Every \(days) days", bundle: .app, locale: .app)
         }
     }
 }

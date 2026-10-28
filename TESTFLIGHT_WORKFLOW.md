@@ -36,6 +36,9 @@ explicit approval.
 - iOS reconciles local publication with in-flight reads, deletion and later
   moderation changes. Search requests have cancellation/account fences and
   scoped error/retry feedback. The API contract/generated client is unchanged.
+- The concurrent ten-language update (`ffd0261`) was integrated without
+  replacing it. New Social labels use the same app-language selection and
+  catalog; feed-mode identifiers remain stable while their labels translate.
 - Figma Code Connect setup was requested, but the Code Connect skill requires
   an Organization/Enterprise plan; the connected Byteme plan is Professional.
   No mappings were published. Existing SwiftUI components are reused directly.

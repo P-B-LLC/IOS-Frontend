@@ -6,6 +6,7 @@
 //
 
 import Charts
+import Foundation
 import SwiftUI
 
 struct LiftProgressChart: View {
@@ -21,8 +22,8 @@ struct LiftProgressChart: View {
 
         var title: String {
             switch self {
-            case .heaviest: return "Heaviest"
-            case .volume: return "Volume"
+            case .heaviest: return String(localized: "Heaviest", bundle: .app, locale: .app, comment: "Chart metric: the heaviest weight lifted in a session")
+            case .volume: return String(localized: "Volume", bundle: .app, locale: .app, comment: "Chart metric: total weight lifted in a session")
             }
         }
     }
@@ -164,13 +165,25 @@ struct LiftProgressChart: View {
             return nil
         }
         let change = value(for: last) - value(for: first)
-        let unit = metric == .heaviest ? "kg" : "kg lifted"
+        let amount = String(format: "%.0f", abs(change))
 
-        guard abs(change) >= 0.5 else {
-            return "\(metric.title) is holding steady."
+        // A sentence per metric rather than the metric's name and unit
+        // dropped into one, so each is translated whole.
+        switch metric {
+        case .heaviest:
+            guard abs(change) >= 0.5 else {
+                return String(localized: "Heaviest is holding steady.", bundle: .app, locale: .app)
+            }
+            return change > 0
+                ? String(localized: "Up \(amount) kg since your first session.", bundle: .app, locale: .app, comment: "The placeholder is a weight in kilograms")
+                : String(localized: "Down \(amount) kg since your first session.", bundle: .app, locale: .app, comment: "The placeholder is a weight in kilograms")
+        case .volume:
+            guard abs(change) >= 0.5 else {
+                return String(localized: "Volume is holding steady.", bundle: .app, locale: .app)
+            }
+            return change > 0
+                ? String(localized: "Up \(amount) kg lifted since your first session.", bundle: .app, locale: .app, comment: "The placeholder is a weight in kilograms")
+                : String(localized: "Down \(amount) kg lifted since your first session.", bundle: .app, locale: .app, comment: "The placeholder is a weight in kilograms")
         }
-        return change > 0
-            ? String(format: "Up %.0f %@ since your first session.", change, unit)
-            : String(format: "Down %.0f %@ since your first session.", -change, unit)
     }
 }

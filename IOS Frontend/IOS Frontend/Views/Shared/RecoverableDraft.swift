@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 
 extension View {
@@ -39,7 +40,7 @@ private struct RecoverableDraftModifier<Value: Codable & Equatable>: ViewModifie
                     loaded = true
                 } catch {
                     // Do not overwrite an unreadable draft with empty fields.
-                    self.error = "Couldn't restore the local draft. \(error.localizedDescription)"
+                    self.error = String(localized: "Couldn't restore the local draft. \(error.localizedDescription)", bundle: .app, locale: .app)
                 }
             }
             .disabled(showingRestoreChoice)
@@ -57,7 +58,7 @@ private struct RecoverableDraftModifier<Value: Codable & Equatable>: ViewModifie
                         pendingRestoration = nil
                         loaded = true
                     } catch {
-                        self.error = "Couldn't clear the local draft. Your previous changes are kept."
+                        self.error = String(localized: "Couldn't clear the local draft. Your previous changes are kept.", bundle: .app, locale: .app)
                         showingRestoreChoice = true
                     }
                 }
@@ -68,12 +69,12 @@ private struct RecoverableDraftModifier<Value: Codable & Equatable>: ViewModifie
                 guard loaded, !saved, let scope,
                       scope == EditorDraftRecovery.shared.scope else { return }
                 do { try EditorDraftRecovery.shared.save(newValue, key: key, scope: scope) }
-                catch { self.error = "Couldn't keep a local draft. \(error.localizedDescription)" }
+                catch { self.error = String(localized: "Couldn't keep a local draft. \(error.localizedDescription)", bundle: .app, locale: .app) }
             }
             .onChange(of: saved) { _, confirmed in
                 guard confirmed, let scope else { return }
                 do { try EditorDraftRecovery.shared.remove(key: key, scope: scope) }
-                catch { self.error = "Saved, but the local draft could not be cleared." }
+                catch { self.error = String(localized: "Saved, but the local draft could not be cleared.", bundle: .app, locale: .app) }
             }
             .onDisappear {
                 if saved, let scope { try? EditorDraftRecovery.shared.remove(key: key, scope: scope) }

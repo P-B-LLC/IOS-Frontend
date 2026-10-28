@@ -414,7 +414,7 @@ final class SocialStore {
     ) async -> Bool {
         guard !isPosting else { return false }
         guard let repository else {
-            showFailure(message: "Connect to Rytivo before posting.")
+            showFailure(message: String(localized: "Connect to Rytivo before posting.", bundle: .app, locale: .app))
             return false
         }
 
@@ -1187,8 +1187,8 @@ final class SocialStore {
             )
             guard connectionGeneration == generation else { return false }
             lastModerationMessage = already
-                ? "A report for this reason has already been submitted."
-                : "Report received. Thank you for helping keep Rytivo safe."
+                ? String(localized: "A report for this reason has already been submitted.", bundle: .app, locale: .app)
+                : String(localized: "Report received. Thank you for helping keep Rytivo safe.", bundle: .app, locale: .app)
             return true
         } catch {
             guard connectionGeneration == generation else { return false }
@@ -1220,7 +1220,7 @@ final class SocialStore {
             searchedPeople.removeAll { $0.id == author.id }
             searchedPosts.removeAll { $0.displayed.author.id == author.id }
             lastModerationMessage =
-                "Blocked \(author.displayName). You will not see each other's posts."
+                String(localized: "Blocked \(author.displayName). You will not see each other's posts.", bundle: .app, locale: .app)
         } catch {
             guard connectionGeneration == generation else { return }
             showFailure(error)
@@ -1233,7 +1233,7 @@ final class SocialStore {
         do {
             try await repository.reportComment(commentID: comment.id, reason: reason, detail: detail)
             guard connectionGeneration == generation else { return false }
-            lastModerationMessage = "Thanks. Your comment report was sent to our moderators."
+            lastModerationMessage = String(localized: "Thanks. Your comment report was sent to our moderators.", bundle: .app, locale: .app)
             return true
         } catch {
             guard connectionGeneration == generation else { return false }
@@ -1420,7 +1420,7 @@ final class SocialStore {
             var post = post
             if post.recommendation == nil { post.recommendation = reasons[post.id] }
             if post.viewerIsAuthor, post.recommendation == nil {
-                post.recommendation = .init(reason: "own", label: "Your post")
+                post.recommendation = .init(reason: "own", label: String(localized: "Your post", bundle: .app, locale: .app))
             }
             return post
         }

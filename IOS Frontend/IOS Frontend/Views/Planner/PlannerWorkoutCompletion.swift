@@ -23,6 +23,7 @@
 //  that looks broken, and names Undo, which is what removes the training.
 //
 
+import Foundation
 import SwiftUI
 
 enum PlannerWorkoutCompletion {
@@ -129,13 +130,22 @@ extension View {
         }
     }
 
+    // Each answer is one whole string rather than a shared sentence with
+    // another added on, so a translation can join the two its own way.
     private func message(for entry: PlannerEntry, canOpen: Bool) -> String {
         guard !entry.isComplete else { return untickMessage(canOpen: canOpen) }
-        let base = "Ticking this off marks the plan done, but records no "
-            + "session — no sets or distance are saved, and it will not count "
-            + "towards your streak or your weekly goal."
-        guard canOpen else { return base }
-        return base + " Open the workout to finish it properly."
+        guard canOpen else {
+            return String(
+                localized: "Ticking this off marks the plan done, but records no session — no sets or distance are saved, and it will not count towards your streak or your weekly goal.",
+                bundle: .app,
+                locale: .app
+            )
+        }
+        return String(
+            localized: "Ticking this off marks the plan done, but records no session — no sets or distance are saved, and it will not count towards your streak or your weekly goal. Open the workout to finish it properly.",
+            bundle: .app,
+            locale: .app
+        )
     }
 
     /// Why a trained workout will not untick.
@@ -146,10 +156,17 @@ extension View {
     /// finished. So the tick gives, and this says why rather than leaving a
     /// checkbox that appears to do nothing.
     private func untickMessage(canOpen: Bool) -> String {
-        let base = "A session was recorded for this day, so this stays done."
         guard canOpen else {
-            return base + " Remove the session to change that."
+            return String(
+                localized: "A session was recorded for this day, so this stays done. Remove the session to change that.",
+                bundle: .app,
+                locale: .app
+            )
         }
-        return base + " To remove the training itself, use Undo in Training."
+        return String(
+            localized: "A session was recorded for this day, so this stays done. To remove the training itself, use Undo in Training.",
+            bundle: .app,
+            locale: .app
+        )
     }
 }

@@ -1,0 +1,468 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "NSCameraUsageDescription" : {
+      "comment" : "iOS camera permission prompt",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التقط صورة أو فيديو لإرفاقه بمنشور تختار مشاركته."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nimm ein Foto oder Video auf, um es an einen Beitrag anzuhängen, den du teilen möchtest."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Take a photo or video to attach to a post you choose to share."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toma una foto o graba un video para adjuntarlo a una publicación que decidas compartir."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prenez une photo ou une vidéo à joindre à une publication que vous choisissez de partager."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आप जो पोस्ट शेयर करना चुनते हैं, उसमें अटैच करने के लिए फ़ोटो या वीडियो लें।"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "シェアする投稿に添付する写真や動画を撮影します。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tire uma foto ou grave um vídeo para anexar a uma publicação que você escolher compartilhar."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сделайте фото или видео, чтобы прикрепить их к публикации, которой вы решите поделиться."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拍摄照片或视频，附加到你选择分享的帖子中。"
+          }
+        }
+      }
+    },
+    "NSHealthShareUsageDescription" : {
+      "comment" : "Apple Health read permission prompt",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يقرأ Rytivo عدد خطواتك وجلسات الجري وركوب الدراجة والسباحة التي يسجّلها iPhone أو Apple Watch، ليظهر تدريبك هنا دون إدخاله مرتين."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo liest deine Schrittzahl sowie die Läufe, Radfahrten und Schwimmeinheiten, die dein iPhone oder deine Apple Watch aufgezeichnet hat, damit dein Training hier erscheint, ohne dass du es doppelt eingeben musst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo reads your step count and the runs, rides, and swims recorded by your iPhone or Apple Watch, so your training shows up here without entering it twice."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo lee tu conteo de pasos y las carreras, recorridos en bici y sesiones de natación que registran tu iPhone o tu Apple Watch, para que tu entrenamiento aparezca aquí sin tener que ingresarlo dos veces."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo lit votre nombre de pas ainsi que les courses, sorties à vélo et séances de natation enregistrées par votre iPhone ou votre Apple Watch, pour que vos entraînements apparaissent ici sans avoir à les saisir deux fois."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo आपके कदमों की गिनती और आपके iPhone या Apple Watch से रिकॉर्ड की गई दौड़, राइड और तैराकी पढ़ता है, ताकि आपकी ट्रेनिंग दो बार दर्ज किए बिना यहाँ दिखे।"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivoは、歩数と、iPhoneまたはApple Watchで記録されたラン、ライド、スイムを読み取ります。これにより、二重に入力しなくてもトレーニングがここに表示されます。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Rytivo lê sua contagem de passos e as corridas, pedaladas e natações registradas pelo seu iPhone ou Apple Watch, para que seus treinos apareçam aqui sem precisar inseri-los duas vezes."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo считывает количество шагов, а также пробежки, заезды и заплывы, записанные iPhone или Apple Watch, чтобы ваши тренировки появлялись здесь без повторного ввода."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo 会读取你的步数，以及 iPhone 或 Apple Watch 记录的跑步、骑行和游泳，这样你的训练就会显示在这里，无需重复输入。"
+          }
+        }
+      }
+    },
+    "NSHealthUpdateUsageDescription" : {
+      "comment" : "Apple Health write permission prompt (the app never writes)",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يكتب Rytivo في تطبيق صحتي. بل يقرأ فقط عدد خطواتك وتمارينك ليظهر تدريبك دون إدخاله مرتين."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo schreibt keine Daten in Health. Es liest nur deine Schrittzahl und Workouts, damit dein Training erscheint, ohne dass du es doppelt eingeben musst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo does not write to Health. It only reads your step count and workouts so your training shows up without entering it twice."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo no escribe datos en Salud. Solo lee tu conteo de pasos y tus entrenamientos para que tu entrenamiento aparezca sin tener que ingresarlo dos veces."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo n’écrit pas dans Santé. Il lit uniquement votre nombre de pas et vos entraînements pour que votre activité apparaisse sans avoir à la saisir deux fois."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo स्वास्थ्य में कुछ नहीं लिखता। यह सिर्फ़ आपके कदमों की गिनती और वर्कआउट पढ़ता है, ताकि आपकी ट्रेनिंग दो बार दर्ज किए बिना दिखे।"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivoはヘルスケアにデータを書き込みません。歩数とワークアウトを読み取るだけなので、二重に入力しなくてもトレーニングが表示されます。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Rytivo não grava dados no app Saúde. Ele só lê sua contagem de passos e seus treinos para que eles apareçam sem precisar inseri-los duas vezes."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo не записывает данные в «Здоровье». Приложение только считывает количество шагов и тренировки, чтобы они появлялись без повторного ввода."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo 不会向“健康”写入数据。它只读取你的步数和训练记录，这样你的训练就会显示出来，无需重复输入。"
+          }
+        }
+      }
+    },
+    "NSLocationWhenInUseUsageDescription" : {
+      "comment" : "iOS location permission prompt",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يستخدم Rytivo موقعك لرسم مسارك وقياس المسافة والوتيرة أثناء جلسة جري أو ركوب دراجة أو سباحة. لا يتم التتبّع إلا خلال جلسة تبدأها أنت، ويتوقف عند إنهائها."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo verwendet deinen Standort, um deine Route aufzuzeichnen sowie Distanz und Pace zu messen, während eine Lauf-, Rad- oder Schwimmeinheit läuft. Die Aufzeichnung erfolgt nur während einer Einheit, die du startest, und endet, wenn du sie beendest."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo uses your location to map your route and measure distance and pace while a run, ride, or swim session is running. Tracking only happens during a session you start, and stops when you end it."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo usa tu ubicación para trazar tu ruta y medir la distancia y el ritmo mientras está en curso una sesión de carrera, ciclismo o natación. El seguimiento solo ocurre durante una sesión que inicias tú y se detiene cuando la terminas."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo utilise votre position pour tracer votre itinéraire et mesurer la distance et l’allure pendant une séance de course, de vélo ou de natation. Le suivi n’a lieu que pendant une séance que vous lancez, et s’arrête quand vous la terminez."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "दौड़, राइड या तैराकी का सेशन चलने के दौरान Rytivo आपका रूट मैप करने और दूरी व पेस मापने के लिए आपकी लोकेशन का इस्तेमाल करता है। ट्रैकिंग सिर्फ़ आपके शुरू किए गए सेशन के दौरान होती है, और सेशन खत्म करने पर बंद हो जाती है।"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivoは、ラン、ライド、スイムのセッション中に位置情報を使ってルートを地図に記録し、距離とペースを計測します。位置情報の記録は、あなたが開始したセッション中にのみ行われ、セッションを終了すると停止します。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Rytivo usa sua localização para mapear seu trajeto e medir a distância e o ritmo enquanto uma sessão de corrida, pedalada ou natação está em andamento. O rastreamento só acontece durante uma sessão que você inicia e para quando você a encerra."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo использует вашу геопозицию, чтобы нанести маршрут на карту и измерить дистанцию и темп во время пробежки, заезда или заплыва. Отслеживание ведётся только во время занятия, которое вы начали, и прекращается, когда вы его завершаете."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo 会在跑步、骑行或游泳训练进行时使用你的位置，以绘制路线并测量距离和配速。仅在你开始的训练期间进行追踪，并在你结束训练时停止。"
+          }
+        }
+      }
+    },
+    "NSMicrophoneUsageDescription" : {
+      "comment" : "iOS microphone permission prompt",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سجّل الصوت عند التقاط فيديو لمنشورك."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nimm Ton auf, wenn du ein Video für deinen Beitrag aufnimmst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Record sound when you capture a video for your post."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Graba el sonido cuando capturas un video para tu publicación."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrez le son lorsque vous filmez une vidéo pour votre publication."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "अपनी पोस्ट के लिए वीडियो बनाते समय आवाज़ रिकॉर्ड करें।"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "投稿用の動画を撮影するときに音声を録音します。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grave o som quando você captura um vídeo para sua publicação."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запись звука, когда вы снимаете видео для своей публикации."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在为帖子拍摄视频时录制声音。"
+          }
+        }
+      }
+    },
+    "NSMotionUsageDescription" : {
+      "comment" : "iOS motion and fitness permission prompt",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يقرأ Rytivo مقياس الضغط الجوي في جهازك أثناء الجري أو ركوب الدراجة أو السباحة لقياس الارتفاع الذي تصعده. ولا يُستخدم إلا أثناء جلسة بدأتها أنت."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo liest während eines Laufs, einer Radfahrt oder einer Schwimmeinheit das Barometer deines Geräts aus, um die zurückgelegten Höhenmeter zu messen. Es wird nur verwendet, während eine von dir gestartete Einheit läuft."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo reads your device's barometer during a run, ride, or swim to measure the elevation you climb. It is only used while a session you started is running."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo lee el barómetro de tu dispositivo durante una carrera, un recorrido en bici o una sesión de natación para medir el desnivel que subes. Solo se usa mientras está en curso una sesión que iniciaste."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo lit le baromètre de votre appareil pendant une course, une sortie à vélo ou une séance de natation pour mesurer le dénivelé que vous gravissez. Il n’est utilisé que pendant une séance que vous avez lancée."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "दौड़, राइड या तैराकी के दौरान आपकी चढ़ाई की ऊँचाई मापने के लिए Rytivo आपके डिवाइस का बैरोमीटर पढ़ता है। इसका इस्तेमाल सिर्फ़ तभी होता है जब आपका शुरू किया गया सेशन चल रहा हो।"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivoは、ラン、ライド、スイム中にデバイスの気圧計を読み取り、登った標高を計測します。あなたが開始したセッションの実行中にのみ使用されます。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Rytivo lê o barômetro do seu dispositivo durante uma corrida, pedalada ou natação para medir o seu ganho de elevação. Ele só é usado enquanto uma sessão iniciada por você está em andamento."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo считывает показания барометра устройства во время пробежки, заезда или заплыва, чтобы измерить набор высоты. Они используются только во время занятия, которое вы начали."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo 会在跑步、骑行或游泳期间读取你设备的气压计，以测量你的爬升高度。仅在你开始的训练进行时使用。"
+          }
+        }
+      }
+    },
+    "RouteTracking" : {
+      "comment" : "iOS prompt asking for precise location during a session",
+      "extractionState" : "manual",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يحتاج Rytivo إلى موقعك الدقيق لرسم مسار هذا الجري أو ركوب الدراجة أو السباحة ولقياس مسافته. من دونه يمكن توقيت الجلسة، لكن لا يمكن تسجيل أي مسار."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo benötigt deinen genauen Standort, um die Route dieses Laufs, dieser Radfahrt oder dieser Schwimmeinheit aufzuzeichnen und ihre Distanz zu messen. Ohne ihn kann die Zeit der Einheit trotzdem gemessen werden, aber es kann keine Route aufgezeichnet werden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo needs your exact location to map the route of this run, ride, or swim and to measure its distance. Without it the session can still be timed, but no route can be recorded."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo necesita tu ubicación exacta para trazar la ruta de esta carrera, recorrido en bici o sesión de natación y para medir su distancia. Sin ella, la sesión se puede cronometrar igualmente, pero no se puede registrar ninguna ruta."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo a besoin de votre position exacte pour tracer l’itinéraire de cette course, sortie à vélo ou séance de natation et en mesurer la distance. Sans elle, la séance peut tout de même être chronométrée, mais aucun itinéraire ne peut être enregistré."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "इस दौड़, राइड या तैराकी का रूट मैप करने और उसकी दूरी मापने के लिए Rytivo को आपकी सटीक लोकेशन चाहिए। इसके बिना भी सेशन का समय गिना जा सकता है, लेकिन कोई रूट रिकॉर्ड नहीं हो सकता।"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このラン、ライド、スイムのルートを地図に記録し、距離を計測するために、Rytivoには正確な位置情報が必要です。許可しない場合もセッションの時間は計測できますが、ルートは記録できません。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Rytivo precisa da sua localização exata para mapear o trajeto desta corrida, pedalada ou natação e medir a distância. Sem ela, a sessão ainda pode ser cronometrada, mas nenhum trajeto pode ser registrado."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo нужна ваша точная геопозиция, чтобы нанести на карту маршрут этой пробежки, заезда или заплыва и измерить его дистанцию. Без неё время занятия всё равно можно засечь, но маршрут записать не получится."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rytivo 需要你的精确位置，以绘制此次跑步、骑行或游泳的路线并测量距离。如果不提供，仍可为训练计时，但无法记录路线。"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

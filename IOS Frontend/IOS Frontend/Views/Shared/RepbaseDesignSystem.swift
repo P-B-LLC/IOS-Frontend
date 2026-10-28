@@ -140,13 +140,14 @@ extension View {
 struct RepbaseScreenHeader: View {
     @Environment(\.homeTimeOfDay) private var timeOfDay
 
-    let eyebrow: String
-    let title: String
-    var detail: String? = nil
+    let eyebrow: LocalizedStringKey
+    let title: LocalizedStringKey
+    var detail: LocalizedStringKey? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
-            Text(eyebrow.uppercased())
+            Text(eyebrow)
+                .textCase(.uppercase)
                 .font(.community(size: 10, weight: .bold))
                 .tracking(1.5)
                 .foregroundStyle(timeOfDay.accent)
@@ -264,7 +265,7 @@ enum RepbaseTonalActionTone {
 }
 
 struct RepbaseTonalActionLabel: View {
-    let title: String
+    let title: LocalizedStringKey
     let systemImage: String
 
     var body: some View {

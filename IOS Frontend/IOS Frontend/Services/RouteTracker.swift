@@ -196,11 +196,15 @@ final class RouteTracker: NSObject, CLLocationManagerDelegate {
             guard hasPreciseLocation == false else { return }
             // Said plainly, because the alternative is a session that records
             // nothing and never explains itself.
-            trackingError = """
-                Precise Location is off, so this route cannot be mapped. \
-                Turn it on in Settings, Privacy & Security, Location Services, \
-                Repbase.
-                """
+            trackingError = String(
+                localized: """
+                    Precise Location is off, so this route cannot be mapped. \
+                    Turn it on in Settings, Privacy & Security, Location Services, \
+                    Rytivo.
+                    """,
+                bundle: .app,
+                locale: .app
+            )
         }
     }
 

@@ -5,6 +5,7 @@
 //  For You, the people you follow, and everybody else.
 //
 
+import Foundation
 import SwiftUI
 
 /// A post id that can be presented as a sheet.
@@ -50,6 +51,14 @@ struct SocialFeedView: View {
         /// People worth following and everybody's latest.
         case discover = "Discover"
         var id: String { rawValue }
+
+        var title: LocalizedStringKey {
+            switch self {
+            case .forYou: "For you"
+            case .following: "Following"
+            case .discover: "Discover"
+            }
+        }
     }
 
     @Environment(SocialStore.self) private var store
@@ -361,7 +370,7 @@ struct SocialFeedView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Notifications")
-                .accessibilityValue(store.unreadNotifications > 0 ? "Unread notifications" : "No unread notifications")
+                .accessibilityValue(store.unreadNotifications > 0 ? Text("Unread notifications") : Text("No unread notifications"))
             }
 
             ViewThatFits(in: .horizontal) {
@@ -424,8 +433,10 @@ struct SocialFeedView: View {
                         feedMode = mode
                     }
                 } label: {
-                    Text(mode.rawValue)
+                    Text(mode.title)
                         .font(.community(.footnote, weight: feedMode == mode ? .semibold : .regular))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                         .foregroundStyle(
                             feedMode == mode
                                 ? timeOfDay.onPrimaryAction
@@ -689,7 +700,7 @@ struct SocialFeedView: View {
 
     /// "Requested" for a closed profile asked to, which the follow list alone
     /// cannot say.
-    private func followTitle(_ person: PostAuthor) -> String {
+    private func followTitle(_ person: PostAuthor) -> LocalizedStringKey {
         if isFollowing(person) { return "Following" }
         if store.requestedUserIDs.contains(person.id) { return "Requested" }
         return "Follow"
@@ -744,7 +755,7 @@ struct SocialFeedView: View {
         .padding(.horizontal, 22)
     }
 
-    private var emptyExplanation: String {
+    private var emptyExplanation: LocalizedStringKey {
         switch feedMode {
         case .forYou:
             return "Nothing to recommend yet. As people post, the best of it shows up here -- and what you like teaches it what to pick."
@@ -766,17 +777,21 @@ struct SocialFeedView: View {
             get: {
                 if let workout = store.lastSavedWorkout {
                     return RepbaseToastPresentation(
-                        title: workout.wasAlreadySaved ? "Workout already saved" : "Workout saved",
+                        title: workout.wasAlreadySaved
+                            ? String(localized: "Workout already saved", bundle: .app, locale: .app)
+                            : String(localized: "Workout saved", bundle: .app, locale: .app),
                         accessibilityMessage: workout.message,
-                        actionTitle: "View",
+                        actionTitle: String(localized: "View", bundle: .app, locale: .app, comment: "Toast button that opens the saved workout"),
                         destination: .workouts
                     )
                 }
                 if let meal = store.lastSavedMeal {
                     return RepbaseToastPresentation(
-                        title: meal.wasAlreadySaved ? "Meal already saved" : "Meal saved",
+                        title: meal.wasAlreadySaved
+                            ? String(localized: "Meal already saved", bundle: .app, locale: .app)
+                            : String(localized: "Meal saved", bundle: .app, locale: .app),
                         accessibilityMessage: meal.message,
-                        actionTitle: "Log",
+                        actionTitle: String(localized: "Log", bundle: .app, locale: .app, comment: "Toast button that opens Food to log the saved meal"),
                         destination: .food
                     )
                 }
@@ -1072,7 +1087,9 @@ struct PostCard: View {
                 // age are one phrase, and stacking them too would spend three
                 // lines saying what one says.
                 HStack(spacing: 6) {
-                    Text(post.viewerIsAuthor && post.repostOf == nil ? "Your post" : "@" + shown.author.username)
+                    Text(post.viewerIsAuthor && post.repostOf == nil
+                         ? String(localized: "Your post", bundle: .app, locale: .app)
+                         : "@" + shown.author.username)
                         .font(.community(.caption))
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                         .lineLimit(1)
@@ -1212,7 +1229,7 @@ struct PostCard: View {
                 if post.offersWorkoutToSave {
                     saveWorkoutButton
                 } else {
-                    Image(systemName: "chevron.right")
+                    Image(systemName: "chevron.forward")
                         .font(.community(size: 10, weight: .bold))
                         .foregroundStyle(timeOfDay.accent)
                 }
@@ -1357,7 +1374,7 @@ struct PostCard: View {
         .background(imageAttached ? Color.clear : RepbaseDesign.success.opacity(0.08), in: RoundedRectangle(cornerRadius: 28, style: .continuous))
     }
 
-    private func macro(_ value: String, _ label: String, _ color: Color) -> some View {
+    private func macro(_ value: String, _ label: LocalizedStringKey, _ color: Color) -> some View {
         HStack(spacing: 3) {
             Text(value).foregroundStyle(color)
             Text(label).foregroundStyle(timeOfDay.secondaryText)
@@ -1391,7 +1408,7 @@ struct PostCard: View {
         .background(timeOfDay.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
     }
 
-    private func workoutSummary(_ workout: PostWorkoutSnapshot) -> String {
+    private func workoutSummary(_ workout: PostWorkoutSnapshot) -> LocalizedStringKey {
         if let distance = workout.routeDistanceKm {
             let miles = ImperialUnits.miles(fromKilometers: distance.nutritionDouble)
             return "\(String(format: "%.2f", miles)) mi · \(Self.pace(duration: workout.durationSeconds, miles: miles)) pace"
@@ -1568,12 +1585,13 @@ struct PostCard: View {
 
     // MARK: - Pieces
 
-    private func shareHeader(_ title: String, symbol: String) -> some View {
+    private func shareHeader(_ title: LocalizedStringKey, symbol: String) -> some View {
         HStack(spacing: 8) {
-            Label(title.uppercased(), systemImage: symbol)
+            Label(title, systemImage: symbol)
                 .font(.community(size: 10, weight: .bold))
                 .tracking(1.15)
                 .foregroundStyle(timeOfDay.accent)
+                .textCase(.uppercase)
             Spacer(minLength: 0)
             if post.offersWorkoutToSave {
                 saveWorkoutButton
@@ -1631,6 +1649,8 @@ struct PostCard: View {
                 }
                 Text(isSaving ? "Saving" : (done ? "Saved" : "Save"))
                     .font(.community(size: 11, weight: .bold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
             .foregroundStyle(colour)
             .padding(.horizontal, 11)
@@ -1645,12 +1665,12 @@ struct PostCard: View {
     }
 
     /// "1 serving", "2 servings" -- the amount, not just the food.
-    private func servingsText(_ value: Decimal) -> String {
+    private func servingsText(_ value: Decimal) -> LocalizedStringKey {
         let text = value.nutritionText
         return text == "1" ? "1 serving" : "\(text) servings"
     }
 
-    private func statistic(_ value: String, _ label: String) -> some View {
+    private func statistic(_ value: String, _ label: LocalizedStringKey) -> some View {
         VStack(alignment: .leading, spacing: 1) {
             Text(value)
                 .font(.community(size: 15, weight: .bold))
@@ -1662,7 +1682,7 @@ struct PostCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func plannerLine(_ label: String, value: String) -> some View {
+    private func plannerLine(_ label: LocalizedStringKey, value: String) -> some View {
         HStack {
             Text(label)
                 .foregroundStyle(timeOfDay.secondaryText)
@@ -1677,7 +1697,7 @@ struct PostCard: View {
     private static func duration(_ seconds: Int?) -> String {
         guard let seconds, seconds > 0 else { return "—" }
         let minutes = seconds / 60
-        if minutes < 60 { return "\(minutes)m" }
+        if minutes < 60 { return String(localized: "\(minutes)m", bundle: .app, locale: .app, comment: "A duration in minutes, abbreviated") }
         return String(format: "%d:%02d", minutes / 60, minutes % 60)
     }
 
@@ -1695,7 +1715,7 @@ struct PostCard: View {
         _ line: PostExerciseLine,
         showsWeights: Bool
     ) -> String {
-        guard let reps = line.topSetReps else { return "\(line.setCount) sets" }
+        guard let reps = line.topSetReps else { return String(localized: "\(line.setCount) sets", bundle: .app, locale: .app) }
         guard showsWeights, let weight = line.topSetWeightKg else {
             return "\(line.setCount) × \(reps)"
         }

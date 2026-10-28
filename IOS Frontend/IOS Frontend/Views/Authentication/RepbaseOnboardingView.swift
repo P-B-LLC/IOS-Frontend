@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 
 struct RepbaseOnboardingView: View {
@@ -14,13 +15,32 @@ struct RepbaseOnboardingView: View {
     /// project rather than a feature.
     private enum Step: Int { case rhythm, ready }
 
+    // The raw values are what the server stores (see `persistPreferences`),
+    // so they stay English and `title` is what is shown.
     private enum TrainingType: String, CaseIterable, Identifiable {
         case strength = "Strength", running = "Running", cycling = "Cycling", swimming = "Swimming"
         var id: String { rawValue }
+
+        var title: String {
+            switch self {
+            case .strength: String(localized: "Strength", bundle: .app, locale: .app, comment: "A kind of training")
+            case .running: String(localized: "Running", bundle: .app, locale: .app, comment: "A kind of training")
+            case .cycling: String(localized: "Cycling", bundle: .app, locale: .app, comment: "A kind of training")
+            case .swimming: String(localized: "Swimming", bundle: .app, locale: .app, comment: "A kind of training")
+            }
+        }
     }
     private enum Emphasis: String, CaseIterable, Identifiable {
         case training = "Training", movement = "Movement", nutrition = "Nutrition"
         var id: String { rawValue }
+
+        var title: String {
+            switch self {
+            case .training: String(localized: "Training", bundle: .app, locale: .app, comment: "What the home screen leads with")
+            case .movement: String(localized: "Movement", bundle: .app, locale: .app, comment: "What the home screen leads with")
+            case .nutrition: String(localized: "Nutrition", bundle: .app, locale: .app, comment: "What the home screen leads with")
+            }
+        }
     }
 
     @Environment(SocialProfileStore.self) private var store
@@ -71,7 +91,7 @@ struct RepbaseOnboardingView: View {
                     guard step.rawValue > 0 else { return }
                     withAnimation { step = Step(rawValue: step.rawValue - 1) ?? .rhythm }
                 } label: {
-                    Image(systemName: "chevron.left")
+                    Image(systemName: "chevron.backward")
                         .frame(width: 40, height: 40)
                         .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 15))
                 }
@@ -118,7 +138,7 @@ struct RepbaseOnboardingView: View {
             VStack(alignment: .leading, spacing: 28) {
                 section("YOUR RHYTHM") {
                     summaryCard(
-                        "\(weeklyTarget) workouts each week",
+                        String(localized: "\(weeklyTarget) workouts each week", bundle: .app, locale: .app),
                         detail: "This is the goal your dashboard counts against.",
                         timeOfDay
                     )
@@ -132,7 +152,7 @@ struct RepbaseOnboardingView: View {
                 }
                 section("HOME OPENS ON") {
                     summaryCard(
-                        emphasis.rawValue,
+                        emphasis.title,
                         detail: "The first thing you see each day.",
                         timeOfDay
                     )
@@ -159,7 +179,7 @@ struct RepbaseOnboardingView: View {
         } label: {
             HStack {
                 Text(step == .ready ? "Start using Rytivo" : "Continue")
-                Image(systemName: "arrow.right")
+                Image(systemName: "arrow.forward")
             }.frame(maxWidth: .infinity)
         }
         .buttonStyle(RepbasePrimaryButtonStyle())
@@ -173,7 +193,7 @@ struct RepbaseOnboardingView: View {
     private func choiceGrid(_ timeOfDay: HomeTimeOfDay) -> some View {
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
             ForEach(TrainingType.allCases) { item in
-                compactChoice(item.rawValue, selected: trainingTypes.contains(item), timeOfDay) {
+                compactChoice(item.title, selected: trainingTypes.contains(item), timeOfDay) {
                     toggle(item, in: &trainingTypes)
                 }
             }
@@ -187,7 +207,7 @@ struct RepbaseOnboardingView: View {
     /// becomes another chance to answer the same question.
     private func summaryCard(
         _ title: String,
-        detail: String,
+        detail: LocalizedStringKey,
         _ timeOfDay: HomeTimeOfDay
     ) -> some View {
         VStack(alignment: .leading, spacing: 5) {
@@ -263,36 +283,40 @@ struct RepbaseOnboardingView: View {
 
     private var emphasisPicker: some View {
         Picker("", selection: $emphasis) {
-            ForEach(Emphasis.allCases) { Text($0.rawValue).tag($0) }
+            ForEach(Emphasis.allCases) { Text($0.title).tag($0) }
         }.pickerStyle(.segmented).labelsHidden()
     }
 
-    private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
+    private func section<Content: View>(_ title: LocalizedStringKey, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title).font(.community(.caption2, weight: .bold)).tracking(1).foregroundStyle(RepbasePalette.sage)
             content()
         }
     }
 
-    private func helper(_ text: String) -> some View {
+    private func helper(_ text: LocalizedStringKey) -> some View {
         Text(text).font(.community(.caption)).foregroundStyle(.secondary)
     }
 
-    private var title: String {
+    private var title: LocalizedStringKey {
         switch step {
         case .rhythm: "How do you like to move?"
         case .ready: "Your starting plan is ready."
         }
     }
-    private var subtitle: String {
+    private var subtitle: LocalizedStringKey {
         switch step {
         case .rhythm: "Choose your usual training, how often, and what home should lead with."
         case .ready: "A simple rhythm built around what matters to you."
         }
     }
     private var trainingSummary: String {
-        let values = TrainingType.allCases.filter(trainingTypes.contains).map { $0.rawValue.lowercased() }
-        return values.isEmpty ? "Choose movement" : values.prefix(2).joined(separator: " + ").capitalized
+        // Joined with a symbol rather than a word, and each title is already
+        // cased as it should read, so no recasing that a language may not use.
+        let values = TrainingType.allCases.filter(trainingTypes.contains).map(\.title)
+        return values.isEmpty
+            ? String(localized: "Choose movement", bundle: .app, locale: .app)
+            : values.prefix(2).joined(separator: " + ")
     }
     private func toggle<T: Hashable>(_ value: T, in set: inout Set<T>) {
         if set.contains(value) { set.remove(value) } else { set.insert(value) }
