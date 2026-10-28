@@ -15,6 +15,11 @@ final class SocialStore {
     private var repository: SocialAPIRepository?
     private var connectionGeneration = UUID()
     private let likes = SocialLikeCoordinator()
+    private var publications = SocialPublicationCoordinator<FeedPost>()
+    private var followingReadID = UUID()
+    private var forYouReadID = UUID()
+    private(set) var publicationReceipt: SocialPublicationReceipt?
+    private var isRefreshingPublicationStatuses = false
     /// Where the next page starts. Nil once the feed has been read to the end.
     private var nextCursor: String?
     /// Whether the following feed has no more pages, so the Following tab can
@@ -78,7 +83,9 @@ final class SocialStore {
     // MARK: - The server
 
     func connect(configuration: APIConfiguration, token: String) async {
-        likes.reset()
+        // A reconnect is also an account boundary; never retain another
+        // account's pending submissions, receipt, or in-flight read state.
+        disconnect()
         let generation = UUID()
         connectionGeneration = generation
         isLoading = true
@@ -92,9 +99,10 @@ final class SocialStore {
             )
             self.repository = repository
 
+            let readRevision = publications.revision
             let page = try await repository.feed()
             guard connectionGeneration == generation else { return }
-            feed = page.posts
+            feed = reconcilePublicPage(page.posts, readRevision: readRevision, prependOwn: true)
             nextCursor = page.nextCursor
             hasReachedEnd = page.nextCursor == nil
         } catch {
@@ -106,6 +114,11 @@ final class SocialStore {
 
     func disconnect() {
         likes.reset()
+        publications.reset()
+        publicationReceipt = nil
+        isRefreshingPublicationStatuses = false
+        followingReadID = UUID()
+        forYouReadID = UUID()
         connectionGeneration = UUID()
         repository = nil
         feed = []
@@ -177,15 +190,19 @@ final class SocialStore {
     func refresh() async {
         guard let repository else { return }
         let generation = connectionGeneration
+        let readID = UUID()
+        followingReadID = readID
         clearError()
+        let readRevision = publications.revision
         do {
             let page = try await repository.feed()
-            guard connectionGeneration == generation else { return }
-            feed = page.posts
+            guard connectionGeneration == generation, followingReadID == readID else { return }
+            feed = reconcilePublicPage(page.posts, readRevision: readRevision, prependOwn: true)
             nextCursor = page.nextCursor
             hasReachedEnd = page.nextCursor == nil
+            await refreshPendingPublications(using: repository, generation: generation)
         } catch {
-            guard connectionGeneration == generation else { return }
+            guard connectionGeneration == generation, followingReadID == readID else { return }
             showFailure(error)
         }
     }
@@ -203,17 +220,19 @@ final class SocialStore {
         else { return }
 
         let generation = connectionGeneration
+        let readID = followingReadID
+        let readRevision = publications.revision
         isLoadingMore = true
         defer { if connectionGeneration == generation { isLoadingMore = false } }
 
         do {
             let page = try await repository.feed(after: cursor)
-            guard connectionGeneration == generation else { return }
+            guard connectionGeneration == generation, followingReadID == readID, nextCursor == cursor else { return }
             // Filtered against what is already held rather than appended
             // blindly: a post written between two page reads shifts the
             // boundary, and the cursor is a position, not a promise.
-            let known = Set(feed.map(\.id))
-            feed.append(contentsOf: page.posts.filter { !known.contains($0.id) })
+            let next = reconcilePublicPage(page.posts, readRevision: readRevision, prependOwn: false)
+            feed = publications.publicPage(feed + next, prependOwn: true)
             nextCursor = page.nextCursor
             hasReachedEnd = page.nextCursor == nil
         } catch {
@@ -417,15 +436,14 @@ final class SocialStore {
                 cookingInstructions: cookingInstructions
             )
             guard connectionGeneration == generation else { return false }
-            // A private post is deliberately kept out of the stream, exactly as
-            // the server keeps it out of everyone else's.
-            if visibility != .privateToMe && posted.isPublished && video == nil {
-                feed.insert(posted, at: 0)
-            }
+            publications.trackSubmission(id: posted.id, awaitingAttachment: video != nil)
             lastPosted = posted
+            openedPosts[posted.id] = posted
+            replace(posted)
             if let video {
                 let updated = try await repository.uploadVideo(postID: posted.id, draft: video)
                 guard connectionGeneration == generation else { return false }
+                publications.attachmentFinished(id: posted.id)
                 replace(updated)
                 lastPosted = updated
             }
@@ -445,7 +463,7 @@ final class SocialStore {
             do {
                 try await repository.delete(post.id)
                 guard connectionGeneration == generation else { return }
-                feed.removeAll { $0.id == post.id }
+                removePost(id: post.id)
             } catch {
                 guard connectionGeneration == generation else { return }
                 showFailure(error)
@@ -457,11 +475,15 @@ final class SocialStore {
         guard let repository, !isPosting else { return false }
         let generation = connectionGeneration
         isPosting = true
+        publications.trackSubmission(id: postID, awaitingAttachment: true)
+        feed = publications.publicPage(feed, prependOwn: true)
+        forYou = ownRecommendation(publications.publicPage(forYou, prependOwn: true))
         clearError()
         defer { if generation == connectionGeneration { isPosting = false } }
         do {
             let updated = try await repository.retryVideo(postID: postID, draft: draft)
             guard generation == connectionGeneration else { return false }
+            publications.attachmentFinished(id: postID)
             replace(updated)
             lastPosted = updated
             lastModerationMessage = updated.publicationMessage
@@ -476,9 +498,10 @@ final class SocialStore {
     func refreshVideo(postID: Int) async throws -> PostVideoMedia? {
         guard let repository else { throw CancellationError() }
         let generation = connectionGeneration
+        let readRevision = publications.revision
         let updated = try await repository.post(withID: postID)
         guard generation == connectionGeneration else { throw CancellationError() }
-        replace(updated)
+        guard replace(updated, readRevision: readRevision) else { return post(withID: postID)?.video }
         return updated.video
     }
 
@@ -523,6 +546,7 @@ final class SocialStore {
         for index in feed.indices { update(&feed[index]) }
         for index in forYou.indices { update(&forYou[index]) }
         for index in discoverPosts.indices { update(&discoverPosts[index]) }
+        for index in searchedPosts.indices { update(&searchedPosts[index]) }
         for id in Array(openedPosts.keys) {
             if var post = openedPosts[id] { update(&post); openedPosts[id] = post }
         }
@@ -531,6 +555,7 @@ final class SocialStore {
             for index in posts.indices { update(&posts[index]) }
             authorPosts[author] = posts
         }
+        publications.mutate(where: { $0.id == originalID || $0.repostOf?.id == originalID }, update)
     }
 
     /// Passes a post on, or takes it back.
@@ -559,7 +584,8 @@ final class SocialStore {
                     // the feed is left for the next refresh: finding it would
                     // mean knowing which of these posts the reader wrote, and
                     // the feed does not carry that.
-                    feed.removeAll { $0.id == post.id }
+                    if post.viewerIsAuthor { removePost(id: post.id) }
+                    else { apply(to: post.id) { $0.viewerHasReposted = false } }
                 }
             }
         } catch {
@@ -596,19 +622,28 @@ final class SocialStore {
     func loadForYou() async {
         guard let repository, !isLoadingForYou else { return }
         let generation = connectionGeneration
+        let readID = UUID()
+        forYouReadID = readID
         isLoadingForYou = true
         defer { if connectionGeneration == generation { isLoadingForYou = false } }
         await finishImpressions()
+        guard connectionGeneration == generation, forYouReadID == readID else { return }
+        let readRevision = publications.revision
         do {
             let page = try await repository.forYou()
-            guard connectionGeneration == generation else { return }
-            forYou = page.posts
+            guard connectionGeneration == generation, forYouReadID == readID else { return }
+            publications.acknowledgeFirstPage(readRevision: readRevision)
+            forYou = ownRecommendation(reconcilePublicPage(page.posts, readRevision: readRevision, prependOwn: true))
+            if let receipt = publicationReceipt, !forYou.contains(where: { $0.id == receipt.postID }) {
+                publicationReceipt = nil
+            }
             forYouCursor = page.nextCursor
             hasReachedEndOfForYou = page.nextCursor == nil
             hasLoadedForYou = true
             dismissals = [:]
             wantedPostIDs = []
             forYouNeedsReranking = false
+            await refreshPendingPublications(using: repository, generation: generation)
         } catch {
             guard connectionGeneration == generation else { return }
             showFailure(error)
@@ -625,6 +660,8 @@ final class SocialStore {
         else { return }
 
         let generation = connectionGeneration
+        let readID = forYouReadID
+        let readRevision = publications.revision
         isLoadingMoreForYou = true
         defer { if connectionGeneration == generation { isLoadingMoreForYou = false } }
 
@@ -634,12 +671,12 @@ final class SocialStore {
         await flushImpressions()
         do {
             let page = try await repository.forYou(after: cursor)
-            guard connectionGeneration == generation else { return }
+            guard connectionGeneration == generation, forYouReadID == readID, forYouCursor == cursor else { return }
             // The server never repeats a post within a session; a session that
             // expired starts again from the top, and that can. A duplicate id
             // in a ForEach is a crash, so it is filtered here.
-            let known = Set(forYou.map(\.id))
-            forYou.append(contentsOf: page.posts.filter { !known.contains($0.id) })
+            let next = reconcilePublicPage(page.posts, readRevision: readRevision, prependOwn: false)
+            forYou = ownRecommendation(publications.publicPage(forYou + next, prependOwn: true))
             forYouCursor = page.nextCursor
             hasReachedEndOfForYou = page.nextCursor == nil
         } catch {
@@ -929,13 +966,14 @@ final class SocialStore {
     func loadDiscover() async {
         guard let repository, !isLoadingDiscover else { return }
         let generation = connectionGeneration
+        let readRevision = publications.revision
         isLoadingDiscover = true
         defer { if connectionGeneration == generation { isLoadingDiscover = false } }
 
         do {
             let loaded = try await repository.allPosts(fromFollowing: false)
             guard connectionGeneration == generation else { return }
-            discoverPosts = loaded
+            discoverPosts = reconcilePublicPage(loaded, readRevision: readRevision, prependOwn: false)
         } catch {
             guard connectionGeneration == generation else { return }
             showFailure(error)
@@ -950,6 +988,8 @@ final class SocialStore {
     private(set) var searchedPeople: [PostAuthor] = []
     private(set) var searchedPosts: [FeedPost] = []
     private(set) var isSearching = false
+    private(set) var searchErrorMessage: String?
+    private var searchRequestID = UUID()
 
     var isShowingSearchResults: Bool { !searchQuery.isEmpty }
 
@@ -962,6 +1002,7 @@ final class SocialStore {
     var searchFoundNothing: Bool {
         isShowingSearchResults
             && !isSearching
+            && searchErrorMessage == nil
             && searchedPeople.isEmpty
             && searchedPosts.isEmpty
     }
@@ -980,13 +1021,17 @@ final class SocialStore {
         }
 
         let generation = connectionGeneration
+        let requestID = UUID()
+        searchRequestID = requestID
+        let readRevision = publications.revision
         searchQuery = trimmed
         isSearching = true
-        // Guarded on the query as well as the connection. A slower earlier
-        // search finishing after a newer one started must not turn the
-        // spinner off underneath it.
+        searchErrorMessage = nil
+        searchedPeople = []
+        searchedPosts = []
+        // Query text alone is not a fence: A → B → A can finish out of order.
         defer {
-            if connectionGeneration == generation, searchQuery == trimmed {
+            if connectionGeneration == generation, searchRequestID == requestID {
                 isSearching = false
             }
         }
@@ -998,17 +1043,20 @@ final class SocialStore {
             // matches spends the request budget on results nobody scrolls to.
             async let posts = repository.allPosts(matching: trimmed, limitPages: 2)
             let found = try await (people, posts)
-            guard connectionGeneration == generation, searchQuery == trimmed else { return }
-            searchedPeople = found.0
-            searchedPosts = found.1
+            guard connectionGeneration == generation, searchRequestID == requestID, !Task.isCancelled else { return }
+            searchedPeople = found.0.filter { !locallyBlockedAuthorIDs.contains($0.id) }
+            searchedPosts = reconcileAuthorVisiblePage(found.1, readRevision: readRevision)
         } catch {
-            guard connectionGeneration == generation, searchQuery == trimmed else { return }
-            showFailure(error)
+            guard connectionGeneration == generation, searchRequestID == requestID,
+                  !Task.isCancelled, !error.isCancellation else { return }
+            searchErrorMessage = error.userFacingMessage
         }
     }
 
     func clearSearch() {
+        searchRequestID = UUID()
         searchQuery = ""
+        searchErrorMessage = nil
         searchedPeople = []
         searchedPosts = []
         isSearching = false
@@ -1033,6 +1081,7 @@ final class SocialStore {
     func loadPosts(byAuthor authorID: Int) async {
         guard let repository else { return }
         let generation = connectionGeneration
+        let readRevision = publications.revision
         loadingPostsFor.insert(authorID)
         defer {
             if connectionGeneration == generation {
@@ -1043,7 +1092,10 @@ final class SocialStore {
         do {
             let loaded = try await repository.posts(byAuthor: authorID)
             guard connectionGeneration == generation else { return }
-            authorPosts[authorID] = loaded
+            for post in loaded { observePublication(post, readRevision: readRevision) }
+            synchronizePublications()
+            authorPosts[authorID] = publications.authorPage(loaded, matches: { $0.author.id == authorID })
+                .filter(canAppearInAuthorVisibleSurface)
         } catch {
             guard connectionGeneration == generation else { return }
             showFailure(error)
@@ -1334,6 +1386,144 @@ final class SocialStore {
 
     // MARK: - Keeping the feed in step
 
+    func consumePublicationReceipt(id: UUID) {
+        guard publicationReceipt?.id == id else { return }
+        publicationReceipt = nil
+    }
+
+    private func isSharedPublication(_ post: FeedPost) -> Bool {
+        SocialPublicationEligibility.shared(approved: post.isPublished, publishedAt: post.publishedAt,
+                                            isPrivate: post.visibility == .privateToMe, videoStatus: post.video?.status)
+    }
+
+    private func canAppearInSharedFeed(_ post: FeedPost) -> Bool {
+        isSharedPublication(post)
+            && !locallyBlockedAuthorIDs.contains(post.author.id)
+            && !locallyBlockedAuthorIDs.contains(post.displayed.author.id)
+            && !publications.isUnavailable(post.id)
+            && !(post.repostOf.map { publications.isUnavailable($0.id) } ?? false)
+    }
+
+    private func canAppearInAuthorVisibleSurface(_ post: FeedPost) -> Bool {
+        !locallyBlockedAuthorIDs.contains(post.author.id)
+            && !locallyBlockedAuthorIDs.contains(post.displayed.author.id)
+            && !publications.isDeleted(post.id)
+            && !(post.repostOf.map { publications.isUnavailable($0.id) } ?? false)
+            && (post.viewerIsAuthor || canAppearInSharedFeed(post))
+    }
+
+    private func ownRecommendation(_ posts: [FeedPost]) -> [FeedPost] {
+        let reasons = Dictionary(forYou.compactMap { post in
+            post.recommendation.map { (post.id, $0) }
+        }, uniquingKeysWith: { first, _ in first })
+        return posts.map { post in
+            var post = post
+            if post.recommendation == nil { post.recommendation = reasons[post.id] }
+            if post.viewerIsAuthor, post.recommendation == nil {
+                post.recommendation = .init(reason: "own", label: "Your post")
+            }
+            return post
+        }
+    }
+
+    private func reconcilePublicPage(_ posts: [FeedPost], readRevision: UInt64, prependOwn: Bool) -> [FeedPost] {
+        for post in posts { observePublication(post, readRevision: readRevision) }
+        synchronizePublications()
+        return publications.publicPage(posts, prependOwn: prependOwn).filter(canAppearInSharedFeed)
+    }
+
+    private func reconcileAuthorVisiblePage(_ posts: [FeedPost], readRevision: UInt64) -> [FeedPost] {
+        for post in posts { observePublication(post, readRevision: readRevision) }
+        synchronizePublications()
+        return publications.resolvedPage(posts).filter(canAppearInAuthorVisibleSurface)
+    }
+
+    @discardableResult
+    private func observePublication(_ post: FeedPost, readRevision: UInt64? = nil) -> Bool {
+        var snapshot = post
+        snapshot.recommendation = nil // Ranking metadata belongs to its destination feed.
+        let observation = publications.observe(
+            snapshot, isOwn: post.viewerIsAuthor, eligible: isSharedPublication(post),
+            expiresAt: (post.publishedAt ?? post.createdAt).addingTimeInterval(24 * 60 * 60),
+            readRevision: readRevision
+        )
+        guard observation.accepted else { return false }
+        if lastPosted?.id == post.id {
+            lastPosted = post
+            lastModerationMessage = post.publicationMessage
+        }
+        if !canAppearInSharedFeed(post), publicationReceipt?.postID == post.id { publicationReceipt = nil }
+        if observation.announcePublication, canAppearInSharedFeed(post) {
+            publicationReceipt = .init(postID: post.id)
+        }
+        return true
+    }
+
+    private func synchronizePublications() {
+        feed = publications.publicPage(feed, prependOwn: true).filter(canAppearInSharedFeed)
+        forYou = ownRecommendation(publications.publicPage(forYou, prependOwn: true).filter(canAppearInSharedFeed))
+        discoverPosts = publications.publicPage(discoverPosts, prependOwn: false).filter(canAppearInSharedFeed)
+        searchedPosts = publications.resolvedPage(searchedPosts).filter(canAppearInAuthorVisibleSurface)
+        let opened = publications.resolvedPage(Array(openedPosts.values)).filter(canAppearInAuthorVisibleSurface)
+        openedPosts = Dictionary(uniqueKeysWithValues: opened.map { ($0.id, $0) })
+        for authorID in Array(authorPosts.keys) {
+            authorPosts[authorID] = publications.resolvedPage(authorPosts[authorID] ?? [])
+                .filter(canAppearInAuthorVisibleSurface)
+        }
+    }
+
+    /// Status reads are bounded and occur only during user/foreground refresh,
+    /// not on a timer. Approval can arrive while no detail/video view is open.
+    private func refreshPendingPublications(using repository: SocialAPIRepository, generation: UUID) async {
+        guard !isRefreshingPublicationStatuses else { return }
+        isRefreshingPublicationStatuses = true
+        defer { if connectionGeneration == generation { isRefreshingPublicationStatuses = false } }
+        let pending = publications.pendingSubmissions
+            .filter {
+                $0.viewerIsAuthor && SocialPublicationEligibility.shouldRefresh(
+                    moderationStatus: $0.moderationStatus, publishedAt: $0.publishedAt,
+                    isPrivate: $0.visibility == .privateToMe, videoStatus: $0.video?.status,
+                    videoProcessingState: $0.video?.processingState)
+            }.prefix(5)
+        for post in pending {
+            guard connectionGeneration == generation, !Task.isCancelled else { return }
+            publications.markStatusChecked(id: post.id)
+            let readRevision = publications.revision
+            do {
+                let updated = try await repository.post(withID: post.id)
+                guard connectionGeneration == generation, !Task.isCancelled else { return }
+                replace(updated, readRevision: readRevision)
+            } catch {
+                // Keep the last confirmed private status and let the feed
+                // refresh proceed. A later refresh can retry the status read.
+                guard connectionGeneration == generation, !Task.isCancelled else { return }
+            }
+        }
+    }
+
+    /// Called when Social returns to the foreground or the composer closes.
+    /// It rechecks only known pending submissions and does not start a timer.
+    func refreshPublicationStatuses() async {
+        guard let repository else { return }
+        await refreshPendingPublications(using: repository, generation: connectionGeneration)
+    }
+
+    private func removePost(id: Int) {
+        publications.remove(id: id)
+        let removes: (FeedPost) -> Bool = { $0.id == id || $0.repostOf?.id == id }
+        feed.removeAll(where: removes)
+        forYou.removeAll(where: removes)
+        discoverPosts.removeAll(where: removes)
+        searchedPosts.removeAll(where: removes)
+        openedPosts = openedPosts.filter { !removes($0.value) }
+        for authorID in Array(authorPosts.keys) { authorPosts[authorID]?.removeAll(where: removes) }
+        comments[id] = nil
+        dismissals[id] = nil
+        wantedPostIDs.remove(id)
+        if lastPosted?.id == id { lastPosted = nil; lastModerationMessage = nil }
+        if publicationReceipt?.postID == id { publicationReceipt = nil }
+    }
+
     private func apply(to postID: Int, _ change: (inout FeedPost) -> Void) {
         if let index = feed.firstIndex(where: { $0.id == postID }) {
             change(&feed[index])
@@ -1349,6 +1539,9 @@ final class SocialStore {
         if let index = discoverPosts.firstIndex(where: { $0.id == postID }) {
             change(&discoverPosts[index])
         }
+        if let index = searchedPosts.firstIndex(where: { $0.id == postID }) {
+            change(&searchedPosts[index])
+        }
         // A post opened from outside the feed is held here instead, and a like
         // made on its page has to show there too.
         if var opened = openedPosts[postID] {
@@ -1361,6 +1554,7 @@ final class SocialStore {
             else { continue }
             change(&authorPosts[author]![index])
         }
+        publications.mutate(where: { $0.id == postID }, change)
     }
 
     private func applyToAuthor(_ authorID: Int, _ change: (inout FeedPost) -> Void) {
@@ -1374,6 +1568,9 @@ final class SocialStore {
         where discoverPosts[index].author.id == authorID {
             change(&discoverPosts[index])
         }
+        for index in searchedPosts.indices where searchedPosts[index].author.id == authorID {
+            change(&searchedPosts[index])
+        }
         for id in openedPosts.keys where openedPosts[id]?.author.id == authorID {
             guard var post = openedPosts[id] else { continue }
             change(&post)
@@ -1386,16 +1583,24 @@ final class SocialStore {
             }
             authorPosts[author] = posts
         }
+        publications.mutate(where: { $0.author.id == authorID }, change)
     }
 
     /// Puts a server copy over every card showing that post — the post itself,
     /// and any repost of it, which carries the same figures underneath.
-    private func replace(_ post: FeedPost) {
-        if !post.isPublished {
+    @discardableResult
+    private func replace(_ post: FeedPost, readRevision: UInt64? = nil) -> Bool {
+        guard observePublication(post, readRevision: readRevision) else { return false }
+        if !canAppearInSharedFeed(post) {
             feed.removeAll { $0.id == post.id || $0.repostOf?.id == post.id }
             forYou.removeAll { $0.id == post.id || $0.repostOf?.id == post.id }
             discoverPosts.removeAll { $0.id == post.id || $0.repostOf?.id == post.id }
             searchedPosts.removeAll { $0.id == post.id || $0.repostOf?.id == post.id }
+            if publicationReceipt?.postID == post.id { publicationReceipt = nil }
+            if !post.viewerIsAuthor {
+                openedPosts[post.id] = nil
+                for author in Array(authorPosts.keys) { authorPosts[author]?.removeAll { $0.id == post.id } }
+            }
         }
         for index in feed.indices where feed[index].id == post.id {
             feed[index] = post
@@ -1409,6 +1614,9 @@ final class SocialStore {
         }
         for index in discoverPosts.indices where discoverPosts[index].id == post.id {
             discoverPosts[index] = post
+        }
+        for index in searchedPosts.indices where searchedPosts[index].id == post.id {
+            searchedPosts[index] = post
         }
         if openedPosts[post.id] != nil {
             openedPosts[post.id] = post
@@ -1431,6 +1639,30 @@ final class SocialStore {
             discoverPosts[index].commentCount = post.commentCount
             discoverPosts[index].repostCount = post.repostCount
         }
+        for index in forYou.indices where forYou[index].repostOf?.id == post.id {
+            forYou[index].repostOf?.video = post.video
+            forYou[index].likeCount = post.likeCount
+            forYou[index].commentCount = post.commentCount
+            forYou[index].repostCount = post.repostCount
+        }
+        for index in searchedPosts.indices where searchedPosts[index].repostOf?.id == post.id {
+            searchedPosts[index].repostOf?.video = post.video
+            searchedPosts[index].likeCount = post.likeCount
+            searchedPosts[index].commentCount = post.commentCount
+            searchedPosts[index].repostCount = post.repostCount
+        }
+        publications.mutate(where: { $0.repostOf?.id == post.id }) {
+            $0.repostOf?.video = post.video
+            $0.likeCount = post.likeCount
+            $0.commentCount = post.commentCount
+            $0.repostCount = post.repostCount
+        }
+        synchronizePublications()
+        if post.viewerIsAuthor {
+            authorPosts[post.author.id] = publications.authorPage(authorPosts[post.author.id] ?? [],
+                                                                matches: { $0.author.id == post.author.id })
+        }
+        return true
     }
 
     /// Posts opened from somewhere the feed does not hold — a profile, a
@@ -1450,9 +1682,12 @@ final class SocialStore {
     func loadPost(id: Int) async {
         guard let repository, post(withID: id) == nil else { return }
         let generation = connectionGeneration
+        let readRevision = publications.revision
         do {
             let loaded = try await repository.post(withID: id)
             guard connectionGeneration == generation else { return }
+            guard replace(loaded, readRevision: readRevision), loaded.isPublished || loaded.viewerIsAuthor,
+                  !locallyBlockedAuthorIDs.contains(loaded.displayed.author.id) else { return }
             openedPosts[id] = loaded
         } catch {
             guard connectionGeneration == generation else { return }

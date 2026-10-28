@@ -14,6 +14,66 @@ This setup does not upload a build, change the installed TestFlight app, or
 change backend/web repositories. Existing feature and backup branches stay
 intact. Keep the integration branch history shared; do not force-push it.
 
+## Social search and own-post confirmation — October 28, 2026
+
+Work remains on `work/testflight-fixes-2026-10-27` in draft
+[PR #39](https://github.com/P-B-LLC/IOS-Frontend/pull/39). Backend recommendation
+changes are on `work/testflight-calendar-sync-2026-10-28` in draft
+[repbase PR #36](https://github.com/P-B-LLC/repbase/pull/36).
+Neither branch is a release; do not merge, deploy, or upload TestFlight without
+explicit approval.
+
+- Approved design: [Social header](https://www.figma.com/design/FbMNgG8cuZfrRFzQTtIVCy/Rytivo-Connected-Flow?node-id=85-1342)
+  and [search results](https://www.figma.com/design/FbMNgG8cuZfrRFzQTtIVCy/Rytivo-Connected-Flow?node-id=86-1388).
+- Persistent search beside Post on For You, Following, and Discover;
+  notifications at the upper-right. Closing search preserves the underlying
+  feed. People/Posts reuse the existing search endpoints, not a new hashtag
+  index, trending service, or exact hashtag token matcher.
+- Own **eligible, server-confirmed published** posts appear in For You.
+  Pending uploads remain private status/author content; no moderation bypass.
+  The backend puts the newest eligible own publication first on a fresh
+  session for 24 hours, with normal session pagination and deduplication.
+- iOS reconciles local publication with in-flight reads, deletion and later
+  moderation changes. Search requests have cancellation/account fences and
+  scoped error/retry feedback. The API contract/generated client is unchanged.
+- Figma Code Connect setup was requested, but the Code Connect skill requires
+  an Organization/Enterprise plan; the connected Byteme plan is Professional.
+  No mappings were published. Existing SwiftUI components are reused directly.
+
+Mac validation (from the iOS repository, with the existing HTTPS API origin in
+`REPBASE_API_URL` and a simulator already booted):
+
+```bash
+git fetch origin
+git switch work/testflight-fixes-2026-10-27
+git pull --ff-only
+INSTALL_SIMULATOR=1 bash Scripts/validate-social-refresh.sh
+```
+
+The script runs the account-safety suite and simulator build, then installs
+when requested. It reuses `.build/social-validation` to avoid accumulating a
+new multi-GB build directory on each run. It does not delete other builds.
+
+Required interactive QA before promotion:
+
+1. Open search from each Social tab; close it and verify tab and scroll position.
+2. Search a name, `@handle`, and `#hashtag`; switch People/Posts, clear, retry an
+   offline request, and type/clear/retype quickly without stale results.
+3. Open a profile, follow/request a private account, open a post/comments,
+   like/save/report/block; confirm existing actions and feedback still work.
+4. Submit a permitted text/photo/video post. Verify pending status is not a
+   public card; after server approval it appears once in For You with a brief
+   confirmation. Refresh/reopen and verify backend ordering and deduplication.
+5. Delete or moderate a visible post; verify it disappears from all feeds and
+   does not return from an older in-flight read. Sign out/switch accounts and
+   verify no old post, receipt, or search results remain.
+6. Check light/dark mode, a narrow iPhone, larger text, VoiceOver, the keyboard,
+   and every tappable header control. Source-wiring tests are not visual QA.
+
+The new backend ordering requires deployment of its tested candidate; a local
+simulator build does not deploy server code. Use test accounts/content only
+for end-to-end checks. Do not describe local syntax checks as an Xcode build.
+
 ## Join the integration branch
 
 First run `git status` and preserve any local changes. Then, from the repository:
