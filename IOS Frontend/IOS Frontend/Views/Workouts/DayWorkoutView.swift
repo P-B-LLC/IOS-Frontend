@@ -18,9 +18,8 @@ struct DayWorkoutView: View {
     @State private var confirmingPartialFinish = false
     @State private var setupDraft = Workout(name: "", exercises: [])
     @State private var editor: WorkoutEditorView.Mode?
-    /// The workout awaiting a delete confirmation, if any.
-    /// Which workout page is on screen when a day holds several.
-    @State private var visibleWorkoutID: Workout.ID?
+    @State private var savedWorkoutMessage: String?
+    @State private var highlightedWorkoutID: Workout.ID?
     @State private var completedSession: CompletedWorkoutSession?
     /// The finished session being shared, if the summary's Share was tapped.
     @State private var sharedWorkout: SharedPostSource?
@@ -37,10 +36,6 @@ struct DayWorkoutView: View {
     @State private var showSessionReadyMoment = false
     @State private var setSuccessMessage: String?
     @State private var setFeedbackTask: Task<Void, Never>?
-
-    private var workout: Workout? {
-        store.workout(on: day)
-    }
 
     private var plannedWorkouts: [Workout] {
         store.workouts(on: day)
@@ -126,7 +121,12 @@ struct DayWorkoutView: View {
                 suggestions: store.knownWorkouts,
                 recoveryContext: WorkoutStore.dateString(store.workoutDate(for: day))
             ) { savedWorkout in
-                await store.saveWorkoutReportingFailure(savedWorkout, on: day)
+                let problem = await store.saveWorkoutReportingFailure(savedWorkout, on: day)
+                if problem == nil {
+                    highlightedWorkoutID = store.lastSavedWorkoutID
+                    savedWorkoutMessage = "\(savedWorkout.name) saved for \(day.fullName)."
+                }
+                return problem
             }
         }
         .fullScreenCover(item: $sharedWorkout) { shared in
@@ -171,15 +171,23 @@ struct DayWorkoutView: View {
     /// Kept apart from the sheets and dialogs in `body`: as one chain the
     /// type-checker could no longer resolve the expression.
     private var styledContent: some View {
-        ScrollView {
-            content
-                .padding(.horizontal)
-                .padding(.vertical, 12)
-                // Pushed inside the tab, so the bottom bar sits over it exactly
-                // as it does over the tab's own page. Without this the last row
-                // -- Remove, or the repeat toggle -- cannot be scrolled clear
-                // of the bar.
-                .padding(.bottom, RepbaseDesign.bottomBarClearance)
+        ScrollViewReader { reader in
+            ScrollView {
+                content
+                    .padding(.horizontal, RepbaseDesign.pageInset)
+                    .padding(.vertical, 12)
+                    .padding(.bottom, RepbaseDesign.bottomBarClearance)
+            }
+            .onChange(of: editor?.id) { _, presented in
+                guard presented == nil, let highlightedWorkoutID else { return }
+                if reduceMotion {
+                    reader.scrollTo(highlightedWorkoutID, anchor: .top)
+                } else {
+                    withAnimation(.easeOut(duration: 0.25)) {
+                        reader.scrollTo(highlightedWorkoutID, anchor: .top)
+                    }
+                }
+            }
         }
         .repbaseScreen(visualPhase)
         .toolbar(visualPhase == .prepare ? .visible : .hidden, for: .navigationBar)
@@ -198,7 +206,7 @@ struct DayWorkoutView: View {
                 } else {
                     WorkoutCompletionSummary(completed: completedSession) { dismiss() }
                     CardioFinisherCard(
-                        plannedMachine: store.workout(on: day)?.cardioMachine,
+                        plannedMachine: plannedWorkouts.first { $0.id == completedSession.session.workoutID }?.cardioMachine,
                         sessionID: completedSession.session.serverID,
                         phase: .recover
                     )
@@ -208,6 +216,23 @@ struct DayWorkoutView: View {
                 }
             } else {
                 if activeSession == nil && !plannedWorkouts.isEmpty { dayHeader }
+
+                if activeSession == nil, let savedWorkoutMessage {
+                    HStack(alignment: .top, spacing: 10) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(RepbaseDesign.success)
+                        Text(savedWorkoutMessage)
+                            .font(.community(.subheadline, weight: .semibold))
+                        Spacer(minLength: 0)
+                        Button { self.savedWorkoutMessage = nil } label: {
+                            Image(systemName: "xmark").frame(width: 44, height: 44)
+                        }
+                        .accessibilityLabel("Dismiss saved workout confirmation")
+                    }
+                    .padding(.leading, 14)
+                    .padding(.vertical, 4)
+                    .background(RepbaseDesign.success.opacity(0.10), in: RoundedRectangle(cornerRadius: 16))
+                }
 
                 if let persistenceError = store.persistenceError {
                     persistenceErrorCard(persistenceError)
@@ -243,91 +268,21 @@ struct DayWorkoutView: View {
     }
 
     private var dayHeader: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 8) {
-                Text("\(day.shortName.uppercased()) · \(store.dateLabel(for: day).uppercased())")
-                    .font(.community(.caption, weight: .bold))
-                    .foregroundStyle(headerColor)
-
-                if store.today == day {
-                    Text("TODAY")
-                        .font(.community(.caption2, weight: .bold))
-                        .foregroundStyle(headerColor)
-                }
-            }
-
-            HStack(alignment: .top, spacing: 12) {
-                VStack(alignment: .leading, spacing: 5) {
-                    Text(headerTitle)
-                        .font(.community(.title2, weight: .bold))
-                        .foregroundStyle(visualPhase.primaryText)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    Text(headerDescription)
-                        .font(.community(.caption))
-                        .foregroundStyle(visualPhase.secondaryText)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-                headerAction
-            }
-            .padding(.leading, 14)
-            .padding(.top, 4)
-            .padding(.bottom, 18)
-            .overlay(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(headerColor)
-                    .frame(width: 3)
-            }
-
-            Divider()
-                .overlay(visualPhase.secondaryText.opacity(0.22))
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    @ViewBuilder
-    private var headerAction: some View {
-        if activeSession != nil {
-            Button {
-                isConfirmingEmptyFinish = false
-            } label: {
-                headerActionLabel("Resume")
-            }
-            .buttonStyle(.plain)
-        } else if let workout {
-            Button {
-                visibleWorkoutID = workout.id
-            } label: {
-                headerActionLabel("View")
-            }
-            .buttonStyle(.plain)
-        } else {
-            Button {
-                editor = .build(setupDraft)
-            } label: {
-                headerActionLabel("Plan")
-            }
-            .buttonStyle(.plain)
-            .disabled(!store.isEditingEnabled)
-        }
-    }
-
-    private func headerActionLabel(_ title: String) -> some View {
-        HStack(spacing: 5) {
-            Text(title)
-            Image(systemName: "arrow.up.right")
+        VStack(alignment: .leading, spacing: 8) {
+            Text("\(store.dateLabel(for: day).uppercased())\(store.today == day ? " · TODAY" : "")")
                 .font(.community(.caption2, weight: .bold))
+                .tracking(1)
+                .foregroundStyle(visualPhase.accent)
+            Text("Your workouts.")
+                .font(.community(.largeTitle, weight: .bold))
+            Text(plannedWorkouts.count == 1
+                 ? "Your plan is saved. Take a look, then make it happen."
+                 : "\(plannedWorkouts.count) saved workouts. Choose the one you want to train.")
+                .font(.community(.subheadline))
+                .foregroundStyle(visualPhase.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .font(.community(.caption, weight: .semibold))
-        .foregroundStyle(visualPhase.surfaceStart)
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background(
-            visualPhase.primaryText,
-            in: RoundedRectangle(cornerRadius: 13, style: .continuous)
-        )
+        .padding(.bottom, 4)
     }
 
 
@@ -583,21 +538,20 @@ struct DayWorkoutView: View {
     }
 
     private func plannedWorkout(_ workout: Workout) -> some View {
-        VStack(alignment: .leading, spacing: 24) {
-            VStack(alignment: .leading, spacing: 16) {
-                sessionOverview(for: workout)
-                sessionStartControl(for: workout)
-            }
+        VStack(alignment: .leading, spacing: 20) {
+            workoutCardHeader(workout, completed: false)
 
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Text("Workout Plan")
+                    Text("Your exercises")
                         .font(.community(.headline))
                     Spacer()
                     Button("Edit") {
                         editor = .edit(workout)
                     }
                     .font(.community(.subheadline, weight: .semibold))
+                    .frame(minWidth: 44, minHeight: 44)
+                    .accessibilityLabel("Edit \(workout.name)")
                     .disabled(!store.isEditingEnabled)
                 }
 
@@ -626,6 +580,8 @@ struct DayWorkoutView: View {
                     }
                 }
             }
+
+            sessionStartControl(for: workout)
 
             // The finisher sits at the end of the workout it belongs to, not
             // as another workout in the day.
@@ -664,55 +620,60 @@ struct DayWorkoutView: View {
                 }
             }
 
-            repeatToggle(for: workout)
-
-            // Acts straight away. The button says exactly what it does, and it
-            // only unschedules: the workout itself is kept and can be put back
-            // on any day.
-            Button(role: .destructive) {
-                store.removeWorkout(workout, on: day)
-            } label: {
-                Text("Remove \(workout.name)")
-                    .font(.community(.subheadline, weight: .semibold))
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(Color.red)
-            .padding(.vertical, 4)
-            .disabled(!store.isEditingEnabled)
+            workoutOptions(workout)
         }
+        .modifier(DayWorkoutCardSurface(highlighted: workout.id == highlightedWorkoutID))
+        .id(workout.id)
     }
 
-    private func sessionOverview(for workout: Workout) -> some View {
-        HStack(spacing: 14) {
-            WorkoutInkArtwork(
-                type: workout.type,
-                size: 54,
-                color: WorkoutVisualPhase.prepare.primaryText
-            )
-            .frame(width: 62, height: 62)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(workout.type.sessionTitle)
-                    .font(.community(.title3, weight: .bold))
-                Text(planDescription(for: workout))
-                    .font(.community(.subheadline))
-                    .foregroundStyle(.secondary)
+    private func workoutCardHeader(_ workout: Workout, completed: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 9) {
+                Image(systemName: workout.type.builderSymbol)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(visualPhase.accent)
+                    .frame(width: 42, height: 42)
+                    .background(visualPhase.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 14))
+                Text(workout.type.title.uppercased())
+                    .font(.community(.caption2, weight: .bold))
+                    .foregroundStyle(visualPhase.secondaryText)
+                Spacer(minLength: 8)
+                Label(completed ? "Completed" : "Saved", systemImage: "checkmark.circle.fill")
+                    .font(.community(.caption, weight: .semibold))
+                    .foregroundStyle(RepbaseDesign.success)
             }
-
-            Spacer(minLength: 8)
-
-            Image(systemName: "arrow.up.right")
-                .font(.community(.subheadline, weight: .semibold))
-                .foregroundStyle(WorkoutVisualPhase.prepare.accent)
+            VStack(alignment: .leading, spacing: 6) {
+                Text(workout.name)
+                    .font(.community(.title2, weight: .bold))
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(planDescription(for: workout))
+                    .font(.community(.caption))
+                    .foregroundStyle(visualPhase.secondaryText)
+            }
         }
-        .padding(.vertical, 14)
-        .overlay(alignment: .top) { Divider() }
-        .overlay(alignment: .bottom) { Divider() }
         .accessibilityElement(children: .combine)
     }
 
+    private func workoutOptions(_ workout: Workout) -> some View {
+        DisclosureGroup("Schedule & options") {
+            repeatToggle(for: workout)
+            Button(role: .destructive) {
+                store.removeWorkout(workout, on: day)
+            } label: {
+                Label("Remove from this day", systemImage: "calendar.badge.minus")
+                    .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+            }
+            .disabled(!store.isEditingEnabled)
+            Text("Your saved workout and recorded training are kept.")
+                .font(.community(.caption2))
+                .foregroundStyle(visualPhase.secondaryText)
+        }
+        .font(.community(.subheadline, weight: .semibold))
+        .padding(.top, 4)
+    }
+
     private func planDescription(for workout: Workout) -> String {
+        if workout.tracksDistance { return "\(workout.type.title) · \(day.fullName)" }
         let exercise = workout.exercises.count == 1 ? "exercise" : "exercises"
         let set = workout.totalSets == 1 ? "target set" : "target sets"
         return "\(workout.exercises.count) \(exercise) · \(workout.totalSets) \(set)"
@@ -742,7 +703,7 @@ struct DayWorkoutView: View {
                 .foregroundStyle(.secondary)
             }
         }
-        .tint(RepbasePalette.charcoal)
+        .tint(visualPhase.accent)
         .padding(.vertical, 12)
         .overlay(alignment: .bottom) {
             Divider()
@@ -750,21 +711,16 @@ struct DayWorkoutView: View {
         .disabled(!store.isEditingEnabled || workout.serverID == nil)
     }
 
-    /// Everything scheduled for the day. A single workout fills the page; when
-    /// a day holds several, each gets its own page and the user swipes between
-    /// them rather than scrolling past one to reach the next.
+    /// Every saved workout is visible as its own named card. No hidden pages,
+    /// first-workout header, or separate summary that looks like another plan.
     private var plannedDay: some View {
         VStack(alignment: .leading, spacing: 18) {
-            ForEach(plannedWorkouts.filter { store.isCompleted(workoutName: $0.name, on: dayDate) }) { done in
-                completedBanner(done)
-            }
-
-            if plannedWorkouts.count > 1 {
-                multiWorkoutBanner
-                workoutPager
-                pageIndicator
-            } else if let only = plannedWorkouts.first {
-                plannedWorkout(only)
+            ForEach(plannedWorkouts) { planned in
+                if store.isCompleted(workout: planned, on: dayDate) {
+                    completedBanner(planned)
+                } else {
+                    plannedWorkout(planned)
+                }
             }
 
             Button {
@@ -780,78 +736,9 @@ struct DayWorkoutView: View {
             }
             .buttonStyle(.plain)
             .padding(.vertical, 13)
-            .overlay(alignment: .top) { Divider() }
+            .workoutOutline(radius: 18)
             .disabled(!store.isEditingEnabled)
         }
-        .onAppear {
-            if visibleWorkoutID == nil {
-                visibleWorkoutID = plannedWorkouts.first?.id
-            }
-        }
-    }
-
-    private var multiWorkoutBanner: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "square.stack.3d.up.fill")
-                .foregroundStyle(WorkoutVisualPhase.prepare.accent)
-            VStack(alignment: .leading, spacing: 1) {
-                Text("^[\(plannedWorkouts.count) workout](inflect: true) planned")
-                    .font(.community(.subheadline, weight: .semibold))
-                Text("Swipe to see the rest")
-                    .font(.community(.caption2))
-                    .foregroundStyle(.secondary)
-            }
-            Spacer(minLength: 0)
-            Image(systemName: "chevron.compact.left")
-                .font(.community(.title3, weight: .semibold))
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background(
-            WorkoutVisualPhase.prepare.accent.opacity(0.1),
-            in: RoundedRectangle(cornerRadius: 14)
-        )
-    }
-
-    /// One page per workout. A horizontal scroll view nests cleanly inside the
-    /// screen's vertical one, unlike a second vertical scroller would.
-    private var workoutPager: some View {
-        ScrollView(.horizontal) {
-            LazyHStack(spacing: 14) {
-                ForEach(Array(plannedWorkouts.enumerated()), id: \.element.id) { index, planned in
-                    VStack(alignment: .leading, spacing: 14) {
-                        Text("WORKOUT \(index + 1) OF \(plannedWorkouts.count)")
-                            .font(.community(.caption2, weight: .bold))
-                            .foregroundStyle(.secondary)
-                        plannedWorkout(planned)
-                        Spacer(minLength: 0)
-                    }
-                    .containerRelativeFrame(.horizontal)
-                    .id(planned.id)
-                }
-            }
-            .scrollTargetLayout()
-        }
-        .scrollTargetBehavior(.paging)
-        .scrollIndicators(.hidden)
-        .scrollPosition(id: $visibleWorkoutID)
-    }
-
-    private var pageIndicator: some View {
-        HStack(spacing: 6) {
-            ForEach(plannedWorkouts) { planned in
-                Circle()
-                    .fill(
-                        planned.id == visibleWorkoutID
-                            ? WorkoutVisualPhase.prepare.accent
-                            : Color.secondary.opacity(0.3)
-                    )
-                    .frame(width: 7, height: 7)
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .accessibilityHidden(true)
     }
 
     @ViewBuilder
@@ -875,7 +762,7 @@ struct DayWorkoutView: View {
                 .buttonStyle(.borderedProminent)
                 .tint(WorkoutVisualPhase.focus.accent)
             }
-        } else if store.isCompleted(workoutName: workout.name, on: dayDate) {
+        } else if store.isCompleted(workout: workout, on: dayDate) {
             // Nothing here. A finished day is started again through Redo
             // Session on its banner, which clears the day first: a second
             // Start beside the first would leave two records of one day, which
@@ -906,7 +793,8 @@ struct DayWorkoutView: View {
                 store.startSession(on: day, workoutID: workout.id)
             } label: {
                 HStack(spacing: 8) {
-                    Text("Start session")
+                    Text("Start \(workout.name)")
+                        .multilineTextAlignment(.leading)
                     Image(systemName: "arrow.right")
                         .font(.community(.subheadline, weight: .semibold))
                 }
@@ -914,6 +802,7 @@ struct DayWorkoutView: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(WorkoutPrimaryButtonStyle(phase: .prepare))
+            .accessibilityHint("Starts this saved workout with the exercises listed above")
             // A run, ride, or swim needs no planned exercises to start.
             .disabled(
                 (!workout.tracksDistance && workout.exercises.isEmpty)
@@ -1471,53 +1360,28 @@ struct DayWorkoutView: View {
         // The newest session for the day is the one shown. Older ones only
         // exist where a day was trained more than once before this screen
         // started refusing to start a finished day again.
-        let session = store.finishedSessions(workoutName: workout.name, on: dayDate)
+        let session = store.finishedSessions(workout: workout, on: dayDate)
             .max { $0.performedAt < $1.performedAt }
         let overview = session.flatMap { store.sessionOverviews[$0.sessionID] }
 
         return VStack(alignment: .leading, spacing: 16) {
-            HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(dayDate.formatted(.dateTime.month(.wide).day()).uppercased())
-                        .font(.community(.caption2, weight: .bold))
-                        .tracking(1)
-                        .foregroundStyle(RepbasePalette.caramel)
-                    Text(workout.name)
-                        .font(.community(.title, weight: .bold))
-                    if let overview {
-                        Text("Completed at \(overview.performedAt.formatted(date: .omitted, time: .shortened))")
-                            .font(.community(.caption))
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                Spacer()
-                Label("DONE", systemImage: "checkmark")
-                    .font(.community(.caption2, weight: .bold))
-                    .foregroundStyle(WorkoutVisualPhase.recover.accent)
-                    .padding(.horizontal, 12)
-                    .frame(height: 28)
-                    .background(WorkoutVisualPhase.recover.accent.opacity(0.10), in: Capsule())
-            }
+            workoutCardHeader(workout, completed: true)
 
             if let overview {
-                VStack(alignment: .leading, spacing: 14) {
-                    Text("RECORDED SESSION")
-                        .font(.community(.caption2, weight: .bold))
-                        .foregroundStyle(Color(hex: 0xB7DCCB))
-                    Text(workout.name)
-                        .font(.community(.title2, weight: .bold))
-                        .foregroundStyle(Color.white)
-                    Divider().overlay(Color(hex: 0x648474))
+                VStack(alignment: .leading, spacing: 12) {
+                    Label("Finished at \(overview.performedAt.formatted(date: .omitted, time: .shortened))", systemImage: "checkmark.seal")
+                        .font(.community(.caption, weight: .semibold))
+                        .foregroundStyle(visualPhase.secondaryText)
                     HStack(spacing: 0) {
                         historyMetric("\(overview.loggedSetCount)", "SETS")
                         historyMetric("\(overview.lines.count)", "EXERCISES")
                         historyMetric(overview.totalVolumeKilograms.map { "\($0.nutritionText) kg" } ?? "—", "VOLUME")
                     }
                 }
-                .padding(20)
-                .background(WorkoutVisualPhase.recover.accent, in: RoundedRectangle(cornerRadius: 25, style: .continuous))
+                .padding(16)
+                .background(RepbaseDesign.success.opacity(0.10), in: RoundedRectangle(cornerRadius: 18))
 
-                Text("EXERCISES LOGGED")
+                Text("YOUR RECORDED EXERCISES")
                     .font(.community(.caption2, weight: .bold))
                     .tracking(1)
                     .foregroundStyle(WorkoutVisualPhase.recover.accent)
@@ -1531,34 +1395,58 @@ struct DayWorkoutView: View {
                 Button {
                     Task {
                         await store.redoSession(
-                            workoutName: workout.name,
+                            workout: workout,
                             on: dayDate,
-                            day: day,
-                            workoutID: workout.id
+                            day: day
                         )
                     }
                 } label: {
-                    Label("Repeat workout", systemImage: "arrow.counterclockwise")
+                    Label("Redo workout", systemImage: "arrow.counterclockwise")
                         .font(.community(.caption, weight: .bold))
                 }
                 .buttonStyle(RepbasePrimaryButtonStyle())
+                .accessibilityHint("Removes this workout's recorded sessions for this day, then starts it again")
                 .disabled(store.isSaving || !store.isEditingEnabled)
 
                 Button("Undo") {
                     Task {
                         await store.undoCompletion(
-                            workoutName: workout.name,
+                            workout: workout,
                             on: dayDate
                         )
                     }
                 }
                 .font(.community(.caption, weight: .bold))
                 .buttonStyle(.bordered)
+                .frame(minHeight: 44)
+                .accessibilityLabel("Undo completion of \(workout.name)")
                 .disabled(store.isSaving || !store.isEditingEnabled)
 
                 Spacer(minLength: 0)
             }
+            Text("Redo replaces this workout’s recorded session. Undo clears it without starting again.")
+                .font(.community(.caption2))
+                .foregroundStyle(visualPhase.secondaryText)
+
+            DisclosureGroup("Saved plan") {
+                VStack(alignment: .leading, spacing: 12) {
+                    ForEach(Array(workout.exercises.enumerated()), id: \.element.id) { index, exercise in
+                        PlannedExerciseRow(position: index + 1, exercise: exercise)
+                    }
+                    Button("Edit saved workout") { editor = .edit(workout) }
+                        .frame(minHeight: 44)
+                        .disabled(!store.isEditingEnabled)
+                    Text("Changes apply to the plan, not the session already recorded.")
+                        .font(.community(.caption2))
+                        .foregroundStyle(visualPhase.secondaryText)
+                }
+                .padding(.top, 12)
+            }
+            .font(.community(.subheadline, weight: .semibold))
+            workoutOptions(workout)
         }
+        .modifier(DayWorkoutCardSurface(highlighted: workout.id == highlightedWorkoutID))
+        .id(workout.id)
         .task(id: session?.sessionID) {
             guard let session else { return }
             await store.loadOverview(for: session)
@@ -1569,12 +1457,12 @@ struct DayWorkoutView: View {
         VStack(alignment: .leading, spacing: 5) {
             Text(value)
                 .font(.community(.headline).monospacedDigit())
-                .foregroundStyle(Color.white)
+                .foregroundStyle(visualPhase.primaryText)
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
             Text(title)
                 .font(.community(.caption2, weight: .bold))
-                .foregroundStyle(Color(hex: 0xB7DCCB))
+                .foregroundStyle(visualPhase.secondaryText)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -1878,27 +1766,6 @@ struct DayWorkoutView: View {
         )
     }
 
-    private var headerTitle: String {
-        if let activeSession { return activeSession.workoutName }
-        return workout?.name ?? "No workout planned"
-    }
-
-    private var headerColor: Color {
-        activeSession != nil || workout != nil
-            ? RepbaseDesign.success
-            : WorkoutVisualPhase.prepare.accent
-    }
-
-    private var headerDescription: String {
-        if let session = activeSession {
-            return "\(session.loggedSetCount) of \(session.totalSetCount) sets logged"
-        }
-        if let workout {
-            return "\(workout.exercises.count) exercises · \(workout.totalSets) target sets"
-        }
-        return "Your day is open. Add a workout when you’re ready."
-    }
-
     private func weightBinding(exerciseID: Exercise.ID, setID: WorkoutSetDraft.ID) -> Binding<String> {
         Binding(
             get: { sessionSet(exerciseID: exerciseID, setID: setID)?.weightKilograms ?? "" },
@@ -1943,6 +1810,35 @@ struct DayWorkoutView: View {
         .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 16))
     }
 
+}
+
+private struct DayWorkoutCardSurface: ViewModifier {
+    let highlighted: Bool
+    private let phase = WorkoutVisualPhase.prepare
+
+    func body(content: Content) -> some View {
+        content
+            .padding(18)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background {
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(phase.surfaceStart)
+                    .overlay {
+                        LinearGradient(
+                            colors: [phase.accent.opacity(0.09), .clear],
+                            startPoint: .topLeading,
+                            endPoint: .center
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                    }
+                    .shadow(color: phase.shadow.opacity(0.28), radius: 10, x: 0, y: 4)
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .strokeBorder(highlighted ? phase.accent.opacity(0.60) : phase.cardBorder,
+                                  lineWidth: highlighted ? 1.5 : 1)
+            }
+    }
 }
 
 private struct RecoveryMetricCard: View {

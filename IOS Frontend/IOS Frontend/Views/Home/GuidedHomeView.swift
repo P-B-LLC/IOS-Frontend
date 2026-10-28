@@ -809,7 +809,7 @@ private struct GuidedDayFlow: View {
     /// one day.
     private var isTrained: Bool {
         guard let workout else { return false }
-        return workouts.isCompleted(workoutName: workout.name, on: selectedDate)
+        return workouts.isCompleted(workout: workout, on: selectedDate)
     }
 
     /// A session already finished wins over one in progress: starting a second

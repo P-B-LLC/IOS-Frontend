@@ -53,6 +53,9 @@ enum PlannerWorkoutCompletion {
         workouts: WorkoutStore
     ) -> Bool {
         guard let date = day(from: entry.date) else { return false }
+        if let workoutID = entry.workoutID {
+            return workouts.isCompleted(workoutServerID: workoutID, on: date)
+        }
         return workouts.isCompleted(workoutName: name(of: entry), on: date)
     }
 

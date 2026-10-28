@@ -138,3 +138,52 @@ check against a backend running the counterpart branch with a test account:
 
 Local Windows checks cover Swift syntax parsing, stable IDs, shell syntax, and
 diff hygiene only. They do not substitute for XCTest/Xcode or real-device QA.
+
+## Workout builder and saved-plan identity — 2026-10-28
+
+The next testing-branch candidate repairs creation and start selection without
+changing the API contract. Creating a workout previously looked up an existing
+template by normalized name and silently scheduled it, skipping the new draft's
+selected exercises. A stale Start selection could also fall back to the first
+workout of the day. Both substitutions are removed: create sends the selected
+exercise IDs/order/targets, save success requires confirmed read-back, and Start
+requires the exact selected workout and matching session exercises. Save retry
+keeps its original idempotency key until read-back succeeds.
+
+The day screen removes the no-op View button and swipe-only workout pager. Each
+saved workout has one named card, its exercises, and its own Start action.
+Completed history appears inside that card instead of being repeated above a
+generic Strength session row. Completion, redo, and undo for saved plans use
+template IDs, not matching names. Home/Training/linked planner badges use the
+same identity. Unlinked manual planner tasks keep their read-only name fallback.
+
+The builder starts blank, shows selected exercises above the catalog, and labels
+drafts versus confirmed saves. Continuing an unfinished local draft is explicit.
+Saved workouts are copied only when deliberately chosen; exact duplicate new
+names are explained, not silently reused. Existing account templates/history are
+not deleted or inferred to be premade data.
+
+Simulator/device QA before promotion:
+
+1. Create a uniquely named leg workout with exercises different from an older
+   saved leg plan. Add, remove, reorder, and change target sets. Confirm every
+   selection appears immediately in the selected tray and review.
+2. Save it and verify its named card appears on the chosen day with the same
+   exercises/order/sets. Start from that card and verify the session matches.
+3. Schedule two workouts on one day. Start the second; never substitute the
+   first. Edit one plan and confirm the next session uses its updated contents.
+4. Attempt an exact existing name: explain the conflict and retain the draft.
+   Explicitly copying a saved plan must require a distinct new name.
+5. Interrupt Save after the write but before read-back. Retry without duplicate
+   creation or an empty success screen. Sign out/in without cross-account drafts.
+6. Close an unfinished editor and reopen it. Continue restores the draft;
+   Discard returns to the fresh/current plan without deleting saved workouts.
+7. Finish and undo a workout. Other templates (including similarly named ones)
+   must keep their own completion/history. The saved plan stays distinct from
+   the recorded session, including its optional cardio finisher.
+8. Check Light/Dark mode, large accessibility text, long workout/exercise names,
+   VoiceOver labels, and scrolling clear of the bottom navigation bar.
+
+`WorkoutSelectionTests` covers create transport, exact identity and ordering,
+retry payloads, and save/start wiring. `WorkoutPresentationTests` guards UI
+wiring only; it does not render SwiftUI or replace the interaction checks above.

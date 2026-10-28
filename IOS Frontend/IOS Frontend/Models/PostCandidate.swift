@@ -14,6 +14,9 @@ import Foundation
 /// A finished session, reduced to what the composer needs to list one.
 nonisolated struct PostableSession: Identifiable, Hashable, Sendable {
     let sessionID: Int
+    /// Nullable only when the session has no surviving template. Never infer
+    /// this identity from the display name for completion or deletion.
+    let workoutServerID: Int?
     let workoutName: String
     /// When it happened: the end of the session, or its start when it never
     /// recorded an end.
@@ -25,6 +28,26 @@ nonisolated struct PostableSession: Identifiable, Hashable, Sendable {
     let workoutType: WorkoutType?
     /// How many sets the session recorded, counted by the server.
     let loggedSetCount: Int
+
+    init(
+        sessionID: Int,
+        workoutServerID: Int? = nil,
+        workoutName: String,
+        performedAt: Date,
+        durationSeconds: Double?,
+        routeDistanceKilometers: Double?,
+        workoutType: WorkoutType?,
+        loggedSetCount: Int
+    ) {
+        self.sessionID = sessionID
+        self.workoutServerID = workoutServerID
+        self.workoutName = workoutName
+        self.performedAt = performedAt
+        self.durationSeconds = durationSeconds
+        self.routeDistanceKilometers = routeDistanceKilometers
+        self.workoutType = workoutType
+        self.loggedSetCount = loggedSetCount
+    }
 
     var id: Int { sessionID }
 

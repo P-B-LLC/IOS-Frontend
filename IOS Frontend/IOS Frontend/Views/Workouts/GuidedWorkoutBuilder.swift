@@ -2,7 +2,7 @@ import SwiftUI
 
 /// The same draft travels through every step; navigation never writes a plan.
 struct GuidedWorkoutBuilder: View {
-    enum Stage { case identity, exercises, review }
+    enum Stage: Hashable { case identity, exercises, review }
     @Binding var draft: Workout
     let suggestions: [WorkoutSummary]
     let startsAtReview: Bool
@@ -35,9 +35,12 @@ struct GuidedWorkoutBuilder: View {
                 case .review: review
                 }
             }
-            .padding(24)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 20)
         }
         .scrollDismissesKeyboard(.interactively)
+        // Each step starts at its heading, even after scrolling a long catalog.
+        .id(stage)
         .safeAreaInset(edge: .bottom) { footer }
         .navigationTitle(stage == .identity ? "New workout" : stage == .exercises ? "Add exercises" : "Review workout")
         .navigationBarTitleDisplayMode(.inline)
@@ -54,6 +57,7 @@ struct GuidedWorkoutBuilder: View {
         }
         .repbaseScreen(.prepare)
         .disabled(isSaving)
+        .sensoryFeedback(.selection, trigger: draft.exercises.count)
         .onAppear {
             guard !initialized else { return }
             initialized = true
@@ -80,28 +84,57 @@ struct GuidedWorkoutBuilder: View {
     }
 
     private var intro: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(stage == .exercises ? "LIFTING · YOUR WORKOUT" : "YOUR WORKOUT, YOUR WAY")
-                .font(.community(.caption2, weight: .bold)).foregroundStyle(phase.accent)
-            Text(stage == .identity ? "Make room for\nyour next win." : stage == .exercises ? "Start with a few\ngood moves." : "Your workout.\nYour way.")
-                .font(.community(.largeTitle, weight: .bold)).fixedSize(horizontal: false, vertical: true)
-            Text(stage == .identity ? "Start small. You can build as you go." : stage == .exercises ? "Pick your exercises. Set the details next." : "Choose your sets. Make the order work for you.")
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top, spacing: 8) {
+                progressStep("Name", number: 1, step: .identity)
+                if draft.type == .lifting {
+                    progressStep("Exercises", number: 2, step: .exercises)
+                }
+                progressStep("Review", number: draft.type == .lifting ? 3 : 2, step: .review)
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Step \(stageNumber) of \(draft.type == .lifting ? 3 : 2): \(stage == .identity ? "Name" : stage == .exercises ? "Exercises" : "Review")")
+
+            Text(stage == .identity ? "Name your workout. Add only what you want to train." : stage == .exercises ? "Every exercise you add appears in your workout below." : draft.type.tracksDistance ? "Review your workout, then save it when you’re ready." : "Check the order and target sets. These are the exercises you’ll train.")
                 .font(.community(.subheadline)).foregroundStyle(phase.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
         }
+    }
+
+    private var stageNumber: Int {
+        switch stage {
+        case .identity: 1
+        case .exercises: 2
+        case .review: draft.type == .lifting ? 3 : 2
+        }
+    }
+
+    private func progressStep(_ title: String, number: Int, step: Stage) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Capsule()
+                .fill(number <= stageNumber ? phase.accent : phase.cardBorder)
+                .frame(height: 3)
+            Text("\(number)  \(title)")
+                .font(.community(.caption, weight: stage == step ? .bold : .medium))
+                .foregroundStyle(stage == step ? phase.primaryText : phase.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var identity: some View {
         VStack(alignment: .leading, spacing: 24) {
             VStack(alignment: .leading, spacing: 10) {
-                eyebrow("1  GIVE IT A NAME")
+                eyebrow("WORKOUT NAME")
                 TextField("e.g. Push day", text: $draft.name)
                     .font(.community(.headline)).textInputAutocapitalization(.words)
                     .padding(16).workoutOutline()
                 Text("Make it yours—or name it before saving.")
                     .font(.community(.caption)).foregroundStyle(phase.secondaryText)
+                if hasDuplicateSavedName { duplicateNameNotice }
             }
             VStack(alignment: .leading, spacing: 12) {
-                eyebrow("2  HOW ARE YOU MOVING?")
+                eyebrow("HOW ARE YOU MOVING?")
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                     ForEach(WorkoutType.allCases) { type in
                         Button { draft.type = type } label: {
@@ -120,13 +153,12 @@ struct GuidedWorkoutBuilder: View {
             }
             Divider()
             VStack(alignment: .leading, spacing: 12) {
-                Text("Already have a favorite?").font(.community(.headline))
                 Button { reusing = true } label: {
                     HStack(spacing: 12) {
                         Image(systemName: "clock.arrow.circlepath")
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Use a previous workout").font(.community(.subheadline, weight: .bold))
-                            Text("Keep its exercises and progress history").font(.community(.caption2)).foregroundStyle(phase.secondaryText)
+                            Text("Use your saved workouts").font(.community(.subheadline, weight: .bold))
+                            Text("Choose a saved plan to copy its exercises").font(.community(.caption2)).foregroundStyle(phase.secondaryText)
                         }
                         Spacer(minLength: 0)
                         Image(systemName: "chevron.right").font(.caption)
@@ -151,6 +183,7 @@ struct GuidedWorkoutBuilder: View {
 
     private var exercisePicker: some View {
         VStack(alignment: .leading, spacing: 16) {
+            selectedExercises
             HStack(spacing: 12) {
                 Image(systemName: "magnifyingglass").foregroundStyle(phase.secondaryText)
                 TextField("Search loaded exercises", text: $query).textInputAutocapitalization(.never)
@@ -173,7 +206,7 @@ struct GuidedWorkoutBuilder: View {
             }
             LazyVStack(spacing: 10) {
                 ForEach(filtered) { choice in
-                    let selected = draft.exercises.contains { $0.serverID == choice.id || WorkoutSummary.matches($0.name, choice.name) }
+                    let selected = draft.exercises.contains { matches($0, choice: choice) }
                     Button { toggle(choice) } label: {
                         HStack(spacing: 12) {
                             VStack(alignment: .leading, spacing: 4) {
@@ -185,12 +218,11 @@ struct GuidedWorkoutBuilder: View {
                             Image(systemName: selected ? "checkmark.circle.fill" : "plus.circle")
                                 .font(.system(size: 24)).foregroundStyle(selected ? phase.accent : phase.secondaryText)
                         }.padding(14).frame(maxWidth: .infinity, minHeight: 76).workoutOutline(selected: selected)
-                    }.buttonStyle(.plain).accessibilityAddTraits(selected ? [.isSelected] : [])
+                    }.buttonStyle(.plain)
+                        .accessibilityLabel("\(selected ? "Remove" : "Add") \(choice.name)")
+                        .accessibilityValue(selected ? "Added to your workout" : "Not added")
+                        .accessibilityAddTraits(selected ? [.isSelected] : [])
                 }
-            }
-            if !draft.exercises.isEmpty {
-                Text("Selected: " + draft.exercises.map(\.name).joined(separator: ", "))
-                    .font(.community(.caption)).foregroundStyle(phase.secondaryText)
             }
             if loading { ProgressView("Loading exercises…") }
             if let loadError {
@@ -209,12 +241,75 @@ struct GuidedWorkoutBuilder: View {
         }
     }
 
+    private var selectedExercises: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                Text("Your workout").font(.community(.headline))
+                Spacer(minLength: 0)
+                Text("\(draft.exercises.count) added")
+                    .font(.community(.caption, weight: .bold))
+                    .foregroundStyle(phase.accent)
+            }
+            if !draft.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                Text(draft.name).font(.community(.title3, weight: .semibold))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Text("Draft · not saved yet")
+                .font(.community(.caption)).foregroundStyle(phase.secondaryText)
+
+            if draft.exercises.isEmpty {
+                Label("No exercises added. Choose one below to start.", systemImage: "plus.circle")
+                    .font(.community(.subheadline)).foregroundStyle(phase.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                ForEach(Array(draft.exercises.enumerated()), id: \.element.id) { index, exercise in
+                    HStack(alignment: .center, spacing: 10) {
+                        Text("\(index + 1)")
+                            .font(.community(.caption, weight: .bold).monospacedDigit())
+                            .foregroundStyle(phase.accent)
+                            .frame(minWidth: 20)
+                        Text(exercise.name).font(.community(.subheadline, weight: .semibold))
+                            .fixedSize(horizontal: false, vertical: true)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Button {
+                            draft.exercises.removeAll { $0.id == exercise.id }
+                        } label: {
+                            Image(systemName: "minus.circle")
+                                .font(.system(size: 20))
+                                .frame(minWidth: 44, minHeight: 44)
+                        }
+                        .buttonStyle(.plain).foregroundStyle(phase.secondaryText)
+                        .accessibilityLabel("Remove \(exercise.name) from your workout")
+                    }
+                    if index < draft.exercises.count - 1 { Divider() }
+                }
+            }
+        }
+        .padding(16)
+        .background(
+            LinearGradient(colors: [phase.accent.opacity(0.09), phase.surfaceStart], startPoint: .topLeading, endPoint: .bottomTrailing),
+            in: RoundedRectangle(cornerRadius: 20, style: .continuous)
+        )
+        .overlay { RoundedRectangle(cornerRadius: 20).strokeBorder(phase.accent.opacity(0.25), lineWidth: 1) }
+        .accessibilityIdentifier("workout-builder-selected-exercises")
+    }
+
     private var review: some View {
         VStack(alignment: .leading, spacing: 16) {
-            TextField("Workout name", text: $draft.name).font(.community(.title2, weight: .bold))
-                .textInputAutocapitalization(.words).accessibilityLabel("Workout name")
-            Text("\(draft.type.title) · \(draft.exercises.count) exercises · \(draft.totalSets) target sets")
-                .font(.community(.subheadline)).foregroundStyle(phase.secondaryText)
+            VStack(alignment: .leading, spacing: 10) {
+                eyebrow("YOUR WORKOUT · READY TO REVIEW")
+                TextField("Workout name", text: $draft.name, axis: .vertical)
+                    .font(.community(.title2, weight: .bold))
+                    .textInputAutocapitalization(.words).accessibilityLabel("Workout name")
+                Text(draft.type.tracksDistance ? "\(draft.type.title) · distance and time recorded during your session" : "\(draft.type.title) · \(draft.exercises.count) exercises · \(draft.totalSets) target sets")
+                    .font(.community(.subheadline)).foregroundStyle(phase.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+                Label("Not saved yet", systemImage: "square.and.pencil")
+                    .font(.community(.caption)).foregroundStyle(phase.secondaryText)
+                if hasDuplicateSavedName { duplicateNameNotice }
+            }
+            .padding(18).workoutOutline(radius: 20)
+            .accessibilityIdentifier("workout-builder-review-summary")
             if draft.type.tracksDistance {
                 WorkoutPlanFields(draft: $draft, sections: .structure)
             } else {
@@ -249,19 +344,19 @@ struct GuidedWorkoutBuilder: View {
                 Text(String(format: "%02d", index + 1)).font(.community(.caption, weight: .bold)).foregroundStyle(phase.accent)
                 Text(exercise.name).font(.community(.headline))
             }
-            HStack {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Target sets").font(.community(.subheadline, weight: .bold))
-                    Text("Weight & reps later").font(.community(.caption2)).foregroundStyle(phase.secondaryText)
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 10) {
+                    targetSetsLabel
+                    targetSetsStepper(for: exercise)
                 }
-                Spacer(minLength: 8)
-                Stepper(value: Binding(get: { max(exercise.sets, 1) }, set: { count in
-                    if let i = draft.exercises.firstIndex(where: { $0.id == exercise.id }) { draft.exercises[i].sets = count }
-                }), in: 1...999) { Text("\(max(exercise.sets, 1))").font(.community(.title2, weight: .bold)).monospacedDigit() }
-                    .fixedSize().accessibilityLabel("\(exercise.name) target sets")
+            } else {
+                HStack {
+                    targetSetsLabel
+                    Spacer(minLength: 8)
+                    targetSetsStepper(for: exercise).fixedSize()
+                }
             }
             HStack(spacing: 8) {
-                Text("Move").font(.community(.caption)).foregroundStyle(phase.secondaryText)
                 Button { move(exercise.id, by: -1) } label: { Image(systemName: "arrow.up").frame(width: 44, height: 44) }
                     .buttonStyle(.bordered).disabled(index == 0).accessibilityLabel("Move \(exercise.name) up")
                 Button { move(exercise.id, by: 1) } label: { Image(systemName: "arrow.down").frame(width: 44, height: 44) }
@@ -275,9 +370,30 @@ struct GuidedWorkoutBuilder: View {
         }.padding(16).workoutOutline(radius: 20)
     }
 
+    private var targetSetsLabel: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text("Target sets").font(.community(.subheadline, weight: .bold))
+            Text("Weight & reps later").font(.community(.caption2)).foregroundStyle(phase.secondaryText)
+        }
+    }
+
+    private func targetSetsStepper(for exercise: Exercise) -> some View {
+        Stepper(value: Binding(get: { max(exercise.sets, 1) }, set: { count in
+            if let i = draft.exercises.firstIndex(where: { $0.id == exercise.id }) { draft.exercises[i].sets = count }
+        }), in: 1...999) {
+            Text("\(max(exercise.sets, 1))").font(.community(.title2, weight: .bold)).monospacedDigit()
+        }
+        .frame(minHeight: 44)
+        .accessibilityLabel("\(exercise.name) target sets")
+    }
+
     private var footer: some View {
         VStack(alignment: .leading, spacing: 10) {
-            if stage != .identity { Text("\(draft.exercises.count) exercises · \(draft.totalSets) target sets").font(.community(.subheadline, weight: .bold)) }
+            if stage != .identity && !draft.type.tracksDistance {
+                Text("\(draft.exercises.count) exercises · \(draft.totalSets) target sets")
+                    .font(.community(.subheadline, weight: .bold))
+                    .accessibilityIdentifier("workout-builder-draft-count")
+            }
             Button {
                 switch stage {
                 case .identity: stage = draft.type == .lifting ? .exercises : .review
@@ -286,9 +402,10 @@ struct GuidedWorkoutBuilder: View {
                 }
             } label: {
                 HStack {
-                    Text(stage == .identity ? (draft.type == .lifting ? "Add exercises" : "Review workout") : stage == .exercises ? "Review \(draft.exercises.count) exercises" : "Save workout")
+                    if isSaving { ProgressView().tint(phase.onPrimaryAction) }
+                    Text(isSaving ? "Saving workout…" : stage == .identity ? (draft.type == .lifting ? "Add exercises" : "Review workout") : stage == .exercises ? "Review \(draft.exercises.count) exercises" : "Save workout")
                     Spacer()
-                    Image(systemName: stage == .review ? "checkmark" : "arrow.right")
+                    if !isSaving { Image(systemName: stage == .review ? "checkmark" : "arrow.right") }
                 }.frame(maxWidth: .infinity)
             }.buttonStyle(WorkoutPrimaryButtonStyle(phase: phase))
                 .disabled(isSaving || (stage == .exercises && draft.exercises.isEmpty) || (stage == .review && !canSave))
@@ -297,13 +414,27 @@ struct GuidedWorkoutBuilder: View {
             if stage == .review && draft.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 Text("Give your workout a name above to save it.").font(.community(.caption)).foregroundStyle(phase.accent)
             }
-        }.padding(.horizontal, 24).padding(.vertical, 12).background(phase.canvasStart)
+        }.padding(.horizontal, 20).padding(.vertical, 12).background(phase.canvasStart)
     }
 
     private var canSave: Bool {
         let name = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        // The matching library row may be this draft's committed write whose
+        // read-back failed. Warn, but keep its idempotent Retry available.
         return !name.isEmpty && name.count <= 150 && (draft.type.tracksDistance || !draft.exercises.isEmpty)
             && draft.exercises.allSatisfy { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && $0.name.count <= 150 && $0.sets >= 1 }
+    }
+
+    private var hasDuplicateSavedName: Bool {
+        guard draft.serverID == nil else { return false }
+        let name = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !name.isEmpty && suggestions.contains { $0.name == name }
+    }
+
+    private var duplicateNameNotice: some View {
+        Label("This name is already in your library. Choose a different name for a new workout. If you’re retrying a save, keep the name so we can confirm it.", systemImage: "info.circle")
+            .font(.community(.caption)).foregroundStyle(phase.accent)
+            .fixedSize(horizontal: false, vertical: true)
     }
 
     private func eyebrow(_ label: String) -> some View {
@@ -316,8 +447,15 @@ struct GuidedWorkoutBuilder: View {
     }
 
     private func toggle(_ choice: WorkoutExerciseChoice) {
-        if let i = draft.exercises.firstIndex(where: { $0.serverID == choice.id || WorkoutSummary.matches($0.name, choice.name) }) { draft.exercises.remove(at: i) }
+        if let i = draft.exercises.firstIndex(where: { matches($0, choice: choice) }) { draft.exercises.remove(at: i) }
         else { draft.exercises.append(Exercise(serverID: choice.id, serverName: choice.name, name: choice.name, sets: 3)) }
+    }
+
+    /// Catalog identity wins over spelling. Only an unsaved custom exercise
+    /// may match a catalog choice by name before it has a server ID.
+    private func matches(_ exercise: Exercise, choice: WorkoutExerciseChoice) -> Bool {
+        if let serverID = exercise.serverID { return serverID == choice.id }
+        return WorkoutSummary.matches(exercise.name, choice.name)
     }
 
     private func addCustomExercise() {
@@ -354,7 +492,7 @@ struct GuidedWorkoutBuilder: View {
                     stage = .review
                 } label: { Label(saved.name, systemImage: saved.type.builderSymbol) }
             }
-            .navigationTitle("Previous workouts")
+            .navigationTitle("Your saved workouts")
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { reusing = false } } }
         }
     }

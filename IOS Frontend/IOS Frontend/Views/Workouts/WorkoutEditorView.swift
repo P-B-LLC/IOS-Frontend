@@ -80,7 +80,8 @@ struct WorkoutEditorView: View {
                 onSave: save
             )
             .saveFeedback(isSaving: isSaving, error: saveError)
-            .recoverableDraft(key: recoveryKey, value: $draft, saved: $draftSaved, error: $saveError)
+            .recoverableDraft(key: recoveryKey, value: $draft, saved: $draftSaved, error: $saveError,
+                              confirmRestoration: true)
         }
     }
 

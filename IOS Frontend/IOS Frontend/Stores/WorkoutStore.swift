@@ -61,6 +61,9 @@ final class WorkoutStore {
     /// Current-week projection of concrete API WorkoutSchedule records. A date
     /// can hold more than one schedule, so each day maps to a list.
     private(set) var schedule: [Weekday: [Workout]]
+    /// Set only after a save's returned template is found in the authoritative
+    /// schedule. The day view can reveal exactly the newly saved card.
+    private(set) var lastSavedWorkoutID: Workout.ID?
     private(set) var persistenceError: String?
     private(set) var isLoading = false
     private(set) var isSaving = false
@@ -162,6 +165,7 @@ final class WorkoutStore {
         let generation = UUID()
         connectionGeneration = generation
         scheduleReads.invalidate()
+        lastSavedWorkoutID = nil
         activeSession = nil
         pendingSetIDs = []
         // A fresh connection owns these flags; never inherit a stuck one.
@@ -202,6 +206,7 @@ final class WorkoutStore {
         completedSessions = []
         repository = nil
         schedule = [:]
+        lastSavedWorkoutID = nil
         activeSession = nil
         pendingSetIDs = []
         persistenceError = nil
@@ -252,6 +257,30 @@ final class WorkoutStore {
         !finishedSessions(workoutName: workoutName, on: date).isEmpty
     }
 
+    /// Saved-template identity is authoritative even if another workout has
+    /// the same name, or this template was renamed after a session finished.
+    func finishedSessions(workout: Workout, on date: Date) -> [PostableSession] {
+        let day = Calendar.current.startOfDay(for: date)
+        return dashboardSessions.filter {
+            $0.recordedSomething
+                && WorkoutSelectionPolicy.sameTemplate(expected: workout.serverID, actual: $0.workoutServerID)
+                && Calendar.current.startOfDay(for: $0.performedAt) == day
+        }
+    }
+
+    func isCompleted(workout: Workout, on date: Date) -> Bool {
+        !finishedSessions(workout: workout, on: date).isEmpty
+    }
+
+    func isCompleted(workoutServerID: Int, on date: Date) -> Bool {
+        let day = Calendar.current.startOfDay(for: date)
+        return dashboardSessions.contains {
+            $0.recordedSomething
+                && WorkoutSelectionPolicy.sameTemplate(expected: workoutServerID, actual: $0.workoutServerID)
+                && Calendar.current.startOfDay(for: $0.performedAt) == day
+        }
+    }
+
     /// What was logged on a completed day, once it has been asked for.
     /// Keyed by session so opening one day does not clear another's.
     private(set) var sessionOverviews: [Int: SessionOverview] = [:]
@@ -289,10 +318,10 @@ final class WorkoutStore {
     /// The day has to be cleared first. A second session left beside the first
     /// would be a second record of the same day, which is the thing that
     /// inflated the count before.
-    func redoSession(workoutName: String, on date: Date, day: Weekday, workoutID: Workout.ID?) async {
-        await undoCompletion(workoutName: workoutName, on: date)
+    func redoSession(workout: Workout, on date: Date, day: Weekday) async {
+        await undoCompletion(workout: workout, on: date)
         guard persistenceError == nil else { return }
-        startSession(on: day, workoutID: workoutID)
+        startSession(on: day, workoutID: workout.id)
     }
 
     /// Undoes a day's training by deleting every finished session recorded for
@@ -301,9 +330,12 @@ final class WorkoutStore {
     /// Every session for the day goes, not the newest one: a day that was
     /// started twice would otherwise still read as trained after an undo, and
     /// the user asked for one undo per day rather than one per attempt.
-    func undoCompletion(workoutName: String, on date: Date) async {
-        guard let repository else { return }
-        let doomed = finishedSessions(workoutName: workoutName, on: date)
+    func undoCompletion(workout: Workout, on date: Date) async {
+        await undoCompletion(sessions: finishedSessions(workout: workout, on: date))
+    }
+
+    private func undoCompletion(sessions doomed: [PostableSession]) async {
+        guard let repository, !isSaving else { return }
         guard !doomed.isEmpty else { return }
 
         let generation = connectionGeneration
@@ -535,8 +567,8 @@ final class WorkoutStore {
 
     /// Schedules a workout the user already has on a date.
     ///
-    /// Separate from `saveWorkout`, which sends a draft and lets the server
-    /// match it to a template by name. There is no draft here: the template is
+    /// Separate from `saveWorkout`, which writes the draft's chosen plan.
+    /// There is no draft here: the template is
     /// known by id, so only a schedule row is written and the saved workout —
     /// its exercises, their relationship rows, their target sets — is left
     /// exactly as it was, wherever else it is also planned.
@@ -596,8 +628,8 @@ final class WorkoutStore {
     ///
     /// For rotations: the cycle writes its own dates from its anchor, so the
     /// workout has to exist as a template first and be scheduled by nothing
-    /// else. A name already in use resolves to that workout rather than a
-    /// second copy of it.
+    /// else. Reusing a saved workout is explicit; its name alone never replaces
+    /// the draft's selected exercises with another template's plan.
     func createTemplate(_ workout: Workout) async -> Int? {
         guard let repository else {
             persistenceError = SaveFailure.notConnected
@@ -610,18 +642,26 @@ final class WorkoutStore {
         let generation = connectionGeneration
         isSaving = true
         persistenceError = nil
-        defer { isSaving = false }
+        defer { if connectionGeneration == generation { isSaving = false } }
 
         do {
             let id = try await repository.createTemplate(Self.normalized(workout))
             guard connectionGeneration == generation else { return nil }
             // So the new workout is offered the next time a day is set, and
             // so the slot can name it without waiting for the next load.
-            await reloadWeek(
+            let reloaded = await reloadWeek(
                 using: repository,
                 generation: generation,
                 showsLoadingState: false
             )
+            guard reloaded, knownWorkouts.contains(where: { $0.serverID == id }) else {
+                if connectionGeneration == generation, persistenceError == nil {
+                    persistenceError = "Your workout was saved, but could not be confirmed. Retry to reload it safely."
+                }
+                return nil
+            }
+            try await repository.acknowledgeTemplateSave(draftID: workout.id)
+            guard connectionGeneration == generation else { return nil }
             return id
         } catch {
             guard connectionGeneration == generation else { return nil }
@@ -653,22 +693,34 @@ final class WorkoutStore {
         let workout = Self.normalized(workout)
         isSaving = true
         persistenceError = nil
+        lastSavedWorkoutID = nil
 
         defer { if connectionGeneration == generation { isSaving = false } }
         do {
-            try await repository.saveWorkout(
+            let templateID = try await repository.saveWorkout(
                 workout,
                 replacing: existing,
                 scheduledDate: date
             )
             guard connectionGeneration == generation else { return false }
             scheduleReads.invalidate()
-            await reloadWeek(
+            let reloaded = await reloadWeek(
                 using: repository,
                 generation: generation,
                 showsLoadingState: false
             )
-            return connectionGeneration == generation
+            guard reloaded, let confirmed = schedule[day]?.first(where: {
+                $0.serverID == templateID && $0.scheduledDate == date
+            }) else {
+                if connectionGeneration == generation, persistenceError == nil {
+                    persistenceError = "Your workout was saved, but could not be confirmed on this day. Retry to reload it safely."
+                }
+                return false
+            }
+            try await repository.acknowledgeTemplateSave(draftID: workout.id)
+            guard connectionGeneration == generation else { return false }
+            lastSavedWorkoutID = confirmed.id
+            return true
         } catch {
             guard connectionGeneration == generation else { return false }
             persistenceError = error.userFacingMessage
@@ -759,8 +811,11 @@ final class WorkoutStore {
 
     /// Starts a session for one of the day's workouts, defaulting to the first.
     func startSession(on day: Weekday, workoutID: Workout.ID? = nil) {
-        let candidate = workoutID.flatMap { workout(id: $0, on: day) }
-            ?? workout(on: day)
+        let candidate = WorkoutSelectionPolicy.resolve(requestedID: workoutID, in: workouts(on: day))
+        if workoutID != nil, candidate == nil {
+            persistenceError = "This workout is no longer scheduled on this day. Reload the day and choose it again."
+            return
+        }
         guard let repository,
               activeSession == nil,
               let workout = candidate,
@@ -1325,12 +1380,13 @@ final class WorkoutStore {
         }
     }
 
+    @discardableResult
     private func reloadWeek(
         using repository: WorkoutAPIRepository,
         generation: UUID,
         showsLoadingState: Bool
-    ) async {
-        guard connectionGeneration == generation else { return }
+    ) async -> Bool {
+        guard connectionGeneration == generation else { return false }
         let readID = scheduleReads.begin()
         if showsLoadingState { isLoading = true }
         // The flag is cleared no matter how this exits. Leaving it set after a
@@ -1350,15 +1406,17 @@ final class WorkoutStore {
             let loaded = try await repository.loadWeek(
                 dateByDay: dateStringsForCurrentWeek()
             )
-            guard connectionGeneration == generation, scheduleReads.accepts(readID) else { return }
+            guard connectionGeneration == generation, scheduleReads.accepts(readID) else { return false }
             schedule = loaded.schedule
             // Names to offer when creating a workout, built from the templates
             // the schedule was built from. This was a second sequential request
             // for rows the first one had already read.
             knownWorkouts = loaded.library
+            return true
         } catch {
-            guard connectionGeneration == generation, scheduleReads.accepts(readID) else { return }
+            guard connectionGeneration == generation, scheduleReads.accepts(readID) else { return false }
             persistenceError = error.userFacingMessage
+            return false
         }
     }
 

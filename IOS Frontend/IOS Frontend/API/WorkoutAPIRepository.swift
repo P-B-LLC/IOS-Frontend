@@ -246,15 +246,16 @@ actor WorkoutAPIRepository {
         _ draft: Workout,
         replacing existing: Workout?,
         scheduledDate: String
-    ) async throws {
+    ) async throws -> Int {
         if let existing, let workoutID = existing.serverID {
             try await updateWorkout(
                 draft,
                 existing: existing,
                 workoutID: workoutID
             )
+            return workoutID
         } else {
-            try await createWorkout(draft, scheduledDate: scheduledDate)
+            return try await createTemplate(draft, initialDate: scheduledDate)
         }
     }
 
@@ -320,13 +321,6 @@ actor WorkoutAPIRepository {
         }
     }
 
-    private func createWorkout(
-        _ draft: Workout,
-        scheduledDate: String
-    ) async throws {
-        _ = try await createTemplate(draft, initialDate: scheduledDate)
-    }
-
     /// Creates a workout and its exercises, and answers with its server id.
     ///
     /// Nothing is put on the calendar. A rotation works out its own dates from
@@ -340,31 +334,20 @@ actor WorkoutAPIRepository {
             intent = try await EditorDraftRecovery.shared.load(TemplateCreateIntent.self, key: operationKey, scope: recoveryScope)
         }
         if intent == nil {
-            // A deliberate library reuse must not rewrite its exercises.
-            if let existing = try await fetchAllWorkouts().first(where: {
-                Self.normalizedName($0.name) == Self.normalizedName(draft.name)
-            }) {
-                if let initialDate {
-                    let schedules = try await fetchAllSchedules()
-                    if !schedules.contains(where: { $0.workout == existing.id && $0.scheduledDate == initialDate }) {
-                        try await scheduleWorkout(templateID: existing.id, scheduledDate: initialDate)
-                    }
-                }
-                return existing.id
-            }
+            // A new draft must save its selections even when its name resembles
+            // an existing template. Explicit reuse goes through scheduling by ID.
             var resolved: [String: Int] = [:]
-            var initialExercises: [Components.Schemas.InitialWorkoutExerciseRequest] = []
-            for (index, exercise) in draft.exercises.enumerated() {
+            var selections: [WorkoutTemplateCreation.Selection] = []
+            for exercise in draft.exercises {
                 let exerciseID = try await resolveExercise(exercise, resolved: &resolved)
-                initialExercises.append(.init(exercise: exerciseID, order: Int64(index + 1),
-                                              targetSets: exercise.targetSets.map(Int64.init)))
+                selections.append(.init(exerciseID: exerciseID, targetSets: exercise.targetSets))
             }
             let request = try Components.Schemas.WorkoutTemplateRequest(
                 name: draft.name, workoutType: Self.workoutTypePayload(draft.type),
                 cardioMachine: draft.cardioMachine.flatMap(Self.cardioEnum)
                     .map { .CardioMachineEnum($0) } ?? .NullEnum(.init()),
                 cardioTargetMinutes: draft.cardioTargetMinutes.map(Int64.init),
-                initialExercises: initialExercises, initialDate: initialDate
+                initialExercises: WorkoutTemplateCreation.initialExercises(selections), initialDate: initialDate
             )
             let snapshot = TemplateCreateIntent(draft: draft, request: request)
             if let recoveryScope {
@@ -372,22 +355,26 @@ actor WorkoutAPIRepository {
             } else { intent = snapshot }
         }
         guard let intent else { throw APIServiceError.missingServerIdentifier("Workout save intent") }
-        let output = try await client.workoutsCreate(
-            headers: .init(idempotencyKey: intent.draft.id.uuidString),
-            body: .json(intent.request)
-        )
-        switch output {
-        case .created(let response):
-            let template = try response.body.json
-            if intent.draft != draft {
-                try await updateWorkout(draft, existing: intent.draft, workoutID: template.id)
-            }
+        let template: Components.Schemas.WorkoutTemplate
+        do {
+            template = try await WorkoutTemplateCreation.send(
+                intent.request, operationID: intent.draft.id, using: client
+            )
+        } catch APIServiceError.undocumentedStatus(400) {
             if let recoveryScope { try await EditorDraftRecovery.shared.remove(key: operationKey, scope: recoveryScope) }
-            return template.id
-        case .undocumented(let statusCode, _):
-            if statusCode == 400, let recoveryScope { try await EditorDraftRecovery.shared.remove(key: operationKey, scope: recoveryScope) }
-            throw APIServiceError.undocumentedStatus(statusCode)
+            throw APIServiceError.undocumentedStatus(400)
         }
+        if intent.draft != draft {
+            try await updateWorkout(draft, existing: intent.draft, workoutID: template.id)
+        }
+        // Keep the original request until the store confirms the saved
+        // template/date by ID. A failed readback must remain retry-safe.
+        return template.id
+    }
+
+    func acknowledgeTemplateSave(draftID: UUID) async throws {
+        guard let recoveryScope else { return }
+        try await EditorDraftRecovery.shared.remove(key: "create-workout-\(draftID)", scope: recoveryScope)
     }
 
     private func scheduleWorkout(
@@ -408,12 +395,6 @@ actor WorkoutAPIRepository {
         case .undocumented(let statusCode, _):
             throw APIServiceError.undocumentedStatus(statusCode)
         }
-    }
-
-    /// Compares workout names the way a person would, so "Morning Run" and
-    /// "morning run " are the same workout.
-    private static func normalizedName(_ value: String) -> String {
-        value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 
     private func updateWorkout(
@@ -593,22 +574,25 @@ actor WorkoutAPIRepository {
         // Asked for by session. This used to read every session-exercise row
         // the account owns and filter here, so opening one session got slower
         // with every session ever logged.
-        var sessionRelations = try await fetchSessionExercises(session: createdID)
+        let sessionRelations = try await fetchSessionExercises(session: createdID)
             .sorted { ($0.order ?? 1, $0.id) < ($1.order ?? 1, $1.id) }
 
+        guard started.id == createdID,
+              WorkoutSelectionPolicy.sameTemplate(expected: workoutServerID, actual: started.workout),
+              sessionRelations.allSatisfy({ $0.session == createdID }),
+              let relationIndices = WorkoutSelectionPolicy.sessionRelationIndices(
+                planned: workout.exercises.map(\.serverID), actual: sessionRelations.map(\.exercise)
+              ) else {
+            throw APIServiceError.malformedResponse
+        }
+
         var exercises: [SessionExerciseDraft] = []
-        for exercise in workout.exercises {
-            guard let exerciseServerID = exercise.serverID,
-                  let relationIndex = sessionRelations.firstIndex(
-                    where: { $0.exercise == exerciseServerID }
-                  ) else {
-                throw APIServiceError.malformedResponse
-            }
-            let relation = sessionRelations.remove(at: relationIndex)
+        for (exercise, relationIndex) in zip(workout.exercises, relationIndices) {
+            let relation = sessionRelations[relationIndex]
             exercises.append(
                 SessionExerciseDraft(
                     id: exercise.id,
-                    exerciseServerID: exerciseServerID,
+                    exerciseServerID: relation.exercise,
                     sessionExerciseID: relation.id,
                     name: relation.exerciseName,
                     sets: Self.makeSetDrafts(count: exercise.sets)
@@ -1133,6 +1117,7 @@ actor WorkoutAPIRepository {
                 }
                 return PostableSession(
                     sessionID: session.id,
+                    workoutServerID: session.workout,
                     // Null once the workout behind the session is deleted --
                     // the same case workoutType below is nil for. Labelled
                     // rather than blank, as DayWorkoutView already does.

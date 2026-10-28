@@ -415,7 +415,7 @@ struct TrainingDashboardContent: View {
     private func isCompleted(_ day: Weekday) -> Bool {
         WorkoutFocusPolicy.dayIsComplete(
             scheduledCompletions: store.workouts(on: day).map {
-                store.isCompleted(workoutName: $0.name, on: store.workoutDate(for: day))
+                store.isCompleted(workout: $0, on: store.workoutDate(for: day))
             },
             hasActiveSession: store.activeSession?.day == day
         )
