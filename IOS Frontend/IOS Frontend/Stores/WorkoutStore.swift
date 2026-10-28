@@ -314,6 +314,10 @@ final class WorkoutStore {
         do {
             for session in doomed {
                 try await repository.discardSession(id: session.sessionID)
+                guard connectionGeneration == generation else { return }
+                // Each confirmed deletion may reopen the server's planner task.
+                // Notify even if a later deletion in this batch fails.
+                calendarRevision &+= 1
             }
             guard connectionGeneration == generation else { return }
             // Drop them locally too, so the count falls now rather than after
@@ -1177,7 +1181,12 @@ final class WorkoutStore {
         }
         guard generation == connectionGeneration, !Task.isCancelled else { throw CancellationError() }
         try await repository.endSession(id: pending.sessionID, endedAt: pending.requestedAt)
-        guard generation == connectionGeneration, !Task.isCancelled else { throw CancellationError() }
+        guard generation == connectionGeneration else { throw CancellationError() }
+        // Finishing also completes the server's planner task. Both a live
+        // Finish and an offline-recovery retry use this path. Local cleanup
+        // failure must not hide an already confirmed server-side completion.
+        calendarRevision &+= 1
+        guard !Task.isCancelled else { throw CancellationError() }
         // Both operations are retry-safe; even a failed local delete can retry.
         try recovery.remove(pending)
         clearActiveCheckpoint(sessionID: pending.sessionID)

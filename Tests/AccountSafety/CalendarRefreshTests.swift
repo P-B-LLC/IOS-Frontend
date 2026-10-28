@@ -261,4 +261,38 @@ final class CalendarRefreshTests: XCTestCase {
             XCTAssertTrue(mutation.contains("calendarRevision &+= 1"))
         }
     }
+
+    func testConfirmedSessionFinishNotifiesBeforeLocalRecoveryCleanup() throws {
+        let workouts = try appSource("Stores/WorkoutStore.swift")
+        let transmit = try section(workouts, from: "private func transmitPendingWorkout(", to: "func retryPendingWorkoutSaves()")
+        let confirmed = try XCTUnwrap(transmit.range(of: "try await repository.endSession("))
+        let accountGuard = try XCTUnwrap(transmit.range(of: "guard generation == connectionGeneration else { throw CancellationError() }",
+                                                        range: confirmed.upperBound..<transmit.endIndex))
+        let notified = try XCTUnwrap(transmit.range(of: "calendarRevision &+= 1"))
+        let cleanup = try XCTUnwrap(transmit.range(of: "try recovery.remove(pending)"))
+        XCTAssertLessThan(confirmed.lowerBound, accountGuard.lowerBound)
+        XCTAssertLessThan(accountGuard.lowerBound, notified.lowerBound)
+        XCTAssertLessThan(notified.lowerBound, cleanup.lowerBound,
+                          "A local cleanup failure must not hide confirmed server completion from Planner")
+
+        let finish = try section(workouts, from: "func endSession(on day:", to: "func consumeTrainingDashboardReward()")
+        let retry = try section(workouts, from: "func retryPendingWorkoutSaves()", to: "func clearSchedule()")
+        XCTAssertTrue(finish.contains("try await transmitPendingWorkout(pending, using: repository, generation: generation)"))
+        XCTAssertTrue(retry.contains("try await transmitPendingWorkout(item, using: repository, generation: generation)"),
+                      "Offline recovery must use the same planner-notification path as a live Finish")
+    }
+
+    func testUndoNotifiesAfterEveryConfirmedDeletionIncludingPartialBatchSuccess() throws {
+        let workouts = try appSource("Stores/WorkoutStore.swift")
+        let undo = try section(workouts, from: "func undoCompletion(", to: "// MARK: - Last time")
+        let batch = try section(undo, from: "for session in doomed {", to: "// Drop them locally too")
+        let deletion = try XCTUnwrap(batch.range(of: "try await repository.discardSession(id: session.sessionID)"))
+        let accountGuard = try XCTUnwrap(batch.range(of: "guard connectionGeneration == generation else { return }"))
+        let notification = try XCTUnwrap(batch.range(of: "calendarRevision &+= 1"))
+        let loopEnd = try XCTUnwrap(batch.range(of: "\n            }"))
+        XCTAssertLessThan(deletion.lowerBound, accountGuard.lowerBound)
+        XCTAssertLessThan(accountGuard.lowerBound, notification.lowerBound)
+        XCTAssertLessThan(notification.lowerBound, loopEnd.lowerBound,
+                          "Waiting until the whole batch succeeds misses an earlier confirmed deletion")
+    }
 }

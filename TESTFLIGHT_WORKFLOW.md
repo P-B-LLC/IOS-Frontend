@@ -95,6 +95,9 @@ The user authorized pushing testing branches and opening draft PRs for CI.
 
 - Workouts now publish a calendar revision after refreshes and schedule changes,
   including an empty schedule or a change outside the current week.
+- Confirmed workout finishes, recovered finishes, and session deletions also
+  refresh planner completion. A local recovery-file cleanup failure or a later
+  failure in a multi-session undo must not hide earlier confirmed changes.
 - Planner refreshes authoritative month, overdue, upcoming, and reminder data
   instead of treating the sync endpoint's newly created rows as a full snapshot.
 - Refreshes coalesce without losing the final change. Read tokens prevent old
@@ -124,6 +127,14 @@ check against a backend running the counterpart branch with a test account:
 6. Delete a generated planner task deliberately; a refresh must not recreate it.
    Check reminders are removed for deleted plans, and sign-out cannot carry one
    account's pending refresh into another account.
+7. Finish a scheduled workout. Its Home/Calendar task should become completed
+   without relaunching or changing months, and its reminder should be removed.
+8. Undo that workout's completion in Training. Home/Calendar must reflect the
+   server's resulting task state. Also test multiple sessions on one day and a
+   failure after one deletion: earlier confirmed changes must still refresh.
+9. Attempt Finish offline, restore connectivity, then retry Finish or its saved
+   recovery. Only server-confirmed completion should update Home/Calendar; a
+   recovery retry must refresh them just like a live Finish.
 
 Local Windows checks cover Swift syntax parsing, stable IDs, shell syntax, and
 diff hygiene only. They do not substitute for XCTest/Xcode or real-device QA.
