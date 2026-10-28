@@ -7,11 +7,13 @@
 - The current shared integration branch is
   `work/testflight-fixes-2026-10-27`, created from `origin/main` at `8e2a58f`.
   Check the current branch and working-tree status before making changes;
-  preserve other developers' work. Use separate `fix/...` or `feature/...`
-  branches for concurrent work.
+  preserve other developers' work. Separate `fix/...` or `feature/...`
+  branches are optional for concurrent work.
 - Follow `TESTFLIGHT_WORKFLOW.md`. Opening a PR starts CI; merely pushing an
   integration/feature branch does not. Require successful checks on the
   current candidate and relevant simulator/device testing before promotion.
+- No teammate approval is required. Work and push on the integration branch;
+  when the user is ready, a passing PR can be merged without another reviewer.
 - Merge to `main`, create release tags, or upload a TestFlight build only when
   explicitly requested. A passing build is not authorization to release.
 - The checked-in ruleset is a record, not automatic enforcement. Do not

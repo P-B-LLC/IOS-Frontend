@@ -1,6 +1,6 @@
 name: Release gate
 
-# The live main ruleset requires reviewed PRs and a passing CI build.
+# The live main ruleset requires PRs and a passing CI build, not peer approval.
 # Re-run that same suite for release tags or an explicitly dispatched candidate.
 # This workflow reports a verdict; it cannot prevent a manual Xcode upload.
 # Release operators must verify the exact candidate before shipping it.

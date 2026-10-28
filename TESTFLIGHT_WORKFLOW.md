@@ -4,11 +4,11 @@
 
 Set up on 2026-10-27 for `P-B-LLC/IOS-Frontend`:
 
-- `main`: release-ready code, changed only through a reviewed pull request.
+- `main`: release-ready code, changed only through a pull request with passing checks.
 - `work/testflight-fixes-2026-10-27`: shared integration/testing branch, based
   on `8e2a58f` (the merged planner redesign, including the food redesign).
-- `fix/<short-description>` or `feature/<short-description>`: one branch per
-  developer/change, normally based on the current integration branch.
+- Optional `fix/<short-description>` or `feature/<short-description>` branches
+  for parallel work, normally based on the current integration branch.
 
 This setup does not upload a build, change the installed TestFlight app, or
 change backend/web repositories. Existing feature and backup branches stay
@@ -25,7 +25,12 @@ git pull --ff-only
 ```
 
 On a clone without a local copy, `git switch` creates it from the matching
-remote branch. For independent work, create a new branch from there:
+remote branch. Make changes, commit them, and use `git push` on this branch.
+That saves work to the integration branch, not `main`. No teammate approval
+is required. Open a PR to `main` only when ready to validate/promote the work
+(or use a draft PR to start CI earlier without merging).
+
+For optional independent work, create another branch from there:
 
 ```bash
 git switch -c fix/short-description
@@ -44,15 +49,10 @@ without discarding another developer's changes.
 3. Verify the fixed behavior and nearby flows in the simulator. Test affected
    device-only behavior (camera, microphone, HealthKit, notifications, signing)
    on an appropriate device. Record the candidate SHA and test results in the PR.
-4. Obtain at least one other developer's approval after the latest reviewable
-   push, and resolve review conversations.
+4. Resolve any review conversations. No teammate, code-owner, or latest-push
+   approval is required; the PR author can merge their own passing PR.
 5. Merge only after explicit release/promotion approval and all GitHub gates
    pass. Do not bypass a red or pending check.
-
-With two developers, have the PR author make the final reviewable code push.
-If the only peer reviewer pushes the final changes, they cannot approve their
-own latest push, and the author cannot approve their own PR; a third reviewer
-would then be needed.
 
 The required GitHub Actions context is `build`. For code/configuration
 changes, it covers Debug/Release simulator builds, Release configuration,
@@ -66,14 +66,15 @@ feels right or that a device-only feature works.
 The existing [Protect main ruleset](https://github.com/P-B-LLC/IOS-Frontend/rules/23549107)
 is updated in place, not replaced by a second overlapping ruleset:
 
-- Pull requests required; one approving review required.
-- New changes dismiss stale approvals; the latest push needs another person's approval.
+- Pull requests required; zero approving reviews required.
+- No code-owner, latest-push, or extra unattributed-change approval requirement.
+- Stale-review dismissal is disabled; no peer sign-off is needed after updates.
 - All review conversations must be resolved.
 - `build` must pass from GitHub Actions (integration ID `15368`), against the
   latest target branch.
 - Branch deletion and force pushes blocked.
 - No bypass actors, including owners/admins. Administrators still have the
-  separate power to change repository settings; do not use that to evade review.
+  separate power to change repository settings; do not use that to evade checks.
 - Both `main` explicitly and the default branch are covered.
 
 There is no `CODEOWNERS` file, so no ownership requirements are invented.

@@ -8,7 +8,7 @@
 Two things have to be green before a version ships: the backend test suite in
 `P-B-LLC/repbase`, and the iOS build checks here. Both run in CI. The iOS `main`
 branch is protected by the live **Protect main** ruleset. Since 2026-10-27,
-promotion requires a reviewed PR as well as an up-to-date passing build.
+promotion requires a PR and an up-to-date passing build, but no teammate approval.
 Use [TESTFLIGHT_WORKFLOW.md](TESTFLIGHT_WORKFLOW.md) for ongoing beta fixes;
 backend rules must be verified independently.
 
@@ -55,16 +55,18 @@ code.
 
 A workflow reports a result; the live GitHub ruleset enforces merge gates.
 The existing iOS [Protect main ruleset](https://github.com/P-B-LLC/IOS-Frontend/rules/23549107)
-requires a pull request, one fresh peer approval, resolved conversations, and
+requires a pull request, resolved conversations, and
 the GitHub Actions `build` check on an up-to-date candidate. Force pushes and
 deletion are blocked; the bypass list is empty, including for administrators.
+No teammate or latest-push approval is required; the PR author can merge their
+own PR once the checks pass and any review conversations are resolved.
 
 `.github/rulesets/protect-main.json` records those settings. It is not applied
 automatically by a commit. Update the existing live ruleset deliberately if
 the policy changes; do not import an older copy or create a duplicate.
 
 Do not relax protection to finish a release. If a check fails, fix the cause
-on a separate branch and obtain review. GitHub protection cannot prevent a
+on a separate branch and rerun validation. GitHub protection cannot prevent a
 manual Xcode upload, so release operators must also verify the exact candidate
 and its test results before uploading to TestFlight.
 
