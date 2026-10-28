@@ -5,6 +5,7 @@
 //  Created by the Rytivo project on 8/9/26.
 //
 
+import Foundation
 import RepbaseAPI
 import SwiftUI
 import UIKit
@@ -128,6 +129,7 @@ struct IOS_FrontendApp: App {
                 .environment(gearStore)
                 .environment(cycleStore)
                 .environment(\.font, .community(.body))
+                .appLanguage()
                 .preferredColorScheme(appearance.colorScheme)
                 // preferredColorScheme reaches the nearest enclosing
                 // presentation and stops. Settings is a fullScreenCover, which
@@ -197,6 +199,7 @@ private struct AppRootView: View {
             || environment["REPBASE_SOCIAL_PREVIEW"] != nil
             || environment["REPBASE_PROMPT_PREVIEW"] != nil
             || environment["REPBASE_LIFTS_PREVIEW"] != nil
+            || environment["REPBASE_LANGUAGE_PREVIEW"] != nil
     }
 #endif
 
@@ -404,6 +407,12 @@ private struct AppRootView: View {
                       let document = LegalDocuments.all.first(where: { $0.id == name }) {
                 NavigationStack {
                     LegalDocumentView(document: document)
+                }
+            } else if ProcessInfo.processInfo.environment["REPBASE_LANGUAGE_PREVIEW"] != nil {
+                // Settings > Language is behind the profile menu and a cover,
+                // and simctl cannot tap its way there.
+                NavigationStack {
+                    LanguageSettingsView()
                 }
             } else if ProcessInfo.processInfo.environment["REPBASE_AUTH_PREVIEW"] != nil
                         || ProcessInfo.processInfo.environment["REPBASE_RESET_PREVIEW"] != nil {
@@ -704,6 +713,14 @@ private struct AppRootView: View {
             guard authentication.token != nil else { return }
             await rescheduleReminders()
         }
+        // A reminder keeps the words it was scheduled with, and its mute
+        // button the language the categories were registered in. Choosing a
+        // language in Settings rewrites both, so tonight's reminder does not
+        // arrive in the language just left.
+        .onChange(of: AppLocalization.shared.language) {
+            NotificationScheduler.shared.registerCategories()
+            Task { await rescheduleReminders() }
+        }
     }
 
     /// Rebuilds every reminder the device raises on its own.
@@ -761,7 +778,7 @@ private struct AppRootView: View {
                 VStack(spacing: 20) {
                     Text("Let's reconnect.")
                         .font(.community(.title2, weight: .semibold))
-                    Text(authentication.errorMessage ?? "Your saved login is safe.")
+                    Text(authentication.errorMessage ?? String(localized: "Your saved login is safe.", bundle: .app, locale: .app))
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                     Button("Try again") {

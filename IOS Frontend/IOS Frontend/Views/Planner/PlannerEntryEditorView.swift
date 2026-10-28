@@ -5,6 +5,7 @@
 //  Create or edit a task or event.
 //
 
+import Foundation
 import SwiftUI
 
 struct PlannerEntryEditorView: View {
@@ -215,7 +216,7 @@ struct PlannerEntryEditorView: View {
                                 dismiss()
                             }
                         } label: {
-                            Label("Delete \(draft.kind.title)", systemImage: "trash")
+                            Label(draft.kind == .event ? "Delete Event" : "Delete Task", systemImage: "trash")
                                 .font(.community(.subheadline, weight: .semibold))
                         }
                         .buttonStyle(.plain)
@@ -236,10 +237,7 @@ struct PlannerEntryEditorView: View {
                             }
                             Button("Cancel", role: .cancel) {}
                         } message: {
-                            Text(
-                                "Days you have already ticked off stay either way — "
-                                + "ending a habit is not saying it never happened."
-                            )
+                            Text("Days you have already ticked off stay either way — ending a habit is not saying it never happened.")
                         }
                     }
                 }
@@ -251,7 +249,7 @@ struct PlannerEntryEditorView: View {
             .toolbar(.hidden, for: .navigationBar)
             .homeTimeScreen(timeOfDay)
             .safeAreaInset(edge: .bottom) {
-                Button(isSaving ? "Saving…" : (isEditing ? "Save changes" : "Add \(draft.kind.title.lowercased())"), action: save)
+                Button(saveButtonTitle, action: save)
                     .buttonStyle(EditorialPrimaryButtonStyle())
                     .disabled(!canSave || isSaving)
                     .padding(.horizontal, 24)
@@ -326,7 +324,12 @@ struct PlannerEntryEditorView: View {
             DisclosureGroup(isExpanded: $showsNotes) {
                 editorialNotes
             } label: {
-                settingLabel("Notes", value: draft.notes.isEmpty ? "Add a note" : "Edit note")
+                settingLabel(
+                    "Notes",
+                    value: draft.notes.isEmpty
+                        ? String(localized: "Add a note", bundle: .app, locale: .app)
+                        : String(localized: "Edit note", bundle: .app, locale: .app)
+                )
             }
             NavigationLink {
                 NotificationPreferencesView()
@@ -335,8 +338,8 @@ struct PlannerEntryEditorView: View {
                     .toolbar(.visible, for: .navigationBar)
             } label: {
                 HStack {
-                    settingLabel("Reminder settings", value: "Manage")
-                    Image(systemName: "chevron.right").font(.community(.caption))
+                    settingLabel("Reminder settings", value: String(localized: "Manage", bundle: .app, locale: .app))
+                    Image(systemName: "chevron.forward").font(.community(.caption))
                 }
             }
             .buttonStyle(.plain)
@@ -348,7 +351,7 @@ struct PlannerEntryEditorView: View {
         .plannerSurface()
     }
 
-    private func settingLabel(_ title: String, value: String) -> some View {
+    private func settingLabel(_ title: LocalizedStringKey, value: String) -> some View {
         HStack {
             Text(title).font(.community(.subheadline))
             Spacer(minLength: 12)
@@ -361,9 +364,9 @@ struct PlannerEntryEditorView: View {
 
     private var repeatSummary: String {
         switch repeatDays {
-        case 0: return "Does not repeat"
-        case weekdayRepeatTag: return "Selected weekdays"
-        case customRepeatTag: return "Every \(customRepeatDays) days"
+        case 0: return String(localized: "Does not repeat", bundle: .app, locale: .app)
+        case weekdayRepeatTag: return String(localized: "Selected weekdays", bundle: .app, locale: .app)
+        case customRepeatTag: return String(localized: "Every \(customRepeatDays) days", bundle: .app, locale: .app)
         default: return PlannerEntryRow.repeatLabel(repeatDays)
         }
     }
@@ -624,11 +627,11 @@ struct PlannerEntryEditorView: View {
                         .accessibilityAddTraits(selected ? .isSelected : [])
                     }
                 }
-                Text(selectedRepeatWeekdays.isEmpty ? "Choose at least one day." : PlannerRepeatWeekday.summary(Array(selectedRepeatWeekdays)))
+                Text(selectedRepeatWeekdays.isEmpty ? String(localized: "Choose at least one day.", bundle: .app, locale: .app) : PlannerRepeatWeekday.summary(Array(selectedRepeatWeekdays)))
                     .font(.community(.footnote))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
                 if !selectedRepeatWeekdays.isEmpty {
-                    Text("First task: \(PlannerRepeatWeekday.firstDate(onOrAfter: date, days: selectedRepeatWeekdays).formatted(date: .abbreviated, time: .omitted))")
+                    Text("First task: \(PlannerRepeatWeekday.firstDate(onOrAfter: date, days: selectedRepeatWeekdays).formatted(Date.FormatStyle(date: .abbreviated, time: .omitted).locale(.app)))")
                         .font(.community(.footnote))
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                 }
@@ -636,7 +639,7 @@ struct PlannerEntryEditorView: View {
 
             if repeatDays == customRepeatTag {
                 HStack(spacing: 8) {
-                    Text("Every")
+                    Text("Every", comment: "Before a number field, read as “Every [4] days”")
                         .font(.community(.subheadline))
                     TextField("", value: $customRepeatDays, format: .number)
                         .font(.community(.subheadline, weight: .semibold))
@@ -645,8 +648,11 @@ struct PlannerEntryEditorView: View {
                         .frame(width: 58)
                         .padding(.vertical, 7)
                         .repbaseInsetSurface()
-                    Text(customRepeatDays == 1 ? "day" : "days")
-                        .font(.community(.subheadline))
+                    Text(
+                        customRepeatDays == 1 ? "day" : "days",
+                        comment: "After a number field, read as “Every [4] days”"
+                    )
+                    .font(.community(.subheadline))
                 }
 
                 if !isCustomRepeatValid {
@@ -712,10 +718,15 @@ struct PlannerEntryEditorView: View {
     /// start and a length in your head is exactly the arithmetic a calendar
     /// ought to be doing for you.
     private var lengthLabel: String {
-        guard let minutes = draft.durationMinutes else { return "No length" }
+        guard let minutes = draft.durationMinutes else { return String(localized: "No length", bundle: .app, locale: .app) }
         let length = PlannerDuration.label(minutes)
         guard let end = previewEndTime(after: minutes) else { return length }
-        return "\(length) · ends \(end)"
+        return String(
+            localized: "\(length) · ends \(end)",
+            bundle: .app,
+            locale: .app,
+            comment: "A length of time, then the clock time it ends, e.g. 1 hour · ends 18:30"
+        )
     }
 
     /// Read off the picker rather than the draft: the draft only learns the
@@ -775,11 +786,22 @@ struct PlannerEntryEditorView: View {
         return false
     }
 
-    private var title: String {
-        switch mode {
-        case .create: return "New \(draft.kind.title)"
-        case .edit: return "Edit \(draft.kind.title)"
+    /// One whole phrase per case: "New" and "Task" agree differently in
+    /// other languages, so they cannot be joined after translating.
+    private var title: LocalizedStringKey {
+        switch (isEditing, draft.kind) {
+        case (false, .task): return "New Task"
+        case (false, .event): return "New Event"
+        case (true, .task): return "Edit Task"
+        case (true, .event): return "Edit Event"
         }
+    }
+
+    /// Whole phrases for the same reason as `title`.
+    private var saveButtonTitle: LocalizedStringKey {
+        if isSaving { return "Saving…" }
+        if isEditing { return "Save changes" }
+        return draft.kind == .event ? "Add event" : "Add task"
     }
 
     // MARK: - Date and time conversion

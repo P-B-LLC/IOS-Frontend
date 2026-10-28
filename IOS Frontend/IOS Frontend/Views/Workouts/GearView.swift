@@ -5,6 +5,7 @@
 //  Shoes and bikes, and how far each has been.
 //
 
+import Foundation
 import SwiftUI
 
 struct GearView: View {
@@ -31,7 +32,7 @@ struct GearView: View {
             VStack(alignment: .leading, spacing: 20) {
                 RepbaseScreenHeader(
                     eyebrow: "TRAINING GEAR",
-                    title: selection == nil ? "Your gear" : "Choose \(kind.singular)",
+                    title: selection == nil ? "Your gear" : chooseTitle,
                     detail: selection == nil ? "Keep the equipment behind every mile organized." : "Select what you are using for this session."
                 )
                 // Both kinds only when browsing. Opened from a run, the Bike
@@ -94,7 +95,7 @@ struct GearView: View {
                 Button {
                     editing = .create(kind)
                 } label: {
-                    Label("Add \(kind.singular)", systemImage: "plus")
+                    Label(kind == .shoe ? "Add shoe" : "Add bike", systemImage: "plus")
                         .font(.community(.subheadline, weight: .semibold))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
@@ -109,7 +110,7 @@ struct GearView: View {
         .repbaseScreen(.prepare)
         // Named for what is on screen. With the switch hidden, a title of
         // "Gear" over a list of only shoes reads like the bikes are missing.
-        .navigationTitle(selection == nil ? "Gear" : kind.title)
+        .navigationTitle(selection == nil ? String(localized: "Gear", bundle: .app, locale: .app, comment: "Training equipment: running shoes and bikes") : kind.title)
         .navigationBarTitleDisplayMode(.inline)
         .task {
             // Open on the kind that was asked for, once. Doing it on every
@@ -127,6 +128,14 @@ struct GearView: View {
         }
     }
 
+    /// A phrase per kind, so a translation can agree with the noun.
+    private var chooseTitle: LocalizedStringKey {
+        switch kind {
+        case .shoe: "Choose shoe"
+        case .bike: "Choose bike"
+        }
+    }
+
     /// Retired gear keeps its place in the list and its mileage, but cannot be
     /// put back into a session without being un-retired first.
     private func canSelect(_ item: Gear) -> Bool {
@@ -141,7 +150,7 @@ struct GearView: View {
 
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("No \(kind.title.lowercased()) yet")
+            Text(kind == .shoe ? "No shoes yet" : "No bike yet")
                 .font(.community(.subheadline, weight: .semibold))
             Text(
                 kind == .shoe
@@ -239,23 +248,25 @@ private struct GearCard: View {
                             .accessibilityHidden(true)
                     }
                     if gear.isDefault {
-                        tag("DEFAULT")
+                        statusTag("DEFAULT")
                     }
                     if gear.isRetired {
-                        tag("RETIRED")
+                        statusTag("RETIRED")
                     }
                 }
 
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    // The number alone, with the unit beside it in its own
+                    // style. Not cut out of `distanceText`, whose unit may be
+                    // translated.
                     Text(
-                        ImperialUnits.distanceText(
-                            kilometers: gear.totalDistanceKilometers,
-                            decimals: 1
+                        String(
+                            format: "%.1f",
+                            ImperialUnits.miles(fromKilometers: gear.totalDistanceKilometers)
                         )
-                        .replacingOccurrences(of: " mi", with: "")
                     )
                     .font(.community(size: 30, weight: .bold, design: .rounded))
-                    Text("mi")
+                    Text("mi", comment: "Abbreviation for miles")
                         .font(.community(.subheadline, weight: .medium))
                         .foregroundStyle(.secondary)
                     Spacer()
@@ -329,10 +340,11 @@ private struct GearCard: View {
     }
 
     private var relativeText: String {
-        guard peakDistanceKilometers > 0 else { return "Not used yet" }
+        guard peakDistanceKilometers > 0 else { return String(localized: "Not used yet", bundle: .app, locale: .app) }
         let behind = peakDistanceKilometers - gear.totalDistanceKilometers
-        if behind <= 0.05 { return "Your most worn" }
-        return "\(ImperialUnits.distanceText(kilometers: behind, decimals: 0)) less than your most worn"
+        if behind <= 0.05 { return String(localized: "Your most worn", bundle: .app, locale: .app) }
+        let distance = ImperialUnits.distanceText(kilometers: behind, decimals: 0)
+        return String(localized: "\(distance) less than your most worn", bundle: .app, locale: .app, comment: "The placeholder is a distance, e.g. 40 mi")
     }
 
     private func remainingText(_ remainingKilometers: Double, fraction: Double) -> String {
@@ -345,10 +357,10 @@ private struct GearCard: View {
                 kilometers: -remainingKilometers,
                 decimals: 0
             )
-            return "\(over) past the \(target) you set"
+            return String(localized: "\(over) past the \(target) you set", bundle: .app, locale: .app, comment: "Both placeholders are distances, e.g. 20 mi past the 400 mi you set")
         }
         let left = ImperialUnits.distanceText(kilometers: remainingKilometers, decimals: 0)
-        return "\(left) left of \(target)"
+        return String(localized: "\(left) left of \(target)", bundle: .app, locale: .app, comment: "Both placeholders are distances, e.g. 120 mi left of 400 mi")
     }
 
     private func barColor(_ fraction: Double) -> Color {
@@ -359,9 +371,13 @@ private struct GearCard: View {
         return RepbasePalette.caramel
     }
 
-    private func tag(_ text: String) -> some View {
+    /// Not `tag`: with a `LocalizedStringKey` parameter, a literal argument
+    /// resolves to SwiftUI's own `View.tag(_:)` instead, and no badge draws.
+    private func statusTag(_ text: LocalizedStringKey) -> some View {
         Text(text)
             .font(.community(.caption2, weight: .bold))
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
             .foregroundStyle(.secondary)
             .padding(.horizontal, 7)
             .padding(.vertical, 3)

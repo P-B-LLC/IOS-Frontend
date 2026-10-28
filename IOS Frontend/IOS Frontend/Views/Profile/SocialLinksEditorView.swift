@@ -14,6 +14,7 @@
 //  the copy in the app is the one that cannot be trusted.
 //
 
+import Foundation
 import SwiftUI
 
 struct SocialLinksEditorView: View {
@@ -159,7 +160,9 @@ struct SocialLinksEditorView: View {
     }
 
     private func placeholder(for platform: ProfileSocialLink.Platform) -> String {
-        platform == .website ? "https://example.com" : "@yourhandle or a link"
+        platform == .website
+            ? "https://example.com"
+            : String(localized: "@yourhandle or a link", bundle: .app, locale: .app)
     }
 
     private func save() {

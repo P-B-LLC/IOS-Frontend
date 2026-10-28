@@ -167,7 +167,7 @@ struct WorkoutPlanFields: View {
         }
     }
 
-    private var namePlaceholder: String {
+    private var namePlaceholder: LocalizedStringKey {
         switch draft.type {
         case .lifting: return "Example: Push Day"
         case .running: return "Example: Morning Run"
@@ -289,6 +289,7 @@ struct WorkoutPlanFields: View {
                                 Text(machine.title)
                                     .font(.community(.caption2, weight: .medium))
                                     .lineLimit(1)
+                                    .minimumScaleFactor(0.8)
                             }
                             .frame(width: 78)
                             .padding(.vertical, 10)
@@ -576,7 +577,7 @@ private struct ExercisePlanEditorCard: View {
 
     private func directAction(
         _ symbol: String,
-        label: String,
+        label: LocalizedStringKey,
         enabled: Bool,
         action: @escaping () -> Void
     ) -> some View {

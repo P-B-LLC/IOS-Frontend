@@ -14,7 +14,7 @@ enum ModerationConsent {
     /// somebody presses Cancel tells them what they already know, in the
     /// voice the app uses for things going wrong.
     struct NotGranted: LocalizedError {
-        var errorDescription: String? { "Nothing was submitted." }
+        var errorDescription: String? { String(localized: "Nothing was submitted.", bundle: .app, locale: .app) }
     }
 
     /// There was no way to put the question.
@@ -24,7 +24,11 @@ enum ModerationConsent {
     /// that silencing a decline does not also silence a fault.
     struct CannotAsk: LocalizedError {
         var errorDescription: String? {
-            "Nothing was submitted. Safety-review permission could not be requested — reopen the app and try again."
+            String(
+                localized: "Nothing was submitted. Safety-review permission could not be requested — reopen the app and try again.",
+                bundle: .app,
+                locale: .app
+            )
         }
     }
 
@@ -102,12 +106,26 @@ enum ModerationConsent {
         while let presented = presenter.presentedViewController { presenter = presented }
         guard !presenter.isBeingDismissed else { return nil }
 
+        // The disclosure and the closing question are separate whole sentences,
+        // each translated on its own, so joining them builds no phrase.
+        let disclosure = String(
+            localized: "Rytivo sends the public-facing text, photos, and extracted video frames you submit to OpenAI for safety checks. This can include profile names, bios, social handles, public gym details, comments, and titles or instructions in shared meals/workouts. Audio, account credentials, private measurements, and unshared logs are excluded. Media stays unpublished while checks or moderator review are pending. Automated checks can make mistakes; contact \(LegalDocuments.contactEmail) to appeal.",
+            bundle: .app,
+            locale: .app
+        )
+        let question = persistent
+            ? String(
+                localized: "Allow safety review for this account? Your choice is saved; you can withdraw it in Settings under Safety review.",
+                bundle: .app,
+                locale: .app
+            )
+            : String(localized: "Allow this submission?", bundle: .app, locale: .app)
         return await withCheckedContinuation { (continuation: CheckedContinuation<Bool?, Never>) in
-            let alert = UIAlertController(title: "Allow safety review?", message:
-                "Rytivo sends the public-facing text, photos, and extracted video frames you submit to OpenAI for safety checks. This can include profile names, bios, social handles, public gym details, comments, and titles or instructions in shared meals/workouts. Audio, account credentials, private measurements, and unshared logs are excluded. Media stays unpublished while checks or moderator review are pending. Automated checks can make mistakes; contact \(LegalDocuments.contactEmail) to appeal. " + (persistent ? "Allow safety review for this account? Your choice is saved; you can withdraw it in Settings under Safety review." : "Allow this submission?"),
+            let alert = UIAlertController(title: String(localized: "Allow safety review?", bundle: .app, locale: .app), message:
+                disclosure + " " + question,
                 preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel) { _ in continuation.resume(returning: false) })
-            alert.addAction(UIAlertAction(title: "Allow and continue", style: .default) { _ in continuation.resume(returning: true) })
+            alert.addAction(UIAlertAction(title: String(localized: "Cancel", bundle: .app, locale: .app), style: .cancel) { _ in continuation.resume(returning: false) })
+            alert.addAction(UIAlertAction(title: String(localized: "Allow and continue", bundle: .app, locale: .app), style: .default) { _ in continuation.resume(returning: true) })
             presenter.present(alert, animated: true)
         }
     }

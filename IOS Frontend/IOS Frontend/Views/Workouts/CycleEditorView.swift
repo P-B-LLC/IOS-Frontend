@@ -9,6 +9,7 @@
 //  one that lands wrong from the second turn onwards.
 //
 
+import Foundation
 import SwiftUI
 
 struct CycleEditorView: View {
@@ -216,11 +217,13 @@ struct CycleEditorView: View {
 
     private var anchorFooter: String {
         let day = draft.anchorDate.formatted(
-            .dateTime.weekday(.wide).month(.wide).day()
+            .dateTime.weekday(.wide).month(.wide).day().locale(.app)
         )
-        return "The cycle counts from \(day). After that it repeats every "
-            + "\(draft.length) days, which means it will not land on the same "
-            + "weekday twice."
+        return String(
+            localized: "The cycle counts from \(day). After that it repeats every \(draft.length) days, which means it will not land on the same weekday twice.",
+            bundle: .app,
+            locale: .app
+        )
     }
 
     /// A day, and the way into building what goes on it.
@@ -251,7 +254,7 @@ struct CycleEditorView: View {
                     )
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(slot.isRest ? "Rest day" : slot.displayName)
+                    Text(slot.isRest ? String(localized: "Rest day", bundle: .app, locale: .app) : slot.displayName)
                         .font(.community(.subheadline, weight: .semibold))
                         .foregroundStyle(timeOfDay.canvasPrimaryText)
                     Text(slot.isRest ? "Choose a workout or keep recovery" : "Workout planned")
@@ -261,7 +264,7 @@ struct CycleEditorView: View {
 
                 Spacer()
 
-                Text(slot.isRest ? "Set" : "Edit")
+                Text(slot.isRest ? "Set" : "Edit", comment: "Action on a rotation day: Set picks a workout for a rest day, Edit changes the planned one")
                     .font(.community(.caption, weight: .semibold))
                     .foregroundStyle(timeOfDay.accent)
             }
@@ -289,7 +292,7 @@ struct CycleEditorView: View {
         // The rotation changed under the editor, so there is no longer a slot
         // to put this in. The workout itself was created and is not lost.
         guard let index = draft.slots.firstIndex(where: { $0.position == position }) else {
-            return "Day \(position) is no longer part of this rotation. The workout was saved and is in your list."
+            return String(localized: "Day \(position) is no longer part of this rotation. The workout was saved and is in your list.", bundle: .app, locale: .app)
         }
         draft.slots[index].workoutID = id
         draft.slots[index].workoutName = built.name

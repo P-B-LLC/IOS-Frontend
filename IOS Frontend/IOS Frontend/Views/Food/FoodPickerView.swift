@@ -6,6 +6,7 @@
 //  search a food database once the OAS documents one, or enter it manually.
 //
 
+import Foundation
 import SwiftUI
 
 struct FoodPickerView: View {
@@ -24,7 +25,7 @@ struct FoodPickerView: View {
     @State private var isSearchingDatabase = false
     @State private var databaseError: String?
     @State private var selectedFood: FoodEntry?
-    @State private var servingDescription = "1 serving of this food entry"
+    @State private var servingDescription = String(localized: "1 serving of this food entry", bundle: .app, locale: .app)
     @State private var savedFood: FoodEntry?
     @State private var openedInitialFood = false
     var initialFood: FoodEntry? = nil
@@ -197,7 +198,7 @@ struct FoodPickerView: View {
                 } else {
                     ForEach(Array(filteredRecents.enumerated()), id: \.element.id) { index, food in
                         Button {
-                            servingDescription = "1 serving of this food entry"
+                            servingDescription = String(localized: "1 serving of this food entry", bundle: .app, locale: .app)
                             selectedFood = food
                         } label: {
                             RecentFoodRow(food: food)
@@ -230,7 +231,7 @@ struct FoodPickerView: View {
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                 }
                 Spacer()
-                Image(systemName: "chevron.right")
+                Image(systemName: "chevron.forward")
                     .font(.community(.caption, weight: .bold))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
             }
@@ -252,7 +253,7 @@ struct FoodPickerView: View {
         }
     }
 
-    private var recentEmptyMessage: String {
+    private var recentEmptyMessage: LocalizedStringKey {
         store.recentFoods.isEmpty
             ? "Foods you log will show up here so you can add them again in one tap."
             : "No previously used food matches that search."
@@ -264,7 +265,11 @@ struct FoodPickerView: View {
         guard !isSaving else { return }
         if let pendingAdd,
            pendingAdd.name != food.name || pendingAdd.servings != food.servings || pendingAdd.nutritionPerServing != food.nutritionPerServing {
-            saveError = "Please retry the previous food first so we can confirm whether it saved."
+            saveError = String(
+                localized: "Please retry the previous food first so we can confirm whether it saved.",
+                bundle: .app,
+                locale: .app
+            )
             return
         }
         let entry = pendingAdd ?? FoodEntry(name: food.name, servings: food.servings,
@@ -310,7 +315,11 @@ struct FoodPickerView: View {
         } catch {
             guard !Task.isCancelled else { return }
             databaseResults = []
-            databaseError = "The food database could not be reached. You can still reuse or enter a food manually."
+            databaseError = String(
+                localized: "The food database could not be reached. You can still reuse or enter a food manually.",
+                bundle: .app,
+                locale: .app
+            )
         }
         isSearchingDatabase = false
     }
@@ -377,7 +386,7 @@ private struct FoodPortionView: View {
                     Text("For your portion").foregroundStyle(.secondary)
                     Text("\(nutrition.calories.nutritionText) kcal").font(.community(.largeTitle, weight: .bold))
                     ForEach(Macro.allCases) { macro in
-                        Text("\(macro.grams(in: nutrition).nutritionText) g \(macro.title)")
+                        Text(amountText(for: macro))
                             .font(.community(.subheadline)).foregroundStyle(macro.color)
                     }
                 }
@@ -401,6 +410,17 @@ private struct FoodPortionView: View {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Back to results") { dismiss() }.disabled(isSaving)
             }
+        }
+    }
+
+    /// Whole phrases per macro, so a translation can put words between the
+    /// amount and the name.
+    private func amountText(for macro: Macro) -> LocalizedStringKey {
+        let grams = macro.grams(in: nutrition).nutritionText
+        switch macro {
+        case .protein: return "\(grams) g Protein"
+        case .carbs: return "\(grams) g Carbs"
+        case .fat: return "\(grams) g Fat"
         }
     }
 

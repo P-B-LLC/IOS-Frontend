@@ -19,10 +19,10 @@ nonisolated enum WorkoutType: String, CaseIterable, Identifiable, Hashable, Coda
 
     var title: String {
         switch self {
-        case .lifting: return "Lifting"
-        case .running: return "Running"
-        case .biking: return "Biking"
-        case .swimming: return "Swimming"
+        case .lifting: return String(localized: "Lifting", bundle: .app, locale: .app, comment: "A kind of workout: weight training")
+        case .running: return String(localized: "Running", bundle: .app, locale: .app, comment: "A kind of workout")
+        case .biking: return String(localized: "Biking", bundle: .app, locale: .app, comment: "A kind of workout: cycling")
+        case .swimming: return String(localized: "Swimming", bundle: .app, locale: .app, comment: "A kind of workout")
         }
     }
 
@@ -34,20 +34,20 @@ nonisolated enum WorkoutType: String, CaseIterable, Identifiable, Hashable, Coda
     /// than the saved workout name.
     var sessionTitle: String {
         switch self {
-        case .lifting: return "Strength session"
-        case .running: return "Run session"
-        case .biking: return "Ride session"
-        case .swimming: return "Swim session"
+        case .lifting: return String(localized: "Strength session", bundle: .app, locale: .app)
+        case .running: return String(localized: "Run session", bundle: .app, locale: .app)
+        case .biking: return String(localized: "Ride session", bundle: .app, locale: .app)
+        case .swimming: return String(localized: "Swim session", bundle: .app, locale: .app)
         }
     }
 
     /// How the logged distance is described for this type.
     var distanceTitle: String {
         switch self {
-        case .running: return "Distance ran"
-        case .biking: return "Distance biked"
-        case .swimming: return "Distance swum"
-        case .lifting: return "Distance"
+        case .running: return String(localized: "Distance ran", bundle: .app, locale: .app)
+        case .biking: return String(localized: "Distance biked", bundle: .app, locale: .app)
+        case .swimming: return String(localized: "Distance swum", bundle: .app, locale: .app)
+        case .lifting: return String(localized: "Distance", bundle: .app, locale: .app)
         }
     }
 }
@@ -70,14 +70,14 @@ nonisolated enum CardioMachine: String, CaseIterable, Identifiable, Hashable, Co
 
     var title: String {
         switch self {
-        case .treadmill: return "Treadmill"
-        case .stationaryBike: return "Bike"
-        case .stairMaster: return "Stair Master"
-        case .elliptical: return "Elliptical"
-        case .rowingMachine: return "Rower"
-        case .assaultBike: return "Assault Bike"
-        case .skiErg: return "Ski Erg"
-        case .other: return "Other"
+        case .treadmill: return String(localized: "Treadmill", bundle: .app, locale: .app, comment: "A cardio machine")
+        case .stationaryBike: return String(localized: "Bike", bundle: .app, locale: .app, comment: "A cardio machine: a stationary exercise bike")
+        case .stairMaster: return String(localized: "Stair Master", bundle: .app, locale: .app, comment: "A cardio machine: a stair climber")
+        case .elliptical: return String(localized: "Elliptical", bundle: .app, locale: .app, comment: "A cardio machine: an elliptical trainer")
+        case .rowingMachine: return String(localized: "Rower", bundle: .app, locale: .app, comment: "A cardio machine: a rowing machine")
+        case .assaultBike: return String(localized: "Assault Bike", bundle: .app, locale: .app, comment: "A cardio machine: a fan-resisted air bike")
+        case .skiErg: return String(localized: "Ski Erg", bundle: .app, locale: .app, comment: "A cardio machine: a ski ergometer")
+        case .other: return String(localized: "Other", bundle: .app, locale: .app, comment: "A cardio machine not in the list")
         }
     }
 
@@ -329,8 +329,8 @@ nonisolated struct PersonalRecord: Identifiable, Hashable, Sendable {
 
         var title: String {
             switch self {
-            case .heaviestWeight: return "Heaviest Lift"
-            case .estimatedOneRepMax: return "Best Est. 1RM"
+            case .heaviestWeight: return String(localized: "Heaviest Lift", bundle: .app, locale: .app, comment: "A kind of personal record")
+            case .estimatedOneRepMax: return String(localized: "Best Est. 1RM", bundle: .app, locale: .app, comment: "A kind of personal record: the best estimated one-rep max")
             }
         }
     }
@@ -348,8 +348,12 @@ nonisolated struct PersonalRecord: Identifiable, Hashable, Sendable {
     var isFirstEver: Bool { previousValueKilograms == nil }
 
     var valueText: String {
-        String(format: "%.1f kg", valueKilograms)
-            .replacingOccurrences(of: ".0 kg", with: " kg")
+        String(
+            localized: "\(Self.kilogramFigure(valueKilograms)) kg",
+            bundle: .app,
+            locale: .app,
+            comment: "A weight; kg is the abbreviation for kilograms"
+        )
     }
 
     /// How much this beat the old best by, e.g. "+2.5 kg".
@@ -357,20 +361,40 @@ nonisolated struct PersonalRecord: Identifiable, Hashable, Sendable {
         guard let previousValueKilograms else { return nil }
         let delta = valueKilograms - previousValueKilograms
         guard delta > 0 else { return nil }
-        return String(format: "+%.1f kg", delta)
-            .replacingOccurrences(of: ".0 kg", with: " kg")
+        return String(
+            localized: "+\(Self.kilogramFigure(delta)) kg",
+            bundle: .app,
+            locale: .app,
+            comment: "How much a personal record beat the old best by; kg is the abbreviation for kilograms"
+        )
     }
 
     var detailText: String {
         if isFirstEver {
-            return reps.map { "First time · \($0) reps" } ?? "First time"
+            return reps.map { String(localized: "First time · \($0) reps", bundle: .app, locale: .app) }
+                ?? String(localized: "First time", bundle: .app, locale: .app)
         }
         let previous = previousValueKilograms.map {
-            String(format: "was %.1f kg", $0)
-                .replacingOccurrences(of: ".0 kg", with: " kg")
+            String(
+                localized: "was \(Self.kilogramFigure($0)) kg",
+                bundle: .app,
+                locale: .app,
+                comment: "The old best a personal record beat; kg is the abbreviation for kilograms"
+            )
         } ?? ""
         guard let reps else { return previous }
-        return "\(reps) reps · \(previous)"
+        return String(
+            localized: "\(reps) reps · \(previous)",
+            bundle: .app,
+            locale: .app,
+            comment: "The second placeholder is the old best, such as “was 80 kg”"
+        )
+    }
+
+    /// One decimal, dropped when it is zero: "82.5", but "80" rather than "80.0".
+    private static func kilogramFigure(_ value: Double) -> String {
+        let figure = String(format: "%.1f", value)
+        return figure.hasSuffix(".0") ? String(figure.dropLast(2)) : figure
     }
 }
 
@@ -477,6 +501,13 @@ nonisolated struct SessionRouteSummary: Hashable, Sendable {
         return ImperialUnits.paceText(secondsPerKilometer: seconds)
     }
 
+    /// The same pace without its unit, "8:51", for a figure whose unit is
+    /// printed beside it.
+    static func paceFigure(_ seconds: Double?) -> String? {
+        guard let seconds, seconds > 0, seconds.isFinite else { return nil }
+        return ImperialUnits.paceFigure(secondsPerKilometer: seconds)
+    }
+
     /// Formats a duration as m:ss, used for split times.
     static func durationText(_ seconds: Double) -> String {
         let total = Int(seconds.rounded())
@@ -554,7 +585,7 @@ nonisolated struct PreviousSet: Hashable, Sendable {
         switch (weightKilograms, reps) {
         case let (weight?, reps?): "\(weight.nutritionText) × \(reps)"
         case let (weight?, nil): weight.nutritionText
-        case let (nil, reps?): "\(reps) reps"
+        case let (nil, reps?): String(localized: "\(reps) reps", bundle: .app, locale: .app)
         case (nil, nil): nil
         }
     }
@@ -576,7 +607,9 @@ nonisolated struct SessionOverview: Hashable, Sendable {
         /// "60 × 8 · 60 × 8", the sets as they were logged.
         var setsText: String {
             let parts = sets.compactMap(\.summary)
-            return parts.isEmpty ? "No sets logged" : parts.joined(separator: "  ·  ")
+            return parts.isEmpty
+                ? String(localized: "No sets logged", bundle: .app, locale: .app)
+                : parts.joined(separator: "  ·  ")
         }
     }
 

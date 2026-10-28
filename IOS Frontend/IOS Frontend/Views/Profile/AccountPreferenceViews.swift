@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 import UserNotifications
 import UIKit
@@ -17,18 +18,33 @@ struct AppleHealthConnectionView: View {
                 )
 
                 VStack(spacing: 0) {
-                    statusRow("Health available", value: activity.isHealthSupported ? "Yes" : "Unavailable")
+                    statusRow(
+                        "Health available",
+                        value: activity.isHealthSupported
+                            ? String(localized: "Yes", bundle: .app, locale: .app)
+                            : String(localized: "Unavailable", bundle: .app, locale: .app)
+                    )
                     Divider()
-                    statusRow("Access requested", value: activity.hasAskedHealth ? "Yes" : "Not yet")
+                    statusRow(
+                        "Access requested",
+                        value: activity.hasAskedHealth
+                            ? String(localized: "Yes", bundle: .app, locale: .app)
+                            : String(localized: "Not yet", bundle: .app, locale: .app)
+                    )
                     Divider()
-                    statusRow("Today's steps", value: activity.stepsToday?.formatted() ?? "Not reported")
+                    statusRow("Today's steps", value: activity.stepsToday?.formatted() ?? String(localized: "Not reported", bundle: .app, locale: .app))
                     Divider()
-                    statusRow("7-day average", value: activity.weekAverage.map { "\($0.formatted()) steps" } ?? "Not reported")
+                    statusRow(
+                        "7-day average",
+                        value: activity.weekAverage.map {
+                            String(localized: "\($0.formatted()) steps", bundle: .app, locale: .app, comment: "The placeholder is a formatted step count")
+                        } ?? String(localized: "Not reported", bundle: .app, locale: .app)
+                    )
                     Divider()
-                    statusRow("8K goal days", value: "\(activity.goalDaysThisWeek) this week")
+                    statusRow("8K goal days", value: String(localized: "\(activity.goalDaysThisWeek) this week", bundle: .app, locale: .app))
                     if let synced = activity.lastSyncedAt {
                         Divider()
-                        statusRow("Last synced", value: synced.formatted(.relative(presentation: .named)))
+                        statusRow("Last synced", value: synced.formatted(.relative(presentation: .named).locale(.app)))
                     }
                 }
 
@@ -80,7 +96,7 @@ struct AppleHealthConnectionView: View {
         .homeTimeScreen(timeOfDay)
     }
 
-    private func statusRow(_ title: String, value: String) -> some View {
+    private func statusRow(_ title: LocalizedStringKey, value: String) -> some View {
         HStack {
             Text(title).font(.community(.body))
             Spacer()
@@ -231,18 +247,38 @@ struct NotificationPreferencesView: View {
     private var mutedTaskCount: String {
         _ = mutedSummaryToken
         let scheduler = NotificationScheduler.shared
-        var parts: [String] = []
         let tasks = scheduler.mutedTaskIDs.count
-        if tasks > 0 {
-            parts.append(tasks == 1 ? "1 task" : "\(tasks) tasks")
+        // Each combination is written out whole, because a list joined from
+        // translated pieces only reads correctly in English.
+        switch (tasks, scheduler.isFoodMutedToday, scheduler.isWorkoutMutedToday) {
+        case (0, false, false):
+            return ""
+        case (0, true, false):
+            return String(localized: "food for today muted from a notification.", bundle: .app, locale: .app)
+        case (0, false, true):
+            return String(localized: "workouts for today muted from a notification.", bundle: .app, locale: .app)
+        case (0, true, true):
+            return String(localized: "food for today, workouts for today muted from a notification.", bundle: .app, locale: .app)
+        case (1, false, false):
+            return String(localized: "1 task muted from a notification.", bundle: .app, locale: .app)
+        case (1, true, false):
+            return String(localized: "1 task, food for today muted from a notification.", bundle: .app, locale: .app)
+        case (1, false, true):
+            return String(localized: "1 task, workouts for today muted from a notification.", bundle: .app, locale: .app)
+        case (1, true, true):
+            return String(localized: "1 task, food for today, workouts for today muted from a notification.", bundle: .app, locale: .app)
+        case (_, false, false):
+            return String(localized: "\(tasks) tasks muted from a notification.", bundle: .app, locale: .app)
+        case (_, true, false):
+            return String(localized: "\(tasks) tasks, food for today muted from a notification.", bundle: .app, locale: .app)
+        case (_, false, true):
+            return String(localized: "\(tasks) tasks, workouts for today muted from a notification.", bundle: .app, locale: .app)
+        case (_, true, true):
+            return String(localized: "\(tasks) tasks, food for today, workouts for today muted from a notification.", bundle: .app, locale: .app)
         }
-        if scheduler.isFoodMutedToday { parts.append("food for today") }
-        if scheduler.isWorkoutMutedToday { parts.append("workouts for today") }
-        guard !parts.isEmpty else { return "" }
-        return parts.joined(separator: ", ") + " muted from a notification."
     }
 
-    private func preference(_ title: String, detail: String, value: Binding<Bool>) -> some View {
+    private func preference(_ title: LocalizedStringKey, detail: LocalizedStringKey, value: Binding<Bool>) -> some View {
         Toggle(isOn: value) {
             VStack(alignment: .leading, spacing: 3) {
                 Text(title).font(.community(.headline))
@@ -252,7 +288,7 @@ struct NotificationPreferencesView: View {
         .padding(.vertical, 15)
     }
 
-    private var permissionLabel: String {
+    private var permissionLabel: LocalizedStringKey {
         switch authorizationStatus {
         case .authorized, .provisional, .ephemeral: "Notifications are on"
         case .denied: "Notifications are off"
@@ -261,7 +297,7 @@ struct NotificationPreferencesView: View {
         }
     }
 
-    private var permissionDetail: String {
+    private var permissionDetail: LocalizedStringKey {
         authorizationStatus == .denied
             ? "Open iOS Settings to restore permission."
             : "Rytivo schedules only the reminders enabled below."

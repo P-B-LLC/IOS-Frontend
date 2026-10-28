@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 import RepbaseAPI
 
@@ -45,7 +46,7 @@ struct SafetyConsentSettings: View {
             granted = result
         } catch {
             guard !Task.isCancelled, authentication.token == token else { return }
-            self.error = "Could not load your safety-review preference. Please retry."
+            self.error = String(localized: "Could not load your safety-review preference. Please retry.", bundle: .app, locale: .app)
         }
     }
 
@@ -63,7 +64,7 @@ struct SafetyConsentSettings: View {
         } catch is ModerationConsent.NotGranted {
         } catch {
             guard !Task.isCancelled, authentication.token == token else { return }
-            self.error = "Your preference could not be updated. Please retry."
+            self.error = String(localized: "Your preference could not be updated. Please retry.", bundle: .app, locale: .app)
         }
     }
 }

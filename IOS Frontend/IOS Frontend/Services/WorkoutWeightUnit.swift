@@ -3,7 +3,11 @@ import Foundation
 /// Display conversion only. Wire values always remain two-decimal kilograms.
 nonisolated enum WorkoutWeightUnit: String, Sendable {
     case metric, imperial
-    var label: String { self == .imperial ? "lb" : "kg" }
+    var label: String {
+        self == .imperial
+            ? String(localized: "lb", bundle: .app, locale: .app, comment: "Abbreviation for pounds, the unit of weight")
+            : String(localized: "kg", bundle: .app, locale: .app, comment: "Abbreviation for kilograms, the unit of weight")
+    }
     private var factor: Decimal { self == .imperial ? Decimal(string: "2.2046226218")! : 1 }
 
     func display(kilograms: String) -> String {

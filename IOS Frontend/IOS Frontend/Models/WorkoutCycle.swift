@@ -25,7 +25,9 @@ nonisolated struct WorkoutCycleSlot: Identifiable, Hashable, Sendable {
     var id: Int { position }
     var isRest: Bool { workoutID == nil }
 
-    var displayName: String { workoutName ?? "Rest" }
+    var displayName: String {
+        workoutName ?? String(localized: "Rest", bundle: .app, locale: .app, comment: "A rest day in a training rotation")
+    }
 }
 
 nonisolated struct WorkoutCycle: Identifiable, Hashable, Sendable {
@@ -59,11 +61,21 @@ nonisolated struct WorkoutCycle: Identifiable, Hashable, Sendable {
     /// unnamed rotation is described by its length instead.
     var displayName: String {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? "\(length)-day rotation" : trimmed
+        return trimmed.isEmpty ? String(localized: "\(length)-day rotation", bundle: .app, locale: .app) : trimmed
     }
 
     /// "Day 3 of 8", the thing an eight-day split makes hard to keep track of.
-    var positionText: String { "Day \(currentPosition) of \(length)" }
+    var positionText: String { String(localized: "Day \(currentPosition) of \(length)", bundle: .app, locale: .app) }
+
+    /// `currentWorkoutName` for display. The server writes the English word
+    /// "Rest" on a rest day, so that one is said here in the app's language
+    /// instead; a workout's name is shown as the server has it.
+    var currentWorkoutDisplayName: String {
+        let slot = orderedSlots.first { $0.position == currentPosition }
+        return slot?.isRest == false
+            ? currentWorkoutName
+            : String(localized: "Rest", bundle: .app, locale: .app, comment: "A rest day in a training rotation")
+    }
 
     /// Which day of the rotation a date falls on, counting from one, or nil
     /// when the rotation was not running then.

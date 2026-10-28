@@ -5,6 +5,7 @@
 //  The selected day as an hour-by-hour schedule.
 //
 
+import Foundation
 import SwiftUI
 
 /// The day laid out against the clock: an hour column down the left, and each
@@ -120,6 +121,8 @@ struct PlannerDaySchedule: View {
                     Text(Self.label(for: hour))
                         .font(.community(size: 11, weight: .medium))
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                         .frame(width: gutterWidth - 8, alignment: .leading)
                     VerticalDashedRule()
                         .stroke(
@@ -290,10 +293,12 @@ struct PlannerDaySchedule: View {
         var parts: [String] = []
         // First, because it is the reason this row sits where it does. The
         // Anytime list arrives in server order, which is already priority-first.
-        if let badge = entry.priority.badge { parts.append(badge.capitalized) }
+        // Its own phrase rather than the badge recased, which only works for
+        // scripts and languages that capitalise the way English does.
+        if entry.priority.badge != nil { parts.append(String(localized: "High Priority", bundle: .app, locale: .app)) }
         parts.append(entry.category.title)
         if let when = entry.displayTimeRange { parts.append(when) }
-        if entry.kind == .event { parts.append("Event") }
+        if entry.kind == .event { parts.append(String(localized: "Event", bundle: .app, locale: .app)) }
         return parts.joined(separator: " · ")
     }
 
@@ -364,10 +369,14 @@ struct PlannerDaySchedule: View {
     }
 
     /// "9 AM", "12 PM", matching the clock rather than the API's 24-hour times.
+    ///
+    /// Formatted rather than spelled out, so the hour reads the way the
+    /// chosen language and the device's clock write it.
     private static func label(for hour: Int) -> String {
-        let suffix = hour < 12 ? "AM" : "PM"
-        let shown = hour % 12 == 0 ? 12 : hour % 12
-        return "\(shown) \(suffix)"
+        guard let moment = Calendar.current.date(bySettingHour: hour, minute: 0, second: 0, of: Date()) else {
+            return String(format: "%02d:00", hour)
+        }
+        return moment.formatted(.dateTime.hour().locale(.app))
     }
 }
 

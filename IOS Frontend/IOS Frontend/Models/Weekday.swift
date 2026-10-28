@@ -17,20 +17,23 @@ nonisolated enum Weekday: Int, CaseIterable, Identifiable, Hashable, Codable, Se
     var id: Int { rawValue }
 
     /// Full display name, e.g. "Monday".
-    var fullName: String {
-        switch self {
-        case .monday: return "Monday"
-        case .tuesday: return "Tuesday"
-        case .wednesday: return "Wednesday"
-        case .thursday: return "Thursday"
-        case .friday: return "Friday"
-        case .saturday: return "Saturday"
-        case .sunday: return "Sunday"
-        }
-    }
+    var fullName: String { Self.symbols(\.weekdaySymbols)[symbolIndex] }
 
     /// Short display name, e.g. "Mon".
-    var shortName: String { String(fullName.prefix(3)) }
+    var shortName: String { Self.symbols(\.shortWeekdaySymbols)[symbolIndex] }
+
+    /// Where this day sits in `Calendar`'s symbol lists, which start on
+    /// Sunday where this enum starts on Monday.
+    private var symbolIndex: Int { rawValue % 7 }
+
+    /// Day names in the language chosen in Settings, read from the calendar
+    /// rather than translated here, so every language gets its own spelling
+    /// and abbreviations.
+    private static func symbols(_ list: KeyPath<Calendar, [String]>) -> [String] {
+        var calendar = Calendar.current
+        calendar.locale = .app
+        return calendar[keyPath: list]
+    }
 
     /// The API's weekday number, which counts from Monday as zero to match
     /// Python's `date.weekday()`. This enum counts from one.

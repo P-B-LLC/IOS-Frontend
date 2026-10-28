@@ -5,6 +5,7 @@
 //  Time-aware daily nutrition dashboard.
 //
 
+import Foundation
 import SwiftUI
 
 struct FoodTrackingView: View {
@@ -47,6 +48,13 @@ struct FoodTrackingView: View {
     private enum FuelDisplay: String, CaseIterable {
         case logged = "Logged"
         case remaining = "Remaining"
+
+        var title: LocalizedStringKey {
+            switch self {
+            case .logged: "Logged"
+            case .remaining: "Remaining"
+            }
+        }
     }
 
     var body: some View {
@@ -148,7 +156,11 @@ struct FoodTrackingView: View {
                     syncNotice(message, timeOfDay: timeOfDay)
                 } else if !store.isConnected {
                     syncNotice(
-                        "Sign in to log food. Meals are kept on your account, not on this phone.",
+                        String(
+                            localized: "Sign in to log food. Meals are kept on your account, not on this phone.",
+                            bundle: .app,
+                            locale: .app
+                        ),
                         timeOfDay: timeOfDay
                     )
                 }
@@ -207,7 +219,7 @@ struct FoodTrackingView: View {
         HStack(alignment: .bottom, spacing: 14) {
             if showsBackButton {
                 Button { dismiss() } label: {
-                    Image(systemName: "chevron.left")
+                    Image(systemName: "chevron.backward")
                         .font(.community(size: 17, weight: .semibold))
                         .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
@@ -234,7 +246,7 @@ struct FoodTrackingView: View {
                         .foregroundStyle(timeOfDay.canvasPrimaryText)
                 }
                 .buttonStyle(.plain)
-                Text(selectedDate.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))
+                Text(selectedDate.formatted(.dateTime.weekday(.wide).month(.abbreviated).day().locale(.app)))
                     .font(.community(.subheadline))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
             }
@@ -277,7 +289,7 @@ struct FoodTrackingView: View {
                 Button {
                     changeWeek(by: -1)
                 } label: {
-                    Image(systemName: "chevron.left")
+                    Image(systemName: "chevron.backward")
                         .frame(width: 44, height: 44)
                 }
                 .accessibilityLabel("Previous week")
@@ -303,7 +315,7 @@ struct FoodTrackingView: View {
                 Button {
                     changeWeek(by: 1)
                 } label: {
-                    Image(systemName: "chevron.right")
+                    Image(systemName: "chevron.forward")
                         .frame(width: 44, height: 44)
                 }
                 .accessibilityLabel("Next week")
@@ -315,11 +327,11 @@ struct FoodTrackingView: View {
                         selectedDate = date
                     } label: {
                         VStack(spacing: 6) {
-                            Text(date.formatted(.dateTime.weekday(.narrow)))
+                            Text(date.formatted(.dateTime.weekday(.narrow).locale(.app)))
                                 .font(.community(.caption2, weight: .semibold))
                                 .foregroundStyle(timeOfDay.secondaryText)
 
-                            Text(date.formatted(.dateTime.day()))
+                            Text(date.formatted(.dateTime.day().locale(.app)))
                                 .font(.community(.caption, weight: .bold).monospacedDigit())
                                 .foregroundStyle(isSelected(date) ? RepbasePalette.cream : timeOfDay.primaryText)
                                 .frame(width: 30, height: 28)
@@ -356,7 +368,7 @@ struct FoodTrackingView: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel(date.formatted(date: .complete, time: .omitted))
+                    .accessibilityLabel(date.formatted(Date.FormatStyle(date: .complete, time: .omitted).locale(.app)))
                     .accessibilityValue(isSelected(date) ? "Selected" : "")
                 }
             }
@@ -389,14 +401,14 @@ struct FoodTrackingView: View {
             )
 
             Picker("Nutrition display", selection: $fuelDisplay) {
-                ForEach(FuelDisplay.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                ForEach(FuelDisplay.allCases, id: \.self) { Text($0.title).tag($0) }
             }
             .pickerStyle(.segmented)
 
             HStack(spacing: 12) {
-                MacroGoalCard(title: "Protein", value: shown.proteinGrams, goal: store.goals.proteinGrams, color: Macro.protein.color, isPulsing: nutritionPulse, delay: 0.05, showsRemaining: fuelDisplay == .remaining)
-                MacroGoalCard(title: "Carbs", value: shown.carbohydrateGrams, goal: store.goals.carbohydrateGrams, color: Macro.carbs.color, isPulsing: nutritionPulse, delay: 0.14, showsRemaining: fuelDisplay == .remaining)
-                MacroGoalCard(title: "Fat", value: shown.fatGrams, goal: store.goals.fatGrams, color: Macro.fat.color, isPulsing: nutritionPulse, delay: 0.23, showsRemaining: fuelDisplay == .remaining)
+                MacroGoalCard(title: String(localized: "Protein", bundle: .app, locale: .app), value: shown.proteinGrams, goal: store.goals.proteinGrams, color: Macro.protein.color, isPulsing: nutritionPulse, delay: 0.05, showsRemaining: fuelDisplay == .remaining)
+                MacroGoalCard(title: String(localized: "Carbs", bundle: .app, locale: .app), value: shown.carbohydrateGrams, goal: store.goals.carbohydrateGrams, color: Macro.carbs.color, isPulsing: nutritionPulse, delay: 0.14, showsRemaining: fuelDisplay == .remaining)
+                MacroGoalCard(title: String(localized: "Fat", bundle: .app, locale: .app), value: shown.fatGrams, goal: store.goals.fatGrams, color: Macro.fat.color, isPulsing: nutritionPulse, delay: 0.23, showsRemaining: fuelDisplay == .remaining)
             }
         }
         .padding(18)
@@ -482,7 +494,7 @@ struct FoodTrackingView: View {
         return VStack(alignment: .leading, spacing: 10) {
             if let nextMeal = meals.first(where: { $0.entries.isEmpty }) {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("UP NEXT · \(nextMeal.name.uppercased())")
+                    Text("UP NEXT · \(nextMeal.displayName.uppercased(with: .app))")
                         .font(.community(.caption2, weight: .semibold))
                     Text("What’s on your plate?").font(.community(.title2, weight: .bold))
                     Text("Add a food and see your day come together.")
@@ -490,7 +502,7 @@ struct FoodTrackingView: View {
                     NavigationLink {
                         MealDetailView(date: selectedDate, mealID: nextMeal.id)
                     } label: {
-                        Text("Log \(nextMeal.name.lowercased())").frame(maxWidth: .infinity)
+                        Text("Log \(nextMeal.displayNameInSentence)").frame(maxWidth: .infinity)
                     }
                     .buttonStyle(WorkoutPrimaryButtonStyle(phase: visualPhase))
                 }
@@ -626,7 +638,7 @@ struct FoodTrackingView: View {
     /// Named for the day being looked at, not for today. The week strip can
     /// be moved off today, and "yesterday" would then be the wrong word for
     /// the day this copies.
-    private var copyPreviousDayTitle: String {
+    private var copyPreviousDayTitle: LocalizedStringKey {
         Calendar.current.isDateInToday(selectedDate)
             ? "Same as yesterday"
             : "Same as the day before"
@@ -652,16 +664,16 @@ struct FoodTrackingView: View {
     }
 
     private var selectedDateTitle: String {
-        if Calendar.current.isDateInToday(selectedDate) { return "Today" }
-        return selectedDate.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
+        if Calendar.current.isDateInToday(selectedDate) { return String(localized: "Today", bundle: .app, locale: .app) }
+        return selectedDate.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day().locale(.app))
     }
 
     private var weekRangeTitle: String {
         guard let first = weekDates.first, let last = weekDates.last else { return "" }
         if Calendar.current.isDate(first, equalTo: last, toGranularity: .month) {
-            return "\(first.formatted(.dateTime.month(.abbreviated).day()))–\(last.formatted(.dateTime.day()))"
+            return "\(first.formatted(.dateTime.month(.abbreviated).day().locale(.app)))–\(last.formatted(.dateTime.day().locale(.app)))"
         }
-        return "\(first.formatted(.dateTime.month(.abbreviated).day()))–\(last.formatted(.dateTime.month(.abbreviated).day()))"
+        return "\(first.formatted(.dateTime.month(.abbreviated).day().locale(.app)))–\(last.formatted(.dateTime.month(.abbreviated).day().locale(.app)))"
     }
 
     private func isSelected(_ date: Date) -> Bool {
@@ -696,7 +708,8 @@ struct FoodTrackingView: View {
         dayCompletionPulse = false
 
         let meals = store.meals(on: selectedDate)
-        let mealName = meals.first(where: { $0.id == event.mealID })?.name ?? "Meal"
+        let mealName = meals.first(where: { $0.id == event.mealID })?.name
+            ?? String(localized: "Meal", bundle: .app, locale: .app)
         let completedMeal = event.afterMealCount > event.beforeMealCount
         let completedDay = !meals.isEmpty
             && event.beforeMealCount < meals.count
@@ -719,8 +732,10 @@ struct FoodTrackingView: View {
                 nutritionPulse = true
                 dayCompletionPulse = completedDay
                 mealSuccessMessage = completedDay
-                    ? "Day complete. Every meal is in."
-                    : completedMeal ? "\(mealName) logged" : "\(mealName) updated"
+                    ? String(localized: "Day complete. Every meal is in.", bundle: .app, locale: .app)
+                    : completedMeal
+                        ? String(localized: "\(mealName) logged", bundle: .app, locale: .app)
+                        : String(localized: "\(mealName) updated", bundle: .app, locale: .app)
             }
 
             if completedDay && event.shouldCelebrate {
@@ -830,10 +845,12 @@ private struct CalorieGoalCard: View {
     }
 
     private var balanceText: String {
-        guard goal > 0 else { return "Set a calorie target in Goals" }
-        if value > goal { return "\((value - goal).nutritionText) kcal above target" }
-        if value == goal { return "Calorie target reached" }
-        return "\((goal - value).nutritionText) kcal remaining"
+        guard goal > 0 else { return String(localized: "Set a calorie target in Goals", bundle: .app, locale: .app) }
+        if value > goal {
+            return String(localized: "\((value - goal).nutritionText) kcal above target", bundle: .app, locale: .app)
+        }
+        if value == goal { return String(localized: "Calorie target reached", bundle: .app, locale: .app) }
+        return String(localized: "\((goal - value).nutritionText) kcal remaining", bundle: .app, locale: .app)
     }
 
     private var progress: CGFloat {
@@ -892,7 +909,14 @@ private struct MacroGoalCard: View {
         .padding(.horizontal, 8)
         .padding(.vertical, 10)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(title), \((showsRemaining ? max(0, goal - value) : value).nutritionText) grams \(showsRemaining ? "remaining" : "logged"), target \(goal.nutritionText) grams")
+        // The macro is the label and the figures its value, so neither
+        // sentence has to be stitched around a translated macro name.
+        .accessibilityLabel(title)
+        .accessibilityValue(
+            showsRemaining
+                ? "\(max(0, goal - value).nutritionText) grams remaining, target \(goal.nutritionText) grams"
+                : "\(value.nutritionText) grams logged, target \(goal.nutritionText) grams"
+        )
     }
 
     private var progress: CGFloat {
@@ -910,7 +934,7 @@ private struct MealRow: View {
     var body: some View {
         HStack(spacing: 11) {
             VStack(alignment: .leading, spacing: 3) {
-                Text(isLogged ? meal.name : "Add \(meal.name.lowercased())")
+                Text(isLogged ? meal.displayName : String(localized: "Add \(meal.displayNameInSentence)", bundle: .app, locale: .app))
                     .font(.community(.subheadline, weight: .semibold))
                 Text(subtitle)
                     .font(.community(.caption))
@@ -978,7 +1002,7 @@ private struct MealRow: View {
     private var isLogged: Bool { !meal.entries.isEmpty }
 
     private var subtitle: String {
-        guard !meal.entries.isEmpty else { return "What’s on your plate?" }
+        guard !meal.entries.isEmpty else { return String(localized: "What’s on your plate?", bundle: .app, locale: .app) }
         return meal.entries.map(\.name).joined(separator: ", ")
     }
 

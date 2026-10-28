@@ -9,6 +9,7 @@
 //  two numbers for one thing, drifting apart, is the bug this avoids.
 //
 
+import Foundation
 import SwiftUI
 
 struct PostDetailView: View {
@@ -220,8 +221,8 @@ struct CommentRow: View {
         var components = URLComponents()
         components.scheme = "mailto"
         components.path = LegalDocuments.contactEmail
-        components.queryItems = [URLQueryItem(name: "subject", value: "Rytivo comment report #\(comment.id)"),
-                                URLQueryItem(name: "body", value: "Please review comment #\(comment.id). Reason: ")]
+        components.queryItems = [URLQueryItem(name: "subject", value: String(localized: "Rytivo comment report #\(comment.id)", bundle: .app, locale: .app)),
+                                URLQueryItem(name: "body", value: String(localized: "Please review comment #\(comment.id). Reason: ", bundle: .app, locale: .app))]
         return components.url!
     }
 

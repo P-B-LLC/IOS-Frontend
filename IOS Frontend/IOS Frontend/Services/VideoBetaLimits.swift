@@ -17,11 +17,11 @@ nonisolated enum VideoBetaLimits {
         case size, duration, resolution, frameRate, format
         var errorDescription: String? {
             switch self {
-            case .size: "Choose a video smaller than 15 MB."
-            case .duration: "Choose a video no longer than 30 seconds."
-            case .resolution: "Choose a video at 1080p or below."
-            case .frameRate: "Choose a video at 60 frames per second or below."
-            case .format: "Choose an MP4 or MOV video encoded with H.264 or HEVC."
+            case .size: String(localized: "Choose a video smaller than 15 MB.", bundle: .app, locale: .app)
+            case .duration: String(localized: "Choose a video no longer than 30 seconds.", bundle: .app, locale: .app)
+            case .resolution: String(localized: "Choose a video at 1080p or below.", bundle: .app, locale: .app)
+            case .frameRate: String(localized: "Choose a video at 60 frames per second or below.", bundle: .app, locale: .app)
+            case .format: String(localized: "Choose an MP4 or MOV video encoded with H.264 or HEVC.", bundle: .app, locale: .app)
             }
         }
     }

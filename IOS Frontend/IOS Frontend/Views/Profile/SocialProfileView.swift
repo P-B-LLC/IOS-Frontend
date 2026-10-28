@@ -6,6 +6,7 @@
 //
 
 import CoreLocation
+import Foundation
 import PhotosUI
 import SwiftUI
 import UserNotifications
@@ -24,7 +25,7 @@ struct ProfileDestinationView: View {
             ContentUnavailableView {
                 Label("Profile unavailable", systemImage: "person.crop.circle.badge.exclamationmark")
             } description: {
-                Text(store.errorMessage ?? "Rytivo could not load this profile.")
+                Text(store.errorMessage ?? String(localized: "Rytivo could not load this profile.", bundle: .app, locale: .app))
             } actions: {
                 if let token = authentication.token {
                     Button("Retry") {
@@ -111,6 +112,13 @@ struct SocialProfileView: View {
         case posts = "Posts"
         case about = "About"
         var id: String { rawValue }
+
+        var title: LocalizedStringKey {
+            switch self {
+            case .posts: "Posts"
+            case .about: "About"
+            }
+        }
     }
 
     private struct AboutMetric: Identifiable {
@@ -236,7 +244,7 @@ struct SocialProfileView: View {
     /// "Following" there is a state where the answer is somebody else's to
     /// give. Read from the store first because that is what the tap updates;
     /// the profile payload is a snapshot from before it.
-    private var followActionTitle: String {
+    private var followActionTitle: LocalizedStringKey {
         if viewerFollowsSubject { return "Following" }
         if let subjectID, social.requestedUserIDs.contains(subjectID) {
             return "Requested"
@@ -254,7 +262,7 @@ struct SocialProfileView: View {
         if !isCurrentUser {
             HStack(alignment: .center, spacing: 12) {
                 Button { dismiss() } label: {
-                    Image(systemName: "chevron.left")
+                    Image(systemName: "chevron.backward")
                         .font(.community(size: 17, weight: .semibold))
                         .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
@@ -348,7 +356,7 @@ struct SocialProfileView: View {
                     HStack {
                         Text("Edit profile")
                         Spacer()
-                        Image(systemName: "arrow.right")
+                        Image(systemName: "arrow.forward")
                     }
                     .font(.community(.subheadline, weight: .semibold))
                     .foregroundStyle(timeOfDay.canvasPrimaryText)
@@ -373,11 +381,11 @@ struct SocialProfileView: View {
 
     private func socialCounts(timeOfDay: HomeTimeOfDay) -> some View {
         HStack(spacing: 7) {
-            profileCount(myPostCount, label: "posts", color: timeOfDay.canvasPrimaryText)
+            profileCount("\(myPostCount) posts", color: timeOfDay.canvasPrimaryText)
             Text("·").foregroundStyle(timeOfDay.secondaryText)
-            profileCount(followerCount, label: "followers", color: timeOfDay.canvasPrimaryText)
+            profileCount("\(followerCount) followers", color: timeOfDay.canvasPrimaryText)
             Text("·").foregroundStyle(timeOfDay.secondaryText)
-            profileCount(followingCount, label: "following", color: timeOfDay.canvasPrimaryText)
+            profileCount("\(followingCount) following", color: timeOfDay.canvasPrimaryText)
         }
         .font(.community(.footnote, weight: .semibold))
         .lineLimit(1)
@@ -385,8 +393,10 @@ struct SocialProfileView: View {
         .accessibilityElement(children: .combine)
     }
 
-    private func profileCount(_ count: Int, label: String, color: Color) -> some View {
-        Text("\(count) \(label)")
+    /// Each count is one whole phrase, so a language can put the number
+    /// where it belongs and pick the plural form that goes with it.
+    private func profileCount(_ phrase: LocalizedStringKey, color: Color) -> some View {
+        Text(phrase)
             .fontWeight(.semibold)
             .foregroundStyle(color)
     }
@@ -400,7 +410,7 @@ struct SocialProfileView: View {
     private var primaryDiscipline: String? {
         profile.disciplines
             .sorted { $0.rawValue < $1.rawValue }
-            .first?.rawValue
+            .first?.title
     }
 
     private var visibleSocialLinks: [ProfileSocialLink] {
@@ -479,7 +489,7 @@ struct SocialProfileView: View {
                     }
                 } label: {
                     VStack(spacing: 9) {
-                        Text(section.rawValue)
+                        Text(section.title)
                             .font(
                                 .community(
                                     .caption,
@@ -595,7 +605,7 @@ struct SocialProfileView: View {
                 VStack(alignment: .leading, spacing: 18) {
                     ForEach(myPrompts) { prompt in
                         VStack(alignment: .leading, spacing: 5) {
-                            Text(prompt.questionLabel.uppercased())
+                            Text(prompt.displayLabel.uppercased())
                                 .font(.community(size: 9, weight: .bold))
                                 .tracking(1.1)
                                 .foregroundStyle(timeOfDay.accent)
@@ -721,7 +731,7 @@ struct SocialProfileView: View {
             Label("A moment worth keeping", systemImage: "sparkles")
                 .font(.community(.footnote, weight: .semibold))
                 .foregroundStyle(Color.white.opacity(0.75))
-            Text(lift.label)
+            Text(lift.displayLabel)
                 .font(.community(.title2, weight: .bold))
                 .foregroundStyle(Color.white)
             if let pounds = lift.displayPounds, let reps = lift.reps {
@@ -750,7 +760,7 @@ struct SocialProfileView: View {
                     .font(.community(size: 9, weight: .bold))
                     .tracking(0.9)
                     .foregroundStyle(timeOfDay.accent)
-                Text(lift.label)
+                Text(lift.displayLabel)
                     .font(.community(.body, weight: .bold))
                     .foregroundStyle(timeOfDay.primaryText)
             }
@@ -785,30 +795,35 @@ struct SocialProfileView: View {
     private var trainingIdentityMetrics: [AboutMetric] {
         var metrics: [AboutMetric] = []
         if !profile.disciplines.isEmpty {
-            metrics.append(AboutMetric(title: "TRAINS AS", value: fullDisciplineSummary, badge: nil))
+            metrics.append(AboutMetric(title: String(localized: "TRAINS AS", bundle: .app, locale: .app), value: fullDisciplineSummary, badge: nil))
         }
         if let gym = profile.gym {
             metrics.append(
                 AboutMetric(
-                    title: "GYM",
+                    title: String(localized: "GYM", bundle: .app, locale: .app),
                     value: gym.city.isEmpty ? gym.name : "\(gym.name) · \(gym.city)",
-                    badge: isCurrentUser ? nil : "Same gym"
+                    badge: isCurrentUser ? nil : String(localized: "Same gym", bundle: .app, locale: .app)
                 )
             )
         }
         if profile.showsHeight {
             metrics.append(
                 AboutMetric(
-                    title: "HEIGHT",
+                    title: String(localized: "HEIGHT", bundle: .app, locale: .app),
                     value: "\(profile.heightFeet)′ \(profile.heightInches)″",
                     badge: nil
                 )
             )
         }
         if profile.showsWeight || profile.showsTargetWeight {
-            let current = profile.showsWeight ? "\(profile.weightPounds) lb" : "Private"
-            let goal = profile.showsTargetWeight ? "\(profile.targetWeightPounds) lb" : "Private"
-            metrics.append(AboutMetric(title: "WEIGHT · GOAL", value: "\(current)  →  \(goal)", badge: nil))
+            let hidden = String(localized: "Private", bundle: .app, locale: .app, comment: "A measurement its owner has chosen not to show")
+            let current = profile.showsWeight
+                ? String(localized: "\(profile.weightPounds) lb", bundle: .app, locale: .app, comment: "A body weight in pounds")
+                : hidden
+            let goal = profile.showsTargetWeight
+                ? String(localized: "\(profile.targetWeightPounds) lb", bundle: .app, locale: .app, comment: "A body weight in pounds")
+                : hidden
+            metrics.append(AboutMetric(title: String(localized: "WEIGHT · GOAL", bundle: .app, locale: .app), value: "\(current)  →  \(goal)", badge: nil))
         }
         return metrics
     }
@@ -850,7 +865,7 @@ struct SocialProfileView: View {
     private var fullDisciplineSummary: String {
         Array(profile.disciplines)
             .sorted { $0.rawValue < $1.rawValue }
-            .map(\.rawValue)
+            .map(\.title)
             .joined(separator: " · ")
     }
 
@@ -879,7 +894,7 @@ struct SocialProfileView: View {
 
             HStack(alignment: .lastTextBaseline, spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(lift.label)
+                    Text(lift.displayLabel)
                         .font(.community(.title3, weight: .bold))
                         .foregroundStyle(timeOfDay.primaryText)
                     if let estimate = lift.estimatedOneRepMaxPounds {
@@ -927,9 +942,9 @@ struct SocialProfileView: View {
 
     private func liftSourceLabel(_ lift: HighlightLift) -> String {
         switch lift.source {
-        case .logged: "FROM YOUR LOG"
-        case .manual: "ENTERED BY HAND"
-        case .none: "SELECTED"
+        case .logged: String(localized: "FROM YOUR LOG", bundle: .app, locale: .app)
+        case .manual: String(localized: "ENTERED BY HAND", bundle: .app, locale: .app)
+        case .none: String(localized: "SELECTED", bundle: .app, locale: .app)
         }
     }
 
@@ -1071,6 +1086,19 @@ private struct ProfileSettingsView: View {
                         .accessibilityHint("Changes the appearance throughout Rytivo")
                     }
 
+                    settingsSection("LANGUAGE", timeOfDay: timeOfDay) {
+                        NavigationLink {
+                            LanguageSettingsView()
+                        } label: {
+                            settingsRow(
+                                "Language",
+                                verbatimDetail: languageDetail,
+                                symbol: "character.bubble"
+                            )
+                        }
+                        .buttonStyle(RepbaseSettingsRowButtonStyle())
+                    }
+
                     settingsSection("PRIVACY & PERMISSIONS", timeOfDay: timeOfDay) {
                         VStack(spacing: 0) {
                             // First, because it is the one thing on this list
@@ -1207,7 +1235,11 @@ private struct ProfileSettingsView: View {
                                 Task {
                                     do {
                                         try await authentication.rotateSessionToken()
-                                        securityMessage = "Your saved account credential was replaced. You are still signed in on this device."
+                                        securityMessage = String(
+                                            localized: "Your saved account credential was replaced. You are still signed in on this device.",
+                                            bundle: .app,
+                                            locale: .app
+                                        )
                                     } catch {
                                         deleteError = error.localizedDescription
                                     }
@@ -1256,7 +1288,7 @@ private struct ProfileSettingsView: View {
                     settingsSection("ABOUT", timeOfDay: timeOfDay) {
                         VStack(spacing: 0) {
                             Link(destination: URL(string: "mailto:\(LegalDocuments.contactEmail)")!) {
-                                settingsRow("Safety & support", detail: LegalDocuments.contactEmail,
+                                settingsRow("Safety & support", verbatimDetail: LegalDocuments.contactEmail,
                                             symbol: "envelope")
                             }
                             .buttonStyle(RepbaseSettingsRowButtonStyle())
@@ -1265,8 +1297,8 @@ private struct ProfileSettingsView: View {
                                     legalDocument = document
                                 } label: {
                                     settingsRow(
-                                        document.title,
-                                        detail: document.summary,
+                                        "\(document.title)",
+                                        verbatimDetail: document.summary,
                                         symbol: document.symbol
                                     )
                                 }
@@ -1348,7 +1380,7 @@ private struct ProfileSettingsView: View {
         )) {
             Button("OK", role: .cancel) { deleteError = nil }
         } message: {
-            Text(deleteError ?? "Please try again.")
+            Text(deleteError ?? String(localized: "Please try again.", bundle: .app, locale: .app))
         }
         .alert("Account Security Updated", isPresented: Binding(
             get: { securityMessage != nil },
@@ -1356,7 +1388,7 @@ private struct ProfileSettingsView: View {
         )) {
             Button("Done", role: .cancel) { securityMessage = nil }
         } message: {
-            Text(securityMessage ?? "Your account security was updated.")
+            Text(securityMessage ?? String(localized: "Your account security was updated.", bundle: .app, locale: .app))
         }
         // Settings is its own presentation, and a colour scheme reaches the
         // nearest enclosing one and stops. Set on the app root it recoloured
@@ -1369,6 +1401,17 @@ private struct ProfileSettingsView: View {
 
     private var appearance: RepbaseAppearancePreference {
         RepbaseAppearancePreference(rawValue: appearanceRawValue) ?? .light
+    }
+
+    /// The language in use, in its own name, and whether it was chosen here
+    /// or followed from the iPhone.
+    private var languageDetail: String {
+        let localization = AppLocalization.shared
+        let name = localization.language.nativeName
+        switch localization.preference {
+        case .system: return String(localized: "System Default · \(name)", bundle: .app, locale: .app)
+        case .language: return name
+        }
     }
 
     private func settingsHeader(timeOfDay: HomeTimeOfDay) -> some View {
@@ -1389,7 +1432,7 @@ private struct ProfileSettingsView: View {
     }
 
     private func settingsSection<Content: View>(
-        _ title: String,
+        _ title: LocalizedStringKey,
         timeOfDay: HomeTimeOfDay,
         @ViewBuilder content: () -> Content
     ) -> some View {
@@ -1439,8 +1482,8 @@ private struct ProfileSettingsView: View {
 
     /// A row that is the setting, rather than a way to reach it.
     private func settingsToggleRow(
-        _ title: String,
-        detail: String,
+        _ title: LocalizedStringKey,
+        detail: LocalizedStringKey,
         symbol: String,
         isOn: Binding<Bool>,
         timeOfDay: HomeTimeOfDay
@@ -1455,10 +1498,32 @@ private struct ProfileSettingsView: View {
     }
 
     private func settingsRow(
-        _ title: String,
-        detail: String,
+        _ title: LocalizedStringKey,
+        detail: LocalizedStringKey,
         symbol: String,
         color: Color? = nil
+    ) -> some View {
+        settingsRow(title, detailText: Text(detail), symbol: symbol, color: color)
+    }
+
+    /// A detail that is shown as it is rather than looked up: an address,
+    /// a legal document's own summary, or a line already built in the app's
+    /// language. Its own label, so a literal `detail:` can never land here and
+    /// skip translation.
+    private func settingsRow(
+        _ title: LocalizedStringKey,
+        verbatimDetail detail: String,
+        symbol: String,
+        color: Color? = nil
+    ) -> some View {
+        settingsRow(title, detailText: Text(detail), symbol: symbol, color: color)
+    }
+
+    private func settingsRow(
+        _ title: LocalizedStringKey,
+        detailText: Text,
+        symbol: String,
+        color: Color?
     ) -> some View {
         HStack(spacing: 14) {
             Image(systemName: symbol)
@@ -1477,7 +1542,7 @@ private struct ProfileSettingsView: View {
                 Text(title)
                     .font(.community(.headline))
                     .foregroundStyle(color ?? .primary)
-                Text(detail)
+                detailText
                     .font(.community(.caption))
                     .foregroundStyle(.secondary)
             }
@@ -1518,7 +1583,7 @@ private struct ProfileSettingsView: View {
     }
 
     private func settingsValueRow(
-        _ title: String,
+        _ title: LocalizedStringKey,
         value: String,
         symbol: String
     ) -> some View {
@@ -1623,7 +1688,7 @@ private struct PrivacyAndPermissionsView: View {
         .task { await refreshPermissionStatus() }
     }
 
-    private func permissionExplanation(_ title: String, detail: String, symbol: String, status: String) -> some View {
+    private func permissionExplanation(_ title: LocalizedStringKey, detail: LocalizedStringKey, symbol: String, status: LocalizedStringKey) -> some View {
         HStack(alignment: .top, spacing: 14) {
             Image(systemName: symbol)
                 .font(.community(size: 18, weight: .semibold))
@@ -1640,7 +1705,7 @@ private struct PrivacyAndPermissionsView: View {
         }
     }
 
-    private var locationLabel: String {
+    private var locationLabel: LocalizedStringKey {
         switch locationStatus {
         case .authorizedAlways, .authorizedWhenInUse: return "Allowed"
         case .denied, .restricted: return "Off"
@@ -1649,7 +1714,7 @@ private struct PrivacyAndPermissionsView: View {
         }
     }
 
-    private var notificationLabel: String {
+    private var notificationLabel: LocalizedStringKey {
         switch notificationStatus {
         case .authorized, .provisional, .ephemeral: return "Allowed"
         case .denied: return "Off"
@@ -1813,7 +1878,7 @@ struct ProfileOnboardingView: View {
                         dismiss()
                     }
                 } label: {
-                    Image(systemName: canGoBack ? "chevron.left" : "xmark")
+                    Image(systemName: canGoBack ? "chevron.backward" : "xmark")
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
@@ -1870,7 +1935,7 @@ struct ProfileOnboardingView: View {
     /// "Edit Profile" is right for a walk through all of it and wrong for one
     /// section: somebody who tapped Body goals should see that they are in
     /// body goals.
-    private var sectionTitle: String {
+    private var sectionTitle: LocalizedStringKey {
         guard editsOneSection else {
             return isEditing ? "Edit Profile" : "Create Profile"
         }
@@ -1949,7 +2014,7 @@ struct ProfileOnboardingView: View {
     }
 
     private func editorSection<Content: View>(
-        _ title: String,
+        _ title: LocalizedStringKey,
         timeOfDay: HomeTimeOfDay,
         @ViewBuilder content: () -> Content
     ) -> some View {
@@ -1964,8 +2029,8 @@ struct ProfileOnboardingView: View {
     }
 
     private func editorRow(
-        _ title: String,
-        detail: String,
+        _ title: LocalizedStringKey,
+        detail: LocalizedStringKey,
         symbol: String,
         timeOfDay: HomeTimeOfDay
     ) -> some View {
@@ -1988,7 +2053,7 @@ struct ProfileOnboardingView: View {
 
             Spacer(minLength: 8)
 
-            Image(systemName: "chevron.right")
+            Image(systemName: "chevron.forward")
                 .font(.community(.caption2))
                 .foregroundStyle(timeOfDay.secondaryText)
         }
@@ -1996,7 +2061,7 @@ struct ProfileOnboardingView: View {
         .contentShape(Rectangle())
     }
 
-    private func heading(_ title: String, detail: String) -> some View {
+    private func heading(_ title: LocalizedStringKey, detail: LocalizedStringKey) -> some View {
         VStack(alignment: .leading, spacing: 7) {
             Text(title).font(.community(size: 29, weight: .bold, design: .rounded))
             Text(detail).font(.community(.subheadline)).foregroundStyle(.secondary)
@@ -2139,7 +2204,7 @@ struct ProfileOnboardingView: View {
     }
 
     private func profileField(
-        _ title: String,
+        _ title: LocalizedStringKey,
         text: Binding<String>,
         contentType: UITextContentType,
         timeOfDay: HomeTimeOfDay
@@ -2158,21 +2223,37 @@ struct ProfileOnboardingView: View {
         VStack(spacing: 13) {
             measurementCard("Height", symbol: "ruler", timeOfDay: timeOfDay) {
                 HStack(spacing: 8) {
-                    measurementInput(value: $draft.heightFeet, unit: "ft", timeOfDay: timeOfDay)
-                    measurementInput(value: $draft.heightInches, unit: "in", timeOfDay: timeOfDay)
+                    measurementInput(
+                        value: $draft.heightFeet,
+                        unit: String(localized: "ft", bundle: .app, locale: .app, comment: "Abbreviation for feet"),
+                        timeOfDay: timeOfDay
+                    )
+                    measurementInput(
+                        value: $draft.heightInches,
+                        unit: String(localized: "in", bundle: .app, locale: .app, comment: "Abbreviation for inches"),
+                        timeOfDay: timeOfDay
+                    )
                 }
             } privacy: {
                 Toggle("Show on profile", isOn: $draft.showsHeight).tint(timeOfDay.accent)
             }
 
             measurementCard("Current weight", symbol: "scalemass", timeOfDay: timeOfDay) {
-                measurementInput(value: $draft.weightPounds, unit: "lb", timeOfDay: timeOfDay)
+                measurementInput(
+                    value: $draft.weightPounds,
+                    unit: String(localized: "lb", bundle: .app, locale: .app, comment: "Abbreviation for pounds"),
+                    timeOfDay: timeOfDay
+                )
             } privacy: {
                 Toggle("Show on profile", isOn: $draft.showsWeight).tint(timeOfDay.accent)
             }
 
             measurementCard("Target weight", symbol: "scope", timeOfDay: timeOfDay) {
-                measurementInput(value: $draft.targetWeightPounds, unit: "lb", timeOfDay: timeOfDay)
+                measurementInput(
+                    value: $draft.targetWeightPounds,
+                    unit: String(localized: "lb", bundle: .app, locale: .app, comment: "Abbreviation for pounds"),
+                    timeOfDay: timeOfDay
+                )
             } privacy: {
                 Toggle("Show on profile", isOn: $draft.showsTargetWeight).tint(timeOfDay.accent)
             }
@@ -2184,7 +2265,7 @@ struct ProfileOnboardingView: View {
     }
 
     private func measurementCard<Content: View, Privacy: View>(
-        _ title: String,
+        _ title: LocalizedStringKey,
         symbol: String,
         timeOfDay: HomeTimeOfDay,
         @ViewBuilder content: () -> Content,
@@ -2247,7 +2328,7 @@ struct ProfileOnboardingView: View {
                     size: 18,
                     color: selected ? .white : timeOfDay.primaryText
                 )
-                Text(discipline.rawValue).lineLimit(1)
+                Text(discipline.title).lineLimit(1).minimumScaleFactor(0.8)
                 Spacer(minLength: 0)
                 if selected { Image(systemName: "checkmark") }
             }
@@ -2352,7 +2433,7 @@ struct ProfileOnboardingView: View {
                 }
                 Text(isSaveStep ? (isEditing ? "Save Changes" : "Create Profile") : "Continue")
                 Spacer()
-                Image(systemName: isSaveStep ? "checkmark" : "arrow.right")
+                Image(systemName: isSaveStep ? "checkmark" : "arrow.forward")
             }
             .font(.community(.headline, weight: .bold))
             .foregroundStyle(Color.white)

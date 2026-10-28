@@ -47,7 +47,11 @@ final class WorkoutStore {
     }
 
     func exerciseChoices(page: Int = 1) async throws -> WorkoutExercisePage {
-        guard let repository else { throw APIServiceError.missingServerIdentifier("Account connection") }
+        guard let repository else {
+            throw APIServiceError.missingServerIdentifier(
+                String(localized: "Account connection", bundle: .app, locale: .app, comment: "Names what is missing in “%@ has not been saved to the server yet.”")
+            )
+        }
         let generation = connectionGeneration
         let result = try await repository.exerciseChoices(page: page)
         guard generation == connectionGeneration else { throw CancellationError() }
@@ -527,10 +531,10 @@ final class WorkoutStore {
     /// looking broken. Nil when editing is available.
     var editingBlockedReason: String? {
         if repository == nil {
-            return "Not connected to Rytivo. Check your connection and retry."
+            return String(localized: "Not connected to Rytivo. Check your connection and retry.", bundle: .app, locale: .app)
         }
-        if isLoading { return "Loading this week…" }
-        if isSaving { return "Saving…" }
+        if isLoading { return String(localized: "Loading this week…", bundle: .app, locale: .app) }
+        if isSaving { return String(localized: "Saving…", bundle: .app, locale: .app) }
         return nil
     }
 
@@ -557,9 +561,9 @@ final class WorkoutStore {
 
     func dateLabel(for day: Weekday) -> String {
         let formatter = DateFormatter()
-        formatter.locale = .current
+        formatter.locale = .app
         formatter.calendar = .current
-        formatter.dateFormat = "MMM d"
+        formatter.setLocalizedDateFormatFromTemplate("MMMd")
         return formatter.string(from: workoutDate(for: day))
     }
 
@@ -656,7 +660,7 @@ final class WorkoutStore {
             )
             guard reloaded, knownWorkouts.contains(where: { $0.serverID == id }) else {
                 if connectionGeneration == generation, persistenceError == nil {
-                    persistenceError = "Your workout was saved, but could not be confirmed. Retry to reload it safely."
+                    persistenceError = String(localized: "Your workout was saved, but could not be confirmed. Retry to reload it safely.", bundle: .app, locale: .app)
                 }
                 return nil
             }
@@ -713,7 +717,7 @@ final class WorkoutStore {
                 $0.serverID == templateID && $0.scheduledDate == date
             }) else {
                 if connectionGeneration == generation, persistenceError == nil {
-                    persistenceError = "Your workout was saved, but could not be confirmed on this day. Retry to reload it safely."
+                    persistenceError = String(localized: "Your workout was saved, but could not be confirmed on this day. Retry to reload it safely.", bundle: .app, locale: .app)
                 }
                 return false
             }
@@ -813,7 +817,7 @@ final class WorkoutStore {
     func startSession(on day: Weekday, workoutID: Workout.ID? = nil) {
         let candidate = WorkoutSelectionPolicy.resolve(requestedID: workoutID, in: workouts(on: day))
         if workoutID != nil, candidate == nil {
-            persistenceError = "This workout is no longer scheduled on this day. Reload the day and choose it again."
+            persistenceError = String(localized: "This workout is no longer scheduled on this day. Reload the day and choose it again.", bundle: .app, locale: .app)
             return
         }
         guard let repository,
@@ -909,7 +913,9 @@ final class WorkoutStore {
             do {
                 if set.isLogged {
                     guard let entryID = set.serverID else {
-                        throw APIServiceError.missingServerIdentifier("Set entry")
+                        throw APIServiceError.missingServerIdentifier(
+                            String(localized: "Set entry", bundle: .app, locale: .app, comment: "Names what is missing in “%@ has not been saved to the server yet.”")
+                        )
                     }
                     try await repository.unlogSet(id: entryID, sessionExerciseID: exercise.sessionExerciseID, setNumber: set.setNumber)
                     guard connectionGeneration == generation else { return }
@@ -935,7 +941,11 @@ final class WorkoutStore {
                         $0.distanceKilometers = distance
                     }
                     if weight != set.weightKilograms || reps != set.reps || distance != set.distanceKilometers {
-                        persistenceError = "Your earlier set was saved. Its saved values are shown; unlog it first if you want to change them."
+                        persistenceError = String(
+                            localized: "Your earlier set was saved. Its saved values are shown; unlog it first if you want to change them.",
+                            bundle: .app,
+                            locale: .app
+                        )
                     }
                 }
             } catch {
@@ -1007,7 +1017,7 @@ final class WorkoutStore {
         do {
             let statsBeforeCompletion = trainingStats
             guard let ownerID = recoveryOwnerID else {
-                persistenceError = "Reconnect before finishing this workout."
+                persistenceError = String(localized: "Reconnect before finishing this workout.", bundle: .app, locale: .app)
                 return nil
             }
             // Write the finish intent before the first network request. A disk
@@ -1095,7 +1105,11 @@ final class WorkoutStore {
             return session.loggedSetCount
         } catch {
             guard connectionGeneration == generation else { return nil }
-            persistenceError = "Workout has not fully synced. Keep this screen open and tap Finish to retry, or retry from Training after reopening. \(error.userFacingMessage ?? error.localizedDescription)"
+            persistenceError = String(
+                localized: "Workout has not fully synced. Keep this screen open and tap Finish to retry, or retry from Training after reopening. \(error.userFacingMessage ?? error.localizedDescription)",
+                bundle: .app,
+                locale: .app
+            )
             recoveryError = persistenceError
             return nil
         }
@@ -1129,7 +1143,7 @@ final class WorkoutStore {
                 do {
                     try recovery.discardSession(ownerID: ownerID, origin: recoveryOrigin, sessionID: session.serverID)
                 } catch {
-                    recoveryError = "Workout discarded. Local recovery cleanup needs another attempt."
+                    recoveryError = String(localized: "Workout discarded. Local recovery cleanup needs another attempt.", bundle: .app, locale: .app)
                 }
                 refreshPendingWorkoutCount()
             }
@@ -1155,7 +1169,7 @@ final class WorkoutStore {
             lastCheckpointAt = Date()
             return true
         } catch {
-            recoveryError = "Couldn't checkpoint this session locally. \(error.localizedDescription)"
+            recoveryError = String(localized: "Couldn't checkpoint this session locally. \(error.localizedDescription)", bundle: .app, locale: .app)
             return false
         }
     }
@@ -1169,7 +1183,7 @@ final class WorkoutStore {
                 try EditorDraftRecovery.shared.remove(key: "active-workout", scope: scope)
             }
             recoveredActiveSession = false
-        } catch { recoveryError = "Session saved, but its local checkpoint needs cleanup." }
+        } catch { recoveryError = String(localized: "Session saved, but its local checkpoint needs cleanup.", bundle: .app, locale: .app) }
     }
 
     private func restoreActiveCheckpoint(using repository: WorkoutAPIRepository, generation: UUID) async {
@@ -1202,7 +1216,11 @@ final class WorkoutStore {
             if checkpointActiveSession() { try await repository.acknowledgeSessionStart(id: reconciled.serverID) }
         } catch {
             guard generation == connectionGeneration else { return }
-            recoveryError = "Your session checkpoint is kept, but couldn't be reopened. \(error.userFacingMessage ?? error.localizedDescription)"
+            recoveryError = String(
+                localized: "Your session checkpoint is kept, but couldn't be reopened. \(error.userFacingMessage ?? error.localizedDescription)",
+                bundle: .app,
+                locale: .app
+            )
         }
     }
 
@@ -1216,12 +1234,12 @@ final class WorkoutStore {
         guard let ownerID = recoveryOwnerID else { return }
         do {
             pendingWorkoutSaveCount = try recovery.entries(ownerID: ownerID, origin: recoveryOrigin).count
-        } catch { recoveryError = "Couldn't read locally saved workouts. \(error.localizedDescription)" }
+        } catch { recoveryError = String(localized: "Couldn't read locally saved workouts. \(error.localizedDescription)", bundle: .app, locale: .app) }
     }
 
     func deleteAccountRecovery(ownerID: Int, origin: String) {
         do { try recovery.removeAccount(ownerID: ownerID, origin: origin) }
-        catch { recoveryError = "Local recovery data could not be removed. \(error.localizedDescription)" }
+        catch { recoveryError = String(localized: "Local recovery data could not be removed. \(error.localizedDescription)", bundle: .app, locale: .app) }
     }
 
     private func transmitPendingWorkout(
@@ -1275,7 +1293,7 @@ final class WorkoutStore {
             }
             guard generation == connectionGeneration else { return }
             if let lastFailure {
-                recoveryError = "Workout sync is pending. Your local copy is kept. \(lastFailure)"
+                recoveryError = String(localized: "Workout sync is pending. Your local copy is kept. \(lastFailure)", bundle: .app, locale: .app)
             }
             if syncedAny { await loadDashboardSessions() }
             if activeSession == nil, generation == connectionGeneration {
@@ -1283,7 +1301,11 @@ final class WorkoutStore {
             }
         } catch {
             guard generation == connectionGeneration else { return }
-            recoveryError = "Workout sync is pending. Your local copy is kept. \(error.userFacingMessage ?? error.localizedDescription)"
+            recoveryError = String(
+                localized: "Workout sync is pending. Your local copy is kept. \(error.userFacingMessage ?? error.localizedDescription)",
+                bundle: .app,
+                locale: .app
+            )
         }
     }
 
@@ -1568,7 +1590,7 @@ final class WorkoutStore {
             guard connectionGeneration == generation else { return false }
             // The time is kept on screen so it is not lost to a failed save.
             cardioStartedAt = startedAt
-            persistenceError = "Cardio could not be saved: \(error.localizedDescription)"
+            persistenceError = String(localized: "Cardio could not be saved: \(error.localizedDescription)", bundle: .app, locale: .app)
             return false
         }
     }
@@ -1587,8 +1609,11 @@ final class WorkoutStore {
             return workout
         }
         var workout = workout
+        // Named in English whatever the interface language: the server finds
+        // an exercise again by its name, so a translated one would start a
+        // second exercise, and a second history, after a language change.
         workout.exercises = [
-            Exercise(name: workout.type.title, sets: 1)
+            Exercise(name: workout.type.rawValue.capitalized, sets: 1)
         ]
         return workout
     }

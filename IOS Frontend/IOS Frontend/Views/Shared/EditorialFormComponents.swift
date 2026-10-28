@@ -46,9 +46,9 @@ struct EditorialFormHeader: View {
         case back
     }
 
-    let title: String
+    let title: LocalizedStringKey
     let leadingAction: LeadingAction
-    let saveTitle: String
+    let saveTitle: LocalizedStringKey
     let canSave: Bool
     let onDismiss: () -> Void
     let onSave: () -> Void
@@ -66,7 +66,7 @@ struct EditorialFormHeader: View {
             HStack {
             Button(action: onDismiss) {
                 if leadingAction == .back {
-                    Image(systemName: "chevron.left")
+                    Image(systemName: "chevron.backward")
                         .font(.community(.body, weight: .semibold))
                         .frame(width: 42, height: 42)
                 } else {
@@ -104,8 +104,8 @@ struct EditorialFormHeader: View {
 }
 
 struct EditorialSectionTitle: View {
-    let title: String
-    var detail: String? = nil
+    let title: LocalizedStringKey
+    var detail: LocalizedStringKey? = nil
 
     @Environment(\.homeTimeOfDay) private var timeOfDay
 
@@ -173,7 +173,7 @@ struct EditorialPrimaryButtonStyle: ButtonStyle {
         HStack {
             configuration.label
             Spacer()
-            Image(systemName: "arrow.right")
+            Image(systemName: "arrow.forward")
         }
         .font(.community(.headline, weight: .bold))
         .foregroundStyle(timeOfDay.onPrimaryAction)

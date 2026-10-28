@@ -111,7 +111,7 @@ final class PlannerStore {
     /// leaving a dead control with no explanation.
     var editingBlockedReason: String? {
         if repository == nil { return SaveFailure.notConnected }
-        if isSaving { return "Saving..." }
+        if isSaving { return String(localized: "Saving...", bundle: .app, locale: .app) }
         return nil
     }
 
@@ -151,7 +151,7 @@ final class PlannerStore {
         guard let parent = entriesByDate[draft.date, default: []]
             .first(where: { $0.title == draft.title && $0.serverID != nil })
         else {
-            return "The task saved, but its steps could not be added to it."
+            return String(localized: "The task saved, but its steps could not be added to it.", bundle: .app, locale: .app)
         }
 
         var unsaved: [String] = []
@@ -165,8 +165,8 @@ final class PlannerStore {
 
         guard !unsaved.isEmpty else { return nil }
         return unsaved.count == 1
-            ? "The task saved, but the step “\(unsaved[0])” did not."
-            : "The task saved, but \(unsaved.count) of its steps did not."
+            ? String(localized: "The task saved, but the step “\(unsaved[0])” did not.", bundle: .app, locale: .app)
+            : String(localized: "The task saved, but \(unsaved.count) of its steps did not.", bundle: .app, locale: .app)
     }
 
 
@@ -325,7 +325,7 @@ final class PlannerStore {
             return false
         }
         guard !isCompletionPending(draft) else {
-            persistenceError = "This task is still being ticked off. Try again in a moment."
+            persistenceError = String(localized: "This task is still being ticked off. Try again in a moment.", bundle: .app, locale: .app)
             return false
         }
         let generation = connectionGeneration
@@ -339,7 +339,7 @@ final class PlannerStore {
         }
         draft.title = draft.title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !draft.title.isEmpty else {
-            persistenceError = "A task needs a title."
+            persistenceError = String(localized: "A task needs a title.", bundle: .app, locale: .app)
             return false
         }
         // An event is not something to finish, so it never carries completion.
@@ -413,7 +413,8 @@ final class PlannerStore {
             }, onFailure: { [weak self] error in
                 guard let self else { return }
                 guard connectionGeneration == generation else { return }
-                persistenceError = error.userFacingMessage ?? "Couldn't confirm this task. Tap its checkbox to retry."
+                persistenceError = error.userFacingMessage
+                    ?? String(localized: "Couldn't confirm this task. Tap its checkbox to retry.", bundle: .app, locale: .app)
             })
         if accepted { persistenceError = nil }
     }
@@ -432,10 +433,10 @@ final class PlannerStore {
     func addSubtask(to entry: PlannerEntry, title: String) async -> String? {
         guard let repository else { return SaveFailure.notConnected }
         guard let parentID = entry.serverID else {
-            return "This task has not finished saving yet."
+            return String(localized: "This task has not finished saving yet.", bundle: .app, locale: .app)
         }
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return "Give the step a name." }
+        guard !trimmed.isEmpty else { return String(localized: "Give the step a name.", bundle: .app, locale: .app) }
 
         let generation = connectionGeneration
         do {
@@ -586,7 +587,11 @@ final class PlannerStore {
                 } catch {
                     guard connectionGeneration == generation, monthReads.accepts(readID),
                           !Task.isCancelled else { return }
-                    persistenceError = "Workouts could not be synced with your planner. \(error.userFacingMessage ?? SaveFailure.unexplained)"
+                    persistenceError = String(
+                        localized: "Workouts could not be synced with your planner. \(error.userFacingMessage ?? SaveFailure.unexplained)",
+                        bundle: .app,
+                        locale: .app
+                    )
                 }
             }
             guard connectionGeneration == generation, monthReads.accepts(readID),

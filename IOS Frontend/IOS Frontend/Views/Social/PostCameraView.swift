@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
@@ -27,7 +28,9 @@ struct PostCameraView: UIViewControllerRepresentable {
         picker.videoQuality = .typeMedium
         picker.delegate = context.coordinator
         let library = UIButton(type: .system)
-        library.setTitle("Camera roll", for: .normal)
+        library.setTitle(String(localized: "Camera roll", bundle: .app, locale: .app), for: .normal)
+        library.titleLabel?.adjustsFontSizeToFitWidth = true
+        library.titleLabel?.minimumScaleFactor = 0.8
         library.setImage(UIImage(systemName: "photo.on.rectangle"), for: .normal)
         library.tintColor = .white
         library.backgroundColor = UIColor.black.withAlphaComponent(0.65)
@@ -59,7 +62,7 @@ struct PostCameraView: UIViewControllerRepresentable {
             } else if let image = info[.originalImage] as? UIImage {
                 finish(.photo(image))
             } else {
-                finish(.failure("That capture could not be read. Please try again."))
+                finish(.failure(String(localized: "That capture could not be read. Please try again.", bundle: .app, locale: .app)))
             }
         }
     }

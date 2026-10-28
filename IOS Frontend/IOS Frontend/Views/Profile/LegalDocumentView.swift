@@ -22,6 +22,15 @@ struct LegalDocumentView: View {
 
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
+                // The documents stay in the English they were written and
+                // checked in, so anyone reading the app in another language
+                // is told why this page is not in theirs.
+                if AppLocalization.shared.language != .english {
+                    Label("This document is available in English only.", systemImage: "globe")
+                        .font(.community(.footnote, weight: .semibold))
+                        .foregroundStyle(timeOfDay.secondaryText)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
                 ForEach(document.sections) { section in
                     VStack(alignment: .leading, spacing: 9) {
                         if let heading = section.heading {

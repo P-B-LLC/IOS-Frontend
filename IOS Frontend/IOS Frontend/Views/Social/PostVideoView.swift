@@ -1,4 +1,5 @@
 import AVKit
+import Foundation
 import PhotosUI
 import SwiftUI
 
@@ -74,7 +75,7 @@ struct PostVideoView: View {
                 if await social.retryVideo(postID: postID, draft: draft) {
                     refreshed = social.lastPosted?.video
                     failure = nil
-                } else { failure = "Could not attach this video. Try again." }
+                } else { failure = String(localized: "Could not attach this video. Try again.", bundle: .app, locale: .app) }
             } catch {
                 if !Task.isCancelled { failure = error.localizedDescription }
             }
@@ -93,10 +94,10 @@ struct PostVideoView: View {
                 let latest = try await social.refreshVideo(postID: postID)
                 guard generation == requestGeneration else { return }
                 refreshed = latest
-                failure = latest == nil ? "This video is no longer available." : nil
+                failure = latest == nil ? String(localized: "This video is no longer available.", bundle: .app, locale: .app) : nil
             } catch {
                 guard generation == requestGeneration else { return }
-                failure = "Could not refresh this video. Please try again."
+                failure = String(localized: "Could not refresh this video. Please try again.", bundle: .app, locale: .app)
             }
             loading = false
         }
@@ -128,7 +129,7 @@ struct PostVideoView: View {
                         }
                         if status == .failed {
                             loading = false
-                            failure = "This video could not play. Please try again."
+                            failure = String(localized: "This video could not play. Please try again.", bundle: .app, locale: .app)
                             await social.recordVideoPlayback(postID: postID, failed: true)
                         }
                     }
@@ -175,7 +176,7 @@ struct PostVideoView: View {
             } catch {
                 guard generation == requestGeneration else { return }
                 loading = false
-                failure = "This video is unavailable. Refresh and try again."
+                failure = String(localized: "This video is unavailable. Refresh and try again.", bundle: .app, locale: .app)
             }
         }
     }

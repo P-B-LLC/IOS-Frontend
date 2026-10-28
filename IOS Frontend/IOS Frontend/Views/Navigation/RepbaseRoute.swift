@@ -32,11 +32,13 @@ nonisolated enum RepbaseTab: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .home: "Home"
-        case .training: "Training"
-        case .planner: "Calendar"
-        case .social: "Social"
-        case .account: "Account"
+        // Its own key: "Home" is also a planner category, meaning household,
+        // and most languages use different words for the two.
+        case .home: String(localized: "tab.home", defaultValue: "Home", bundle: .app, locale: .app, comment: "Bottom bar tab: the home dashboard")
+        case .training: String(localized: "Training", bundle: .app, locale: .app, comment: "Bottom bar tab")
+        case .planner: String(localized: "Calendar", bundle: .app, locale: .app, comment: "Bottom bar tab")
+        case .social: String(localized: "Social", bundle: .app, locale: .app, comment: "Bottom bar tab")
+        case .account: String(localized: "Account", bundle: .app, locale: .app, comment: "Bottom bar tab")
         }
     }
 
@@ -74,8 +76,8 @@ nonisolated enum TrainingHalf: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .workouts: "Workouts"
-        case .food: "Food"
+        case .workouts: String(localized: "Workouts", bundle: .app, locale: .app, comment: "Half of the Training tab")
+        case .food: String(localized: "Food", bundle: .app, locale: .app, comment: "Half of the Training tab")
         }
     }
 }

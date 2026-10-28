@@ -195,7 +195,7 @@ struct AuthenticationView: View {
                     HStack {
                         Text("Sign In")
                         Spacer()
-                        Image(systemName: "arrow.right")
+                        Image(systemName: "arrow.forward")
                     }
                     .frame(maxWidth: .infinity)
                 }
@@ -310,7 +310,7 @@ struct AuthenticationView: View {
     }
 
     private func authenticationLineField<Content: View>(
-        title: String,
+        title: LocalizedStringKey,
         systemImage: String,
         timeOfDay: HomeTimeOfDay,
         @ViewBuilder content: () -> Content
@@ -455,7 +455,7 @@ private struct AccountRegistrationView: View {
                         if authentication.isWorking { ProgressView().tint(.white) }
                         Text("Create Account")
                         Spacer()
-                        Image(systemName: "arrow.right")
+                        Image(systemName: "arrow.forward")
                     }
                     .font(.community(.headline, weight: .bold))
                     .foregroundStyle(.white)
@@ -480,21 +480,23 @@ private struct AccountRegistrationView: View {
     }
 
     private func registrationField(
-        _ title: String,
+        _ title: LocalizedStringKey,
         text: Binding<String>,
         contentType: UITextContentType,
         timeOfDay: HomeTimeOfDay,
         lowercase: Bool = false
     ) -> some View {
         HStack(spacing: 12) {
-            Image(systemName: title == "Email" ? "envelope" : "person")
+            // Told apart by content type, not by the label, which is
+            // translated.
+            Image(systemName: contentType == .emailAddress ? "envelope" : "person")
                 .foregroundStyle(timeOfDay.secondaryText)
                 .frame(width: 20)
             TextField(title, text: text)
                 .textContentType(contentType)
                 .textInputAutocapitalization(lowercase ? .never : .words)
                 .autocorrectionDisabled(lowercase)
-                .keyboardType(title == "Email" ? .emailAddress : .default)
+                .keyboardType(contentType == .emailAddress ? .emailAddress : .default)
         }
         .authenticationField(timeOfDay: timeOfDay)
     }

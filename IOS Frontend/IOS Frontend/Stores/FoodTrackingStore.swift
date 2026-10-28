@@ -374,7 +374,11 @@ final class FoodTrackingStore {
         // The meal has no server id yet, so there is nothing to attach food to.
         // Naming it beats "please try again", which never fixes this one.
         guard let serverID = mealServerID(mealID, on: date) else {
-            errorMessage = "That meal hasn't finished being created yet. Try again in a moment."
+            errorMessage = String(
+                localized: "That meal hasn't finished being created yet. Try again in a moment.",
+                bundle: .app,
+                locale: .app
+            )
             return false
         }
         let generation = connectionGeneration
@@ -505,7 +509,7 @@ final class FoodTrackingStore {
         to date: Date
     ) async -> PlanOutcome {
         guard let repository, !isSaving else {
-            return PlanOutcome(errorMessage: "Not connected to Rytivo.")
+            return PlanOutcome(errorMessage: String(localized: "Not connected to Rytivo.", bundle: .app, locale: .app))
         }
 
         let generation = connectionGeneration

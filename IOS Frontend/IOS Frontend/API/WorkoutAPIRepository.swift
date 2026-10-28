@@ -29,9 +29,20 @@ actor WorkoutAPIRepository {
         case unavailable, differentStart, finishedStart
         var errorDescription: String? {
             switch self {
-            case .unavailable: return "Local save recovery is unavailable. Reconnect your account and try again."
-            case .differentStart: return "A previous workout start is waiting to be confirmed. Retry workout sync before starting another workout."
-            case .finishedStart: return "The previous session has already ended or was removed. You can now start a new workout."
+            case .unavailable:
+                return String(localized: "Local save recovery is unavailable. Reconnect your account and try again.", bundle: .app, locale: .app)
+            case .differentStart:
+                return String(
+                    localized: "A previous workout start is waiting to be confirmed. Retry workout sync before starting another workout.",
+                    bundle: .app,
+                    locale: .app
+                )
+            case .finishedStart:
+                return String(
+                    localized: "The previous session has already ended or was removed. You can now start a new workout.",
+                    bundle: .app,
+                    locale: .app
+                )
             }
         }
     }
@@ -199,7 +210,9 @@ actor WorkoutAPIRepository {
     /// repeat's identifier.
     func startRepeating(_ workout: Workout, on day: Weekday) async throws -> Int {
         guard let templateID = workout.serverID else {
-            throw APIServiceError.missingServerIdentifier("Workout")
+            throw APIServiceError.missingServerIdentifier(
+                String(localized: "Workout", bundle: .app, locale: .app, comment: "Names what is missing in “%@ has not been saved to the server yet.”")
+            )
         }
 
         let output = try await client.recurrencesCreate(
@@ -222,7 +235,9 @@ actor WorkoutAPIRepository {
     /// and leaves this week, and every finished week, exactly as they are.
     func stopRepeating(_ workout: Workout) async throws {
         guard let recurrenceID = workout.recurrenceID else {
-            throw APIServiceError.missingServerIdentifier("Weekly repeat")
+            throw APIServiceError.missingServerIdentifier(
+                String(localized: "Weekly repeat", bundle: .app, locale: .app, comment: "Names what is missing in “%@ has not been saved to the server yet.”")
+            )
         }
 
         let output = try await client.recurrencesDestroy(
@@ -307,7 +322,9 @@ actor WorkoutAPIRepository {
 
     func removeSchedule(_ workout: Workout) async throws {
         guard let scheduleID = workout.scheduleID else {
-            throw APIServiceError.missingServerIdentifier("Workout schedule")
+            throw APIServiceError.missingServerIdentifier(
+                String(localized: "Workout schedule", bundle: .app, locale: .app, comment: "Names what is missing in “%@ has not been saved to the server yet.”")
+            )
         }
 
         let output = try await client.schedulesDestroy(
@@ -354,7 +371,11 @@ actor WorkoutAPIRepository {
                 intent = try await EditorDraftRecovery.shared.capture(snapshot, key: operationKey, scope: recoveryScope)
             } else { intent = snapshot }
         }
-        guard let intent else { throw APIServiceError.missingServerIdentifier("Workout save intent") }
+        guard let intent else {
+            throw APIServiceError.missingServerIdentifier(
+                String(localized: "Workout save intent", bundle: .app, locale: .app, comment: "Names what is missing in “%@ has not been saved to the server yet.”")
+            )
+        }
         let template: Components.Schemas.WorkoutTemplate
         do {
             template = try await WorkoutTemplateCreation.send(
@@ -521,14 +542,20 @@ actor WorkoutAPIRepository {
     ) async throws -> ActiveWorkoutSession {
         guard let recoveryScope else { throw RecoveryFailure.unavailable }
         try await WorkoutWriteRecovery.finishConsumption(key: "session-start", contextKey: "session-start-context", scope: recoveryScope)
-        guard workout.serverID != nil else { throw APIServiceError.missingServerIdentifier("Workout") }
+        guard workout.serverID != nil else {
+            throw APIServiceError.missingServerIdentifier(
+                String(localized: "Workout", bundle: .app, locale: .app, comment: "Names what is missing in “%@ has not been saved to the server yet.”")
+            )
+        }
         let context = try await EditorDraftRecovery.shared.capture(
             SessionStartContext(workout: workout, day: day), key: "session-start-context", scope: recoveryScope)
         guard context.workout.serverID == workout.serverID, context.day == day else { throw RecoveryFailure.differentStart }
         let workout = context.workout
         let day = context.day
         guard let workoutServerID = workout.serverID else {
-            throw APIServiceError.missingServerIdentifier("Workout")
+            throw APIServiceError.missingServerIdentifier(
+                String(localized: "Workout", bundle: .app, locale: .app, comment: "Names what is missing in “%@ has not been saved to the server yet.”")
+            )
         }
 
         let receipt: WorkoutWriteRecovery.Receipt<Components.Schemas.WorkoutSessionRequest>
@@ -1121,7 +1148,8 @@ actor WorkoutAPIRepository {
                     // Null once the workout behind the session is deleted --
                     // the same case workoutType below is nil for. Labelled
                     // rather than blank, as DayWorkoutView already does.
-                    workoutName: session.workoutName ?? "Workout",
+                    workoutName: session.workoutName
+                        ?? String(localized: "Workout", bundle: .app, locale: .app, comment: "Stands in for the name of a workout that was deleted"),
                     performedAt: performedAt,
                     durationSeconds: session.durationSeconds,
                     routeDistanceKilometers: session.routeDistanceKm,

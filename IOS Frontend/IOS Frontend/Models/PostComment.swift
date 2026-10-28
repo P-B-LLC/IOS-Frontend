@@ -43,8 +43,8 @@ nonisolated struct CommentDraft: Equatable, Hashable, Sendable {
 
     /// What the composer says it is about to do.
     var placeholder: String {
-        guard let replyingTo else { return "Add a comment" }
-        return "Reply to \(replyingTo.author.displayName)"
+        guard let replyingTo else { return String(localized: "Add a comment", bundle: .app, locale: .app) }
+        return String(localized: "Reply to \(replyingTo.author.displayName)", bundle: .app, locale: .app)
     }
 
     mutating func clear() {

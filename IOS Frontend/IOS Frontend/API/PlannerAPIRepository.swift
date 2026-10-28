@@ -160,7 +160,9 @@ actor PlannerAPIRepository {
     @discardableResult
     func update(_ entry: PlannerEntry) async throws -> PlannerEntry {
         guard let serverID = entry.serverID else {
-            throw APIServiceError.missingServerIdentifier("Planner entry")
+            throw APIServiceError.missingServerIdentifier(
+                String(localized: "Planner entry", bundle: .app, locale: .app, comment: "Fills in “… has not been saved to the server yet.”")
+            )
         }
 
         // PUT, not PATCH.
@@ -205,7 +207,9 @@ actor PlannerAPIRepository {
     @discardableResult
     func setComplete(_ entry: PlannerEntry, _ isComplete: Bool) async throws -> PlannerEntry {
         guard let serverID = entry.serverID else {
-            throw APIServiceError.missingServerIdentifier("Planner entry")
+            throw APIServiceError.missingServerIdentifier(
+                String(localized: "Planner entry", bundle: .app, locale: .app, comment: "Fills in “… has not been saved to the server yet.”")
+            )
         }
 
         let output = try await client.plannerPartialUpdate(
@@ -303,7 +307,9 @@ actor PlannerAPIRepository {
     /// the caller has to ask for it.
     func delete(_ entry: PlannerEntry, endsRepeat: Bool = false) async throws {
         guard let serverID = entry.serverID else {
-            throw APIServiceError.missingServerIdentifier("Planner entry")
+            throw APIServiceError.missingServerIdentifier(
+                String(localized: "Planner entry", bundle: .app, locale: .app, comment: "Fills in “… has not been saved to the server yet.”")
+            )
         }
 
         let output = try await client.plannerDestroy(

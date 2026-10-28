@@ -10,6 +10,7 @@
 //  planned on.
 //
 
+import Foundation
 import SwiftUI
 
 struct SavedWorkoutsView: View {
@@ -35,7 +36,7 @@ struct SavedWorkoutsView: View {
                             .font(.community(size: 10, weight: .bold))
                             .tracking(1.2)
                             .foregroundStyle(RepbasePalette.caramel)
-                        Text(date.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))
+                        Text(date.formatted(.dateTime.weekday(.wide).month(.abbreviated).day().locale(.app)))
                             .font(.community(.headline))
                     }
                     Spacer()
@@ -138,6 +139,8 @@ struct SavedWorkoutsView: View {
                     } else {
                         Text("Add")
                             .font(.community(.caption, weight: .semibold))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                     }
                 }
                 .frame(minWidth: 38, minHeight: 26)
@@ -172,7 +175,7 @@ struct SavedWorkoutsView: View {
             .padding(.leading, 6)
             .accessibilityLabel("Delete \(workout.name)")
             .accessibilityLabel("Add \(workout.name)")
-            .accessibilityHint("Schedules it on \(date.formatted(date: .abbreviated, time: .omitted))")
+            .accessibilityHint("Schedules it on \(date.formatted(Date.FormatStyle(date: .abbreviated, time: .omitted).locale(.app)))")
         }
         .padding(.vertical, 12)
     }
@@ -180,7 +183,7 @@ struct SavedWorkoutsView: View {
     private func detail(_ workout: WorkoutSummary) -> String {
         guard !workout.exercises.isEmpty else { return workout.type.title }
         let sets = workout.exercises.reduce(0) { $0 + $1.sets }
-        return "\(workout.exercises.count) exercises · \(sets) target sets"
+        return String(localized: "\(workout.exercises.count) exercises · \(sets) target sets", bundle: .app, locale: .app)
     }
 
     private func add(_ workout: WorkoutSummary) async {
@@ -195,7 +198,7 @@ struct SavedWorkoutsView: View {
             // Stays open, saying so. Closing on a failure would look like it
             // worked until the day was opened and found empty.
             failureMessage = store.persistenceError
-                ?? "That workout could not be added to the day."
+                ?? String(localized: "That workout could not be added to the day.", bundle: .app, locale: .app)
         }
     }
 }

@@ -5,6 +5,7 @@
 //  The reader's say over their For You page.
 //
 
+import Foundation
 import SwiftUI
 
 /// What For You has picked up about the reader, and what they can do about it.
@@ -139,7 +140,7 @@ struct ForYouSettingsView: View {
                     chip(
                         topic,
                         on: added,
-                        state: "added",
+                        state: String(localized: "added", bundle: .app, locale: .app, comment: "VoiceOver state of a For You topic the reader added as an interest"),
                         symbol: "plus",
                         hint: added ? "Stops counting it as one of your interests" : "Counts it as one of your interests"
                     ) {
@@ -173,7 +174,7 @@ struct ForYouSettingsView: View {
                     chip(
                         topic,
                         on: hidden,
-                        state: "hidden",
+                        state: String(localized: "hidden", bundle: .app, locale: .app, comment: "VoiceOver state of a For You topic the reader hid"),
                         symbol: "eye.slash",
                         hint: hidden ? "Shows these posts again" : "Hides these posts from For You"
                     ) {
@@ -193,7 +194,7 @@ struct ForYouSettingsView: View {
         on selected: Bool,
         state: String,
         symbol: String,
-        hint: String,
+        hint: LocalizedStringKey,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
@@ -268,15 +269,16 @@ struct ForYouSettingsView: View {
 
     // MARK: - Pieces
 
-    private func heading(_ text: String) -> some View {
-        Text(text.uppercased())
+    private func heading(_ text: LocalizedStringKey) -> some View {
+        Text(text)
             .font(.community(.caption2, weight: .bold))
             .tracking(1.2)
             .foregroundStyle(timeOfDay.accent)
+            .textCase(.uppercase)
             .accessibilityAddTraits(.isHeader)
     }
 
-    private func note(_ text: String) -> some View {
+    private func note(_ text: LocalizedStringKey) -> some View {
         Text(text)
             .font(.community(.footnote))
             .foregroundStyle(timeOfDay.secondaryText)

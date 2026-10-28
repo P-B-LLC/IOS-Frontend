@@ -110,7 +110,7 @@ struct PromptPickerView: View {
                 } label: {
                     VStack(alignment: .leading, spacing: 7) {
                         HStack {
-                            Text(answered.questionLabel.uppercased())
+                            Text(answered.displayLabel.uppercased())
                                 .font(.community(size: 9, weight: .bold))
                                 .tracking(1.1)
                                 .foregroundStyle(timeOfDay.accent)
@@ -235,7 +235,7 @@ struct PromptLibraryView: View {
                             }
                         } header: {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(category.rawValue)
+                                Text(category.title)
                                     .font(.community(size: 19, weight: .bold))
                                     .foregroundStyle(timeOfDay.canvasPrimaryText)
                                 Text(category.blurb)
@@ -300,7 +300,7 @@ struct PromptLibraryView: View {
                         .tracking(0.6)
                         .foregroundStyle(timeOfDay.accent)
                 } else {
-                    Image(systemName: "chevron.right")
+                    Image(systemName: "chevron.forward")
                         .font(.community(.caption2, weight: .bold))
                         .foregroundStyle(timeOfDay.secondaryText)
                 }

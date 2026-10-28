@@ -73,14 +73,10 @@ struct NotificationsView: View {
                 VStack(alignment: .leading, spacing: 3) {
                     // The name and what they did in one line, so a page of
                     // these reads as sentences rather than as a table.
-                    (
-                        Text(notification.actorName)
-                            .font(.community(.subheadline, weight: .semibold))
-                        + Text(" \(notification.summary)")
-                            .font(.community(.subheadline))
-                    )
-                    .foregroundStyle(timeOfDay.primaryText)
-                    .multilineTextAlignment(.leading)
+                    headline(notification)
+                        .font(.community(.subheadline))
+                        .foregroundStyle(timeOfDay.primaryText)
+                        .multilineTextAlignment(.leading)
 
                     // Quoted, because "commented on your post" without the
                     // comment is a notification that makes you go and look.
@@ -105,5 +101,27 @@ struct NotificationsView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+
+    /// `SocialNotification.summary` with the name set heavier. The name is
+    /// interpolated as styled text rather than joined on the front, so each
+    /// sentence is still translated whole -- the keys are the same ones.
+    private func headline(_ notification: SocialNotification) -> Text {
+        let name = Text(notification.actorName)
+            .font(.community(.subheadline, weight: .semibold))
+        switch notification.kind {
+        case .follow: return Text("\(name) started following you")
+        case .followRequest: return Text("\(name) asked to follow you")
+        case .followApproved: return Text("\(name) accepted your follow request")
+        case .like: return Text("\(name) liked your post")
+        case .repost: return Text("\(name) reposted your post")
+        case .comment: return Text("\(name) commented on your post")
+        case .moderationRejected:
+            return Text(
+                "\(name) did not publish your post after review. You can check it on your profile or contact support.",
+                comment: "The placeholder is the app's name, Rytivo"
+            )
+        case .unknown: return Text("\(name) did something")
+        }
     }
 }

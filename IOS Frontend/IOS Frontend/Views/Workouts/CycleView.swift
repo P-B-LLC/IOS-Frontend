@@ -9,6 +9,7 @@
 //  largest thing on the screen, and everything else supports it.
 //
 
+import Foundation
 import SwiftUI
 
 struct CycleView: View {
@@ -78,13 +79,15 @@ struct CycleView: View {
                 Spacer()
                 Text(cycle.positionText)
                     .font(.community(.caption, weight: .bold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
                     .padding(.horizontal, 11)
                     .padding(.vertical, 6)
                     .background(phase.accent.opacity(0.16), in: Capsule())
                     .foregroundStyle(phase.accent)
             }
 
-            Text(cycle.currentWorkoutName)
+            Text(cycle.currentWorkoutDisplayName)
                 .font(.community(.largeTitle, weight: .bold))
                 .foregroundStyle(phase.primaryText)
                 .lineLimit(2)
@@ -115,16 +118,16 @@ struct CycleView: View {
     /// weekday each turn.
     private func nextLine(_ cycle: WorkoutCycle) -> String {
         guard let date = cycle.nextWorkoutDate, !cycle.nextWorkoutName.isEmpty else {
-            return "No workouts in this rotation yet."
+            return String(localized: "No workouts in this rotation yet.", bundle: .app, locale: .app)
         }
-        let day = date.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
+        let day = date.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day().locale(.app))
         if Calendar.current.isDateInToday(date) {
-            return "\(cycle.nextWorkoutName) is due today."
+            return String(localized: "\(cycle.nextWorkoutName) is due today.", bundle: .app, locale: .app)
         }
         if Calendar.current.isDateInTomorrow(date) {
-            return "Next: \(cycle.nextWorkoutName), tomorrow."
+            return String(localized: "Next: \(cycle.nextWorkoutName), tomorrow.", bundle: .app, locale: .app)
         }
-        return "Next: \(cycle.nextWorkoutName) on \(day)."
+        return String(localized: "Next: \(cycle.nextWorkoutName) on \(day).", bundle: .app, locale: .app)
     }
 
     // MARK: - Getting back on schedule
@@ -156,8 +159,8 @@ struct CycleView: View {
     }
 
     private func shiftButton(
-        title: String,
-        detail: String,
+        title: LocalizedStringKey,
+        detail: LocalizedStringKey,
         symbol: String,
         action: @escaping () async -> Void
     ) -> some View {
@@ -224,19 +227,27 @@ struct CycleView: View {
 
     private func receiptTitle(_ outcome: CycleShiftOutcome) -> String {
         let days = outcome.daysShifted
-        if days == 0 { return "Already on schedule." }
-        return days == 1 ? "Pushed back a day." : "Pushed back \(days) days."
+        if days == 0 { return String(localized: "Already on schedule.", bundle: .app, locale: .app) }
+        return days == 1
+            ? String(localized: "Pushed back a day.", bundle: .app, locale: .app)
+            : String(localized: "Pushed back \(days) days.", bundle: .app, locale: .app)
     }
 
+    /// Whole sentences rather than parts joined with commas, so a translation
+    /// can put them in its own order.
     private func receiptDetail(_ outcome: CycleShiftOutcome) -> String {
-        var parts = ["\(outcome.scheduled) \(outcome.scheduled == 1 ? "day" : "days") rescheduled"]
+        let scheduled = outcome.scheduled
         if outcome.kept > 0 {
             // Days already trained, or ones the user put there by hand. They
             // are left where they are, and it matters that this is visible:
             // the plan will look out of step with the rule otherwise.
-            parts.append("\(outcome.kept) left alone")
+            return scheduled == 1
+                ? String(localized: "1 day rescheduled, \(outcome.kept) left alone.", bundle: .app, locale: .app)
+                : String(localized: "\(scheduled) days rescheduled, \(outcome.kept) left alone.", bundle: .app, locale: .app)
         }
-        return parts.joined(separator: ", ") + "."
+        return scheduled == 1
+            ? String(localized: "1 day rescheduled.", bundle: .app, locale: .app)
+            : String(localized: "\(scheduled) days rescheduled.", bundle: .app, locale: .app)
     }
 
     // MARK: - The rotation itself
@@ -415,8 +426,8 @@ private struct CycleSlotRow: View {
                 if let date {
                     Text(
                         isToday
-                            ? "Today"
-                            : date.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
+                            ? String(localized: "Today", bundle: .app, locale: .app)
+                            : date.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day().locale(.app))
                     )
                     .font(.community(.caption2))
                     .foregroundStyle(phase.secondaryText)

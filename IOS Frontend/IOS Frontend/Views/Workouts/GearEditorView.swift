@@ -5,6 +5,7 @@
 //  Adding a shoe or bike, and editing one.
 //
 
+import Foundation
 import SwiftUI
 
 struct GearEditorView: View {
@@ -55,7 +56,7 @@ struct GearEditorView: View {
                     VStack(spacing: 0) {
                         editorialField(mode.kind == .shoe ? "SHOE NAME" : "BIKE NAME", text: $name, placeholder: namePlaceholder)
                         Divider().padding(.leading, 18)
-                        editorialField("BRAND", text: $brand, placeholder: "Optional")
+                        editorialField("BRAND", text: $brand, placeholder: String(localized: "Optional", bundle: .app, locale: .app, comment: "Placeholder for a field that can be left empty"))
                     }
                 }
 
@@ -76,7 +77,7 @@ struct GearEditorView: View {
                                 ? "We will show remaining distance as sessions are saved."
                                 : "Rytivo will show the distance remaining until service.",
                             text: $retireAtMilesText,
-                            placeholder: "None"
+                            placeholder: String(localized: "None", bundle: .app, locale: .app, comment: "Placeholder: no replacement or service distance set")
                         )
                     }
                 }
@@ -87,7 +88,7 @@ struct GearEditorView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(mode.kind == .shoe ? "Use by default" : "Use for rides by default")
                                 .font(.community(.headline))
-                            Text("Automatically select this \(mode.kind == .shoe ? "pair for runs" : "bike for cycling sessions").")
+                            Text(mode.kind == .shoe ? "Automatically select this pair for runs." : "Automatically select this bike for cycling sessions.")
                                 .font(.community(.caption))
                                 .foregroundStyle(.secondary)
                         }
@@ -155,24 +156,24 @@ struct GearEditorView: View {
         return false
     }
 
-    private var screenTitle: String {
+    private var screenTitle: LocalizedStringKey {
         if isEditing { return mode.kind == .shoe ? "Edit running shoes" : "Edit bike" }
         return mode.kind == .shoe ? "Add running shoes" : "Add a bike"
     }
 
-    private var introText: String {
+    private var introText: LocalizedStringKey {
         mode.kind == .shoe
             ? "Give this pair a name, then decide how you want mileage tracked."
             : "Add the bike, then choose when Rytivo should flag its next service."
     }
 
-    private var notesPlaceholder: String {
+    private var notesPlaceholder: LocalizedStringKey {
         mode.kind == .shoe
             ? "Optional details about fit, color, or rotation"
             : "Optional details about setup, components, or service"
     }
 
-    private func sectionLabel(_ text: String) -> some View {
+    private func sectionLabel(_ text: LocalizedStringKey) -> some View {
         Text(text)
             .font(.community(.caption2, weight: .bold))
             .tracking(1.1)
@@ -180,7 +181,7 @@ struct GearEditorView: View {
     }
 
     private func editorSection<Content: View>(
-        _ title: String,
+        _ title: LocalizedStringKey,
         @ViewBuilder content: () -> Content
     ) -> some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -195,7 +196,7 @@ struct GearEditorView: View {
     }
 
     private func editorialField(
-        _ label: String,
+        _ label: LocalizedStringKey,
         text: Binding<String>,
         placeholder: String
     ) -> some View {
@@ -210,8 +211,8 @@ struct GearEditorView: View {
     }
 
     private func mileageRow(
-        title: String,
-        detail: String,
+        title: LocalizedStringKey,
+        detail: LocalizedStringKey,
         text: Binding<String>,
         placeholder: String
     ) -> some View {
@@ -229,9 +230,12 @@ struct GearEditorView: View {
         .padding(18)
     }
 
-    private var title: String {
+    /// One phrase per kind rather than the kind dropped into "New …": the
+    /// noun's gender changes the adjective in many languages.
+    private var title: LocalizedStringKey {
         switch mode {
-        case .create(let kind): "New \(kind.singular)"
+        case .create(.shoe): "New shoe"
+        case .create(.bike): "New bike"
         case .edit: "Edit"
         }
     }
@@ -248,7 +252,7 @@ struct GearEditorView: View {
             TextField(placeholder, text: text)
                 .keyboardType(.decimalPad)
                 .multilineTextAlignment(.trailing)
-            Text("mi")
+            Text("mi", comment: "Abbreviation for miles")
                 .foregroundStyle(.secondary)
         }
     }

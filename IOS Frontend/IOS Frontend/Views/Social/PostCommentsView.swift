@@ -89,12 +89,15 @@ struct PostCommentsView: View {
             }
             Button("Keep", role: .cancel) {}
         } message: { comment in
-            Text(
-                comment.replies.isEmpty
-                    ? "It will be removed for everyone."
-                    : "Its \(comment.replies.count == 1 ? "reply goes" : "replies go") with it."
-            )
+            Text(deleteMessage(for: comment))
         }
+    }
+
+    /// A whole sentence for each case. Splicing "reply goes" or "replies go"
+    /// into one sentence left a translator with pieces of it.
+    private func deleteMessage(for comment: PostComment) -> LocalizedStringKey {
+        if comment.replies.isEmpty { return "It will be removed for everyone." }
+        return comment.replies.count == 1 ? "Its reply goes with it." : "Its replies go with it."
     }
 
     private var header: some View {
@@ -109,7 +112,7 @@ struct PostCommentsView: View {
         }
     }
 
-    private var countText: String {
+    private var countText: LocalizedStringKey {
         let total = store.post(withID: postID)?.commentCount
             ?? threads.reduce(0) { $0 + $1.totalCount }
         return total == 1 ? "1 comment" : "\(total) comments"

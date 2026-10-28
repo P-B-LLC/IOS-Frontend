@@ -106,6 +106,26 @@ nonisolated struct FoodMeal: Identifiable, Equatable, Hashable, Codable, Sendabl
     var totalNutrition: NutritionAmount {
         entries.reduce(.zero) { $0 + $1.totalNutrition }
     }
+
+    /// The name to show, in the chosen language when it is one of ours.
+    ///
+    /// The server names a day's slots "Meal 1" to "Meal 4", and the app names
+    /// any it adds the same way, and that English is what is stored. Those
+    /// default names are shown translated; a name somebody typed is shown as
+    /// they typed it. `name` stays the stored value, for renaming and saving.
+    var displayName: String {
+        let prefix = "Meal "
+        guard name.hasPrefix(prefix), let number = Int(name.dropFirst(prefix.count)) else {
+            return name
+        }
+        return String(localized: "Meal \(number)", bundle: .app, locale: .app)
+    }
+
+    /// The display name inside a sentence ("Log meal 1"). Lower case, as the
+    /// English has it, except in German, where every noun is capitalized.
+    var displayNameInSentence: String {
+        AppLocalization.shared.language == .german ? displayName : displayName.lowercased(with: .app)
+    }
 }
 
 /// A reusable recipe or meal assembled from manual food entries.

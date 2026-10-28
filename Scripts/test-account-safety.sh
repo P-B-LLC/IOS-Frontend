@@ -50,6 +50,12 @@ cp "$repo/IOS Frontend/IOS Frontend/Services/ModerationConsent.swift" "$test_pac
 cp "$repo/Tests/AccountSafety/ModerationConsentTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/Tests/AccountSafety/ReportableErrorTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/IOS Frontend/IOS Frontend/Models/ReportableError.swift" "$test_package/Sources/AccountSafety/"
+# Language choice and runtime switching. Both are Foundation only; the
+# catalog tests compile the real string catalog with xcstringstool.
+cp "$repo/IOS Frontend/IOS Frontend/Services/AppLanguage.swift" "$test_package/Sources/AccountSafety/"
+cp "$repo/IOS Frontend/IOS Frontend/Services/AppLocalization.swift" "$test_package/Sources/AccountSafety/"
+cp "$repo/Tests/AccountSafety/AppLanguageTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/Tests/AccountSafety/LocalizationCatalogTests.swift" "$test_package/Tests/AccountSafetyTests/"
 for name in AuthenticationStore APIConfiguration KeychainTokenStore; do
     cp "$repo/IOS Frontend/IOS Frontend/API/$name.swift" "$test_package/Sources/AccountSafety/"
 done

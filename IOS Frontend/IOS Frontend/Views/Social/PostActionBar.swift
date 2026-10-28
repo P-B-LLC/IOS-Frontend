@@ -10,6 +10,7 @@
 //  nobody has got to it yet.
 //
 
+import Foundation
 import SwiftUI
 
 struct PostActionBar: View {
@@ -27,7 +28,7 @@ struct PostActionBar: View {
                 symbol: "bubble.left",
                 count: post.commentCount,
                 tint: timeOfDay.secondaryText,
-                label: "Comments"
+                label: String(localized: "Comments", bundle: .app, locale: .app)
             ) {
                 openComments?()
             }
@@ -41,7 +42,9 @@ struct PostActionBar: View {
                 symbol: "arrow.2.squarepath",
                 count: post.repostCount,
                 tint: post.viewerHasReposted ? RepbaseDesign.success : timeOfDay.secondaryText,
-                label: post.viewerHasReposted ? "Undo repost" : "Repost"
+                label: post.viewerHasReposted
+                    ? String(localized: "Undo repost", bundle: .app, locale: .app)
+                    : String(localized: "Repost", bundle: .app, locale: .app, comment: "Button that reposts a post")
             ) {
                 Task { await store.toggleRepost(post) }
             }
@@ -50,7 +53,9 @@ struct PostActionBar: View {
                 symbol: post.viewerHasLiked ? "heart.fill" : "heart",
                 count: post.likeCount,
                 tint: post.viewerHasLiked ? Color(hex: 0xE0446B) : timeOfDay.secondaryText,
-                label: post.viewerHasLiked ? "Unlike" : "Like",
+                label: post.viewerHasLiked
+                    ? String(localized: "Unlike", bundle: .app, locale: .app)
+                    : String(localized: "Like", bundle: .app, locale: .app, comment: "Button that likes a post"),
                 pending: store.isLikePending(post)
             ) {
                 Task { await store.toggleLike(post) }
@@ -80,15 +85,15 @@ struct PostActionBar: View {
         let shown = post.displayed
         let who = shown.author.displayName
         if !shown.caption.isEmpty {
-            return "\(who) on Rytivo: \(shown.caption)"
+            return String(localized: "\(who) on Rytivo: \(shown.caption)", bundle: .app, locale: .app)
         }
         if let workout = shown.workout {
-            return "\(who) trained \(workout.title) on Rytivo."
+            return String(localized: "\(who) trained \(workout.title) on Rytivo.", bundle: .app, locale: .app)
         }
         if let meal = shown.meal {
-            return "\(who) logged \(meal.name) on Rytivo."
+            return String(localized: "\(who) logged \(meal.name) on Rytivo.", bundle: .app, locale: .app)
         }
-        return "\(who) posted on Rytivo."
+        return String(localized: "\(who) posted on Rytivo.", bundle: .app, locale: .app)
     }
 
     private func action(

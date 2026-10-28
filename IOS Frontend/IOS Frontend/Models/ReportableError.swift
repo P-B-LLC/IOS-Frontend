@@ -52,21 +52,21 @@ extension Error {
         case NSURLErrorNotConnectedToInternet,
              NSURLErrorNetworkConnectionLost,
              NSURLErrorDataNotAllowed:
-            return "You appear to be offline. Check your connection and try again."
+            return String(localized: "You appear to be offline. Check your connection and try again.", bundle: .app, locale: .app)
         case NSURLErrorTimedOut:
-            return "Rytivo took too long to answer. Try again."
+            return String(localized: "Rytivo took too long to answer. Try again.", bundle: .app, locale: .app)
         case NSURLErrorCannotFindHost,
              NSURLErrorCannotConnectToHost,
              NSURLErrorDNSLookupFailed:
-            return "Couldn't reach Rytivo. Try again in a moment."
+            return String(localized: "Couldn't reach Rytivo. Try again in a moment.", bundle: .app, locale: .app)
         case NSURLErrorSecureConnectionFailed,
              NSURLErrorServerCertificateUntrusted,
              NSURLErrorServerCertificateHasBadDate,
              NSURLErrorServerCertificateNotYetValid,
              NSURLErrorServerCertificateHasUnknownRoot:
-            return "Couldn't make a secure connection to Rytivo."
+            return String(localized: "Couldn't make a secure connection to Rytivo.", bundle: .app, locale: .app)
         default:
-            return "Couldn't reach Rytivo. Check your connection and try again."
+            return String(localized: "Couldn't reach Rytivo. Check your connection and try again.", bundle: .app, locale: .app)
         }
     }
 
@@ -156,7 +156,7 @@ extension Error {
         if isCancellation || isDeclinedByPerson { return nil }
         if let networkFailureMessage { return networkFailureMessage }
         if transportRoot is DecodingError {
-            return "Rytivo couldn't load this information. Please try again later."
+            return String(localized: "Rytivo couldn't load this information. Please try again later.", bundle: .app, locale: .app)
         }
         return transportRoot.localizedDescription
     }

@@ -72,7 +72,8 @@ struct FoodEntryEditorView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
                 EditorialFormHeader(
-                    title: name.isEmpty ? "Add Food" : name,
+                    // The food's own name is shown as typed, not translated.
+                    title: name.isEmpty ? "Add Food" : "\(name)",
                     leadingAction: .back,
                     saveTitle: "Save",
                     canSave: isValid,
@@ -173,7 +174,7 @@ struct FoodEntryEditorView: View {
     }
 
     private func macroField(
-        _ title: String,
+        _ title: LocalizedStringKey,
         text: Binding<String>,
         tint: Color
     ) -> some View {

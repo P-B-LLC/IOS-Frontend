@@ -5,6 +5,7 @@
 //  Choosing what a profile says: three questions, and three lifts.
 //
 
+import Foundation
 import SwiftUI
 
 struct ProfileExpressionEditorView: View {
@@ -101,7 +102,7 @@ struct ProfileExpressionEditorView: View {
 
             ForEach(store.prompts) { answer in
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(answer.questionLabel.uppercased())
+                    Text(answer.displayLabel.uppercased())
                         .font(.community(size: 9, weight: .bold))
                         .tracking(1.1)
                         .foregroundStyle(timeOfDay.accent)
@@ -166,8 +167,9 @@ struct ProfileExpressionEditorView: View {
                     Image(systemName: "checkmark")
                         .font(.community(size: 10, weight: .bold))
                 }
-                Text(lift.label.replacingOccurrences(of: " Press", with: ""))
+                Text(lift.pillLabel)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
             .font(.community(.caption, weight: .bold))
             .foregroundStyle(
@@ -199,7 +201,7 @@ struct ProfileExpressionEditorView: View {
         return VStack(alignment: .leading, spacing: 18) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("\(lift.label.uppercased()) · SHOWN ON PROFILE")
+                    Text(shownOnProfileTitle(lift))
                         .font(.community(size: 9, weight: .bold))
                         .tracking(0.9)
                         .foregroundStyle(timeOfDay.accent)
@@ -275,8 +277,13 @@ struct ProfileExpressionEditorView: View {
                 .font(.community(.caption))
                 .foregroundStyle(timeOfDay.secondaryText)
             HStack(spacing: 18) {
-                numberField("Weight", unit: "lb", text: poundsBinding(lift), timeOfDay: timeOfDay)
-                numberField("Reps", unit: "", text: repsBinding(lift), timeOfDay: timeOfDay)
+                numberField(
+                    String(localized: "Weight", bundle: .app, locale: .app),
+                    unit: String(localized: "lb", bundle: .app, locale: .app, comment: "Abbreviation for pounds"),
+                    text: poundsBinding(lift),
+                    timeOfDay: timeOfDay
+                )
+                numberField(String(localized: "Reps", bundle: .app, locale: .app), unit: "", text: repsBinding(lift), timeOfDay: timeOfDay)
             }
         }
     }
@@ -366,7 +373,7 @@ struct ProfileExpressionEditorView: View {
                 .foregroundStyle(timeOfDay.canvasSecondaryText)
 
             if let incomplete = incompleteLift {
-                Text("Give \(incomplete.label) both a weight and a rep count, or leave both empty.")
+                Text(incompleteMessage(incomplete))
                     .font(.community(.caption))
                     .foregroundStyle(.red)
                     .fixedSize(horizontal: false, vertical: true)
@@ -395,9 +402,27 @@ struct ProfileExpressionEditorView: View {
         }
     }
 
+    /// Written out per lift rather than built around its name, so a language
+    /// that inflects the name, or agrees a word with it, can.
+    private func shownOnProfileTitle(_ lift: FeaturedLift) -> LocalizedStringKey {
+        switch lift {
+        case .bench: "BENCH PRESS · SHOWN ON PROFILE"
+        case .squat: "SQUAT · SHOWN ON PROFILE"
+        case .deadlift: "DEADLIFT · SHOWN ON PROFILE"
+        }
+    }
+
+    private func incompleteMessage(_ lift: FeaturedLift) -> LocalizedStringKey {
+        switch lift {
+        case .bench: "Give Bench Press both a weight and a rep count, or leave both empty."
+        case .squat: "Give Squat both a weight and a rep count, or leave both empty."
+        case .deadlift: "Give Deadlift both a weight and a rep count, or leave both empty."
+        }
+    }
+
     private func sectionTitle(
-        _ title: String,
-        detail: String,
+        _ title: LocalizedStringKey,
+        detail: LocalizedStringKey,
         timeOfDay: HomeTimeOfDay
     ) -> some View {
         VStack(alignment: .leading, spacing: 3) {
@@ -408,6 +433,16 @@ struct ProfileExpressionEditorView: View {
                 .font(.community(.caption))
                 .foregroundStyle(timeOfDay.canvasSecondaryText)
                 .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+}
+
+private extension FeaturedLift {
+    /// The shorter name the selector pills use: "Bench" for the bench press.
+    var pillLabel: String {
+        switch self {
+        case .bench: String(localized: "Bench", bundle: .app, locale: .app, comment: "Short name for the bench press, on a narrow button")
+        case .squat, .deadlift: label
         }
     }
 }

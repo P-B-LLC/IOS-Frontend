@@ -24,7 +24,7 @@ struct TrainingWeekOverview: View {
                 Text("\(stats.completedThisWeek)")
                     .font(.community(.largeTitle, weight: .bold)).monospacedDigit()
                     .contentTransition(.numericText())
-                Text("session\(stats.completedThisWeek == 1 ? "" : "s") logged")
+                Text(stats.completedThisWeek == 1 ? "session logged" : "sessions logged")
                     .font(.community(.subheadline)).foregroundStyle(theme.canvasSecondaryText)
             }
             if stats.weeklyGoal > 0 {
