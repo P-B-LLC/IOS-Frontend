@@ -29,6 +29,11 @@ explicit approval.
   notifications at the upper-right. Closing search preserves the underlying
   feed. People/Posts reuse the existing search endpoints, not a new hashtag
   index, trending service, or exact hashtag token matcher.
+- Follow-up: search rests as a 72 × 44-point, icon-only glass capsule (no
+  “People or #hashtags” prompt). Tapping expands into the existing search
+  screen with its text field focused; closing restores the feed. The input
+  shares the glass style. Reduce Motion avoids the zoom; Reduce Transparency
+  and Increase Contrast use an opaque outlined surface. No API/store changes.
 - Own **eligible, server-confirmed published** posts appear in For You.
   Pending uploads remain private status/author content; no moderation bypass.
   The backend puts the newest eligible own publication first on a fresh
@@ -59,7 +64,9 @@ new multi-GB build directory on each run. It does not delete other builds.
 
 Required interactive QA before promotion:
 
-1. Open search from each Social tab; close it and verify tab and scroll position.
+1. Tap the glass search capsule from each Social tab; verify it expands and
+   opens the keyboard in one tap. Close it and verify tab/scroll position.
+   Open/close rapidly and return from a result: no unwanted keyboard or reset.
 2. Search a name, `@handle`, and `#hashtag`; switch People/Posts, clear, retry an
    offline request, and type/clear/retype quickly without stale results.
 3. Open a profile, follow/request a private account, open a post/comments,
@@ -71,7 +78,8 @@ Required interactive QA before promotion:
    does not return from an older in-flight read. Sign out/switch accounts and
    verify no old post, receipt, or search results remain.
 6. Check light/dark mode, a narrow iPhone, larger text, VoiceOver, the keyboard,
-   and every tappable header control. Source-wiring tests are not visual QA.
+   RTL, Reduce Motion/Transparency, Increase Contrast, and every tappable
+   header control. Source-wiring tests are not visual QA.
 
 The new backend ordering requires deployment of its tested candidate; a local
 simulator build does not deploy server code. Use test accounts/content only

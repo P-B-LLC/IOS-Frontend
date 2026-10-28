@@ -7,6 +7,27 @@ enum SocialSearchStyle {
     )
 }
 
+/// Shared by the compact trigger and expanded text field. Native glass adapts
+/// to light/dark appearance; accessibility preferences get an opaque surface.
+struct SocialSearchGlass: ViewModifier {
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.colorSchemeContrast) private var contrast
+
+    @ViewBuilder func body(content: Content) -> some View {
+        if reduceTransparency || contrast == .increased {
+            content
+                .background(Color(.secondarySystemBackground), in: Capsule())
+                .overlay {
+                    Capsule().strokeBorder(Color.primary.opacity(0.5), lineWidth: 1)
+                        .allowsHitTesting(false)
+                        .accessibilityHidden(true)
+                }
+        } else {
+            content.glassEffect(.regular.interactive(), in: Capsule())
+        }
+    }
+}
+
 /// Search is independent of the three feeds. Closing it leaves the selected
 /// feed and its scroll position intact; all results still use the normal
 /// post/profile navigation and server visibility rules.
@@ -29,6 +50,7 @@ struct SocialSearchView: View {
     @State private var openedPerson: PersonDestination?
     @State private var comments: CommentDestination?
     @State private var actionFeedback: String?
+    @State private var didFocusOnPresentation = false
     @FocusState private var isQueryFocused: Bool
     private let theme = HomeTimeOfDay.current
 
@@ -73,6 +95,7 @@ struct SocialSearchView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
+                        isQueryFocused = false
                         store.clearSearch()
                         dismiss()
                     } label: {
@@ -147,13 +170,20 @@ struct SocialSearchView: View {
             .onChange(of: store.isConnected) { _, connected in
                 guard !connected else { return }
                 actionFeedback = nil
+                isQueryFocused = false
                 query = ""
                 openedPost = nil
                 openedPerson = nil
                 comments = nil
                 dismiss()
             }
-            .task { isQueryFocused = query.isEmpty }
+            .task {
+                // Focus once when the expanded field is mounted. Returning
+                // from a profile/post must not unexpectedly raise a keyboard.
+                guard !didFocusOnPresentation else { return }
+                didFocusOnPresentation = true
+                isQueryFocused = query.isEmpty
+            }
         }
     }
 
@@ -187,7 +217,7 @@ struct SocialSearchView: View {
         .padding(.leading, 14)
         .padding(.trailing, query.isEmpty ? 14 : 4)
         .frame(minHeight: 48)
-        .background(SocialSearchStyle.softSurface, in: Capsule())
+        .modifier(SocialSearchGlass())
     }
 
     private var scopePicker: some View {

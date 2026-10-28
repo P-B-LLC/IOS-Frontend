@@ -65,6 +65,8 @@ struct SocialFeedView: View {
     @Environment(SocialProfileStore.self) private var profileStore
     @Environment(\.repbaseNavigate) private var navigate
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Namespace private var searchTransition
 
     /// Opens straight onto a post's thread. Only set by the preview launch
     /// mode: `simctl` cannot tap, so pushing on arrival is the only way to
@@ -284,7 +286,12 @@ struct SocialFeedView: View {
             initialSearchText = ""
             store.clearSearch()
         }) {
-            SocialSearchView(initialQuery: initialSearchText)
+            if reduceMotion {
+                SocialSearchView(initialQuery: initialSearchText)
+            } else {
+                SocialSearchView(initialQuery: initialSearchText)
+                    .navigationTransition(.zoom(sourceID: "social.search", in: searchTransition))
+            }
         }
         .sheet(item: $commenting) { target in
             PostCommentsSheet(postID: target.id, timeOfDay: timeOfDay)
@@ -373,15 +380,13 @@ struct SocialFeedView: View {
                 .accessibilityValue(store.unreadNotifications > 0 ? Text("Unread notifications") : Text("No unread notifications"))
             }
 
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: 10) {
-                    searchButton(timeOfDay: timeOfDay)
-                    postButton(timeOfDay: timeOfDay)
-                }
-                VStack(spacing: 8) {
-                    searchButton(timeOfDay: timeOfDay, wraps: true)
-                    postButton(timeOfDay: timeOfDay)
-                }
+            // One persistent transition source, not duplicate sources inside
+            // ViewThatFits. The icon-only control leaves room for every
+            // localized Post label without filling the row with a prompt.
+            HStack(spacing: 10) {
+                searchButton(timeOfDay: timeOfDay)
+                Spacer(minLength: 0)
+                postButton(timeOfDay: timeOfDay)
             }
         }
         .padding(.horizontal, RepbaseDesign.pageInset)
@@ -389,21 +394,19 @@ struct SocialFeedView: View {
         .padding(.bottom, 4)
     }
 
-    private func searchButton(timeOfDay: HomeTimeOfDay, wraps: Bool = false) -> some View {
+    private func searchButton(timeOfDay: HomeTimeOfDay) -> some View {
         Button {
             isSearching = true
         } label: {
-            Label("People or #hashtags", systemImage: "magnifyingglass")
-                .font(.community(size: 14, weight: .semibold))
+            Image(systemName: "magnifyingglass")
+                .font(.community(.headline, weight: .semibold))
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
-                .fixedSize(horizontal: !wraps, vertical: wraps)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 14)
-                .frame(minHeight: 44)
-                .background(SocialSearchStyle.softSurface, in: Capsule())
+                .frame(width: 72, height: 44)
+                .modifier(SocialSearchGlass())
                 .contentShape(Capsule())
         }
         .buttonStyle(.plain)
+        .matchedTransitionSource(id: "social.search", in: searchTransition)
         .accessibilityLabel("Search people or hashtags")
         .accessibilityHint("Search by name, handle, hashtag, or words in a post")
         .accessibilityIdentifier("social.search")

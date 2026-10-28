@@ -80,6 +80,48 @@ final class SocialSearchTests: XCTestCase {
         XCTAssertTrue(presentation.contains("SocialSearchView(initialQuery:"))
     }
 
+    func testCollapsedSearchIsIconOnlyButStillAccessible() throws {
+        let source = try appSource("Views/Social/SocialFeedView.swift")
+        let button = try section(source, from: "private func searchButton", to: "private func postButton")
+        XCTAssertTrue(button.contains("Image(systemName: \"magnifyingglass\")"))
+        XCTAssertFalse(button.contains("Label("))
+        XCTAssertFalse(button.contains("Text("))
+        XCTAssertTrue(button.contains(".frame(width: 72, height: 44)"))
+        XCTAssertTrue(button.contains(".modifier(SocialSearchGlass())"))
+        XCTAssertTrue(button.contains(".accessibilityLabel(\"Search people or hashtags\")"))
+        XCTAssertTrue(button.contains(".accessibilityIdentifier(\"social.search\")"))
+    }
+
+    func testCompactControlExpandsIntoSearchAndRespectsReducedMotion() throws {
+        let source = try appSource("Views/Social/SocialFeedView.swift")
+        XCTAssertTrue(source.contains("@Environment(\\.accessibilityReduceMotion)"))
+        XCTAssertTrue(source.contains(".matchedTransitionSource(id: \"social.search\", in: searchTransition)"))
+        let presentation = try section(source, from: ".fullScreenCover(isPresented: $isSearching", to: ".sheet(item: $commenting)")
+        XCTAssertTrue(presentation.contains("if reduceMotion {"))
+        XCTAssertTrue(presentation.contains(".navigationTransition(.zoom(sourceID: \"social.search\", in: searchTransition))"))
+        let reduced = try section(presentation, from: "if reduceMotion {", to: "} else {")
+        XCTAssertFalse(reduced.contains(".zoom("))
+        let header = try section(source, from: "private func socialHeader", to: "private func searchButton")
+        XCTAssertEqual(header.components(separatedBy: "searchButton(timeOfDay:").count - 1, 1,
+                       "Only one mounted search source may own the matched transition")
+    }
+
+    func testExpandedGlassFieldFocusesOnceAndKeepsAccessibilityFallbacks() throws {
+        let source = try appSource("Views/Social/SocialSearchView.swift")
+        let glass = try section(source, from: "struct SocialSearchGlass:", to: "struct SocialSearchView:")
+        XCTAssertTrue(glass.contains("@Environment(\\.accessibilityReduceTransparency)"))
+        XCTAssertTrue(glass.contains("contrast == .increased"))
+        XCTAssertTrue(glass.contains("Color(.secondarySystemBackground)"))
+        XCTAssertTrue(glass.contains(".glassEffect(.regular.interactive(), in: Capsule())"))
+        let field = try section(source, from: "private var queryField:", to: "private var scopePicker:")
+        XCTAssertTrue(field.contains(".modifier(SocialSearchGlass())"))
+        XCTAssertTrue(field.contains(".focused($isQueryFocused)"))
+        XCTAssertTrue(source.contains("guard !didFocusOnPresentation else { return }"))
+        XCTAssertTrue(source.contains("isQueryFocused = query.isEmpty"))
+        XCTAssertTrue(field.contains(".onSubmit { isQueryFocused = false }"),
+                      "Dismissing the keyboard must not dismiss search")
+    }
+
     func testSearchUsesRealResultsAndExistingNavigation() throws {
         let source = try appSource("Views/Social/SocialSearchView.swift")
         XCTAssertTrue(source.contains("await store.search(normalizedQuery)"))
