@@ -83,9 +83,12 @@ final class SocialSearchTests: XCTestCase {
     func testCollapsedSearchIsIconOnlyButStillAccessible() throws {
         let source = try appSource("Views/Social/SocialFeedView.swift")
         let button = try section(source, from: "private func searchButton", to: "private func postButton")
+        // Inspect only the rendered label. The button's accessibilityLabel
+        // is spoken text, not visible copy, and must remain present.
+        let visualLabel = try section(button, from: "} label: {", to: ".buttonStyle(.plain)")
         XCTAssertTrue(button.contains("Image(systemName: \"magnifyingglass\")"))
-        XCTAssertFalse(button.contains("Label("))
-        XCTAssertFalse(button.contains("Text("))
+        XCTAssertFalse(visualLabel.contains("Label("))
+        XCTAssertFalse(visualLabel.contains("Text("))
         XCTAssertTrue(button.contains(".frame(width: 72, height: 44)"))
         XCTAssertTrue(button.contains(".modifier(SocialSearchGlass())"))
         XCTAssertTrue(button.contains(".accessibilityLabel(\"Search people or hashtags\")"))
