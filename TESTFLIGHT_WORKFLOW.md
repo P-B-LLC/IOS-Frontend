@@ -87,3 +87,43 @@ change and preserve stronger protections.
 Follow `RELEASING.md` for tagging and release validation. A green PR or release
 gate does not automatically upload to TestFlight. Manual Xcode uploads remain
 possible outside GitHub: only upload an explicitly approved, tested candidate.
+
+## Calendar/workout sync candidate — 2026-10-28
+
+Work stays on this testing branch; no main merge or deployment is authorized.
+The user authorized pushing testing branches and opening draft PRs for CI.
+
+- Workouts now publish a calendar revision after refreshes and schedule changes,
+  including an empty schedule or a change outside the current week.
+- Planner refreshes authoritative month, overdue, upcoming, and reminder data
+  instead of treating the sync endpoint's newly created rows as a full snapshot.
+- Refreshes coalesce without losing the final change. Read tokens prevent old
+  month/week/reminder responses from restoring deleted entries after a change.
+- Home uses concrete dates, not weekday names alone, and its current week stays
+  loaded even while Calendar browses another month.
+- The backend counterpart is `P-B-LLC/repbase` branch
+  `work/testflight-calendar-sync-2026-10-28`. Client refresh alone cannot repair
+  planner tasks that the old backend left in the database after schedule deletion.
+  Backend rollout must include the new schedule provenance migration. Do not
+  guess-delete old unlinked planner entries: they cannot reliably be distinguished
+  from manually written workout tasks.
+
+Before promotion, run the draft PR's Mac build and account-safety tests, then
+check against a backend running the counterpart branch with a test account:
+
+1. Enable a rotation; verify Workouts, Home, Calendar, and next-up tasks agree.
+2. Stop it, then clear the schedule. Unfinished generated tasks should disappear
+   everywhere; completed workout history and personal tasks/events must remain.
+3. Add a saved workout manually and verify it appears on the same date in all
+   three views. Change only a future week and verify Calendar catches up too.
+4. Make successive schedule changes on a slow connection. The final state must
+   win without duplicate tasks or a stuck loading indicator.
+5. Browse another month, then return Home. Today's agenda must remain available.
+   On a Sunday-first Home calendar, a previous Sunday must not show next Sunday's
+   workout or navigate into that different date.
+6. Delete a generated planner task deliberately; a refresh must not recreate it.
+   Check reminders are removed for deleted plans, and sign-out cannot carry one
+   account's pending refresh into another account.
+
+Local Windows checks cover Swift syntax parsing, stable IDs, shell syntax, and
+diff hygiene only. They do not substitute for XCTest/Xcode or real-device QA.

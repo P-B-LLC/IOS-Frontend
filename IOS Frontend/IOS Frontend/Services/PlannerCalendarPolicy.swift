@@ -28,19 +28,16 @@ nonisolated enum PlannerCalendarPolicy {
     static func movingWeeks(_ offset: Int, from date: Date, calendar: Calendar = .current) -> Date? {
         calendar.date(byAdding: .weekOfYear, value: offset, to: calendar.startOfDay(for: date))
     }
-}
 
-/// A response for a previously browsed month must not replace the current one.
-/// The token also distinguishes two reads of the same month (A → B → A).
-@MainActor
-final class PlannerMonthReadGate {
-    private var latest: UUID?
-
-    func begin() -> UUID {
-        let token = UUID()
-        latest = token
-        return token
+    /// Keep Home's locale-based week and Training's Monday-based week loaded
+    /// even when Calendar is browsing a different month. This bounded set must
+    /// not expand into every date between today and the browsed month.
+    static func homeAndTrainingWeek(containing date: Date, calendar: Calendar = .current) -> [Date] {
+        let training = week(containing: date, calendar: calendar)
+        guard let interval = calendar.dateInterval(of: .weekOfYear, for: date) else { return training }
+        let home = (0..<7).compactMap {
+            calendar.date(byAdding: .day, value: $0, to: interval.start)
+        }
+        return Set(training + home).sorted()
     }
-
-    func accepts(_ token: UUID) -> Bool { latest == token }
 }

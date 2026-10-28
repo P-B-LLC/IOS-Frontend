@@ -9,6 +9,8 @@ cp "$repo/Tests/AccountSafety/VideoBetaTests.swift" "$test_package/Tests/Account
 cp "$repo/Tests/AccountSafety/PlannerWeekdayTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/Tests/AccountSafety/PlannerCalendarTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/IOS Frontend/IOS Frontend/Services/PlannerCalendarPolicy.swift" "$test_package/Sources/AccountSafety/"
+cp "$repo/Tests/AccountSafety/CalendarRefreshTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/IOS Frontend/IOS Frontend/Services/CalendarRefreshCoordinator.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/Tests/AccountSafety/TrainingInsightTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/Tests/AccountSafety/WorkoutFlowTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/IOS Frontend/IOS Frontend/Services/WorkoutFocusPolicy.swift" "$test_package/Sources/AccountSafety/"

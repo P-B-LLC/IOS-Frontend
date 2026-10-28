@@ -27,15 +27,16 @@ final class PlannerStore {
     private var repository: PlannerAPIRepository?
     private var connectionGeneration = UUID()
     private let completions = PlannerCompletionCoordinator()
-    private let monthReads = PlannerMonthReadGate()
+    private let monthReads = CalendarReadGate()
+    private let calendarRefresh = CalendarRefreshCoordinator()
 
     func isCompletionPending(_ entry: PlannerEntry) -> Bool {
         entry.serverID.map { completions.isPending($0) } ?? false
     }
 
-    /// Everything loaded for the visible month, keyed by its `YYYY-MM-DD` date.
-    /// The month is the unit because the calendar has to mark every day in it,
-    /// and the day list is a slice of the same data rather than a second fetch.
+    /// The visible month plus the current Home/Training week, keyed by date.
+    /// Browsing another month must not empty Home's agenda. The cache remains
+    /// bounded to these ranges rather than accumulating every visited month.
     private(set) var entriesByDate: [String: [PlannerEntry]] = [:]
     /// The day whose list is shown, and the date a new entry is filled in with.
     private(set) var selectedDate: Date = Calendar.current.startOfDay(for: Date())
@@ -64,7 +65,6 @@ final class PlannerStore {
     /// reward the action without celebrating an optimistic change that later
     /// rolls back.
     private(set) var latestCompletionEvent: PlannerCompletionEvent?
-    private var isSyncingScheduledWorkouts = false
 
     /// How far ahead "upcoming" looks. Stated rather than assumed, so the list
     /// being short means the diary is empty and not that it was truncated.
@@ -177,11 +177,12 @@ final class PlannerStore {
     func connect(configuration: APIConfiguration, token: String) async {
         let generation = UUID()
         connectionGeneration = generation
+        calendarRefresh.reset()
+        monthReads.invalidate()
         completions.reset()
         latestCompletionEvent = nil
         isLoading = false
         isSaving = false
-        isSyncingScheduledWorkouts = false
 
         do {
             let repository = try PlannerAPIRepository(
@@ -200,6 +201,8 @@ final class PlannerStore {
     }
 
     func disconnect() {
+        calendarRefresh.reset()
+        monthReads.invalidate()
         completions.reset()
         connectionGeneration = UUID()
         repository = nil
@@ -212,7 +215,6 @@ final class PlannerStore {
         latestCompletionEvent = nil
         isLoading = false
         isSaving = false
-        isSyncingScheduledWorkouts = false
         selectedDate = Calendar.current.startOfDay(for: Date())
         visibleMonth = selectedDate
     }
@@ -265,69 +267,18 @@ final class PlannerStore {
         return (tasks.filter(\.isComplete).count, tasks.count)
     }
 
-    /// Gives every scheduled workout in the current week a planner task, by
-    /// asking the server to do it.
-    ///
-    /// The decision moved to the server, and the reason is the whole point of
-    /// this function. Deciding here meant comparing schedules against the
-    /// planner and creating whatever was missing, and "missing" covers both a
-    /// day never offered and a day whose task the user deleted. The second is
-    /// an answer, and re-asking it every launch put deleted tasks back. The
-    /// server records having asked, so it can tell them apart.
-    func syncScheduledWorkouts(_ workouts: [Workout]) async {
-        guard let repository, !isSyncingScheduledWorkouts else { return }
-        let dates = workouts.compactMap(\.scheduledDate).sorted()
-        guard let first = dates.first, let last = dates.last else { return }
-
+    /// Reconcile every displayed planner collection after a schedule change.
+    /// The sync endpoint returns newly created rows, not an authoritative
+    /// snapshot. Reload even when the schedule is empty or only future dates
+    /// changed, so deleted rotation tasks cannot remain on Home or Calendar.
+    func refreshScheduledWorkouts() async {
+        guard repository != nil else { return }
         let generation = connectionGeneration
-        isSyncingScheduledWorkouts = true
-        defer {
-            if connectionGeneration == generation {
-                isSyncingScheduledWorkouts = false
-            }
+        monthReads.invalidate()
+        await calendarRefresh.refresh { [weak self] in
+            guard let self, self.connectionGeneration == generation else { return }
+            await self.reloadMonth(generation: generation, showsLoadingState: false)
         }
-
-        do {
-            let created = try await repository.syncScheduledWorkouts(
-                from: first,
-                to: last
-            )
-            guard connectionGeneration == generation, !created.isEmpty else { return }
-            for entry in created {
-                // The month on screen may already hold it, if a refresh landed
-                // between the request and its answer.
-                let known = entriesByDate[entry.date]?.contains {
-                    $0.serverID == entry.serverID
-                } ?? false
-                if !known {
-                    entriesByDate[entry.date, default: []].append(entry)
-                }
-                rememberForReminders(entry)
-            }
-        } catch {
-            guard connectionGeneration == generation else { return }
-            persistenceError = "Scheduled workouts could not be added to the planner: \(error.localizedDescription)"
-        }
-    }
-
-    /// Adds a newly created entry to the reminder list if it falls inside the
-    /// horizon.
-    ///
-    /// Scheduled workouts are materialised into planner tasks in the
-    /// background, so they appear without any read that would have refreshed
-    /// the reminder list. Without this, a workout planned for tomorrow was not
-    /// remindable until something else happened to trigger a reload.
-    private func rememberForReminders(_ entry: PlannerEntry) {
-        let today = Self.dateString(Calendar.current.startOfDay(for: Date()))
-        guard let last = Calendar.current.date(
-            byAdding: .day,
-            value: Self.reminderHorizonDays,
-            to: Date()
-        ) else { return }
-        // ISO-8601 day strings compare lexically, so no parsing back.
-        guard entry.date >= today, entry.date <= Self.dateString(last) else { return }
-        guard !reminderEntries.contains(where: { $0.isSameEntry(as: entry) }) else { return }
-        reminderEntries.append(entry)
     }
 
     // MARK: - Navigation
@@ -567,10 +518,15 @@ final class PlannerStore {
                 // Same reasoning as `apply`: the row is held under a different
                 // local id in each list, so deleting by that id left a copy
                 // behind in whichever list the delete was not made from.
+                monthReads.invalidate()
+                isLoading = false
                 entriesByDate[entry.date]?.removeAll { $0.isSameEntry(as: entry) }
                 pastDue.removeAll { $0.isSameEntry(as: entry) }
                 upcomingEvents.removeAll { $0.isSameEntry(as: entry) }
                 reminderEntries.removeAll { $0.isSameEntry(as: entry) }
+                // An overlapping schedule refresh must not restore this row.
+                // The server remembers deliberately deleted generated tasks.
+                await refreshScheduledWorkouts()
             } catch {
                 guard connectionGeneration == generation else { return }
                 persistenceError = error.userFacingMessage
@@ -587,10 +543,17 @@ final class PlannerStore {
     // MARK: - Loading
 
     private func reloadMonth(generation: UUID, showsLoadingState: Bool) async {
-        guard let repository else { return }
+        guard let repository, connectionGeneration == generation else { return }
         // The grid shows a few days either side of the month, so the range is
         // padded rather than clipped to the first and last of the month.
         guard let range = Self.monthRange(around: visibleMonth) else { return }
+        let homeDays = PlannerCalendarPolicy.homeAndTrainingWeek(containing: Date())
+        let homeRange = homeDays.first.flatMap { start in
+            homeDays.last.map { end in (start: Self.dateString(start), end: Self.dateString(end)) }
+        }
+        let extraHomeRange = homeRange.flatMap {
+            $0.start < range.start || $0.end > range.end ? $0 : nil
+        }
         let readID = monthReads.begin()
         if showsLoadingState { isLoading = true }
         persistenceError = nil
@@ -612,11 +575,32 @@ final class PlannerStore {
             // imply did not, and the calendar looked like the rotation had not
             // taken. Asking per month means it also holds when you page ahead.
             //
-            // Not fatal: the server is the one that remembers having asked, so
-            // a failure here costs a month of tasks, not the month itself.
-            try? await repository.syncScheduledWorkouts(from: range.start, to: range.end)
+            // Continue reading existing tasks if sync fails, but surface the
+            // error instead of silently leaving a newly scheduled workout out.
+            let syncRanges = [range] + (extraHomeRange.map { [$0] } ?? [])
+            for requestedRange in syncRanges {
+                guard connectionGeneration == generation, monthReads.accepts(readID),
+                      !Task.isCancelled else { return }
+                do {
+                    _ = try await repository.syncScheduledWorkouts(from: requestedRange.start, to: requestedRange.end)
+                } catch {
+                    guard connectionGeneration == generation, monthReads.accepts(readID),
+                          !Task.isCancelled else { return }
+                    persistenceError = "Workouts could not be synced with your planner. \(error.userFacingMessage ?? SaveFailure.unexplained)"
+                }
+            }
+            guard connectionGeneration == generation, monthReads.accepts(readID),
+                  !Task.isCancelled else { return }
             let read = completions.beginRead()
-            let loaded = try await repository.entries(from: range.start, to: range.end)
+            let loaded: [PlannerEntry]
+            if let extraHomeRange {
+                async let month = repository.entries(from: range.start, to: range.end)
+                async let home = repository.entries(from: extraHomeRange.start, to: extraHomeRange.end)
+                let (monthEntries, homeEntries) = try await (month, home)
+                loaded = monthEntries + homeEntries.filter { $0.date < range.start || $0.date > range.end }
+            } else {
+                loaded = try await repository.entries(from: range.start, to: range.end)
+            }
             guard connectionGeneration == generation, monthReads.accepts(readID) else { return }
             entriesByDate = Dictionary(grouping: loaded.map { reconcileCompletion($0, read: read) }, by: \.date)
         } catch {
@@ -624,13 +608,16 @@ final class PlannerStore {
             persistenceError = error.userFacingMessage
         }
 
-        await reloadSurroundings(generation: generation)
+        guard connectionGeneration == generation, monthReads.accepts(readID),
+              !Task.isCancelled else { return }
+        await reloadSurroundings(generation: generation, readID: readID)
     }
 
     /// What is overdue and what is coming, neither of which lives inside the
     /// month on screen.
-    private func reloadSurroundings(generation: UUID) async {
-        guard let repository else { return }
+    private func reloadSurroundings(generation: UUID, readID: UUID) async {
+        guard let repository, connectionGeneration == generation,
+              monthReads.accepts(readID) else { return }
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
         guard let yesterday = calendar.date(byAdding: .day, value: -1, to: today),
@@ -672,7 +659,7 @@ final class PlannerStore {
             )
             let (loadedOverdue, loadedAhead, loadedRemindable) =
                 try await (overdue, ahead, remindable)
-            guard connectionGeneration == generation else { return }
+            guard connectionGeneration == generation, monthReads.accepts(readID) else { return }
             // High first, then oldest first. Something marked high has been
             // waiting *and* matters, and sorting by age alone filed it behind
             // whatever happened to be older.
@@ -700,9 +687,9 @@ final class PlannerStore {
             upcomingEvents = loadedAhead.sorted {
                 ($0.date, $0.time ?? "") < ($1.date, $1.time ?? "")
             }
-            reminderEntries = loadedRemindable
+            reminderEntries = loadedRemindable.map { reconcileCompletion($0, read: read) }
         } catch {
-            guard connectionGeneration == generation else { return }
+            guard connectionGeneration == generation, monthReads.accepts(readID) else { return }
             persistenceError = error.userFacingMessage
         }
     }

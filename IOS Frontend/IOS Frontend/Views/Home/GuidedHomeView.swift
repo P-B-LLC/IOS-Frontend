@@ -245,7 +245,10 @@ private struct GuidedHomeWeekStrip: View {
     }
 
     private func dayHasContent(_ day: Date) -> Bool {
-        let weekday = Weekday(calendarWeekday: Calendar.current.component(.weekday, from: day))
+        // The Home strip may start on the previous Sunday, but the workout
+        // store holds the current Monday-based week. Never borrow the next
+        // Sunday's workout just because both dates share a weekday.
+        let weekday = workouts.weekday(forDateString: PlannerStore.dateString(day))
         return planner.hasEntries(on: day)
             || weekday.map { !workouts.workouts(on: $0).isEmpty } == true
     }
@@ -782,7 +785,9 @@ private struct GuidedDayFlow: View {
     }
 
     private var weekday: Weekday? {
-        Weekday(calendarWeekday: Calendar.current.component(.weekday, from: selectedDate))
+        // The card and its destination must refer to the same concrete day.
+        // An out-of-week date can open Training, not a different day's plan.
+        workouts.weekday(forDateString: PlannerStore.dateString(selectedDate))
     }
 
     private var workout: Workout? {

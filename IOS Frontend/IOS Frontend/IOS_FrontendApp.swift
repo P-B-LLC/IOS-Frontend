@@ -668,7 +668,7 @@ private struct AppRootView: View {
                 token: token
             )
             guard authentication.token == token, !Task.isCancelled else { return }
-            await plannerStore.syncScheduledWorkouts(workoutStore.currentWeekWorkouts)
+            await plannerStore.refreshScheduledWorkouts()
             guard authentication.token == token, !Task.isCancelled else { return }
             await rescheduleReminders()
             // So the icon is right from launch rather than only after the
@@ -678,12 +678,14 @@ private struct AppRootView: View {
             guard authentication.token == token, !Task.isCancelled else { return }
             await workoutStore.retryPendingWorkoutSaves()
         }
-        .task(id: workoutStore.currentWeekWorkouts) {
+        // A revision also changes for an empty/identical current week: stopping
+        // a rotation can remove future dates without changing this week's rows.
+        .task(id: workoutStore.calendarRevision) {
 #if DEBUG
             guard Self.isPreviewing == false else { return }
 #endif
             guard authentication.token != nil else { return }
-            await plannerStore.syncScheduledWorkouts(workoutStore.currentWeekWorkouts)
+            await plannerStore.refreshScheduledWorkouts()
             await rescheduleReminders()
         }
         // A task added, moved, finished or deleted changes what should be

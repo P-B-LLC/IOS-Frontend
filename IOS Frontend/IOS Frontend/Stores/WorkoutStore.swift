@@ -54,6 +54,9 @@ final class WorkoutStore {
         return result
     }
     private var connectionGeneration = UUID()
+    private let scheduleReads = CalendarReadGate()
+    /// Invalidates dependent planner data even if this week's rows are unchanged.
+    private(set) var calendarRevision: UInt64 = 0
 
     /// Current-week projection of concrete API WorkoutSchedule records. A date
     /// can hold more than one schedule, so each day maps to a list.
@@ -158,6 +161,7 @@ final class WorkoutStore {
         recoveryOrigin = configuration.serverURL.absoluteString
         let generation = UUID()
         connectionGeneration = generation
+        scheduleReads.invalidate()
         activeSession = nil
         pendingSetIDs = []
         // A fresh connection owns these flags; never inherit a stuck one.
@@ -192,6 +196,7 @@ final class WorkoutStore {
         recoveryError = nil
         isRecoveringWorkouts = false
         connectionGeneration = UUID()
+        scheduleReads.invalidate()
         routeTracker.reset()
         trainingStats = .empty
         completedSessions = []
@@ -439,8 +444,7 @@ final class WorkoutStore {
     }
 
     /// Every concrete workout scheduled in the current week, in weekday and
-    /// schedule order. Planner synchronization reads this projection rather
-    /// than reaching into the store's private dictionary.
+    /// schedule order. Dates, not weekday names, identify concrete schedules.
     var currentWeekWorkouts: [Workout] {
         Weekday.allCases.flatMap { workouts(on: $0) }
     }
@@ -556,6 +560,7 @@ final class WorkoutStore {
                 on: Self.dateString(date)
             )
             guard connectionGeneration == generation else { return false }
+            scheduleReads.invalidate()
             await reloadWeek(
                 using: repository,
                 generation: generation,
@@ -652,6 +657,8 @@ final class WorkoutStore {
                 replacing: existing,
                 scheduledDate: date
             )
+            guard connectionGeneration == generation else { return false }
+            scheduleReads.invalidate()
             await reloadWeek(
                 using: repository,
                 generation: generation,
@@ -677,10 +684,13 @@ final class WorkoutStore {
             do {
                 try await repository.removeSchedule(workout)
                 guard connectionGeneration == generation else { return }
+                scheduleReads.invalidate()
+                isLoading = false
                 schedule[day]?.removeAll { $0.id == workout.id }
                 if schedule[day]?.isEmpty == true {
                     schedule.removeValue(forKey: day)
                 }
+                calendarRevision &+= 1
             } catch {
                 guard connectionGeneration == generation else { return }
                 persistenceError = error.userFacingMessage
@@ -718,7 +728,10 @@ final class WorkoutStore {
                     recurrenceID = nil
                 }
                 guard connectionGeneration == generation else { return }
+                scheduleReads.invalidate()
+                isLoading = false
                 mutateWorkout(workout, on: day) { $0.recurrenceID = recurrenceID }
+                calendarRevision &+= 1
             } catch {
                 guard connectionGeneration == generation else { return }
                 persistenceError = error.userFacingMessage
@@ -1228,6 +1241,7 @@ final class WorkoutStore {
         do {
             try await repository.clearSchedule()
             guard connectionGeneration == generation else { return }
+            scheduleReads.invalidate()
             await reloadWeek(
                 using: repository,
                 generation: generation,
@@ -1253,6 +1267,7 @@ final class WorkoutStore {
         do {
             try await repository.deleteSavedWorkout(id: workout.id)
             guard connectionGeneration == generation else { return }
+            scheduleReads.invalidate()
             knownWorkouts.removeAll { $0.id == workout.id }
             await reloadWeek(
                 using: repository,
@@ -1306,25 +1321,34 @@ final class WorkoutStore {
         generation: UUID,
         showsLoadingState: Bool
     ) async {
+        guard connectionGeneration == generation else { return }
+        let readID = scheduleReads.begin()
         if showsLoadingState { isLoading = true }
         // The flag is cleared no matter how this exits. Leaving it set after a
         // stale return would disable every editing control with nothing on
         // screen to explain why, and retryPersistence() would refuse to run.
-        defer { if showsLoadingState { isLoading = false } }
+        defer {
+            if connectionGeneration == generation, scheduleReads.accepts(readID) {
+                isLoading = false
+                // Also on a failed week read: a preceding server write may
+                // have succeeded, and the planner must independently refresh.
+                calendarRevision &+= 1
+            }
+        }
 
         persistenceError = nil
         do {
             let loaded = try await repository.loadWeek(
                 dateByDay: dateStringsForCurrentWeek()
             )
-            guard connectionGeneration == generation else { return }
+            guard connectionGeneration == generation, scheduleReads.accepts(readID) else { return }
             schedule = loaded.schedule
             // Names to offer when creating a workout, built from the templates
             // the schedule was built from. This was a second sequential request
             // for rows the first one had already read.
             knownWorkouts = loaded.library
         } catch {
-            guard connectionGeneration == generation else { return }
+            guard connectionGeneration == generation, scheduleReads.accepts(readID) else { return }
             persistenceError = error.userFacingMessage
         }
     }
