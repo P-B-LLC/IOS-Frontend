@@ -39,4 +39,25 @@ final class FoodPortionMeasurementTests: XCTestCase {
         XCTAssertNil(FoodPortionMeasurement.multiplier(amount: 1001, measured: false,
             ounces: false, gramsPerServing: nil))
     }
+
+    func testArabicKeyboardDecimalAcrossRegionsAndNumberingSystems() {
+        // Explicit numbering-system overrides keep this independent of the
+        // OS/CLDR default chosen by the language-only `ar` locale.
+        for identifier in ["ar", "ar_EG", "ar_SA", "ar_DZ", "ar-u-nu-latn", "ar-u-nu-arab"] {
+            let locale = Locale(identifier: identifier)
+            XCTAssertEqual(FoodPortionMeasurement.positive("١٫٥", locale: locale), Decimal(string: "1.5"), identifier)
+            XCTAssertEqual(FoodPortionMeasurement.positive("١٢٥٫٢٥", locale: locale), Decimal(string: "125.25"), identifier)
+            for invalid in ["١٬٥", "١٬٠٠٠", "١٬٠٠٠٫٥", "١٫٥٫٥", "١٫٥.٥", "١٫٥,٥", "٫", "٠٫٠", "-١٫٥", "١٫٥abc"] {
+                XCTAssertNil(FoodPortionMeasurement.positive(invalid, locale: locale), "\(identifier): \(invalid)")
+            }
+        }
+    }
+
+    func testArabicDecimalMarkerDoesNotEnableAmbiguousGroupingAlternatives() {
+        let latinArabic = Locale(identifier: "ar-u-nu-latn")
+        XCTAssertEqual(FoodPortionMeasurement.positive("1.5", locale: latinArabic), Decimal(string: "1.5"))
+        XCTAssertNil(FoodPortionMeasurement.positive("1,000", locale: latinArabic))
+        XCTAssertNil(FoodPortionMeasurement.positive("1.000", locale: Locale(identifier: "de")))
+        XCTAssertNil(FoodPortionMeasurement.positive("1,000٫5", locale: Locale(identifier: "en")))
+    }
 }

@@ -8,7 +8,13 @@ nonisolated enum FoodPortionMeasurement {
     static func positive(_ text: String, locale: Locale) -> Decimal? {
         let input = text.trimmingCharacters(in: .whitespacesAndNewlines)
         let separator = locale.decimalSeparator ?? "."
-        let parts = input.components(separatedBy: separator)
+        // An Arabic keyboard can emit U+066B even when the selected locale
+        // uses Latin digits and a period (including some `ar` defaults).
+        // This is explicitly a decimal mark, not the distinct U+066C group
+        // separator. Normalize it without accepting ambiguous comma/dot
+        // alternatives or relaxing the single-separator/digits-only checks.
+        let decimalInput = input.replacingOccurrences(of: "\u{066B}", with: separator)
+        let parts = decimalInput.components(separatedBy: separator)
         guard parts.count <= 2, !input.isEmpty,
               parts.contains(where: { !$0.isEmpty }),
               parts.allSatisfy({ $0.unicodeScalars.allSatisfy { CharacterSet.decimalDigits.contains($0) } }) else { return nil }

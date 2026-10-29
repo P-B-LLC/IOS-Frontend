@@ -53,6 +53,18 @@ The first Mac build exposed a missing `import Vision` in the earlier barcode
 scanner work on this shared branch. The one-line import is included so that the
 complete branch can compile; barcode behavior is otherwise unchanged.
 
+Mac [run 40945215343](https://github.com/P-B-LLC/IOS-Frontend/actions/runs/40945215343)
+passed Debug and Release simulator builds, generated-client parity, stable IDs,
+and all notification activity tests. Its full regression suite found one earlier
+food-quantity defect: Arabic keyboard `٫` was rejected when the locale's decimal
+separator was `.`. This branch now normalizes that unambiguous decimal mark,
+without allowing grouping or malformed amounts, and adds regional regressions.
+The full CI rerun on that fix is still required; this is not a full-suite pass.
+
+Backend [run 40945042659](https://github.com/P-B-LLC/repbase/actions/runs/40945042659)
+passed the full Linux SQLite and PostgreSQL suites, dependency audit, schema
+parity, and production checks for backend commit `88c8c1c`.
+
 `NotificationActivityTests` covers grouping, distinct actors, deduplication,
 latest ordering, missing previews, non-post events, legacy DTO decoding, scoped
 read batches, retries, new arrivals, and read-state reset/reconciliation.
