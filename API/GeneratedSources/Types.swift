@@ -286,7 +286,7 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /api/v1/food/saved-meals/{id}/apply/`.
     /// - Remark: Generated from `#/paths//api/v1/food/saved-meals/{id}/apply//post(food_saved_meals_apply_create)`.
     func foodSavedMealsApplyCreate(_ input: Operations.FoodSavedMealsApplyCreate.Input) async throws -> Operations.FoodSavedMealsApplyCreate.Output
-    /// Searches USDA FoodData Central and returns foods in the shape a food entry is logged in. Results are cached for a week.
+    /// Searches Open Food Facts or looks up a product barcode. Only records with complete calories and macros are returned. Results are cached; empty means not found or incomplete nutrition. Attribute Open Food Facts (ODbL).
     ///
     /// - Remark: HTTP `GET /api/v1/food/search/`.
     /// - Remark: Generated from `#/paths//api/v1/food/search//get(food_search_list)`.
@@ -977,7 +977,7 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /api/v1/social/notifications/`.
     /// - Remark: Generated from `#/paths//api/v1/social/notifications//get(social_notifications_list)`.
     func socialNotificationsList(_ input: Operations.SocialNotificationsList.Input) async throws -> Operations.SocialNotificationsList.Output
-    /// Mark every notification as seen. Answers with what is left unread, which is zero, so the caller has one shape to read whichever of these two it called.
+    /// Mark supplied notification IDs as seen (at most 500). An empty ids list changes nothing; omitting ids preserves legacy mark-all behavior. Only the authenticated recipient's currently visible rows are changed. Returns the actual remaining unread count. Clients must see supports_scoped_read=true in a list response before sending ids.
     ///
     /// - Remark: HTTP `POST /api/v1/social/notifications/read/`.
     /// - Remark: Generated from `#/paths//api/v1/social/notifications/read//post(social_notifications_read_create)`.
@@ -1967,7 +1967,7 @@ extension APIProtocol {
             body: body
         ))
     }
-    /// Searches USDA FoodData Central and returns foods in the shape a food entry is logged in. Results are cached for a week.
+    /// Searches Open Food Facts or looks up a product barcode. Only records with complete calories and macros are returned. Results are cached; empty means not found or incomplete nutrition. Attribute Open Food Facts (ODbL).
     ///
     /// - Remark: HTTP `GET /api/v1/food/search/`.
     /// - Remark: Generated from `#/paths//api/v1/food/search//get(food_search_list)`.
@@ -3350,12 +3350,18 @@ extension APIProtocol {
             headers: headers
         ))
     }
-    /// Mark every notification as seen. Answers with what is left unread, which is zero, so the caller has one shape to read whichever of these two it called.
+    /// Mark supplied notification IDs as seen (at most 500). An empty ids list changes nothing; omitting ids preserves legacy mark-all behavior. Only the authenticated recipient's currently visible rows are changed. Returns the actual remaining unread count. Clients must see supports_scoped_read=true in a list response before sending ids.
     ///
     /// - Remark: HTTP `POST /api/v1/social/notifications/read/`.
     /// - Remark: Generated from `#/paths//api/v1/social/notifications/read//post(social_notifications_read_create)`.
-    public func socialNotificationsReadCreate(headers: Operations.SocialNotificationsReadCreate.Input.Headers = .init()) async throws -> Operations.SocialNotificationsReadCreate.Output {
-        try await socialNotificationsReadCreate(Operations.SocialNotificationsReadCreate.Input(headers: headers))
+    public func socialNotificationsReadCreate(
+        headers: Operations.SocialNotificationsReadCreate.Input.Headers = .init(),
+        body: Operations.SocialNotificationsReadCreate.Input.Body? = nil
+    ) async throws -> Operations.SocialNotificationsReadCreate.Output {
+        try await socialNotificationsReadCreate(Operations.SocialNotificationsReadCreate.Input(
+            headers: headers,
+            body: body
+        ))
     }
     /// How many notifications have not been seen yet.
     ///
@@ -6722,6 +6728,28 @@ public enum Components {
             public var message: Swift.String?
             /// - Remark: Generated from `#/components/schemas/Notification/created_at`.
             public var createdAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/Notification/post_preview`.
+            public struct PostPreviewPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/Notification/post_preview/value1`.
+                public var value1: Components.Schemas.NotificationPostPreview
+                /// Creates a new `PostPreviewPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.NotificationPostPreview) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/Notification/post_preview`.
+            public var postPreview: Components.Schemas.Notification.PostPreviewPayload?
+            /// - Remark: Generated from `#/components/schemas/Notification/supports_scoped_read`.
+            public var supportsScopedRead: Swift.Bool?
             /// Creates a new `Notification`.
             ///
             /// - Parameters:
@@ -6737,6 +6765,8 @@ public enum Components {
             ///   - isRead:
             ///   - message:
             ///   - createdAt:
+            ///   - postPreview:
+            ///   - supportsScopedRead:
             public init(
                 id: Swift.Int,
                 kind: Components.Schemas.NotificationKindEnum,
@@ -6749,7 +6779,9 @@ public enum Components {
                 commentBody: Swift.String? = nil,
                 isRead: Swift.Bool,
                 message: Swift.String? = nil,
-                createdAt: Foundation.Date
+                createdAt: Foundation.Date,
+                postPreview: Components.Schemas.Notification.PostPreviewPayload? = nil,
+                supportsScopedRead: Swift.Bool? = nil
             ) {
                 self.id = id
                 self.kind = kind
@@ -6763,6 +6795,8 @@ public enum Components {
                 self.isRead = isRead
                 self.message = message
                 self.createdAt = createdAt
+                self.postPreview = postPreview
+                self.supportsScopedRead = supportsScopedRead
             }
             public enum CodingKeys: String, CodingKey {
                 case id
@@ -6777,6 +6811,8 @@ public enum Components {
                 case isRead = "is_read"
                 case message
                 case createdAt = "created_at"
+                case postPreview = "post_preview"
+                case supportsScopedRead = "supports_scoped_read"
             }
         }
         /// * `follow` - Started following you
@@ -6796,6 +6832,66 @@ public enum Components {
             case repost = "repost"
             case comment = "comment"
             case moderationRejected = "moderation_rejected"
+        }
+        /// Small, recipient-authorized context, never a second full post payload.
+        ///
+        /// - Remark: Generated from `#/components/schemas/NotificationPostPreview`.
+        public struct NotificationPostPreview: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/NotificationPostPreview/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/NotificationPostPreview/kind`.
+            public var kind: Swift.String
+            /// - Remark: Generated from `#/components/schemas/NotificationPostPreview/title`.
+            public var title: Swift.String
+            /// - Remark: Generated from `#/components/schemas/NotificationPostPreview/thumbnail_url`.
+            public var thumbnailUrl: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/NotificationPostPreview/media_kind`.
+            public var mediaKind: Swift.String
+            /// Creates a new `NotificationPostPreview`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - kind:
+            ///   - title:
+            ///   - thumbnailUrl:
+            ///   - mediaKind:
+            public init(
+                id: Swift.Int,
+                kind: Swift.String,
+                title: Swift.String,
+                thumbnailUrl: Swift.String? = nil,
+                mediaKind: Swift.String
+            ) {
+                self.id = id
+                self.kind = kind
+                self.title = title
+                self.thumbnailUrl = thumbnailUrl
+                self.mediaKind = mediaKind
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case kind
+                case title
+                case thumbnailUrl = "thumbnail_url"
+                case mediaKind = "media_kind"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/NotificationReadRequest`.
+        public struct NotificationReadRequest: Codable, Hashable, Sendable {
+            /// Mark only these notification IDs as read. An empty list changes nothing. Omit the body/ids for legacy mark-all behavior.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NotificationReadRequest/ids`.
+            public var ids: [Swift.Int]?
+            /// Creates a new `NotificationReadRequest`.
+            ///
+            /// - Parameters:
+            ///   - ids: Mark only these notification IDs as read. An empty list changes nothing. Omit the body/ids for legacy mark-all behavior.
+            public init(ids: [Swift.Int]? = nil) {
+                self.ids = ids
+            }
+            public enum CodingKeys: String, CodingKey {
+                case ids
+            }
         }
         /// - Remark: Generated from `#/components/schemas/NullEnum`.
         public typealias NullEnum = OpenAPIRuntime.OpenAPIValueContainer
@@ -20945,7 +21041,7 @@ public enum Operations {
             }
         }
     }
-    /// Searches USDA FoodData Central and returns foods in the shape a food entry is logged in. Results are cached for a week.
+    /// Searches Open Food Facts or looks up a product barcode. Only records with complete calories and macros are returned. Results are cached; empty means not found or incomplete nutrition. Attribute Open Food Facts (ODbL).
     ///
     /// - Remark: HTTP `GET /api/v1/food/search/`.
     /// - Remark: Generated from `#/paths//api/v1/food/search//get(food_search_list)`.
@@ -20954,14 +21050,14 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/api/v1/food/search/GET/query`.
             public struct Query: Sendable, Hashable {
-                /// What to search for. Two characters or more.
+                /// Submit a food/brand search (two characters minimum), or barcode: followed by a GTIN-8/12/13/14 product barcode. Do not search on every keystroke.
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/food/search/GET/query/q`.
                 public var q: Swift.String
                 /// Creates a new `Query`.
                 ///
                 /// - Parameters:
-                ///   - q: What to search for. Two characters or more.
+                ///   - q: Submit a food/brand search (two characters minimum), or barcode: followed by a GTIN-8/12/13/14 product barcode. Do not search on every keystroke.
                 public init(q: Swift.String) {
                     self.q = q
                 }
@@ -33469,7 +33565,7 @@ public enum Operations {
             }
         }
     }
-    /// Mark every notification as seen. Answers with what is left unread, which is zero, so the caller has one shape to read whichever of these two it called.
+    /// Mark supplied notification IDs as seen (at most 500). An empty ids list changes nothing; omitting ids preserves legacy mark-all behavior. Only the authenticated recipient's currently visible rows are changed. Returns the actual remaining unread count. Clients must see supports_scoped_read=true in a list response before sending ids.
     ///
     /// - Remark: HTTP `POST /api/v1/social/notifications/read/`.
     /// - Remark: Generated from `#/paths//api/v1/social/notifications/read//post(social_notifications_read_create)`.
@@ -33488,12 +33584,23 @@ public enum Operations {
                 }
             }
             public var headers: Operations.SocialNotificationsReadCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/social/notifications/read/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/notifications/read/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.NotificationReadRequest)
+            }
+            public var body: Operations.SocialNotificationsReadCreate.Input.Body?
             /// Creates a new `Input`.
             ///
             /// - Parameters:
             ///   - headers:
-            public init(headers: Operations.SocialNotificationsReadCreate.Input.Headers = .init()) {
+            ///   - body:
+            public init(
+                headers: Operations.SocialNotificationsReadCreate.Input.Headers = .init(),
+                body: Operations.SocialNotificationsReadCreate.Input.Body? = nil
+            ) {
                 self.headers = headers
+                self.body = body
             }
         }
         @frozen public enum Output: Sendable, Hashable {

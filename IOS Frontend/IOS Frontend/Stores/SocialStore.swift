@@ -42,6 +42,19 @@ final class SocialStore {
     private(set) var changingFollowFor: Set<Int> = []
     /// What has happened to the signed-in user, newest first.
     private(set) var notifications: [SocialNotification] = []
+    private(set) var isLoadingNotifications = false
+    private(set) var hasLoadedNotifications = false
+    private(set) var notificationsError: String?
+    private(set) var notificationReadError: String?
+    private var notificationLoadID = UUID()
+    private var notificationEpoch = UUID()
+    private var notificationCountID = UUID()
+    private var notificationReads = SocialNotificationReadState()
+    private var isMarkingNotificationsRead = false
+
+    var notificationGroups: [SocialNotificationGroup] {
+        SocialNotificationGrouping.groups(from: notifications)
+    }
     /// How many of those have not been seen. Kept apart from the list because
     /// the badge is wanted in places that have no reason to load the page.
     private(set) var unreadNotifications = 0
@@ -141,8 +154,7 @@ final class SocialStore {
         followRequests = []
         answeringRequests = []
         requestedUserIDs = []
-        notifications = []
-        unreadNotifications = 0
+        clearNotificationState()
         // One account's count must never sit on the icon for the next. Signing
         // out is not reading them, so this clears the number without touching
         // what the server still holds as unread.
@@ -292,10 +304,23 @@ final class SocialStore {
     func loadNotifications() async {
         guard let repository else { return }
         let generation = connectionGeneration
+        let epoch = notificationEpoch
+        let requestID = UUID()
+        notificationLoadID = requestID
+        isLoadingNotifications = true
+        notificationsError = nil
+        defer {
+            if connectionGeneration == generation, notificationEpoch == epoch,
+               notificationLoadID == requestID { isLoadingNotifications = false }
+        }
         do {
             let loaded = try await repository.notifications()
-            guard connectionGeneration == generation else { return }
-            notifications = loaded
+            guard connectionGeneration == generation, notificationEpoch == epoch,
+                  notificationLoadID == requestID, !Task.isCancelled else { return }
+            notificationReads.retain(Set(loaded.map(\.id)))
+            notifications = notificationReads.applyingConfirmedReads(to: loaded)
+                .filter { !locallyBlockedAuthorIDs.contains($0.actorID) }
+            hasLoadedNotifications = true
             // An approval is the answer to a request this device is still
             // drawing as pending. The button reads a profile snapshot that
             // only changes on a refetch, so it went on saying "Requested"
@@ -310,46 +335,83 @@ final class SocialStore {
                 requestedUserIDs.remove(row.actorID)
             }
         } catch {
-            guard connectionGeneration == generation else { return }
-            showFailure(error)
+            guard connectionGeneration == generation, notificationEpoch == epoch,
+                  notificationLoadID == requestID, !Task.isCancelled else { return }
+            notificationsError = error.userFacingMessage
         }
     }
 
     func refreshUnreadNotificationCount() async {
         guard let repository else { return }
         let generation = connectionGeneration
+        let epoch = notificationEpoch
+        let requestID = UUID()
+        notificationCountID = requestID
         // Quietly: this runs to draw a dot, and a failed count is not worth a
         // message across a page somebody is reading for another reason.
         if let count = try? await repository.unreadNotificationCount(),
-           connectionGeneration == generation {
+           connectionGeneration == generation, notificationEpoch == epoch,
+           notificationCountID == requestID {
             unreadNotifications = count
             await NotificationScheduler.shared.setBadge(count)
         }
     }
 
-    /// Marks everything seen, which is what opening the page means.
-    func markNotificationsRead() async {
-        guard let repository, unreadNotifications > 0 else { return }
+    /// Called for the event IDs in a visible card. Never marks undisplayed
+    /// activity or an arrival newer than the response currently on screen.
+    /// Requests coalesce and serialize, so a slower count cannot undo a newer
+    /// confirmation. Older servers are read-only here until they advertise
+    /// scoped-read support; sending IDs to the legacy endpoint is unsafe.
+    func markNotificationsRead(ids: [Int]) async {
+        guard let repository else { return }
+        notificationReads.enqueue(ids, in: notifications)
+        guard !isMarkingNotificationsRead, !notificationReads.pending.isEmpty else { return }
         let generation = connectionGeneration
-        do {
-            try await repository.markNotificationsRead()
-            guard connectionGeneration == generation else { return }
-            unreadNotifications = 0
-            // The rows on screen as well as the count. The server has them
-            // marked and the badge is cleared, but each row still carried the
-            // `isRead` it was fetched with, so the dots stayed lit down a page
-            // that had just read every one of them — and stayed lit until
-            // something refetched, which on this page is nothing.
-            notifications = notifications.map { row in
-                var seen = row
-                seen.isRead = true
-                return seen
+        let epoch = notificationEpoch
+        isMarkingNotificationsRead = true
+        notificationReadError = nil
+        defer {
+            if connectionGeneration == generation, notificationEpoch == epoch {
+                isMarkingNotificationsRead = false
             }
-            await NotificationScheduler.shared.setBadge(0)
-        } catch {
-            guard connectionGeneration == generation else { return }
-            showFailure(error)
         }
+        while !notificationReads.pending.isEmpty {
+            guard connectionGeneration == generation, notificationEpoch == epoch else { return }
+            let batch = notificationReads.takeBatch()
+            do {
+                let unread = try await repository.markNotificationsRead(ids: batch)
+                guard connectionGeneration == generation, notificationEpoch == epoch else { return }
+                notificationReads.complete(batch)
+                notifications = notificationReads.applyingConfirmedReads(to: notifications)
+                // A count request started before this confirmation is stale.
+                notificationCountID = UUID()
+                unreadNotifications = unread
+                await NotificationScheduler.shared.setBadge(unread)
+            } catch {
+                guard connectionGeneration == generation, notificationEpoch == epoch else { return }
+                notificationReads.retry(batch)
+                if !Task.isCancelled { notificationReadError = error.userFacingMessage }
+                return
+            }
+        }
+    }
+
+    func retryNotificationReads() async {
+        await markNotificationsRead(ids: [])
+    }
+
+    private func clearNotificationState() {
+        notificationEpoch = UUID()
+        notificationLoadID = UUID()
+        notificationCountID = UUID()
+        notificationReads = SocialNotificationReadState()
+        isMarkingNotificationsRead = false
+        notifications = []
+        unreadNotifications = 0
+        isLoadingNotifications = false
+        hasLoadedNotifications = false
+        notificationsError = nil
+        notificationReadError = nil
     }
 
     // MARK: - Requests waiting on you
@@ -1208,6 +1270,11 @@ final class SocialStore {
             try await repository.block(userID: author.id)
             guard connectionGeneration == generation else { return }
             locallyBlockedAuthorIDs.insert(author.id)
+            // An actor and the author of a replied-to post can be different
+            // people. Drop all cached previews and fence in-flight responses
+            // until the server re-evaluates visibility for this account.
+            clearNotificationState()
+            RemoteImageCache.shared.clear()
             feed.removeAll { $0.displayed.author.id == author.id }
             forYou.removeAll { $0.displayed.author.id == author.id }
             discoverPosts.removeAll { $0.displayed.author.id == author.id }
@@ -1221,6 +1288,7 @@ final class SocialStore {
             searchedPosts.removeAll { $0.displayed.author.id == author.id }
             lastModerationMessage =
                 String(localized: "Blocked \(author.displayName). You will not see each other's posts.", bundle: .app, locale: .app)
+            await refreshUnreadNotificationCount()
         } catch {
             guard connectionGeneration == generation else { return }
             showFailure(error)

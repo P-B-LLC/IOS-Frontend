@@ -1,6 +1,9 @@
 name: CI
 
 on:
+  # Validate the shared testing branch even when an unrelated main update
+  # temporarily prevents GitHub from creating the PR merge candidate.
+  workflow_dispatch:
   push:
     branches: [main]
   pull_request:

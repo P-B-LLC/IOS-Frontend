@@ -847,27 +847,31 @@ actor SocialAPIRepository {
     // MARK: - What has happened to you
 
     func notifications() async throws -> [SocialNotification] {
-        let output = try await client.socialNotificationsList(query: .init())
-        switch output {
-        case .ok(let response):
-            return try response.body.json.results.map { row in
-                SocialNotification(
-                    id: row.id,
-                    kind: SocialNotification.Kind(rawValue: row.kind.rawValue)
-                        ?? .unknown,
-                    actorID: row.actorId,
-                    actorUsername: row.actorUsername,
-                    actorFirstName: row.actorFirstName,
-                    actorLastName: row.actorLastName,
-                    actorPhotoURL: row.actorPhotoUrl,
-                    postID: row.post,
-                    commentBody: row.commentBody,
-                    isRead: row.isRead
-                )
+        var page: Int?
+        var visited: Set<Int> = [1]
+        var rowsByID: [Int: SocialNotification] = [:]
+        // A group can span API pages. Read the complete notification history,
+        // not just page one, before claiming totals for each post. Requests
+        // remain sequential/cancellable and never fetch a full post per row.
+        repeat {
+            try Task.checkCancellation()
+            let output = try await client.socialNotificationsList(query: .init(page: page))
+            let body: Components.Schemas.PaginatedNotificationList
+            switch output {
+            case .ok(let response):
+                body = try response.body.json
+            case .undocumented(let statusCode, _):
+                throw APIServiceError.undocumentedStatus(statusCode)
             }
-        case .undocumented(let statusCode, _):
-            throw APIServiceError.undocumentedStatus(statusCode)
-        }
+            try Task.checkCancellation()
+            for value in body.results {
+                var row = NotificationPayloadMapping.notification(from: value)
+                row.isRead = row.isRead || (rowsByID[row.id]?.isRead ?? false)
+                rowsByID[row.id] = row
+            }
+            page = try nextPage(body.next, visited: &visited)
+        } while page != nil
+        return rowsByID.values.sorted(by: SocialNotificationGrouping.newestFirst)
     }
 
     @discardableResult
@@ -881,11 +885,17 @@ actor SocialAPIRepository {
         }
     }
 
-    func markNotificationsRead() async throws {
-        let output = try await client.socialNotificationsReadCreate()
+    func markNotificationsRead(ids: [Int]) async throws -> Int {
+        // No empty/omitted request: the legacy no-body meaning is mark-all.
+        guard !ids.isEmpty, ids.count <= 500, ids.allSatisfy({ $0 > 0 }) else {
+            throw APIServiceError.malformedResponse
+        }
+        let output = try await client.socialNotificationsReadCreate(
+            body: .json(Components.Schemas.NotificationReadRequest(ids: ids))
+        )
         switch output {
-        case .ok:
-            return
+        case .ok(let response):
+            return try response.body.json.unread
         case .undocumented(let statusCode, _):
             throw APIServiceError.undocumentedStatus(statusCode)
         }

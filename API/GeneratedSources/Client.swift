@@ -3795,7 +3795,7 @@ public struct Client: APIProtocol {
             }
         )
     }
-    /// Searches USDA FoodData Central and returns foods in the shape a food entry is logged in. Results are cached for a week.
+    /// Searches Open Food Facts or looks up a product barcode. Only records with complete calories and macros are returned. Results are cached; empty means not found or incomplete nutrition. Attribute Open Food Facts (ODbL).
     ///
     /// - Remark: HTTP `GET /api/v1/food/search/`.
     /// - Remark: Generated from `#/paths//api/v1/food/search//get(food_search_list)`.
@@ -10564,7 +10564,7 @@ public struct Client: APIProtocol {
             }
         )
     }
-    /// Mark every notification as seen. Answers with what is left unread, which is zero, so the caller has one shape to read whichever of these two it called.
+    /// Mark supplied notification IDs as seen (at most 500). An empty ids list changes nothing; omitting ids preserves legacy mark-all behavior. Only the authenticated recipient's currently visible rows are changed. Returns the actual remaining unread count. Clients must see supports_scoped_read=true in a list response before sending ids.
     ///
     /// - Remark: HTTP `POST /api/v1/social/notifications/read/`.
     /// - Remark: Generated from `#/paths//api/v1/social/notifications/read//post(social_notifications_read_create)`.
@@ -10586,7 +10586,18 @@ public struct Client: APIProtocol {
                     in: &request.headerFields,
                     contentTypes: input.headers.accept
                 )
-                return (request, nil)
+                let body: OpenAPIRuntime.HTTPBody?
+                switch input.body {
+                case .none:
+                    body = nil
+                case let .json(value):
+                    body = try converter.setOptionalRequestBodyAsJSON(
+                        value,
+                        headerFields: &request.headerFields,
+                        contentType: "application/json; charset=utf-8"
+                    )
+                }
+                return (request, body)
             },
             deserializer: { response, responseBody in
                 switch response.status.code {

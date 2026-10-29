@@ -2,6 +2,11 @@
 
 ## Branches
 
+Notification-center testing work is documented in
+[NOTIFICATION_ACTIVITY_HANDOFF.md](NOTIFICATION_ACTIVITY_HANDOFF.md), including
+the two draft PRs, optional backend preview support, Mac generation evidence,
+and the simulator/accessibility checklist. It is not a production deployment.
+
 Set up on 2026-10-27 for `P-B-LLC/IOS-Frontend`:
 
 - `main`: release-ready code, changed only through a pull request with passing checks.
