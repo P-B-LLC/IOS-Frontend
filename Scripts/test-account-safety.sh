@@ -37,6 +37,8 @@ cp "$repo/IOS Frontend/IOS Frontend/Services/ImpressionTracker.swift" "$test_pac
 cp "$repo/Tests/AccountSafety/FoodDaySyncTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/Tests/AccountSafety/FoodBarcodeTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/IOS Frontend/IOS Frontend/Services/FoodBarcode.swift" "$test_package/Sources/AccountSafety/"
+cp "$repo/IOS Frontend/IOS Frontend/Services/FoodPortionMeasurement.swift" "$test_package/Sources/AccountSafety/"
+cp "$repo/Tests/AccountSafety/FoodPortionMeasurementTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/IOS Frontend/IOS Frontend/Services/FoodDaySyncCoordinator.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/Services/SocialLikeCoordinator.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/Tests/AccountSafety/WorkoutWriteRecoveryTests.swift" "$test_package/Tests/AccountSafetyTests/"

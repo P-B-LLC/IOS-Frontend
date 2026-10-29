@@ -388,6 +388,9 @@ private struct FoodPortionView: View {
     let lockedForRetry: Bool
     let onAdd: (FoodEntry) -> Void
     @State private var quantity: String
+    @State private var usesMeasurement: Bool
+    @State private var usesOunces = false
+    @State private var servingGrams = ""
 
     init(food: FoodEntry, servingDescription: String, isSaving: Bool,
          error: String?, lockedForRetry: Bool, onAdd: @escaping (FoodEntry) -> Void) {
@@ -398,15 +401,26 @@ private struct FoodPortionView: View {
         self.lockedForRetry = lockedForRetry
         self.onAdd = onAdd
         let measured = servingDescription == "100 g" || servingDescription == "100 ml"
-        _quantity = State(initialValue: (food.servings * (measured ? 100 : 1)).nutritionText)
+        _usesMeasurement = State(initialValue: measured)
+        _quantity = State(initialValue: (food.servings * (measured ? 100 : 1))
+            .formatted(.number.locale(.app).precision(.fractionLength(0...12)).grouping(.never)))
     }
 
     private var servings: Decimal? {
-        guard let value = Decimal(string: quantity, locale: .app), value > 0 else { return nil }
-        let result = value / (isMeasured ? 100 : 1)
-        return result <= 1000 ? result : nil
+        guard let value = FoodPortionMeasurement.positive(quantity, locale: .app) else { return nil }
+        return FoodPortionMeasurement.multiplier(amount: value, measured: usesMeasurement,
+            ounces: usesOunces && !isLiquid, gramsPerServing: measurementBasis)
     }
-    private var isMeasured: Bool { servingDescription == "100 g" || servingDescription == "100 ml" }
+    private var isLiquid: Bool { servingDescription == "100 ml" }
+    private var measurementBasis: Decimal? {
+        if servingDescription == "100 g" || isLiquid { return 100 }
+        return FoodPortionMeasurement.positive(servingGrams, locale: .app)
+    }
+    private var measurementFactor: Decimal? {
+        guard usesMeasurement else { return 1 }
+        guard let basis = measurementBasis else { return nil }
+        return basis / (usesOunces && !isLiquid ? FoodPortionMeasurement.gramsPerOunce : 1)
+    }
     private var nutrition: NutritionAmount { food.nutritionPerServing * (servings ?? 0) }
 
     var body: some View {
@@ -415,27 +429,39 @@ private struct FoodPortionView: View {
                 Text("How much did you have?").font(.community(.largeTitle, weight: .bold))
                 Text(food.name).font(.community(.subheadline)).foregroundStyle(.secondary)
                 Text("YOUR PORTION").font(.community(.caption, weight: .semibold)).foregroundStyle(.secondary)
-                if servingDescription == "100 g" { Text("Grams") }
-                else if servingDescription == "100 ml" { Text("Millilitres") }
-                else { Text("Servings") }
-                HStack {
-                    Button { adjust(by: isMeasured ? -25 : Decimal(string: "-0.5")!) } label: {
-                        Image(systemName: "minus").frame(minWidth: 44, minHeight: 44)
-                    }.buttonStyle(.bordered).buttonBorderShape(.circle)
-                        .accessibilityLabel("Decrease quantity")
-                    Spacer()
-                    TextField("1", text: $quantity)
+                VStack(alignment: .leading, spacing: 16) {
+                    Picker("Portion", selection: Binding(get: { usesMeasurement }, set: { selected in
+                        let previous = servings
+                        usesMeasurement = selected
+                        restoreQuantity(previous)
+                    })) {
+                        if isLiquid { Text("Millilitres").tag(true) }
+                        else { Text("Weight").tag(true) }
+                        Text("Servings").tag(false)
+                    }.pickerStyle(.segmented)
+                    if usesMeasurement && !isLiquid {
+                        Picker("Weight", selection: Binding(get: { usesOunces }, set: { selected in
+                            let previous = servings
+                            usesOunces = selected
+                            restoreQuantity(previous)
+                        })) {
+                            Text("Grams").tag(false)
+                            Text("Ounces").tag(true)
+                        }.pickerStyle(.segmented)
+                        if servingDescription != "100 g" {
+                            Text("Grams in one serving")
+                            TextField("Grams in one serving", text: $servingGrams)
+                                .keyboardType(.decimalPad).textFieldStyle(.roundedBorder)
+                            Text("Enter the weight of one serving from the label. Do not guess.")
+                                .font(.community(.caption)).foregroundStyle(.secondary)
+                        }
+                    }
+                    Text(portionUnit).font(.community(.headline))
+                    TextField("Quantity", text: $quantity)
                         .keyboardType(.decimalPad)
                         .font(.community(.largeTitle, weight: .bold))
-                        .multilineTextAlignment(.center)
-                        .frame(width: 130, height: 130)
-                        .overlay(Circle().strokeBorder(RepbaseDesign.accent, lineWidth: 3))
+                        .textFieldStyle(.roundedBorder)
                         .accessibilityLabel(portionUnit)
-                    Spacer()
-                    Button { adjust(by: isMeasured ? 25 : Decimal(string: "0.5")!) } label: {
-                        Image(systemName: "plus").frame(minWidth: 44, minHeight: 44)
-                    }.buttonStyle(.bordered).buttonBorderShape(.circle)
-                        .accessibilityLabel("Increase quantity")
                 }
                 .disabled(isSaving || lockedForRetry)
                 Text("Per serving: \(servingDescription)")
@@ -482,15 +508,18 @@ private struct FoodPortionView: View {
         }
     }
 
-    private func adjust(by delta: Decimal) {
-        let current = (servings ?? 1) * (isMeasured ? 100 : 1)
-        quantity = min(isMeasured ? 100000 : 1000, max(isMeasured ? 1 : Decimal(string: "0.5")!, current + delta)).nutritionText
+    private func restoreQuantity(_ previous: Decimal?) {
+        guard let previous, let factor = measurementFactor else {
+            quantity = ""
+            return
+        }
+        quantity = (previous * factor).formatted(.number.locale(.app).precision(.fractionLength(0...12)).grouping(.never))
     }
 
     private var portionUnit: LocalizedStringKey {
-        if servingDescription == "100 g" { return "Grams" }
-        if servingDescription == "100 ml" { return "Millilitres" }
-        return "Servings"
+        if !usesMeasurement { return "Servings" }
+        if isLiquid { return "Millilitres" }
+        return usesOunces ? "Ounces" : "Grams"
     }
 }
 

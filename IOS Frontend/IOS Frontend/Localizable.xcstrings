@@ -1,6 +1,266 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+  "Ounces": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ounces"
+        }
+      },
+      "es": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Onzas"
+        }
+      },
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "盎司"
+        }
+      },
+      "hi": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "औंस"
+        }
+      },
+      "ar": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "أونصات"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Onces"
+        }
+      },
+      "pt-BR": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Onças"
+        }
+      },
+      "ru": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Унции"
+        }
+      },
+      "ja": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "オンス"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Unzen"
+        }
+      }
+    }
+  },
+  "Quantity": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Quantity"
+        }
+      },
+      "es": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Cantidad"
+        }
+      },
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "数量"
+        }
+      },
+      "hi": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "मात्रा"
+        }
+      },
+      "ar": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "الكمية"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Quantité"
+        }
+      },
+      "pt-BR": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Quantidade"
+        }
+      },
+      "ru": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Количество"
+        }
+      },
+      "ja": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "数量"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Menge"
+        }
+      }
+    }
+  },
+  "Grams in one serving": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Grams in one serving"
+        }
+      },
+      "es": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Gramos por porción"
+        }
+      },
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "每份的克数"
+        }
+      },
+      "hi": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "एक सर्विंग में ग्राम"
+        }
+      },
+      "ar": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "الغرامات في الحصة الواحدة"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Grammes par portion"
+        }
+      },
+      "pt-BR": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Gramas por porção"
+        }
+      },
+      "ru": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Граммов в одной порции"
+        }
+      },
+      "ja": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "1食分のグラム数"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Gramm pro Portion"
+        }
+      }
+    }
+  },
+  "Enter the weight of one serving from the label. Do not guess.": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Enter the weight of one serving from the label. Do not guess."
+        }
+      },
+      "es": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Introduce el peso de una porción indicado en la etiqueta. No lo estimes."
+        }
+      },
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "输入标签上一份的重量，请勿猜测。"
+        }
+      },
+      "hi": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "लेबल से एक सर्विंग का वजन दर्ज करें। अनुमान न लगाएँ।"
+        }
+      },
+      "ar": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "أدخل وزن الحصة الواحدة من الملصق. لا تخمّن."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Saisissez le poids d’une portion indiqué sur l’étiquette. Ne devinez pas."
+        }
+      },
+      "pt-BR": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Digite o peso de uma porção indicado no rótulo. Não estime."
+        }
+      },
+      "ru": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Введите вес одной порции с этикетки. Не угадывайте."
+        }
+      },
+      "ja": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "ラベルに記載された1食分の重量を入力してください。推測しないでください。"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Gib das Gewicht einer Portion vom Etikett ein. Nicht schätzen."
+        }
+      }
+    }
+  },
   "Decrease quantity": {
     "extractionState": "manual",
     "localizations": {
