@@ -7,7 +7,8 @@ for tool in xcodebuild xcrun; do
 done
 : "${REPBASE_API_URL:?Set REPBASE_API_URL to your existing HTTPS API origin.}"
 case "$REPBASE_API_URL" in https://*) ;; *) echo 'Use an HTTPS API origin.' >&2; exit 1;; esac
-build_dir="$(mktemp -d "${TMPDIR:-/tmp}/rytivo-food-refresh.XXXXXX")"
+build_dir="$repo/.build/food-validation"
+mkdir -p "$build_dir"
 xcodebuild -project 'IOS Frontend/IOS Frontend.xcodeproj' -scheme 'IOS Frontend' \
     -configuration Debug -destination 'generic/platform=iOS Simulator' \
     -derivedDataPath "$build_dir" CODE_SIGNING_ALLOWED=NO \

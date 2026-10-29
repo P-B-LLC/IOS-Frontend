@@ -922,12 +922,13 @@ extension FoodTrackingStore {
     }
     /// Foods from the public catalogue, through Repbase.
     ///
-    /// Returns nothing at all when there is no connection yet rather than
-    /// throwing: the picker is reachable before the first sync finishes, and
-    /// an empty catalogue with the recents still listed is a better answer
-    /// there than an error about a repository.
+    /// Unavailable is distinct from no matches; recents/manual entry remain
+    /// usable. Discard results belonging to an earlier account connection.
     func searchCatalogue(_ query: String) async throws -> [FoodDatabaseResult] {
-        guard let catalogue else { return [] }
-        return try await catalogue.search(query)
+        guard let catalogue else { throw URLError(.notConnectedToInternet) }
+        let generation = connectionGeneration
+        let results = try await catalogue.search(query)
+        guard generation == connectionGeneration, !Task.isCancelled else { throw CancellationError() }
+        return results
     }
 }
