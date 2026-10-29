@@ -52,21 +52,21 @@ struct StepsWidget: View {
     private var compactCard: some View {
         let goal = store.stepGoal
         let steps = store.stepsToday ?? 0
-        let progress = min(Double(steps) / Double(goal), 1)
+        let progress = min(Double(steps) / Double(max(goal, 1)), 1)
         let remaining = max(goal - steps, 0)
         return VStack(alignment: .leading, spacing: 7) {
             HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("TODAY'S MOVEMENT")
+                    Text("YOUR DAILY ADVENTURE")
                         .font(.community(size: 9, weight: .bold))
                         .tracking(0.5)
-                        .foregroundStyle(RepbaseDesign.success)
+                        .foregroundStyle(timeOfDay.accent)
 
                     HStack(alignment: .firstTextBaseline, spacing: 5) {
-                        Text(steps.formatted(.number))
+                        Text(store.stepsToday == nil ? "—" : steps.formatted(.number))
                             .font(.community(.title2, weight: .bold))
                             .contentTransition(.numericText())
-                        Text("steps today")
+                        Text("steps into your day")
                             .font(.community(.caption2, weight: .medium))
                             .foregroundStyle(timeOfDay.secondaryText)
                     }
@@ -80,57 +80,61 @@ struct StepsWidget: View {
                         isEditingGoal = true
                     } label: {
                         HStack(spacing: 3) {
-                            Text(Self.goalText(goal))
+                            Text("Edit goal")
                                 .font(.community(size: 9, weight: .bold))
-                            Image(systemName: "pencil")
+                            Image(systemName: "slider.horizontal.3")
                                 .font(.community(size: 7, weight: .bold))
                         }
-                        .foregroundStyle(RepbaseDesign.success)
+                        .foregroundStyle(timeOfDay.primaryText)
                         // A label this small is hard to hit, so the target is
                         // padded well past what is drawn.
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 4)
+                        .padding(.horizontal, 12)
+                        .frame(minHeight: 44)
+                        .workoutOutline(radius: 12)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(
                         "Change your daily step goal, currently \(goal.formatted(.number))"
                     )
-                    Text(progress.formatted(.percent.precision(.fractionLength(0))))
+                    Text("Daily goal \(goal.formatted(.number))")
                         .font(.community(.caption2, weight: .semibold))
                         .foregroundStyle(timeOfDay.secondaryText)
                 }
             }
 
             GeometryReader { proxy in
-                let markerX = max(7, min(proxy.size.width - 7, proxy.size.width * progress))
+                let markerX = max(13, min(proxy.size.width - 13, proxy.size.width * progress))
                 ZStack(alignment: .leading) {
-                    Capsule().fill(RepbaseDesign.success.opacity(0.18)).frame(height: 3)
-                    Capsule().fill(RepbaseDesign.success).frame(width: markerX, height: 3)
-                    ForEach(0...4, id: \.self) { index in
+                    Capsule().fill(timeOfDay.secondaryText.opacity(0.15)).frame(height: 5).offset(y: 12)
+                    Capsule().fill(timeOfDay.accent).frame(width: proxy.size.width * progress, height: 5).offset(y: 12)
+                    ForEach(1...3, id: \.self) { index in
                         Circle()
-                            .fill(Double(index) / 4 <= progress ? RepbaseDesign.success : RepbasePalette.paper)
-                            .overlay(Circle().stroke(RepbaseDesign.success.opacity(0.22), lineWidth: 1))
-                            .frame(width: 9, height: 9)
-                            .position(x: proxy.size.width * CGFloat(index) / 4, y: 11)
+                            .fill(Double(index) / 4 <= progress ? timeOfDay.accent : timeOfDay.secondaryText)
+                            .overlay(Circle().stroke(WorkoutVisualPhase.prepare.surfaceStart, lineWidth: 2))
+                            .frame(width: 8, height: 8)
+                            .position(x: proxy.size.width * CGFloat(index) / 4, y: 29)
                     }
-                    Circle()
-                        .fill(RepbaseDesign.accent)
-                        .frame(width: 13, height: 13)
-                        .overlay(Circle().stroke(RepbaseDesign.accent.opacity(0.24), lineWidth: 4))
-                        .position(x: markerX, y: 11)
+                    Image(systemName: "figure.walk")
+                        .font(.system(size: 17)).foregroundStyle(WorkoutVisualPhase.prepare.onPrimaryAction)
+                        .frame(width: 26, height: 26).background(WorkoutVisualPhase.prepare.primaryActionSurface, in: Circle())
+                        .position(x: markerX, y: 13)
+                    Image(systemName: "flag.checkered").font(.system(size: 14)).foregroundStyle(timeOfDay.secondaryText)
+                        .position(x: proxy.size.width - 8, y: 9)
                 }
             }
-            .frame(height: 22)
+            .frame(height: 36)
+            .accessibilityHidden(true)
 
-            Text(remaining == 0 ? "Goal reached" : "\(remaining.formatted(.number)) to go")
+            Text(store.stepsToday == nil ? "No steps reported for today yet." : remaining == 0 ? "Daily goal reached. Enjoy the win." : "\(remaining.formatted(.number)) steps to your goal")
             .font(.community(size: 9, weight: .semibold))
-            .foregroundStyle(RepbaseDesign.success)
+            .foregroundStyle(timeOfDay.secondaryText)
+            if let error = store.persistenceError {
+                Text(error).font(.community(.caption2)).foregroundStyle(.red)
+            }
         }
-        .padding(.horizontal, 12)
-        .padding(.top, 10)
-        .padding(.bottom, 9)
-        .overlay(alignment: .bottom) { Divider() }
+        .padding(20)
+        .workoutOutline(radius: 20)
         .task { await store.refresh() }
         // Not combined into one element, or the goal button disappears from
         // VoiceOver along with everything else on the row.

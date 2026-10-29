@@ -48,7 +48,7 @@ final class ModerationTransportTests: XCTestCase {
     /// it would look like a server fault from the app and a client fault from
     /// the server.
     func testTheVersionIsTheOneTheServerExpects() {
-        XCTAssertEqual(ModerationDisclosure.version, "2026-09-15")
+        XCTAssertEqual(ModerationDisclosure.version, "2026-10-16")
     }
 
     // MARK: - The refusals

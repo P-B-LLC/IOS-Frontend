@@ -1,5 +1,62 @@
 # Moderation integration — 15 September 2026
 
+## Main promotion — 17 October 2026
+
+- User approved promotion after successful Mac validation and reporting the
+  updated agreement flow works against the deployed backend.
+- Includes generated Swift updates through 1152ffb and dashboard discovery/retry
+  improvements through d32c2e2. Backend migration 0080 was subsequently deployed.
+- Dashboard opens within iOS in an embedded browser, with separate session login;
+  authorization remains server-enforced. No standalone native queue was added.
+- This Git promotion does not upload a TestFlight/App Store build. Historical
+  WIP and pending-deployment notes below are retained as development history.
+
+## Dashboard discoverability follow-up
+
+- Settings now shows an explicit moderation-access loading state and retryable
+  failure rather than treating network/API errors as a role denial. Confirmed
+  non-moderators still receive no dashboard entry. Authorized users see a labeled
+  card opening the existing session-authenticated dashboard inside the app.
+- Rechecks access on foreground/account changes; stale async responses cannot
+  update a different session. Backend enforcement remains unchanged.
+- This is an embedded browser dashboard, not a newly built native moderation
+  queue. Separate dashboard sign-in remains necessary. Mac build/manual access
+  tests are pending for this UI-only follow-up; no generated-client changes.
+
+## Latest WIP — agreements at signup/sign-in (17 October 2026)
+
+- Supersedes the per-submission and account-dialog UI described below. Signup
+  now requires an unchecked Privacy Policy/agreements control with readable
+  document sheets. It submits `agreement_version`; there is no second dialog.
+- Existing accounts see AccountAgreementGate once per policy version after
+  sign-in. Server acceptance is not inferred from past login or old consent.
+  Failures offer retry/sign-out, and the authenticated root is withheld until
+  acceptance is confirmed. The gate is reset on account/token change.
+- Posting/profile writes only check the saved preference; they do not present
+  OpenAI prompts. Explicit withdrawal still prevents sharing, with a Settings
+  error. The provider disclosure remains inside the Privacy Policy.
+- Updated legal HTML generated from Swift, with copies in the web public/legal
+  directory. Backend migration 0080 and `/me/agreements/` must deploy first.
+- NOT Mac-validated yet: regenerate the client and run
+  `bash Scripts/validate-moderation-ios.sh`, then commit generated sources.
+  Added a signup-without-acceptance unit test; Xcode must compile the new gate.
+
+## WIP update — 17 October 2026: account consent
+
+- Authenticated social/profile operations now use backend-saved safety consent
+  version `2026-10-17`, rather than a dialog for every submission. No local grant
+  cache; withdrawal on another device is respected. Registration still asks for
+  its own single submission because no authenticated account exists yet.
+- Settings → Safety review allows granting/withdrawing permission. Cancellation
+  and failed preference writes do not submit content. Privacy prose updated.
+- New backend contract: GET/PUT `/api/v1/me/safety-consent/`; deploy backend
+  migration 0079 first. Existing generated Swift does NOT yet include these
+  operations. Run `bash Scripts/generate-api-client.sh`, then account-safety tests
+  and the Xcode simulator build on Mac. Never hand-edit generated sources.
+- Previous Mac success at cbf6328 does not validate these new changes. This is a
+  WIP branch, not a main/release merge. New consent queue test added but not run
+  here (Windows has no Swift/Xcode).
+
 ## Release update — 14 October 2026
 
 - iOS PR #28 merged to `main` at `949be5cf3519f781b0635e7c5b82b981d2e22421`.

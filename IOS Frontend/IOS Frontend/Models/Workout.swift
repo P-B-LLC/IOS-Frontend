@@ -115,6 +115,18 @@ nonisolated struct Exercise: Identifiable, Hashable, Codable, Sendable {
     }
 }
 
+/// A catalog result, not a workout relation. IDs remain server-owned.
+nonisolated struct WorkoutExerciseChoice: Identifiable, Hashable, Sendable {
+    let id: Int
+    let name: String
+    let muscleGroup: String
+}
+
+nonisolated struct WorkoutExercisePage: Sendable {
+    let items: [WorkoutExerciseChoice]
+    let nextPage: Int?
+}
+
 /// A workout the user builds and assigns to a day of the week (e.g. "Pull") —
 /// a named group of exercises.
 nonisolated struct Workout: Identifiable, Hashable, Codable, Sendable {
@@ -211,7 +223,7 @@ nonisolated struct WorkoutSetDraft: Identifiable, Hashable, Codable, Sendable {
     var isWeightValid: Bool {
         let value = weightKilograms.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !value.isEmpty else { return true }
-        return value.range(
+        return Decimal(string: value) != nil && value.range(
             of: #"^-?\d{0,5}(?:\.\d{0,2})?$"#,
             options: .regularExpression
         ) != nil

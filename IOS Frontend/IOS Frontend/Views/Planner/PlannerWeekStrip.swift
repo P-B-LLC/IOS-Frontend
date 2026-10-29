@@ -15,8 +15,6 @@ struct PlannerWeekStrip: View {
     /// with the chips rather than keeping its own idea of what is selected.
     @Binding var categoryFilter: PlannerCategory?
 
-    /// Whether the full month is open above this strip.
-    var isMonthShown: Bool = false
     /// Opens the month. The day tabs cannot do this themselves: they already
     /// mean "choose this day".
     var onToggleMonth: (() -> Void)?
@@ -29,33 +27,54 @@ struct PlannerWeekStrip: View {
                 monthButton
             }
             dayTabs
-            if !categories.isEmpty {
+            if categories.count > 1 || categoryFilter != nil {
                 categoryTabs
             }
             progress
         }
-        .repbaseCard(contentPadding: 14, cornerRadius: 20)
     }
 
     // MARK: - Opening the month
 
     private var monthButton: some View {
-        Button {
-            onToggleMonth?()
-        } label: {
-            HStack(spacing: 5) {
-                Text(store.selectedDate.formatted(.dateTime.month(.wide).year()))
-                    .font(.community(size: 14, weight: .bold))
-                    .foregroundStyle(timeOfDay.primaryText)
-                Image(systemName: isMonthShown ? "chevron.up" : "chevron.down")
-                    .font(.community(size: 10, weight: .bold))
-                    .foregroundStyle(timeOfDay.secondaryText)
-                Spacer(minLength: 0)
+        HStack(spacing: 8) {
+            Button {
+                onToggleMonth?()
+            } label: {
+                Label("View month", systemImage: "chevron.down")
+                    .font(.community(.footnote, weight: .semibold))
+                    .padding(.horizontal, 14)
+                    .frame(minHeight: 44)
+                    .background(timeOfDay.surfaceRaised, in: Capsule())
+                    .overlay { Capsule().strokeBorder(timeOfDay.canvasBorder) }
             }
-            .contentShape(Rectangle())
+            .accessibilityIdentifier("planner.viewMonth")
+            .accessibilityHint("Open the full month calendar")
+            Spacer(minLength: 0)
+            if !calendar.isDateInToday(store.selectedDate) {
+                Button("Today") { store.showToday() }
+                    .font(.community(.footnote, weight: .semibold))
+                    .frame(minHeight: 44)
+            }
+            weekButton("chevron.left", label: "Previous week", offset: -1)
+            weekButton("chevron.right", label: "Next week", offset: 1)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(isMonthShown ? "Hide the month" : "Show the month")
+        .foregroundStyle(timeOfDay.canvasPrimaryText)
+    }
+
+    private func weekButton(_ symbol: String, label: String, offset: Int) -> some View {
+        Button {
+            guard let date = PlannerCalendarPolicy.movingWeeks(offset, from: store.selectedDate) else { return }
+            store.select(date)
+        } label: {
+            Image(systemName: symbol)
+                .font(.community(.footnote, weight: .semibold))
+                .frame(width: 44, height: 44)
+                .background(timeOfDay.surfaceRaised, in: Circle())
+                .overlay { Circle().strokeBorder(timeOfDay.canvasBorder) }
+        }
+        .accessibilityLabel(label)
     }
 
     // MARK: - Days
@@ -81,13 +100,13 @@ struct PlannerWeekStrip: View {
         } label: {
             VStack(spacing: 4) {
                 Text(date.formatted(.dateTime.weekday(.abbreviated)))
-                    .font(.community(size: 9, weight: .semibold))
+                    .font(.community(size: 11, weight: .semibold))
                     .foregroundStyle(
-                        isSelected ? Color(hex: 0xFFFFFF).opacity(0.85) : timeOfDay.secondaryText
+                        isSelected ? timeOfDay.onPrimaryAction : timeOfDay.canvasSecondaryText
                     )
                 Text("\(calendar.component(.day, from: date))")
-                    .font(.community(size: 15, weight: .bold))
-                    .foregroundStyle(isSelected ? Color(hex: 0xFFFFFF) : timeOfDay.primaryText)
+                    .font(.community(size: 18, weight: .bold))
+                    .foregroundStyle(isSelected ? timeOfDay.onPrimaryAction : timeOfDay.canvasPrimaryText)
                 marker(for: date, isSelected: isSelected)
             }
             .frame(maxWidth: .infinity)
@@ -96,6 +115,9 @@ struct PlannerWeekStrip: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(date.formatted(.dateTime.weekday(.wide).month(.wide).day()))
+        .accessibilityValue(store.hasEntries(on: date) ? "Items planned" : "Nothing planned")
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     /// A single dot saying "something is planned", rather than a count: the
@@ -104,7 +126,7 @@ struct PlannerWeekStrip: View {
         Circle()
             .fill(
                 store.hasEntries(on: date)
-                    ? (isSelected ? Color(hex: 0xFFFFFF) : timeOfDay.accent)
+                    ? (isSelected ? timeOfDay.onPrimaryAction : PlannerStyle.accentText)
                     : Color.clear
             )
             .frame(width: 4, height: 4)
@@ -113,9 +135,9 @@ struct PlannerWeekStrip: View {
     @ViewBuilder
     private func tabBackground(isSelected: Bool, isToday: Bool) -> some View {
         if isSelected {
-            RoundedRectangle(cornerRadius: 13).fill(timeOfDay.accent)
+            Capsule().fill(timeOfDay.primaryActionSurface)
         } else if isToday {
-            RoundedRectangle(cornerRadius: 13).strokeBorder(timeOfDay.accent.opacity(0.5), lineWidth: 1)
+            Capsule().strokeBorder(PlannerStyle.accentText.opacity(0.5), lineWidth: 1)
         }
     }
 
@@ -157,11 +179,11 @@ struct PlannerWeekStrip: View {
         Button(action: action) {
             Text(title)
                 .font(.community(size: 11, weight: .semibold))
-                .foregroundStyle(isSelected ? Color(hex: 0xFFFFFF) : timeOfDay.secondaryText)
+                .foregroundStyle(isSelected ? timeOfDay.onPrimaryAction : timeOfDay.canvasPrimaryText)
                 .padding(.horizontal, 11)
-                .padding(.vertical, 6)
+                .frame(minHeight: 44)
                 .background(
-                    isSelected ? tint : tint.opacity(0.12),
+                    isSelected ? timeOfDay.primaryActionSurface : tint.opacity(0.12),
                     in: Capsule()
                 )
         }
@@ -172,34 +194,23 @@ struct PlannerWeekStrip: View {
 
     private var progress: some View {
         let counts = store.taskCounts(on: store.selectedDate)
-        let fraction = store.progress(on: store.selectedDate)
-
-        return VStack(alignment: .leading, spacing: 5) {
-            HStack {
-                Text("PROGRESS")
-                    .font(.community(size: 9, weight: .bold))
-                    .foregroundStyle(timeOfDay.secondaryText)
-                Spacer()
-                Text(
-                    counts.total == 0
-                        ? "No tasks"
-                        : "\(counts.done) of \(counts.total)"
-                )
-                .font(.community(size: 9, weight: .bold))
-                .foregroundStyle(timeOfDay.secondaryText)
+        let cleared = counts.total > 0 && counts.done == counts.total
+        return HStack(spacing: 10) {
+            Image(systemName: cleared ? "checkmark.circle.fill" : "checkmark.circle")
+                .font(.community(.title3))
+                .foregroundStyle(cleared ? PlannerStyle.success : PlannerStyle.accentText)
+            Text(store.isLoading ? "Loading your plan…" : (counts.total == 0 ? "A fresh start. Make it yours." : "\(counts.done) of \(counts.total) tasks done"))
+                .font(.community(.footnote, weight: .semibold))
+                .foregroundStyle(timeOfDay.canvasPrimaryText)
+            Spacer(minLength: 0)
+            if counts.total > 0, !store.isLoading {
+                Text(cleared ? "Day cleared" : "Keep going")
+                    .font(.community(.footnote, weight: .semibold))
+                    .foregroundStyle(cleared ? PlannerStyle.success : PlannerStyle.accentText)
             }
-
-            GeometryReader { proxy in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(timeOfDay.secondaryText.opacity(0.15))
-                    Capsule()
-                        .fill(timeOfDay.accent)
-                        .frame(width: max(0, proxy.size.width * fraction))
-                }
-            }
-            .frame(height: 5)
-            .animation(.easeOut(duration: 0.2), value: fraction)
         }
+        .plannerSurface(soft: true)
+        .accessibilityElement(children: .combine)
     }
 
     // MARK: - Dates
@@ -207,11 +218,6 @@ struct PlannerWeekStrip: View {
     /// The week the selected day sits in, Monday first, matching the rest of
     /// the app rather than the device's locale.
     private var weekDays: [Date] {
-        let start = calendar.startOfDay(for: store.selectedDate)
-        let weekday = calendar.component(.weekday, from: start)
-        let daysSinceMonday = (weekday + 5) % 7
-        guard let monday = calendar.date(byAdding: .day, value: -daysSinceMonday, to: start)
-        else { return [] }
-        return (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: monday) }
+        PlannerCalendarPolicy.week(containing: store.selectedDate)
     }
 }

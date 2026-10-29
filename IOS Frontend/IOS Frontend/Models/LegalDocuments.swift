@@ -34,7 +34,7 @@ enum LegalDocuments {
 
     /// The date the current wording took effect. Update it whenever the text
     /// below changes in substance, not for typographical fixes.
-    static let effectiveDate = "12 October 2026"
+    static let effectiveDate = "17 October 2026"
 
     static let all: [LegalDocument] = [privacyPolicy, termsOfService, licence]
 
@@ -145,8 +145,13 @@ enum LegalDocuments {
 
         SAFETY REVIEW
 
-        With your permission before submission, public-facing text and uploaded \
-        photos are sent to OpenAI for automated safety checks. This includes \
+        With your permission, public-facing text, uploaded photos and extracted \
+        video frames are sent to OpenAI for automated safety checks. Audio is \
+        excluded. By accepting this Privacy Policy and the agreements at signup \
+        or after sign-in, you authorize this safety review for content you submit. \
+        Acceptance is saved for your account, not requested for every post. \
+        You can withdraw permission in Settings under Safety review; queued checks \
+        stop, but content already sent cannot be recalled. Reviewed content includes \
         profile names, bios, prompt answers, social handles, public gym details, \
         comments, captions, and titles or instructions in content you choose to \
         share. Account credentials, private measurements and unshared logs are \

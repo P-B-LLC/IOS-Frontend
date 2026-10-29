@@ -46,10 +46,28 @@ struct PlannerEntryEditorView: View {
         var date: Date
         var time: Date
         var hasTime: Bool
+        // Optional so drafts written by earlier app versions still decode.
+        var newSteps: [String]?
+        var stepDraft: String?
+        var repeatDays: Int?
+        var repeatHasEnd: Bool?
+        var repeatEnds: Date?
+        var selectedRepeatWeekdays: Set<Int>?
+        var customRepeatDays: Int?
     }
     private var checkpoint: Binding<Checkpoint> {
-        Binding(get: { Checkpoint(draft: draft, date: date, time: time, hasTime: hasTime) }, set: {
+        Binding(get: {
+            Checkpoint(draft: draft, date: date, time: time, hasTime: hasTime,
+                       newSteps: newSteps, stepDraft: stepDraft, repeatDays: repeatDays,
+                       repeatHasEnd: repeatHasEnd, repeatEnds: repeatEnds,
+                       selectedRepeatWeekdays: selectedRepeatWeekdays, customRepeatDays: customRepeatDays)
+        }, set: {
             draft = $0.draft; date = $0.date; time = $0.time; hasTime = $0.hasTime
+            newSteps = $0.newSteps ?? []; stepDraft = $0.stepDraft ?? ""
+            repeatDays = $0.repeatDays ?? 0; repeatHasEnd = $0.repeatHasEnd ?? false
+            repeatEnds = $0.repeatEnds ?? Date()
+            selectedRepeatWeekdays = $0.selectedRepeatWeekdays ?? []
+            customRepeatDays = $0.customRepeatDays ?? 4
         })
     }
     @State private var draft: PlannerEntry
@@ -73,6 +91,8 @@ struct PlannerEntryEditorView: View {
     @State private var selectedRepeatWeekdays: Set<Int> = []
     @State private var customRepeatDays = 4
     @State private var isChoosingDeleteScope = false
+    @State private var showsRepeatOptions = false
+    @State private var showsNotes = false
 
     /// How often the task actually repeats, whichever way it was chosen.
     private var repeatInterval: Int {
@@ -134,66 +154,37 @@ struct PlannerEntryEditorView: View {
 
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
+                VStack(alignment: .leading, spacing: 16) {
                     EditorialFormHeader(
                         title: title,
                         leadingAction: .cancel,
                         saveTitle: "Save",
                         canSave: canSave,
-                        onDismiss: { dismiss() },
+                        onDismiss: { if !isSaving { dismiss() } },
                         onSave: save,
                         showsSaveAction: false
                     )
 
                     VStack(alignment: .leading, spacing: 6) {
-                        Text(draft.kind == .task ? "NEW TASK" : "NEW EVENT")
-                            .font(.community(size: 10, weight: .bold))
-                            .tracking(1.25)
-                            .foregroundStyle(timeOfDay.accent)
-                        Text(draft.kind == .task ? "Add something to your day." : "Put time on the calendar.")
-                            .font(.community(size: 34, weight: .bold, design: .rounded))
-                            .tracking(-0.8)
+                        Text(draft.kind == .task ? "A little plan. A clearer day." : "Make time for what matters.")
+                            .font(.community(.title2, weight: .bold))
                         Text(
                             draft.kind == .task
-                                ? "A quick reminder that lives beside your events."
-                                : "Plan a moment with a clear start and finish."
+                                ? "Name it now. Add details only if you need them."
+                                : "Events have a time, not a completion checkbox."
                         )
                         .font(.community(.subheadline))
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                     }
 
                     editorialNameAndType(timeOfDay: timeOfDay)
-
-                    // Above the schedule, because breaking the work up is part
-                    // of saying what the task *is* -- the same thought as
-                    // naming it. When it happens is a separate decision, made
-                    // once you know what you are scheduling.
-                    //
-                    // Events do not have steps: they happen, and carry no
-                    // checkbox for a step to tick off.
+                    editorialDetails(timeOfDay: timeOfDay)
                     if draft.kind == .task {
                         editorialSteps(timeOfDay: timeOfDay)
+                            .plannerSurface(soft: true)
                     }
 
-                    editorialDetails(timeOfDay: timeOfDay)
-
-                    // Creation only. Changing the rule behind days already
-                    // written is a different act from editing one of them, and
-                    // offering both here would make it ambiguous which was
-                    // meant.
-                    if draft.kind == .task, !isEditing {
-                        editorialRepeat(timeOfDay: timeOfDay)
-                    }
-
-                    if !draft.notes.isEmpty || isEditing {
-                        editorialNotes
-                    }
-
-                    Button(isEditing ? "Save changes" : "Add \(draft.kind.title.lowercased())") {
-                        save()
-                    }
-                    .buttonStyle(EditorialPrimaryButtonStyle())
-                    .disabled(!canSave)
+                    advancedOptions(timeOfDay: timeOfDay)
 
                     if case .edit(let entry) = mode {
                         // Only an entry the server already knows about. A
@@ -254,10 +245,19 @@ struct PlannerEntryEditorView: View {
                 }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 28)
+                .disabled(isSaving)
             }
             .scrollIndicators(.hidden)
             .toolbar(.hidden, for: .navigationBar)
             .homeTimeScreen(timeOfDay)
+            .safeAreaInset(edge: .bottom) {
+                Button(isSaving ? "Saving…" : (isEditing ? "Save changes" : "Add \(draft.kind.title.lowercased())"), action: save)
+                    .buttonStyle(EditorialPrimaryButtonStyle())
+                    .disabled(!canSave || isSaving)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 12)
+                    .background(timeOfDay.surface)
+            }
             .saveFeedback(isSaving: isSaving, error: saveError)
             .recoverableDraft(key: "planner-\(mode.id)", value: checkpoint, saved: $draftSaved, error: $saveError)
             .fullScreenCover(item: $sharedEntry) { shared in
@@ -276,6 +276,20 @@ struct PlannerEntryEditorView: View {
 
     private func editorialNameAndType(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(alignment: .leading, spacing: 17) {
+            Picker("Type", selection: $draft.kind) {
+                ForEach(PlannerKind.allCases) { kind in
+                    Text(kind.title).tag(kind)
+                }
+            }
+            .pickerStyle(.segmented)
+            .onChange(of: draft.kind) { _, kind in
+                if !draft.category.suits(kind) { draft.category = .other }
+                if kind == .event { hasTime = true }
+            }
+
+            Text(draft.kind == .task ? "TASK NAME" : "EVENT NAME")
+                .font(.community(.caption2, weight: .bold))
+                .foregroundStyle(timeOfDay.canvasSecondaryText)
             TextField(
                 draft.kind == .task ? "What needs doing?" : "What is happening?",
                 text: $draft.title
@@ -286,22 +300,78 @@ struct PlannerEntryEditorView: View {
             .padding(.vertical, 10)
             .overlay(alignment: .bottom) { Divider() }
 
-            Picker("Type", selection: $draft.kind) {
-                ForEach(PlannerKind.allCases) { kind in
-                    Text(kind.title).tag(kind)
+        }
+    }
+
+    private func advancedOptions(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if draft.kind == .task, !isEditing {
+                DisclosureGroup(isExpanded: $showsRepeatOptions) {
+                    editorialRepeat(timeOfDay: timeOfDay)
+                } label: {
+                    settingLabel("Repeats", value: repeatSummary)
+                }
+            } else if draft.kind == .task, draft.isRepeating {
+                Text("This task repeats. Edits affect this day; use Stop repeating to end future tasks.")
+                    .font(.community(.footnote))
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+            }
+            Picker("Priority", selection: $draft.priority) {
+                ForEach(PlannerPriority.offered) { priority in Text(priority.title).tag(priority) }
+            }
+            .font(.community(.subheadline))
+            .pickerStyle(.menu)
+            .frame(minHeight: 44)
+
+            DisclosureGroup(isExpanded: $showsNotes) {
+                editorialNotes
+            } label: {
+                settingLabel("Notes", value: draft.notes.isEmpty ? "Add a note" : "Edit note")
+            }
+            NavigationLink {
+                NotificationPreferencesView()
+                    .navigationTitle("Reminders")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar(.visible, for: .navigationBar)
+            } label: {
+                HStack {
+                    settingLabel("Reminder settings", value: "Manage")
+                    Image(systemName: "chevron.right").font(.community(.caption))
                 }
             }
-            .pickerStyle(.segmented)
-            .onChange(of: draft.kind) { _, kind in
-                guard !draft.category.suits(kind) else { return }
-                draft.category = .other
-            }
+            .buttonStyle(.plain)
+            Text("Reminders follow your notification preferences.")
+                .font(.community(.footnote))
+                .foregroundStyle(timeOfDay.canvasSecondaryText)
+        }
+        .tint(PlannerStyle.accentText)
+        .plannerSurface()
+    }
+
+    private func settingLabel(_ title: String, value: String) -> some View {
+        HStack {
+            Text(title).font(.community(.subheadline))
+            Spacer(minLength: 12)
+            Text(value).font(.community(.footnote)).foregroundStyle(.secondary)
+        }
+        .foregroundStyle(.primary)
+        .frame(minHeight: 44)
+        .contentShape(Rectangle())
+    }
+
+    private var repeatSummary: String {
+        switch repeatDays {
+        case 0: return "Does not repeat"
+        case weekdayRepeatTag: return "Selected weekdays"
+        case customRepeatTag: return "Every \(customRepeatDays) days"
+        default: return PlannerEntryRow.repeatLabel(repeatDays)
         }
     }
 
     private func editorialDetails(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(alignment: .leading, spacing: 13) {
-            EditorialSectionTitle(title: "Schedule")
+            Text("SCHEDULE").font(.community(.caption2, weight: .bold))
+                .foregroundStyle(timeOfDay.canvasSecondaryText)
             VStack(spacing: 0) {
                 HStack {
                     Text("Category").font(.community(.subheadline))
@@ -323,33 +393,6 @@ struct PlannerEntryEditorView: View {
                 .padding(.vertical, 13)
                 .overlay(alignment: .bottom) { Divider() }
 
-                // Sits with Category rather than under Schedule: both describe
-                // the thing itself, where Date and Set a time describe when it
-                // happens. Offered for events too — a flight matters more than
-                // a coffee, and the request was tasks and events alike.
-                HStack {
-                    Text("Priority").font(.community(.subheadline))
-                    Spacer()
-                    Menu {
-                        ForEach(PlannerPriority.offered) { priority in
-                            Button {
-                                draft.priority = priority
-                            } label: {
-                                Label(priority.title, systemImage: priority.symbolName)
-                            }
-                        }
-                    } label: {
-                        Label(draft.priority.title, systemImage: draft.priority.symbolName)
-                            .font(.community(.subheadline, weight: .bold))
-                            .foregroundStyle(
-                                draft.priority == .high
-                                    ? draft.priority.tint
-                                    : timeOfDay.accent
-                            )
-                    }
-                }
-                .padding(.vertical, 13)
-                .overlay(alignment: .bottom) { Divider() }
 
                 if draft.category == .workout {
                     HStack {
@@ -427,6 +470,7 @@ struct PlannerEntryEditorView: View {
                     .padding(.vertical, 13)
                 }
             }
+            .plannerSurface()
         }
     }
 
@@ -439,7 +483,7 @@ struct PlannerEntryEditorView: View {
     private func editorialSteps(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             EditorialSectionTitle(
-                title: "Steps",
+                title: "Break it into steps",
                 detail: draft.subtasks.isEmpty && newSteps.isEmpty ? "Optional" : nil
             )
 
@@ -721,7 +765,7 @@ struct PlannerEntryEditorView: View {
         saveError = nil
         Task {
             defer { isSaving = false }
-            if let problem = await onSaved(saved, stepsToSave) { saveError = problem }
+            if let problem = await onSaved(saved, saved.kind == .task ? stepsToSave : []) { saveError = problem }
             else { draftSaved = true; dismiss() }
         }
     }
@@ -733,7 +777,7 @@ struct PlannerEntryEditorView: View {
 
     private var title: String {
         switch mode {
-        case .create(let kind, _): return "New \(kind.title)"
+        case .create: return "New \(draft.kind.title)"
         case .edit: return "Edit \(draft.kind.title)"
         }
     }

@@ -165,14 +165,19 @@ final class AuthenticationStore {
         email: String,
         password: String,
         firstName: String,
-        lastName: String
+        lastName: String,
+        acceptedAgreements: Bool = false
     ) async {
+        guard acceptedAgreements else {
+            errorMessage = "Please accept the Privacy Policy and agreements to create your account."
+            return
+        }
         await authenticate {
             let client = try anonymousClient()
-            try await ModerationConsent.require()
             let output = try await client.authRegisterCreate(
                 body: .json(
                     Components.Schemas.RegisterRequest(
+                        agreementVersion: "2026-10-17",
                         username: username,
                         email: email,
                         password: password,

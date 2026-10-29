@@ -1,0 +1,13 @@
+{
+  "fileKey": "zavGrRPLRkrcKfcVlpDVcR",
+  "pageId": "574:2",
+  "board": "751:1257",
+  "screen": "751:1195",
+  "exerciseComponent": "751:1190",
+  "screens": {
+    "light": "751:1260",
+    "dark": "751:1322"
+  },
+  "validation": "Light/dark full-content composition reviewed; editable text, component instances and theme bindings; Nunito Sans/SF Pro; no UI raster.",
+  "scope": "Figma visual proposal only; controls not wired. Searchable catalog and muscle filters are new proposed features, not present in current manual-entry app. Four example exercises, two selected. In native implementation list scrolls and summary action stays above safe area; selection preserved during search. No saved workout or code changes."
+}

@@ -32,25 +32,61 @@ struct MealDetailView: View {
     @State private var editingFood: FoodEntry?
     @State private var isRenamingMeal = false
     @State private var renamedMeal = ""
+    @State private var showsNutritionDetails = false
+    @State private var recentFoodSelection: FoodEntry?
 
     var body: some View {
         Group {
             if let meal {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
-                        mealSummary(meal)
+                    VStack(alignment: .leading, spacing: 28) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(meal.entries.isEmpty ? "Let’s add your first food." : "What’s on the menu?")
+                                .font(.community(.largeTitle, weight: .bold))
+                            Text(meal.entries.isEmpty
+                                 ? "Start with one ingredient. You can add the rest as you go."
+                                 : "Your favorites. Your portions. Your plate.")
+                                .font(.community(.subheadline))
+                                .foregroundStyle(.secondary)
+                        }
                         if meal.entries.isEmpty {
-                            emptyMealActions
-                            mealGuidance
+                            VStack(alignment: .leading, spacing: 22) {
+                                Label("Find a food you love", systemImage: "1.circle")
+                                Label("Make the portion yours", systemImage: "2.circle")
+                                Label("Add it. You’re on your way.", systemImage: "3.circle")
+                            }
+                            .font(.community(.headline))
+                            .padding(.vertical, 12)
+                            addFoodButton
                         } else {
+                            addFoodButton
+                        }
+                        HStack {
+                            Button("Saved meals →") { isShowingSavedMeals = true }
+                            Spacer()
+                            Button("Enter manually +") { isEnteringFood = true }
+                        }
+                        .font(.community(.subheadline, weight: .semibold))
+                        .tint(phase.accent)
+
+                        if !meal.entries.isEmpty {
+                            mealSummary(meal)
                             foodList(meal)
                         }
-                        addFoodButton
-
-                        // An empty meal already states that in the food list,
-                        // so the breakdown only appears once there is food.
+                        if !store.recentFoods.isEmpty { recentFoodShelf }
                         if !meal.entries.isEmpty {
-                            NutritionBreakdownView(meals: [meal], scope: .meal)
+                            DisclosureGroup("Nutrition details", isExpanded: $showsNutritionDetails) {
+                                NutritionBreakdownView(meals: [meal], scope: .meal)
+                                    .padding(.top, 12)
+                            }
+                            .font(.community(.subheadline, weight: .semibold))
+                            .tint(phase.accent)
+                        }
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Foods save as you add them.")
+                                .font(.community(.caption)).foregroundStyle(.secondary)
+                            Button("Done") { dismiss() }
+                                .buttonStyle(RepbasePrimaryButtonStyle())
                         }
                     }
                     .padding(.horizontal)
@@ -58,8 +94,9 @@ struct MealDetailView: View {
                     // Pushed inside the tab, so the bottom bar overlays it.
                     .padding(.bottom, RepbaseDesign.bottomBarClearance)
                 }
-                .repbaseScreen(phase)
+                .background(Color(.systemBackground))
                 .navigationTitle(meal.name)
+                .navigationBarTitleDisplayMode(.inline)
                 .toolbar { mealToolbar(meal) }
             } else {
                 ContentUnavailableView(
@@ -71,7 +108,7 @@ struct MealDetailView: View {
         }
         .fullScreenCover(isPresented: $isAddingFood) {
             NavigationStack {
-                FoodPickerView(date: date, mealID: mealID)
+                FoodPickerView(date: date, mealID: mealID, initialFood: recentFoodSelection)
             }
         }
         .fullScreenCover(isPresented: $isEnteringFood) {
@@ -108,47 +145,61 @@ struct MealDetailView: View {
 
     private func mealSummary(_ meal: FoodMeal) -> some View {
         VStack(alignment: .leading, spacing: 18) {
-            HStack {
-                Text(meal.name.uppercased())
-                .font(.community(.caption2, weight: .bold))
-                .tracking(1.2)
-                .foregroundStyle(phase.accent)
-                Spacer()
-                Text("\(meal.totalNutrition.calories.nutritionText) KCAL")
-                    .font(.community(.caption2, weight: .bold))
-                    .foregroundStyle(RepbaseDesign.warning)
-                    .padding(.horizontal, 13)
-                    .frame(height: 30)
-                    .background(RepbasePalette.oatmeal, in: Capsule())
+            Text("YOUR PLATE, COMING TOGETHER")
+                .font(.community(.caption2, weight: .semibold))
+                .foregroundStyle(.secondary)
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 24) {
+                    mealRing(meal)
+                    mealLegend(meal)
+                }
+                VStack(alignment: .leading, spacing: 20) {
+                    mealRing(meal)
+                    mealLegend(meal)
+                }
             }
+        }
+        .padding(.vertical, 8)
+    }
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(meal.entries.isEmpty ? "Build your plate." : "Your plate, in balance.")
-                    .font(.community(.title2, weight: .bold))
-                Text(meal.entries.isEmpty ? "Add one food and the balance comes to life." : "A useful view of this meal—not a daily target.")
-                    .font(.community(.caption))
-                    .foregroundStyle(.secondary)
-            }
-
-            HStack(spacing: 18) {
+    private func mealRing(_ meal: FoodMeal) -> some View {
                 MacroMixRing(nutrition: meal.totalNutrition)
-                    .frame(width: 128, height: 128)
+                    .frame(width: 146, height: 146)
+    }
 
-                VStack(spacing: 9) {
+    private func mealLegend(_ meal: FoodMeal) -> some View {
+                VStack(alignment: .leading, spacing: 16) {
                     ForEach(Macro.allCases) { macro in
-                        MealMacro(
-                            title: macro.title,
-                            value: macro.grams(in: meal.totalNutrition),
-                            share: meal.totalNutrition.energyShare(for: macro),
-                            color: macro.color
-                        )
+                        Text("\(macro.grams(in: meal.totalNutrition).nutritionText) g  \(macro.title)")
+                            .font(.community(.subheadline, weight: .semibold))
+                            .foregroundStyle(macro.color)
+                    }
+                }
+    }
+
+    private var recentFoodShelf: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Have it again").font(.community(.title3, weight: .bold))
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(alignment: .top, spacing: 24) {
+                    ForEach(store.recentFoods.prefix(8)) { food in
+                        Button { recentFoodSelection = food; isAddingFood = true } label: {
+                            VStack(alignment: .leading, spacing: 10) {
+                                Capsule().fill(phase.accent).frame(width: 42, height: 3)
+                                Text(food.name).font(.community(.headline)).foregroundStyle(.primary)
+                                Text("\(food.servings.nutritionText) servings · \(food.totalNutrition.calories.nutritionText) kcal")
+                                    .font(.community(.caption)).foregroundStyle(.secondary)
+                                Text("+ Add").font(.community(.subheadline, weight: .semibold))
+                                    .foregroundStyle(phase.accent)
+                            }
+                            .frame(width: 170, alignment: .leading)
+                            .padding(.vertical, 8)
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
             }
-
-            MacroMixRibbon(nutrition: meal.totalNutrition)
         }
-        .foodCard()
     }
 
     private var emptyMealActions: some View {
@@ -212,7 +263,7 @@ struct MealDetailView: View {
 
     private func foodList(_ meal: FoodMeal) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Foods")
+            Text("On your plate · Tap to edit portions")
                 .font(.community(.title3, weight: .bold))
 
             if meal.entries.isEmpty {
@@ -243,9 +294,10 @@ struct MealDetailView: View {
 
     private var addFoodButton: some View {
         Button {
+            recentFoodSelection = nil
             isAddingFood = true
         } label: {
-            Label("Add food", systemImage: "plus")
+            Label("Search foods", systemImage: "magnifyingglass")
                 .font(.community(.headline))
                 .frame(maxWidth: .infinity)
         }
@@ -316,8 +368,9 @@ private struct MacroMixRing: View {
                     .rotationEffect(.degrees(-90 + nutrition.startAngle(for: macro)))
             }
             VStack(spacing: 2) {
-                Text("Meal mix").font(.community(.subheadline, weight: .bold))
-                Text("BY ENERGY")
+                Text(nutrition.calories.nutritionText).font(.community(.largeTitle, weight: .bold))
+                    .minimumScaleFactor(0.6).lineLimit(1)
+                Text("kcal")
                     .font(.community(size: 8, weight: .bold))
                     .tracking(0.8)
                     .foregroundStyle(.secondary)
@@ -375,10 +428,6 @@ private struct FoodEntryRow: View {
 
     var body: some View {
         HStack(spacing: 13) {
-            Image(systemName: "carrot.fill")
-                .foregroundStyle(Color.orange)
-                .frame(width: 38, height: 38)
-                .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 11))
             VStack(alignment: .leading, spacing: 4) {
                 Text(food.name)
                     .font(.community(.headline))
@@ -396,7 +445,7 @@ private struct FoodEntryRow: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .foodCard()
+        .padding(.vertical, 16)
     }
 }
 

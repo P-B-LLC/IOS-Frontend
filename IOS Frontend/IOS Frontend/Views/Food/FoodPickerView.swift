@@ -23,24 +23,39 @@ struct FoodPickerView: View {
     @State private var databaseResults: [FoodDatabaseResult] = []
     @State private var isSearchingDatabase = false
     @State private var databaseError: String?
+    @State private var selectedFood: FoodEntry?
+    @State private var servingDescription = "1 serving of this food entry"
+    @State private var savedFood: FoodEntry?
+    @State private var openedInitialFood = false
+    var initialFood: FoodEntry? = nil
 
     var body: some View {
         let timeOfDay = HomeTimeOfDay.current
 
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                RytivoBrandLockup(size: 24)
                 pickerHeader(timeOfDay: timeOfDay)
-
+                if let savedFood {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 54)).foregroundStyle(RepbaseDesign.success)
+                    Text("Added to your meal")
+                        .font(.community(.largeTitle, weight: .bold))
+                    Text(savedFood.name).font(.community(.headline))
+                    Text("\(savedFood.servings.nutritionText) servings · \(savedFood.totalNutrition.calories.nutritionText) kcal")
+                        .foregroundStyle(.secondary)
+                    Button("Add another food") {
+                        self.savedFood = nil
+                        pendingAdd = nil
+                        draftSaved = false
+                        searchText = ""
+                    }.buttonStyle(RepbasePrimaryButtonStyle())
+                    Button("Done") { dismiss() }.buttonStyle(RepbasePrimaryButtonStyle())
+                } else {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("FOOD DATABASE")
-                        .font(.community(size: 10, weight: .bold))
-                        .tracking(1.25)
-                        .foregroundStyle(timeOfDay.accent)
-                    Text("Find it quickly.")
-                        .font(.community(size: 28, weight: .bold))
+                    Text("Find your food.")
+                        .font(.community(.largeTitle, weight: .bold))
                         .tracking(-0.8)
-                    Text("Search the USDA food database, reuse something you have logged, or enter nutrition by hand.")
+                    Text("Try chicken, rice, or yogurt. Then choose how much you had.")
                         .font(.community(.subheadline))
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                 }
@@ -52,9 +67,9 @@ struct FoodPickerView: View {
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                 }
-                .padding(.horizontal, 2)
+                .padding(.horizontal, 16)
                 .frame(height: 52)
-                .overlay(alignment: .bottom) { Divider() }
+                .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 16))
 
                 if let pendingAdd {
                     Button("Retry saving \(pendingAdd.name)") { add(pendingAdd) }
@@ -63,20 +78,37 @@ struct FoodPickerView: View {
                 }
 
                 databaseEditorialSection(timeOfDay: timeOfDay)
-                recentEditorialSection(timeOfDay: timeOfDay)
+                if !store.recentFoods.isEmpty {
+                    recentEditorialSection(timeOfDay: timeOfDay)
+                }
 
                 manualEntryCard(timeOfDay: timeOfDay)
+                }
             }
             .padding(.horizontal, RepbaseDesign.pageInset)
             .padding(.bottom, 28)
         }
         .scrollIndicators(.hidden)
         .toolbar(.hidden, for: .navigationBar)
-        .homeTimeScreen(timeOfDay)
+        .background(Color(.systemBackground))
         .saveFeedback(isSaving: isSaving, error: saveError)
         .recoverableDraft(key: "food-picker-\(mealID)", value: $pendingAdd,
                           saved: $draftSaved, error: $saveError)
         .task(id: searchText) { await searchDatabase() }
+        .onAppear {
+            if let initialFood, !openedInitialFood {
+                openedInitialFood = true
+                selectedFood = initialFood
+            }
+        }
+        .sheet(item: $selectedFood) { food in
+            NavigationStack {
+                FoodPortionView(food: food, servingDescription: servingDescription,
+                                isSaving: isSaving, error: saveError,
+                                lockedForRetry: pendingAdd != nil, onAdd: add)
+            }
+            .interactiveDismissDisabled(isSaving)
+        }
     }
 
     private func pickerHeader(timeOfDay: HomeTimeOfDay) -> some View {
@@ -114,7 +146,7 @@ struct FoodPickerView: View {
                     .font(.community(.caption))
                     .foregroundStyle(.orange)
             } else if searchText.trimmed.count < 2 {
-                Text("Type at least two letters to search packaged foods worldwide.")
+                Text("Type at least two letters to search foods.")
                     .font(.community(.caption))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
             } else if !isSearchingDatabase && databaseResults.isEmpty {
@@ -124,10 +156,18 @@ struct FoodPickerView: View {
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(databaseResults.enumerated()), id: \.element.id) { index, result in
-                        Button { add(result.entry) } label: {
-                            DatabaseFoodRow(result: result).padding(.vertical, 12)
+                        Button {
+                            servingDescription = result.servingDescription
+                            selectedFood = result.entry
+                        } label: {
+                            VStack(alignment: .leading, spacing: 8) {
+                                DatabaseFoodRow(result: result)
+                                Text("Choose portion →").font(.community(.subheadline, weight: .semibold))
+                                    .foregroundStyle(timeOfDay.accent)
+                            }.padding(.vertical, 12)
                         }
                         .buttonStyle(.plain)
+                        .disabled(isSaving || pendingAdd != nil)
                         if index < databaseResults.count - 1 { Divider() }
                     }
                 }
@@ -144,7 +184,7 @@ struct FoodPickerView: View {
                 .font(.community(.caption2, weight: .bold))
                 .tracking(1.2)
                 .foregroundStyle(timeOfDay.accent)
-            Text("Add again in one tap")
+            Text("Choose a food, then check your portion")
                 .font(.community(.footnote))
                 .foregroundStyle(timeOfDay.canvasSecondaryText)
             VStack(spacing: 0) {
@@ -156,11 +196,15 @@ struct FoodPickerView: View {
                         .padding(.vertical, 22)
                 } else {
                     ForEach(Array(filteredRecents.enumerated()), id: \.element.id) { index, food in
-                        Button { add(food) } label: {
+                        Button {
+                            servingDescription = "1 serving of this food entry"
+                            selectedFood = food
+                        } label: {
                             RecentFoodRow(food: food)
                                 .padding(.vertical, 14)
                         }
                         .buttonStyle(.plain)
+                        .disabled(isSaving || pendingAdd != nil)
                         if index < filteredRecents.count - 1 { Divider() }
                     }
                 }
@@ -240,7 +284,8 @@ struct FoodPickerView: View {
             return
         }
         draftSaved = true
-        dismiss()
+        savedFood = entry
+        selectedFood = nil
         }
     }
 
@@ -268,6 +313,99 @@ struct FoodPickerView: View {
             databaseError = "The food database could not be reached. You can still reuse or enter a food manually."
         }
         isSearchingDatabase = false
+    }
+}
+
+/// Portion selection changes only the quantity; saving still uses the picker's
+/// existing retry-safe save path and a fresh entry identity.
+private struct FoodPortionView: View {
+    @Environment(\.dismiss) private var dismiss
+    let food: FoodEntry
+    let servingDescription: String
+    let isSaving: Bool
+    let error: String?
+    let lockedForRetry: Bool
+    let onAdd: (FoodEntry) -> Void
+    @State private var quantity: String
+
+    init(food: FoodEntry, servingDescription: String, isSaving: Bool,
+         error: String?, lockedForRetry: Bool, onAdd: @escaping (FoodEntry) -> Void) {
+        self.food = food
+        self.servingDescription = servingDescription
+        self.isSaving = isSaving
+        self.error = error
+        self.lockedForRetry = lockedForRetry
+        self.onAdd = onAdd
+        _quantity = State(initialValue: food.servings.nutritionText)
+    }
+
+    private var servings: Decimal? {
+        guard let value = Decimal(string: quantity, locale: .current), value > 0, value <= 1000 else { return nil }
+        return value
+    }
+    private var nutrition: NutritionAmount { food.nutritionPerServing * (servings ?? 0) }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 28) {
+                Text("How much did you have?").font(.community(.largeTitle, weight: .bold))
+                Text(food.name).font(.community(.subheadline)).foregroundStyle(.secondary)
+                Text("YOUR PORTION").font(.community(.caption, weight: .semibold)).foregroundStyle(.secondary)
+                HStack {
+                    Button { adjust(by: Decimal(string: "-0.5")!) } label: {
+                        Image(systemName: "minus").frame(minWidth: 44, minHeight: 44)
+                    }.buttonStyle(.bordered).buttonBorderShape(.circle)
+                        .accessibilityLabel("Decrease servings")
+                    Spacer()
+                    TextField("1", text: $quantity)
+                        .keyboardType(.decimalPad)
+                        .font(.community(.largeTitle, weight: .bold))
+                        .multilineTextAlignment(.center)
+                        .frame(width: 130, height: 130)
+                        .overlay(Circle().strokeBorder(RepbaseDesign.accent, lineWidth: 3))
+                        .accessibilityLabel("Servings")
+                    Spacer()
+                    Button { adjust(by: Decimal(string: "0.5")!) } label: {
+                        Image(systemName: "plus").frame(minWidth: 44, minHeight: 44)
+                    }.buttonStyle(.bordered).buttonBorderShape(.circle)
+                        .accessibilityLabel("Increase servings")
+                }
+                .disabled(isSaving || lockedForRetry)
+                Text("Per serving: \(servingDescription)")
+                    .font(.community(.caption)).foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("For your portion").foregroundStyle(.secondary)
+                    Text("\(nutrition.calories.nutritionText) kcal").font(.community(.largeTitle, weight: .bold))
+                    ForEach(Macro.allCases) { macro in
+                        Text("\(macro.grams(in: nutrition).nutritionText) g \(macro.title)")
+                            .font(.community(.subheadline)).foregroundStyle(macro.color)
+                    }
+                }
+                if let error { Text(error).foregroundStyle(.red).accessibilityAddTraits(.isStaticText) }
+                if servings == nil { Text("Enter a quantity greater than zero, up to 1,000 servings.").foregroundStyle(.secondary) }
+                Button(isSaving ? "Saving…" : lockedForRetry ? "Retry adding food" : "Add to meal") {
+                    guard let servings else { return }
+                    var entry = food
+                    entry.servings = servings
+                    onAdd(entry)
+                }
+                .buttonStyle(RepbasePrimaryButtonStyle())
+                .disabled(isSaving || servings == nil)
+                Text("You can edit the portion later.").font(.community(.caption)).foregroundStyle(.secondary)
+            }.padding(24)
+        }
+        .background(Color(.systemBackground))
+        .navigationTitle("Portion")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Back to results") { dismiss() }.disabled(isSaving)
+            }
+        }
+    }
+
+    private func adjust(by delta: Decimal) {
+        quantity = min(1000, max(Decimal(string: "0.5")!, (servings ?? 1) + delta)).nutritionText
     }
 }
 
