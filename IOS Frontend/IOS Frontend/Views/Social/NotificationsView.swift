@@ -149,6 +149,8 @@ private struct NotificationActivityCard: View {
             NotificationPostActivityView(postID: postID)
         } else if group.latest.kind == .moderationRejected, let postID = group.latest.postID {
             PostDetailView(postID: postID)
+        } else if group.latest.kind.isPostInteraction || group.latest.kind == .moderationRejected {
+            ContentUnavailableView("Post unavailable", systemImage: "photo")
         } else { PersonProfileView(userID: group.latest.actorID) }
     }
 
@@ -172,6 +174,8 @@ private struct NotificationActivityCard: View {
             NavigationLink { PostDetailView(postID: postID) } label: {
                 NotificationPostThumbnail(preview: group.preview)
             }.buttonStyle(.plain).accessibilityLabel("Open post")
+        } else if group.latest.kind.isPostInteraction {
+            NotificationPostThumbnail(preview: nil)
         } else if group.latest.kind != .moderationRejected && group.latest.kind != .unknown {
             NavigationLink { PersonProfileView(userID: group.latest.actorID) } label: {
                 VStack(spacing: 3) {

@@ -1,5 +1,6 @@
 import AVFoundation
 import SwiftUI
+import Vision
 import VisionKit
 
 /// Frames stay on device. Only a validated product number goes to our API.

@@ -49,6 +49,10 @@ Windows checks: Swift syntax parsing, stable decoded IDs, matching iOS/backend
 notification schemas, shell syntax, localization JSON/placeholder/plural checks,
 and diff hygiene. These are not an Xcode build or rendered UI validation.
 
+The first Mac build exposed a missing `import Vision` in the earlier barcode
+scanner work on this shared branch. The one-line import is included so that the
+complete branch can compile; barcode behavior is otherwise unchanged.
+
 `NotificationActivityTests` covers grouping, distinct actors, deduplication,
 latest ordering, missing previews, non-post events, legacy DTO decoding, scoped
 read batches, retries, new arrivals, and read-state reset/reconciliation.
