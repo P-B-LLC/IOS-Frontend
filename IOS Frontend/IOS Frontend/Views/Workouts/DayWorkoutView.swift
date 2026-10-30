@@ -211,11 +211,11 @@ struct DayWorkoutView: View {
         )
     }
 
-    private func saveEditedWorkout(_ workout: Workout) async -> String? {
-        let problem = await store.saveWorkoutReportingFailure(workout, on: day)
+    private func saveEditedWorkout(_ savedWorkout: Workout) async -> String? {
+        let problem = await store.saveWorkoutReportingFailure(savedWorkout, on: day)
         if problem == nil {
             highlightedWorkoutID = store.lastSavedWorkoutID
-            savedWorkoutMessage = Self.savedMessage(workout.name, on: day)
+            savedWorkoutMessage = Self.savedMessage(savedWorkout.name, on: day)
         }
         return problem
     }

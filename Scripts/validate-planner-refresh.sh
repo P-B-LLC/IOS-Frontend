@@ -21,10 +21,17 @@ if [ "${INSTALL_SIMULATOR:-0}" = 1 ]; then
 fi
 : "${REPBASE_API_URL:?Set REPBASE_API_URL to your existing HTTPS API origin.}"
 case "$REPBASE_API_URL" in https://*) ;; *) echo 'Use an HTTPS API origin.' >&2; exit 1;; esac
-bash Scripts/test-account-safety.sh
 # Reuse intermediates instead of retaining a new multi-GB build on every run.
 build_dir="${DERIVED_DATA_PATH:-$repo/.build/planner-validation}"
 mkdir -p "$build_dir"
+if bash Scripts/test-account-safety.sh 2>&1 | tee "$build_dir/tests.log"; then
+    :
+else
+    test_status=$?
+    echo "Tests failed. Diagnostics from $build_dir/tests.log:" >&2
+    grep -n -B 3 -A 8 -E 'error:|XCTAssert|Test Case .*failed' "$build_dir/tests.log" | head -n 120 || true
+    exit "$test_status"
+fi
 if xcodebuild -project 'IOS Frontend/IOS Frontend.xcodeproj' -scheme 'IOS Frontend' \
     -configuration Debug -destination 'generic/platform=iOS Simulator' \
     -derivedDataPath "$build_dir" CODE_SIGNING_ALLOWED=NO \
