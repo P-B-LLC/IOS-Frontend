@@ -695,8 +695,9 @@ final class RytivoE2ETests: XCTestCase {
     /// from its actions takes it off again.
     func test12CalendarAgenda() throws {
         signInIfNeeded()
-        XCTAssertTrue(app.buttons["Calendar"].waitForExistence(timeout: 20))
-        app.buttons["Calendar"].tap()
+        let calendarTab = app.buttons["tab.planner"]
+        XCTAssertTrue(calendarTab.waitForExistence(timeout: 20))
+        calendarTab.tap()
         XCTAssertTrue(element(labelContaining: "Push Day").waitForExistence(timeout: 20), "today's workout is on the agenda")
         shot("01 agenda")
 
