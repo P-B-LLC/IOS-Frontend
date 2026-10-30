@@ -10,6 +10,7 @@
 //  and the screen is not where that conversation belongs.
 //
 
+import Foundation
 import SwiftUI
 
 struct StepsWidget: View {
@@ -36,8 +37,8 @@ struct StepsWidget: View {
     /// nine points than the number itself.
     static func goalText(_ goal: Int) -> String {
         goal % 1_000 == 0
-            ? "\(goal / 1_000)K GOAL"
-            : "\(goal.formatted(.number)) GOAL"
+            ? String(localized: "\(goal / 1_000)K GOAL", bundle: .app, locale: .app, comment: "A step goal in thousands, e.g. 8K GOAL")
+            : String(localized: "\(goal.formatted(.number)) GOAL", bundle: .app, locale: .app, comment: "A step goal, e.g. 8,500 GOAL")
     }
 
     var body: some View {
@@ -160,7 +161,7 @@ struct StepsWidget: View {
 
     private var changeText: String {
         guard let change = store.latestDayChange else { return "—" }
-        if change == 0 { return "Even" }
+        if change == 0 { return String(localized: "Even", bundle: .app, locale: .app, comment: "No change in steps from the day before") }
         return "\(change > 0 ? "+" : "")\(change.formatted(.number))"
     }
 
@@ -185,7 +186,7 @@ struct StepsWidget: View {
     }
 
     private func connectBody(
-        message: String,
+        message: LocalizedStringKey,
         action: (() -> Void)?
     ) -> some View {
         HStack(spacing: 10) {
@@ -338,20 +339,24 @@ struct StepsWidget: View {
            summary.imported > 0 || summary.skippedOverlapping > 0 {
             VStack(alignment: .leading, spacing: 3) {
                 if summary.imported > 0 {
-                    Text("\(summary.imported) \(workoutWord(summary.imported)) brought in from Health")
+                    Text(
+                        summary.imported == 1
+                            ? "1 workout brought in from Health"
+                            : "\(summary.imported) workouts brought in from Health"
+                    )
                 }
                 if summary.skippedOverlapping > 0 {
-                    Text("\(summary.skippedOverlapping) \(workoutWord(summary.skippedOverlapping)) skipped, already recorded here")
+                    Text(
+                        summary.skippedOverlapping == 1
+                            ? "1 workout skipped, already recorded here"
+                            : "\(summary.skippedOverlapping) workouts skipped, already recorded here"
+                    )
                 }
             }
             .font(.community(.caption))
             .foregroundStyle(timeOfDay.secondaryText)
             .fixedSize(horizontal: false, vertical: true)
         }
-    }
-
-    private func workoutWord(_ count: Int) -> String {
-        count == 1 ? "workout" : "workouts"
     }
 
     // MARK: - Days
@@ -372,17 +377,19 @@ struct StepsWidget: View {
     }
 
     private func weekdayInitial(_ day: Date) -> String {
-        let index = Calendar.current.component(.weekday, from: day) - 1
-        let symbols = Calendar.current.veryShortWeekdaySymbols
+        var calendar = Calendar.current
+        calendar.locale = .app
+        let index = calendar.component(.weekday, from: day) - 1
+        let symbols = calendar.veryShortWeekdaySymbols
         guard symbols.indices.contains(index) else { return "" }
         return symbols[index]
     }
 
     private var weekAccessibilityLabel: String {
         let counted = store.week.count
-        guard counted > 0 else { return "No steps in the last seven days" }
+        guard counted > 0 else { return String(localized: "No steps in the last seven days", bundle: .app, locale: .app) }
         let total = store.week.reduce(0) { $0 + $1.steps }
-        return "\(total.formatted(.number)) steps across \(counted) of the last seven days"
+        return String(localized: "\(total.formatted(.number)) steps across \(counted) of the last seven days", bundle: .app, locale: .app)
     }
 }
 

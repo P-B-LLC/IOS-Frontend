@@ -58,9 +58,9 @@ nonisolated enum PostVisibility: String, CaseIterable, Identifiable, Sendable {
 
     var title: String {
         switch self {
-        case .publicToAll: "Everyone"
-        case .followers: "Followers"
-        case .privateToMe: "Only me"
+        case .publicToAll: String(localized: "Everyone", bundle: .app, locale: .app)
+        case .followers: String(localized: "Followers", bundle: .app, locale: .app)
+        case .privateToMe: String(localized: "Only me", bundle: .app, locale: .app)
         }
     }
 
@@ -74,9 +74,9 @@ nonisolated enum PostVisibility: String, CaseIterable, Identifiable, Sendable {
 
     var explanation: String {
         switch self {
-        case .publicToAll: "Anyone on Rytivo can see this."
-        case .followers: "Only people who follow you."
-        case .privateToMe: "Kept on your profile, shown to nobody else."
+        case .publicToAll: String(localized: "Anyone on Rytivo can see this.", bundle: .app, locale: .app)
+        case .followers: String(localized: "Only people who follow you.", bundle: .app, locale: .app)
+        case .privateToMe: String(localized: "Kept on your profile, shown to nobody else.", bundle: .app, locale: .app)
         }
     }
 }
@@ -275,9 +275,9 @@ nonisolated struct FeedPost: Identifiable, Equatable, Hashable, Sendable {
     var publicationMessage: String? {
         switch moderationStatus {
         case "approved": nil
-        case "rejected": "Not published after review. Contact support if you think this was a mistake."
-        case "flagged": "Awaiting moderator review. Only you can see this submission."
-        default: "Checking your post. It is not public yet. You can check its status on your profile."
+        case "rejected": String(localized: "Not published after review. Contact support if you think this was a mistake.", bundle: .app, locale: .app)
+        case "flagged": String(localized: "Awaiting moderator review. Only you can see this submission.", bundle: .app, locale: .app)
+        default: String(localized: "Checking your post. It is not public yet. You can check its status on your profile.", bundle: .app, locale: .app)
         }
     }
 
@@ -346,16 +346,28 @@ nonisolated struct SavedMealOutcome: Equatable, Hashable, Sendable {
     var wasAlreadySaved = false
 
     var message: String {
-        let items = itemCount == 1 ? "1 item" : "\(itemCount) items"
+        let items = itemCount == 1
+            ? String(localized: "1 item", bundle: .app, locale: .app)
+            : String(localized: "\(itemCount) items", bundle: .app, locale: .app)
         // See SavedWorkoutOutcome: saying "Saved!" again for a tap that
         // saved nothing is what got somebody to tap a third time.
         if wasAlreadySaved {
-            return "\"\(name)\" is already in your saved meals."
+            return String(localized: "\"\(name)\" is already in your saved meals.", bundle: .app, locale: .app)
         }
         if wasRenamed {
-            return "Saved as \"\(name)\" — \(items). You already had one by its own name."
+            return String(
+                localized: "Saved as \"\(name)\" — \(items). You already had one by its own name.",
+                bundle: .app,
+                locale: .app,
+                comment: "The second placeholder is a count, e.g. 3 items or 4 exercises"
+            )
         }
-        return "Saved \"\(name)\" to your meals — \(items)."
+        return String(
+            localized: "Saved \"\(name)\" to your meals — \(items).",
+            bundle: .app,
+            locale: .app,
+            comment: "The second placeholder is a count, e.g. 3 items or 4 exercises"
+        )
     }
 }
 
@@ -367,73 +379,6 @@ nonisolated struct SavedMealOutcome: Equatable, Hashable, Sendable {
 nonisolated struct BlockedPerson: Identifiable, Equatable, Hashable, Sendable {
     let id: Int
     let person: PostAuthor
-}
-
-/// One line of the notifications page.
-nonisolated struct SocialNotification: Identifiable, Equatable, Hashable, Sendable {
-    /// What somebody did. Unknown covers a kind added on the server before
-    /// this build knew about it: the row still names who and when, which is
-    /// more use than dropping it.
-    enum Kind: String, Sendable {
-        case follow
-        case followRequest = "follow_request"
-        case followApproved = "follow_approved"
-        case like
-        case repost
-        case comment
-        case moderationRejected = "moderation_rejected"
-        case unknown
-    }
-
-    let id: Int
-    let kind: Kind
-    let actorID: Int
-    let actorUsername: String
-    let actorFirstName: String
-    let actorLastName: String
-    let actorPhotoURL: String?
-    let postID: Int?
-    let commentBody: String?
-    /// Whether this row has been seen.
-    ///
-    /// Settable, unlike the rest, because opening the page marks everything
-    /// read on the server and the rows in hand have to follow. Refetching to
-    /// learn what this device just caused would be a request whose answer is
-    /// already known.
-    var isRead: Bool
-
-    var actorName: String {
-        if kind == .moderationRejected { return "Rytivo" }
-        let full = "\(actorFirstName) \(actorLastName)"
-            .trimmingCharacters(in: .whitespaces)
-        return full.isEmpty ? actorUsername : full
-    }
-
-    /// What the row says happened, in words rather than a code.
-    var summary: String {
-        switch kind {
-        case .follow: return "started following you"
-        case .followRequest: return "asked to follow you"
-        case .followApproved: return "accepted your follow request"
-        case .like: return "liked your post"
-        case .repost: return "reposted your post"
-        case .comment: return "commented on your post"
-        case .moderationRejected: return "did not publish your post after review. You can check it on your profile or contact support."
-        case .unknown: return "did something"
-        }
-    }
-
-    var symbol: String {
-        switch kind {
-        case .follow, .followRequest: return "person.badge.plus"
-        case .followApproved: return "person.crop.circle.badge.checkmark"
-        case .like: return "heart.fill"
-        case .repost: return "arrow.2.squarepath"
-        case .comment: return "bubble.left"
-        case .moderationRejected: return "exclamationmark.shield"
-        case .unknown: return "bell"
-        }
-    }
 }
 
 /// Somebody waiting to be let in to a closed profile.
@@ -473,14 +418,14 @@ nonisolated enum PostReportReason: String, CaseIterable, Identifiable, Sendable 
 
     var title: String {
         switch self {
-        case .spam: return "Spam or misleading"
-        case .harassment: return "Harassment or bullying"
-        case .hate: return "Hate speech"
-        case .violence: return "Violence or threats"
-        case .nudity: return "Nudity or sexual content"
-        case .harm: return "Promotes self-harm or disordered eating"
-        case .advice: return "Dangerous or false advice"
-        case .other: return "Something else"
+        case .spam: return String(localized: "Spam or misleading", bundle: .app, locale: .app)
+        case .harassment: return String(localized: "Harassment or bullying", bundle: .app, locale: .app)
+        case .hate: return String(localized: "Hate speech", bundle: .app, locale: .app)
+        case .violence: return String(localized: "Violence or threats", bundle: .app, locale: .app)
+        case .nudity: return String(localized: "Nudity or sexual content", bundle: .app, locale: .app)
+        case .harm: return String(localized: "Promotes self-harm or disordered eating", bundle: .app, locale: .app)
+        case .advice: return String(localized: "Dangerous or false advice", bundle: .app, locale: .app)
+        case .other: return String(localized: "Something else", bundle: .app, locale: .app)
         }
     }
 
@@ -503,16 +448,34 @@ nonisolated struct SavedWorkoutOutcome: Equatable, Hashable, Sendable {
     var wasAlreadySaved = false
 
     var message: String {
-        let exercises = exerciseCount == 1 ? "1 exercise" : "\(exerciseCount) exercises"
+        let exercises = exerciseCount == 1
+            ? String(localized: "1 exercise", bundle: .app, locale: .app)
+            : String(localized: "\(exerciseCount) exercises", bundle: .app, locale: .app)
         // Said plainly rather than as another "Saved!". Repeating the
         // success of the first tap is how somebody ends up tapping a third
         // time looking for the copy they think did not arrive.
         if wasAlreadySaved {
-            return "\"\(name)\" is already in your workouts."
+            return String(localized: "\"\(name)\" is already in your workouts.", bundle: .app, locale: .app)
         }
         if wasRenamed {
-            return "Saved as \"\(name)\" — \(exercises). You already had one by its own name."
+            return String(
+                localized: "Saved as \"\(name)\" — \(exercises). You already had one by its own name.",
+                bundle: .app,
+                locale: .app,
+                comment: "The second placeholder is a count, e.g. 3 items or 4 exercises"
+            )
         }
-        return "Saved \"\(name)\" to your workouts — \(exercises)."
+        return String(
+            localized: "Saved \"\(name)\" to your workouts — \(exercises).",
+            bundle: .app,
+            locale: .app,
+            comment: "The second placeholder is a count, e.g. 3 items or 4 exercises"
+        )
     }
+}
+
+extension PostExerciseLine {
+    /// The name in the reader's language when it is a library exercise; a
+    /// name somebody typed stays as they wrote it.
+    var displayName: String { ExerciseLibrary.displayName(name) }
 }

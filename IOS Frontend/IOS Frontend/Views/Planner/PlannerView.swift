@@ -2,10 +2,10 @@
 //  PlannerView.swift
 //  IOS Frontend
 //
-//  The planner: the week in focus, the day against the clock, and what is
-//  overdue or coming.
+//  Pick a date, read its agenda, and keep other days out of the way.
 //
 
+import Foundation
 import SwiftUI
 
 struct PlannerView: View {
@@ -23,7 +23,6 @@ struct PlannerView: View {
     @State private var editor: PlannerEntryEditorView.Mode?
     @State private var categoryFilter: PlannerCategory?
     @State private var isMonthShown = false
-    @State private var showsCompleted = false
     @State private var openingDay: Weekday?
     @State private var handledCompletionID: UUID?
     @State private var completedEntryID: PlannerEntry.ID?
@@ -34,62 +33,9 @@ struct PlannerView: View {
     var body: some View {
         let timeOfDay = HomeTimeOfDay.current
 
-        ScrollView {
-            VStack(spacing: 14) {
-                HStack {
-                    RytivoBrandLockup(size: 24)
-                    Spacer()
-                    Text("Planner")
-                        .font(.community(.title3, weight: .bold))
-                        .foregroundStyle(timeOfDay.canvasPrimaryText)
-                }
-
-                HStack(alignment: .bottom) {
-                    if showsBackButton {
-                        Button { dismiss() } label: {
-                            Image(systemName: "chevron.left")
-                                .font(.community(size: 17, weight: .semibold))
-                                .frame(width: 40, height: 40)
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .foregroundStyle(timeOfDay.canvasPrimaryText)
-                        .accessibilityLabel("Back")
-                        .padding(.trailing, 2)
-                    }
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Make room for your day.")
-                            .font(.community(.title2, weight: .bold))
-                            .foregroundStyle(timeOfDay.canvasPrimaryText)
-                        Text(store.selectedDate.formatted(.dateTime.weekday(.wide).month(.wide).day()))
-                            .font(.community(.subheadline))
-                            .foregroundStyle(timeOfDay.canvasSecondaryText)
-                    }
-                    Spacer(minLength: 0)
-                }
-
-                PlannerWeekStrip(
-                    categoryFilter: $categoryFilter,
-                    onToggleMonth: { isMonthShown = true }
-                )
-
-                addButtons(timeOfDay: timeOfDay)
-                daySection(timeOfDay: timeOfDay)
-                rotationStrip(timeOfDay: timeOfDay)
-                pastDueSection(timeOfDay: timeOfDay)
-                upcomingSection(timeOfDay: timeOfDay)
-
-                if let error = store.persistenceError {
-                    errorCard(error, timeOfDay: timeOfDay)
-                }
-            }
-            .padding(.horizontal, 24)
-            .padding(.top, 16)
-            .padding(.bottom, RepbaseDesign.bottomBarClearance)
+        GeometryReader { geometry in
+            plannerContent(timeOfDay: timeOfDay, timelineHeight: min(320, max(220, geometry.size.height * 0.40)))
         }
-        .scrollIndicators(.hidden)
-        .minimizesBottomBarOnScroll()
         .toolbar(.hidden, for: .navigationBar)
         .homeTimeScreen(timeOfDay)
         .sheet(isPresented: $isMonthShown, onDismiss: {
@@ -125,7 +71,6 @@ struct PlannerView: View {
         // left over from yesterday would read as an empty day.
         .onChange(of: store.selectedDate) {
             categoryFilter = nil
-            showsCompleted = false
         }
         .onChange(of: store.latestCompletionEvent) { _, event in
             handleCompletion(event)
@@ -138,10 +83,44 @@ struct PlannerView: View {
         }
     }
 
+    private func plannerContent(timeOfDay: HomeTimeOfDay, timelineHeight: CGFloat) -> some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                VStack(spacing: 12) {
+                    HStack {
+                        RytivoBrandLockup(size: 24)
+                        Spacer()
+                        Text("Calendar")
+                            .font(.community(.title3, weight: .bold))
+                            .foregroundStyle(timeOfDay.canvasPrimaryText)
+                    }
+                    addButtons(timeOfDay: timeOfDay)
+                }
+                if showsBackButton {
+                    Button { dismiss() } label: {
+                        Label("Back", systemImage: "chevron.backward")
+                            .font(.community(.subheadline, weight: .semibold))
+                            .frame(minHeight: 44)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(timeOfDay.canvasPrimaryText)
+                }
+                if let error = store.persistenceError { errorCard(error, timeOfDay: timeOfDay) }
+                PlannerWeekStrip(onToggleMonth: { isMonthShown = true })
+                daySection(timeOfDay: timeOfDay, timelineHeight: timelineHeight)
+                otherDaysSection(timeOfDay: timeOfDay)
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 16)
+            .padding(.bottom, RepbaseDesign.bottomBarClearance)
+        }
+        .scrollIndicators(.hidden)
+    }
+
     // MARK: - Adding
 
     private func addButtons(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 10) {
             addButton(
                 "Add Task",
                 systemImage: "plus",
@@ -160,7 +139,7 @@ struct PlannerView: View {
     }
 
     private func addButton(
-        _ title: String,
+        _ title: LocalizedStringKey,
         systemImage: String,
         kind: PlannerKind,
         primary: Bool,
@@ -172,14 +151,16 @@ struct PlannerView: View {
             editor = .create(kind, store.selectedDate)
         } label: {
             Label(title, systemImage: systemImage)
-                .font(.community(size: 13, weight: .semibold))
+                .font(.community(.footnote, weight: .semibold))
                 .foregroundStyle(primary ? timeOfDay.onPrimaryAction : timeOfDay.canvasPrimaryText)
-                .frame(maxWidth: .infinity, minHeight: 48)
+                .frame(maxWidth: .infinity, minHeight: 38)
                 .background(
                     primary ? timeOfDay.primaryActionSurface : timeOfDay.surfaceRaised,
-                    in: Capsule()
+                    in: RoundedRectangle(cornerRadius: 12)
                 )
-                .overlay { Capsule().strokeBorder(primary ? Color.clear : timeOfDay.canvasBorder) }
+                .overlay { RoundedRectangle(cornerRadius: 12).strokeBorder(primary ? Color.clear : timeOfDay.canvasBorder) }
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .disabled(!store.isEditingEnabled || store.isLoading)
@@ -188,11 +169,7 @@ struct PlannerView: View {
 
     // MARK: - The day
 
-    /// Where the rotation is, above the day it is describing.
-    ///
-    /// Only while one is running and only on days it covers: a strip counting
-    /// "day 3 of 6" over a date the rotation has nothing to say about would be
-    /// answering a question nobody asked of that day.
+    /// Context for this day, not a separate destination below its task list.
     @ViewBuilder
     private func rotationStrip(timeOfDay: HomeTimeOfDay) -> some View {
         if let cycle = cycleStore.activeCycle,
@@ -219,35 +196,20 @@ struct PlannerView: View {
         }
     }
 
-    private func daySection(timeOfDay: HomeTimeOfDay) -> some View {
+    private func daySection(timeOfDay: HomeTimeOfDay, timelineHeight: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 8) {
-                Text("Your day")
-                    .font(.community(.headline, weight: .bold))
-                    .foregroundStyle(timeOfDay.canvasPrimaryText)
-                Spacer(minLength: 0)
-                if !completedTasks.isEmpty {
-                    Button {
-                        withAnimation(reduceMotion ? nil : .easeOut(duration: 0.2)) {
-                            showsCompleted.toggle()
-                        }
-                    } label: {
-                        Label("Completed (\(completedTasks.count))",
-                              systemImage: showsCompleted ? "chevron.up" : "chevron.down")
-                            .font(.community(.footnote))
-                            .frame(minHeight: 44)
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(timeOfDay.canvasSecondaryText)
-                    .accessibilityValue(showsCompleted ? "Expanded" : "Collapsed")
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .top) {
+                    dayHeading(timeOfDay: timeOfDay)
+                    Spacer(minLength: 12)
+                    categoryMenu(timeOfDay: timeOfDay)
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    dayHeading(timeOfDay: timeOfDay)
+                    categoryMenu(timeOfDay: timeOfDay)
                 }
             }
-
-            if let categoryFilter {
-                Text("Showing \(categoryFilter.title.lowercased()) items. Choose All to see the whole day.")
-                    .font(.community(.caption))
-                    .foregroundStyle(timeOfDay.canvasSecondaryText)
-            }
+            rotationStrip(timeOfDay: timeOfDay)
             if let reason = store.editingBlockedReason {
                 Text(reason)
                     .font(.community(.footnote))
@@ -255,18 +217,27 @@ struct PlannerView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            if store.isLoading {
-                ProgressView("Loading your day…")
-                    .frame(maxWidth: .infinity, minHeight: 80)
-            } else if filtered.isEmpty {
-                Text(categoryFilter == nil ? "Your day is open. Add a task or event to get started." : "Nothing in this category on this day.")
-                    .font(.community(.subheadline))
-                    .foregroundStyle(timeOfDay.canvasSecondaryText)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .plannerSurface(soft: true)
-            } else {
-                ForEach(dayAgenda) { entry in
-                    agendaRow(entry)
+            HStack(spacing: 5) {
+                Image(systemName: "arrow.up.arrow.down")
+                Text("Scroll through the hours")
+            }
+            .font(.community(.caption))
+            .foregroundStyle(timeOfDay.canvasSecondaryText)
+
+            PlannerDaySchedule(
+                entries: store.isLoading ? [] : dayAgenda.filter { PlannerHourAgenda.hour(from: $0.time) != nil },
+                onSelect: { editor = .edit($0) },
+                onOpenWorkout: { openingDay = $0 }
+            )
+            .frame(height: timelineHeight)
+
+            if !store.isLoading {
+                agendaGroup("Anytime", entries: dayAgenda.filter { PlannerHourAgenda.hour(from: $0.time) == nil }, timeOfDay: timeOfDay)
+                if categoryFilter != nil {
+                    Button("Clear filters") { categoryFilter = nil }
+                        .font(.community(.footnote, weight: .semibold))
+                        .frame(minHeight: 44)
+                        .tint(PlannerStyle.accentText)
                 }
                 if openTasks.isEmpty, !completedTasks.isEmpty {
                     Label(categoryFilter == nil ? "All tasks done. A little room to breathe." : "All tasks in this category are done.", systemImage: "checkmark.circle.fill")
@@ -274,10 +245,66 @@ struct PlannerView: View {
                         .foregroundStyle(PlannerStyle.success)
                         .padding(.vertical, 8)
                 }
-                if showsCompleted {
-                    ForEach(completedTasks) { entry in
-                        agendaRow(entry)
+            }
+        }
+    }
+
+    private func dayHeading(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text("Your day")
+                .font(.community(.title2, weight: .bold))
+                .foregroundStyle(timeOfDay.canvasPrimaryText)
+            if !store.isLoading, !filtered.isEmpty {
+                let tasks = filtered.filter { $0.kind == .task }
+                if !tasks.isEmpty {
+                    Text("\(completedTasks.count) of \(tasks.count) tasks done")
+                        .font(.community(.footnote))
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                } else {
+                    Text("\(tasks.count) tasks · \(filtered.filter { $0.kind == .event }.count) events")
+                        .font(.community(.footnote))
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func categoryMenu(timeOfDay: HomeTimeOfDay) -> some View {
+        let categories = store.categories(on: store.selectedDate)
+        if categories.count > 1 || categoryFilter != nil {
+            Menu {
+                Picker("Filters", selection: $categoryFilter) {
+                    Text("All").tag(Optional<PlannerCategory>.none)
+                    ForEach(PlannerCategory.allCases.filter { categories.contains($0) || $0 == categoryFilter }) { category in
+                        Text(category.title).tag(Optional(category))
                     }
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "line.3.horizontal.decrease")
+                    if let categoryFilter { Text(categoryFilter.title) } else { Text("Filters") }
+                }
+                .font(.community(.footnote, weight: .semibold))
+                .foregroundStyle(categoryFilter == nil ? timeOfDay.canvasPrimaryText : PlannerStyle.accentText)
+                .padding(.horizontal, 12)
+                .frame(minHeight: 44)
+                .background(timeOfDay.surfaceRaised, in: Capsule())
+                .overlay { Capsule().strokeBorder(timeOfDay.canvasBorder) }
+            }
+            .accessibilityIdentifier("planner.filters")
+        }
+    }
+
+    @ViewBuilder
+    private func agendaGroup(_ title: LocalizedStringKey, entries: [PlannerEntry], timeOfDay: HomeTimeOfDay) -> some View {
+        if !entries.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(title)
+                    .font(.community(.footnote, weight: .semibold))
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+                LazyVStack(spacing: 8) {
+                    ForEach(entries) { entry in agendaRow(entry) }
                 }
             }
         }
@@ -285,10 +312,9 @@ struct PlannerView: View {
 
     private var openTasks: [PlannerEntry] { filtered.filter { $0.kind == .task && !$0.isComplete } }
     private var completedTasks: [PlannerEntry] { filtered.filter { $0.kind == .task && $0.isComplete } }
-    /// One plan, not separate task/event modes. Events remain visible even
-    /// when the day's tasks are finished; only completed tasks are tucked away.
+    /// Completion changes the row's checkmark, not its place in the day.
     private var dayAgenda: [PlannerEntry] {
-        PlannerAgendaOrder.ordered(filtered.filter { $0.kind == .event || !$0.isComplete }, time: { $0.time })
+        PlannerAgendaOrder.ordered(filtered, time: { $0.time })
     }
 
     private func agendaRow(_ entry: PlannerEntry) -> some View {
@@ -300,7 +326,7 @@ struct PlannerView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    Text(store.visibleMonth.formatted(.dateTime.month(.wide).year()))
+                    Text(store.visibleMonth.formatted(.dateTime.month(.wide).year().locale(.app)))
                         .font(.community(.title2, weight: .bold))
                     Text("Choose a date to see its tasks and events.")
                         .font(.community(.subheadline))
@@ -310,7 +336,7 @@ struct PlannerView: View {
                         ProgressView("Loading this month…")
                             .frame(maxWidth: .infinity, minHeight: 80)
                     } else if PlannerStore.isSameMonth(store.selectedDate, store.visibleMonth) {
-                        Text(store.selectedDate.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))
+                        Text(store.selectedDate.formatted(.dateTime.weekday(.wide).month(.abbreviated).day().locale(.app)))
                             .font(.community(.headline, weight: .bold))
                         let counts = store.taskCounts(on: store.selectedDate)
                         Text("\(counts.total) tasks · \(store.entries(on: store.selectedDate).filter { $0.kind == .event }.count) events")
@@ -319,7 +345,7 @@ struct PlannerView: View {
                         ForEach(store.entries(on: store.selectedDate).prefix(3)) { entry in
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(entry.title).font(.community(.headline))
-                                Text(entry.displayTimeRange ?? "Anytime")
+                                Text(entry.displayTimeRange ?? String(localized: "Anytime", bundle: .app, locale: .app))
                                     .font(.community(.footnote))
                                     .foregroundStyle(timeOfDay.canvasSecondaryText)
                             }
@@ -378,8 +404,12 @@ struct PlannerView: View {
         withAnimation(reduceMotion ? .easeOut(duration: 0.18) : .spring(response: 0.42, dampingFraction: 0.72)) {
             completedEntryID = event.entryID
             completionMessage = event.clearedDay
-                ? "You cleared \(store.selectedDate.formatted(.dateTime.weekday(.wide))). Everything planned is done."
-                : "\(event.title) complete · \(event.completedTasks) of \(event.totalTasks)"
+                ? String(
+                    localized: "You cleared \(store.selectedDate.formatted(.dateTime.weekday(.wide).locale(.app))). Everything planned is done.",
+                    bundle: .app,
+                    locale: .app
+                )
+                : String(localized: "\(event.title) complete · \(event.completedTasks) of \(event.totalTasks)", bundle: .app, locale: .app)
             if event.clearedDay {
                 completionPulse.toggle()
             }
@@ -425,28 +455,43 @@ struct PlannerView: View {
             .filter { $0.category == categoryFilter }
     }
 
-    // MARK: - Past due
+    // MARK: - Other days
+
+    @ViewBuilder
+    private func otherDaysSection(timeOfDay: HomeTimeOfDay) -> some View {
+        let hasPastDue = store.pastDue.contains { $0.date != PlannerStore.dateString(store.selectedDate) }
+        let hasUpcoming = store.upcomingEvents.contains { $0.date != PlannerStore.dateString(store.selectedDate) }
+        if hasPastDue || hasUpcoming {
+            VStack(alignment: .leading, spacing: 12) {
+                Divider()
+                Text("Beyond this day")
+                    .font(.community(.footnote, weight: .semibold))
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+                pastDueSection(timeOfDay: timeOfDay)
+                upcomingSection(timeOfDay: timeOfDay)
+            }
+        }
+    }
 
     @ViewBuilder
     private func pastDueSection(timeOfDay: HomeTimeOfDay) -> some View {
         let entries = store.pastDue.filter { $0.date != PlannerStore.dateString(store.selectedDate) }
         if !entries.isEmpty {
-            VStack(alignment: .leading, spacing: 8) {
-                sectionHeader(
-                    "Past due",
-                    detail: "\(entries.count)",
-                    tint: Color(hex: 0xD8557A),
-                    timeOfDay: timeOfDay
-                )
-                ForEach(entries) { entry in
-                    PlannerEntryRow(
-                        entry: entry,
-                        showsDate: true,
-                        onEdit: { editor = .edit(entry) },
-                        onOpenWorkout: { openingDay = $0 }
-                    )
+            DisclosureGroup {
+                LazyVStack(spacing: 8) {
+                    ForEach(entries) { entry in
+                        PlannerEntryRow(
+                            entry: entry,
+                            showsDate: true,
+                            onEdit: { editor = .edit(entry) },
+                            onOpenWorkout: { openingDay = $0 }
+                        )
+                    }
                 }
+            } label: {
+                disclosureHeading("Past due", count: entries.count, timeOfDay: timeOfDay, isOverdue: true)
             }
+            .tint(timeOfDay.canvasSecondaryText)
         }
     }
 
@@ -456,50 +501,43 @@ struct PlannerView: View {
     private func upcomingSection(timeOfDay: HomeTimeOfDay) -> some View {
         let entries = store.upcomingEvents.filter { $0.date != PlannerStore.dateString(store.selectedDate) }
         if !entries.isEmpty {
-            VStack(alignment: .leading, spacing: 8) {
-                sectionHeader(
-                    "Upcoming events",
-                    detail: "next \(PlannerStore.upcomingHorizonDays) days",
-                    tint: timeOfDay.accent,
-                    timeOfDay: timeOfDay
-                )
-                ForEach(entries.prefix(6)) { entry in
-                    PlannerEntryRow(
-                        entry: entry,
-                        showsDate: true,
-                        onEdit: { editor = .edit(entry) },
-                        onOpenWorkout: { openingDay = $0 }
-                    )
+            DisclosureGroup {
+                LazyVStack(spacing: 8) {
+                    ForEach(entries) { entry in
+                        PlannerEntryRow(
+                            entry: entry,
+                            showsDate: true,
+                            onEdit: { editor = .edit(entry) },
+                            onOpenWorkout: { openingDay = $0 }
+                        )
+                    }
                 }
-                if entries.count > 6 {
-                    Text("+\(entries.count - 6) more")
-                        .font(.community(.caption2))
-                        .foregroundStyle(timeOfDay.secondaryText)
-                        .padding(.leading, 4)
-                }
+            } label: {
+                disclosureHeading("Upcoming events", count: entries.count, timeOfDay: timeOfDay)
             }
+            .tint(timeOfDay.canvasSecondaryText)
         }
     }
 
-    private func sectionHeader(
-        _ title: String,
-        detail: String,
-        tint: Color,
-        timeOfDay: HomeTimeOfDay
+    private func disclosureHeading(
+        _ title: LocalizedStringKey,
+        count: Int,
+        timeOfDay: HomeTimeOfDay,
+        isOverdue: Bool = false
     ) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 7) {
-            Circle()
-                .fill(tint)
-                .frame(width: 6, height: 6)
+        HStack(spacing: 8) {
             Text(title)
-                .font(.community(size: 15, weight: .bold))
+                .font(.community(.subheadline, weight: .semibold))
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
             Spacer(minLength: 0)
-            Text(detail)
-                .font(.community(size: 10, weight: .semibold))
-                .foregroundStyle(timeOfDay.canvasSecondaryText)
+            Text(count, format: .number.locale(.app))
+                .font(.community(.footnote, weight: .semibold))
+                .foregroundStyle(isOverdue ? PlannerStyle.overdueCount : timeOfDay.canvasSecondaryText)
+                .padding(.horizontal, 9)
+                .padding(.vertical, 4)
+                .background(isOverdue ? PlannerStyle.overdueCount.opacity(0.08) : timeOfDay.selectorSurface, in: Capsule())
         }
-        .padding(.top, 4)
+        .frame(minHeight: 44)
     }
 
     private func errorCard(_ message: String, timeOfDay: HomeTimeOfDay) -> some View {
@@ -563,14 +601,11 @@ struct PlannerEntryRow: View {
             }
         }
         .padding(.vertical, 8)
-        .padding(.horizontal, entry.completionIsDerived || entry.kind == .event ? 8 : 0)
-        .background(
-            entry.kind == .event ? PlannerStyle.soft : (entry.completionIsDerived ? timeOfDay.surfaceRaised : Color.clear),
-            in: RoundedRectangle(cornerRadius: PlannerStyle.radius)
-        )
+        .padding(.horizontal, 8)
+        .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 18))
         .overlay {
-            RoundedRectangle(cornerRadius: PlannerStyle.radius)
-                .strokeBorder(entry.completionIsDerived ? timeOfDay.canvasBorder : Color.clear)
+            RoundedRectangle(cornerRadius: 18)
+                .strokeBorder(timeOfDay.canvasBorder)
         }
         .plannerWorkoutCompletionDialog(
             entry: $confirming,
@@ -594,10 +629,7 @@ struct PlannerEntryRow: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text(
-                "This day and every one after it goes. Days you have already "
-                + "ticked off stay — ending a habit is not saying it never happened."
-            )
+            Text("This day and every one after it goes. Days you have already ticked off stay — ending a habit is not saying it never happened.")
         }
         .onAppear {
             showingSteps = entry.completionIsDerived && !entry.isComplete
@@ -635,7 +667,7 @@ struct PlannerEntryRow: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityHint("Edit this \(entry.kind.title.lowercased())")
+            .accessibilityHint(entry.kind == .event ? "Edit this event" : "Edit this task")
 
             Menu {
                 entryActions
@@ -675,11 +707,11 @@ struct PlannerEntryRow: View {
     private var subtitle: String {
         var parts: [String] = []
         if showsDate, let day = Self.date(from: entry.date) {
-            parts.append(day.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()))
+            parts.append(day.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day().locale(.app)))
         }
-        parts.append(entry.displayTimeRange ?? "Anytime")
+        parts.append(entry.displayTimeRange ?? String(localized: "Anytime", bundle: .app, locale: .app))
         parts.append(entry.category.title)
-        if entry.kind == .event { parts.append("Event") }
+        if entry.kind == .event { parts.append(String(localized: "Event", bundle: .app, locale: .app)) }
         if let weekdays = entry.repeatWeekdays, !weekdays.isEmpty {
             parts.append(PlannerRepeatWeekday.summary(weekdays))
         } else if let every = entry.repeatIntervalDays { parts.append(Self.repeatLabel(every)) }
@@ -759,7 +791,7 @@ struct PlannerEntryRow: View {
                     .contentShape(Rectangle())
                     .buttonStyle(.plain)
                     .disabled(busyStep != nil || isAddingStep || !store.isEditingEnabled)
-                    .accessibilityLabel("\(step.isComplete ? "Mark not done" : "Mark done"): \(step.title)")
+                    .accessibilityLabel(step.isComplete ? "Mark not done: \(step.title)" : "Mark done: \(step.title)")
 
                     Text(step.title)
                         .font(.community(.subheadline))
@@ -883,11 +915,11 @@ extension PlannerEntryRow {
     /// better than "every 7". The rest fall back to the count.
     static func repeatLabel(_ days: Int) -> String {
         switch days {
-        case 1: return "Every day"
-        case 2: return "Every other day"
-        case 7: return "Every week"
-        case 14: return "Every 2 weeks"
-        default: return "Every \(days) days"
+        case 1: return String(localized: "Every day", bundle: .app, locale: .app)
+        case 2: return String(localized: "Every other day", bundle: .app, locale: .app)
+        case 7: return String(localized: "Every week", bundle: .app, locale: .app)
+        case 14: return String(localized: "Every 2 weeks", bundle: .app, locale: .app)
+        default: return String(localized: "Every \(days) days", bundle: .app, locale: .app)
         }
     }
 }

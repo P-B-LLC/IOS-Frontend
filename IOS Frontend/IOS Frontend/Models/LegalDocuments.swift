@@ -61,9 +61,10 @@ enum LegalDocuments {
         does not sell or share your data with anyone.
 
         One outside service is involved, in one place. When you search for a \
-        food, the words you typed are sent to the United States Department of \
-        Agriculture's FoodData Central, which is where the nutrition figures \
-        come from. That request is made by our server rather than by your \
+        food or scan a product barcode, the search words or product number \
+        are sent to Open Food Facts, which supplies community-maintained \
+        nutrition data. Camera frames stay on your device. That request is \
+        made by our server rather than by your \
         phone, and it carries no account, name, or device with it: they are \
         told that somebody looked up "oats", and nothing about who. Searches \
         are cached here, so a common one is often not sent at all.

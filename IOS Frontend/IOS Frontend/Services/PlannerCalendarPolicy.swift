@@ -16,6 +16,44 @@ nonisolated enum PlannerAgendaOrder {
     }
 }
 
+/// An hourly agenda groups by the literal API clock, not an invented date in
+/// the current time zone. Empty hours remain available, including on DST days.
+nonisolated enum PlannerHourAgenda {
+    static let hours = Array(0..<24)
+
+    static func hour(from time: String?) -> Int? {
+        guard let time else { return nil }
+        let parts = time.split(separator: ":", omittingEmptySubsequences: false)
+        guard parts.count == 2 || parts.count == 3,
+              parts[0].count == 2, parts[1].count == 2,
+              let hour = Int(parts[0]), (0..<24).contains(hour),
+              let minute = Int(parts[1]), (0..<60).contains(minute) else { return nil }
+        if parts.count == 3 {
+            guard let second = Double(parts[2]), second.isFinite,
+                  second >= 0, second < 60 else { return nil }
+        }
+        return hour
+    }
+
+    static func grouped<Entry>(_ entries: [Entry], time: (Entry) -> String?) -> [Int: [Entry]] {
+        var result: [Int: [Entry]] = [:]
+        for entry in PlannerAgendaOrder.ordered(entries, time: time) {
+            guard let hour = hour(from: time(entry)) else { continue }
+            result[hour, default: []].append(entry)
+        }
+        return result
+    }
+
+    static func initialHour(scheduledHours: [Int], isToday: Bool, currentHour: Int) -> Int {
+        if let first = scheduledHours.filter({ hours.contains($0) }).min() { return first }
+        return isToday ? min(23, max(0, currentHour)) : 8
+    }
+
+    static func movingDays(_ offset: Int, from date: Date, calendar: Calendar = .current) -> Date? {
+        calendar.date(byAdding: .day, value: offset, to: calendar.startOfDay(for: date))
+    }
+}
+
 /// Calendar arithmetic stays date-based across DST and year boundaries.
 nonisolated enum PlannerCalendarPolicy {
     static func week(containing date: Date, calendar: Calendar = .current) -> [Date] {
@@ -28,19 +66,16 @@ nonisolated enum PlannerCalendarPolicy {
     static func movingWeeks(_ offset: Int, from date: Date, calendar: Calendar = .current) -> Date? {
         calendar.date(byAdding: .weekOfYear, value: offset, to: calendar.startOfDay(for: date))
     }
-}
 
-/// A response for a previously browsed month must not replace the current one.
-/// The token also distinguishes two reads of the same month (A → B → A).
-@MainActor
-final class PlannerMonthReadGate {
-    private var latest: UUID?
-
-    func begin() -> UUID {
-        let token = UUID()
-        latest = token
-        return token
+    /// Keep Home's locale-based week and Training's Monday-based week loaded
+    /// even when Calendar is browsing a different month. This bounded set must
+    /// not expand into every date between today and the browsed month.
+    static func homeAndTrainingWeek(containing date: Date, calendar: Calendar = .current) -> [Date] {
+        let training = week(containing: date, calendar: calendar)
+        guard let interval = calendar.dateInterval(of: .weekOfYear, for: date) else { return training }
+        let home = (0..<7).compactMap {
+            calendar.date(byAdding: .day, value: $0, to: interval.start)
+        }
+        return Set(training + home).sorted()
     }
-
-    func accepts(_ token: UUID) -> Bool { latest == token }
 }

@@ -124,6 +124,8 @@ struct TrainingTabView: View {
                 } label: {
                     Label(item.title, systemImage: item.symbol)
                         .font(.community(size: 13, weight: .semibold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                         .foregroundStyle(item == half ? timeOfDay.onPrimaryAction : timeOfDay.canvasSecondaryText)
                         .frame(maxWidth: .infinity, minHeight: 40)
                         .background {
@@ -242,7 +244,7 @@ private enum TrainingQuickAction: String, Identifiable {
 
     var id: String { rawValue }
 
-    var title: String {
+    var title: LocalizedStringKey {
         switch self {
         case .postFood: "Post food"
         case .planMeals: "Plan meals"
@@ -252,7 +254,7 @@ private enum TrainingQuickAction: String, Identifiable {
         }
     }
 
-    var detail: String {
+    var detail: LocalizedStringKey {
         switch self {
         case .postFood: "Share today’s nutrition"
         case .planMeals: "Build and preview a day"

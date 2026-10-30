@@ -84,6 +84,8 @@ struct FollowRequestsView: View {
                 Task { await social.answerFollowRequest(request, approve: false) }
             }
             .font(.community(.footnote, weight: .semibold))
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
             .foregroundStyle(timeOfDay.secondaryText)
             .buttonStyle(.plain)
             .disabled(busy)
@@ -92,6 +94,8 @@ struct FollowRequestsView: View {
                 Task { await social.answerFollowRequest(request, approve: true) }
             }
             .font(.community(.footnote, weight: .bold))
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
             .foregroundStyle(Color.white)
             .padding(.horizontal, 14)
             .padding(.vertical, 8)

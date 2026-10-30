@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 import RepbaseAPI
 
@@ -69,7 +70,11 @@ struct AccountAgreementGate<Content: View>: View {
             }
         } catch {
             guard !Task.isCancelled, authentication.token == token else { return }
-            self.error = "Could not load the current agreements. Check your connection or update the app, then retry."
+            self.error = String(
+                localized: "Could not load the current agreements. Check your connection or update the app, then retry.",
+                bundle: .app,
+                locale: .app
+            )
         }
     }
 
@@ -90,7 +95,7 @@ struct AccountAgreementGate<Content: View>: View {
             }
         } catch {
             guard !Task.isCancelled, authentication.token == token else { return }
-            self.error = "Your agreement could not be saved. Please retry."
+            self.error = String(localized: "Your agreement could not be saved. Please retry.", bundle: .app, locale: .app)
         }
     }
 }

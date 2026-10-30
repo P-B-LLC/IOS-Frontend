@@ -6,7 +6,10 @@ enum PlannerStyle {
     static let soft = Color("PlannerSoft")
     static let accentText = Color("PlannerAccentText")
     static let success = Color("PlannerSuccess")
+    static let successSoft = Color("PlannerSuccessSoft")
+    static let overdueCount = Color.repbaseDynamic(light: RepbaseDesign.danger, dark: Color(hex: 0xFF8FA0))
     static let radius: CGFloat = 28
+    static let weekRadius: CGFloat = 14
 }
 
 extension View {

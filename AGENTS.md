@@ -1,5 +1,24 @@
 # Repository instructions
 
+## TestFlight branch safety
+
+- Keep `main` release-ready. Do not commit or push directly to `main`, force
+  push it, or bypass/relax its GitHub rules to complete a task.
+- The current shared integration branch is
+  `work/testflight-fixes-2026-10-27`, created from `origin/main` at `8e2a58f`.
+  Check the current branch and working-tree status before making changes;
+  preserve other developers' work. Separate `fix/...` or `feature/...`
+  branches are optional for concurrent work.
+- Follow `TESTFLIGHT_WORKFLOW.md`. Opening a PR starts CI; merely pushing an
+  integration/feature branch does not. Require successful checks on the
+  current candidate and relevant simulator/device testing before promotion.
+- No teammate approval is required. Work and push on the integration branch;
+  when the user is ready, a passing PR can be merged without another reviewer.
+- Merge to `main`, create release tags, or upload a TestFlight build only when
+  explicitly requested. A passing build is not authorization to release.
+- The checked-in ruleset is a record, not automatic enforcement. Do not
+  replace stronger live GitHub settings with an older JSON file.
+
 ## Backend API contract
 
 - `API/openapi.yaml` is the canonical contract for every backend request and
@@ -42,6 +61,13 @@
   current OAS declares only success responses and no stable error schema.
 - Perform network work asynchronously and expose explicit loading, saving,
   empty, and retryable error states to SwiftUI.
+
+## Localization
+
+- Follow `LOCALIZATION.md`. Text built as a `String` uses
+  `String(localized: …, bundle: .app, locale: .app)`; SwiftUI literals need
+  nothing. New strings must be translated into all ten languages in
+  `Localizable.xcstrings` before the catalog tests pass.
 
 ## Validation
 

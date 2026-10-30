@@ -14,6 +14,9 @@ import Foundation
 /// A finished session, reduced to what the composer needs to list one.
 nonisolated struct PostableSession: Identifiable, Hashable, Sendable {
     let sessionID: Int
+    /// Nullable only when the session has no surviving template. Never infer
+    /// this identity from the display name for completion or deletion.
+    let workoutServerID: Int?
     let workoutName: String
     /// When it happened: the end of the session, or its start when it never
     /// recorded an end.
@@ -25,6 +28,36 @@ nonisolated struct PostableSession: Identifiable, Hashable, Sendable {
     let workoutType: WorkoutType?
     /// How many sets the session recorded, counted by the server.
     let loggedSetCount: Int
+    /// Effort, entered values and details. Empty from a server that predates
+    /// them, and for a lifting session nobody rated.
+    var activitySummary: SessionActivitySummary
+
+    /// The activity, from the server when it says, else the type's own.
+    var activity: WorkoutActivity? {
+        activitySummary.activity ?? workoutType.map(WorkoutActivity.legacyDefault(for:))
+    }
+
+    init(
+        sessionID: Int,
+        workoutServerID: Int? = nil,
+        workoutName: String,
+        performedAt: Date,
+        durationSeconds: Double?,
+        routeDistanceKilometers: Double?,
+        workoutType: WorkoutType?,
+        loggedSetCount: Int,
+        activitySummary: SessionActivitySummary = SessionActivitySummary()
+    ) {
+        self.sessionID = sessionID
+        self.workoutServerID = workoutServerID
+        self.workoutName = workoutName
+        self.performedAt = performedAt
+        self.durationSeconds = durationSeconds
+        self.routeDistanceKilometers = routeDistanceKilometers
+        self.workoutType = workoutType
+        self.loggedSetCount = loggedSetCount
+        self.activitySummary = activitySummary
+    }
 
     var id: Int { sessionID }
 
@@ -40,13 +73,16 @@ nonisolated struct PostableSession: Identifiable, Hashable, Sendable {
     /// simulator recorded "nothing" and never got its completed badge. Time is
     /// the evidence there: a run that took twenty minutes happened, whether or
     /// not GPS was watching.
+    ///
+    /// Every activity that is not sets-based is judged the same way: a tennis
+    /// match or a yoga class logged with its length happened.
     var recordedSomething: Bool {
-        switch workoutType {
-        case .running, .biking, .swimming:
-            (routeDistanceKilometers ?? 0) > 0 || (durationSeconds ?? 0) > 0
-        case .lifting, nil:
-            loggedSetCount > 0
-        }
+        SessionTraining.recordedSomething(
+            activity: activity,
+            loggedSetCount: loggedSetCount,
+            durationSeconds: durationSeconds,
+            distanceKilometers: activitySummary.distanceKilometers ?? routeDistanceKilometers
+        )
     }
 }
 
@@ -66,9 +102,9 @@ nonisolated enum PostSource: String, CaseIterable, Identifiable, Sendable {
     /// the user has already been rather than a new piece of vocabulary.
     var title: String {
         switch self {
-        case .workout: "Workout"
-        case .meal: "Food"
-        case .planner: "Calendar"
+        case .workout: String(localized: "Workout", bundle: .app, locale: .app)
+        case .meal: String(localized: "Food", bundle: .app, locale: .app)
+        case .planner: String(localized: "Calendar", bundle: .app, locale: .app)
         }
     }
 
@@ -80,25 +116,15 @@ nonisolated enum PostSource: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    /// What one of these is called, for a sheet opened already knowing the
-    /// kind: "Choose a meal" rather than "Choose something".
-    var itemNoun: String {
-        switch self {
-        case .workout: "workout"
-        case .meal: "meal"
-        case .planner: "calendar entry"
-        }
-    }
-
     /// Says what would put something here, rather than only that nothing is.
     var emptyMessage: String {
         switch self {
         case .workout:
-            "Finish a workout session and it will be here to share."
+            String(localized: "Finish a workout session and it will be here to share.", bundle: .app, locale: .app)
         case .meal:
-            "Log some food and the meal will be here to share."
+            String(localized: "Log some food and the meal will be here to share.", bundle: .app, locale: .app)
         case .planner:
-            "Add a task or an event to the calendar and it will be here to share."
+            String(localized: "Add a task or an event to the calendar and it will be here to share.", bundle: .app, locale: .app)
         }
     }
 }

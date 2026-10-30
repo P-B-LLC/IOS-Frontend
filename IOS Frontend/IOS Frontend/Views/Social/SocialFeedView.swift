@@ -5,6 +5,7 @@
 //  For You, the people you follow, and everybody else.
 //
 
+import Foundation
 import SwiftUI
 
 /// A post id that can be presented as a sheet.
@@ -33,18 +34,6 @@ struct SocialFeedView: View {
         let isConnected: Bool
     }
 
-    /// What a search depends on: the text, and something to ask.
-    ///
-    /// The connection is half of it because it does not exist yet when this
-    /// page first appears — it is fetched, and the store holds nothing until
-    /// that returns. Keyed on the text alone, a search made before then asks
-    /// a store with no repository, gets nothing, and never runs again,
-    /// because the text it is keyed on has not changed since.
-    private struct SearchRequest: Equatable {
-        let text: String
-        let isConnected: Bool
-    }
-
     /// The three tabs.
     ///
     /// For You is ranked for the reader by the server -- everybody's posts,
@@ -59,15 +48,25 @@ struct SocialFeedView: View {
         case forYou = "For you"
         /// The people you follow, newest first.
         case following = "Following"
-        /// Search, people worth following, and everybody's latest.
+        /// People worth following and everybody's latest.
         case discover = "Discover"
         var id: String { rawValue }
+
+        var title: LocalizedStringKey {
+            switch self {
+            case .forYou: "For you"
+            case .following: "Following"
+            case .discover: "Discover"
+            }
+        }
     }
 
     @Environment(SocialStore.self) private var store
     @Environment(SocialProfileStore.self) private var profileStore
     @Environment(\.repbaseNavigate) private var navigate
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Namespace private var searchTransition
 
     /// Opens straight onto a post's thread. Only set by the preview launch
     /// mode: `simctl` cannot tap, so pushing on arrival is the only way to
@@ -83,7 +82,8 @@ struct SocialFeedView: View {
     /// unlike `navigationDestination(item:)`, which only wants Hashable.
     @State private var commenting: CommentedPost?
     @State private var feedMode: FeedMode = .forYou
-    @State private var searchText = ""
+    @State private var isSearching = false
+    @State private var initialSearchText = ""
     /// Whether the For You tuning sheet is up.
     @State private var isTuning = false
     /// Whose profile is open, if anyone's.
@@ -115,10 +115,8 @@ struct SocialFeedView: View {
                 isComposing = true
             }
             if let seeded = ProcessInfo.processInfo.environment["REPBASE_SOCIAL_SEARCH"] {
-                // Onto the tab the box lives on, or the seed would land on a
-                // page with nothing to type into.
-                feedMode = .discover
-                searchText = seeded
+                initialSearchText = seeded
+                isSearching = true
             }
             // Opens a real post inside the real signed-in app, tab bar and
             // all. The preview harness renders this page on a bare stack,
@@ -142,22 +140,13 @@ struct SocialFeedView: View {
     private func screen(timeOfDay: HomeTimeOfDay) -> some View {
         ScrollView {
             LazyVStack(spacing: 0) {
-                socialHeader(timeOfDay: timeOfDay)
-                modePicker(timeOfDay: timeOfDay)
+                if feedMode == .discover, !store.suggestedPeople.isEmpty {
+                    suggestionsSection(timeOfDay: timeOfDay)
+                }
 
-                if feedMode == .discover {
-                    searchField(timeOfDay: timeOfDay)
-                    // Only while searching. A permanent list of eight
-                    // arbitrary people above the feed is not an answer to
-                    // anything; it was there before because the search could
-                    // not reach anybody who was not already on the page.
-                    if store.isShowingSearchResults && !store.searchedPeople.isEmpty {
-                        peopleSection(timeOfDay: timeOfDay)
-                    } else if !store.isShowingSearchResults && !store.suggestedPeople.isEmpty {
-                        // Before anything is typed: people the server thinks
-                        // are worth following, each saying why.
-                        suggestionsSection(timeOfDay: timeOfDay)
-                    }
+                if feedMode == .forYou, let receipt = store.publicationReceipt,
+                   store.forYou.contains(where: { $0.id == receipt.postID }) {
+                    publicationConfirmation(id: receipt.id, timeOfDay: timeOfDay)
                 }
 
                 if let message = store.errorMessage {
@@ -181,25 +170,22 @@ struct SocialFeedView: View {
                     .padding(.horizontal, RepbaseDesign.pageInset)
                     .padding(.vertical, 8)
                     .onTapGesture { store.lastModerationMessage = nil }
+
+                    if let pending = store.lastPosted,
+                       pending.publicationMessage == message,
+                       pending.moderationStatus != "rejected" {
+                        Button("Check post status") {
+                            Task { await store.refreshPublicationStatuses() }
+                        }
+                        .font(.community(.footnote, weight: .semibold))
+                        .frame(minHeight: 44)
+                        .buttonStyle(.bordered)
+                        .padding(.bottom, 8)
+                    }
                 }
 
                 if isListLoading && displayedPosts.isEmpty {
                     ProgressView().padding(.top, 40)
-                } else if feedMode == .discover, store.searchFoundNothing {
-                    // A search that matched nothing is not an empty feed, and
-                    // saying "share a workout to start your own" to somebody
-                    // looking for a person answers a question they did not ask.
-                    //
-                    // Gated on the tab because the query outlives it: leaving
-                    // a search on Discover and stepping back to For You must
-                    // not tell the reader their own feed matched nothing.
-                    noMatchesState(timeOfDay: timeOfDay)
-                } else if feedMode == .discover,
-                          store.isShowingSearchResults,
-                          displayedPosts.isEmpty {
-                    // People matched, posts did not. The section above is
-                    // showing the answer, so this says only what is missing.
-                    noMatchingPostsState(timeOfDay: timeOfDay)
                 } else if displayedPosts.isEmpty {
                     emptyState(timeOfDay: timeOfDay)
                 } else {
@@ -227,7 +213,7 @@ struct SocialFeedView: View {
                                 // on from one they flicked past. Mostly on
                                 // screen counts, as on the web.
                                 .onScrollVisibilityChange(threshold: 0.6) { visible in
-                                    guard feedMode == .forYou else { return }
+                                    guard feedMode == .forYou, !isSearching, !isComposing else { return }
                                     if visible {
                                         store.impressionShown(post.id)
                                     } else {
@@ -261,6 +247,15 @@ struct SocialFeedView: View {
             }
             .padding(.bottom, RepbaseDesign.bottomBarClearance)
         }
+        // Search, Post and the feed tabs remain reachable while the feed
+        // scrolls. Presenting search does not replace or reset this scroll.
+        .safeAreaInset(edge: .top, spacing: 0) {
+            VStack(spacing: 0) {
+                socialHeader(timeOfDay: timeOfDay)
+                modePicker(timeOfDay: timeOfDay)
+            }
+            .background(Color(.systemBackground))
+        }
         .scrollIndicators(.hidden)
         .minimizesBottomBarOnScroll()
         // Pulls down on whichever list the tab is actually showing. For You
@@ -282,8 +277,21 @@ struct SocialFeedView: View {
         .repbaseToast(saveConfirmation) { destination in
             navigate(destination)
         }
-        .fullScreenCover(isPresented: $isComposing) {
+        .fullScreenCover(isPresented: $isComposing, onDismiss: {
+            Task { await store.refreshPublicationStatuses() }
+        }) {
             PostComposerView()
+        }
+        .fullScreenCover(isPresented: $isSearching, onDismiss: {
+            initialSearchText = ""
+            store.clearSearch()
+        }) {
+            if reduceMotion {
+                SocialSearchView(initialQuery: initialSearchText)
+            } else {
+                SocialSearchView(initialQuery: initialSearchText)
+                    .navigationTransition(.zoom(sourceID: "social.search", in: searchTransition))
+            }
         }
         .sheet(item: $commenting) { target in
             PostCommentsSheet(postID: target.id, timeOfDay: timeOfDay)
@@ -321,146 +329,117 @@ struct SocialFeedView: View {
         .onChange(of: scenePhase) {
             if scenePhase != .active {
                 Task { await store.finishImpressions() }
+            } else {
+                Task { await store.refreshPublicationStatuses() }
             }
         }
         .onChange(of: feedMode) {
             Task { await store.finishImpressions() }
         }
+        .onChange(of: isSearching) {
+            if isSearching { Task { await store.finishImpressions() } }
+        }
         .onDisappear {
             Task { await store.finishImpressions() }
-        }
-        .task(id: SearchRequest(text: searchText, isConnected: store.isConnected)) {
-            let typed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !typed.isEmpty else {
-                store.clearSearch()
-                return
-            }
-            guard store.isConnected else { return }
-            // Debounced by sleeping first. `.task(id:)` cancels the previous
-            // one the moment the text changes, so a keystroke inside this
-            // window throws the pending request away before it is sent —
-            // otherwise every letter of a handle is its own round trip, and
-            // the answers race each other back.
-            try? await Task.sleep(for: .milliseconds(300))
-            guard !Task.isCancelled else { return }
-            await store.search(typed)
         }
     }
 
     private func socialHeader(timeOfDay: HomeTimeOfDay) -> some View {
-        VStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Social")
-                    .font(.community(.title, weight: .bold))
-                    .foregroundStyle(timeOfDay.canvasPrimaryText)
-                Text("A little inspiration. A lot of you.")
-                    .font(.community(.footnote))
-                    .foregroundStyle(timeOfDay.canvasSecondaryText)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.top, 8)
+        VStack(spacing: 12) {
+            HStack(alignment: .center, spacing: 12) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Social")
+                        .font(.community(.title, weight: .bold))
+                        .foregroundStyle(timeOfDay.canvasPrimaryText)
+                    Text("A little inspiration. A lot of you.")
+                        .font(.community(.footnote))
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-            socialActions(timeOfDay: timeOfDay)
-                .padding(.top, 10)
-                .padding(.bottom, 8)
+                NavigationLink {
+                    NotificationsView()
+                } label: {
+                    Image(systemName: "bell")
+                        .font(.community(.headline))
+                        .foregroundStyle(timeOfDay.canvasPrimaryText)
+                        .frame(width: 44, height: 44)
+                        .background(SocialSearchStyle.softSurface, in: Circle())
+                        .overlay(alignment: .topTrailing) {
+                            if store.unreadNotifications > 0 {
+                                Circle()
+                                    .fill(timeOfDay.accent)
+                                    .frame(width: 7, height: 7)
+                                    .padding(8)
+                            }
+                        }
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Notifications")
+                .accessibilityValue(store.unreadNotifications > 0 ? Text("Unread notifications") : Text("No unread notifications"))
+            }
+
+            // One persistent transition source, not duplicate sources inside
+            // ViewThatFits. The icon-only control leaves room for every
+            // localized Post label without filling the row with a prompt.
+            HStack(spacing: 10) {
+                searchButton(timeOfDay: timeOfDay)
+                Spacer(minLength: 0)
+                postButton(timeOfDay: timeOfDay)
+            }
         }
         .padding(.horizontal, RepbaseDesign.pageInset)
+        .padding(.top, 8)
+        .padding(.bottom, 4)
     }
 
-    /// Tuning, notifications and posting, on a row of their own under the
-    /// title.
-    ///
-    /// They used to share the title's row with the wordmark centred over it
-    /// in an overlay, and on a phone the tuning button ran underneath the
-    /// wordmark. A third of the row each, so nothing can reach anything else,
-    /// and the bell stays in the middle whether or not tuning is showing.
-    private func socialActions(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack(spacing: 8) {
-            // A ZStack rather than a Group: a Group hands its frame to its
-            // children, so with no button in it there was no third at all,
-            // and the bell slid left to the middle of what was left.
-            ZStack(alignment: .leading) {
-                if feedMode == .forYou {
-                    Button {
-                        isTuning = true
-                    } label: {
-                        // Flush left, under the wordmark's edge, with the
-                        // rest of the 44 points still tappable.
-                        Image(systemName: "slider.horizontal.3")
-                            .font(.community(.headline))
-                            .foregroundStyle(timeOfDay.canvasPrimaryText)
-                            .frame(width: 44, height: 44, alignment: .leading)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Tune For You")
-                    .accessibilityHint("See what For You has picked up, hide topics, or start fresh")
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            NavigationLink {
-                NotificationsView()
-            } label: {
-                Image(systemName: "bell")
-                    .font(.community(.headline))
-                    .foregroundStyle(timeOfDay.canvasPrimaryText)
-                    .frame(width: 34, height: 34)
-                    .overlay(alignment: .topTrailing) {
-                        // A dot rather than a number. The count is behind the
-                        // page anyway, and "you have things waiting" is the
-                        // whole of what a glance needs.
-                        if store.unreadNotifications > 0 {
-                            Circle()
-                                .fill(RepbaseDesign.danger)
-                                .frame(width: 9, height: 9)
-                                .offset(x: -3, y: 3)
-                        }
-                    }
-                    .frame(width: 44, height: 44)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Notifications")
-            .frame(maxWidth: .infinity)
-
-            Button {
-                isComposing = true
-            } label: {
-                Label("Post", systemImage: "plus")
-                    .font(.community(size: 13, weight: .semibold))
-                    .foregroundStyle(Color.white)
-                    .padding(.horizontal, 12)
-                    .frame(minHeight: 44)
-                    .background(timeOfDay.accent, in: Capsule())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Create post")
-            .frame(maxWidth: .infinity, alignment: .trailing)
+    private func searchButton(timeOfDay: HomeTimeOfDay) -> some View {
+        Button {
+            isSearching = true
+        } label: {
+            Image(systemName: "magnifyingglass")
+                .font(.community(.headline, weight: .semibold))
+                .foregroundStyle(timeOfDay.canvasPrimaryText)
+                .frame(width: 72, height: 44)
+                .modifier(SocialSearchGlass())
+                .contentShape(Capsule())
         }
-        // Capped, as the bar was when these shared the title's row, so the
-        // Post button's label still fits its third of a phone at the
-        // accessibility sizes. Every control carries its own accessibility
-        // label, so nothing is lost to a reader who cannot see it.
-        .typeSizeCeiling()
+        .buttonStyle(.plain)
+        .matchedTransitionSource(id: "social.search", in: searchTransition)
+        .accessibilityLabel("Search people or hashtags")
+        .accessibilityHint("Search by name, handle, hashtag, or words in a post")
+        .accessibilityIdentifier("social.search")
     }
 
-    private var viewerInitials: String {
-        let initials = profileStore.profile?.initials
-            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        return initials.isEmpty ? "ME" : initials
+    private func postButton(timeOfDay: HomeTimeOfDay) -> some View {
+        Button {
+            isComposing = true
+        } label: {
+            Label("Post", systemImage: "plus")
+                .font(.community(size: 14, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .fixedSize()
+                .padding(.horizontal, 22)
+                .frame(minHeight: 44)
+                .background(timeOfDay.accent, in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Create post")
     }
 
     private func modePicker(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 6) {
             ForEach(FeedMode.allCases) { mode in
                 Button {
                     withAnimation(.easeOut(duration: 0.18)) {
                         feedMode = mode
                     }
                 } label: {
-                    Text(mode.rawValue)
-                        .font(.community(size: 14, weight: .semibold))
+                    Text(mode.title)
+                        .font(.community(.footnote, weight: feedMode == mode ? .semibold : .regular))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                         .foregroundStyle(
                             feedMode == mode
                                 ? timeOfDay.onPrimaryAction
@@ -468,122 +447,56 @@ struct SocialFeedView: View {
                         )
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
+                        .frame(minHeight: 44)
                         .background(feedMode == mode ? timeOfDay.primaryActionSurface : Color.clear, in: Capsule())
                 }
                 .buttonStyle(.plain)
                 .accessibilityAddTraits(feedMode == mode ? [.isSelected] : [])
+            }
+            if feedMode == .forYou {
+                Button {
+                    isTuning = true
+                } label: {
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.community(.headline))
+                        .foregroundStyle(timeOfDay.canvasPrimaryText)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Tune For You")
+                .accessibilityHint("Adjust topics and recommendations")
             }
         }
         .padding(.horizontal, RepbaseDesign.pageInset)
         .padding(.vertical, 8)
     }
 
-    private func searchField(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack(spacing: 10) {
-            Image(systemName: "magnifyingglass")
-                .foregroundStyle(timeOfDay.accent)
-            TextField("Search people or posts", text: $searchText)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .submitLabel(.search)
-
-            if store.isSearching {
-                ProgressView().controlSize(.small)
-            } else if !searchText.isEmpty {
-                // Clearing by hand rather than only by deleting: a handle is
-                // long enough that holding backspace is the slower way out,
-                // and the field is the one control here with no other exit.
-                Button {
-                    searchText = ""
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(timeOfDay.canvasSecondaryText)
-                }
-                .buttonStyle(.plain)
-                // The glyph is smaller than a finger; the frame is not.
-                .contentShape(Rectangle())
-                .accessibilityLabel("Clear search")
+    private func publicationConfirmation(id: UUID, timeOfDay: HomeTimeOfDay) -> some View {
+        HStack(spacing: 8) {
+            Label("Posted. Your update is in For You.", systemImage: "checkmark.circle.fill")
+                .font(.community(.footnote, weight: .semibold))
+                .foregroundStyle(timeOfDay.canvasPrimaryText)
+                .labelStyle(.titleAndIcon)
+            Spacer(minLength: 0)
+            Button {
+                store.consumePublicationReceipt(id: id)
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.community(.caption))
+                    .frame(width: 44, height: 44)
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Dismiss posting confirmation")
         }
-        .padding(.horizontal, 16)
-        .frame(height: 50)
-        .repbaseDepthSurface(cornerRadius: 18)
+        .tint(timeOfDay.accent)
         .padding(.horizontal, RepbaseDesign.pageInset)
-        .padding(.bottom, 12)
-    }
-
-    private func peopleSection(timeOfDay: HomeTimeOfDay) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                Text("PEOPLE")
-                    .font(.community(.caption2, weight: .bold))
-                    .tracking(1.2)
-                    .foregroundStyle(timeOfDay.accent)
-                Spacer()
-                Text("\(store.searchedPeople.count) found")
-                    .font(.community(.caption2))
-                    .foregroundStyle(timeOfDay.canvasSecondaryText)
-            }
-            .padding(.bottom, 8)
-
-            ForEach(Array(store.searchedPeople.prefix(8).enumerated()), id: \.element.id) { index, person in
-                HStack(spacing: 12) {
-                    Circle()
-                        .fill(timeOfDay.accent.opacity(0.12))
-                        .frame(width: 38, height: 38)
-                        .overlay {
-                            Text(person.initials)
-                                .font(.community(.caption, weight: .bold))
-                                .foregroundStyle(timeOfDay.accent)
-                        }
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(person.displayName).font(.community(.subheadline, weight: .semibold))
-                        Text("@\(person.username)")
-                            .font(.community(.caption))
-                            .foregroundStyle(timeOfDay.canvasSecondaryText)
-                    }
-                    Spacer()
-                        // The gap is part of the row, so the whole line opens
-                        // the profile rather than just the name.
-                        .contentShape(Rectangle())
-                    if person.id != profileStore.viewerID {
-                        Button(isFollowing(person) ? "Following" : "Follow") {
-                            Task {
-                                await store.setFollowing(
-                                    !isFollowing(person),
-                                    user: person,
-                                    viewerID: profileStore.viewerID
-                                )
-                            }
-                        }
-                        .font(.community(.caption, weight: .bold))
-                        .buttonStyle(.bordered)
-                        .buttonBorderShape(.capsule)
-                        .disabled(store.changingFollowFor.contains(person.id))
-                    }
-                }
-                .padding(.vertical, 10)
-                .contentShape(Rectangle())
-                // Not a Button wrapping the row: it holds the Follow button,
-                // and a button inside a button swallows the inner tap.
-                .onTapGesture { visiting = VisitedPerson(id: person.id) }
-                if index < min(store.searchedPeople.count, 8) - 1 { Divider() }
-            }
+        .task(id: id) {
+            do { try await Task.sleep(for: .seconds(8)) } catch { return }
+            store.consumePublicationReceipt(id: id)
         }
-        .padding(.vertical, 12)
-        // Inset to the same margin the cards below use, so the heading lines
-        // up with them instead of sitting against the edge of the screen. The
-        // dividers are added after and stay full width, which is what makes
-        // the section read as a band rather than another card.
-        .padding(.horizontal, RepbaseDesign.pageInset)
-        .overlay(alignment: .top) { Divider() }
-        .overlay(alignment: .bottom) { Divider() }
     }
 
-    private func isFollowing(_ person: PostAuthor) -> Bool {
-        guard let viewerID = profileStore.viewerID else { return false }
-        return store.followingByUser[viewerID]?.contains(where: { $0.id == person.id }) == true
-    }
 
     private var isListLoading: Bool {
         switch feedMode {
@@ -596,7 +509,7 @@ struct SocialFeedView: View {
         case .following:
             return store.isLoading
         case .discover:
-            return store.isShowingSearchResults ? store.isSearching : store.isLoadingDiscover
+            return store.isLoadingDiscover
         }
     }
 
@@ -612,9 +525,7 @@ struct SocialFeedView: View {
     ///
     /// For You is the server's ranking for this reader. Following is the
     /// people they follow, newest first. Discover is everybody else's latest,
-    /// or the search results when there are any -- search is deliberately not
-    /// narrowed to strangers: looking somebody up should find them whether or
-    /// not you follow them.
+    /// while search has its own presentation and never replaces a feed.
     ///
     /// Results arrive already narrowed by a server that also decided what
     /// this reader may see, so nothing is filtered here: a second pass could
@@ -626,7 +537,7 @@ struct SocialFeedView: View {
         case .following:
             return store.feed
         case .discover:
-            return store.isShowingSearchResults ? store.searchedPosts : store.discoverPosts
+            return store.discoverPosts
         }
     }
 
@@ -754,19 +665,11 @@ struct SocialFeedView: View {
                 // The gap is part of the row, so the whole line opens the
                 // profile rather than just the name.
                 .contentShape(Rectangle())
-            Button(followTitle(person)) {
-                Task {
-                    await store.setFollowing(
-                        !isFollowing(person),
-                        user: person,
-                        viewerID: profileStore.viewerID
-                    )
-                }
-            }
-            .font(.community(.caption, weight: .bold))
-            .buttonStyle(.bordered)
-            .buttonBorderShape(.capsule)
-            .disabled(store.changingFollowFor.contains(person.id))
+            FollowButton(
+                person: person,
+                relationship: store.relationship(with: person.id, viewerID: profileStore.viewerID),
+                viewerID: profileStore.viewerID
+            )
 
             Button {
                 Task { await store.setSuggestionDismissed(true, person: suggestion) }
@@ -784,14 +687,6 @@ struct SocialFeedView: View {
         .contentShape(Rectangle())
         // Not a Button wrapping the row: it holds two buttons of its own.
         .onTapGesture { visiting = VisitedPerson(id: person.id) }
-    }
-
-    /// "Requested" for a closed profile asked to, which the follow list alone
-    /// cannot say.
-    private func followTitle(_ person: PostAuthor) -> String {
-        if isFollowing(person) { return "Following" }
-        if store.requestedUserIDs.contains(person.id) { return "Requested" }
-        return "Follow"
     }
 
     /// The line at the end of the people you follow.
@@ -813,36 +708,6 @@ struct SocialFeedView: View {
         .padding(.vertical, 22)
     }
 
-    /// Nothing matched at all — no people and no posts.
-    private func noMatchesState(timeOfDay: HomeTimeOfDay) -> some View {
-        VStack(spacing: 10) {
-            Image(systemName: "magnifyingglass")
-                .font(.community(size: 30, weight: .semibold))
-                .foregroundStyle(timeOfDay.accent)
-            Text("No matches")
-                .font(.community(.headline))
-                .foregroundStyle(timeOfDay.canvasPrimaryText)
-            Text("Nothing came back for \u{201C}\(store.searchQuery)\u{201D}. Try a username, someone's name, or a word from a post.")
-                .font(.community(.subheadline))
-                .multilineTextAlignment(.center)
-                .foregroundStyle(timeOfDay.canvasSecondaryText)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 44)
-        .padding(.horizontal, RepbaseDesign.pageInset)
-    }
-
-    /// People matched but no posts did.
-    private func noMatchingPostsState(timeOfDay: HomeTimeOfDay) -> some View {
-        Text("No posts match \u{201C}\(store.searchQuery)\u{201D}.")
-            .font(.community(.subheadline))
-            .multilineTextAlignment(.center)
-            .foregroundStyle(timeOfDay.canvasSecondaryText)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 32)
-            .padding(.horizontal, RepbaseDesign.pageInset)
-    }
 
     private func emptyState(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(spacing: 10) {
@@ -873,7 +738,7 @@ struct SocialFeedView: View {
         .padding(.horizontal, 22)
     }
 
-    private var emptyExplanation: String {
+    private var emptyExplanation: LocalizedStringKey {
         switch feedMode {
         case .forYou:
             return "Nothing to recommend yet. As people post, the best of it shows up here -- and what you like teaches it what to pick."
@@ -895,17 +760,21 @@ struct SocialFeedView: View {
             get: {
                 if let workout = store.lastSavedWorkout {
                     return RepbaseToastPresentation(
-                        title: workout.wasAlreadySaved ? "Workout already saved" : "Workout saved",
+                        title: workout.wasAlreadySaved
+                            ? String(localized: "Workout already saved", bundle: .app, locale: .app)
+                            : String(localized: "Workout saved", bundle: .app, locale: .app),
                         accessibilityMessage: workout.message,
-                        actionTitle: "View",
+                        actionTitle: String(localized: "View", bundle: .app, locale: .app, comment: "Toast button that opens the saved workout"),
                         destination: .workouts
                     )
                 }
                 if let meal = store.lastSavedMeal {
                     return RepbaseToastPresentation(
-                        title: meal.wasAlreadySaved ? "Meal already saved" : "Meal saved",
+                        title: meal.wasAlreadySaved
+                            ? String(localized: "Meal already saved", bundle: .app, locale: .app)
+                            : String(localized: "Meal saved", bundle: .app, locale: .app),
                         accessibilityMessage: meal.message,
-                        actionTitle: "Log",
+                        actionTitle: String(localized: "Log", bundle: .app, locale: .app, comment: "Toast button that opens Food to log the saved meal"),
                         destination: .food
                     )
                 }
@@ -1014,7 +883,8 @@ struct PostCard: View {
                         // Why For You picked it. Quiet: it explains the card,
                         // it is not the card. Feed only -- on the post's own
                         // page the question has already been answered.
-                        if presentation == .feed, let recommendation = post.recommendation {
+                        if presentation == .feed, !post.viewerIsAuthor,
+                           let recommendation = post.recommendation {
                             Text(recommendation.label)
                                 .font(.community(.caption, weight: .semibold))
                                 .foregroundStyle(timeOfDay.canvasSecondaryText)
@@ -1214,7 +1084,7 @@ struct PostCard: View {
             // accessibility sizes left "Aar... @a... - 1..." -- a byline that
             // no longer says who posted. Stacked, the name gets its own line
             // and the handle and age share the next.
-            AdaptiveStack(spacing: 6) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(shown.author.displayName)
                     .font(.community(.subheadline, weight: .bold))
                     .foregroundStyle(timeOfDay.primaryText)
@@ -1224,7 +1094,9 @@ struct PostCard: View {
                 // age are one phrase, and stacking them too would spend three
                 // lines saying what one says.
                 HStack(spacing: 6) {
-                    Text("@" + shown.author.username)
+                    Text(post.viewerIsAuthor && post.repostOf == nil
+                         ? String(localized: "Your post", bundle: .app, locale: .app)
+                         : "@" + shown.author.username)
                         .font(.community(.caption))
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                         .lineLimit(1)
@@ -1306,7 +1178,7 @@ struct PostCard: View {
                         Image(systemName: "ellipsis")
                             .font(.community(size: 14, weight: .semibold))
                             .foregroundStyle(timeOfDay.canvasSecondaryText)
-                            .frame(width: 24, height: 24)
+                            .frame(width: 44, height: 44)
                             .contentShape(Rectangle())
                     }
                 }
@@ -1317,13 +1189,13 @@ struct PostCard: View {
     @ViewBuilder
     private var authorAvatar: some View {
         if let photo = shown.author.photoURL, let url = URL(string: photo) {
-            RemoteImage(url: url, maxPixel: 108) {
+            RemoteImage(url: url, maxPixel: 132) {
                 avatarInitials
             } failure: {
                 avatarInitials
             }
             .scaledToFill()
-            .frame(width: 36, height: 36)
+            .frame(width: 44, height: 44)
             .clipShape(Circle())
         } else {
             avatarInitials
@@ -1332,10 +1204,10 @@ struct PostCard: View {
 
     private var avatarInitials: some View {
         Text(shown.author.initials)
-            .font(.community(size: 12, weight: .bold))
-            .foregroundStyle(Color.white)
-            .frame(width: 36, height: 36)
-            .background(timeOfDay.accent, in: Circle())
+            .font(.community(.footnote, weight: .semibold))
+            .foregroundStyle(timeOfDay.canvasPrimaryText)
+            .frame(width: 44, height: 44)
+            .background(SocialSearchStyle.softSurface, in: Circle())
     }
 
     // MARK: - Bodies
@@ -1364,7 +1236,7 @@ struct PostCard: View {
                 if post.offersWorkoutToSave {
                     saveWorkoutButton
                 } else {
-                    Image(systemName: "chevron.right")
+                    Image(systemName: "chevron.forward")
                         .font(.community(size: 10, weight: .bold))
                         .foregroundStyle(timeOfDay.accent)
                 }
@@ -1394,7 +1266,7 @@ struct PostCard: View {
                 VStack(spacing: 8) {
                     ForEach(workout.exercises) { line in
                         HStack(spacing: 8) {
-                            Text(line.name)
+                            Text(line.displayName)
                                 .font(.community(size: 12, weight: .semibold))
                                 .foregroundStyle(timeOfDay.primaryText)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -1509,7 +1381,7 @@ struct PostCard: View {
         .background(imageAttached ? Color.clear : RepbaseDesign.success.opacity(0.08), in: RoundedRectangle(cornerRadius: 28, style: .continuous))
     }
 
-    private func macro(_ value: String, _ label: String, _ color: Color) -> some View {
+    private func macro(_ value: String, _ label: LocalizedStringKey, _ color: Color) -> some View {
         HStack(spacing: 3) {
             Text(value).foregroundStyle(color)
             Text(label).foregroundStyle(timeOfDay.secondaryText)
@@ -1543,7 +1415,7 @@ struct PostCard: View {
         .background(timeOfDay.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
     }
 
-    private func workoutSummary(_ workout: PostWorkoutSnapshot) -> String {
+    private func workoutSummary(_ workout: PostWorkoutSnapshot) -> LocalizedStringKey {
         if let distance = workout.routeDistanceKm {
             let miles = ImperialUnits.miles(fromKilometers: distance.nutritionDouble)
             return "\(String(format: "%.2f", miles)) mi · \(Self.pace(duration: workout.durationSeconds, miles: miles)) pace"
@@ -1571,7 +1443,7 @@ struct PostCard: View {
                 VStack(alignment: .leading, spacing: 0) {
                     ForEach(Array(workout.exercises.enumerated()), id: \.element.id) { index, line in
                         HStack(spacing: 6) {
-                            Text(line.name)
+                            Text(line.displayName)
                                 .font(.community(size: 13, weight: .medium))
                                 .foregroundStyle(timeOfDay.primaryText)
                             Spacer(minLength: 6)
@@ -1720,12 +1592,13 @@ struct PostCard: View {
 
     // MARK: - Pieces
 
-    private func shareHeader(_ title: String, symbol: String) -> some View {
+    private func shareHeader(_ title: LocalizedStringKey, symbol: String) -> some View {
         HStack(spacing: 8) {
-            Label(title.uppercased(), systemImage: symbol)
+            Label(title, systemImage: symbol)
                 .font(.community(size: 10, weight: .bold))
                 .tracking(1.15)
                 .foregroundStyle(timeOfDay.accent)
+                .textCase(.uppercase)
             Spacer(minLength: 0)
             if post.offersWorkoutToSave {
                 saveWorkoutButton
@@ -1783,6 +1656,8 @@ struct PostCard: View {
                 }
                 Text(isSaving ? "Saving" : (done ? "Saved" : "Save"))
                     .font(.community(size: 11, weight: .bold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
             .foregroundStyle(colour)
             .padding(.horizontal, 11)
@@ -1797,12 +1672,12 @@ struct PostCard: View {
     }
 
     /// "1 serving", "2 servings" -- the amount, not just the food.
-    private func servingsText(_ value: Decimal) -> String {
+    private func servingsText(_ value: Decimal) -> LocalizedStringKey {
         let text = value.nutritionText
         return text == "1" ? "1 serving" : "\(text) servings"
     }
 
-    private func statistic(_ value: String, _ label: String) -> some View {
+    private func statistic(_ value: String, _ label: LocalizedStringKey) -> some View {
         VStack(alignment: .leading, spacing: 1) {
             Text(value)
                 .font(.community(size: 15, weight: .bold))
@@ -1814,7 +1689,7 @@ struct PostCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func plannerLine(_ label: String, value: String) -> some View {
+    private func plannerLine(_ label: LocalizedStringKey, value: String) -> some View {
         HStack {
             Text(label)
                 .foregroundStyle(timeOfDay.secondaryText)
@@ -1829,7 +1704,7 @@ struct PostCard: View {
     private static func duration(_ seconds: Int?) -> String {
         guard let seconds, seconds > 0 else { return "—" }
         let minutes = seconds / 60
-        if minutes < 60 { return "\(minutes)m" }
+        if minutes < 60 { return String(localized: "\(minutes)m", bundle: .app, locale: .app, comment: "A duration in minutes, abbreviated") }
         return String(format: "%d:%02d", minutes / 60, minutes % 60)
     }
 
@@ -1847,7 +1722,7 @@ struct PostCard: View {
         _ line: PostExerciseLine,
         showsWeights: Bool
     ) -> String {
-        guard let reps = line.topSetReps else { return "\(line.setCount) sets" }
+        guard let reps = line.topSetReps else { return String(localized: "\(line.setCount) sets", bundle: .app, locale: .app) }
         guard showsWeights, let weight = line.topSetWeightKg else {
             return "\(line.setCount) × \(reps)"
         }

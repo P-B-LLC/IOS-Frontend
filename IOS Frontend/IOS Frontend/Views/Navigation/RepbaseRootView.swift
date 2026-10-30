@@ -229,6 +229,9 @@ struct RepbaseBottomNavigation: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(item.title)
+                // Stable whatever the language, and unique: Home also has a
+                // "Calendar" link that the label alone cannot tell apart.
+                .accessibilityIdentifier("tab.\(item.rawValue)")
                 .accessibilityAddTraits(item == tab ? [.isSelected] : [])
             }
         }

@@ -6,6 +6,7 @@
 //  macros, which foods supply each macro, and how each meal contributes.
 //
 
+import Foundation
 import SwiftUI
 
 struct NutritionBreakdownView: View {
@@ -109,7 +110,7 @@ struct NutritionBreakdownView: View {
 
             let sources = sources(for: selectedMacro)
             if sources.isEmpty {
-                Text("No \(selectedMacro.title.lowercased()) logged for this day yet.")
+                Text(noSourcesMessage(for: selectedMacro))
                     .font(.community(.caption))
                     .foregroundStyle(.secondary)
                     .padding(.vertical, 4)
@@ -136,7 +137,7 @@ struct NutritionBreakdownView: View {
                 ForEach(mealsWithFood) { meal in
                     VStack(alignment: .leading, spacing: 5) {
                         HStack {
-                            Text(meal.name)
+                            Text(meal.displayName)
                                 .font(.community(.caption, weight: .semibold))
                                 .lineLimit(1)
                             Spacer()
@@ -216,8 +217,18 @@ struct NutritionBreakdownView: View {
 
     private func macroSummary(for amount: NutritionAmount) -> String {
         Macro.allCases
-            .map { "\($0.title) \(gramsText(grams(of: $0, in: amount)))g" }
+            .map { $0.summary(grams: gramsText(grams(of: $0, in: amount))) }
             .joined(separator: " · ")
+    }
+
+    /// One sentence per macro rather than a name dropped into a shared one,
+    /// so a translation can inflect it.
+    private func noSourcesMessage(for macro: Macro) -> LocalizedStringKey {
+        switch macro {
+        case .protein: "No protein logged for this day yet."
+        case .carbs: "No carbs logged for this day yet."
+        case .fat: "No fat logged for this day yet."
+        }
     }
 
     /// Foods that are a real source of a macro, largest first.
@@ -285,7 +296,7 @@ struct NutritionBreakdownView: View {
             result.append(
                 MacroSource(
                     id: "other",
-                    name: "Other foods",
+                    name: String(localized: "Other foods", bundle: .app, locale: .app),
                     grams: remainder,
                     share: remainder / total,
                     primary: nil,
@@ -331,9 +342,19 @@ enum Macro: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .protein: return "Protein"
-        case .carbs: return "Carbs"
-        case .fat: return "Fat"
+        case .protein: return String(localized: "Protein", bundle: .app, locale: .app)
+        case .carbs: return String(localized: "Carbs", bundle: .app, locale: .app)
+        case .fat: return String(localized: "Fat", bundle: .app, locale: .app)
+        }
+    }
+
+    /// "Protein 20g": the name and its amount as one phrase per macro, since
+    /// the order of the two and any word between them depend on the language.
+    fileprivate func summary(grams: String) -> String {
+        switch self {
+        case .protein: return String(localized: "Protein \(grams)g", bundle: .app, locale: .app)
+        case .carbs: return String(localized: "Carbs \(grams)g", bundle: .app, locale: .app)
+        case .fat: return String(localized: "Fat \(grams)g", bundle: .app, locale: .app)
         }
     }
 
@@ -439,6 +460,7 @@ private struct MacroLegendItem: View {
                     .font(.community(.caption2))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
             Text("\(gramsText(grams))g")
                 .font(.community(.caption, weight: .semibold))
@@ -448,7 +470,8 @@ private struct MacroLegendItem: View {
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(macro.title) \(gramsText(grams)) grams, \(percentText(share)) of macro calories")
+        .accessibilityLabel(macro.title)
+        .accessibilityValue("\(gramsText(grams)) grams, \(percentText(share)) of macro calories")
     }
 }
 

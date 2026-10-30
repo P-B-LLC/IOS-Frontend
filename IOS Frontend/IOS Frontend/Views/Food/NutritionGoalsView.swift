@@ -126,7 +126,7 @@ struct NutritionGoalsView: View {
     }
 
     private func macroTarget(
-        _ title: String,
+        _ title: LocalizedStringKey,
         text: Binding<String>,
         tint: Color,
         caloriesPerGram: Decimal

@@ -6,6 +6,7 @@
 //  actions are preserved; every statistic is derived from API-owned records.
 //
 
+import Foundation
 import SwiftUI
 
 struct TrainingDashboardContent: View {
@@ -45,7 +46,7 @@ struct TrainingDashboardContent: View {
                         Text("Your session is still open. Continue it or finish it from its workout day.")
                             .font(.community(.footnote))
                         NavigationLink("Open recovered session") { DayWorkoutView(day: session.day) }
-                        if session.tracksDistance {
+                        if session.activity.tracksRoute {
                             Button("Resume GPS tracking") { store.resumeRecoveredTracking() }
                         }
                     }
@@ -53,7 +54,7 @@ struct TrainingDashboardContent: View {
                 if store.pendingWorkoutSaveCount > 0 || store.recoveryError != nil {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Workout sync pending").font(.community(.headline))
-                        Text(store.recoveryError ?? "Your workout is saved on this device until sync completes. If its session is open, tap Finish there to retry.")
+                        Text(store.recoveryError ?? String(localized: "Your workout is saved on this device until sync completes. If its session is open, tap Finish there to retry.", bundle: .app, locale: .app))
                             .font(.community(.footnote))
                         Button("Retry sync") { Task { await store.retryPendingWorkoutSaves() } }
                             .disabled(store.isRecoveringWorkouts || store.isSaving)
@@ -205,7 +206,7 @@ struct TrainingDashboardContent: View {
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(cycles.activeCycle?.positionText ?? "Repeating split")
+                    Text(cycles.activeCycle?.positionText ?? String(localized: "Repeating split", bundle: .app, locale: .app))
                         .font(.community(.subheadline, weight: .semibold))
                         .foregroundStyle(phase.primaryText)
                     Text(cycleDetail)
@@ -216,7 +217,7 @@ struct TrainingDashboardContent: View {
 
                 Spacer(minLength: 0)
 
-                Image(systemName: "chevron.right")
+                Image(systemName: "chevron.forward")
                     .font(.community(.caption, weight: .semibold))
                     .foregroundStyle(phase.secondaryText)
             }
@@ -227,9 +228,9 @@ struct TrainingDashboardContent: View {
 
     private var cycleDetail: String {
         guard let cycle = cycles.activeCycle else {
-            return "Train on a cycle, not a weekly plan"
+            return String(localized: "Train on a cycle, not a weekly plan", bundle: .app, locale: .app)
         }
-        return "\(cycle.currentWorkoutName) today"
+        return String(localized: "\(cycle.currentWorkoutDisplayName) today", bundle: .app, locale: .app, comment: "The placeholder is a workout name, or Rest on a rest day")
     }
 
     @ViewBuilder
@@ -241,10 +242,12 @@ struct TrainingDashboardContent: View {
                 WorkoutFocusCard(
                     eyebrow: "SESSION IN PROGRESS",
                     title: session.workoutName,
-                    detail: "\(session.loggedSetCount) of \(session.totalSetCount) sets logged",
+                    detail: session.tracksDistance
+                        ? String(localized: "\(session.activity.title) · in progress", bundle: .app, locale: .app, comment: "An activity being timed, such as “Tennis · in progress”")
+                        : String(localized: "\(session.loggedSetCount) of \(session.totalSetCount) sets logged", bundle: .app, locale: .app),
                     completed: metrics.completedThisWeek,
                     goal: metrics.weeklyGoal,
-                    workoutType: session.workoutType
+                    symbol: session.activity.symbol
                 )
             }
             .buttonStyle(.plain)
@@ -254,11 +257,11 @@ struct TrainingDashboardContent: View {
             } label: {
                 WorkoutFocusCard(
                     eyebrow: "TODAY",
-                    title: store.workout(on: day)?.name ?? "Plan today’s workout",
+                    title: store.workout(on: day)?.name ?? String(localized: "Plan today’s workout", bundle: .app, locale: .app),
                     detail: focusDescription(for: day),
                     completed: completedThisWeek,
                     goal: metrics.weeklyGoal,
-                    workoutType: store.workout(on: day)?.type ?? .lifting,
+                    symbol: store.workout(on: day)?.activity.symbol ?? WorkoutActivity.weightlifting.symbol,
                     isDayComplete: hiddenCompletedDay != day && store.workout(on: day).map {
                         store.isCompleted(
                             workoutName: $0.name,
@@ -286,6 +289,11 @@ struct TrainingDashboardContent: View {
             totalsCard
             trendCard
             milestoneCard
+            RecentActivityList(
+                sessions: Array(store.dashboardSessions.filter(\.recordedSomething).prefix(8)),
+                phase: phase,
+                unit: store.preferences.weightUnit == .imperial ? .miles : .kilometers
+            )
 
             if store.isLoadingDashboardSessions && store.dashboardSessions.isEmpty {
                 ProgressView("Loading progress from Rytivo...")
@@ -309,7 +317,9 @@ struct TrainingDashboardContent: View {
             metric(
                 eyebrow: "CURRENT STREAK",
                 value: metrics.currentStreakText,
-                detail: "Best: \(metrics.bestStreakText)",
+                detail: metrics.bestStreakWeeks == 1
+                    ? String(localized: "Best: 1 week", bundle: .app, locale: .app)
+                    : String(localized: "Best: \(metrics.bestStreakWeeks) weeks", bundle: .app, locale: .app),
                 color: phase.secondaryText
             )
         }
@@ -318,7 +328,7 @@ struct TrainingDashboardContent: View {
         .overlay(alignment: .bottom) { Divider() }
     }
 
-    private func metric(eyebrow: String, value: String, detail: String, color: Color) -> some View {
+    private func metric(eyebrow: LocalizedStringKey, value: String, detail: String, color: Color) -> some View {
         VStack(alignment: .leading, spacing: 7) {
             Text(eyebrow)
                 .font(.community(.caption2, weight: .bold))
@@ -371,8 +381,10 @@ struct TrainingDashboardContent: View {
                                 .fill(index == 5 ? HomeTimeOfDay.current.accent : phase.secondaryText.opacity(0.6))
                                 .frame(height: metrics.barHeight(for: count))
                         }
-                        Text(index == 5 ? "NOW" : "−\(5 - index)W")
+                        Text(index == 5 ? "NOW" : "−\(5 - index)W", comment: "Week chart label: NOW is this week, −2W is two weeks ago")
                             .font(.community(size: 9, weight: .bold))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                             .foregroundStyle(index == 5 ? RepbaseDesign.warning : phase.secondaryText)
                     }
                     .frame(maxWidth: .infinity)
@@ -415,7 +427,7 @@ struct TrainingDashboardContent: View {
     private func isCompleted(_ day: Weekday) -> Bool {
         WorkoutFocusPolicy.dayIsComplete(
             scheduledCompletions: store.workouts(on: day).map {
-                store.isCompleted(workoutName: $0.name, on: store.workoutDate(for: day))
+                store.isCompleted(workout: $0, on: store.workoutDate(for: day))
             },
             hasActiveSession: store.activeSession?.day == day
         )
@@ -441,7 +453,7 @@ struct TrainingDashboardContent: View {
                 displayedTotalWorkouts = reward.totalWorkouts
                 hiddenCompletedDay = nil
                 rewardIsVisible = true
-                rewardToast = "\(reward.workoutName) complete · goal moved forward"
+                rewardToast = String(localized: "\(reward.workoutName) complete · goal moved forward", bundle: .app, locale: .app)
             }
             // The saved-session summary already celebrates the confirmed finish.
 
@@ -472,11 +484,15 @@ struct TrainingDashboardContent: View {
 
     private func focusDescription(for day: Weekday) -> String {
         guard let workout = store.workout(on: day) else {
-            return "Add a name, exercises, and target sets."
+            return String(localized: "Add a name, exercises, and target sets.", bundle: .app, locale: .app)
         }
-        let exerciseLabel = workout.exercises.count == 1 ? "exercise" : "exercises"
-        let setLabel = workout.totalSets == 1 ? "target set" : "target sets"
-        return "\(workout.exercises.count) \(exerciseLabel)  ·  \(workout.totalSets) \(setLabel)"
+        let exercises = workout.exercises.count == 1
+            ? String(localized: "1 exercise", bundle: .app, locale: .app)
+            : String(localized: "\(workout.exercises.count) exercises", bundle: .app, locale: .app)
+        let sets = workout.totalSets == 1
+            ? String(localized: "1 target set", bundle: .app, locale: .app)
+            : String(localized: "\(workout.totalSets) target sets", bundle: .app, locale: .app)
+        return "\(exercises)  ·  \(sets)"
     }
 }
 
@@ -496,7 +512,7 @@ private struct DashboardDayItem: View {
                 .font(.community(size: 9, weight: isToday ? .bold : .semibold))
                 .foregroundStyle(isToday ? RepbaseDesign.warning : Color.secondary)
 
-            Text(date.formatted(.dateTime.day()))
+            Text(date.formatted(.dateTime.day().locale(.app)))
                 .font(.community(.headline, weight: .bold))
                 .foregroundStyle(RepbaseDesign.ink)
             .overlay(alignment: .topTrailing) {
@@ -528,9 +544,11 @@ private struct DashboardDayItem: View {
     }
 
     private var accessibilityLabel: String {
-        guard isPlanned else { return "\(day.fullName), add workout" }
-        let completion = isCompleted ? ", completed" : ""
-        return "\(day.fullName), \(workouts.map(\.name).joined(separator: ", "))\(completion)"
+        guard isPlanned else { return String(localized: "\(day.fullName), add workout", bundle: .app, locale: .app) }
+        let names = workouts.map(\.name).joined(separator: ", ")
+        return isCompleted
+            ? String(localized: "\(day.fullName), \(names), completed", bundle: .app, locale: .app, comment: "A weekday, then the names of its workouts")
+            : "\(day.fullName), \(names)"
     }
 
     private var dayMarkerSymbol: String {
@@ -557,12 +575,12 @@ private struct DashboardDayItem: View {
 }
 
 private struct WorkoutFocusCard: View {
-    let eyebrow: String
+    let eyebrow: LocalizedStringKey
     let title: String
     let detail: String
     let completed: Int
     let goal: Int
-    let workoutType: WorkoutType
+    let symbol: String
     var isDayComplete = false
     var celebratesCompletion = false
 
@@ -571,14 +589,15 @@ private struct WorkoutFocusCard: View {
             HStack {
                 Text(eyebrow).font(.community(.caption2, weight: .bold))
                 Spacer()
-                Image(systemName: workoutType.builderSymbol).font(.system(size: 20))
+                Image(systemName: symbol).font(.system(size: 20))
             }.foregroundStyle(RepbaseDesign.warning)
             Text(title).font(.community(.title, weight: .bold))
             Text(detail).font(.community(.caption)).foregroundStyle(.secondary)
             HStack {
+                // Compares keys, which are the same whatever the language.
                 Text(eyebrow == "SESSION IN PROGRESS" ? "Resume workout" : isDayComplete ? "View workout" : "Open workout")
                 Spacer()
-                Image(systemName: "arrow.right")
+                Image(systemName: "arrow.forward")
             }
             .font(.community(.subheadline, weight: .bold))
             .foregroundStyle(WorkoutVisualPhase.prepare.onPrimaryAction)

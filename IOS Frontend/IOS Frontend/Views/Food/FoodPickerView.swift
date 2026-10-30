@@ -6,6 +6,7 @@
 //  search a food database once the OAS documents one, or enter it manually.
 //
 
+import Foundation
 import SwiftUI
 
 struct FoodPickerView: View {
@@ -20,11 +21,15 @@ struct FoodPickerView: View {
     let mealID: FoodMeal.ID
 
     @State private var searchText = ""
+    @State private var submittedQuery = ""
+    @State private var searchRevision = 0
+    @State private var showingBarcode = false
+    @State private var scannedBarcode: String?
     @State private var databaseResults: [FoodDatabaseResult] = []
     @State private var isSearchingDatabase = false
     @State private var databaseError: String?
     @State private var selectedFood: FoodEntry?
-    @State private var servingDescription = "1 serving of this food entry"
+    @State private var servingDescription = String(localized: "1 serving of this food entry", bundle: .app, locale: .app)
     @State private var savedFood: FoodEntry?
     @State private var openedInitialFood = false
     var initialFood: FoodEntry? = nil
@@ -55,7 +60,7 @@ struct FoodPickerView: View {
                     Text("Find your food.")
                         .font(.community(.largeTitle, weight: .bold))
                         .tracking(-0.8)
-                    Text("Try chicken, rice, or yogurt. Then choose how much you had.")
+                    Text("Search a food or brand, or scan the barcode on a packet.")
                         .font(.community(.subheadline))
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                 }
@@ -66,10 +71,24 @@ struct FoodPickerView: View {
                     TextField("Search foods", text: $searchText)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
+                        .submitLabel(.search)
+                        .onSubmit { submitSearch() }
+                    Button { submitSearch() } label: {
+                        Image(systemName: "arrow.right.circle.fill").font(.title2)
+                    }
+                    .accessibilityLabel("Search")
+                    .disabled(searchText.trimmed.count < 2 || isSaving)
                 }
                 .padding(.horizontal, 16)
                 .frame(height: 52)
                 .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 16))
+
+                Button { showingBarcode = true } label: {
+                    Label("Scan barcode", systemImage: "barcode.viewfinder")
+                        .frame(maxWidth: .infinity, minHeight: 48)
+                }
+                .buttonStyle(.bordered)
+                .disabled(isSaving || pendingAdd != nil)
 
                 if let pendingAdd {
                     Button("Retry saving \(pendingAdd.name)") { add(pendingAdd) }
@@ -94,7 +113,26 @@ struct FoodPickerView: View {
         .saveFeedback(isSaving: isSaving, error: saveError)
         .recoverableDraft(key: "food-picker-\(mealID)", value: $pendingAdd,
                           saved: $draftSaved, error: $saveError)
-        .task(id: searchText) { await searchDatabase() }
+        .task(id: searchRevision) { await searchDatabase() }
+        .onChange(of: searchText) { _, _ in
+            // Typing invalidates an old response but never spends a provider call.
+            submittedQuery = ""
+            databaseResults = []
+            databaseError = nil
+            isSearchingDatabase = false
+        }
+        .sheet(isPresented: $showingBarcode, onDismiss: {
+            if let code = scannedBarcode {
+                scannedBarcode = nil
+                submittedQuery = "barcode:" + code
+                searchRevision += 1
+            }
+        }) {
+            FoodBarcodeSheet { code in
+                scannedBarcode = code
+                showingBarcode = false
+            }
+        }
         .onAppear {
             if let initialFood, !openedInitialFood {
                 openedInitialFood = true
@@ -134,8 +172,8 @@ struct FoodPickerView: View {
                     .foregroundStyle(timeOfDay.accent)
                 Spacer()
                 if isSearchingDatabase { ProgressView().controlSize(.mini) }
-                else if searchText.trimmed.count >= 2 {
-                    Text("USDA FOODDATA CENTRAL")
+                else {
+                    Link("Open Food Facts", destination: URL(string: "https://world.openfoodfacts.org")!)
                         .font(.community(.caption2, weight: .bold))
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                 }
@@ -145,12 +183,13 @@ struct FoodPickerView: View {
                 Text(databaseError)
                     .font(.community(.caption))
                     .foregroundStyle(.orange)
-            } else if searchText.trimmed.count < 2 {
-                Text("Type at least two letters to search foods.")
+                Button("Retry") { searchRevision += 1 }
+            } else if submittedQuery.isEmpty {
+                Text("Type a name, then tap Search. Or scan a barcode.")
                     .font(.community(.caption))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
             } else if !isSearchingDatabase && databaseResults.isEmpty {
-                Text("No database foods match this search.")
+                Text("No complete match found. Try another name or enter the label manually.")
                     .font(.community(.caption))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
             } else {
@@ -172,6 +211,10 @@ struct FoodPickerView: View {
                     }
                 }
             }
+            Text("Community product data. Check the label and portion before adding.")
+                .font(.community(.caption2)).foregroundStyle(.secondary)
+            Link("ODbL", destination: URL(string: "https://opendatacommons.org/licenses/odbl/1-0/")!)
+                .font(.community(.caption2))
         }
         .padding(.vertical, 14)
         .overlay(alignment: .top) { Divider() }
@@ -197,7 +240,7 @@ struct FoodPickerView: View {
                 } else {
                     ForEach(Array(filteredRecents.enumerated()), id: \.element.id) { index, food in
                         Button {
-                            servingDescription = "1 serving of this food entry"
+                            servingDescription = String(localized: "1 serving of this food entry", bundle: .app, locale: .app)
                             selectedFood = food
                         } label: {
                             RecentFoodRow(food: food)
@@ -230,7 +273,7 @@ struct FoodPickerView: View {
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                 }
                 Spacer()
-                Image(systemName: "chevron.right")
+                Image(systemName: "chevron.forward")
                     .font(.community(.caption, weight: .bold))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
             }
@@ -252,7 +295,7 @@ struct FoodPickerView: View {
         }
     }
 
-    private var recentEmptyMessage: String {
+    private var recentEmptyMessage: LocalizedStringKey {
         store.recentFoods.isEmpty
             ? "Foods you log will show up here so you can add them again in one tap."
             : "No previously used food matches that search."
@@ -264,7 +307,11 @@ struct FoodPickerView: View {
         guard !isSaving else { return }
         if let pendingAdd,
            pendingAdd.name != food.name || pendingAdd.servings != food.servings || pendingAdd.nutritionPerServing != food.nutritionPerServing {
-            saveError = "Please retry the previous food first so we can confirm whether it saved."
+            saveError = String(
+                localized: "Please retry the previous food first so we can confirm whether it saved.",
+                bundle: .app,
+                locale: .app
+            )
             return
         }
         let entry = pendingAdd ?? FoodEntry(name: food.name, servings: food.servings,
@@ -289,8 +336,15 @@ struct FoodPickerView: View {
         }
     }
 
+    private func submitSearch() {
+        guard searchText.trimmed.count >= 2 else { return }
+        submittedQuery = searchText.trimmed
+        searchRevision += 1
+    }
+
     private func searchDatabase() async {
-        let query = searchText.trimmed
+        let query = submittedQuery
+        let revision = searchRevision
         guard query.count >= 2 else {
             databaseResults = []
             databaseError = nil
@@ -298,19 +352,26 @@ struct FoodPickerView: View {
             return
         }
         isSearchingDatabase = true
+        defer {
+            if revision == searchRevision, query == submittedQuery { isSearchingDatabase = false }
+        }
+        databaseResults = []
         databaseError = nil
-        try? await Task.sleep(for: .milliseconds(350))
         guard !Task.isCancelled else { return }
         do {
             let results = try await store.searchCatalogue(query)
-            guard !Task.isCancelled, query == searchText.trimmed else { return }
+            guard !Task.isCancelled, revision == searchRevision, query == submittedQuery else { return }
             databaseResults = results
         } catch is CancellationError {
             return
         } catch {
-            guard !Task.isCancelled else { return }
+            guard !Task.isCancelled, revision == searchRevision, query == submittedQuery else { return }
             databaseResults = []
-            databaseError = "The food database could not be reached. You can still reuse or enter a food manually."
+            databaseError = String(
+                localized: "The food database could not be reached. You can still reuse or enter a food manually.",
+                bundle: .app,
+                locale: .app
+            )
         }
         isSearchingDatabase = false
     }
@@ -327,6 +388,9 @@ private struct FoodPortionView: View {
     let lockedForRetry: Bool
     let onAdd: (FoodEntry) -> Void
     @State private var quantity: String
+    @State private var usesMeasurement: Bool
+    @State private var usesOunces = false
+    @State private var servingGrams = ""
 
     init(food: FoodEntry, servingDescription: String, isSaving: Bool,
          error: String?, lockedForRetry: Bool, onAdd: @escaping (FoodEntry) -> Void) {
@@ -336,12 +400,26 @@ private struct FoodPortionView: View {
         self.error = error
         self.lockedForRetry = lockedForRetry
         self.onAdd = onAdd
-        _quantity = State(initialValue: food.servings.nutritionText)
+        let measured = servingDescription == "100 g" || servingDescription == "100 ml"
+        _usesMeasurement = State(initialValue: measured)
+        _quantity = State(initialValue: (food.servings * (measured ? 100 : 1))
+            .formatted(.number.locale(.app).precision(.fractionLength(0...12)).grouping(.never)))
     }
 
     private var servings: Decimal? {
-        guard let value = Decimal(string: quantity, locale: .current), value > 0, value <= 1000 else { return nil }
-        return value
+        guard let value = FoodPortionMeasurement.positive(quantity, locale: .app) else { return nil }
+        return FoodPortionMeasurement.multiplier(amount: value, measured: usesMeasurement,
+            ounces: usesOunces && !isLiquid, gramsPerServing: measurementBasis)
+    }
+    private var isLiquid: Bool { servingDescription == "100 ml" }
+    private var measurementBasis: Decimal? {
+        if servingDescription == "100 g" || isLiquid { return 100 }
+        return FoodPortionMeasurement.positive(servingGrams, locale: .app)
+    }
+    private var measurementFactor: Decimal? {
+        guard usesMeasurement else { return 1 }
+        guard let basis = measurementBasis else { return nil }
+        return basis / (usesOunces && !isLiquid ? FoodPortionMeasurement.gramsPerOunce : 1)
     }
     private var nutrition: NutritionAmount { food.nutritionPerServing * (servings ?? 0) }
 
@@ -351,24 +429,39 @@ private struct FoodPortionView: View {
                 Text("How much did you have?").font(.community(.largeTitle, weight: .bold))
                 Text(food.name).font(.community(.subheadline)).foregroundStyle(.secondary)
                 Text("YOUR PORTION").font(.community(.caption, weight: .semibold)).foregroundStyle(.secondary)
-                HStack {
-                    Button { adjust(by: Decimal(string: "-0.5")!) } label: {
-                        Image(systemName: "minus").frame(minWidth: 44, minHeight: 44)
-                    }.buttonStyle(.bordered).buttonBorderShape(.circle)
-                        .accessibilityLabel("Decrease servings")
-                    Spacer()
-                    TextField("1", text: $quantity)
+                VStack(alignment: .leading, spacing: 16) {
+                    Picker("Portion", selection: Binding(get: { usesMeasurement }, set: { selected in
+                        let previous = servings
+                        usesMeasurement = selected
+                        restoreQuantity(previous)
+                    })) {
+                        if isLiquid { Text("Millilitres").tag(true) }
+                        else { Text("Weight").tag(true) }
+                        Text("Servings").tag(false)
+                    }.pickerStyle(.segmented)
+                    if usesMeasurement && !isLiquid {
+                        Picker("Weight", selection: Binding(get: { usesOunces }, set: { selected in
+                            let previous = servings
+                            usesOunces = selected
+                            restoreQuantity(previous)
+                        })) {
+                            Text("Grams").tag(false)
+                            Text("Ounces").tag(true)
+                        }.pickerStyle(.segmented)
+                        if servingDescription != "100 g" {
+                            Text("Grams in one serving")
+                            TextField("Grams in one serving", text: $servingGrams)
+                                .keyboardType(.decimalPad).textFieldStyle(.roundedBorder)
+                            Text("Enter the weight of one serving from the label. Do not guess.")
+                                .font(.community(.caption)).foregroundStyle(.secondary)
+                        }
+                    }
+                    Text(portionUnit).font(.community(.headline))
+                    TextField("Quantity", text: $quantity)
                         .keyboardType(.decimalPad)
                         .font(.community(.largeTitle, weight: .bold))
-                        .multilineTextAlignment(.center)
-                        .frame(width: 130, height: 130)
-                        .overlay(Circle().strokeBorder(RepbaseDesign.accent, lineWidth: 3))
-                        .accessibilityLabel("Servings")
-                    Spacer()
-                    Button { adjust(by: Decimal(string: "0.5")!) } label: {
-                        Image(systemName: "plus").frame(minWidth: 44, minHeight: 44)
-                    }.buttonStyle(.bordered).buttonBorderShape(.circle)
-                        .accessibilityLabel("Increase servings")
+                        .textFieldStyle(.roundedBorder)
+                        .accessibilityLabel(portionUnit)
                 }
                 .disabled(isSaving || lockedForRetry)
                 Text("Per serving: \(servingDescription)")
@@ -377,12 +470,12 @@ private struct FoodPortionView: View {
                     Text("For your portion").foregroundStyle(.secondary)
                     Text("\(nutrition.calories.nutritionText) kcal").font(.community(.largeTitle, weight: .bold))
                     ForEach(Macro.allCases) { macro in
-                        Text("\(macro.grams(in: nutrition).nutritionText) g \(macro.title)")
+                        Text(amountText(for: macro))
                             .font(.community(.subheadline)).foregroundStyle(macro.color)
                     }
                 }
                 if let error { Text(error).foregroundStyle(.red).accessibilityAddTraits(.isStaticText) }
-                if servings == nil { Text("Enter a quantity greater than zero, up to 1,000 servings.").foregroundStyle(.secondary) }
+                if servings == nil { Text("Check the portion quantity.").foregroundStyle(.secondary) }
                 Button(isSaving ? "Saving…" : lockedForRetry ? "Retry adding food" : "Add to meal") {
                     guard let servings else { return }
                     var entry = food
@@ -404,8 +497,29 @@ private struct FoodPortionView: View {
         }
     }
 
-    private func adjust(by delta: Decimal) {
-        quantity = min(1000, max(Decimal(string: "0.5")!, (servings ?? 1) + delta)).nutritionText
+    /// Whole phrases per macro, so a translation can put words between the
+    /// amount and the name.
+    private func amountText(for macro: Macro) -> LocalizedStringKey {
+        let grams = macro.grams(in: nutrition).nutritionText
+        switch macro {
+        case .protein: return "\(grams) g Protein"
+        case .carbs: return "\(grams) g Carbs"
+        case .fat: return "\(grams) g Fat"
+        }
+    }
+
+    private func restoreQuantity(_ previous: Decimal?) {
+        guard let previous, let factor = measurementFactor else {
+            quantity = ""
+            return
+        }
+        quantity = (previous * factor).formatted(.number.locale(.app).precision(.fractionLength(0...12)).grouping(.never))
+    }
+
+    private var portionUnit: LocalizedStringKey {
+        if !usesMeasurement { return "Servings" }
+        if isLiquid { return "Millilitres" }
+        return usesOunces ? "Ounces" : "Grams"
     }
 }
 
@@ -417,7 +531,7 @@ private extension String {
 ///
 /// Says what the numbers are measured against, which the recents row has no
 /// need to: a food logged before carries the serving it was logged with, while
-/// nearly everything out of FoodData Central is per 100 g. Adding one without
+/// catalogue products may be per 100 g, 100 ml, or a labelled serving. Adding one without
 /// reading that is how a chicken breast gets logged as a third of itself.
 private struct DatabaseFoodRow: View {
     let result: FoodDatabaseResult

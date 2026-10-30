@@ -5,6 +5,7 @@
 //  Created by the Rytivo project on 8/9/26.
 //
 
+import Foundation
 import RepbaseAPI
 import SwiftUI
 import UIKit
@@ -128,6 +129,7 @@ struct IOS_FrontendApp: App {
                 .environment(gearStore)
                 .environment(cycleStore)
                 .environment(\.font, .community(.body))
+                .appLanguage()
                 .preferredColorScheme(appearance.colorScheme)
                 // preferredColorScheme reaches the nearest enclosing
                 // presentation and stops. Settings is a fullScreenCover, which
@@ -195,8 +197,10 @@ private struct AppRootView: View {
             || environment["REPBASE_STEPS_PREVIEW"] != nil
             || environment["REPBASE_CYCLE_PREVIEW"] != nil
             || environment["REPBASE_SOCIAL_PREVIEW"] != nil
+            || environment["REPBASE_WORKOUT_PREVIEW"] != nil
             || environment["REPBASE_PROMPT_PREVIEW"] != nil
             || environment["REPBASE_LIFTS_PREVIEW"] != nil
+            || environment["REPBASE_LANGUAGE_PREVIEW"] != nil
     }
 #endif
 
@@ -291,11 +295,38 @@ private struct AppRootView: View {
                         // `-avatar` shows the profile configuration of the
                         // same view: square, circular, no choice of shape.
                         PhotoCropperPreview()
+                    case "follow":
+                        // Every state of the follow button and its label,
+                        // which otherwise needs a second account in each
+                        // relationship to see.
+                        FollowStatesPreview()
                     default:
                         SocialFeedView()
                     }
                 }
                 .environment(SocialStore.preview)
+            } else if let workoutPreview = ProcessInfo.processInfo.environment["REPBASE_WORKOUT_PREVIEW"] {
+                // The live lifting screen, the plan review and workout
+                // settings, each a server and several taps away. "active"
+                // also starts the Lock Screen activity, which the simulator
+                // shows on its own lock screen.
+                switch workoutPreview {
+                case "builder":
+                    WorkoutEditorView(mode: .edit(WorkoutStore.previewWorkouts[0]))
+                        .environment(WorkoutStore.previewWithLibrary)
+                case "settings":
+                    NavigationStack { WorkoutSettingsView() }
+                        .environment(WorkoutStore.previewWithLibrary)
+                case "saved":
+                    NavigationStack { SavedWorkoutsView() }
+                        .environment(WorkoutStore.previewWithLibrary)
+                case "effort":
+                    EffortChartPreviewScreen()
+                default:
+                    let store = WorkoutStore.sharedPreviewActiveSession
+                    NavigationStack { DayWorkoutView(day: store.activeSession?.day ?? .monday) }
+                        .environment(store)
+                }
             } else if ProcessInfo.processInfo.environment["REPBASE_CYCLE_PREVIEW"] != nil {
                 // A rotation is several taps deep and needs a saved library
                 // behind it, neither of which a script can arrange.
@@ -404,6 +435,12 @@ private struct AppRootView: View {
                       let document = LegalDocuments.all.first(where: { $0.id == name }) {
                 NavigationStack {
                     LegalDocumentView(document: document)
+                }
+            } else if ProcessInfo.processInfo.environment["REPBASE_LANGUAGE_PREVIEW"] != nil {
+                // Settings > Language is behind the profile menu and a cover,
+                // and simctl cannot tap its way there.
+                NavigationStack {
+                    LanguageSettingsView()
                 }
             } else if ProcessInfo.processInfo.environment["REPBASE_AUTH_PREVIEW"] != nil
                         || ProcessInfo.processInfo.environment["REPBASE_RESET_PREVIEW"] != nil {
@@ -668,7 +705,7 @@ private struct AppRootView: View {
                 token: token
             )
             guard authentication.token == token, !Task.isCancelled else { return }
-            await plannerStore.syncScheduledWorkouts(workoutStore.currentWeekWorkouts)
+            await plannerStore.refreshScheduledWorkouts()
             guard authentication.token == token, !Task.isCancelled else { return }
             await rescheduleReminders()
             // So the icon is right from launch rather than only after the
@@ -678,12 +715,14 @@ private struct AppRootView: View {
             guard authentication.token == token, !Task.isCancelled else { return }
             await workoutStore.retryPendingWorkoutSaves()
         }
-        .task(id: workoutStore.currentWeekWorkouts) {
+        // A revision also changes for an empty/identical current week: stopping
+        // a rotation can remove future dates without changing this week's rows.
+        .task(id: workoutStore.calendarRevision) {
 #if DEBUG
             guard Self.isPreviewing == false else { return }
 #endif
             guard authentication.token != nil else { return }
-            await plannerStore.syncScheduledWorkouts(workoutStore.currentWeekWorkouts)
+            await plannerStore.refreshScheduledWorkouts()
             await rescheduleReminders()
         }
         // A task added, moved, finished or deleted changes what should be
@@ -701,6 +740,14 @@ private struct AppRootView: View {
 #endif
             guard authentication.token != nil else { return }
             await rescheduleReminders()
+        }
+        // A reminder keeps the words it was scheduled with, and its mute
+        // button the language the categories were registered in. Choosing a
+        // language in Settings rewrites both, so tonight's reminder does not
+        // arrive in the language just left.
+        .onChange(of: AppLocalization.shared.language) {
+            NotificationScheduler.shared.registerCategories()
+            Task { await rescheduleReminders() }
         }
     }
 
@@ -759,7 +806,7 @@ private struct AppRootView: View {
                 VStack(spacing: 20) {
                     Text("Let's reconnect.")
                         .font(.community(.title2, weight: .semibold))
-                    Text(authentication.errorMessage ?? "Your saved login is safe.")
+                    Text(authentication.errorMessage ?? String(localized: "Your saved login is safe.", bundle: .app, locale: .app))
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                     Button("Try again") {
@@ -792,6 +839,32 @@ private struct AppRootView: View {
 }
 
 #if DEBUG
+/// The effort chart as the activity log shows it, rated at
+/// `REPBASE_EFFORT_VALUE` (64 if unset, "none" for not rated). Logging an
+/// activity needs a server and several taps, and screenshots on several screen
+/// sizes need neither.
+private struct EffortChartPreviewScreen: View {
+    @State private var value: Int? = {
+        let raw = ProcessInfo.processInfo.environment["REPBASE_EFFORT_VALUE"]
+        return raw == "none" ? nil : Int(raw ?? "") ?? 64
+    }()
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("HOW HARD WAS IT?")
+                    .font(.community(.caption, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                EffortChart(value: $value, phase: .prepare)
+                    .padding(14)
+                    .workoutOutline(radius: 18)
+            }
+            .padding(20)
+        }
+        .repbaseScreen(.prepare)
+    }
+}
+
 /// The rotation editor with the workout builder already pushed onto it.
 ///
 /// `simctl` cannot tap, so the only way to see what the pushed builder looks
@@ -809,6 +882,34 @@ private struct CycleEditorPreviewPush: View {
                     suggestions: workoutStore.knownWorkouts
                 )
             }
+    }
+}
+#endif
+
+#if DEBUG
+/// The follow control in each relationship, for checking in the simulator.
+private struct FollowStatesPreview: View {
+    private let person = PostAuthor(id: 77, username: "sam.lifts", firstName: "Sam", lastName: "Lee", photoURL: nil)
+    private let states: [(String, FollowRelationship)] = [
+        ("none", .init(outgoing: .none, followsViewer: false, isPrivate: false)),
+        ("they follow you", .init(outgoing: .none, followsViewer: true, isPrivate: false)),
+        ("private", .init(outgoing: .none, followsViewer: false, isPrivate: true)),
+        ("requested", .init(outgoing: .requested, followsViewer: false, isPrivate: true)),
+        ("one way", .init(outgoing: .following, followsViewer: false, isPrivate: false)),
+        ("mutual", .init(outgoing: .following, followsViewer: true, isPrivate: false)),
+    ]
+
+    var body: some View {
+        List(states, id: \.0) { state in
+            VStack(alignment: .leading, spacing: 8) {
+                Text(verbatim: state.0).font(.caption).foregroundStyle(.secondary)
+                RelationshipBadge(relationship: state.1)
+                HStack {
+                    FollowButton(person: person, relationship: state.1, viewerID: 1, size: .large)
+                    FollowButton(person: person, relationship: state.1, viewerID: 1)
+                }
+            }
+        }
     }
 }
 #endif

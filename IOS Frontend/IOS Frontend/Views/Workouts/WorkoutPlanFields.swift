@@ -29,7 +29,7 @@ struct WorkoutPlanFields: View {
             }
 
             if sections != .identity {
-                if draft.type.tracksDistance {
+                if draft.tracksDistance {
                     distanceCard
                 } else {
                     exerciseSection
@@ -155,7 +155,7 @@ struct WorkoutPlanFields: View {
     private func reuse(_ workout: WorkoutSummary) {
         withAnimation(.snappy) {
             draft.name = workout.name
-            draft.type = workout.type
+            draft.activity = workout.activity
             draft.exercises = workout.exercises.map { exercise in
                 Exercise(
                     serverID: exercise.serverID,
@@ -167,7 +167,7 @@ struct WorkoutPlanFields: View {
         }
     }
 
-    private var namePlaceholder: String {
+    private var namePlaceholder: LocalizedStringKey {
         switch draft.type {
         case .lifting: return "Example: Push Day"
         case .running: return "Example: Morning Run"
@@ -185,7 +185,7 @@ struct WorkoutPlanFields: View {
             HStack(spacing: 7) {
                 ForEach(WorkoutType.allCases) { type in
                     Button {
-                        withAnimation(.snappy) { draft.type = type }
+                        withAnimation(.snappy) { draft.activity = .legacyDefault(for: type) }
                     } label: {
                         VStack(spacing: 4) {
                             WorkoutInkArtwork(type: type, size: 54)
@@ -233,7 +233,9 @@ struct WorkoutPlanFields: View {
         VStack(alignment: .leading, spacing: 8) {
             Label("How this is logged", systemImage: "stopwatch")
                 .font(.community(.subheadline, weight: .semibold))
-            Text("Start the session when you set off and end it when you finish. Rytivo follows your route by GPS and works out your distance, time, and pace — there is nothing to type in.")
+            Text(draft.activity.tracksRoute
+                 ? "Start the session when you set off and end it when you finish. Rytivo follows your route by GPS and works out your distance, time, and pace — there is nothing to type in."
+                 : "Start the session when you begin and end it when you finish. Rytivo times it, then asks how hard it felt. You can also log it afterwards from its day.")
                 .font(.community(.caption))
                 .foregroundStyle(phase.secondaryText)
         }
@@ -289,6 +291,7 @@ struct WorkoutPlanFields: View {
                                 Text(machine.title)
                                     .font(.community(.caption2, weight: .medium))
                                     .lineLimit(1)
+                                    .minimumScaleFactor(0.8)
                             }
                             .frame(width: 78)
                             .padding(.vertical, 10)
@@ -576,7 +579,7 @@ private struct ExercisePlanEditorCard: View {
 
     private func directAction(
         _ symbol: String,
-        label: String,
+        label: LocalizedStringKey,
         enabled: Bool,
         action: @escaping () -> Void
     ) -> some View {

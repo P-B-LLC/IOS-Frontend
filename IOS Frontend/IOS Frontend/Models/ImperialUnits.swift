@@ -37,23 +37,63 @@ nonisolated enum ImperialUnits {
         miles(fromKilometers: kilometersPerHour)
     }
 
+    // MARK: - Figures
+    //
+    // The number alone, for a screen that prints the unit beside it. Kept
+    // apart from the strings below rather than cut out of them: their unit is
+    // translated, so it is not always " mi" to cut off.
+
+    static func distanceFigure(kilometers: Double, decimals: Int = 2) -> String {
+        String(format: "%.\(decimals)f", miles(fromKilometers: kilometers))
+    }
+
+    static func speedFigure(kilometersPerHour: Double) -> String {
+        String(format: "%.1f", milesPerHour(fromKilometersPerHour: kilometersPerHour))
+    }
+
+    /// "8:51" from seconds per kilometre.
+    static func paceFigure(secondsPerKilometer seconds: Double) -> String {
+        let perMile = Int(paceSecondsPerMile(fromPerKilometer: seconds).rounded())
+        return String(format: "%d:%02d", perMile / 60, perMile % 60)
+    }
+
     // MARK: - Strings
 
     static func distanceText(kilometers: Double, decimals: Int = 2) -> String {
-        String(format: "%.\(decimals)f mi", miles(fromKilometers: kilometers))
+        String(
+            localized: "\(distanceFigure(kilometers: kilometers, decimals: decimals)) mi",
+            bundle: .app,
+            locale: .app,
+            comment: "A distance; mi is the abbreviation for miles"
+        )
     }
 
     static func elevationText(meters: Double) -> String {
-        String(format: "%.0f ft", feet(fromMeters: meters))
+        let figure = String(format: "%.0f", feet(fromMeters: meters))
+        return String(
+            localized: "\(figure) ft",
+            bundle: .app,
+            locale: .app,
+            comment: "A height climbed; ft is the abbreviation for feet"
+        )
     }
 
     static func speedText(kilometersPerHour: Double) -> String {
-        String(format: "%.1f mph", milesPerHour(fromKilometersPerHour: kilometersPerHour))
+        String(
+            localized: "\(speedFigure(kilometersPerHour: kilometersPerHour)) mph",
+            bundle: .app,
+            locale: .app,
+            comment: "A speed; mph is the abbreviation for miles per hour"
+        )
     }
 
     /// "8:51 /mi" from seconds per kilometre.
     static func paceText(secondsPerKilometer seconds: Double) -> String {
-        let perMile = Int(paceSecondsPerMile(fromPerKilometer: seconds).rounded())
-        return String(format: "%d:%02d /mi", perMile / 60, perMile % 60)
+        String(
+            localized: "\(paceFigure(secondsPerKilometer: seconds)) /mi",
+            bundle: .app,
+            locale: .app,
+            comment: "A pace in minutes and seconds; /mi means per mile"
+        )
     }
 }

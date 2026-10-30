@@ -59,21 +59,21 @@ nonisolated enum PlannerCategory: String, CaseIterable, Identifiable, Hashable, 
 
     var title: String {
         switch self {
-        case .habit: return "Habit"
-        case .workout: return "Workout"
-        case .errand: return "Errand"
-        case .study: return "Study"
-        case .sleep: return "Sleep"
-        case .health: return "Health"
-        case .work: return "Work"
-        case .home: return "Home"
-        case .birthday: return "Birthday"
-        case .holiday: return "Holiday"
-        case .appointment: return "Appointment"
-        case .meeting: return "Meeting"
-        case .travel: return "Travel"
-        case .social: return "Social"
-        case .other: return "Other"
+        case .habit: return String(localized: "Habit", bundle: .app, locale: .app)
+        case .workout: return String(localized: "Workout", bundle: .app, locale: .app)
+        case .errand: return String(localized: "Errand", bundle: .app, locale: .app)
+        case .study: return String(localized: "Study", bundle: .app, locale: .app, comment: "Planner category: studying")
+        case .sleep: return String(localized: "Sleep", bundle: .app, locale: .app, comment: "Planner category: sleeping")
+        case .health: return String(localized: "Health", bundle: .app, locale: .app, comment: "Planner category")
+        case .work: return String(localized: "Work", bundle: .app, locale: .app, comment: "Planner category: your job")
+        case .home: return String(localized: "Home", bundle: .app, locale: .app, comment: "Planner category: things around the house")
+        case .birthday: return String(localized: "Birthday", bundle: .app, locale: .app)
+        case .holiday: return String(localized: "Holiday", bundle: .app, locale: .app)
+        case .appointment: return String(localized: "Appointment", bundle: .app, locale: .app)
+        case .meeting: return String(localized: "Meeting", bundle: .app, locale: .app)
+        case .travel: return String(localized: "Travel", bundle: .app, locale: .app, comment: "Planner category: a trip")
+        case .social: return String(localized: "Social", bundle: .app, locale: .app, comment: "Planner category: a social occasion")
+        case .other: return String(localized: "Other", bundle: .app, locale: .app, comment: "Planner category for anything else")
         }
     }
 
@@ -133,8 +133,8 @@ nonisolated enum PlannerKind: String, CaseIterable, Identifiable, Hashable, Coda
 
     var title: String {
         switch self {
-        case .task: return "Task"
-        case .event: return "Event"
+        case .task: return String(localized: "Task", bundle: .app, locale: .app)
+        case .event: return String(localized: "Event", bundle: .app, locale: .app)
         }
     }
 }
@@ -158,9 +158,9 @@ nonisolated enum PlannerPriority: String, CaseIterable, Identifiable, Hashable, 
 
     var title: String {
         switch self {
-        case .low: return "Low"
-        case .normal: return "Normal"
-        case .high: return "High"
+        case .low: return String(localized: "Low", bundle: .app, locale: .app, comment: "A task's priority level")
+        case .normal: return String(localized: "Normal", bundle: .app, locale: .app, comment: "A task's priority level")
+        case .high: return String(localized: "High", bundle: .app, locale: .app, comment: "A task's priority level")
         }
     }
 
@@ -187,7 +187,7 @@ nonisolated enum PlannerPriority: String, CaseIterable, Identifiable, Hashable, 
     /// Only `high` speaks. A day where every row wore a badge would be a day
     /// with no emphasis in it, and `normal` is what most rows are.
     var badge: String? {
-        self == .high ? "HIGH PRIORITY" : nil
+        self == .high ? String(localized: "HIGH PRIORITY", bundle: .app, locale: .app) : nil
     }
 
     var symbolName: String {
@@ -218,9 +218,13 @@ nonisolated enum PlannerDuration {
         let hours = minutes / 60
         let rest = minutes % 60
         switch (hours, rest) {
-        case (0, let m): return "\(m) min"
-        case (let h, 0): return h == 1 ? "1 hour" : "\(h) hours"
-        case (let h, let m): return "\(h) hr \(m) min"
+        case (0, let m): return String(localized: "\(m) min", bundle: .app, locale: .app, comment: "A length of time in minutes")
+        case (let h, 0):
+            return h == 1
+                ? String(localized: "1 hour", bundle: .app, locale: .app)
+                : String(localized: "\(h) hours", bundle: .app, locale: .app)
+        case (let h, let m):
+            return String(localized: "\(h) hr \(m) min", bundle: .app, locale: .app, comment: "A length of time in hours and minutes")
         }
     }
 
@@ -257,7 +261,7 @@ nonisolated enum PlannerDuration {
             // written plainly rather than dropped.
             return String(format: "%02d:%02d", minutes / 60, minutes % 60)
         }
-        return moment.formatted(date: .omitted, time: .shortened)
+        return moment.formatted(Date.FormatStyle(date: .omitted, time: .shortened).locale(.app))
     }
 }
 

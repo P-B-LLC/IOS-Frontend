@@ -6,13 +6,13 @@
 > is served with `DEBUG` off.
 
 Two things have to be green before a version ships: the backend test suite in
-`P-B-LLC/repbase`, and the iOS build checks here. Both already run in CI. Until
-the step below is done, **neither one blocks anything** — and that is not a
-theoretical worry. Commit `18487ff` failed to compile the app target and
-reached `main` regardless, because a red CI run on a push has nothing attached
-to it.
+`P-B-LLC/repbase`, and the iOS build checks here. Both run in CI. The iOS `main`
+branch is protected by the live **Protect main** ruleset. Since 2026-10-27,
+promotion requires a PR and an up-to-date passing build, but no teammate approval.
+Use [TESTFLIGHT_WORKFLOW.md](TESTFLIGHT_WORKFLOW.md) for ongoing beta fixes;
+backend rules must be verified independently.
 
-## The current release candidate
+## Historical release candidate (2026-09-15)
 
 Recorded 2026-09-15. Both repositories, verified from a clean CI checkout
 rather than from either working machine.
@@ -53,31 +53,22 @@ code.
 
 ## The part that is a GitHub setting, not a file
 
-A workflow can report a failure; only **branch protection** can refuse a
-merge. That lives in repository settings, so no commit can switch it on. What
-*is* committed is the ruleset itself, ready to import:
+A workflow reports a result; the live GitHub ruleset enforces merge gates.
+The existing iOS [Protect main ruleset](https://github.com/P-B-LLC/IOS-Frontend/rules/23549107)
+requires a pull request, resolved conversations, and
+the GitHub Actions `build` check on an up-to-date candidate. Force pushes and
+deletion are blocked; the bypass list is empty, including for administrators.
+No teammate or latest-push approval is required; the PR author can merge their
+own PR once the checks pass and any review conversations are resolved.
 
-> Settings → Rules → Rulesets → **New ruleset** → **Import a ruleset**, and
-> pick `.github/rulesets/protect-main.json` from that repository's checkout.
-> Then **Create**.
+`.github/rulesets/protect-main.json` records those settings. It is not applied
+automatically by a commit. Update the existing live ruleset deliberately if
+the policy changes; do not import an older copy or create a duplicate.
 
-Once per repository, and the two files differ because the job lists do:
-`build` in `IOS-Frontend`, `test` and `postgres` in `repbase`. A job
-nobody has ticked is a check nobody is held to, so when a workflow gains a
-job, add it to the JSON and import again.
-
-**This changes how you push.** A required check cannot have passed for a
-commit that is not on GitHub yet, so pushing straight to `main` starts being
-refused: branch, push, open a pull request, let CI run, merge. That is the
-whole point — `18487ff` reached `main` exactly because a direct push had
-nothing attached to it — but it is a real change to a habit rather than a
-silent one, and worth knowing before the first time it stops you.
-
-For a genuine emergency, add yourself to the **Bypass list** after importing.
-Left empty, as it ships, the rule applies to everyone including the owner.
-
-Until this is on, the release gate catches a bad **tag** and a bad **commit**
-still reaches `main`.
+Do not relax protection to finish a release. If a check fails, fix the cause
+on a separate branch and rerun validation. GitHub protection cannot prevent a
+manual Xcode upload, so release operators must also verify the exact candidate
+and its test results before uploading to TestFlight.
 
 ## Checking a build without waiting for CI
 

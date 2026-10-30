@@ -374,7 +374,11 @@ final class FoodTrackingStore {
         // The meal has no server id yet, so there is nothing to attach food to.
         // Naming it beats "please try again", which never fixes this one.
         guard let serverID = mealServerID(mealID, on: date) else {
-            errorMessage = "That meal hasn't finished being created yet. Try again in a moment."
+            errorMessage = String(
+                localized: "That meal hasn't finished being created yet. Try again in a moment.",
+                bundle: .app,
+                locale: .app
+            )
             return false
         }
         let generation = connectionGeneration
@@ -505,7 +509,7 @@ final class FoodTrackingStore {
         to date: Date
     ) async -> PlanOutcome {
         guard let repository, !isSaving else {
-            return PlanOutcome(errorMessage: "Not connected to Rytivo.")
+            return PlanOutcome(errorMessage: String(localized: "Not connected to Rytivo.", bundle: .app, locale: .app))
         }
 
         let generation = connectionGeneration
@@ -918,12 +922,13 @@ extension FoodTrackingStore {
     }
     /// Foods from the public catalogue, through Repbase.
     ///
-    /// Returns nothing at all when there is no connection yet rather than
-    /// throwing: the picker is reachable before the first sync finishes, and
-    /// an empty catalogue with the recents still listed is a better answer
-    /// there than an error about a repository.
+    /// Unavailable is distinct from no matches; recents/manual entry remain
+    /// usable. Discard results belonging to an earlier account connection.
     func searchCatalogue(_ query: String) async throws -> [FoodDatabaseResult] {
-        guard let catalogue else { return [] }
-        return try await catalogue.search(query)
+        guard let catalogue else { throw URLError(.notConnectedToInternet) }
+        let generation = connectionGeneration
+        let results = try await catalogue.search(query)
+        guard generation == connectionGeneration, !Task.isCancelled else { throw CancellationError() }
+        return results
     }
 }

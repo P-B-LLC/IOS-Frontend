@@ -5,6 +5,7 @@
 //  A month of eating at once, reached from the week strip.
 //
 
+import Foundation
 import SwiftUI
 
 struct FoodMonthView: View {
@@ -51,14 +52,14 @@ struct FoodMonthView: View {
             Button {
                 changeMonth(by: -1)
             } label: {
-                Image(systemName: "chevron.left").frame(width: 30, height: 30)
+                Image(systemName: "chevron.backward").frame(width: 30, height: 30)
             }
             .accessibilityLabel("Previous month")
 
             Spacer()
 
             VStack(spacing: 2) {
-                Text(month.formatted(.dateTime.month(.wide).year()))
+                Text(month.formatted(.dateTime.month(.wide).year().locale(.app)))
                     .font(.community(.headline))
                 Text(monthSummary)
                     .font(.community(.caption))
@@ -70,7 +71,7 @@ struct FoodMonthView: View {
             Button {
                 changeMonth(by: 1)
             } label: {
-                Image(systemName: "chevron.right").frame(width: 30, height: 30)
+                Image(systemName: "chevron.forward").frame(width: 30, height: 30)
             }
             .accessibilityLabel("Next month")
         }
@@ -85,11 +86,13 @@ struct FoodMonthView: View {
     /// counted by eye.
     private var monthSummary: String {
         let logged = daysInMonth.filter { store.hasLoggedFood(on: $0) }.count
-        guard logged > 0 else { return "Nothing logged yet" }
+        guard logged > 0 else { return String(localized: "Nothing logged yet", bundle: .app, locale: .app) }
         // Spelled out rather than using ^[...](inflect:), which only works on
         // a LocalizedStringKey literal. Handed a String it prints the markup
         // verbatim, which is what it did here.
-        return "\(logged) \(logged == 1 ? "day" : "days") logged"
+        return logged == 1
+            ? String(localized: "1 day logged", bundle: .app, locale: .app)
+            : String(localized: "\(logged) days logged", bundle: .app, locale: .app)
     }
 
     private var weekdayHeadings: some View {
@@ -137,7 +140,7 @@ struct FoodMonthView: View {
         let isSelected = calendar.isDate(day, inSameDayAs: selectedDate)
 
         return VStack(spacing: 2) {
-            Text(day.formatted(.dateTime.day()))
+            Text(day.formatted(.dateTime.day().locale(.app)))
                 .font(.community(.caption, weight: .bold).monospacedDigit())
                 .foregroundStyle(
                     isSelected ? RepbasePalette.cream : timeOfDay.primaryText
@@ -182,9 +185,9 @@ struct FoodMonthView: View {
         logged: Bool,
         calories: Decimal
     ) -> String {
-        let date = day.formatted(.dateTime.weekday(.wide).month(.wide).day())
-        guard logged else { return "\(date), nothing logged" }
-        return "\(date), \(calories.nutritionText) calories"
+        let date = day.formatted(.dateTime.weekday(.wide).month(.wide).day().locale(.app))
+        guard logged else { return String(localized: "\(date), nothing logged", bundle: .app, locale: .app) }
+        return String(localized: "\(date), \(calories.nutritionText) calories", bundle: .app, locale: .app)
     }
 
     private var legend: some View {
@@ -221,7 +224,10 @@ struct FoodMonthView: View {
     }
 
     private var orderedWeekdaySymbols: [String] {
-        let symbols = calendar.veryShortWeekdaySymbols
+        // Names in the app's language; the first weekday stays the grid's.
+        var localized = calendar
+        localized.locale = .app
+        let symbols = localized.veryShortWeekdaySymbols
         let offset = calendar.firstWeekday - 1
         return Array(symbols[offset...] + symbols[..<offset])
     }

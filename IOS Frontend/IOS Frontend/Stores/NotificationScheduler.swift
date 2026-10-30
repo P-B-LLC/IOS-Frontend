@@ -105,21 +105,31 @@ final class NotificationScheduler: NSObject {
     /// Registers the categories and takes delivery of taps. Call once.
     func start() {
         centre.delegate = self
+        registerCategories()
+    }
+
+    /// Puts the mute buttons on in the language chosen right now.
+    ///
+    /// iOS keeps the button titles it was handed, so a language picked in
+    /// Settings would otherwise only reach them at the next launch. Call this
+    /// again when the language changes, and then `reschedule`: every pending
+    /// reminder also carries the words it was written with.
+    func registerCategories() {
         centre.setNotificationCategories([
             category(
                 Category.task,
                 actionID: Action.muteTask,
-                title: "Mute this task"
+                title: String(localized: "Mute this task", bundle: .app, locale: .app)
             ),
             category(
                 Category.food,
                 actionID: Action.muteFood,
-                title: "Mute for today"
+                title: String(localized: "Mute for today", bundle: .app, locale: .app)
             ),
             category(
                 Category.workout,
                 actionID: Action.muteWorkout,
-                title: "Mute for today"
+                title: String(localized: "Mute for today", bundle: .app, locale: .app)
             ),
         ])
     }
@@ -170,7 +180,15 @@ final class NotificationScheduler: NSObject {
         guard settings.authorizationStatus == .authorized
             || settings.authorizationStatus == .provisional
         else { return }
-        centre.removeAllPendingNotificationRequests()
+        // Everything this schedules, but not the rest timer's alert. That one
+        // belongs to the workout in progress, and RestTimerNotifier never
+        // schedules the same rest twice, so a reschedule mid-rest (a relaunch
+        // reloading the week does one) left the rest ending in silence.
+        let pending = await centre.pendingNotificationRequests()
+        guard generation == run, !Task.isCancelled else { return }
+        centre.removePendingNotificationRequests(
+            withIdentifiers: pending.map(\.identifier).filter { $0 != RestTimerNotifier.identifier }
+        )
 
         await Self.$schedulingGeneration.withValue(run) {
             if isOn(Setting.food) { await scheduleFood(now: now) }
@@ -226,8 +244,8 @@ final class NotificationScheduler: NSObject {
     /// app's things it is costs a couple of words and answers that.
     static func headline(for entry: PlannerEntry) -> String {
         switch entry.kind {
-        case .task: return "Upcoming Task: \(entry.title)"
-        case .event: return "Upcoming Event: \(entry.title)"
+        case .task: return String(localized: "Upcoming Task: \(entry.title)", bundle: .app, locale: .app)
+        case .event: return String(localized: "Upcoming Event: \(entry.title)", bundle: .app, locale: .app)
         }
     }
 
@@ -241,15 +259,15 @@ final class NotificationScheduler: NSObject {
         if let when = entry.displayTimeRange ?? entry.displayTime {
             parts.append(when)
         }
-        if entry.priority == .high { parts.append("High priority") }
+        if entry.priority == .high { parts.append(String(localized: "High priority", bundle: .app, locale: .app)) }
         return parts.joined(separator: " \u{00B7} ")
     }
 
     private static func countdown(_ minutes: Int) -> String {
         switch minutes {
-        case 60: return "In 1 hour"
-        case 1: return "In 1 minute"
-        default: return "In \(minutes) minutes"
+        case 60: return String(localized: "In 1 hour", bundle: .app, locale: .app)
+        case 1: return String(localized: "In 1 minute", bundle: .app, locale: .app)
+        default: return String(localized: "In \(minutes) minutes", bundle: .app, locale: .app)
         }
     }
 
@@ -276,15 +294,20 @@ final class NotificationScheduler: NSObject {
     /// rhythm whatever the calendar says.
     private func scheduleFood(now: Date) async {
         guard !isMutedToday(Key.foodMutedOn, now: now) else { return }
-        let times: [(hour: Int, meal: String, body: String)] = [
-            (9, "Breakfast", "Log what you had while it is still fresh."),
-            (14, "Lunch", "Log it before the afternoon runs away."),
-            (20, "Dinner", "Round off the day, and anything after it."),
+        // Whole titles rather than the meal dropped into one: a translation
+        // may need the meal's name to change form around it.
+        let times: [(hour: Int, title: String, body: String)] = [
+            (9, String(localized: "Food Check-In: Breakfast", bundle: .app, locale: .app),
+             String(localized: "Log what you had while it is still fresh.", bundle: .app, locale: .app)),
+            (14, String(localized: "Food Check-In: Lunch", bundle: .app, locale: .app),
+             String(localized: "Log it before the afternoon runs away.", bundle: .app, locale: .app)),
+            (20, String(localized: "Food Check-In: Dinner", bundle: .app, locale: .app),
+             String(localized: "Round off the day, and anything after it.", bundle: .app, locale: .app)),
         ]
-        for (hour, meal, body) in times.prefix(Budget.food) {
+        for (hour, title, body) in times.prefix(Budget.food) {
             await addRepeatingDaily(
                 id: "rytivo.food.\(hour)",
-                title: "Food Check-In: \(meal)",
+                title: title,
                 body: body,
                 hour: hour,
                 category: Category.food
@@ -319,8 +342,8 @@ final class NotificationScheduler: NSObject {
             let name = entry.workoutName ?? entry.title
             await add(
                 id: "rytivo.workout.\(Self.dayKey(day))",
-                title: "Training Session Today: \(name)",
-                body: "No time set for it, so it is yours to place in the day.",
+                title: String(localized: "Training Session Today: \(name)", bundle: .app, locale: .app),
+                body: String(localized: "No time set for it, so it is yours to place in the day.", bundle: .app, locale: .app),
                 at: fires,
                 category: Category.workout,
                 userInfo: [:]
@@ -522,6 +545,13 @@ extension NotificationScheduler: UNUserNotificationCenterDelegate {
         withCompletionHandler completionHandler:
             @escaping (UNNotificationPresentationOptions) -> Void
     ) {
+        // The end of a rest, while the workout screen can show it itself:
+        // the sound is the useful part, and a banner would cover the set the
+        // person is about to log.
+        if notification.request.identifier == RestTimerNotifier.identifier {
+            completionHandler([.sound])
+            return
+        }
         let owner = notification.request.content.userInfo["accountID"] as? Int
         Task { @MainActor in
             completionHandler(owner != nil && owner == self.accountID ? [.banner, .sound] : [])

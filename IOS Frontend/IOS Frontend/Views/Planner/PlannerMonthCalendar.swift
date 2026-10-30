@@ -5,6 +5,7 @@
 //  The month grid at the top of the planner.
 //
 
+import Foundation
 import SwiftUI
 
 struct PlannerMonthCalendar: View {
@@ -65,7 +66,7 @@ struct PlannerMonthCalendar: View {
 
     private var monthControls: some View {
         HStack(spacing: 10) {
-            stepper(systemImage: "chevron.left", label: "Previous month", months: -1)
+            stepper(systemImage: "chevron.backward", label: "Previous month", months: -1)
             Spacer(minLength: 0)
             Button("Today") { store.showToday() }
                 .font(.community(.footnote, weight: .semibold))
@@ -74,7 +75,7 @@ struct PlannerMonthCalendar: View {
                 .tint(PlannerStyle.accentText)
                 .frame(minHeight: 44)
             Spacer(minLength: 0)
-            stepper(systemImage: "chevron.right", label: "Next month", months: 1)
+            stepper(systemImage: "chevron.forward", label: "Next month", months: 1)
 
         }
     }
@@ -87,14 +88,14 @@ struct PlannerMonthCalendar: View {
         }
     }
 
-    private func legendItem(_ title: String, color: Color) -> some View {
+    private func legendItem(_ title: LocalizedStringKey, color: Color) -> some View {
         HStack(spacing: 4) {
             Circle().fill(color).frame(width: 6, height: 6)
             Text(title).font(.community(.caption)).foregroundStyle(timeOfDay.secondaryText)
         }
     }
 
-    private func stepper(systemImage: String, label: String, months: Int) -> some View {
+    private func stepper(systemImage: String, label: LocalizedStringKey, months: Int) -> some View {
         Button {
             store.showMonth(offsetBy: months)
         } label: {
@@ -113,9 +114,12 @@ struct PlannerMonthCalendar: View {
     private var weekdayLabels: some View {
         HStack(spacing: 0) {
             ForEach(Weekday.allCases) { day in
-                Text(day.shortName.uppercased())
+                Text(day.shortName)
+                    .textCase(.uppercase)
                     .font(.community(size: 10, weight: .semibold))
                     .foregroundStyle(timeOfDay.secondaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
                     .frame(maxWidth: .infinity)
             }
         }
@@ -226,9 +230,9 @@ struct PlannerMonthCalendar: View {
     }
 
     private func accessibilityLabel(for date: Date) -> String {
-        let day = date.formatted(.dateTime.weekday(.wide).month(.wide).day())
+        let day = date.formatted(.dateTime.weekday(.wide).month(.wide).day().locale(.app))
         let counts = store.taskCounts(on: date)
         guard counts.total > 0 else { return day }
-        return "\(day), \(counts.done) of \(counts.total) tasks done"
+        return String(localized: "\(day), \(counts.done) of \(counts.total) tasks done", bundle: .app, locale: .app)
     }
 }

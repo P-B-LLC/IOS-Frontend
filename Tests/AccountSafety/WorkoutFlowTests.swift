@@ -13,12 +13,27 @@ final class WorkoutFlowTests: XCTestCase {
 
     func testWeightConversionPreservesKilogramWireValuesAndInvalidInput() {
         XCTAssertEqual(WorkoutWeightUnit.imperial.kilograms(display: "135"), "61.23")
-        XCTAssertEqual(WorkoutWeightUnit.imperial.display(kilograms: "61.23"), "134.99")
+        // Pounds are shown to a tenth from two-decimal kilograms, so 135 lb
+        // typed in comes back as 135 rather than 134.99.
+        XCTAssertEqual(WorkoutWeightUnit.imperial.display(kilograms: "61.23"), "135")
         XCTAssertEqual(WorkoutWeightUnit.metric.kilograms(display: "12,5"), "12.5")
         XCTAssertEqual(WorkoutWeightUnit.metric.kilograms(display: ""), "")
         XCTAssertEqual(WorkoutWeightUnit.imperial.kilograms(display: "0"), "0")
         XCTAssertEqual(WorkoutWeightUnit.imperial.kilograms(display: ".5"), "0.23")
         XCTAssertEqual(WorkoutWeightUnit.imperial.kilograms(display: "12junk"), "12junk")
+    }
+
+    /// Arabic and Devanagari keyboards type their own digits; the set has to
+    /// log all the same.
+    func testNativeKeyboardDigitsAreReadAsNumbers() {
+        XCTAssertEqual(NumberInput.latinDigits("٦٠٫٥"), "60.5")
+        XCTAssertEqual(NumberInput.latinDigits("६०"), "60")
+        XCTAssertEqual(NumberInput.latinDigits("12junk"), "12junk")
+        XCTAssertEqual(WorkoutWeightUnit.metric.kilograms(display: "٦٠"), "60")
+        XCTAssertEqual(WorkoutWeightUnit.imperial.kilograms(display: "١٣٥"), "61.23")
+        var draft = ActivityLogDraft(activity: .running)
+        draft.minutes = "٤٥"
+        XCTAssertEqual(draft.durationSeconds, 2700)
     }
     func testSwitchingPreservesRequestedExerciseEvenWhenItIsComplete() {
         let a = UUID(), b = UUID()

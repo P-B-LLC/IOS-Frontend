@@ -166,22 +166,24 @@ struct PostComposerView: View {
         isOpeningCamera = true
         defer { isOpeningCamera = false }
         guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
-            cameraMessage = "Camera capture is unavailable here. Choose a photo or video from your camera roll."
+            cameraMessage = String(localized: "Camera capture is unavailable here. Choose a photo or video from your camera roll.", bundle: .app, locale: .app)
             return
         }
         guard AVCaptureDevice.authorizationStatus(for: .video) != .restricted else {
-            cameraMessage = "Camera access is restricted on this device. You can still choose from your camera roll."
+            cameraMessage = String(localized: "Camera access is restricted on this device. You can still choose from your camera roll.", bundle: .app, locale: .app)
             return
         }
         let cameraAllowed = await AVCaptureDevice.requestAccess(for: .video)
         guard !Task.isCancelled else { return }
         guard cameraAllowed else {
-            cameraMessage = "Allow camera access in Settings, or choose from your camera roll."
+            cameraMessage = String(localized: "Allow camera access in Settings, or choose from your camera roll.", bundle: .app, locale: .app)
             return
         }
         cameraAllowsVideo = await AVCaptureDevice.requestAccess(for: .audio)
         guard !Task.isCancelled else { return }
-        cameraMessage = cameraAllowsVideo ? nil : "Microphone access is off. You can still take a photo or choose a video from your camera roll."
+        cameraMessage = cameraAllowsVideo
+            ? nil
+            : String(localized: "Microphone access is off. You can still take a photo or choose a video from your camera roll.", bundle: .app, locale: .app)
         showingCamera = true
     }
 
@@ -238,7 +240,7 @@ struct PostComposerView: View {
                 VStack(alignment: .leading, spacing: 24) {
                     if !social.isConnected {
                         notice(
-                            "Connect to Rytivo to post.",
+                            String(localized: "Connect to Rytivo to post.", bundle: .app, locale: .app),
                             timeOfDay: timeOfDay
                         )
                     }
@@ -349,7 +351,7 @@ struct PostComposerView: View {
 
     /// Names what is being shared. A photo or video with nothing linked is
     /// not a workout post, whichever tab the picker below is showing.
-    private var introductionEyebrow: String {
+    private var introductionEyebrow: LocalizedStringKey {
         if isMediaOnly {
             return videoDraft != nil && photoData == nil ? "SHARE A VIDEO" : "SHARE A PHOTO"
         }
@@ -451,8 +453,7 @@ struct PostComposerView: View {
     private func candidateSection(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(alignment: .leading, spacing: 13) {
             EditorialSectionTitle(
-                title: lockedSource.map { "Choose a \($0.itemNoun)" }
-                    ?? "Choose something",
+                title: candidateSectionTitle,
                 detail: hasMedia
                     ? "Optional with a photo or video. Linking something adds its details."
                     : "Pick something you recorded, or add a photo or video below."
@@ -689,7 +690,7 @@ struct PostComposerView: View {
             guard let data = try await item.loadTransferable(type: Data.self),
                   let image = await PhotoDecoding.decoded(data) else {
                 guard !Task.isCancelled, generation == photoImportGeneration else { return }
-                photoError = "That photo could not be read."
+                photoError = String(localized: "That photo could not be read.", bundle: .app, locale: .app)
                 return
             }
             guard !Task.isCancelled, generation == photoImportGeneration else { return }
@@ -708,7 +709,7 @@ struct PostComposerView: View {
             // Reachable only from an enormous picture at the widest shape;
             // the cropper bounds its longest edge, so most crops land far
             // under. Said plainly rather than failing at the server.
-            photoError = "That photo is still larger than 5 MB once framed."
+            photoError = String(localized: "That photo is still larger than 5 MB once framed.", bundle: .app, locale: .app)
             return
         }
         photoError = nil
@@ -948,7 +949,7 @@ struct PostComposerView: View {
     private func postingOverlay(timeOfDay: HomeTimeOfDay) -> some View {
         ZStack {
             Color.black.opacity(0.12).ignoresSafeArea()
-            ProgressView(social.postingStep == .uploadingVideo ? "Uploading video…" : "Publishing…")
+            ProgressView(postingOverlayTitle)
                 .padding(18)
                 .foregroundStyle(timeOfDay.primaryText)
                 .background(
@@ -962,10 +963,25 @@ struct PostComposerView: View {
 
     /// Names what the sheet is for. A page that already knows the kind should
     /// say so at the top rather than leave the user to infer it from the list.
-    private var composerTitle: String {
+    /// Whole phrases rather than "Share a" plus a noun, which only works in
+    /// languages where the article does not depend on the noun.
+    private var composerTitle: LocalizedStringKey {
         if fixedSubject != nil { return "Share" }
-        guard let lockedSource else { return "New Post" }
-        return "Share a \(lockedSource.itemNoun.capitalized)"
+        switch lockedSource {
+        case nil: return "New Post"
+        case .workout: return "Share a Workout"
+        case .meal: return "Share a Meal"
+        case .planner: return "Share a Calendar Entry"
+        }
+    }
+
+    private var candidateSectionTitle: LocalizedStringKey {
+        switch lockedSource {
+        case nil: return "Choose something"
+        case .workout: return "Choose a workout"
+        case .meal: return "Choose a meal"
+        case .planner: return "Choose a calendar entry"
+        }
     }
 
     /// The chosen picture as the API wants it, or nil when there is none.
@@ -979,6 +995,14 @@ struct PostComposerView: View {
             contentType: photoContentType,
             base64: photoData.base64EncodedString()
         )
+    }
+
+    private var postingOverlayTitle: LocalizedStringKey {
+        switch social.postingStep {
+        case .uploadingVideo: "Uploading video…"
+        case .discarding: "Removing post…"
+        case .publishing, nil: "Publishing…"
+        }
     }
 
     /// Something recorded, or a picture: either is a post. Neither, and there
@@ -1134,8 +1158,8 @@ struct PostComposerView: View {
     /// finished workouts" is wrong for someone who simply picked Tuesday.
     private var dayIsEmptyMessage: String? {
         guard usesDayPicker, !allCandidates.isEmpty else { return nil }
-        let day = selectedDay.formatted(.dateTime.weekday(.wide).month(.abbreviated).day())
-        return "Nothing recorded on \(day). Pick another day above."
+        let day = selectedDay.formatted(.dateTime.weekday(.wide).month(.abbreviated).day().locale(.app))
+        return String(localized: "Nothing recorded on \(day). Pick another day above.", bundle: .app, locale: .app)
     }
 
     /// The seven days of the week `selectedDay` falls in, in the user's own
@@ -1175,13 +1199,13 @@ struct PostComposerView: View {
                 Button {
                     changeWeek(by: -1)
                 } label: {
-                    Image(systemName: "chevron.left").frame(width: 44, height: 34)
+                    Image(systemName: "chevron.backward").frame(width: 44, height: 34)
                 }
                 .accessibilityLabel("Previous week")
 
                 Spacer()
 
-                Text(selectedDay.formatted(.dateTime.month(.abbreviated).day().year()))
+                Text(selectedDay.formatted(.dateTime.month(.abbreviated).day().year().locale(.app)))
                     .font(.community(.subheadline, weight: .semibold))
 
                 Spacer()
@@ -1189,7 +1213,7 @@ struct PostComposerView: View {
                 Button {
                     changeWeek(by: 1)
                 } label: {
-                    Image(systemName: "chevron.right").frame(width: 44, height: 34)
+                    Image(systemName: "chevron.forward").frame(width: 44, height: 34)
                 }
                 .accessibilityLabel("Next week")
             }
@@ -1202,10 +1226,10 @@ struct PostComposerView: View {
                         selection = nil
                     } label: {
                         VStack(spacing: 5) {
-                            Text(day.formatted(.dateTime.weekday(.narrow)))
+                            Text(day.formatted(.dateTime.weekday(.narrow).locale(.app)))
                                 .font(.community(.caption2, weight: .semibold))
                                 .foregroundStyle(timeOfDay.secondaryText)
-                            Text(day.formatted(.dateTime.day()))
+                            Text(day.formatted(.dateTime.day().locale(.app)))
                                 .font(.community(.caption, weight: .bold).monospacedDigit())
                                 .foregroundStyle(
                                     isSelected ? RepbasePalette.cream : timeOfDay.primaryText
@@ -1226,7 +1250,7 @@ struct PostComposerView: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel(day.formatted(date: .complete, time: .omitted))
+                    .accessibilityLabel(day.formatted(Date.FormatStyle(date: .complete, time: .omitted).locale(.app)))
                     .accessibilityValue(hasSomething(on: day) ? "Has entries" : "Nothing recorded")
                     .accessibilityAddTraits(isSelected ? [.isSelected] : [])
                 }
@@ -1317,7 +1341,7 @@ struct PostComposerView: View {
     /// is. Eight seconds reads as eight seconds rather than as a blank.
     private static func sessionSubtitle(_ session: PostableSession) -> String {
         var parts = [PostDateText.label(for: session.performedAt)]
-        parts.append(session.performedAt.formatted(date: .omitted, time: .shortened))
+        parts.append(session.performedAt.formatted(Date.FormatStyle(date: .omitted, time: .shortened).locale(.app)))
 
         if let distance = session.routeDistanceKilometers, distance > 0 {
             parts.append(String(format: "%.1f km", distance))
@@ -1326,17 +1350,21 @@ struct PostComposerView: View {
             parts.append(Self.durationText(seconds))
         }
         if session.loggedSetCount > 0 {
-            parts.append("\(session.loggedSetCount) set\(session.loggedSetCount == 1 ? "" : "s")")
+            parts.append(
+                session.loggedSetCount == 1
+                    ? String(localized: "1 set", bundle: .app, locale: .app)
+                    : String(localized: "\(session.loggedSetCount) sets", bundle: .app, locale: .app)
+            )
         }
         return parts.joined(separator: " · ")
     }
 
     private static func durationText(_ seconds: Double) -> String {
         let whole = Int(seconds.rounded())
-        if whole < 60 { return "\(whole) sec" }
+        if whole < 60 { return String(localized: "\(whole) sec", bundle: .app, locale: .app) }
         let minutes = whole / 60
-        if minutes < 60 { return "\(minutes) min" }
-        return "\(minutes / 60)h \(minutes % 60)m"
+        if minutes < 60 { return String(localized: "\(minutes) min", bundle: .app, locale: .app) }
+        return String(localized: "\(minutes / 60)h \(minutes % 60)m", bundle: .app, locale: .app, comment: "A duration in hours and minutes, abbreviated")
     }
 
     private static func plannerSubtitle(
@@ -1346,7 +1374,7 @@ struct PostComposerView: View {
         var parts = [PostDateText.label(forKey: dayKey)]
         if let time = entry.displayTime { parts.append(time) }
         parts.append(entry.kind.title)
-        if entry.isComplete { parts.append("Done") }
+        if entry.isComplete { parts.append(String(localized: "Done", bundle: .app, locale: .app, comment: "A calendar entry that has been completed")) }
         return parts.joined(separator: " · ")
     }
 }
@@ -1371,6 +1399,6 @@ private enum PostDateText {
     }
 
     static func label(for date: Date) -> String {
-        date.formatted(.dateTime.month(.abbreviated).day())
+        date.formatted(.dateTime.month(.abbreviated).day().locale(.app))
     }
 }

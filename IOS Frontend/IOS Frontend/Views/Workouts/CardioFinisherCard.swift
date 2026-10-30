@@ -96,8 +96,8 @@ struct CardioFinisherCard: View {
                 store.startCardio(machine: machine, sessionID: sessionID)
             } label: {
                 HStack(spacing: 8) {
-                    Text("Start \(machine.title.lowercased())")
-                    Image(systemName: "arrow.right")
+                    Text(startTitle)
+                    Image(systemName: "arrow.forward")
                         .font(.community(.subheadline, weight: .semibold))
                 }
                 .font(.community(.headline))
@@ -143,7 +143,7 @@ struct CardioFinisherCard: View {
                         Color.primary.opacity(0.05),
                         in: RoundedRectangle(cornerRadius: 9)
                     )
-                Text("mi")
+                Text("mi", comment: "Abbreviation for miles")
                     .font(.community(.caption))
                     .foregroundStyle(phase.secondaryText)
             }
@@ -172,7 +172,7 @@ struct CardioFinisherCard: View {
                     } else {
                         HStack(spacing: 8) {
                             Text("Finish cardio")
-                            Image(systemName: "arrow.right")
+                            Image(systemName: "arrow.forward")
                                 .font(.community(.subheadline, weight: .semibold))
                         }
                             .font(.community(.headline))
@@ -197,6 +197,21 @@ struct CardioFinisherCard: View {
             Spacer(minLength: 0)
             Text(durationText(seconds))
                 .font(.community(.title3, weight: .bold).monospacedDigit())
+        }
+    }
+
+    // One phrase per machine rather than "Start" and the machine's name:
+    // other languages change the name, or the verb, to fit each other.
+    private var startTitle: LocalizedStringKey {
+        switch machine {
+        case .treadmill: return "Start treadmill"
+        case .stationaryBike: return "Start bike"
+        case .stairMaster: return "Start stair master"
+        case .elliptical: return "Start elliptical"
+        case .rowingMachine: return "Start rower"
+        case .assaultBike: return "Start assault bike"
+        case .skiErg: return "Start ski erg"
+        case .other: return "Start other"
         }
     }
 

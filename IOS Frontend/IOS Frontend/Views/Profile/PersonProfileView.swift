@@ -5,6 +5,7 @@
 //  Somebody else's profile, opened by id.
 //
 
+import Foundation
 import SwiftUI
 
 /// Loads a person and hands them to the profile screen.
@@ -38,7 +39,7 @@ struct PersonProfileView: View {
                 ContentUnavailableView {
                     Label("Profile unavailable", systemImage: "person.crop.circle.badge.exclamationmark")
                 } description: {
-                    Text(store.errorMessage ?? "Rytivo could not load this profile.")
+                    Text(store.errorMessage ?? String(localized: "Rytivo could not load this profile.", bundle: .app, locale: .app))
                 }
             } else {
                 ProgressView()
@@ -66,6 +67,7 @@ struct PersonProfileView: View {
 /// transaction.
 struct PrivateProfileView: View {
     @Environment(SocialStore.self) private var social
+    @Environment(SocialProfileStore.self) private var profileStore
 
     let person: SocialProfile
 
@@ -107,30 +109,37 @@ struct PrivateProfileView: View {
             // which is what makes this different from a public profile where
             // the same tap is the whole transaction.
             if let id = person.id {
-                Button {
-                    Task { await ask(id) }
-                } label: {
-                    Text(hasAsked(id) ? "Requested" : "Follow")
-                        .font(.community(.headline))
-                        .foregroundStyle(hasAsked(id) ? timeOfDay.accent : Color.white)
-                        .padding(.horizontal, 34)
-                        .padding(.vertical, 13)
-                        .background(
-                            hasAsked(id)
-                                ? timeOfDay.accent.opacity(0.12)
-                                : timeOfDay.accent,
-                            in: Capsule()
-                        )
+                let relationship = social.relationship(
+                    with: id,
+                    viewerID: profileStore.viewerID,
+                    isPrivate: true,
+                    viewerFollowsHint: person.viewerFollows,
+                    requestedHint: person.viewerHasRequested,
+                    followsViewerHint: person.followsViewer
+                )
+                VStack(spacing: 10) {
+                    RelationshipBadge(relationship: relationship)
+                    FollowButton(
+                        person: PostAuthor(
+                            id: id,
+                            username: person.username,
+                            firstName: person.firstName,
+                            lastName: person.lastName,
+                            photoURL: person.profilePhotoURL
+                        ),
+                        relationship: relationship,
+                        viewerID: profileStore.viewerID,
+                        size: .large
+                    )
+                    .frame(maxWidth: 260)
+                    if relationship.action == .requested {
+                        Text("They will see your request.")
+                            .font(.community(.caption))
+                            .foregroundStyle(timeOfDay.secondaryText)
+                    }
                 }
-                .buttonStyle(.plain)
-                .disabled(social.changingFollowFor.contains(id))
                 .padding(.top, 4)
-
-                if hasAsked(id) {
-                    Text("They will see your request.")
-                        .font(.community(.caption))
-                        .foregroundStyle(timeOfDay.secondaryText)
-                }
+                .animation(.snappy(duration: 0.2), value: relationship)
             }
 
             Spacer(minLength: 0)
@@ -140,24 +149,5 @@ struct PrivateProfileView: View {
         .homeTimeScreen(timeOfDay)
         .navigationTitle("Profile")
         .navigationBarTitleDisplayMode(.inline)
-    }
-
-    /// Asked already, either in this session or before the page was opened.
-    private func hasAsked(_ id: Int) -> Bool {
-        social.requestedUserIDs.contains(id) || person.viewerHasRequested
-    }
-
-    private func ask(_ id: Int) async {
-        await social.setFollowing(
-            true,
-            user: PostAuthor(
-                id: id,
-                username: person.username,
-                firstName: person.firstName,
-                lastName: person.lastName,
-                photoURL: person.profilePhotoURL
-            ),
-            viewerID: nil
-        )
     }
 }

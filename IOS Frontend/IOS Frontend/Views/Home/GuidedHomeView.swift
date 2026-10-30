@@ -6,6 +6,7 @@
 //  to come from the existing stores and personalization settings.
 //
 
+import Foundation
 import SwiftUI
 
 /// Scoped to Home: stronger night-mode contrast without changing other screens
@@ -122,7 +123,7 @@ private struct GuidedHomeHeader: View {
     var body: some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("\(greeting), \(firstName)")
+                Text(greeting)
                     .font(.community(.footnote, weight: .semibold))
                     .foregroundStyle(HomeWidgetColors.secondaryText)
                 Text("Make today yours.")
@@ -166,16 +167,20 @@ private struct GuidedHomeHeader: View {
     }
 
     private var firstName: String {
-        guard case .signedIn(let user) = authentication.phase else { return "Your day" }
+        guard case .signedIn(let user) = authentication.phase else {
+            return String(localized: "Your day", bundle: .app, locale: .app)
+        }
         let given = user.firstName.trimmingCharacters(in: .whitespacesAndNewlines)
         return given.isEmpty ? user.username : given
     }
 
-    private var greeting: String {
+    /// The greeting and the name as one phrase, because where a name goes and
+    /// what punctuation sits beside it differ from language to language.
+    private var greeting: LocalizedStringKey {
         switch Calendar.current.component(.hour, from: date) {
-        case 5..<12: "Good morning"
-        case 12..<17: "Good afternoon"
-        default: "Good evening"
+        case 5..<12: "Good morning, \(firstName)"
+        case 12..<17: "Good afternoon, \(firstName)"
+        default: "Good evening, \(firstName)"
         }
     }
 
@@ -201,9 +206,11 @@ private struct GuidedHomeWeekStrip: View {
                     planner.select(day)
                 } label: {
                     VStack(spacing: 2) {
-                        Text(day.formatted(.dateTime.weekday(.abbreviated)))
+                        Text(day.formatted(.dateTime.weekday(.abbreviated).locale(.app)))
                             .font(.community(.caption2, weight: .bold))
-                        Text(day.formatted(.dateTime.day()))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                        Text(day.formatted(.dateTime.day().locale(.app)))
                             .font(.community(.subheadline, weight: .bold))
 
                         Circle()
@@ -219,7 +226,7 @@ private struct GuidedHomeWeekStrip: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(day.formatted(date: .complete, time: .omitted))
+                .accessibilityLabel(day.formatted(Date.FormatStyle(date: .complete, time: .omitted).locale(.app)))
                 .accessibilityAddTraits(isSelected(day) ? [.isSelected] : [])
             }
         }
@@ -245,7 +252,10 @@ private struct GuidedHomeWeekStrip: View {
     }
 
     private func dayHasContent(_ day: Date) -> Bool {
-        let weekday = Weekday(calendarWeekday: Calendar.current.component(.weekday, from: day))
+        // The Home strip may start on the previous Sunday, but the workout
+        // store holds the current Monday-based week. Never borrow the next
+        // Sunday's workout just because both dates share a weekday.
+        let weekday = workouts.weekday(forDateString: PlannerStore.dateString(day))
         return planner.hasEntries(on: day)
             || weekday.map { !workouts.workouts(on: $0).isEmpty } == true
     }
@@ -382,10 +392,10 @@ private struct GuidedDayFlow: View {
         // Personalization still chooses the order; avoid making it read like
         // numbered report sections.
         switch chapter {
-        case .movement: "Your movement"
-        case .training: "A little stronger today"
-        case .fuel: "Fuel your day"
-        case .finish: "Still to do"
+        case .movement: String(localized: "Your movement", bundle: .app, locale: .app)
+        case .training: String(localized: "A little stronger today", bundle: .app, locale: .app)
+        case .fuel: String(localized: "Fuel your day", bundle: .app, locale: .app)
+        case .finish: String(localized: "Still to do", bundle: .app, locale: .app)
         }
     }
 
@@ -414,7 +424,7 @@ private struct GuidedDayFlow: View {
                     .foregroundStyle(timeOfDay.primaryText)
             }
             Spacer()
-            Text(selectedDate.formatted(.dateTime.weekday(.abbreviated).day()))
+            Text(selectedDate.formatted(.dateTime.weekday(.abbreviated).day().locale(.app)))
                 .font(.community(.caption, weight: .bold))
                 .foregroundStyle(HomeWidgetColors.secondaryText)
                 .textCase(.uppercase)
@@ -439,7 +449,7 @@ private struct GuidedDayFlow: View {
                         .font(.community(.headline, weight: .bold))
                         .foregroundStyle(timeOfDay.canvasPrimaryText)
                         .fixedSize(horizontal: false, vertical: true)
-                    Text("\(entry.displayTime ?? "No time set") · \(entry.priority.title) priority")
+                    Text(verbatim: "\(entry.displayTime ?? String(localized: "No time set", bundle: .app, locale: .app)) · \(priorityLabel(entry.priority))")
                         .font(.community(.footnote))
                         .foregroundStyle(HomeWidgetColors.secondaryText)
                 } else {
@@ -451,7 +461,7 @@ private struct GuidedDayFlow: View {
                     .filter({ !$0.isComplete || !$0.isCompletable })
                     .sorted(by: { ($0.time ?? "99:99:99") < ($1.time ?? "99:99:99") })
                     .dropFirst().first {
-                    Text("Then: \(following.title) · \(following.displayTime ?? "No time set")")
+                    Text("Then: \(following.title) · \(following.displayTime ?? String(localized: "No time set", bundle: .app, locale: .app))")
                         .font(.community(.caption2, weight: .semibold))
                         .foregroundStyle(HomeWidgetColors.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
@@ -517,7 +527,7 @@ private struct GuidedDayFlow: View {
             Text("A little stronger today")
                 .font(.community(.caption2, weight: .semibold))
                 .foregroundStyle(Color.white)
-            Text(workout?.name ?? "Plan your workout")
+            Text(workout?.name ?? String(localized: "Plan your workout", bundle: .app, locale: .app))
                 .font(.community(size: 24, weight: .bold))
                 .foregroundStyle(Color.white)
                 .fixedSize(horizontal: false, vertical: true)
@@ -526,9 +536,14 @@ private struct GuidedDayFlow: View {
                 .foregroundStyle(Color.white.opacity(0.85))
                 .fixedSize(horizontal: false, vertical: true)
             Button { navigate(workoutRoute) } label: {
-                Text("\(workoutActionTitle) workout →")
+                Text(workoutActionTitle)
                     .font(.community(.footnote, weight: .semibold))
                     .foregroundStyle(RepbasePalette.ink)
+                    // Half a card wide: "Запланировать тренировку →" shrinks
+                    // a little rather than leaving its arrow on a second line.
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .padding(.horizontal, 8)
                     .frame(maxWidth: .infinity, minHeight: 44)
                     .background(Color.white, in: RoundedRectangle(cornerRadius: 16))
             }
@@ -644,7 +659,12 @@ private struct GuidedDayFlow: View {
                 // same thing reads the same way in both places.
                 stageLabel(
                     everythingLeftIsPastDue
-                        ? String(format: "%02d · PAST DUE", number)
+                        ? String(
+                            localized: "\(String(format: "%02d", number)) · PAST DUE",
+                            bundle: .app,
+                            locale: .app,
+                            comment: "Section label; the placeholder is a two-digit section number, e.g. 03"
+                        )
                         : stageNumber(number, .finish),
                     color: everythingLeftIsPastDue
                         ? Color(hex: 0xD8557A)
@@ -682,18 +702,18 @@ private struct GuidedDayFlow: View {
                     .font(.community(.headline, weight: .bold))
                 Spacer()
                 Button { navigate(.planner) } label: {
-                    Label("Calendar", systemImage: "arrow.right")
+                    Label("Calendar", systemImage: "arrow.forward")
                         .font(.community(.footnote, weight: .semibold))
                         .frame(minHeight: 44)
                 }
                 .buttonStyle(.plain)
             }
-            Text("\(selectedDate.formatted(.dateTime.weekday(.wide).month(.abbreviated).day())) · \(planner.entries(on: selectedDate).count) entries")
+            Text("\(selectedDate.formatted(.dateTime.weekday(.wide).month(.abbreviated).day().locale(.app))) · \(planner.entries(on: selectedDate).count) entries")
                 .font(.community(.footnote))
                 .foregroundStyle(HomeWidgetColors.secondaryText)
             ForEach(planner.entries(on: selectedDate)) { entry in
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("\(entry.displayTime ?? "No time set") · \(entry.title)")
+                    Text(verbatim: "\(entry.displayTime ?? String(localized: "No time set", bundle: .app, locale: .app)) · \(entry.title)")
                         .font(.community(.footnote, weight: .semibold))
                     Text(entry.category.title)
                         .font(.community(.caption))
@@ -741,7 +761,7 @@ private struct GuidedDayFlow: View {
         )
     }
 
-    private func momentumMetric(value: String, label: String) -> some View {
+    private func momentumMetric(value: String, label: LocalizedStringKey) -> some View {
         VStack(spacing: 3) {
             Text(value)
                 .font(.community(.title3, weight: .bold))
@@ -782,7 +802,9 @@ private struct GuidedDayFlow: View {
     }
 
     private var weekday: Weekday? {
-        Weekday(calendarWeekday: Calendar.current.component(.weekday, from: selectedDate))
+        // The card and its destination must refer to the same concrete day.
+        // An out-of-week date can open Training, not a different day's plan.
+        workouts.weekday(forDateString: PlannerStore.dateString(selectedDate))
     }
 
     private var workout: Workout? {
@@ -804,16 +826,19 @@ private struct GuidedDayFlow: View {
     /// one day.
     private var isTrained: Bool {
         guard let workout else { return false }
-        return workouts.isCompleted(workoutName: workout.name, on: selectedDate)
+        return workouts.isCompleted(workout: workout, on: selectedDate)
     }
 
     /// A session already finished wins over one in progress: starting a second
     /// one is possible, but "Start" is the wrong thing for the card to lead
     /// with on a day that has been trained.
-    private var workoutActionTitle: String {
-        if workout == nil { return "Plan" }
-        if isTrained { return "View" }
-        return activeSession == nil ? "Start" : "Continue"
+    ///
+    /// The whole button label per case: the verb and "workout" do not combine
+    /// the same way in every language.
+    private var workoutActionTitle: LocalizedStringKey {
+        if workout == nil { return "Plan workout →" }
+        if isTrained { return "View workout →" }
+        return activeSession == nil ? "Start workout →" : "Continue workout →"
     }
 
     private var workoutActionSymbol: String {
@@ -822,25 +847,27 @@ private struct GuidedDayFlow: View {
     }
 
     private var workoutMetadata: String {
-        guard let workout else { return "Choose a plan or build something new" }
+        guard let workout else { return String(localized: "Choose a plan or build something new", bundle: .app, locale: .app) }
         let exercises = workout.exercises.count
-        return "\(exercises) \(exercises == 1 ? "exercise" : "exercises") · \(workout.totalSets) target sets"
+        return exercises == 1
+            ? String(localized: "1 exercise · \(workout.totalSets) target sets", bundle: .app, locale: .app)
+            : String(localized: "\(exercises) exercises · \(workout.totalSets) target sets", bundle: .app, locale: .app)
     }
 
     private var workoutDetail: String {
         if let activeSession {
-            return "Session in progress · \(activeSession.workoutName)"
+            return String(localized: "Session in progress · \(activeSession.workoutName)", bundle: .app, locale: .app)
         }
         // Said before the exercise list, because "Incline Chest and 2 more"
         // beside a Start button is what made a finished day read as an
         // unstarted one.
-        if isTrained { return "Trained · view the session" }
-        guard let workout else { return "Your training plan for this day is open" }
+        if isTrained { return String(localized: "Trained · view the session", bundle: .app, locale: .app) }
+        guard let workout else { return String(localized: "Your training plan for this day is open", bundle: .app, locale: .app) }
         if let first = workout.exercises.first {
             let remaining = max(workout.exercises.count - 1, 0)
-            return remaining == 0 ? first.name : "\(first.name) and \(remaining) more"
+            return remaining == 0 ? first.name : String(localized: "\(first.name) and \(remaining) more", bundle: .app, locale: .app)
         }
-        return workout.type.title
+        return workout.activity.title
     }
 
     /// The next thing on the day being looked at, and only that day.
@@ -864,8 +891,18 @@ private struct GuidedDayFlow: View {
     }
 
     private func nextEntryEyebrow(_ entry: PlannerEntry) -> String {
-        guard let time = entry.displayTime else { return "UP NEXT" }
-        return "UP NEXT · \(time)"
+        guard let time = entry.displayTime else { return String(localized: "UP NEXT", bundle: .app, locale: .app) }
+        return String(localized: "UP NEXT · \(time)", bundle: .app, locale: .app)
+    }
+
+    /// Whole phrases per level, since the level's word changes form with
+    /// "priority" in many languages.
+    private func priorityLabel(_ priority: PlannerPriority) -> String {
+        switch priority {
+        case .low: return String(localized: "Low priority", bundle: .app, locale: .app)
+        case .normal: return String(localized: "Normal priority", bundle: .app, locale: .app)
+        case .high: return String(localized: "High priority", bundle: .app, locale: .app)
+        }
     }
 
     private var remainingTasks: [PlannerEntry] {
@@ -894,29 +931,42 @@ private struct GuidedDayFlow: View {
 
     private var taskSummary: String {
         let count = remainingTasks.count
-        guard count > 0 else { return "Everything is done" }
-        let noun = "task\(count == 1 ? "" : "s")"
-        return everythingLeftIsPastDue
-            ? "\(count) \(noun) past due"
-            : "\(count) \(noun) still to do"
+        guard count > 0 else { return String(localized: "Everything is done", bundle: .app, locale: .app) }
+        if everythingLeftIsPastDue {
+            return count == 1
+                ? String(localized: "1 task past due", bundle: .app, locale: .app)
+                : String(localized: "\(count) tasks past due", bundle: .app, locale: .app)
+        }
+        return count == 1
+            ? String(localized: "1 task still to do", bundle: .app, locale: .app)
+            : String(localized: "\(count) tasks still to do", bundle: .app, locale: .app)
     }
 
     private var taskDetail: String {
-        guard let task = remainingTasks.first else { return "Nothing else needs your attention" }
+        guard let task = remainingTasks.first else {
+            return String(localized: "Nothing else needs your attention", bundle: .app, locale: .app)
+        }
         // Named with the day it was due. A bare title reads as something
         // planned for today, which is the confusion worth removing.
         if isPastDue(task), let day = task.dayValue {
-            return "\(task.title) · due \(Self.overdueDay(day))"
+            return Self.overdueDetail(task.title, day: day)
         }
-        if let time = task.displayTime { return "\(task.title) · due by \(time)" }
+        if let time = task.displayTime { return String(localized: "\(task.title) · due by \(time)", bundle: .app, locale: .app) }
         return task.title
     }
 
     /// "yesterday" when it was, and the day by name when it was longer ago.
-    private static func overdueDay(_ day: Date) -> String {
+    ///
+    /// Two whole phrases rather than one with the day dropped in: a word like
+    /// "yesterday" and a date take different words around them elsewhere.
+    private static func overdueDetail(_ title: String, day: Date) -> String {
         Calendar.current.isDateInYesterday(day)
-            ? "yesterday"
-            : day.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
+            ? String(localized: "\(title) · due yesterday", bundle: .app, locale: .app)
+            : String(
+                localized: "\(title) · due \(day.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day().locale(.app)))",
+                bundle: .app,
+                locale: .app
+            )
     }
 
     private var weeklyProgress: Double {
@@ -1054,7 +1104,7 @@ private struct GuidedMacroMetric: View {
     @Environment(\.homeTimeOfDay) private var timeOfDay
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    let label: String
+    let label: LocalizedStringKey
     let value: Decimal
     let goal: Decimal
     let color: Color

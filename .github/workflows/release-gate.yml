@@ -1,13 +1,9 @@
 name: Release gate
 
-# A release starts with a version tag, so that is where the checks have to
-# hold. CI already runs on pushes to main, but nothing depends on the result:
-# these repositories have no branch protection, so a red run blocks nothing
-# and a broken commit reaches main anyway. That is not hypothetical -- 18487ff
-# failed to compile the app target and landed regardless.
-#
-# This does not make main unpushable. It makes a tagged version unshippable
-# without the checks passing, which is the point at which it matters most.
+# The live main ruleset requires PRs and a passing CI build, not peer approval.
+# Re-run that same suite for release tags or an explicitly dispatched candidate.
+# This workflow reports a verdict; it cannot prevent a manual Xcode upload.
+# Release operators must verify the exact candidate before shipping it.
 on:
   push:
     tags: ["v*"]

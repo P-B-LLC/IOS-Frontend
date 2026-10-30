@@ -538,27 +538,9 @@ actor FoodAPIRepository {
 
 // MARK: - Public food catalogue
 
-/// Food search, through Repbase rather than at a catalogue directly.
-///
-/// This used to call Open Food Facts from the device on every keystroke. Three
-/// things were wrong with that and only one of them was about food data.
-///
-/// It made the privacy policy untrue: every search sent what somebody was
-/// eating, and the address they were eating it at, to a third party, while the
-/// policy in Settings said no third party received anything.
-///
-/// It was the usage Open Food Facts asks people not to make -- their limit is
-/// ten searches a minute per address and their documentation says in as many
-/// words not to wire it to a search-as-you-type field, which is exactly where
-/// it was wired.
-///
-/// And it read a catalogue's numbers on the phone, where a misread is a wrong
-/// calorie count in somebody's log and nobody can see it happen. The server
-/// reads USDA FoodData Central now, in one place, under test.
-///
-/// What stays true is the part worth keeping: whatever is chosen here is
-/// copied into a Repbase food entry, so a logged meal never depends on a
-/// catalogue afterwards.
+/// Explicit food searches and product barcodes go through Rytivo, not directly
+/// to Open Food Facts. The backend normalizes and caches public product data;
+/// saved entries remain independent nutrition snapshots.
 actor FoodDatabaseRepository {
     private let client: Client
 

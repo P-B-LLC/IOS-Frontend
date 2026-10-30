@@ -11,6 +11,7 @@
 //  what the arrow is for.
 //
 
+import Foundation
 import SwiftUI
 
 struct GearPickerRow: View {
@@ -60,9 +61,11 @@ struct GearPickerRow: View {
                 VStack(spacing: 2) {
                     gearIcon(for: kind)
                         .frame(width: 34, height: 34)
-                    Text("GEAR")
+                    Text("GEAR", comment: "Label under the shoe or bike icon: training equipment")
                         .font(.community(size: 8, weight: .bold))
                         .foregroundStyle(accent)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                 }
                 .frame(width: 64)
 
@@ -86,6 +89,8 @@ struct GearPickerRow: View {
                 Text(selectionAction(for: choices))
                     .font(.community(.subheadline, weight: .medium))
                     .foregroundStyle(accent)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
 
                 Image(systemName: "chevron.forward")
                     .font(.community(.subheadline, weight: .semibold))
@@ -131,16 +136,20 @@ struct GearPickerRow: View {
     private func selectionDetail(for kind: GearKind, choices: [Gear]) -> String {
         if choices.isEmpty {
             return kind == .shoe
-                ? "Add shoes to track their distance"
-                : "Add a bike to track its distance"
+                ? String(localized: "Add shoes to track their distance", bundle: .app, locale: .app)
+                : String(localized: "Add a bike to track its distance", bundle: .app, locale: .app)
         }
         if let selected = selectedName(from: choices) { return selected }
-        return kind == .shoe ? "Select gear for this run" : "Select gear for this ride"
+        return kind == .shoe
+            ? String(localized: "Select gear for this run", bundle: .app, locale: .app)
+            : String(localized: "Select gear for this ride", bundle: .app, locale: .app)
     }
 
     private func selectionAction(for choices: [Gear]) -> String {
-        if choices.isEmpty { return "Add" }
-        return selectedName(from: choices) == nil ? "Choose" : "Change"
+        if choices.isEmpty { return String(localized: "Add", bundle: .app, locale: .app, comment: "Action: add a shoe or bike") }
+        return selectedName(from: choices) == nil
+            ? String(localized: "Choose", bundle: .app, locale: .app, comment: "Action: pick a shoe or bike for this session")
+            : String(localized: "Change", bundle: .app, locale: .app, comment: "Action: pick a different shoe or bike for this session")
     }
 
     private func select(_ id: Int?) {

@@ -99,6 +99,7 @@ private struct HomeCalorieArc: View {
                 Text("of \(goal.nutritionText) cal")
                     .font(.community(size: 9, weight: .medium))
                     .foregroundStyle(timeOfDay.secondaryText)
+                    .minimumScaleFactor(0.8)
             }
             .padding(.bottom, 5)
         }
@@ -110,7 +111,7 @@ private struct HomeCalorieArc: View {
 private struct HomeMacroMetric: View {
     @Environment(\.homeTimeOfDay) private var timeOfDay
 
-    let title: String
+    let title: LocalizedStringKey
     let value: Decimal
     let goal: Decimal
 
@@ -119,6 +120,7 @@ private struct HomeMacroMetric: View {
             Text(title)
                 .font(.community(size: 10, weight: .medium))
                 .foregroundStyle(timeOfDay.secondaryText)
+                .minimumScaleFactor(0.8)
                 .frame(width: 44, alignment: .leading)
             GeometryReader { proxy in
                 ZStack(alignment: .leading) {

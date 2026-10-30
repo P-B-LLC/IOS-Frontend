@@ -6,6 +6,7 @@
 //
 
 import Charts
+import Foundation
 import SwiftUI
 
 struct LiftProgressChart: View {
@@ -21,13 +22,15 @@ struct LiftProgressChart: View {
 
         var title: String {
             switch self {
-            case .heaviest: return "Heaviest"
-            case .volume: return "Volume"
+            case .heaviest: return String(localized: "Heaviest", bundle: .app, locale: .app, comment: "Chart metric: the heaviest weight lifted in a session")
+            case .volume: return String(localized: "Volume", bundle: .app, locale: .app, comment: "Chart metric: total weight lifted in a session")
             }
         }
     }
 
     @State private var metric: Metric = .heaviest
+    @Environment(WorkoutStore.self) private var store
+    private var unit: WorkoutWeightUnit { store.preferences.weightUnit }
     @State private var selectedExerciseID: Int?
 
     private var selected: LiftProgressSeries? {
@@ -52,13 +55,13 @@ struct LiftProgressChart: View {
             if series.count > 1 {
                 Picker("Exercise", selection: exerciseBinding) {
                     ForEach(series) { entry in
-                        Text(entry.exerciseName).tag(entry.exerciseID)
+                        Text(entry.exerciseDisplayName).tag(entry.exerciseID)
                     }
                 }
                 .pickerStyle(.menu)
                 .tint(phase.accent)
             } else if let selected {
-                Text(selected.exerciseName)
+                Text(selected.exerciseDisplayName)
                     .font(.community(.subheadline, weight: .semibold))
             }
 
@@ -153,9 +156,14 @@ struct LiftProgressChart: View {
 
     private func value(for day: LiftProgressSeries.Day) -> Double {
         switch metric {
-        case .heaviest: return day.heaviestKilograms
-        case .volume: return day.volumeKilograms
+        // Drawn in the unit being shown; the series itself stays kilograms.
+        case .heaviest: return Self.shown(day.heaviestKilograms, in: unit)
+        case .volume: return Self.shown(day.volumeKilograms, in: unit)
         }
+    }
+
+    private static func shown(_ kilograms: Double, in unit: WorkoutWeightUnit) -> Double {
+        unit == .imperial ? kilograms / 0.45359237 : kilograms
     }
 
     private func caption(for entry: LiftProgressSeries) -> String? {
@@ -164,13 +172,35 @@ struct LiftProgressChart: View {
             return nil
         }
         let change = value(for: last) - value(for: first)
-        let unit = metric == .heaviest ? "kg" : "kg lifted"
+        let amount = String(format: "%.0f", abs(change))
 
-        guard abs(change) >= 0.5 else {
-            return "\(metric.title) is holding steady."
+        // A sentence per metric rather than the metric's name and unit
+        // dropped into one, so each is translated whole.
+        switch metric {
+        case .heaviest:
+            guard abs(change) >= 0.5 else {
+                return String(localized: "Heaviest is holding steady.", bundle: .app, locale: .app)
+            }
+            if unit == .imperial {
+                return change > 0
+                    ? String(localized: "Up \(amount) lb since your first session.", bundle: .app, locale: .app, comment: "The placeholder is a weight in pounds")
+                    : String(localized: "Down \(amount) lb since your first session.", bundle: .app, locale: .app, comment: "The placeholder is a weight in pounds")
+            }
+            return change > 0
+                ? String(localized: "Up \(amount) kg since your first session.", bundle: .app, locale: .app, comment: "The placeholder is a weight in kilograms")
+                : String(localized: "Down \(amount) kg since your first session.", bundle: .app, locale: .app, comment: "The placeholder is a weight in kilograms")
+        case .volume:
+            guard abs(change) >= 0.5 else {
+                return String(localized: "Volume is holding steady.", bundle: .app, locale: .app)
+            }
+            if unit == .imperial {
+                return change > 0
+                    ? String(localized: "Up \(amount) lb lifted since your first session.", bundle: .app, locale: .app, comment: "The placeholder is a weight in pounds")
+                    : String(localized: "Down \(amount) lb lifted since your first session.", bundle: .app, locale: .app, comment: "The placeholder is a weight in pounds")
+            }
+            return change > 0
+                ? String(localized: "Up \(amount) kg lifted since your first session.", bundle: .app, locale: .app, comment: "The placeholder is a weight in kilograms")
+                : String(localized: "Down \(amount) kg lifted since your first session.", bundle: .app, locale: .app, comment: "The placeholder is a weight in kilograms")
         }
-        return change > 0
-            ? String(format: "Up %.0f %@ since your first session.", change, unit)
-            : String(format: "Down %.0f %@ since your first session.", -change, unit)
     }
 }

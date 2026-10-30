@@ -95,7 +95,7 @@ struct MealDetailView: View {
                     .padding(.bottom, RepbaseDesign.bottomBarClearance)
                 }
                 .background(Color(.systemBackground))
-                .navigationTitle(meal.name)
+                .navigationTitle(meal.displayName)
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { mealToolbar(meal) }
             } else {
@@ -170,11 +170,21 @@ struct MealDetailView: View {
     private func mealLegend(_ meal: FoodMeal) -> some View {
                 VStack(alignment: .leading, spacing: 16) {
                     ForEach(Macro.allCases) { macro in
-                        Text("\(macro.grams(in: meal.totalNutrition).nutritionText) g  \(macro.title)")
+                        Text(legendText(for: macro, grams: macro.grams(in: meal.totalNutrition).nutritionText))
                             .font(.community(.subheadline, weight: .semibold))
                             .foregroundStyle(macro.color)
                     }
                 }
+    }
+
+    /// Whole phrases per macro, so a translation can put words between the
+    /// amount and the name.
+    private func legendText(for macro: Macro, grams: String) -> LocalizedStringKey {
+        switch macro {
+        case .protein: "\(grams) g  Protein"
+        case .carbs: "\(grams) g  Carbs"
+        case .fat: "\(grams) g  Fat"
+        }
     }
 
     private var recentFoodShelf: some View {
@@ -225,7 +235,7 @@ struct MealDetailView: View {
         }
     }
 
-    private func mealAction(_ title: String, detail: String, symbol: String, action: @escaping () -> Void) -> some View {
+    private func mealAction(_ title: LocalizedStringKey, detail: LocalizedStringKey, symbol: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Image(systemName: symbol)
@@ -238,7 +248,7 @@ struct MealDetailView: View {
                     Text(detail).font(.community(.caption2)).foregroundStyle(.secondary)
                 }
                 Spacer()
-                Image(systemName: "chevron.right").font(.community(.caption, weight: .bold)).foregroundStyle(.secondary)
+                Image(systemName: "chevron.forward").font(.community(.caption, weight: .bold)).foregroundStyle(.secondary)
             }
             .padding(.vertical, 7)
             .contentShape(Rectangle())
@@ -432,7 +442,9 @@ private struct FoodEntryRow: View {
                 Text(food.name)
                     .font(.community(.headline))
                     .foregroundStyle(.primary)
-                Text("\(food.servings.nutritionText) serving\(food.servings == 1 ? "" : "s")")
+                Text(food.servings == 1
+                     ? "\(food.servings.nutritionText) serving"
+                     : "\(food.servings.nutritionText) servings")
                     .font(.community(.caption))
                     .foregroundStyle(.secondary)
             }

@@ -98,7 +98,7 @@ struct MealPlanView: View {
                     }
                 }
                 Spacer()
-                Text("\(plan.count) \(plan.count == 1 ? "meal" : "meals")")
+                Text(plan.count == 1 ? "1 meal" : "\(plan.count) meals")
                     .font(.community(.caption, weight: .bold))
                     .padding(.horizontal, 11)
                     .padding(.vertical, 7)
@@ -123,7 +123,7 @@ struct MealPlanView: View {
         .overlay(alignment: .bottom) { Divider() }
     }
 
-    private func macro(_ title: String, _ value: Decimal, color: Color) -> some View {
+    private func macro(_ title: LocalizedStringKey, _ value: Decimal, color: Color) -> some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(title)
                 .font(.community(.caption2, weight: .semibold))
@@ -238,7 +238,9 @@ struct MealPlanView: View {
     private func report(_ outcome: FoodTrackingStore.PlanOutcome) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             if outcome.isCompleteSuccess {
-                Text("Added \(outcome.applied.count) \(outcome.applied.count == 1 ? "meal" : "meals") to the day.")
+                Text(outcome.applied.count == 1
+                     ? "Added 1 meal to the day."
+                     : "Added \(outcome.applied.count) meals to the day.")
                     .font(.community(.footnote, weight: .semibold))
             } else {
                 // Names, not a count. "2 of 4 saved" leaves the user to work

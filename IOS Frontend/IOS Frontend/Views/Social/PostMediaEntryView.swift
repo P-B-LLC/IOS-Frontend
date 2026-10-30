@@ -46,7 +46,7 @@ struct PostMediaEntryView: View {
                         HStack {
                             Text("Continue without media")
                             Spacer()
-                            Image(systemName: "arrow.right")
+                            Image(systemName: "arrow.forward")
                         }
                         .font(.community(.subheadline, weight: .semibold))
                         .padding(.vertical, 12)
@@ -105,7 +105,7 @@ struct PostMediaEntryView: View {
                     Image(systemName: "photo.on.rectangle")
                     Text("Choose from camera roll")
                     Spacer()
-                    Image(systemName: "chevron.right")
+                    Image(systemName: "chevron.forward")
                 }
                 .font(.community(.headline)).padding(18)
                 .background(theme.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 18))
@@ -151,7 +151,7 @@ struct PostMediaEntryView: View {
         .overlay(RoundedRectangle(cornerRadius: 20).stroke(theme.canvasBorder, lineWidth: 1))
     }
 
-    private func permissionRow(_ title: String, icon: String, status: AVAuthorizationStatus) -> some View {
+    private func permissionRow(_ title: LocalizedStringKey, icon: String, status: AVAuthorizationStatus) -> some View {
         HStack(spacing: 12) {
             Image(systemName: icon).foregroundStyle(theme.accent).frame(width: 22)
             Text(title).font(.community(.subheadline, weight: .semibold))
@@ -162,7 +162,7 @@ struct PostMediaEntryView: View {
         .accessibilityElement(children: .combine)
     }
 
-    private func permissionLabel(_ status: AVAuthorizationStatus) -> String {
+    private func permissionLabel(_ status: AVAuthorizationStatus) -> LocalizedStringKey {
         guard cameraAvailable else { return "Simulator" }
         switch status {
         case .authorized: return "Allowed"

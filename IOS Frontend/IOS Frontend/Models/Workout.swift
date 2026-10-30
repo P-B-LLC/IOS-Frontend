@@ -19,10 +19,10 @@ nonisolated enum WorkoutType: String, CaseIterable, Identifiable, Hashable, Coda
 
     var title: String {
         switch self {
-        case .lifting: return "Lifting"
-        case .running: return "Running"
-        case .biking: return "Biking"
-        case .swimming: return "Swimming"
+        case .lifting: return String(localized: "Lifting", bundle: .app, locale: .app, comment: "A kind of workout: weight training")
+        case .running: return String(localized: "Running", bundle: .app, locale: .app, comment: "A kind of workout")
+        case .biking: return String(localized: "Biking", bundle: .app, locale: .app, comment: "A kind of workout: cycling")
+        case .swimming: return String(localized: "Swimming", bundle: .app, locale: .app, comment: "A kind of workout")
         }
     }
 
@@ -34,20 +34,20 @@ nonisolated enum WorkoutType: String, CaseIterable, Identifiable, Hashable, Coda
     /// than the saved workout name.
     var sessionTitle: String {
         switch self {
-        case .lifting: return "Strength session"
-        case .running: return "Run session"
-        case .biking: return "Ride session"
-        case .swimming: return "Swim session"
+        case .lifting: return String(localized: "Strength session", bundle: .app, locale: .app)
+        case .running: return String(localized: "Run session", bundle: .app, locale: .app)
+        case .biking: return String(localized: "Ride session", bundle: .app, locale: .app)
+        case .swimming: return String(localized: "Swim session", bundle: .app, locale: .app)
         }
     }
 
     /// How the logged distance is described for this type.
     var distanceTitle: String {
         switch self {
-        case .running: return "Distance ran"
-        case .biking: return "Distance biked"
-        case .swimming: return "Distance swum"
-        case .lifting: return "Distance"
+        case .running: return String(localized: "Distance ran", bundle: .app, locale: .app)
+        case .biking: return String(localized: "Distance biked", bundle: .app, locale: .app)
+        case .swimming: return String(localized: "Distance swum", bundle: .app, locale: .app)
+        case .lifting: return String(localized: "Distance", bundle: .app, locale: .app)
         }
     }
 }
@@ -70,21 +70,22 @@ nonisolated enum CardioMachine: String, CaseIterable, Identifiable, Hashable, Co
 
     var title: String {
         switch self {
-        case .treadmill: return "Treadmill"
-        case .stationaryBike: return "Bike"
-        case .stairMaster: return "Stair Master"
-        case .elliptical: return "Elliptical"
-        case .rowingMachine: return "Rower"
-        case .assaultBike: return "Assault Bike"
-        case .skiErg: return "Ski Erg"
-        case .other: return "Other"
+        case .treadmill: return String(localized: "Treadmill", bundle: .app, locale: .app, comment: "A cardio machine")
+        case .stationaryBike: return String(localized: "Bike", bundle: .app, locale: .app, comment: "A cardio machine: a stationary exercise bike")
+        case .stairMaster: return String(localized: "Stair Master", bundle: .app, locale: .app, comment: "A cardio machine: a stair climber")
+        case .elliptical: return String(localized: "Elliptical", bundle: .app, locale: .app, comment: "A cardio machine: an elliptical trainer")
+        case .rowingMachine: return String(localized: "Rower", bundle: .app, locale: .app, comment: "A cardio machine: a rowing machine")
+        case .assaultBike: return String(localized: "Assault Bike", bundle: .app, locale: .app, comment: "A cardio machine: a fan-resisted air bike")
+        case .skiErg: return String(localized: "Ski Erg", bundle: .app, locale: .app, comment: "A cardio machine: a ski ergometer")
+        case .other: return String(localized: "Other", bundle: .app, locale: .app, comment: "A cardio machine not in the list")
         }
     }
 
 }
 
 /// A single exercise within a workout (e.g. "Bench Press"), with a target
-/// number of sets. Reps and weight are logged per-session later, not here.
+/// number of sets and how they are meant to be done. Reps and weight are
+/// logged per-session later; the targets here are only what to aim for.
 nonisolated struct Exercise: Identifiable, Hashable, Codable, Sendable {
     let id: UUID
     var serverID: Int?
@@ -97,6 +98,17 @@ nonisolated struct Exercise: Identifiable, Hashable, Codable, Sendable {
         get { targetSets ?? 0 }
         set { targetSets = newValue }
     }
+    /// The kind of each planned set, in order. Shorter than the set count
+    /// when the last sets are normal, which is how the backend stores it.
+    var setTypes: [WorkoutSetType]
+    /// Seconds to rest after each set. Nil follows the person's default rest;
+    /// zero means no timer for this exercise.
+    var restSeconds: Int?
+    /// Exercises sharing a number are a superset, done back to back.
+    var supersetGroup: Int?
+    var targetReps: Int?
+    /// Decimal-string kilograms, like every weight on the wire.
+    var targetWeightKilograms: String?
 
     init(
         id: UUID = UUID(),
@@ -104,7 +116,12 @@ nonisolated struct Exercise: Identifiable, Hashable, Codable, Sendable {
         workoutExerciseID: Int? = nil,
         serverName: String? = nil,
         name: String,
-        sets: Int? = 3
+        sets: Int? = 3,
+        setTypes: [WorkoutSetType] = [],
+        restSeconds: Int? = nil,
+        supersetGroup: Int? = nil,
+        targetReps: Int? = nil,
+        targetWeightKilograms: String? = nil
     ) {
         self.id = id
         self.serverID = serverID
@@ -112,6 +129,46 @@ nonisolated struct Exercise: Identifiable, Hashable, Codable, Sendable {
         self.serverName = serverName
         self.name = name
         targetSets = sets
+        self.setTypes = setTypes
+        self.restSeconds = restSeconds
+        self.supersetGroup = supersetGroup
+        self.targetReps = targetReps
+        self.targetWeightKilograms = targetWeightKilograms
+    }
+
+    /// The kind of every planned set, one per set.
+    var plannedSetTypes: [WorkoutSetType] {
+        (0..<max(sets, 0)).map { setTypes.indices.contains($0) ? setTypes[$0] : .normal }
+    }
+
+    mutating func setType(_ type: WorkoutSetType, at index: Int) {
+        var types = plannedSetTypes
+        guard types.indices.contains(index) else { return }
+        types[index] = type
+        setTypes = WorkoutStructureDiff.storedSetTypes(types)
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, serverID, workoutExerciseID, serverName, name, targetSets
+        case setTypes, restSeconds, supersetGroup, targetReps, targetWeightKilograms
+    }
+
+    // Written out so a draft saved before set kinds, rests and supersets
+    // existed still opens. Recovery keeps drafts across app updates, and a
+    // missing key would otherwise fail the whole draft.
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        id = try values.decode(UUID.self, forKey: .id)
+        serverID = try values.decodeIfPresent(Int.self, forKey: .serverID)
+        workoutExerciseID = try values.decodeIfPresent(Int.self, forKey: .workoutExerciseID)
+        serverName = try values.decodeIfPresent(String.self, forKey: .serverName)
+        name = try values.decode(String.self, forKey: .name)
+        targetSets = try values.decodeIfPresent(Int.self, forKey: .targetSets)
+        setTypes = try values.decodeIfPresent([WorkoutSetType].self, forKey: .setTypes) ?? []
+        restSeconds = try values.decodeIfPresent(Int.self, forKey: .restSeconds)
+        supersetGroup = try values.decodeIfPresent(Int.self, forKey: .supersetGroup)
+        targetReps = try values.decodeIfPresent(Int.self, forKey: .targetReps)
+        targetWeightKilograms = try values.decodeIfPresent(String.self, forKey: .targetWeightKilograms)
     }
 }
 
@@ -120,6 +177,9 @@ nonisolated struct WorkoutExerciseChoice: Identifiable, Hashable, Sendable {
     let id: Int
     let name: String
     let muscleGroup: String
+    /// Created by this account rather than part of the shared catalogue. The
+    /// server only ever returns the reader's own custom exercises.
+    var isCustom: Bool = false
 }
 
 nonisolated struct WorkoutExercisePage: Sendable {
@@ -137,7 +197,12 @@ nonisolated struct Workout: Identifiable, Hashable, Codable, Sendable {
     var scheduledDate: String?
     var name: String
     /// Mirrors the API `workout_type`; existing records default to lifting.
-    var type: WorkoutType
+    /// The activity's family, which old builds read; set with `activity`.
+    private(set) var type: WorkoutType
+    /// What this workout actually is: tennis, a hike, a lifting day.
+    var activity: WorkoutActivity {
+        didSet { type = activity.family }
+    }
     /// Optional cardio to finish on. Part of this workout, not a second one.
     var cardioMachine: CardioMachine?
     /// How long the finisher is meant to last, if a target was set.
@@ -155,6 +220,7 @@ nonisolated struct Workout: Identifiable, Hashable, Codable, Sendable {
         scheduledDate: String? = nil,
         name: String,
         type: WorkoutType = .lifting,
+        activity: WorkoutActivity? = nil,
         cardioMachine: CardioMachine? = nil,
         cardioTargetMinutes: Int? = nil,
         recurrenceID: Int? = nil,
@@ -165,7 +231,9 @@ nonisolated struct Workout: Identifiable, Hashable, Codable, Sendable {
         self.scheduleID = scheduleID
         self.scheduledDate = scheduledDate
         self.name = name
-        self.type = type
+        let activity = activity ?? WorkoutActivity.legacyDefault(for: type)
+        self.activity = activity
+        self.type = activity.family
         self.cardioMachine = cardioMachine
         self.cardioTargetMinutes = cardioTargetMinutes
         self.recurrenceID = recurrenceID
@@ -181,7 +249,35 @@ nonisolated struct Workout: Identifiable, Hashable, Codable, Sendable {
     /// Total number of sets across all exercises.
     var totalSets: Int { exercises.reduce(0) { $0 + $1.sets } }
 
-    var tracksDistance: Bool { type.tracksDistance }
+    /// Logged as time (and distance, where it has one) rather than as sets.
+    /// True for every activity that is not sets-based: a tennis match is
+    /// timed like a run, it just has no route. GPS is `activity.tracksRoute`.
+    var tracksDistance: Bool { !activity.usesSets }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, serverID, scheduleID, scheduledDate, name, type, activity
+        case cardioMachine, cardioTargetMinutes, recurrenceID, exercises
+    }
+
+    // Written out so a draft recovered from a build before activities existed
+    // still opens, as the activity its type always meant.
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        id = try values.decode(UUID.self, forKey: .id)
+        serverID = try values.decodeIfPresent(Int.self, forKey: .serverID)
+        scheduleID = try values.decodeIfPresent(Int.self, forKey: .scheduleID)
+        scheduledDate = try values.decodeIfPresent(String.self, forKey: .scheduledDate)
+        name = try values.decode(String.self, forKey: .name)
+        let type = try values.decode(WorkoutType.self, forKey: .type)
+        let activity = try values.decodeIfPresent(WorkoutActivity.self, forKey: .activity)
+            ?? WorkoutActivity.legacyDefault(for: type)
+        self.activity = activity
+        self.type = activity.family
+        cardioMachine = try values.decodeIfPresent(CardioMachine.self, forKey: .cardioMachine)
+        cardioTargetMinutes = try values.decodeIfPresent(Int.self, forKey: .cardioTargetMinutes)
+        recurrenceID = try values.decodeIfPresent(Int.self, forKey: .recurrenceID)
+        exercises = try values.decode([Exercise].self, forKey: .exercises)
+    }
 }
 
 /// One editable set while a workout session is in progress. Weight remains a
@@ -198,6 +294,8 @@ nonisolated struct WorkoutSetDraft: Identifiable, Hashable, Codable, Sendable {
     /// backend's decimal-string `distance_km` field.
     var distanceKilometers: String
     var isLogged: Bool
+    /// What this set is for. Logged with it, so history keeps the kind.
+    var setType: WorkoutSetType
 
     init(
         id: UUID = UUID(),
@@ -206,7 +304,8 @@ nonisolated struct WorkoutSetDraft: Identifiable, Hashable, Codable, Sendable {
         weightKilograms: String = "",
         reps: String = "",
         distanceKilometers: String = "",
-        isLogged: Bool = false
+        isLogged: Bool = false,
+        setType: WorkoutSetType = .normal
     ) {
         self.id = id
         self.serverID = serverID
@@ -215,6 +314,26 @@ nonisolated struct WorkoutSetDraft: Identifiable, Hashable, Codable, Sendable {
         self.reps = reps
         self.distanceKilometers = distanceKilometers
         self.isLogged = isLogged
+        self.setType = setType
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, serverID, setNumber, weightKilograms, reps, distanceKilometers, isLogged, setType
+    }
+
+    // A session checkpointed by an earlier build has no set kinds. Reading
+    // them as normal keeps that session, and every set in it, recoverable
+    // after an update installed mid-workout.
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        id = try values.decode(UUID.self, forKey: .id)
+        serverID = try values.decodeIfPresent(Int.self, forKey: .serverID)
+        setNumber = try values.decode(Int.self, forKey: .setNumber)
+        weightKilograms = try values.decode(String.self, forKey: .weightKilograms)
+        reps = try values.decode(String.self, forKey: .reps)
+        distanceKilometers = try values.decodeIfPresent(String.self, forKey: .distanceKilometers) ?? ""
+        isLogged = try values.decode(Bool.self, forKey: .isLogged)
+        setType = try values.decodeIfPresent(WorkoutSetType.self, forKey: .setType) ?? .normal
     }
 
     /// Matches the OAS decimal-string contract (up to five integer digits and
@@ -271,19 +390,55 @@ nonisolated struct WorkoutSummary: Identifiable, Hashable, Sendable {
     let serverID: Int
     let name: String
     let type: WorkoutType
+    let activity: WorkoutActivity
     /// The saved structure of this workout, used to seed a new lifting day.
     let exercises: [Exercise]
+    var cardioMachine: CardioMachine?
+    var cardioTargetMinutes: Int?
+    /// When it was last trained, as the server counts it: the latest finished
+    /// session that recorded a set. Nil when it never has been.
+    var lastPerformedAt: Date?
 
     init(
         serverID: Int,
         name: String,
         type: WorkoutType,
-        exercises: [Exercise] = []
+        activity: WorkoutActivity? = nil,
+        exercises: [Exercise] = [],
+        cardioMachine: CardioMachine? = nil,
+        cardioTargetMinutes: Int? = nil,
+        lastPerformedAt: Date? = nil
     ) {
         self.serverID = serverID
         self.name = name
-        self.type = type
+        let activity = activity ?? WorkoutActivity.legacyDefault(for: type)
+        self.activity = activity
+        self.type = activity.family
         self.exercises = exercises
+        self.cardioMachine = cardioMachine
+        self.cardioTargetMinutes = cardioTargetMinutes
+        self.lastPerformedAt = lastPerformedAt
+    }
+
+    var totalSets: Int { exercises.reduce(0) { $0 + $1.sets } }
+
+    /// The same plan as a workout draft, for editing or copying it. The rows
+    /// keep their ids, so an edit updates them rather than replacing them.
+    var asWorkout: Workout {
+        // Marked in its first byte. A scheduled workout's id is derived from
+        // its schedule row, and a schedule and a template can share a number.
+        var identity = UUID.stable(forServerID: serverID).uuid
+        identity.0 = 0x54
+        return Workout(
+            id: UUID(uuid: identity),
+            serverID: serverID,
+            name: name,
+            type: type,
+            activity: activity,
+            cardioMachine: cardioMachine,
+            cardioTargetMinutes: cardioTargetMinutes,
+            exercises: exercises
+        )
     }
 
     var id: Int { serverID }
@@ -329,8 +484,8 @@ nonisolated struct PersonalRecord: Identifiable, Hashable, Sendable {
 
         var title: String {
             switch self {
-            case .heaviestWeight: return "Heaviest Lift"
-            case .estimatedOneRepMax: return "Best Est. 1RM"
+            case .heaviestWeight: return String(localized: "Heaviest Lift", bundle: .app, locale: .app, comment: "A kind of personal record")
+            case .estimatedOneRepMax: return String(localized: "Best Est. 1RM", bundle: .app, locale: .app, comment: "A kind of personal record: the best estimated one-rep max")
             }
         }
     }
@@ -347,30 +502,85 @@ nonisolated struct PersonalRecord: Identifiable, Hashable, Sendable {
 
     var isFirstEver: Bool { previousValueKilograms == nil }
 
-    var valueText: String {
-        String(format: "%.1f kg", valueKilograms)
-            .replacingOccurrences(of: ".0 kg", with: " kg")
+    var valueText: String { valueText(in: .metric) }
+
+    /// The record in the unit being shown. Records are kilograms from the
+    /// server, like every weight, and are only converted here to be read.
+    func valueText(in unit: WorkoutWeightUnit) -> String {
+        guard unit == .metric else { return unit.formatted(kilograms: Self.decimal(valueKilograms)) }
+        return String(
+            localized: "\(Self.kilogramFigure(valueKilograms)) kg",
+            bundle: .app,
+            locale: .app,
+            comment: "A weight; kg is the abbreviation for kilograms"
+        )
     }
 
     /// How much this beat the old best by, e.g. "+2.5 kg".
-    var improvementText: String? {
+    var improvementText: String? { improvementText(in: .metric) }
+
+    func improvementText(in unit: WorkoutWeightUnit) -> String? {
         guard let previousValueKilograms else { return nil }
         let delta = valueKilograms - previousValueKilograms
         guard delta > 0 else { return nil }
-        return String(format: "+%.1f kg", delta)
-            .replacingOccurrences(of: ".0 kg", with: " kg")
+        guard unit == .metric else {
+            return String(
+                localized: "+\(unit.formatted(kilograms: Self.decimal(delta)))",
+                bundle: .app,
+                locale: .app,
+                comment: "How much a personal record beat the old best by, such as +5 lb"
+            )
+        }
+        return String(
+            localized: "+\(Self.kilogramFigure(delta)) kg",
+            bundle: .app,
+            locale: .app,
+            comment: "How much a personal record beat the old best by; kg is the abbreviation for kilograms"
+        )
     }
 
-    var detailText: String {
+    var detailText: String { detailText(in: .metric) }
+
+    func detailText(in unit: WorkoutWeightUnit) -> String {
         if isFirstEver {
-            return reps.map { "First time · \($0) reps" } ?? "First time"
+            return reps.map { String(localized: "First time · \($0) reps", bundle: .app, locale: .app) }
+                ?? String(localized: "First time", bundle: .app, locale: .app)
         }
-        let previous = previousValueKilograms.map {
-            String(format: "was %.1f kg", $0)
-                .replacingOccurrences(of: ".0 kg", with: " kg")
+        let previous = previousValueKilograms.map { value -> String in
+            guard unit == .metric else {
+                return String(
+                    localized: "was \(unit.formatted(kilograms: Self.decimal(value)))",
+                    bundle: .app,
+                    locale: .app,
+                    comment: "The old best a personal record beat, such as “was 180 lb”"
+                )
+            }
+            return String(
+                localized: "was \(Self.kilogramFigure(value)) kg",
+                bundle: .app,
+                locale: .app,
+                comment: "The old best a personal record beat; kg is the abbreviation for kilograms"
+            )
         } ?? ""
         guard let reps else { return previous }
-        return "\(reps) reps · \(previous)"
+        return String(
+            localized: "\(reps) reps · \(previous)",
+            bundle: .app,
+            locale: .app,
+            comment: "The second placeholder is the old best, such as “was 80 kg”"
+        )
+    }
+
+    /// The server sends records as numbers; two decimals is all a stored
+    /// weight ever has, so this loses nothing.
+    private static func decimal(_ value: Double) -> Decimal {
+        Decimal(string: String(format: "%.2f", value)) ?? Decimal(value)
+    }
+
+    /// One decimal, dropped when it is zero: "82.5", but "80" rather than "80.0".
+    private static func kilogramFigure(_ value: Double) -> String {
+        let figure = String(format: "%.1f", value)
+        return figure.hasSuffix(".0") ? String(figure.dropLast(2)) : figure
     }
 }
 
@@ -477,6 +687,13 @@ nonisolated struct SessionRouteSummary: Hashable, Sendable {
         return ImperialUnits.paceText(secondsPerKilometer: seconds)
     }
 
+    /// The same pace without its unit, "8:51", for a figure whose unit is
+    /// printed beside it.
+    static func paceFigure(_ seconds: Double?) -> String? {
+        guard let seconds, seconds > 0, seconds.isFinite else { return nil }
+        return ImperialUnits.paceFigure(secondsPerKilometer: seconds)
+    }
+
     /// Formats a duration as m:ss, used for split times.
     static func durationText(_ seconds: Double) -> String {
         let total = Int(seconds.rounded())
@@ -491,6 +708,80 @@ nonisolated struct SessionExerciseDraft: Identifiable, Hashable, Codable, Sendab
     let sessionExerciseID: Int
     let name: String
     var sets: [WorkoutSetDraft]
+    /// The saved workout's row this exercise came from. Nil for an exercise
+    /// added during the session; that is how finishing tells the two apart.
+    var workoutExerciseID: Int?
+    /// Seconds to rest after each set. Nil follows the default rest.
+    var restSeconds: Int?
+    var supersetGroup: Int?
+    var targetReps: Int?
+    var targetWeightKilograms: String?
+
+    init(
+        id: Exercise.ID,
+        exerciseServerID: Int,
+        sessionExerciseID: Int,
+        name: String,
+        sets: [WorkoutSetDraft],
+        workoutExerciseID: Int? = nil,
+        restSeconds: Int? = nil,
+        supersetGroup: Int? = nil,
+        targetReps: Int? = nil,
+        targetWeightKilograms: String? = nil
+    ) {
+        self.id = id
+        self.exerciseServerID = exerciseServerID
+        self.sessionExerciseID = sessionExerciseID
+        self.name = name
+        self.sets = sets
+        self.workoutExerciseID = workoutExerciseID
+        self.restSeconds = restSeconds
+        self.supersetGroup = supersetGroup
+        self.targetReps = targetReps
+        self.targetWeightKilograms = targetWeightKilograms
+    }
+
+    /// The target a set aims at. Targets describe the working sets, so a
+    /// warm-up has none: offering 60 kg × 8 on a warm-up row would log a full
+    /// working set as preparation with one tap.
+    func targetReps(for set: WorkoutSetDraft) -> Int? {
+        set.setType.countsAsWorkingSet ? targetReps : nil
+    }
+
+    func targetWeightKilograms(for set: WorkoutSetDraft) -> String? {
+        guard set.setType.countsAsWorkingSet,
+              let weight = targetWeightKilograms, !weight.isEmpty else { return nil }
+        return weight
+    }
+
+    var loggedCount: Int { sets.filter(\.isLogged).count }
+    var isComplete: Bool { !sets.isEmpty && sets.allSatisfy(\.isLogged) }
+    /// The set to do next: the first one not yet logged.
+    var currentSet: WorkoutSetDraft? { sets.first { !$0.isLogged } }
+
+    /// Set numbers are the server's key for a set, so a new one takes the next
+    /// unused number rather than the count: after a set is deleted from the
+    /// middle, the count would reuse a number a logged set still holds.
+    var nextSetNumber: Int { (sets.map(\.setNumber).max() ?? 0) + 1 }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, exerciseServerID, sessionExerciseID, name, sets
+        case workoutExerciseID, restSeconds, supersetGroup, targetReps, targetWeightKilograms
+    }
+
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        id = try values.decode(Exercise.ID.self, forKey: .id)
+        exerciseServerID = try values.decode(Int.self, forKey: .exerciseServerID)
+        sessionExerciseID = try values.decode(Int.self, forKey: .sessionExerciseID)
+        name = try values.decode(String.self, forKey: .name)
+        sets = try values.decode([WorkoutSetDraft].self, forKey: .sets)
+        workoutExerciseID = try values.decodeIfPresent(Int.self, forKey: .workoutExerciseID)
+        restSeconds = try values.decodeIfPresent(Int.self, forKey: .restSeconds)
+        supersetGroup = try values.decodeIfPresent(Int.self, forKey: .supersetGroup)
+        targetReps = try values.decodeIfPresent(Int.self, forKey: .targetReps)
+        targetWeightKilograms = try values.decodeIfPresent(String.self, forKey: .targetWeightKilograms)
+    }
 }
 
 /// App-facing state for the single API workout session currently being logged.
@@ -504,10 +795,59 @@ nonisolated struct ActiveWorkoutSession: Identifiable, Hashable, Codable, Sendab
     let workoutName: String
     /// Decides whether this session logs distance or weighted reps.
     let workoutType: WorkoutType
+    /// What is being done. Recovered sessions from before activities read as
+    /// their type's activity.
+    let activity: WorkoutActivity
     let startedAt: Date
     var exercises: [SessionExerciseDraft]
+    /// The rest in progress, if any. Part of the session so it is saved in
+    /// the same checkpoint: leaving the screen, switching apps or relaunching
+    /// all come back to the same countdown.
+    var restTimer: RestTimer?
+    /// The saved workout's shape when this session started. Nil for a session
+    /// recovered from a build that did not record it, which then simply does
+    /// not offer to update the plan.
+    var plan: WorkoutStructure?
+    /// The exercise being worked on, shared by the screen and the Lock Screen
+    /// so both point at the same next set.
+    var focusedExerciseID: Exercise.ID?
+    /// Set when the order changed here but the server has not confirmed it.
+    var orderNeedsSync: Bool
 
-    var tracksDistance: Bool { workoutType.tracksDistance }
+    init(
+        id: UUID,
+        serverID: Int,
+        day: Weekday,
+        workoutID: Workout.ID,
+        workoutServerID: Int,
+        workoutName: String,
+        workoutType: WorkoutType,
+        activity: WorkoutActivity? = nil,
+        startedAt: Date,
+        exercises: [SessionExerciseDraft],
+        restTimer: RestTimer? = nil,
+        plan: WorkoutStructure? = nil,
+        focusedExerciseID: Exercise.ID? = nil,
+        orderNeedsSync: Bool = false
+    ) {
+        self.id = id
+        self.serverID = serverID
+        self.day = day
+        self.workoutID = workoutID
+        self.workoutServerID = workoutServerID
+        self.workoutName = workoutName
+        self.workoutType = workoutType
+        self.activity = activity ?? WorkoutActivity.legacyDefault(for: workoutType)
+        self.startedAt = startedAt
+        self.exercises = exercises
+        self.restTimer = restTimer
+        self.plan = plan
+        self.focusedExerciseID = focusedExerciseID
+        self.orderNeedsSync = orderNeedsSync
+    }
+
+    /// Timed rather than logged as sets. See `Workout.tracksDistance`.
+    var tracksDistance: Bool { !activity.usesSets }
 
     var totalSetCount: Int {
         exercises.reduce(0) { $0 + $1.sets.count }
@@ -517,6 +857,63 @@ nonisolated struct ActiveWorkoutSession: Identifiable, Hashable, Codable, Sendab
         exercises.reduce(0) { total, exercise in
             total + exercise.sets.filter(\.isLogged).count
         }
+    }
+
+    var completedExerciseCount: Int { exercises.filter(\.isComplete).count }
+
+    /// The session's shape now, in the same terms as `plan`.
+    var structure: WorkoutStructure {
+        WorkoutStructure(items: exercises.map {
+            WorkoutStructure.Item(
+                workoutExerciseID: $0.workoutExerciseID,
+                exerciseServerID: $0.exerciseServerID,
+                name: $0.name,
+                setTypes: $0.sets.map(\.setType),
+                restSeconds: $0.restSeconds,
+                supersetGroup: $0.supersetGroup
+            )
+        })
+    }
+
+    /// How the session has been reshaped since it started. Empty when there is
+    /// no plan to compare with.
+    var structureChanges: [WorkoutStructureChange] {
+        guard let plan else { return [] }
+        return WorkoutStructureDiff.changes(from: plan, to: structure)
+    }
+
+    /// Total weight moved in the sets logged so far, in kilograms.
+    var loggedVolumeKilograms: Decimal {
+        exercises.flatMap(\.sets).reduce(Decimal.zero) { total, set in
+            guard set.isLogged, set.setType.countsAsWorkingSet,
+                  let weight = Decimal(string: set.weightKilograms),
+                  let reps = Int(set.reps) else { return total }
+            return total + weight * Decimal(reps)
+        }
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, serverID, day, workoutID, workoutServerID, workoutName, workoutType, activity, startedAt, exercises
+        case restTimer, plan, focusedExerciseID, orderNeedsSync
+    }
+
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        id = try values.decode(UUID.self, forKey: .id)
+        serverID = try values.decode(Int.self, forKey: .serverID)
+        day = try values.decode(Weekday.self, forKey: .day)
+        workoutID = try values.decode(Workout.ID.self, forKey: .workoutID)
+        workoutServerID = try values.decode(Int.self, forKey: .workoutServerID)
+        workoutName = try values.decode(String.self, forKey: .workoutName)
+        workoutType = try values.decode(WorkoutType.self, forKey: .workoutType)
+        activity = try values.decodeIfPresent(WorkoutActivity.self, forKey: .activity)
+            ?? WorkoutActivity.legacyDefault(for: workoutType)
+        startedAt = try values.decode(Date.self, forKey: .startedAt)
+        exercises = try values.decode([SessionExerciseDraft].self, forKey: .exercises)
+        restTimer = try values.decodeIfPresent(RestTimer.self, forKey: .restTimer)
+        plan = try values.decodeIfPresent(WorkoutStructure.self, forKey: .plan)
+        focusedExerciseID = try values.decodeIfPresent(Exercise.ID.self, forKey: .focusedExerciseID)
+        orderNeedsSync = try values.decodeIfPresent(Bool.self, forKey: .orderNeedsSync) ?? false
     }
 }
 
@@ -548,13 +945,20 @@ nonisolated struct PreviousSet: Hashable, Sendable {
     let setNumber: Int
     let weightKilograms: Decimal?
     let reps: Int?
+    /// Nil from a server that does not record kinds yet, read as normal.
+    var setType: WorkoutSetType? = nil
 
     /// "60 × 8", or nil when the set carries neither number.
     var summary: String? {
+        summary(in: .metric)
+    }
+
+    /// The same, with the weight in the unit being shown.
+    func summary(in unit: WorkoutWeightUnit) -> String? {
         switch (weightKilograms, reps) {
-        case let (weight?, reps?): "\(weight.nutritionText) × \(reps)"
-        case let (weight?, nil): weight.nutritionText
-        case let (nil, reps?): "\(reps) reps"
+        case let (weight?, reps?): "\(unit.display(kilograms: weight)) × \(reps)"
+        case let (weight?, nil): unit.display(kilograms: weight)
+        case let (nil, reps?): String(localized: "\(reps) reps", bundle: .app, locale: .app)
         case (nil, nil): nil
         }
     }
@@ -574,9 +978,19 @@ nonisolated struct SessionOverview: Hashable, Sendable {
         var id: Int { exerciseID }
 
         /// "60 × 8 · 60 × 8", the sets as they were logged.
-        var setsText: String {
-            let parts = sets.compactMap(\.summary)
-            return parts.isEmpty ? "No sets logged" : parts.joined(separator: "  ·  ")
+        var setsText: String { setsText(in: .metric) }
+
+        /// The same in the unit being shown, with a warm-up or drop set
+        /// marked by its letter so the line reads the way it was trained.
+        func setsText(in unit: WorkoutWeightUnit) -> String {
+            let parts = sets.compactMap { set -> String? in
+                guard let summary = set.summary(in: unit) else { return nil }
+                guard let badge = set.setType?.badge else { return summary }
+                return "\(badge) \(summary)"
+            }
+            return parts.isEmpty
+                ? String(localized: "No sets logged", bundle: .app, locale: .app)
+                : parts.joined(separator: "  ·  ")
         }
     }
 
@@ -587,11 +1001,13 @@ nonisolated struct SessionOverview: Hashable, Sendable {
     var loggedSetCount: Int { lines.reduce(0) { $0 + $1.sets.count } }
 
     /// Total weight moved, for sessions that recorded any. Nil when nothing
-    /// logged a weight, which is what a bodyweight day should show.
+    /// logged a weight, which is what a bodyweight day should show. Warm-ups
+    /// are left out, as the server leaves them out of records and progress.
     var totalVolumeKilograms: Decimal? {
         let total = lines.reduce(Decimal.zero) { running, line in
             running + line.sets.reduce(Decimal.zero) { inner, set in
-                guard let weight = set.weightKilograms, let reps = set.reps else {
+                guard set.setType?.countsAsWorkingSet != false,
+                      let weight = set.weightKilograms, let reps = set.reps else {
                     return inner
                 }
                 return inner + weight * Decimal(reps)
@@ -599,4 +1015,34 @@ nonisolated struct SessionOverview: Hashable, Sendable {
         }
         return total > 0 ? total : nil
     }
+}
+
+// MARK: - Exercise names as shown
+
+// An exercise's `name` is what the server calls it and what every match and
+// save goes by. These are what a screen shows instead: the library's
+// translation when the name is one of its exercises, else the name as written.
+
+extension Exercise {
+    var displayName: String { ExerciseLibrary.displayName(name) }
+}
+
+extension WorkoutExerciseChoice {
+    var displayName: String { ExerciseLibrary.displayName(name) }
+}
+
+extension SessionExerciseDraft {
+    var displayName: String { ExerciseLibrary.displayName(name) }
+}
+
+extension SessionOverview.Line {
+    var displayName: String { ExerciseLibrary.displayName(name) }
+}
+
+extension PersonalRecord {
+    var exerciseDisplayName: String { ExerciseLibrary.displayName(exerciseName) }
+}
+
+extension LiftProgressSeries {
+    var exerciseDisplayName: String { ExerciseLibrary.displayName(exerciseName) }
 }

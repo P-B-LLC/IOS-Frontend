@@ -36,7 +36,11 @@ enum AccountSafetyConsent {
 
     struct ReviewDisabled: LocalizedError {
         var errorDescription: String? {
-            "Safety review is disabled for your account. Manage it in Settings before sharing."
+            String(
+                localized: "Safety review is disabled for your account. Manage it in Settings before sharing.",
+                bundle: .app,
+                locale: .app
+            )
         }
     }
 }

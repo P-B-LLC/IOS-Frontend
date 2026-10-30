@@ -38,7 +38,13 @@ final class EditorDraftRecovery {
         try folder.setResourceValues(metadata)
         var options: Data.WritingOptions = [.atomic]
 #if os(iOS)
-        options.insert(.completeFileProtectionUnlessOpen)
+        // Readable while the phone is locked, once it has been unlocked since
+        // it started. Lock Screen workout controls log sets with the phone
+        // locked, and every write reads its receipt back: under
+        // `completeUnlessOpen` a closed file cannot be opened again until
+        // unlock, so Complete set failed from the Lock Screen. Nothing here
+        // is a credential; tokens live in the Keychain.
+        options.insert(.completeFileProtectionUntilFirstUserAuthentication)
 #endif
         try JSONEncoder().encode(value).write(to: file, options: options)
     }

@@ -8,6 +8,7 @@
 //
 
 import CoreLocation
+import Foundation
 import MapKit
 import SwiftUI
 
@@ -78,6 +79,8 @@ struct RouteTrackingCard: View {
             if tracker.isTracking {
                 Text("TRACKING")
                     .font(.community(.caption2, weight: .bold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
                     .foregroundStyle(phase.accent)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
@@ -89,7 +92,7 @@ struct RouteTrackingCard: View {
     /// Shown before the system prompt so the reason is on screen when it appears.
     private var permissionPrompt: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Track this \(workoutType.title.lowercased())?")
+            Text(permissionQuestion)
                 .font(.community(.callout, weight: .semibold))
             Text("Rytivo can map your route and measure your distance and pace while this session runs. Location is only used during a session you start.")
                 .font(.community(.caption))
@@ -113,7 +116,7 @@ struct RouteTrackingCard: View {
                     : "Location access is off."
             )
             .font(.community(.callout, weight: .semibold))
-            Text("Your \(workoutType.title.lowercased()) is still timed and saved — it just won't have a map or a measured distance.")
+            Text(withoutLocationNote)
                 .font(.community(.caption))
                 .foregroundStyle(.secondary)
             if tracker.permission == .denied,
@@ -123,6 +126,33 @@ struct RouteTrackingCard: View {
                         .font(.community(.subheadline, weight: .semibold))
                 }
             }
+        }
+    }
+
+    // Written out per type rather than built around the type's name: other
+    // languages inflect the name, and the words around it, differently for
+    // each one.
+    private var permissionQuestion: LocalizedStringKey {
+        switch workoutType {
+        // Only the lifting family's outdoor activities -- rowing, paddling --
+        // track a route, and "lifting" is not what any of them is.
+        case .lifting: return "Track this activity?"
+        case .running: return "Track this running?"
+        case .biking: return "Track this biking?"
+        case .swimming: return "Track this swimming?"
+        }
+    }
+
+    private var withoutLocationNote: LocalizedStringKey {
+        switch workoutType {
+        case .lifting:
+            return "This activity is still timed and saved — it just won't have a map or a measured distance."
+        case .running:
+            return "Your running is still timed and saved — it just won't have a map or a measured distance."
+        case .biking:
+            return "Your biking is still timed and saved — it just won't have a map or a measured distance."
+        case .swimming:
+            return "Your swimming is still timed and saved — it just won't have a map or a measured distance."
         }
     }
 
@@ -146,36 +176,40 @@ struct RouteTrackingCard: View {
                         ImperialUnits.milesPerHour(fromKilometersPerHour: $0)
                     )
                 } ?? "--"
-            : SessionRouteSummary.paceText(
+            : SessionRouteSummary.paceFigure(
                 tracker.liveAveragePaceSecondsPerKilometer
                     ?? tracker.currentPaceSecondsPerKilometer
-              )?.replacingOccurrences(of: " /mi", with: "") ?? "--"
+              ) ?? "--"
 
         return HStack(alignment: .top, spacing: 0) {
             LiveStat(
-                title: "DISTANCE",
+                title: String(localized: "DISTANCE", bundle: .app, locale: .app),
                 value: String(
                     format: "%.2f",
                     ImperialUnits.miles(fromKilometers: tracker.liveDistanceKilometers)
                 ),
-                unit: "mi",
+                unit: String(localized: "mi", bundle: .app, locale: .app, comment: "Abbreviation for miles"),
                 accent: phase.accent,
                 secondary: phase.secondaryText
             )
             LiveStat(
-                title: isRide ? "SPEED" : "PACE",
+                title: isRide
+                    ? String(localized: "SPEED", bundle: .app, locale: .app)
+                    : String(localized: "PACE", bundle: .app, locale: .app),
                 value: rate,
-                unit: isRide ? "mph" : "/mi",
+                unit: isRide
+                    ? String(localized: "mph", bundle: .app, locale: .app, comment: "Abbreviation for miles per hour")
+                    : String(localized: "/mi", bundle: .app, locale: .app, comment: "Per mile, the unit of a running pace"),
                 accent: phase.accent,
                 secondary: phase.secondaryText
             )
             LiveStat(
-                title: "CLIMB",
+                title: String(localized: "CLIMB", bundle: .app, locale: .app),
                 value: String(
                     format: "%.0f",
                     ImperialUnits.feet(fromMeters: tracker.liveElevationGainMeters)
                 ),
-                unit: "ft",
+                unit: String(localized: "ft", bundle: .app, locale: .app, comment: "Abbreviation for feet"),
                 accent: phase.accent,
                 secondary: phase.secondaryText
             )
@@ -198,7 +232,9 @@ struct RouteTrackingCard: View {
                 MapPolyline(coordinates: tracker.points.map(\.coordinate))
                     .stroke(phase.accent, lineWidth: 4)
                 if let last = tracker.points.last {
-                    Annotation("You", coordinate: last.coordinate) {
+                    // MapKit takes a literal title as a plain String, not a
+                    // localization key, so the title is looked up here.
+                    Annotation(String(localized: "You", bundle: .app, locale: .app, comment: "Map pin at the person's current position"), coordinate: last.coordinate) {
                         Circle()
                             .fill(phase.accent)
                             .frame(width: 12, height: 12)

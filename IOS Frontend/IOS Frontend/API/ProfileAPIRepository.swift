@@ -100,6 +100,9 @@ nonisolated struct RemoteProfile: Equatable, Sendable {
     /// Whether the reader has asked to and is waiting for an answer. Survives
     /// the emptying of a closed profile, so the button can say so.
     var viewerHasRequested: Bool = false
+    /// Whether this person follows the reader. Nil from a server that does
+    /// not say, which shows no "Follows you" rather than a guess.
+    var followsViewer: Bool? = nil
     var disciplines: [String]
     var gymID: Int?
     var gymName: String?
@@ -284,6 +287,7 @@ actor ProfileAPIRepository {
                 isReadable: payload.isReadable ?? true,
                 viewerFollows: payload.viewerFollows ?? false,
                 viewerHasRequested: payload.viewerHasRequested ?? false,
+                followsViewer: payload.followsViewer,
                 // Already strings here, unlike on /me/ where the contract
                 // gives a closed enum.
                 disciplines: payload.disciplines,
