@@ -19,6 +19,42 @@ This setup does not upload a build, change the installed TestFlight app, or
 change backend/web repositories. Existing feature and backup branches stay
 intact. Keep the integration branch history shared; do not force-push it.
 
+## 1.1 beta candidate — October 30, 2026
+
+Promotion of this integration branch to `main` as version 1.1 (the last
+TestFlight build was 1.0 (525), built against `https://rytivo.app`). Its
+backend is repbase `work/testflight-calendar-sync-2026-10-28`, promoted in
+repbase PR #36, which now also carries the photo/video post backend ported
+from repbase PR #34 (migration renumbered `0086_media_posts`).
+
+**Deploy the backend before any tester gets this build.** The server at
+`rytivo.app` ran roughly the 2026-10-17 backend, without notifications'
+scoped reads, Open Food Facts search and barcodes, activity logging, set
+structure, the exercise library or media posts. Build 525 keeps working
+against the new backend: the contract change is additive, and an unknown
+post kind is kept as a card it cannot draw.
+
+Deploy order on the droplet: confirm the running commit and migrations, back
+up the database (`pg_dump -Fc`), stop the timers and the `repbase` service
+(migrations 0082/0083 add NOT NULL columns that the old process cannot
+insert into), run `deploy/deploy.sh` for the merged `main` SHA, verify
+`/health/`, 0086 applied, and 1,023 library rows, then start the timers.
+Rolling back after the new code has served means restoring the backup.
+
+Release-review fixes in this candidate: untranslated media-post strings and
+a CI check that catches strings missing from the catalog, the composer's
+discard leaving a ghost post, Discover state surviving an account switch,
+Lock Screen set logging failing while locked (file protection), native
+Arabic/Devanagari digits in number fields, last-time hints after relaunch,
+duplicate exercises from the session sheet, the rest alert lost on reminder
+rescheduling, and silent Finish/plan-update failures. E2E adds activity and
+calendar-agenda tests; the runner suppresses the simulator's slide-to-type
+tip, which otherwise hangs the first test to type a word.
+
+Device-only checks still owed before inviting external testers: Lock Screen
+and Dynamic Island workout controls with the phone locked, rest-over
+notification, barcode scanning, camera/photo/video posting, HealthKit.
+
 ## Calendar structure refresh — October 30, 2026
 
 The compact task/event buttons sit directly below the brand/header. A compact
