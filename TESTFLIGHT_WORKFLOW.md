@@ -19,6 +19,45 @@ This setup does not upload a build, change the installed TestFlight app, or
 change backend/web repositories. Existing feature and backup branches stay
 intact. Keep the integration branch history shared; do not force-push it.
 
+## Calendar structure refresh — October 30, 2026
+
+The calendar now keeps date navigation separate from the selected day's agenda.
+The month button, Today and week arrows stay together; task/event creation is
+visible below. Your day owns its filters, progress, rotation context, scheduled
+items and anytime items. Completed items, overdue tasks and upcoming events are
+expandable. Expanding upcoming events shows every item already loaded in the
+existing horizon rather than stopping at six with a non-interactive count.
+The previous design is preserved in integration history at `24aaedb`.
+
+This is presentation work: planner persistence, completion/subtask requests,
+notification scheduling and calendar date arithmetic are unchanged. Existing
+appearance tokens provide light/dark variants. The two new headings have all
+nine non-English translations in `Localizable.xcstrings`.
+
+Before promotion, run `INSTALL_SIMULATOR=1 bash Scripts/validate-planner-refresh.sh`
+on the Mac with a booted simulator. When `REPBASE_API_URL` is unset, the script
+reads the existing address from the installed Rytivo app's Info.plist; if there
+is no installed configuration, set the existing HTTPS origin explicitly.
+It reuses `.build/planner-validation` and installs over the existing app,
+without erasing simulator data.
+Windows syntax/catalog checks do not replace an Xcode build or visual QA.
+
+Interactive checks:
+
+1. Open the month, browse across a month/year boundary, choose a date and return.
+   Test Today and both week arrows, including a week spanning two months.
+2. Add a task/event on a non-today date. Verify scheduled ordering, anytime
+   placement, edits, completion/undo, subtask expansion and workout navigation.
+3. Filter a day, remove its last matching entry, clear the filter, and switch
+   dates. Ensure an empty filter never reads as an empty unfiltered day.
+4. Expand completed, past-due and upcoming groups. Verify dates and all loaded
+   upcoming events are accessible, including more than six. Selected-date items
+   must not also appear under the other-day groups.
+5. Check loading, retry, editing blocked, empty and all-tasks-complete states;
+   undo completion and verify the week marker reverts from green.
+6. Check light/dark mode, large text, a narrow screen, VoiceOver, Reduce Motion
+   and Arabic RTL. In particular, inspect month controls and the filter menu.
+
 ## Social search and own-post confirmation — October 28, 2026
 
 Work remains on `work/testflight-fixes-2026-10-27` in draft

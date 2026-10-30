@@ -2,8 +2,7 @@
 //  PlannerView.swift
 //  IOS Frontend
 //
-//  The planner: the week in focus, the day against the clock, and what is
-//  overdue or coming.
+//  Pick a date, read its agenda, and keep other days out of the way.
 //
 
 import Foundation
@@ -36,54 +35,36 @@ struct PlannerView: View {
         let timeOfDay = HomeTimeOfDay.current
 
         ScrollView {
-            VStack(spacing: 14) {
+            VStack(alignment: .leading, spacing: 24) {
                 HStack {
                     RytivoBrandLockup(size: 24)
                     Spacer()
-                    Text("Planner")
+                    Text("Calendar")
                         .font(.community(.title3, weight: .bold))
                         .foregroundStyle(timeOfDay.canvasPrimaryText)
                 }
 
-                HStack(alignment: .bottom) {
-                    if showsBackButton {
-                        Button { dismiss() } label: {
-                            Image(systemName: "chevron.backward")
-                                .font(.community(size: 17, weight: .semibold))
-                                .frame(width: 40, height: 40)
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .foregroundStyle(timeOfDay.canvasPrimaryText)
-                        .accessibilityLabel("Back")
-                        .padding(.trailing, 2)
+                if showsBackButton {
+                    Button { dismiss() } label: {
+                        Label("Back", systemImage: "chevron.backward")
+                            .font(.community(.subheadline, weight: .semibold))
+                            .frame(minHeight: 44)
                     }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(timeOfDay.canvasPrimaryText)
+                }
 
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Make room for your day.")
-                            .font(.community(.title2, weight: .bold))
-                            .foregroundStyle(timeOfDay.canvasPrimaryText)
-                        Text(store.selectedDate.formatted(.dateTime.weekday(.wide).month(.wide).day().locale(.app)))
-                            .font(.community(.subheadline))
-                            .foregroundStyle(timeOfDay.canvasSecondaryText)
-                    }
-                    Spacer(minLength: 0)
+                if let error = store.persistenceError {
+                    errorCard(error, timeOfDay: timeOfDay)
                 }
 
                 PlannerWeekStrip(
-                    categoryFilter: $categoryFilter,
                     onToggleMonth: { isMonthShown = true }
                 )
 
                 addButtons(timeOfDay: timeOfDay)
                 daySection(timeOfDay: timeOfDay)
-                rotationStrip(timeOfDay: timeOfDay)
-                pastDueSection(timeOfDay: timeOfDay)
-                upcomingSection(timeOfDay: timeOfDay)
-
-                if let error = store.persistenceError {
-                    errorCard(error, timeOfDay: timeOfDay)
-                }
+                otherDaysSection(timeOfDay: timeOfDay)
             }
             .padding(.horizontal, 24)
             .padding(.top, 16)
@@ -142,7 +123,7 @@ struct PlannerView: View {
     // MARK: - Adding
 
     private func addButtons(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 10) {
             addButton(
                 "Add Task",
                 systemImage: "plus",
@@ -173,14 +154,14 @@ struct PlannerView: View {
             editor = .create(kind, store.selectedDate)
         } label: {
             Label(title, systemImage: systemImage)
-                .font(.community(size: 13, weight: .semibold))
+                .font(.community(.subheadline, weight: .semibold))
                 .foregroundStyle(primary ? timeOfDay.onPrimaryAction : timeOfDay.canvasPrimaryText)
                 .frame(maxWidth: .infinity, minHeight: 48)
                 .background(
                     primary ? timeOfDay.primaryActionSurface : timeOfDay.surfaceRaised,
-                    in: Capsule()
+                    in: RoundedRectangle(cornerRadius: 16)
                 )
-                .overlay { Capsule().strokeBorder(primary ? Color.clear : timeOfDay.canvasBorder) }
+                .overlay { RoundedRectangle(cornerRadius: 16).strokeBorder(primary ? Color.clear : timeOfDay.canvasBorder) }
         }
         .buttonStyle(.plain)
         .disabled(!store.isEditingEnabled || store.isLoading)
@@ -189,11 +170,7 @@ struct PlannerView: View {
 
     // MARK: - The day
 
-    /// Where the rotation is, above the day it is describing.
-    ///
-    /// Only while one is running and only on days it covers: a strip counting
-    /// "day 3 of 6" over a date the rotation has nothing to say about would be
-    /// answering a question nobody asked of that day.
+    /// Context for this day, not a separate destination below its task list.
     @ViewBuilder
     private func rotationStrip(timeOfDay: HomeTimeOfDay) -> some View {
         if let cycle = cycleStore.activeCycle,
@@ -221,37 +198,19 @@ struct PlannerView: View {
     }
 
     private func daySection(timeOfDay: HomeTimeOfDay) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 8) {
-                Text("Your day")
-                    .font(.community(.headline, weight: .bold))
-                    .foregroundStyle(timeOfDay.canvasPrimaryText)
-                Spacer(minLength: 0)
-                if !completedTasks.isEmpty {
-                    Button {
-                        withAnimation(reduceMotion ? nil : .easeOut(duration: 0.2)) {
-                            showsCompleted.toggle()
-                        }
-                    } label: {
-                        Label("Completed (\(completedTasks.count))",
-                              systemImage: showsCompleted ? "chevron.up" : "chevron.down")
-                            .font(.community(.footnote))
-                            .frame(minHeight: 44)
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(timeOfDay.canvasSecondaryText)
-                    .accessibilityValue(showsCompleted ? "Expanded" : "Collapsed")
+        VStack(alignment: .leading, spacing: 16) {
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .top) {
+                    dayHeading(timeOfDay: timeOfDay)
+                    Spacer(minLength: 12)
+                    categoryMenu(timeOfDay: timeOfDay)
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    dayHeading(timeOfDay: timeOfDay)
+                    categoryMenu(timeOfDay: timeOfDay)
                 }
             }
-
-            if let categoryFilter {
-                Text(
-                    "Showing \(categoryFilter.title.lowercased(with: .app)) items. Choose All to see the whole day.",
-                    comment: "The placeholder is a planner category name in lower case, e.g. habit or birthday"
-                )
-                    .font(.community(.caption))
-                    .foregroundStyle(timeOfDay.canvasSecondaryText)
-            }
+            rotationStrip(timeOfDay: timeOfDay)
             if let reason = store.editingBlockedReason {
                 Text(reason)
                     .font(.community(.footnote))
@@ -263,25 +222,110 @@ struct PlannerView: View {
                 ProgressView("Loading your day…")
                     .frame(maxWidth: .infinity, minHeight: 80)
             } else if filtered.isEmpty {
-                Text(categoryFilter == nil ? "Your day is open. Add a task or event to get started." : "Nothing in this category on this day.")
-                    .font(.community(.subheadline))
-                    .foregroundStyle(timeOfDay.canvasSecondaryText)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .plannerSurface(soft: true)
-            } else {
-                ForEach(dayAgenda) { entry in
-                    agendaRow(entry)
+                VStack(alignment: .leading, spacing: 10) {
+                    Image(systemName: categoryFilter == nil ? "calendar.badge.plus" : "line.3.horizontal.decrease")
+                        .font(.community(.title2))
+                        .foregroundStyle(PlannerStyle.accentText)
+                        .accessibilityHidden(true)
+                    Text(categoryFilter == nil ? "Your day is open. Add a task or event to get started." : "Nothing in this category on this day.")
+                        .font(.community(.subheadline))
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                    if categoryFilter != nil {
+                        Button("Clear filters") { categoryFilter = nil }
+                            .font(.community(.subheadline, weight: .semibold))
+                            .frame(minHeight: 44)
+                            .tint(PlannerStyle.accentText)
+                    }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .plannerSurface(soft: true)
+            } else {
+                agendaGroup("Scheduled", entries: dayAgenda.filter { $0.time != nil }, timeOfDay: timeOfDay)
+                agendaGroup("Anytime", entries: dayAgenda.filter { $0.time == nil }, timeOfDay: timeOfDay)
                 if openTasks.isEmpty, !completedTasks.isEmpty {
                     Label(categoryFilter == nil ? "All tasks done. A little room to breathe." : "All tasks in this category are done.", systemImage: "checkmark.circle.fill")
                         .font(.community(.subheadline))
                         .foregroundStyle(PlannerStyle.success)
                         .padding(.vertical, 8)
                 }
-                if showsCompleted {
-                    ForEach(completedTasks) { entry in
-                        agendaRow(entry)
+                if !completedTasks.isEmpty {
+                    DisclosureGroup(isExpanded: $showsCompleted) {
+                        LazyVStack(spacing: 8) {
+                            ForEach(completedTasks) { entry in agendaRow(entry) }
+                        }
+                    } label: {
+                        disclosureHeading("Completed", count: completedTasks.count, timeOfDay: timeOfDay)
                     }
+                    .tint(timeOfDay.canvasSecondaryText)
+                }
+            }
+        }
+    }
+
+    private func dayHeading(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text("Your day")
+                .font(.community(.title2, weight: .bold))
+                .foregroundStyle(timeOfDay.canvasPrimaryText)
+            Text(store.selectedDate.formatted(.dateTime.weekday(.wide).month(.abbreviated).day().locale(.app)))
+                .font(.community(.subheadline))
+                .foregroundStyle(timeOfDay.canvasSecondaryText)
+            if !store.isLoading, !filtered.isEmpty {
+                let tasks = filtered.filter { $0.kind == .task }
+                if !tasks.isEmpty {
+                    Text("\(completedTasks.count) of \(tasks.count) tasks done")
+                        .font(.community(.footnote))
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                    ProgressView(value: Double(completedTasks.count), total: Double(tasks.count))
+                        .tint(completedTasks.count == tasks.count ? PlannerStyle.success : PlannerStyle.accentText)
+                        .frame(maxWidth: 180)
+                        .padding(.top, 5)
+                        .accessibilityLabel("\(completedTasks.count) of \(tasks.count) tasks done")
+                } else {
+                    Text("\(tasks.count) tasks · \(filtered.filter { $0.kind == .event }.count) events")
+                        .font(.community(.footnote))
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func categoryMenu(timeOfDay: HomeTimeOfDay) -> some View {
+        let categories = store.categories(on: store.selectedDate)
+        if categories.count > 1 || categoryFilter != nil {
+            Menu {
+                Picker("Filters", selection: $categoryFilter) {
+                    Text("All").tag(Optional<PlannerCategory>.none)
+                    ForEach(PlannerCategory.allCases.filter { categories.contains($0) || $0 == categoryFilter }) { category in
+                        Text(category.title).tag(Optional(category))
+                    }
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "line.3.horizontal.decrease")
+                    if let categoryFilter { Text(categoryFilter.title) } else { Text("Filters") }
+                }
+                .font(.community(.footnote, weight: .semibold))
+                .foregroundStyle(categoryFilter == nil ? timeOfDay.canvasPrimaryText : PlannerStyle.accentText)
+                .padding(.horizontal, 12)
+                .frame(minHeight: 44)
+                .background(timeOfDay.surfaceRaised, in: Capsule())
+                .overlay { Capsule().strokeBorder(timeOfDay.canvasBorder) }
+            }
+            .accessibilityIdentifier("planner.filters")
+        }
+    }
+
+    @ViewBuilder
+    private func agendaGroup(_ title: LocalizedStringKey, entries: [PlannerEntry], timeOfDay: HomeTimeOfDay) -> some View {
+        if !entries.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(title)
+                    .font(.community(.footnote, weight: .semibold))
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+                LazyVStack(spacing: 8) {
+                    ForEach(entries) { entry in agendaRow(entry) }
                 }
             }
         }
@@ -433,28 +477,43 @@ struct PlannerView: View {
             .filter { $0.category == categoryFilter }
     }
 
-    // MARK: - Past due
+    // MARK: - Other days
+
+    @ViewBuilder
+    private func otherDaysSection(timeOfDay: HomeTimeOfDay) -> some View {
+        let hasPastDue = store.pastDue.contains { $0.date != PlannerStore.dateString(store.selectedDate) }
+        let hasUpcoming = store.upcomingEvents.contains { $0.date != PlannerStore.dateString(store.selectedDate) }
+        if hasPastDue || hasUpcoming {
+            VStack(alignment: .leading, spacing: 12) {
+                Divider()
+                Text("Beyond this day")
+                    .font(.community(.footnote, weight: .semibold))
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+                pastDueSection(timeOfDay: timeOfDay)
+                upcomingSection(timeOfDay: timeOfDay)
+            }
+        }
+    }
 
     @ViewBuilder
     private func pastDueSection(timeOfDay: HomeTimeOfDay) -> some View {
         let entries = store.pastDue.filter { $0.date != PlannerStore.dateString(store.selectedDate) }
         if !entries.isEmpty {
-            VStack(alignment: .leading, spacing: 8) {
-                sectionHeader(
-                    "Past due",
-                    detail: "\(entries.count)",
-                    tint: Color(hex: 0xD8557A),
-                    timeOfDay: timeOfDay
-                )
-                ForEach(entries) { entry in
-                    PlannerEntryRow(
-                        entry: entry,
-                        showsDate: true,
-                        onEdit: { editor = .edit(entry) },
-                        onOpenWorkout: { openingDay = $0 }
-                    )
+            DisclosureGroup {
+                LazyVStack(spacing: 8) {
+                    ForEach(entries) { entry in
+                        PlannerEntryRow(
+                            entry: entry,
+                            showsDate: true,
+                            onEdit: { editor = .edit(entry) },
+                            onOpenWorkout: { openingDay = $0 }
+                        )
+                    }
                 }
+            } label: {
+                disclosureHeading("Past due", count: entries.count, timeOfDay: timeOfDay)
             }
+            .tint(timeOfDay.canvasSecondaryText)
         }
     }
 
@@ -464,50 +523,42 @@ struct PlannerView: View {
     private func upcomingSection(timeOfDay: HomeTimeOfDay) -> some View {
         let entries = store.upcomingEvents.filter { $0.date != PlannerStore.dateString(store.selectedDate) }
         if !entries.isEmpty {
-            VStack(alignment: .leading, spacing: 8) {
-                sectionHeader(
-                    "Upcoming events",
-                    detail: String(localized: "next \(PlannerStore.upcomingHorizonDays) days", bundle: .app, locale: .app),
-                    tint: timeOfDay.accent,
-                    timeOfDay: timeOfDay
-                )
-                ForEach(entries.prefix(6)) { entry in
-                    PlannerEntryRow(
-                        entry: entry,
-                        showsDate: true,
-                        onEdit: { editor = .edit(entry) },
-                        onOpenWorkout: { openingDay = $0 }
-                    )
+            DisclosureGroup {
+                LazyVStack(spacing: 8) {
+                    ForEach(entries) { entry in
+                        PlannerEntryRow(
+                            entry: entry,
+                            showsDate: true,
+                            onEdit: { editor = .edit(entry) },
+                            onOpenWorkout: { openingDay = $0 }
+                        )
+                    }
                 }
-                if entries.count > 6 {
-                    Text("+\(entries.count - 6) more")
-                        .font(.community(.caption2))
-                        .foregroundStyle(timeOfDay.secondaryText)
-                        .padding(.leading, 4)
-                }
+            } label: {
+                disclosureHeading("Upcoming events", count: entries.count, timeOfDay: timeOfDay)
             }
+            .tint(timeOfDay.canvasSecondaryText)
         }
     }
 
-    private func sectionHeader(
+    private func disclosureHeading(
         _ title: LocalizedStringKey,
-        detail: String,
-        tint: Color,
+        count: Int,
         timeOfDay: HomeTimeOfDay
     ) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 7) {
-            Circle()
-                .fill(tint)
-                .frame(width: 6, height: 6)
+        HStack(spacing: 8) {
             Text(title)
-                .font(.community(size: 15, weight: .bold))
+                .font(.community(.subheadline, weight: .semibold))
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
             Spacer(minLength: 0)
-            Text(detail)
-                .font(.community(size: 10, weight: .semibold))
+            Text(count, format: .number.locale(.app))
+                .font(.community(.footnote, weight: .semibold))
                 .foregroundStyle(timeOfDay.canvasSecondaryText)
+                .padding(.horizontal, 9)
+                .padding(.vertical, 4)
+                .background(timeOfDay.selectorSurface, in: Capsule())
         }
-        .padding(.top, 4)
+        .frame(minHeight: 44)
     }
 
     private func errorCard(_ message: String, timeOfDay: HomeTimeOfDay) -> some View {
@@ -571,14 +622,11 @@ struct PlannerEntryRow: View {
             }
         }
         .padding(.vertical, 8)
-        .padding(.horizontal, entry.completionIsDerived || entry.kind == .event ? 8 : 0)
-        .background(
-            entry.kind == .event ? PlannerStyle.soft : (entry.completionIsDerived ? timeOfDay.surfaceRaised : Color.clear),
-            in: RoundedRectangle(cornerRadius: PlannerStyle.radius)
-        )
+        .padding(.horizontal, 8)
+        .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 18))
         .overlay {
-            RoundedRectangle(cornerRadius: PlannerStyle.radius)
-                .strokeBorder(entry.completionIsDerived ? timeOfDay.canvasBorder : Color.clear)
+            RoundedRectangle(cornerRadius: 18)
+                .strokeBorder(timeOfDay.canvasBorder)
         }
         .plannerWorkoutCompletionDialog(
             entry: $confirming,

@@ -2,7 +2,7 @@
 //  PlannerWeekStrip.swift
 //  IOS Frontend
 //
-//  The week widget above the day's list: which day, what is on it, how far in.
+//  Date navigation only. The day's filters and progress belong to its agenda.
 //
 
 import Foundation
@@ -11,10 +11,6 @@ import SwiftUI
 struct PlannerWeekStrip: View {
     @Environment(PlannerStore.self) private var store
     @Environment(\.homeTimeOfDay) private var timeOfDay
-
-    /// Nil means every category. Held by the page so the list below filters
-    /// with the chips rather than keeping its own idea of what is selected.
-    @Binding var categoryFilter: PlannerCategory?
 
     /// Opens the month. The day tabs cannot do this themselves: they already
     /// mean "choose this day".
@@ -28,11 +24,8 @@ struct PlannerWeekStrip: View {
                 monthButton
             }
             dayTabs
-            if categories.count > 1 || categoryFilter != nil {
-                categoryTabs
-            }
-            progress
         }
+        .plannerSurface(padding: 12)
     }
 
     // MARK: - Opening the month
@@ -42,24 +35,29 @@ struct PlannerWeekStrip: View {
             Button {
                 onToggleMonth?()
             } label: {
-                Label("View month", systemImage: "chevron.down")
-                    .font(.community(.footnote, weight: .semibold))
-                    .padding(.horizontal, 14)
-                    .frame(minHeight: 44)
-                    .background(timeOfDay.surfaceRaised, in: Capsule())
-                    .overlay { Capsule().strokeBorder(timeOfDay.canvasBorder) }
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(store.selectedDate.formatted(.dateTime.month(.wide).year().locale(.app)))
+                        .font(.community(.subheadline, weight: .bold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                    Label("View month", systemImage: "chevron.down")
+                        .font(.community(.caption))
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                }
+                .frame(minHeight: 44)
             }
             .accessibilityIdentifier("planner.viewMonth")
+            .accessibilityLabel("Open the month, \(store.selectedDate.formatted(.dateTime.month(.wide).year().locale(.app)))")
             .accessibilityHint("Open the full month calendar")
             Spacer(minLength: 0)
-            if !calendar.isDateInToday(store.selectedDate) {
-                Button("Today") { store.showToday() }
-                    .font(.community(.footnote, weight: .semibold))
-                    .frame(minHeight: 44)
-            }
+            Button("Today") { store.showToday() }
+                .font(.community(.footnote, weight: .semibold))
+                .foregroundStyle(PlannerStyle.accentText)
+                .frame(minWidth: 44, minHeight: 44)
             weekButton("chevron.backward", label: "Previous week", offset: -1)
             weekButton("chevron.forward", label: "Next week", offset: 1)
         }
+        .padding(.horizontal, 2)
         .buttonStyle(.plain)
         .foregroundStyle(timeOfDay.canvasPrimaryText)
     }
@@ -72,8 +70,6 @@ struct PlannerWeekStrip: View {
             Image(systemName: symbol)
                 .font(.community(.footnote, weight: .semibold))
                 .frame(width: 44, height: 44)
-                .background(timeOfDay.surfaceRaised, in: Circle())
-                .overlay { Circle().strokeBorder(timeOfDay.canvasBorder) }
         }
         .accessibilityLabel(label)
     }
@@ -87,14 +83,17 @@ struct PlannerWeekStrip: View {
             }
         }
         // Seven tabs across, for the same reason the month grid has seven
-        // columns. Capped here rather than on the whole card, so the
-        // categories and the progress line underneath still grow.
+        // columns. The agenda and its controls still use the full text size.
         .typeSizeCeiling()
     }
 
     private func dayTab(_ date: Date) -> some View {
         let isSelected = calendar.isDate(date, inSameDayAs: store.selectedDate)
         let isToday = calendar.isDateInToday(date)
+        let counts = store.taskCounts(on: date)
+        let isComplete = counts.total > 0 && counts.done == counts.total
+        let hasEntries = store.hasEntries(on: date)
+        let tint = isComplete ? PlannerStyle.success : PlannerStyle.accentText
 
         return Button {
             store.select(date)
@@ -103,121 +102,41 @@ struct PlannerWeekStrip: View {
                 Text(date.formatted(.dateTime.weekday(.abbreviated).locale(.app)))
                     .font(.community(size: 11, weight: .semibold))
                     .foregroundStyle(
-                        isSelected ? timeOfDay.onPrimaryAction : timeOfDay.canvasSecondaryText
+                        isSelected ? tint : timeOfDay.canvasSecondaryText
                     )
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                 Text("\(calendar.component(.day, from: date))")
                     .font(.community(size: 18, weight: .bold))
-                    .foregroundStyle(isSelected ? timeOfDay.onPrimaryAction : timeOfDay.canvasPrimaryText)
-                marker(for: date, isSelected: isSelected)
+                    .foregroundStyle(isSelected || isComplete ? tint : timeOfDay.canvasPrimaryText)
+                ZStack {
+                    if isComplete {
+                        Image(systemName: "checkmark")
+                            .font(.community(size: 9, weight: .bold))
+                            .foregroundStyle(PlannerStyle.success)
+                    } else if hasEntries {
+                        Circle().fill(PlannerStyle.accentText).frame(width: 4, height: 4)
+                    }
+                }
+                .frame(height: 10)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 9)
-            .background(tabBackground(isSelected: isSelected, isToday: isToday))
+            .background {
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(hasEntries || isSelected ? tint.opacity(0.09) : timeOfDay.selectorSurface.opacity(0.5))
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: 14)
+                    .strokeBorder(isSelected ? tint : (isToday ? timeOfDay.canvasBorder : .clear),
+                                  lineWidth: isSelected ? 1.5 : 1)
+            }
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(date.formatted(.dateTime.weekday(.wide).month(.wide).day().locale(.app)))
-        .accessibilityValue(store.hasEntries(on: date) ? "Items planned" : "Nothing planned")
+        .accessibilityValue(isComplete ? "Tasks complete" : (hasEntries ? "Items planned" : "Nothing planned"))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
-    }
-
-    /// A single dot saying "something is planned", rather than a count: the
-    /// strip is for choosing a day, and the list below answers what is on it.
-    private func marker(for date: Date, isSelected: Bool) -> some View {
-        Circle()
-            .fill(
-                store.hasEntries(on: date)
-                    ? (isSelected ? timeOfDay.onPrimaryAction : PlannerStyle.accentText)
-                    : Color.clear
-            )
-            .frame(width: 4, height: 4)
-    }
-
-    @ViewBuilder
-    private func tabBackground(isSelected: Bool, isToday: Bool) -> some View {
-        if isSelected {
-            Capsule().fill(timeOfDay.primaryActionSurface)
-        } else if isToday {
-            Capsule().strokeBorder(PlannerStyle.accentText.opacity(0.5), lineWidth: 1)
-        }
-    }
-
-    // MARK: - Categories
-
-    /// Only categories actually planned that day. Offering the full list would
-    /// mean most chips filter to nothing.
-    private var categories: [PlannerCategory] {
-        store.categories(on: store.selectedDate)
-    }
-
-    private var categoryTabs: some View {
-        ScrollView(.horizontal) {
-            HStack(spacing: 6) {
-                chip(
-                    title: String(localized: "All", bundle: .app, locale: .app, comment: "Category filter chip that shows every category"),
-                    tint: timeOfDay.accent,
-                    isSelected: categoryFilter == nil
-                ) {
-                    categoryFilter = nil
-                }
-                ForEach(categories) { category in
-                    chip(
-                        title: category.title,
-                        tint: category.tint,
-                        isSelected: categoryFilter == category
-                    ) {
-                        categoryFilter = categoryFilter == category ? nil : category
-                    }
-                }
-            }
-            .padding(.horizontal, 1)
-        }
-        .scrollIndicators(.hidden)
-    }
-
-    private func chip(
-        title: String,
-        tint: Color,
-        isSelected: Bool,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(.community(size: 11, weight: .semibold))
-                .foregroundStyle(isSelected ? timeOfDay.onPrimaryAction : timeOfDay.canvasPrimaryText)
-                .padding(.horizontal, 11)
-                .frame(minHeight: 44)
-                .background(
-                    isSelected ? timeOfDay.primaryActionSurface : tint.opacity(0.12),
-                    in: Capsule()
-                )
-        }
-        .buttonStyle(.plain)
-    }
-
-    // MARK: - Progress
-
-    private var progress: some View {
-        let counts = store.taskCounts(on: store.selectedDate)
-        let cleared = counts.total > 0 && counts.done == counts.total
-        return HStack(spacing: 10) {
-            Image(systemName: cleared ? "checkmark.circle.fill" : "checkmark.circle")
-                .font(.community(.title3))
-                .foregroundStyle(cleared ? PlannerStyle.success : PlannerStyle.accentText)
-            Text(store.isLoading ? "Loading your plan…" : (counts.total == 0 ? "A fresh start. Make it yours." : "\(counts.done) of \(counts.total) tasks done"))
-                .font(.community(.footnote, weight: .semibold))
-                .foregroundStyle(timeOfDay.canvasPrimaryText)
-            Spacer(minLength: 0)
-            if counts.total > 0, !store.isLoading {
-                Text(cleared ? "Day cleared" : "Keep going")
-                    .font(.community(.footnote, weight: .semibold))
-                    .foregroundStyle(cleared ? PlannerStyle.success : PlannerStyle.accentText)
-            }
-        }
-        .plannerSurface(soft: true)
-        .accessibilityElement(children: .combine)
     }
 
     // MARK: - Dates
