@@ -979,13 +979,13 @@ final class WorkoutStore {
         guard !pendingSetIDs.contains(setID) else { return }
         mutateSet(on: day, exerciseID: exerciseID, setID: setID) { set in
             if let weightKilograms {
-                set.weightKilograms = weightKilograms
+                set.weightKilograms = NumberInput.latinDigits(weightKilograms)
             }
             if let reps {
-                set.reps = reps
+                set.reps = NumberInput.latinDigits(reps)
             }
             if let distanceKilometers {
-                set.distanceKilometers = distanceKilometers
+                set.distanceKilometers = NumberInput.latinDigits(distanceKilometers)
             }
         }
     }
@@ -1842,6 +1842,11 @@ final class WorkoutStore {
                     activeSession = recovered
                     recoveredActiveSession = true
                     if checkpointActiveSession() { try await repository.acknowledgeSessionStart(id: recovered.serverID) }
+                    // As startSession does: the hints and one-tap logging
+                    // read last time's sets, and a relaunch had lost them.
+                    if !recovered.tracksDistance {
+                        await loadPreviousSets(for: recovered, using: repository, generation: generation)
+                    }
                 }
                 return
             }
@@ -1859,6 +1864,9 @@ final class WorkoutStore {
             activeSession = reconciled
             recoveredActiveSession = true
             if checkpointActiveSession() { try await repository.acknowledgeSessionStart(id: reconciled.serverID) }
+            if !reconciled.tracksDistance {
+                await loadPreviousSets(for: reconciled, using: repository, generation: generation)
+            }
         } catch {
             guard generation == connectionGeneration else { return }
             recoveryError = String(

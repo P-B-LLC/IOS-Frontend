@@ -2,7 +2,7 @@ import Foundation
 
 nonisolated enum FoodBarcode {
     static func validated(_ raw: String) -> String? {
-        let code = raw.replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "-", with: "")
+        let code = NumberInput.latinDigits(raw).replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "-", with: "")
         let bytes = Array(code.utf8)
         guard [8, 12, 13, 14].contains(bytes.count), bytes.allSatisfy({ (48...57).contains($0) }) else { return nil }
         let sum = bytes.dropLast().reversed().enumerated().reduce(0) {

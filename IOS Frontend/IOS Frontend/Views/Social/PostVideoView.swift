@@ -106,7 +106,7 @@ struct PostVideoView: View {
     /// sent a clip that cannot play. Encoding is said before review: a clip
     /// still being encoded is also pending review, and saying it waits for a
     /// moderator would be wrong.
-    private var statusText: String {
+    private var statusText: LocalizedStringKey {
         if current.failed { return "Video processing failed" }
         if Self.isEncoding(current.processingState) { return "Video is being prepared" }
         if current.status == "rejected" { return "Your video was not approved" }

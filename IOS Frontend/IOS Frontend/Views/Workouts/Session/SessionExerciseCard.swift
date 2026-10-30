@@ -146,7 +146,7 @@ struct SessionExerciseCard: View {
             if !others.isEmpty {
                 Menu {
                     ForEach(others) { other in
-                        Button(other.name) { store.supersetSessionExercise(on: day, exerciseID: exercise.id, with: other.id) }
+                        Button(other.displayName) { store.supersetSessionExercise(on: day, exerciseID: exercise.id, with: other.id) }
                     }
                 } label: { Label("Superset with…", systemImage: "link") }
             }

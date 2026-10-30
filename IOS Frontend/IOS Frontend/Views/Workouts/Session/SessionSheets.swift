@@ -82,13 +82,12 @@ struct AddSessionExerciseSheet: View {
                         Text(error).font(.community(.caption)).foregroundStyle(RepbaseDesign.danger)
                     }
                     ExerciseCatalogPicker(
-                        isSelected: { option in
-                            added.contains { WorkoutSummary.matches($0, option.name) }
-                                || store.activeSession(on: day)?.exercises.contains {
-                                    option.matches(serverID: $0.exerciseServerID, name: $0.name)
-                                } == true
-                        },
+                        isSelected: isInSession,
                         onToggle: { option in
+                            // Checked means it is already in the session. A
+                            // second card for it is never what tapping that
+                            // row asks for; removing one is the card's menu.
+                            guard !isInSession(option) else { return }
                             add(Exercise(
                                 serverID: option.serverID,
                                 serverName: option.serverID == nil ? nil : option.name,
@@ -119,6 +118,13 @@ struct AddSessionExerciseSheet: View {
             }
             .repbaseScreen(.focus)
         }
+    }
+
+    private func isInSession(_ option: ExerciseOption) -> Bool {
+        added.contains { WorkoutSummary.matches($0, option.name) }
+            || store.activeSession(on: day)?.exercises.contains {
+                option.matches(serverID: $0.exerciseServerID, name: $0.name)
+            } == true
     }
 
     private func add(_ exercise: Exercise) {

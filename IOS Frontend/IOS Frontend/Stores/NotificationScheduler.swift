@@ -180,7 +180,15 @@ final class NotificationScheduler: NSObject {
         guard settings.authorizationStatus == .authorized
             || settings.authorizationStatus == .provisional
         else { return }
-        centre.removeAllPendingNotificationRequests()
+        // Everything this schedules, but not the rest timer's alert. That one
+        // belongs to the workout in progress, and RestTimerNotifier never
+        // schedules the same rest twice, so a reschedule mid-rest (a relaunch
+        // reloading the week does one) left the rest ending in silence.
+        let pending = await centre.pendingNotificationRequests()
+        guard generation == run, !Task.isCancelled else { return }
+        centre.removePendingNotificationRequests(
+            withIdentifiers: pending.map(\.identifier).filter { $0 != RestTimerNotifier.identifier }
+        )
 
         await Self.$schedulingGeneration.withValue(run) {
             if isOn(Setting.food) { await scheduleFood(now: now) }

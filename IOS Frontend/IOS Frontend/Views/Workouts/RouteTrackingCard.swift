@@ -134,7 +134,9 @@ struct RouteTrackingCard: View {
     // each one.
     private var permissionQuestion: LocalizedStringKey {
         switch workoutType {
-        case .lifting: return "Track this lifting?"
+        // Only the lifting family's outdoor activities -- rowing, paddling --
+        // track a route, and "lifting" is not what any of them is.
+        case .lifting: return "Track this activity?"
         case .running: return "Track this running?"
         case .biking: return "Track this biking?"
         case .swimming: return "Track this swimming?"
@@ -144,7 +146,7 @@ struct RouteTrackingCard: View {
     private var withoutLocationNote: LocalizedStringKey {
         switch workoutType {
         case .lifting:
-            return "Your lifting is still timed and saved — it just won't have a map or a measured distance."
+            return "This activity is still timed and saved — it just won't have a map or a measured distance."
         case .running:
             return "Your running is still timed and saved — it just won't have a map or a measured distance."
         case .biking:

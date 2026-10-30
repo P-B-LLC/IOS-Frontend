@@ -388,7 +388,7 @@ struct GuidedWorkoutBuilder: View {
                     Spacer(minLength: 0)
                     targetField("Reps", value: Binding(
                         get: { binding.wrappedValue.targetReps.map(String.init) ?? "" },
-                        set: { binding.wrappedValue.targetReps = Int($0.filter(\.isNumber).prefix(4)) }
+                        set: { binding.wrappedValue.targetReps = Int(NumberInput.latinDigits($0).filter(\.isNumber).prefix(4)) }
                     ), keyboard: .numberPad, width: 46)
                     targetField(LocalizedStringKey(store.preferences.weightUnit.label), value: Binding(
                         get: { binding.wrappedValue.targetWeightKilograms.map { store.preferences.weightUnit.display(kilograms: $0) } ?? "" },

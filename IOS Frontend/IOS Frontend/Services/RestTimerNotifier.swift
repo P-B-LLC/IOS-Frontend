@@ -78,7 +78,7 @@ final class RestTimerNotifier {
             return String(localized: "Time for your next set.", bundle: .app, locale: .app)
         }
         return String(
-            localized: "Next: \(exercise.name), set \(index + 1) of \(exercise.sets.count)",
+            localized: "Next: \(exercise.displayName), set \(index + 1) of \(exercise.sets.count)",
             bundle: .app,
             locale: .app,
             comment: "Rest-over notification. The first placeholder is an exercise name"

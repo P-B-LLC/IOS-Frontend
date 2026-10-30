@@ -80,7 +80,10 @@ final class PendingWorkoutSaves {
         try protectedDirectory.setResourceValues(values)
         var options: Data.WritingOptions = [.atomic]
 #if os(iOS)
-        options.insert(.completeFileProtectionUnlessOpen)
+        // The same class as EditorDraftRecovery and for the same reason: a
+        // set logged from the Lock Screen queues here with the phone locked,
+        // and the queue is read before it is appended to.
+        options.insert(.completeFileProtectionUntilFirstUserAuthentication)
 #endif
         try JSONEncoder().encode(entries).write(to: file, options: options)
     }

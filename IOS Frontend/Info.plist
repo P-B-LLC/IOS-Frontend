@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>NSCameraUsageDescription</key>
-	<string>Take a photo or video to attach to a post you choose to share.</string>
+	<string>Take a photo or video to attach to a post you choose to share, or scan a food’s barcode to log it.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Record sound when you capture a video for your post.</string>
 	<!--

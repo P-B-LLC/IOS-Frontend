@@ -949,7 +949,7 @@ struct PostComposerView: View {
     private func postingOverlay(timeOfDay: HomeTimeOfDay) -> some View {
         ZStack {
             Color.black.opacity(0.12).ignoresSafeArea()
-            ProgressView(social.postingStep == .uploadingVideo ? "Uploading video…" : "Publishing…")
+            ProgressView(postingOverlayTitle)
                 .padding(18)
                 .foregroundStyle(timeOfDay.primaryText)
                 .background(
@@ -995,6 +995,14 @@ struct PostComposerView: View {
             contentType: photoContentType,
             base64: photoData.base64EncodedString()
         )
+    }
+
+    private var postingOverlayTitle: LocalizedStringKey {
+        switch social.postingStep {
+        case .uploadingVideo: "Uploading video…"
+        case .discarding: "Removing post…"
+        case .publishing, nil: "Publishing…"
+        }
     }
 
     /// Something recorded, or a picture: either is a post. Neither, and there

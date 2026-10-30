@@ -296,6 +296,12 @@ struct DayWorkoutView: View {
                     recoveryWorkspace(completedSession)
                 } else {
                     WorkoutCompletionSummary(completed: completedSession) { dismiss() }
+                    // As the distance summary does. Choosing "Update saved
+                    // workout" at Finish writes the plan after the session,
+                    // and a failure there otherwise read as success.
+                    if let persistenceError = store.persistenceError {
+                        persistenceErrorCard(persistenceError)
+                    }
                     SessionFeedbackCard(
                         sessionID: completedSession.session.serverID,
                         activity: completedSession.session.activity,
@@ -1118,7 +1124,7 @@ struct DayWorkoutView: View {
                 .buttonStyle(.borderedProminent)
                 .tint(phase.primaryText)
                 .foregroundStyle(phase.heroStart)
-                .disabled(store.isSaving || store.hasPendingSetChanges)
+                .disabled(store.isSaving || store.hasPendingSetChanges || store.isRecoveringWorkouts)
             }
 
             VStack(alignment: .leading, spacing: 14) {

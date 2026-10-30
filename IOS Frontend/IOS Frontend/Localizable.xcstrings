@@ -59,6 +59,122 @@
         }
       }
     },
+    "Add a caption. Linking something you recorded is optional." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أضف وصفًا. ربط شيء سجّلته اختياري."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Füge eine Bildunterschrift hinzu. Etwas Erfasstes zu verknüpfen ist optional."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añade una descripción. Vincular algo que registraste es opcional."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajoutez une légende. Lier quelque chose que vous avez enregistré est facultatif."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कैप्शन जोड़ें। रिकॉर्ड की गई किसी चीज़ को जोड़ना वैकल्पिक है।"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "キャプションを追加しましょう。記録した内容のリンクは任意です。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicione uma legenda. Vincular algo que você registrou é opcional."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Добавьте подпись. Привязывать что-то из записанного необязательно."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加配文。关联你记录的内容是可选的。"
+          }
+        }
+      }
+    },
+    "Discard post" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تجاهل المنشور"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beitrag verwerfen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descartar publicación"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer la publication"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "पोस्ट हटाएँ"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "投稿を破棄"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descartar publicação"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить публикацию"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "舍弃帖子"
+          }
+        }
+      }
+    },
     "Next day" : {
       "localizations" : {
         "ar" : {
@@ -113,6 +229,238 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "后一天"
+          }
+        }
+      }
+    },
+    "Only you can see this post until another video is added." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يمكن لأحد غيرك رؤية هذا المنشور حتى تتم إضافة فيديو آخر."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur du kannst diesen Beitrag sehen, bis ein anderes Video hinzugefügt wird."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo tú puedes ver esta publicación hasta que se añada otro video."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous seul pouvez voir cette publication jusqu’à l’ajout d’une autre vidéo."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "जब तक दूसरा वीडियो नहीं जोड़ा जाता, यह पोस्ट सिर्फ़ आप देख सकते हैं।"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "別の動画が追加されるまで、この投稿はあなただけに表示されます。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Só você pode ver esta publicação até que outro vídeo seja adicionado."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Эту публикацию видите только вы, пока не будет добавлено другое видео."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在添加其他视频之前，只有你能看到此帖子。"
+          }
+        }
+      }
+    },
+    "Only you can see this post until its video is ready." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يمكن لأحد غيرك رؤية هذا المنشور حتى يصبح الفيديو جاهزًا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur du kannst diesen Beitrag sehen, bis sein Video bereit ist."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo tú puedes ver esta publicación hasta que su video esté listo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous seul pouvez voir cette publication jusqu’à ce que sa vidéo soit prête."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "जब तक इसका वीडियो तैयार नहीं होता, यह पोस्ट सिर्फ़ आप देख सकते हैं।"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "動画の準備ができるまで、この投稿はあなただけに表示されます。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Só você pode ver esta publicação até que o vídeo fique pronto."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Эту публикацию видите только вы, пока видео не будет готово."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在视频准备好之前，只有你能看到此帖子。"
+          }
+        }
+      }
+    },
+    "Optional with a photo or video. Linking something adds its details." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختياري مع صورة أو فيديو. ربط شيء ما يضيف تفاصيله."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Optional bei einem Foto oder Video. Eine Verknüpfung fügt die Details hinzu."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opcional con una foto o un video. Vincular algo añade sus detalles."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Facultatif avec une photo ou une vidéo. Lier un élément ajoute ses détails."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "फ़ोटो या वीडियो के साथ वैकल्पिक। कुछ जोड़ने पर उसका विवरण भी जुड़ जाता है।"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "写真や動画があれば任意です。リンクすると詳細が追加されます。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opcional com uma foto ou vídeo. Vincular algo adiciona os detalhes."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Необязательно, если есть фото или видео. Привязка добавит подробности."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "有照片或视频时可选。关联内容会添加其详情。"
+          }
+        }
+      }
+    },
+    "Pick something you recorded, or add a photo or video below." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختر شيئًا سجّلته، أو أضف صورة أو فيديو أدناه."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wähle etwas Erfasstes aus oder füge unten ein Foto oder Video hinzu."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige algo que registraste o añade una foto o un video abajo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez quelque chose que vous avez enregistré, ou ajoutez une photo ou une vidéo ci-dessous."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रिकॉर्ड की गई कोई चीज़ चुनें, या नीचे फ़ोटो या वीडियो जोड़ें।"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "記録した内容を選ぶか、下で写真や動画を追加してください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolha algo que você registrou ou adicione uma foto ou vídeo abaixo."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выберите что-то из записанного или добавьте фото или видео ниже."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择你记录的内容，或在下方添加照片或视频。"
           }
         }
       }
@@ -175,60 +523,118 @@
         }
       }
     },
-    "Scheduled" : {
+    "Publishing…" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "بوقت محدد"
+            "value" : "جارٍ النشر…"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mit Uhrzeit"
+            "value" : "Wird veröffentlicht…"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Con horario"
+            "value" : "Publicando…"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "À heure fixe"
+            "value" : "Publication…"
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "तय समय पर"
+            "value" : "प्रकाशित हो रही है…"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "時間指定あり"
+            "value" : "公開中…"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Com horário"
+            "value" : "Publicando…"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "По времени"
+            "value" : "Публикация…"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "有指定时间"
+            "value" : "正在发布…"
+          }
+        }
+      }
+    },
+    "Removing post…" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جارٍ حذف المنشور…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beitrag wird entfernt…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminando publicación…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suppression de la publication…"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "पोस्ट हटाई जा रही है…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "投稿を削除中…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Removendo publicação…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удаление публикации…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在移除帖子…"
           }
         }
       }
@@ -16208,76 +16614,6 @@
         }
       }
     },
-    "+%lld more" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "+%lld أخرى"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "+%lld weitere"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "+%lld más"
-          }
-        },
-        "fr" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "+%lld autre"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "+%lld autres"
-                }
-              }
-            }
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "+%lld और"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "+%lld件"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mais %lld"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "+ещё %lld"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "+%lld 项"
-          }
-        }
-      }
-    },
     "+%lld reps" : {
       "comment" : "Extra reps beyond the last full round",
       "localizations" : {
@@ -18669,64 +19005,6 @@
         }
       }
     },
-    "A fresh start. Make it yours." : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "بداية جديدة. اجعلها لك."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ein Neuanfang. Mach ihn zu deinem."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Un nuevo comienzo. Hazlo tuyo."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Un nouveau départ. À vous de jouer."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "एक नई शुरुआत। इसे अपना बनाएँ।"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "新しいスタート。あなたらしく始めましょう。"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Um novo começo. Do seu jeito."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Новый старт. Сделайте его своим."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "全新的开始。让它属于你。"
-          }
-        }
-      }
-    },
     "A hidden topic is left out of For You entirely. Tap it again to bring it back." : {
       "localizations" : {
         "ar" : {
@@ -19129,64 +19407,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你自己创建的新动作"
-          }
-        }
-      }
-    },
-    "A post is built from what you have already recorded." : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "يُنشأ المنشور مما سجّلته بالفعل."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ein Beitrag entsteht aus dem, was du bereits erfasst hast."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Una publicación se crea a partir de lo que ya registraste."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Une publication se construit à partir de ce que vous avez déjà enregistré."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "पोस्ट उसी से बनती है जो आपने पहले से रिकॉर्ड किया है।"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "投稿は、すでに記録した内容から作成されます。"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Uma publicação é criada a partir do que você já registrou."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Публикация собирается из того, что вы уже записали."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "帖子基于你已记录的内容生成。"
           }
         }
       }
@@ -20696,64 +20916,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AMRAP"
-          }
-        }
-      }
-    },
-    "ANYTIME" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "في أي وقت"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "JEDERZEIT"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A CUALQUIER HORA"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "À TOUT MOMENT"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "कभी भी"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "時間指定なし"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A QUALQUER HORA"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "В ЛЮБОЕ ВРЕМЯ"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "任意时间"
           }
         }
       }
@@ -40216,64 +40378,6 @@
         }
       }
     },
-    "Collapsed" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "مطوي"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Eingeklappt"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Contraído"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Réduit"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "समेटा गया"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "折りたたみ中"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Recolhido"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Свёрнуто"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已收起"
-          }
-        }
-      }
-    },
     "Combat sports" : {
       "comment" : "A group of activities",
       "localizations" : {
@@ -40742,64 +40846,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已完成"
-          }
-        }
-      }
-    },
-    "Completed (%lld)" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "مكتملة (%lld)"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Abgeschlossen (%lld)"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Completadas (%lld)"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Terminées (%lld)"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "पूरे हुए (%lld)"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "完了（%lld）"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Concluídas (%lld)"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Выполнено (%lld)"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已完成（%lld）"
           }
         }
       }
@@ -45633,64 +45679,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "第 %1$lld 天，共 %2$lld 天"
-          }
-        }
-      }
-    },
-    "Day cleared" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "تم مسح اليوم"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tag geleert"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Día despejado"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Journée bouclée"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "दिन खाली किया गया"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "この日をクリアしました"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dia limpo"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "День очищен"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "当天已清空"
           }
         }
       }
@@ -54193,64 +54181,6 @@
         }
       }
     },
-    "Everything you planned is complete." : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "اكتمل كل ما خططت له."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Alles Geplante ist erledigt."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Todo lo que planificaste está completado."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tout ce que vous aviez prévu est terminé."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "आपने जो कुछ प्लान किया था, सब पूरा हो गया।"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "計画したことはすべて完了しました。"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tudo o que você planejou está concluído."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Всё запланированное выполнено."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "你计划的所有事项都已完成。"
-          }
-        }
-      }
-    },
     "Every…" : {
       "localizations" : {
         "ar" : {
@@ -55124,64 +55054,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rytivo 开始追踪骑行之前的已有里程。"
-          }
-        }
-      }
-    },
-    "Expanded" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "موسّع"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ausgeklappt"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Expandido"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Déplié"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "फैलाया गया"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "展開中"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Expandido"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Развёрнуто"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已展开"
           }
         }
       }
@@ -63137,64 +63009,6 @@
         }
       }
     },
-    "High Priority" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "أولوية عالية"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hohe Priorität"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Prioridad alta"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Priorité haute"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "उच्च प्राथमिकता"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "優先度：高"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Alta prioridade"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Высокий приоритет"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "高优先级"
-          }
-        }
-      }
-    },
     "High priority" : {
       "localizations" : {
         "ar" : {
@@ -67331,64 +67145,6 @@
         }
       }
     },
-    "Keep going" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "واصل"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Weiter so"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sigue así"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Continuez"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "जारी रखें"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "この調子で"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Continue"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Продолжайте"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "继续加油"
-          }
-        }
-      }
-    },
     "Keep it" : {
       "localizations" : {
         "ar" : {
@@ -70664,64 +70420,6 @@
         }
       }
     },
-    "Loading your plan…" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "جارٍ تحميل خطتك…"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dein Plan wird geladen…"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cargando tu plan…"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Chargement de votre plan…"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "आपका प्लान लोड हो रहा है…"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "プランを読み込み中…"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Carregando seu plano…"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Загрузка плана…"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "正在加载你的计划…"
-          }
-        }
-      }
-    },
     "Loading your rotation..." : {
       "localizations" : {
         "ar" : {
@@ -73917,64 +73615,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "为下一次胜利\n腾出空间。"
-          }
-        }
-      }
-    },
-    "Make room for your day." : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "أفسح المجال ليومك."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Schaff Platz für deinen Tag."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Haz espacio para tu día."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Faites de la place pour votre journée."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "अपने दिन के लिए जगह बनाएँ।"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "一日にゆとりをつくりましょう。"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Abra espaço para o seu dia."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Освободите место для своего дня."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "为你的一天腾出空间。"
           }
         }
       }
@@ -84263,64 +83903,6 @@
         }
       }
     },
-    "Nothing in this category on this day." : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "لا شيء في هذه الفئة في هذا اليوم."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "An diesem Tag nichts in dieser Kategorie."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No hay nada de esta categoría en este día."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rien dans cette catégorie ce jour-là."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "इस दिन इस कैटेगरी में कुछ नहीं है।"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "この日はこのカテゴリの項目はありません。"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nada nesta categoria neste dia."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "В этот день в этой категории ничего нет."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "这天此类别中没有内容。"
-          }
-        }
-      }
-    },
     "Nothing is locked in. Your plan learns and changes with you." : {
       "localizations" : {
         "ar" : {
@@ -84607,122 +84189,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无计划"
-          }
-        }
-      }
-    },
-    "Nothing planned for this day yet" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "لا شيء مخطط لهذا اليوم بعد"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Für diesen Tag ist noch nichts geplant"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aún no hay nada planificado para este día"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rien de prévu pour ce jour"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "इस दिन के लिए अभी कुछ प्लान नहीं है"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "この日の予定はまだありません"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nada planejado para este dia ainda"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "На этот день пока ничего не запланировано"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "这天还没有计划"
-          }
-        }
-      }
-    },
-    "Nothing planned for this day yet." : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "لا شيء مخطط لهذا اليوم بعد."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Für diesen Tag ist noch nichts geplant."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aún no hay nada planificado para este día."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rien de prévu pour ce jour."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "इस दिन के लिए अभी कुछ प्लान नहीं है।"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "この日の予定はまだありません。"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nada planejado para este dia ainda."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "На этот день пока ничего не запланировано."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "这天还没有计划。"
           }
         }
       }
@@ -94438,64 +93904,6 @@
         }
       }
     },
-    "Planner" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "المخطِّط"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Planer"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Agenda"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Agenda"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "प्लानर"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "プランナー"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Agenda"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Планировщик"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "日历"
-          }
-        }
-      }
-    },
     "Planner entry" : {
       "comment" : "Fills in “… has not been saved to the server yet.”",
       "localizations" : {
@@ -95558,64 +94966,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "发布成功。你的帖子已显示在“为你推荐”中。"
-          }
-        }
-      }
-    },
-    "Posting…" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "جارٍ النشر…"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wird gepostet…"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Publicando…"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Publication…"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "पोस्ट हो रही है…"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "投稿中…"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Publicando…"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Публикация…"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "正在发布…"
           }
         }
       }
@@ -107872,6 +107222,122 @@
         }
       }
     },
+    "SHARE A PHOTO" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مشاركة صورة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FOTO TEILEN"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "COMPARTIR UNA FOTO"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PARTAGER UNE PHOTO"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "फ़ोटो शेयर करें"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "写真をシェア"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "COMPARTILHAR UMA FOTO"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ПОДЕЛИТЬСЯ ФОТО"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分享照片"
+          }
+        }
+      }
+    },
+    "SHARE A VIDEO" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مشاركة فيديو"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VIDEO TEILEN"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "COMPARTIR UN VIDEO"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PARTAGER UNE VIDÉO"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "वीडियो शेयर करें"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "動画をシェア"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "COMPARTILHAR UM VÍDEO"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ПОДЕЛИТЬСЯ ВИДЕО"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分享视频"
+          }
+        }
+      }
+    },
     "SHARE FOOD" : {
       "localizations" : {
         "ar" : {
@@ -116094,65 +115560,6 @@
         }
       }
     },
-    "Showing %@ items. Choose All to see the whole day." : {
-      "comment" : "The placeholder is a planner category name in lower case, e.g. habit or birthday",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "يتم عرض عناصر «%@». اختر «الكل» لرؤية اليوم كاملًا."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Angezeigt: Einträge der Kategorie „%@“. Wähle „Alle“, um den ganzen Tag zu sehen."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mostrando elementos de tipo %@. Elige Todo para ver el día completo."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Éléments « %@ » affichés. Choisissez Tout pour voir toute la journée."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ आइटम दिखाए जा रहे हैं। पूरा दिन देखने के लिए ‘सभी’ चुनें।"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@の項目を表示中。一日全体を見るには「すべて」を選んでください。"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mostrando itens de %@. Escolha Todos para ver o dia inteiro."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Показаны записи категории «%@». Выберите «Все», чтобы увидеть весь день."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "正在显示“%@”类条目。选择“全部”以查看全天内容。"
-          }
-        }
-      }
-    },
     "Shown on profile" : {
       "localizations" : {
         "ar" : {
@@ -122562,6 +121969,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "轮换"
+          }
+        }
+      }
+    },
+    "This post has no video yet, so only you can see it." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يحتوي هذا المنشور على فيديو بعد، لذا لا يمكن لأحد غيرك رؤيته."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Beitrag hat noch kein Video, daher kannst nur du ihn sehen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta publicación aún no tiene video, así que solo tú puedes verla."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette publication n’a pas encore de vidéo : vous seul pouvez la voir."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "इस पोस्ट में अभी कोई वीडियो नहीं है, इसलिए इसे सिर्फ़ आप देख सकते हैं।"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この投稿にはまだ動画がないため、あなただけに表示されます。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta publicação ainda não tem vídeo, então só você pode vê-la."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В этой публикации пока нет видео, поэтому её видите только вы."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此帖子还没有视频，因此只有你能看到。"
           }
         }
       }
@@ -130040,60 +129505,60 @@
         }
       }
     },
-    "Track this lifting?" : {
+    "Track this activity?" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "تتبّع رفع الأثقال هذا؟"
+            "value" : "هل تريد تتبّع هذا النشاط؟"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dieses Krafttraining aufzeichnen?"
+            "value" : "Diese Aktivität aufzeichnen?"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "¿Registrar esta sesión de pesas?"
+            "value" : "¿Registrar esta actividad?"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Suivre cette séance de musculation ?"
+            "value" : "Suivre cette activité ?"
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "इस लिफ़्टिंग को ट्रैक करें?"
+            "value" : "इस गतिविधि को ट्रैक करें?"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "この筋トレを記録しますか？"
+            "value" : "このアクティビティを記録しますか？"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Rastrear este treino de musculação?"
+            "value" : "Registrar esta atividade?"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Отслеживать эту силовую тренировку?"
+            "value" : "Отслеживать эту активность?"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "追踪这次力量训练？"
+            "value" : "要追踪此活动吗？"
           }
         }
       }
@@ -131924,6 +131389,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "接下来 · %@"
+          }
+        }
+      }
+    },
+    "Uploading video…" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جارٍ رفع الفيديو…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Video wird hochgeladen…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subiendo video…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envoi de la vidéo…"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "वीडियो अपलोड हो रहा है…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "動画をアップロード中…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enviando vídeo…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Загрузка видео…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在上传视频…"
           }
         }
       }
@@ -135684,6 +135207,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "热"
+          }
+        }
+      }
+    },
+    "Waiting for review. Others will see it once it is approved." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بانتظار المراجعة. سيراه الآخرون بمجرد الموافقة عليه."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wartet auf Prüfung. Andere sehen es, sobald es freigegeben ist."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En espera de revisión. Los demás lo verán cuando se apruebe."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En attente de vérification. Les autres la verront une fois approuvée."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "समीक्षा की प्रतीक्षा है। स्वीकृत होने के बाद दूसरे इसे देख पाएँगे।"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "審査待ちです。承認されると他の人にも表示されます。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aguardando revisão. Os outros verão quando for aprovado."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ожидает проверки. Другие увидят его после одобрения."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "等待审核。获批后其他人即可看到。"
           }
         }
       }
@@ -141441,6 +141022,64 @@
         }
       }
     },
+    "Your post is saved, but only you can see it until its video is added. Retry attaches the video to that same post." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم حفظ منشورك، لكن لا يمكن لأحد غيرك رؤيته حتى تتم إضافة الفيديو. تؤدي إعادة المحاولة إلى إرفاق الفيديو بالمنشور نفسه."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Beitrag ist gespeichert, aber nur du kannst ihn sehen, bis sein Video hinzugefügt ist. „Erneut versuchen“ hängt das Video an denselben Beitrag an."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu publicación está guardada, pero solo tú puedes verla hasta que se añada su video. Al reintentar, el video se adjunta a esa misma publicación."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre publication est enregistrée, mais vous seul pouvez la voir jusqu’à l’ajout de sa vidéo. Réessayer joint la vidéo à cette même publication."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आपकी पोस्ट सेव हो गई है, लेकिन वीडियो जुड़ने तक इसे सिर्फ़ आप देख सकते हैं। फिर से कोशिश करने पर वीडियो उसी पोस्ट में अटैच होगा।"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "投稿は保存されていますが、動画が追加されるまではあなただけに表示されます。再試行すると、同じ投稿に動画が添付されます。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sua publicação foi salva, mas só você pode vê-la até que o vídeo seja adicionado. Ao tentar de novo, o vídeo é anexado a essa mesma publicação."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Публикация сохранена, но видите её только вы, пока не будет добавлено видео. Кнопка «Повторить» прикрепит видео к этой же публикации."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你的帖子已保存，但在添加视频之前只有你能看到。重试会将视频附加到同一帖子。"
+          }
+        }
+      }
+    },
     "YOUR PROGRESS" : {
       "localizations" : {
         "ar" : {
@@ -141727,6 +141366,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你的训练周"
+          }
+        }
+      }
+    },
+    "Your video was not approved" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم تتم الموافقة على الفيديو الخاص بك"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Video wurde nicht freigegeben"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu video no fue aprobado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre vidéo n’a pas été approuvée"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आपका वीडियो स्वीकृत नहीं हुआ"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "動画は承認されませんでした"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seu vídeo não foi aprovado"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ваше видео не одобрено"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你的视频未获批准"
           }
         }
       }
@@ -143778,64 +143475,6 @@
         }
       }
     },
-    "Your day is open. Add a task or event to get started." : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "يومك متاح. أضف مهمة أو حدثًا للبدء."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dein Tag ist frei. Füge eine Aufgabe oder ein Ereignis hinzu, um loszulegen."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tu día está libre. Agrega una tarea o un evento para empezar."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Votre journée est libre. Ajoutez une tâche ou un événement pour commencer."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "आपका दिन खाली है। शुरू करने के लिए कोई टास्क या इवेंट जोड़ें।"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "今日は予定が空いています。タスクやイベントを追加して始めましょう。"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Seu dia está livre. Adicione uma tarefa ou evento para começar."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ваш день свободен. Добавьте задачу или событие, чтобы начать."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "你今天还没有安排。添加任务或日程开始吧。"
-          }
-        }
-      }
-    },
     "Your earlier set was saved. Its saved values are shown; unlog it first if you want to change them." : {
       "localizations" : {
         "ar" : {
@@ -144592,60 +144231,60 @@
         }
       }
     },
-    "Your lifting is still timed and saved — it just won't have a map or a measured distance." : {
+    "This activity is still timed and saved — it just won't have a map or a measured distance." : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "لا يزال رفع الأثقال يُوقَّت ويُحفظ — فقط لن تكون له خريطة أو مسافة مقيسة."
+            "value" : "لا يزال هذا النشاط مُؤقّتًا ومحفوظًا، لكنه لن يتضمن خريطة أو مسافة مقيسة."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Die Zeit deines Krafttrainings wird trotzdem gemessen und gespeichert — nur ohne Karte und gemessene Distanz."
+            "value" : "Diese Aktivität wird trotzdem gestoppt und gespeichert – nur ohne Karte und gemessene Strecke."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tu sesión de pesas se sigue cronometrando y guardando — solo que no tendrá mapa ni distancia medida."
+            "value" : "Esta actividad se sigue cronometrando y guardando; solo que no tendrá mapa ni distancia medida."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Votre séance de musculation est toujours chronométrée et enregistrée — simplement sans carte ni distance mesurée."
+            "value" : "Cette activité reste chronométrée et enregistrée, simplement sans carte ni distance mesurée."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "आपकी लिफ़्टिंग का समय फिर भी गिना और सेव किया जाएगा — बस उसमें नक्शा या मापी गई दूरी नहीं होगी।"
+            "value" : "यह गतिविधि फिर भी टाइम और सेव होगी — बस इसमें नक्शा या मापी गई दूरी नहीं होगी।"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "筋トレは引き続き計測・保存されます — 地図と計測距離が記録されないだけです。"
+            "value" : "このアクティビティは引き続き計測・保存されます。地図と計測距離が付かないだけです。"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sua musculação continua sendo cronometrada e salva — só não terá mapa nem distância medida."
+            "value" : "Esta atividade continua sendo cronometrada e salva — só não terá mapa nem distância medida."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Силовая тренировка всё равно засекается и сохраняется — просто без карты и измеренной дистанции."
+            "value" : "Эта активность всё равно засекается и сохраняется — просто без карты и измеренного расстояния."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "你的力量训练仍会计时并保存——只是不会有地图或测得的距离。"
+            "value" : "此活动仍会计时并保存，只是没有地图和测得的距离。"
           }
         }
       }
@@ -147339,6 +146978,24 @@
             }
           }
         },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld round"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld rounds"
+                }
+              }
+            }
+          }
+        },
         "es" : {
           "variations" : {
             "plural" : {
@@ -147525,6 +147182,24 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld Routen"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld route"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld routes"
                 }
               }
             }
@@ -147886,6 +147561,24 @@
             }
           }
         },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld set"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld sets"
+                }
+              }
+            }
+          }
+        },
         "es" : {
           "variations" : {
             "plural" : {
@@ -148237,6 +147930,24 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld Sprints"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld sprint"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld sprints"
                 }
               }
             }
@@ -150603,172 +150314,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "英里/小时"
-          }
-        }
-      }
-    },
-    "next %lld days" : {
-      "localizations" : {
-        "ar" : {
-          "variations" : {
-            "plural" : {
-              "few" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "الأيام الـ%lld التالية"
-                }
-              },
-              "many" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "الـ%lld يومًا التالية"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "اليوم التالي"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "الـ%lld يوم التالية"
-                }
-              },
-              "two" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "اليومان التاليان"
-                }
-              },
-              "zero" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "الأيام الـ%lld التالية"
-                }
-              }
-            }
-          }
-        },
-        "de" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "nächster Tag"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "nächste %lld Tage"
-                }
-              }
-            }
-          }
-        },
-        "es" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "próximo día"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "próximos %lld días"
-                }
-              }
-            }
-          }
-        },
-        "fr" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld prochain jour"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld prochains jours"
-                }
-              }
-            }
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "अगले %lld दिन"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "今後%lld日間"
-          }
-        },
-        "pt-BR" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "próximo %lld dia"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "próximos %lld dias"
-                }
-              }
-            }
-          }
-        },
-        "ru" : {
-          "variations" : {
-            "plural" : {
-              "few" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "следующие %lld дня"
-                }
-              },
-              "many" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "следующие %lld дней"
-                }
-              },
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "следующий %lld день"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "следующие %lld дня"
-                }
-              }
-            }
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "未来 %lld 天"
           }
         }
       }

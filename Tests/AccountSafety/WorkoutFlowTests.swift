@@ -22,6 +22,19 @@ final class WorkoutFlowTests: XCTestCase {
         XCTAssertEqual(WorkoutWeightUnit.imperial.kilograms(display: ".5"), "0.23")
         XCTAssertEqual(WorkoutWeightUnit.imperial.kilograms(display: "12junk"), "12junk")
     }
+
+    /// Arabic and Devanagari keyboards type their own digits; the set has to
+    /// log all the same.
+    func testNativeKeyboardDigitsAreReadAsNumbers() {
+        XCTAssertEqual(NumberInput.latinDigits("٦٠٫٥"), "60.5")
+        XCTAssertEqual(NumberInput.latinDigits("६०"), "60")
+        XCTAssertEqual(NumberInput.latinDigits("12junk"), "12junk")
+        XCTAssertEqual(WorkoutWeightUnit.metric.kilograms(display: "٦٠"), "60")
+        XCTAssertEqual(WorkoutWeightUnit.imperial.kilograms(display: "١٣٥"), "61.23")
+        var draft = ActivityLogDraft(activity: .running)
+        draft.minutes = "٤٥"
+        XCTAssertEqual(draft.durationSeconds, 2700)
+    }
     func testSwitchingPreservesRequestedExerciseEvenWhenItIsComplete() {
         let a = UUID(), b = UUID()
         let progress = [WorkoutFocusPolicy.Progress(id: a, pendingSets: 0), .init(id: b, pendingSets: 4)]

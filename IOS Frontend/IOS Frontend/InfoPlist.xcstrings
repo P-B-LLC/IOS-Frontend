@@ -33,61 +33,61 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "التقط صورة أو فيديو لإرفاقه بمنشور تختار مشاركته."
+            "value" : "التقط صورة أو فيديو لإرفاقه بمنشور تختار مشاركته، أو امسح الرمز الشريطي لطعام لتسجيله."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nimm ein Foto oder Video auf, um es an einen Beitrag anzuhängen, den du teilen möchtest."
+            "value" : "Nimm ein Foto oder Video auf, um es an einen Beitrag anzuhängen, den du teilen möchtest, oder scanne den Barcode eines Lebensmittels, um es zu erfassen."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Take a photo or video to attach to a post you choose to share."
+            "value" : "Take a photo or video to attach to a post you choose to share, or scan a food’s barcode to log it."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Toma una foto o graba un video para adjuntarlo a una publicación que decidas compartir."
+            "value" : "Toma una foto o graba un video para adjuntarlo a una publicación que decidas compartir, o escanea el código de barras de un alimento para registrarlo."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Prenez une photo ou une vidéo à joindre à une publication que vous choisissez de partager."
+            "value" : "Prenez une photo ou une vidéo à joindre à une publication que vous choisissez de partager, ou scannez le code-barres d’un aliment pour l’enregistrer."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "आप जो पोस्ट शेयर करना चुनते हैं, उसमें अटैच करने के लिए फ़ोटो या वीडियो लें।"
+            "value" : "आप जो पोस्ट शेयर करना चुनते हैं, उसमें अटैच करने के लिए फ़ोटो या वीडियो लें, या किसी खाने को लॉग करने के लिए उसका बारकोड स्कैन करें।"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "シェアする投稿に添付する写真や動画を撮影します。"
+            "value" : "シェアする投稿に添付する写真や動画を撮影したり、食品のバーコードをスキャンして記録したりします。"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tire uma foto ou grave um vídeo para anexar a uma publicação que você escolher compartilhar."
+            "value" : "Tire uma foto ou grave um vídeo para anexar a uma publicação que você escolher compartilhar, ou escaneie o código de barras de um alimento para registrá-lo."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Сделайте фото или видео, чтобы прикрепить их к публикации, которой вы решите поделиться."
+            "value" : "Сделайте фото или видео, чтобы прикрепить их к публикации, которой вы решите поделиться, или отсканируйте штрихкод продукта, чтобы записать его."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "拍摄照片或视频，附加到你选择分享的帖子中。"
+            "value" : "拍摄照片或视频，附加到你选择分享的帖子中，或扫描食品条形码进行记录。"
           }
         }
       }

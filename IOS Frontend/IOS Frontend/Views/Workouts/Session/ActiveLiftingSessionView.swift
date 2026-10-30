@@ -60,7 +60,7 @@ struct ActiveLiftingSessionView: View {
                         HStack { Text("Finish workout"); Spacer(); Image(systemName: "checkmark") }
                     }
                     .buttonStyle(WorkoutPrimaryButtonStyle(phase: phase))
-                    .disabled(store.isSaving || store.hasPendingSetChanges)
+                    .disabled(store.isSaving || store.hasPendingSetChanges || store.isRecoveringWorkouts)
                 }
                 discardButton
             }
@@ -120,7 +120,7 @@ struct ActiveLiftingSessionView: View {
                     .background(phase.primaryActionSurface, in: Capsule())
                     .frame(minHeight: 44)
                     .buttonStyle(.plain)
-                    .disabled(store.isSaving || store.hasPendingSetChanges)
+                    .disabled(store.isSaving || store.hasPendingSetChanges || store.isRecoveringWorkouts)
             }
 
             HStack(spacing: 14) {

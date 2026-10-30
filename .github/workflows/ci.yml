@@ -218,6 +218,14 @@ jobs:
         if: steps.scope.outputs.code == 'true'
         run: python3 Scripts/check-stable-ids.py
 
+      # The catalog tests only see strings already in the catalog, and
+      # xcodebuild never adds new ones, so a string written from the command
+      # line shows in English in every language while every test passes.
+      # Reads what the Build step's compiler extracted.
+      - name: Every string the app looks up is in the catalog
+        if: steps.scope.outputs.code == 'true'
+        run: python3 Scripts/check-localization-coverage.py .build/DerivedData
+
       - name: Account safety regression tests
         if: steps.scope.outputs.code == 'true'
         run: bash Scripts/test-account-safety.sh

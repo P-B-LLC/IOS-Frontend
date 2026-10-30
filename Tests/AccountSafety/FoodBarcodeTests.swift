@@ -11,6 +11,10 @@ final class FoodBarcodeTests: XCTestCase {
             XCTAssertNil(FoodBarcode.validated(input))
         }
     }
+    func testBarcodeTypedInNativeDigits() {
+        XCTAssertEqual(FoodBarcode.validated("٣٠١٧٦٢٠٤٢٢٠٠٣"), "3017620422003")
+        XCTAssertNil(FoodBarcode.validated("٣٠١٧٦٢٠٤٢٢٠٠٤"))
+    }
     func testUPCEExpandsBeforeGTINValidation() {
         XCTAssertEqual(FoodBarcode.expandUPCE("04252614"), FoodBarcode.validated("042100005264"))
         XCTAssertNotNil(FoodBarcode.expandUPCE("04252614"))

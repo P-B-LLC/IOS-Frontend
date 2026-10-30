@@ -1,5 +1,27 @@
 import Foundation
 
+/// Typed numbers in Latin digits. An Arabic or Devanagari keyboard types its
+/// own digits ("٦٠", "६०"), which `Int` and `Decimal(string:)` reject, so the
+/// field turned red and the set could not be logged. Only decimal digits are
+/// mapped, plus U+066B, which is explicitly a decimal mark; everything else
+/// passes through for the field's own validation to judge, as before.
+nonisolated enum NumberInput {
+    static func latinDigits(_ text: String) -> String {
+        var result = String.UnicodeScalarView()
+        for scalar in text.unicodeScalars {
+            if scalar == "\u{066B}" {
+                result.append(".")
+            } else if scalar.properties.numericType == .decimal,
+                      let value = scalar.properties.numericValue {
+                result.append(Unicode.Scalar(UInt8(48 + Int(value))))
+            } else {
+                result.append(scalar)
+            }
+        }
+        return String(result)
+    }
+}
+
 /// Display conversion only. Wire values always remain two-decimal kilograms.
 ///
 /// Conversion happens once, on the way in, and the shown figure is worked out
@@ -46,7 +68,7 @@ nonisolated enum WorkoutWeightUnit: String, CaseIterable, Identifiable, Sendable
     }
 
     func kilograms(display: String) -> String {
-        let normalized = display.replacingOccurrences(of: ",", with: ".")
+        let normalized = NumberInput.latinDigits(display).replacingOccurrences(of: ",", with: ".")
         guard !normalized.isEmpty, let value = Decimal(string: normalized),
               normalized.range(of: #"^-?(?:\d+(?:\.\d*)?|\.\d+)$"#, options: .regularExpression) != nil else { return normalized }
         return rounded(self == .imperial ? value * Self.kilogramsPerPound : value, scale: 2)

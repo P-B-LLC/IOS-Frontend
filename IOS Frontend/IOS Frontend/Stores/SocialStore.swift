@@ -10,10 +10,12 @@ import Foundation
 import Observation
 
 /// The two waits in sending a post with a clip: making the post, then
-/// putting the clip on it.
+/// putting the clip on it. And the one in giving up on a post whose clip
+/// never arrived, which the sheet waits on just the same.
 nonisolated enum PostingStep: Equatable, Sendable {
     case publishing
     case uploadingVideo
+    case discarding
 }
 
 @MainActor
@@ -221,6 +223,12 @@ final class SocialStore {
         lastSavedMeal = nil
         lastModerationMessage = nil
         blockedPeople = []
+        // A load still in flight for the last account finishes into a stale
+        // generation and leaves its flag alone, so clear it here or the next
+        // account's Discover never loads.
+        isLoadingBlocks = false
+        discoverPosts = []
+        isLoadingDiscover = false
         savingMealFor = []
         savingWorkoutFor = []
         // What For You knows is about whoever was signed in: their page,
@@ -633,16 +641,21 @@ final class SocialStore {
         guard let repository, !isPosting else { return false }
         let generation = connectionGeneration
         isPosting = true
-        publications.trackSubmission(id: postID, awaitingAttachment: true)
-        feed = publications.publicPage(feed, prependOwn: true)
-        forYou = ownRecommendation(publications.publicPage(forYou, prependOwn: true))
+        postingStep = .discarding
         clearError()
-        defer { if generation == connectionGeneration { isPosting = false } }
+        defer {
+            if generation == connectionGeneration {
+                isPosting = false
+                postingStep = nil
+            }
+        }
         do {
             try await repository.delete(postID)
             guard generation == connectionGeneration else { return false }
-            feed.removeAll { $0.id == postID }
-            if lastPosted?.id == postID { lastPosted = nil }
+            // Everywhere, not just the feed: the publications coordinator
+            // still holds it as the author's own submission, and would put it
+            // back on their profile at the next page it merges.
+            removePost(id: postID)
             return true
         } catch {
             guard generation == connectionGeneration else { return false }
@@ -656,6 +669,9 @@ final class SocialStore {
         let generation = connectionGeneration
         isPosting = true
         postingStep = .uploadingVideo
+        publications.trackSubmission(id: postID, awaitingAttachment: true)
+        feed = publications.publicPage(feed, prependOwn: true)
+        forYou = ownRecommendation(publications.publicPage(forYou, prependOwn: true))
         clearError()
         defer {
             if generation == connectionGeneration {

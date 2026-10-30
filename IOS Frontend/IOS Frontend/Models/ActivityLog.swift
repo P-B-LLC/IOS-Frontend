@@ -87,8 +87,8 @@ nonisolated struct ActivityLogDraft: Hashable, Codable, Sendable {
     }
 
     var durationSeconds: Int? {
-        let hours = Int(hours.trimmingCharacters(in: .whitespaces)) ?? 0
-        let minutes = Int(minutes.trimmingCharacters(in: .whitespaces)) ?? 0
+        let hours = Int(NumberInput.latinDigits(hours).trimmingCharacters(in: .whitespaces)) ?? 0
+        let minutes = Int(NumberInput.latinDigits(minutes).trimmingCharacters(in: .whitespaces)) ?? 0
         guard hours > 0 || minutes > 0 else { return nil }
         return hours * 3600 + minutes * 60
     }
@@ -101,7 +101,7 @@ nonisolated struct ActivityLogDraft: Hashable, Codable, Sendable {
     /// Kilometres from what was typed, in whichever unit it was typed in.
     /// Nil for blank; `.invalid` for anything that is not a positive number.
     var distanceKilometers: DistanceValue {
-        let trimmed = distance.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: ",", with: ".")
+        let trimmed = NumberInput.latinDigits(distance).trimmingCharacters(in: .whitespaces).replacingOccurrences(of: ",", with: ".")
         guard !trimmed.isEmpty else { return .blank }
         guard let typed = Decimal(string: trimmed), typed > 0 else { return .invalid }
         var kilometers = typed * distanceUnit.kilometersPerUnit
@@ -175,7 +175,7 @@ nonisolated struct ActivityLogDraft: Hashable, Codable, Sendable {
         case .invalid: return .failure(.invalidDistance)
         case .value(let value): distanceKilometers = value
         }
-        let caloriesText = calories.trimmingCharacters(in: .whitespaces)
+        let caloriesText = NumberInput.latinDigits(calories).trimmingCharacters(in: .whitespaces)
         let calories: Int?
         if caloriesText.isEmpty {
             calories = nil
