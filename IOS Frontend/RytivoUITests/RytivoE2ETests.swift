@@ -710,7 +710,14 @@ final class RytivoE2ETests: XCTestCase {
         dismissKeyboard()
         app.buttons["Add task"].firstMatch.tap()
 
+        // Untimed, so it is listed under Anytime, below the hourly schedule,
+        // in a lazy stack that only builds rows once they are scrolled to.
+        // Dragged from below the schedule: a swipe on it scrolls the hours.
         let actions = app.buttons["Actions for Stretch E2E"].firstMatch
+        for _ in 0..<6 where !actions.exists || !actions.isHittable {
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8))
+                .press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.4)))
+        }
         XCTAssertTrue(actions.waitForExistence(timeout: 15), "the new task is on the agenda")
         shot("02 task added")
         actions.tap()
