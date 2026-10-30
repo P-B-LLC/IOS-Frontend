@@ -21,16 +21,18 @@ intact. Keep the integration branch history shared; do not force-push it.
 
 ## Calendar structure refresh — October 30, 2026
 
-The compact task/event buttons sit directly below the brand/header. The week
-card and empty-day callout are removed. Your day has a compact date/month
-control, Today and day arrows, followed by a separately scrollable hourly
+The compact task/event buttons sit directly below the brand/header. A compact
+weekday selector is restored without its enclosing card. Month, Today and
+week arrows sit above the seven day choices. Your day has a separately scrollable hourly
 agenda whose height is bounded to part of the screen. All 24 clock hours remain
 available, including on empty days. Entries stack within their starting hour
 and retain their exact time-range labels; card heights do not claim a duration.
-Untimed entries remain outside the hour grid. Completed items, overdue tasks
-and upcoming events remain expandable; the overdue count is red in both themes.
+Untimed entries remain outside the hour grid. Completed tasks stay in their
+original hourly/anytime rows with checkmarks and strikethrough; there is no
+separate Completed section. Overdue tasks and upcoming events stay expandable,
+and the overdue count is red in both themes.
 Expanding upcoming shows every item already loaded in the existing horizon.
-The preceding calendar layout is preserved at `a0a015e` in integration history.
+The preceding hourly layout is preserved at `d96e9e3` in integration history.
 
 This is presentation work: planner persistence, completion/subtask requests,
 notification scheduling are unchanged. Day navigation uses calendar arithmetic
@@ -49,12 +51,14 @@ Windows syntax/catalog checks do not replace an Xcode build or visual QA.
 Interactive checks:
 
 1. Open the month, browse across a month/year boundary, choose a date and return.
-   Test Today and both day arrows across month/year and DST boundaries.
+   Test Today, weekday selection and both week arrows across month/year and DST boundaries.
 2. Add a task/event on a non-today date. Verify scheduled ordering, anytime
    placement, edits, completion/undo, subtask expansion and workout navigation.
 3. Filter a day, remove its last matching entry, clear the filter, and switch
    dates. Ensure an empty filter never reads as an empty unfiltered day.
-4. Expand completed, past-due and upcoming groups. Verify dates and all loaded
+4. Complete and undo both a timed and an anytime task; each must remain in
+   its original location, with the same edit/subtask controls and scroll position.
+   Expand past-due and upcoming groups. Verify dates and all loaded
    upcoming events are accessible, including more than six. Selected-date items
    must not also appear under the other-day groups.
 5. Check loading, retry, editing blocked, empty and all-tasks-complete states.
