@@ -1242,7 +1242,7 @@ struct PostCard: View {
                 VStack(spacing: 8) {
                     ForEach(workout.exercises) { line in
                         HStack(spacing: 8) {
-                            Text(line.name)
+                            Text(line.displayName)
                                 .font(.community(size: 12, weight: .semibold))
                                 .foregroundStyle(timeOfDay.primaryText)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -1419,7 +1419,7 @@ struct PostCard: View {
                 VStack(alignment: .leading, spacing: 0) {
                     ForEach(Array(workout.exercises.enumerated()), id: \.element.id) { index, line in
                         HStack(spacing: 6) {
-                            Text(line.name)
+                            Text(line.displayName)
                                 .font(.community(size: 13, weight: .medium))
                                 .foregroundStyle(timeOfDay.primaryText)
                             Spacer(minLength: 6)

@@ -63,7 +63,10 @@ struct LanguageSettingsView: View {
             }
             .padding(RepbaseDesign.pageInset)
         }
-        .navigationTitle("Language")
+        // A string rather than a key: the key is the same in every language,
+        // so after a switch SwiftUI saw nothing new to send the bar, and this
+        // screen -- the one the switch happens on -- kept its English title.
+        .navigationTitle(String(localized: "Language", bundle: .app, locale: .app))
         .navigationBarTitleDisplayMode(.inline)
         .homeTimeScreen(timeOfDay)
 #if DEBUG

@@ -55,13 +55,13 @@ struct LiftProgressChart: View {
             if series.count > 1 {
                 Picker("Exercise", selection: exerciseBinding) {
                     ForEach(series) { entry in
-                        Text(entry.exerciseName).tag(entry.exerciseID)
+                        Text(entry.exerciseDisplayName).tag(entry.exerciseID)
                     }
                 }
                 .pickerStyle(.menu)
                 .tint(phase.accent)
             } else if let selected {
-                Text(selected.exerciseName)
+                Text(selected.exerciseDisplayName)
                     .font(.community(.subheadline, weight: .semibold))
             }
 

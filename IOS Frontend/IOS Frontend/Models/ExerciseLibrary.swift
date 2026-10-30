@@ -60,17 +60,45 @@ nonisolated struct LibraryExercise: Identifiable, Hashable, Decodable, Sendable 
     var detailLine: String {
         [region?.title, equipmentKind?.title].compactMap { $0 }.joined(separator: " · ")
     }
+
+    /// The name in the language on screen. `name` stays the exercise's
+    /// identity -- what the server's row is called and what a saved workout
+    /// finds it by -- so it is only ever this that is shown.
+    var localizedName: String { ExerciseLibraryText.localized(name) }
+
+    /// How to do it, step by step, in the language on screen.
+    var localizedInstructions: [String] { instructions.map { ExerciseLibraryText.localized($0) } }
+}
+
+/// The library's own text in the chosen language.
+///
+/// Names and instructions live in `ExerciseLibrary.xcstrings`, keyed by their
+/// English, rather than in `Localizable`: they come from the library file, not
+/// from code, and a thousand exercises would bury the app's own strings. They
+/// are looked up in `Bundle.app` like everything else, so a language picked in
+/// Settings applies at once. Text the table lacks -- an exercise added to the
+/// library since it was translated -- reads in English.
+nonisolated enum ExerciseLibraryText {
+    static let table = "ExerciseLibrary"
+
+    static func localized(_ english: String, in bundle: Bundle = .app) -> String {
+        bundle.localizedString(forKey: english, value: english, table: table)
+    }
 }
 
 /// Every lookup the pickers make, over the whole library at once.
 ///
 /// Built once: the file is read and every name and alias folded for search
 /// up front, so a keystroke filters a thousand exercises without allocating a
-/// thousand lowercased strings.
+/// thousand lowercased strings. Translated names are folded the first time a
+/// language is searched, and kept for as long as it stays chosen.
 nonisolated final class ExerciseLibrary: Sendable {
     let exercises: [LibraryExercise]
     let version: String
     private let searchIndex: [String: Entry]
+    /// Folded English name to the exercise's position in `exercises`.
+    private let positionByName: [String: Int]
+    private let translatedIndex = TranslatedIndex()
 
     private struct Entry: Sendable {
         let foldedName: String
@@ -105,8 +133,10 @@ nonisolated final class ExerciseLibrary: Sendable {
         exercises = file.exercises
         version = file.libraryVersion
         var index: [String: Entry] = [:]
-        for exercise in file.exercises {
+        var positions: [String: Int] = [:]
+        for (position, exercise) in file.exercises.enumerated() {
             let name = ExerciseSearch.folded(exercise.name)
+            if positions[name] == nil { positions[name] = position }
             let aliases = exercise.aliases.map(ExerciseSearch.folded)
             let vocabulary = [
                 exercise.equipmentKind?.searchTerm, exercise.region?.searchTerm,
@@ -118,6 +148,7 @@ nonisolated final class ExerciseLibrary: Sendable {
             )
         }
         searchIndex = index
+        positionByName = positions
     }
 
     /// The library bundled with the app, read once on first use. Nil only if
@@ -135,26 +166,32 @@ nonisolated final class ExerciseLibrary: Sendable {
     ///
     /// Every word of the query has to appear in the name, an alias, or the
     /// exercise's equipment or muscles, so "db row" and "row dumbbell" both
-    /// find Bent Over Row (Dumbbell). Ranked so that what somebody most
-    /// likely meant comes first: an exact name or alias, then a name that
-    /// starts with what was typed, then the rest alphabetically.
-    func search(_ query: String, filter: ExerciseFilter = ExerciseFilter()) -> [LibraryExercise] {
+    /// find Bent Over Row (Dumbbell). The name in the language on screen
+    /// counts as much as the English one: "press de banca" and "bench press"
+    /// find the same exercise. Ranked so that what somebody most likely meant
+    /// comes first: an exact name or alias, then a name that starts with what
+    /// was typed, then the rest in the order of the names as shown.
+    func search(_ query: String, filter: ExerciseFilter = ExerciseFilter(), in bundle: Bundle = .app) -> [LibraryExercise] {
         let words = ExerciseSearch.words(query)
         let folded = words.joined(separator: " ")
+        let translated = translatedIndex.names(for: exercises, in: bundle)
         let candidates = exercises.filter(filter.matches)
-        guard !words.isEmpty else { return candidates }
+        guard !words.isEmpty else {
+            return candidates.sorted { translated.areInOrder($0, $1) }
+        }
         var ranked: [(rank: Int, exercise: LibraryExercise)] = []
         for exercise in candidates {
-            guard let entry = searchIndex[exercise.slug],
-                  words.allSatisfy({ entry.haystack.contains($0) }) else { continue }
+            guard let entry = searchIndex[exercise.slug] else { continue }
+            let shown = translated.folded[exercise.slug] ?? entry.foldedName
+            guard words.allSatisfy({ entry.haystack.contains($0) || shown.contains($0) }) else { continue }
             let rank: Int
-            if entry.foldedName == folded || entry.foldedAliases.contains(folded) {
+            if entry.foldedName == folded || shown == folded || entry.foldedAliases.contains(folded) {
                 rank = 0
-            } else if entry.foldedName.hasPrefix(folded) {
+            } else if entry.foldedName.hasPrefix(folded) || shown.hasPrefix(folded) {
                 rank = 1
             } else if entry.foldedAliases.contains(where: { $0.hasPrefix(folded) }) {
                 rank = 2
-            } else if words.allSatisfy({ entry.foldedName.contains($0) }) {
+            } else if words.allSatisfy({ entry.foldedName.contains($0) || shown.contains($0) }) {
                 rank = 3
             } else {
                 rank = 4
@@ -162,8 +199,27 @@ nonisolated final class ExerciseLibrary: Sendable {
             ranked.append((rank, exercise))
         }
         return ranked
-            .sorted { $0.rank != $1.rank ? $0.rank < $1.rank : $0.exercise.name.localizedCaseInsensitiveCompare($1.exercise.name) == .orderedAscending }
+            .sorted { $0.rank != $1.rank ? $0.rank < $1.rank : translated.areInOrder($0.exercise, $1.exercise) }
             .map(\.exercise)
+    }
+
+    /// How to show an exercise called `name`: in the language on screen when
+    /// it is one of the library's -- as the server's shared exercises are,
+    /// since the library names them -- and as written otherwise. Somebody's
+    /// own exercise keeps the name they gave it.
+    ///
+    /// Only the library's own names count, not aliases: an exercise saved as
+    /// "Deadlift" was named that by somebody, and showing it as "Deadlift
+    /// (Barbell)" translated would say more than they did.
+    func displayName(for name: String, in bundle: Bundle = .app) -> String {
+        guard let position = positionByName[ExerciseSearch.folded(name)] else { return name }
+        return ExerciseLibraryText.localized(exercises[position].name, in: bundle)
+    }
+
+    /// `displayName(for:)` on the bundled library, for the many places that
+    /// show a name they were given.
+    static func displayName(_ name: String) -> String {
+        shared?.displayName(for: name) ?? name
     }
 
     /// The library exercise a name refers to, by its name or one of its
@@ -172,8 +228,8 @@ nonisolated final class ExerciseLibrary: Sendable {
     func exercise(named name: String) -> LibraryExercise? {
         let folded = ExerciseSearch.folded(name)
         guard !folded.isEmpty else { return nil }
-        if let exact = exercises.first(where: { searchIndex[$0.slug]?.foldedName == folded }) {
-            return exact
+        if let position = positionByName[folded] {
+            return exercises[position]
         }
         return exercises.first { searchIndex[$0.slug]?.foldedAliases.contains(folded) == true }
     }
@@ -208,6 +264,45 @@ nonisolated final class ExerciseLibrary: Sendable {
     var disciplinesInUse: [ExerciseDiscipline] {
         let used = Set(exercises.flatMap(\.disciplineKinds))
         return ExerciseDiscipline.allCases.filter(used.contains)
+    }
+}
+
+/// The library's names in one language: folded for search, and the order
+/// they are listed in there.
+private nonisolated struct TranslatedNames: Sendable {
+    let folded: [String: String]
+    let order: [String: Int]
+
+    func areInOrder(_ first: LibraryExercise, _ second: LibraryExercise) -> Bool {
+        (order[first.slug] ?? .max) < (order[second.slug] ?? .max)
+    }
+}
+
+/// The translated names of the language last searched in. Rebuilt only when
+/// the language changes, which takes a few milliseconds for the whole library.
+private nonisolated final class TranslatedIndex: @unchecked Sendable {
+    private let lock = NSLock()
+    private var cached: (path: String, names: TranslatedNames)?
+
+    func names(for exercises: [LibraryExercise], in bundle: Bundle) -> TranslatedNames {
+        let path = bundle.bundlePath
+        if let cached = lock.withLock({ cached }), cached.path == path {
+            return cached.names
+        }
+        let shown = exercises.map { ($0.slug, ExerciseLibraryText.localized($0.name, in: bundle)) }
+        // The chosen language's own alphabetical order: pinyin for Chinese,
+        // the kana order for Japanese.
+        let url = bundle.bundleURL
+        let locale = Locale(identifier: url.pathExtension == "lproj" ? url.deletingPathExtension().lastPathComponent : "en")
+        let sorted = shown.sorted {
+            $0.1.compare($1.1, options: [.caseInsensitive, .numeric], range: nil, locale: locale) == .orderedAscending
+        }
+        let names = TranslatedNames(
+            folded: Dictionary(shown.map { ($0.0, ExerciseSearch.folded($0.1)) }, uniquingKeysWith: { first, _ in first }),
+            order: Dictionary(sorted.enumerated().map { ($1.0, $0) }, uniquingKeysWith: { first, _ in first })
+        )
+        lock.withLock { cached = (path, names) }
+        return names
     }
 }
 
@@ -492,7 +587,7 @@ nonisolated enum MovementPattern: String, CaseIterable, Identifiable, Hashable, 
         case .horizontalPull: String(localized: "Horizontal pull", bundle: .app, locale: .app, comment: "A movement pattern, as in a row")
         case .verticalPull: String(localized: "Vertical pull", bundle: .app, locale: .app, comment: "A movement pattern, as in a pull-up")
         case .carry: String(localized: "Carry", bundle: .app, locale: .app, comment: "A movement pattern, as in a farmer's carry")
-        case .rotation: String(localized: "Rotation", bundle: .app, locale: .app, comment: "A movement pattern: twisting or resisting a twist")
+        case .rotation: String(localized: "Rotation (movement pattern)", defaultValue: "Rotation", bundle: .app, locale: .app, comment: "A movement pattern: twisting or resisting a twist. Not the weekly workout rotation")
         case .core: String(localized: "Core", bundle: .app, locale: .app, comment: "A muscle group: abs and obliques")
         case .isolation: String(localized: "Isolation", bundle: .app, locale: .app, comment: "A movement pattern: one joint, one muscle, as in a curl")
         case .explosive: String(localized: "Explosive", bundle: .app, locale: .app, comment: "A movement pattern: fast, powerful lifts and jumps")

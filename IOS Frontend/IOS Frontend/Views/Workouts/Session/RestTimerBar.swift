@@ -73,7 +73,9 @@ struct RestTimerBar: View {
                         .foregroundStyle(state == .finished ? RepbaseDesign.success : phase.secondaryText)
                         .lineLimit(1)
                         .minimumScaleFactor(0.75)
-                    Text(state == .finished ? "Time for your next set" : RestTimer.clockText(timer.remaining(at: now)))
+                    Text(state == .finished
+                         ? String(localized: "Time for your next set", bundle: .app, locale: .app)
+                         : RestTimer.clockText(timer.remaining(at: now)))
                         .font(state == .finished
                               ? .community(.subheadline, weight: .semibold)
                               : .community(.title2, weight: .bold).monospacedDigit())

@@ -1016,3 +1016,33 @@ nonisolated struct SessionOverview: Hashable, Sendable {
         return total > 0 ? total : nil
     }
 }
+
+// MARK: - Exercise names as shown
+
+// An exercise's `name` is what the server calls it and what every match and
+// save goes by. These are what a screen shows instead: the library's
+// translation when the name is one of its exercises, else the name as written.
+
+extension Exercise {
+    var displayName: String { ExerciseLibrary.displayName(name) }
+}
+
+extension WorkoutExerciseChoice {
+    var displayName: String { ExerciseLibrary.displayName(name) }
+}
+
+extension SessionExerciseDraft {
+    var displayName: String { ExerciseLibrary.displayName(name) }
+}
+
+extension SessionOverview.Line {
+    var displayName: String { ExerciseLibrary.displayName(name) }
+}
+
+extension PersonalRecord {
+    var exerciseDisplayName: String { ExerciseLibrary.displayName(exerciseName) }
+}
+
+extension LiftProgressSeries {
+    var exerciseDisplayName: String { ExerciseLibrary.displayName(exerciseName) }
+}

@@ -21,18 +21,31 @@ final class RytivoE2ETests: XCTestCase {
     private var password: String { ProcessInfo.processInfo.environment["RYTIVO_E2E_PASSWORD"] ?? "" }
 
     /// Signs in if the app is at the sign-in screen; otherwise does nothing.
-    func signInIfNeeded() {
+    /// The labels are the English ones unless another language is on screen.
+    func signInIfNeeded(
+        welcome welcomeLabel: String = "Sign In",
+        usernamePrompt: String = "Enter your username",
+        passwordPrompt: String = "Enter your password",
+        submit: String = "Sign in"
+    ) {
         // The welcome screen comes first, with its own Sign In button.
-        let welcome = app.buttons["Sign In"]
+        let welcome = app.buttons[welcomeLabel]
         if welcome.waitForExistence(timeout: 8) { welcome.tap() }
-        let field = app.textFields["Enter your username"]
+        let field = app.textFields[usernamePrompt]
         guard field.waitForExistence(timeout: 8) else { return }
         field.tap()
         field.typeText(username)
-        let secure = app.secureTextFields["Enter your password"]
+        let secure = app.secureTextFields[passwordPrompt]
         secure.tap()
         secure.typeText(password)
-        app.buttons["Sign in"].firstMatch.tap()
+        app.buttons[submit].firstMatch.tap()
+    }
+
+    /// The same in Spanish, after relaunching in it: the token does not
+    /// outlive the process in these unsigned builds.
+    func signInInSpanish() {
+        signInIfNeeded(welcome: "Iniciar sesión", usernamePrompt: "Ingresa tu nombre de usuario",
+                       passwordPrompt: "Ingresa tu contraseña", submit: "Iniciar sesión")
     }
 
     func shot(_ name: String) {
@@ -76,6 +89,34 @@ final class RytivoE2ETests: XCTestCase {
         XCTAssertTrue(start.waitForExistence(timeout: 10), "start button")
         start.tap()
         XCTAssertTrue(app.buttons["Finish"].waitForExistence(timeout: 20), "session opened")
+    }
+
+    /// `preferred`, unless that is today. Today holds the seed's workout and,
+    /// from test03 on, a session left open, so its tile opens the session; a
+    /// test that needs a plain day takes `fallback` then. Past days of the
+    /// week still take new workouts.
+    func weekday(_ preferred: String, otherwise fallback: String) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "EEEE"
+        return formatter.string(from: Date()) == preferred ? fallback : preferred
+    }
+
+    /// Opens a day of the week and starts a new workout on it: the first, or
+    /// another beside what an earlier test left there.
+    func createWorkout(onDay prefix: String) {
+        let day = button(labelStartingWith: prefix)
+        XCTAssertTrue(day.waitForExistence(timeout: 10), prefix)
+        day.tap()
+        let create = app.buttons["Create a workout"].firstMatch
+        let another = app.buttons["Add another workout"]
+        waitUntil(10, "\(prefix) offers a workout") { create.exists || another.exists }
+        if create.exists {
+            create.tap()
+        } else {
+            for _ in 0..<6 where !another.isHittable { app.swipeUp() }
+            another.tap()
+        }
     }
 
     func type(_ text: String, into field: XCUIElement) {
@@ -275,10 +316,8 @@ final class RytivoE2ETests: XCTestCase {
         signInIfNeeded()
         XCTAssertTrue(app.buttons["Training"].waitForExistence(timeout: 20))
         app.buttons["Training"].tap()
-        button(labelStartingWith: "Friday").tap()
-        let create = app.buttons["Create a workout"]
-        XCTAssertTrue(create.waitForExistence(timeout: 10))
-        create.tap()
+        let day = weekday("Friday", otherwise: "Thursday")
+        createWorkout(onDay: day)
         let name = app.textFields["e.g. Push day"]
         XCTAssertTrue(name.waitForExistence(timeout: 10))
         type("Core Day", into: name)
@@ -316,9 +355,8 @@ final class RytivoE2ETests: XCTestCase {
 
         // The new exercise is offered straight away the next time.
         app.navigationBars.buttons.element(boundBy: 0).tap()
-        XCTAssertTrue(button(labelStartingWith: "Friday, Core Day").waitForExistence(timeout: 10), "on the week")
-        button(labelStartingWith: "Saturday").tap()
-        app.buttons["Create a workout"].firstMatch.tap()
+        XCTAssertTrue(button(labelStartingWith: "\(day), Core Day").waitForExistence(timeout: 10), "on the week")
+        createWorkout(onDay: weekday("Saturday", otherwise: "Monday"))
         type("Arms", into: app.textFields["e.g. Push day"])
         button(labelStartingWith: "Add exercises").tap()
         XCTAssertTrue(element(labelContaining: "Your exercises").waitForExistence(timeout: 15), "own exercises section")
@@ -489,8 +527,7 @@ final class RytivoE2ETests: XCTestCase {
         XCTAssertTrue(app.buttons["Training"].waitForExistence(timeout: 20))
         app.buttons["Training"].tap()
         // Not Saturday: the explore test leaves an unsaved draft there.
-        button(labelStartingWith: "Sunday").tap()
-        app.buttons["Create a workout"].firstMatch.tap()
+        createWorkout(onDay: weekday("Sunday", otherwise: "Monday"))
         type("Leg Day", into: app.textFields["e.g. Push day"])
         button(labelStartingWith: "Add exercises").tap()
         let search = app.textFields["Search or create an exercise"]
@@ -529,5 +566,101 @@ final class RytivoE2ETests: XCTestCase {
         review.tap()
         app.buttons["Save workout"].firstMatch.tap()
         XCTAssertTrue(element(labelContaining: "Leg Day").waitForExistence(timeout: 20), "saved with library exercises")
+    }
+
+    /// Picks a language in Settings > Language, as somebody would. The labels
+    /// to find the way there are passed in, since they are in the language on
+    /// screen at the time.
+    /// Starts from a tab's root, where the tab bar shows.
+    func chooseLanguage(_ nativeName: String, account: String, settings: String, language: String) {
+        let accountTab = app.buttons[account]
+        XCTAssertTrue(accountTab.waitForExistence(timeout: 20), account)
+        accountTab.tap()
+        let choice = button(labelStartingWith: nativeName)
+        if !choice.waitForExistence(timeout: 2) {
+            let settingsButton = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", settings)).firstMatch
+            XCTAssertTrue(settingsButton.waitForExistence(timeout: 10), "settings entry")
+            settingsButton.tap()
+            let row = button(labelStartingWith: language)
+            XCTAssertTrue(row.waitForExistence(timeout: 10), "language row")
+            for _ in 0..<6 where !row.isHittable { app.swipeUp() }
+            row.tap()
+        }
+        XCTAssertTrue(choice.waitForExistence(timeout: 10), nativeName)
+        choice.tap()
+    }
+
+    /// The workout screens in another language, chosen in Settings and applied
+    /// without a relaunch, then kept across one: activity names, the effort
+    /// chart read aloud, and the exercise library found by its Spanish name,
+    /// with Spanish steps. Then back to English.
+    func test10WorkoutsInAnotherLanguage() throws {
+        signInIfNeeded()
+        chooseLanguage("Español", account: "Account", settings: "settings", language: "Language")
+        waitUntil(10, "switched without a relaunch") { self.app.navigationBars["Idioma"].exists }
+        XCTAssertTrue(element(labelContaining: "Tu idioma.").exists, "the whole screen switched, title and all")
+
+        // The rest from a fresh launch, which also shows the choice is kept.
+        // Leaving the settings stack by hand is unreliable: a pushed screen
+        // hides the tab bar, and a tap where a tab was lands on whatever row
+        // is drawn there -- here, another language.
+        app.terminate()
+        app.launch()
+        signInInSpanish()
+        let training = app.buttons["Entrenamiento"]
+        XCTAssertTrue(training.waitForExistence(timeout: 20), "still Spanish after relaunching")
+        training.tap()
+        // A day with nothing on it: the seed plans today, and other tests use
+        // Friday to Sunday. Weekday 3 is Tuesday.
+        let day = Calendar(identifier: .gregorian).component(.weekday, from: Date()) == 3 ? "miércoles" : "martes"
+        let tile = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", day)).firstMatch
+        XCTAssertTrue(tile.waitForExistence(timeout: 10), "the week reads in Spanish")
+        tile.tap()
+        let create = app.buttons["Crear un entrenamiento"].firstMatch
+        XCTAssertTrue(create.waitForExistence(timeout: 10))
+        create.tap()
+
+        let weightlifting = app.buttons["activity-weightlifting"]
+        XCTAssertTrue(weightlifting.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.navigationBars["Nuevo entrenamiento"].exists, "a screen opened after the switch is titled in Spanish")
+        XCTAssertTrue(weightlifting.label.contains("Levantamiento de pesas"), weightlifting.label)
+        XCTAssertTrue(app.buttons["activity-tennis"].label.contains("Tenis"), app.buttons["activity-tennis"].label)
+        shot("01 activities in Spanish")
+
+        app.buttons["activity-tennis"].tap()
+        let primary = app.buttons["workout-builder-primary"]
+        primary.tap()
+        let chart = app.descendants(matching: .any)["effort-chart"].firstMatch
+        for _ in 0..<6 where !chart.exists || chart.frame.maxY > primary.frame.minY - 8 {
+            app.swipeUp(velocity: .slow)
+        }
+        XCTAssertEqual(chart.label, "Esfuerzo percibido")
+        chart.coordinate(withNormalizedOffset: CGVector(dx: 0.7, dy: 0.5)).tap()
+        waitUntil(5, "effort read in Spanish") { (chart.value as? String)?.contains("de 100") == true }
+        shot("02 effort chart in Spanish")
+
+        app.buttons["Atrás"].firstMatch.tap()
+        XCTAssertTrue(weightlifting.waitForExistence(timeout: 10))
+        weightlifting.tap()
+        primary.tap()
+        let search = app.textFields["exercise-search"]
+        XCTAssertTrue(search.waitForExistence(timeout: 10))
+        type("press de banca", into: search)
+        let bench = button(labelStartingWith: "Agregar Press de banca (Barra)")
+        XCTAssertTrue(bench.waitForExistence(timeout: 10), "found by its Spanish name, and listed by it")
+        button(labelStartingWith: "Cómo hacer Press de banca (Barra)").tap()
+        XCTAssertTrue(element(labelContaining: "Cómo hacerlo").waitForExistence(timeout: 5), "the page is in Spanish")
+        XCTAssertTrue(element(labelContaining: "Acuéstate boca arriba en un banco plano").exists, "and so are the steps")
+        XCTAssertTrue(element(labelContaining: "Bench Press (Barbell)").exists, "the English name is offered too")
+        shot("03 exercise page in Spanish")
+        app.buttons["Listo"].firstMatch.tap()
+        app.buttons["Atrás"].firstMatch.tap()
+        app.buttons["Cancelar"].firstMatch.tap()
+
+        app.terminate()
+        app.launch()
+        signInInSpanish()
+        chooseLanguage("English", account: "Cuenta", settings: "Configuración", language: "Idioma")
+        waitUntil(10, "back to English") { self.app.navigationBars["Language"].exists }
     }
 }

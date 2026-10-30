@@ -29,7 +29,7 @@ struct SessionReorderSheet: View {
                                     Capsule().fill(SupersetPalette.color(for: group)).frame(width: 4, height: 30)
                                 }
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text(exercise.name).font(.community(.subheadline, weight: .semibold))
+                                    Text(exercise.displayName).font(.community(.subheadline, weight: .semibold))
                                     Text("\(exercise.loggedCount) of \(exercise.sets.count) sets logged")
                                         .font(.community(.caption))
                                         .foregroundStyle(.secondary)

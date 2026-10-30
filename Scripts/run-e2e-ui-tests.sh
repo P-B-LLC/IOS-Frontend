@@ -3,8 +3,9 @@
 # started workout (cancel, then confirm), trains a session (set kinds, rest
 # timer, units, add/remove/reorder, Finish with the plan question), manages
 # saved workouts, explores exercises, follows and unfollows, changes workout
-# settings, logs a tennis match with the effort chart, and searches and
-# filters the exercise library.
+# settings, logs a tennis match with the effort chart, searches and filters
+# the exercise library, and switches to Spanish to see activities, the effort
+# chart and the library translated live.
 #
 #   bash Scripts/run-e2e-ui-tests.sh [simulator-udid]
 #
@@ -58,4 +59,5 @@ xcodebuild test-without-building -xctestrun "$(ls "$derived"/Build/Products/*.xc
     -only-testing:RytivoUITests/RytivoE2ETests/test05Following \
     -only-testing:RytivoUITests/RytivoE2ETests/test06WorkoutSettings \
     -only-testing:RytivoUITests/RytivoE2ETests/test08LogTennis \
-    -only-testing:RytivoUITests/RytivoE2ETests/test09ExerciseLibrary
+    -only-testing:RytivoUITests/RytivoE2ETests/test09ExerciseLibrary \
+    -only-testing:RytivoUITests/RytivoE2ETests/test10WorkoutsInAnotherLanguage

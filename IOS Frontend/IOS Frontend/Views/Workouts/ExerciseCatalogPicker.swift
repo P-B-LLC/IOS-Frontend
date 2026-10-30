@@ -25,6 +25,10 @@ struct ExerciseOption: Identifiable, Hashable {
 
     var id: String { serverID.map { "server-\($0)" } ?? "library-\(library?.slug ?? name)" }
 
+    /// What the row shows: the library's translation of a library name,
+    /// anything else as written.
+    var displayName: String { ExerciseLibrary.displayName(name) }
+
     var detail: String {
         if let library, !library.detailLine.isEmpty { return library.detailLine }
         if !muscleGroup.isEmpty { return MuscleRegion(serverMuscleGroup: muscleGroup)?.title ?? muscleGroup }
@@ -88,7 +92,10 @@ struct ExerciseCatalogPicker: View {
                 guard filter.refinementCount == 0 else { return nil }
                 if let region = filter.region, MuscleRegion(serverMuscleGroup: choice.muscleGroup) != region { return nil }
             }
-            let haystack = ExerciseSearch.folded(([choice.name] + (entry?.aliases ?? [])).joined(separator: " "))
+            // The name as shown counts too: the library leaves out exercises
+            // listed here, so this is the only place a translated name finds them.
+            let names = [choice.name, choice.displayName] + (entry?.aliases ?? [])
+            let haystack = ExerciseSearch.folded(names.joined(separator: " "))
             return words.allSatisfy(haystack.contains) ? option : nil
         }
     }
@@ -326,7 +333,7 @@ struct ExerciseCatalogPicker: View {
             Button { onToggle(option) } label: {
                 HStack(spacing: 12) {
                     VStack(alignment: .leading, spacing: 3) {
-                        Text(option.name).font(.community(.subheadline, weight: .semibold))
+                        Text(option.displayName).font(.community(.subheadline, weight: .semibold))
                             .multilineTextAlignment(.leading)
                         Text(option.detail)
                             .font(.community(.caption)).foregroundStyle(phase.secondaryText)
@@ -340,7 +347,7 @@ struct ExerciseCatalogPicker: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(selected ? "Remove \(option.name)" : "Add \(option.name)")
+            .accessibilityLabel(selected ? "Remove \(option.displayName)" : "Add \(option.displayName)")
             .accessibilityValue(selected ? "Added to your workout" : "Not added")
             .accessibilityAddTraits(selected ? [.isSelected] : [])
 
@@ -352,7 +359,7 @@ struct ExerciseCatalogPicker: View {
                         .frame(width: 40, height: 44)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("How to do \(option.name)")
+                .accessibilityLabel("How to do \(option.displayName)")
             }
         }
         .padding(.leading, 14).padding(.trailing, option.library == nil ? 14 : 4).padding(.vertical, 8)
@@ -446,10 +453,10 @@ struct ExerciseDetailSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text(shown.name).font(.community(.title2, weight: .bold))
+                        Text(shown.localizedName).font(.community(.title2, weight: .bold))
                             .fixedSize(horizontal: false, vertical: true)
-                        if !shown.aliases.isEmpty {
-                            Text("Also called \(shown.aliases.prefix(4).joined(separator: ", "))")
+                        if !alsoCalled.isEmpty {
+                            Text("Also called \(alsoCalled.joined(separator: ", "))")
                                 .font(.community(.caption)).foregroundStyle(phase.secondaryText)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -467,9 +474,10 @@ struct ExerciseDetailSheet: View {
                     muscles
 
                     if !shown.instructions.isEmpty {
+                        let steps = shown.localizedInstructions
                         VStack(alignment: .leading, spacing: 10) {
                             Text("How to do it").font(.community(.headline))
-                            ForEach(Array(shown.instructions.enumerated()), id: \.offset) { index, step in
+                            ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
                                 HStack(alignment: .firstTextBaseline, spacing: 10) {
                                     Text("\(index + 1)")
                                         .font(.community(.caption, weight: .bold).monospacedDigit())
@@ -497,7 +505,7 @@ struct ExerciseDetailSheet: View {
                                 Button { withAnimation { shown = variation } } label: {
                                     HStack {
                                         VStack(alignment: .leading, spacing: 2) {
-                                            Text(variation.name).font(.community(.subheadline, weight: .semibold))
+                                            Text(variation.localizedName).font(.community(.subheadline, weight: .semibold))
                                             Text(variation.detailLine).font(.community(.caption)).foregroundStyle(phase.secondaryText)
                                         }
                                         Spacer()
@@ -538,6 +546,13 @@ struct ExerciseDetailSheet: View {
     private var tags: [String] {
         [shown.equipmentKind?.title, shown.type?.title, shown.pattern?.title, shown.difficulty?.title]
             .compactMap { $0 } + shown.disciplineKinds.map(\.title)
+    }
+
+    /// Other names it goes by. In another language the English name leads:
+    /// gyms the world over use it, so it is often the one people know.
+    private var alsoCalled: [String] {
+        let english = shown.localizedName == shown.name ? [] : [shown.name]
+        return Array((english + shown.aliases).prefix(4))
     }
 
     @ViewBuilder

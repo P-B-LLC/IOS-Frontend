@@ -99,7 +99,8 @@ struct ActivitySessionSummary: View {
     }
 }
 
-/// The effort chart in miniature: five rising bars, filled to the band.
+/// The effort chart in miniature: one rounded bar per band, rising, lit in
+/// caramel up to the band the score is in.
 struct EffortGlyph: View {
     let score: Int
     var phase: WorkoutVisualPhase = .prepare
@@ -108,10 +109,9 @@ struct EffortGlyph: View {
         let level = EffortLevel(score: score).rawValue
         HStack(alignment: .bottom, spacing: 2) {
             ForEach(0..<5, id: \.self) { index in
-                RoundedRectangle(cornerRadius: 1.5)
-                    .fill(index <= level ? phase.accent : phase.surfaceStart)
-                    .overlay { RoundedRectangle(cornerRadius: 1.5).strokeBorder(phase.primaryText.opacity(0.7), lineWidth: 1) }
-                    .frame(width: 5, height: CGFloat(5 + index * 3))
+                Capsule(style: .continuous)
+                    .fill(index <= level ? phase.accent : phase.primaryText.opacity(0.14))
+                    .frame(width: 4, height: CGFloat(6 + index * 3))
             }
         }
         .accessibilityHidden(true)

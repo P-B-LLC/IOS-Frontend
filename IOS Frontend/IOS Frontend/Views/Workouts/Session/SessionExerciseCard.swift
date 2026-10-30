@@ -119,7 +119,7 @@ struct SessionExerciseCard: View {
                                 .foregroundStyle(RepbaseDesign.success)
                         }
                     }
-                    Text(exercise.name)
+                    Text(exercise.displayName)
                         .font(.community(.headline))
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
@@ -128,7 +128,7 @@ struct SessionExerciseCard: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("\(exercise.name), exercise \(position) of \(count)")
+            .accessibilityLabel("\(exercise.displayName), exercise \(position) of \(count)")
             .accessibilityHint(isFocused ? "Current exercise" : "Makes this the current exercise")
 
             menu
@@ -162,9 +162,9 @@ struct SessionExerciseCard: View {
                 .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
         }
-        .accessibilityLabel("Options for \(exercise.name)")
+        .accessibilityLabel("Options for \(exercise.displayName)")
         .confirmationDialog("Remove this exercise?", isPresented: $confirmingRemoval, titleVisibility: .visible) {
-            Button("Remove \(exercise.name)", role: .destructive, action: onRemove)
+            Button("Remove \(exercise.displayName)", role: .destructive, action: onRemove)
             Button("Keep exercise", role: .cancel) {}
         } message: {
             Text("\(exercise.loggedCount) logged sets will be removed from this workout. Your other exercises and your rest timer are not affected.")

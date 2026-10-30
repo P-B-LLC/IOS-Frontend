@@ -291,7 +291,7 @@ struct SavedWorkoutsView: View {
     /// The first few exercise names, so a workout is recognised by what is in
     /// it rather than by its name alone.
     private func preview(_ workout: WorkoutSummary) -> String? {
-        let names = workout.exercises.map(\.name)
+        let names = workout.exercises.map(\.displayName)
         guard !names.isEmpty else { return nil }
         let shown = names.prefix(3).joined(separator: ", ")
         guard names.count > 3 else { return shown }

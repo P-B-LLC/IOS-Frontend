@@ -7,6 +7,10 @@
 # same file is what lets a library exercise chosen in the app become the
 # server's row for it by name. Edit the library in repbase
 # (Scripts/exercise_library/), rebuild it there, then run this.
+#
+# Names and steps are translated in IOS Frontend/ExerciseLibrary.xcstrings,
+# keyed by their English. A new or reworded exercise reads in English until it
+# is translated there, and ExerciseLibraryLocalizationTests fails until it is.
 set -euo pipefail
 repo="$(cd "$(dirname "$0")/.." && pwd)"
 source="${1:-$repo/../repbase/core/data/exercise_library.json}"

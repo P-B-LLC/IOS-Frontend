@@ -265,7 +265,7 @@ struct GuidedWorkoutBuilder: View {
                             .font(.community(.caption, weight: .bold).monospacedDigit())
                             .foregroundStyle(phase.accent)
                             .frame(minWidth: 20)
-                        Text(exercise.name).font(.community(.subheadline, weight: .semibold))
+                        Text(exercise.displayName).font(.community(.subheadline, weight: .semibold))
                             .fixedSize(horizontal: false, vertical: true)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         Button {
@@ -276,7 +276,7 @@ struct GuidedWorkoutBuilder: View {
                                 .frame(minWidth: 44, minHeight: 44)
                         }
                         .buttonStyle(.plain).foregroundStyle(phase.secondaryText)
-                        .accessibilityLabel("Remove \(exercise.name) from your workout")
+                        .accessibilityLabel("Remove \(exercise.displayName) from your workout")
                     }
                     if index < draft.exercises.count - 1 { Divider() }
                 }
@@ -334,7 +334,7 @@ struct GuidedWorkoutBuilder: View {
                 .animation(.snappy(duration: 0.22), value: draft.exercises.map(\.id))
                 .sensoryFeedback(.selection, trigger: draft.exercises.map(\.id))
                 if let removed {
-                    Button("Undo removing \(removed.exercise.name)") {
+                    Button("Undo removing \(removed.exercise.displayName)") {
                         draft.exercises.insert(removed.exercise, at: min(removed.index, draft.exercises.count))
                         self.removed = nil
                     }.font(.community(.caption))
@@ -368,7 +368,7 @@ struct GuidedWorkoutBuilder: View {
                     Text(String(format: "%02d", index + 1))
                         .font(.community(.caption, weight: .bold).monospacedDigit())
                         .foregroundStyle(phase.accent)
-                    Text(exercise.name)
+                    Text(exercise.displayName)
                         .font(.community(.subheadline, weight: .bold))
                         .fixedSize(horizontal: false, vertical: true)
                     if let supersetColor {
@@ -414,7 +414,7 @@ struct GuidedWorkoutBuilder: View {
                 .strokeBorder(phase.cardBorder, lineWidth: 1)
         }
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("\(index + 1). \(exercise.name), \(exercise.sets) sets")
+        .accessibilityLabel("\(index + 1). \(exercise.displayName), \(exercise.sets) sets")
         .accessibilityAction(named: "Move up") { moveExercise(exercise.id, by: -1) }
         .accessibilityAction(named: "Move down") { moveExercise(exercise.id, by: 1) }
     }
@@ -445,7 +445,7 @@ struct GuidedWorkoutBuilder: View {
                 .frame(width: 36, height: 36)
                 .contentShape(Rectangle())
         }
-        .accessibilityLabel("Options for \(exercise.name)")
+        .accessibilityLabel("Options for \(exercise.displayName)")
     }
 
     /// The planned sets as small badges, one per set, each opening a menu of
@@ -766,7 +766,7 @@ private struct DraftReorderSheet: View {
                                 Capsule().fill(SupersetPalette.color(for: group)).frame(width: 4, height: 28)
                             }
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(exercise.name).font(.community(.subheadline, weight: .semibold))
+                                Text(exercise.displayName).font(.community(.subheadline, weight: .semibold))
                                 Text("\(exercise.sets) sets")
                                     .font(.community(.caption))
                                     .foregroundStyle(.secondary)

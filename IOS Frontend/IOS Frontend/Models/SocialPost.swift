@@ -468,3 +468,9 @@ nonisolated struct SavedWorkoutOutcome: Equatable, Hashable, Sendable {
         )
     }
 }
+
+extension PostExerciseLine {
+    /// The name in the reader's language when it is a library exercise; a
+    /// name somebody typed stays as they wrote it.
+    var displayName: String { ExerciseLibrary.displayName(name) }
+}

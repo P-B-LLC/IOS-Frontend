@@ -213,14 +213,14 @@ final class WorkoutLiveActivityController {
             let after = session.exercises[(position + 1)...].first { !$0.isComplete && $0.id != exercise.id }
                 ?? session.exercises.first { !$0.isComplete && $0.id != exercise.id }
             return after.map {
-                String(localized: "Next: \($0.name)", bundle: .app, locale: .app, comment: "The exercise after the current one")
+                String(localized: "Next: \(ExerciseLibrary.displayName($0.name))", bundle: .app, locale: .app, comment: "The exercise after the current one")
             }
         }()
 
         return State(
             phase: phase,
             sessionID: session.serverID,
-            exerciseName: exercise?.name ?? session.workoutName,
+            exerciseName: exercise.map { ExerciseLibrary.displayName($0.name) } ?? session.workoutName,
             exercisePosition: String(
                 localized: "Exercise \(position + 1) of \(session.exercises.count)",
                 bundle: .app,

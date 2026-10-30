@@ -34,6 +34,9 @@ Sources: Ethnologue 2025 speaker counts, W3Techs content languages
 
 - `Localizable.xcstrings` holds every string the app shows, keyed by its English
   text. `InfoPlist.xcstrings` holds the iOS permission prompts.
+  `ExerciseLibrary.xcstrings` holds the exercise library's names and
+  step-by-step instructions (1,023 exercises), also keyed by their English;
+  see "The exercise library" below.
 - `Services/AppLanguage.swift` decides the language: a choice made in Settings
   wins; otherwise the device's languages are matched the way iOS matches a
   bundle; otherwise English. A choice is also written to `AppleLanguages`, the
@@ -68,6 +71,26 @@ Sources: Ethnologue 2025 speaker counts, W3Techs content languages
 3. Run `bash Scripts/test-account-safety.sh`. `LocalizationCatalogTests` fails
    on any missing translation, stale entry, changed placeholder or wrong plural
    form, and compiles the catalog to check lookups at runtime.
+
+## The exercise library
+
+- The library file (`Resources/ExerciseLibrary/exercise_library.json`) stays
+  English: its names are what the server's shared exercises are called and
+  what saving a workout matches on. Translations live beside it in
+  `ExerciseLibrary.xcstrings`, a table of its own so a thousand exercises do not
+  bury the app's strings. Its entries are `manual`, so a build never marks them
+  stale.
+- Show `exercise.displayName` (or `ExerciseLibrary.displayName(_:)` for a bare
+  name), `LibraryExercise.localizedName` and `localizedInstructions`. Keep
+  `name` for matching and saving. Only a library exercise's own name is
+  translated: somebody's custom exercise, or one named after an alias, shows as
+  written.
+- Search matches the name on screen as well as the English name and aliases,
+  so "press de banca" and "bench press" find the same exercise.
+- When the library changes, translate the new names and steps into all nine
+  languages: equipment stays in brackets, and no two exercises may share a
+  name. `ExerciseLibraryLocalizationTests` checks coverage, script, brackets
+  and uniqueness, and compiles the table to look names up at runtime.
 
 ## Known limits
 

@@ -43,7 +43,7 @@ struct WorkoutCompletionSummary: View {
                     Image(systemName: count == exercise.sets.count && count > 0 ? "checkmark.circle.fill" : "circle.lefthalf.filled")
                         .foregroundStyle(count == exercise.sets.count && count > 0 ? RepbaseDesign.success : phase.secondaryText)
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(exercise.name).font(.community(.headline))
+                        Text(exercise.displayName).font(.community(.headline))
                         Text("\(count) of \(exercise.sets.count) sets logged").font(.community(.caption)).foregroundStyle(phase.secondaryText)
                         if let line = loggedLine(exercise) {
                             Text(line)

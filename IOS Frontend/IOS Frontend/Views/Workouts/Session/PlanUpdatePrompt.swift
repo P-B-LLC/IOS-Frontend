@@ -76,7 +76,7 @@ struct PlanUpdatePrompt: View {
         .presentationDragIndicator(.visible)
     }
 
-    private func option(title: LocalizedStringKey, detail: String, prominent: Bool, action: @escaping () -> Void) -> some View {
+    private func option(title: LocalizedStringKey, detail: LocalizedStringKey, prominent: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title).font(.community(.headline))
@@ -103,13 +103,13 @@ struct PlanUpdatePrompt: View {
         for change in changes {
             let line: String
             switch change {
-            case .added(let name): line = String(localized: "Added \(name)", bundle: .app, locale: .app, comment: "A change to a workout: an exercise was added")
-            case .removed(let name): line = String(localized: "Removed \(name)", bundle: .app, locale: .app, comment: "A change to a workout: an exercise was removed")
+            case .added(let name): line = String(localized: "Added \(ExerciseLibrary.displayName(name))", bundle: .app, locale: .app, comment: "A change to a workout: an exercise was added")
+            case .removed(let name): line = String(localized: "Removed \(ExerciseLibrary.displayName(name))", bundle: .app, locale: .app, comment: "A change to a workout: an exercise was removed")
             case .reordered: line = String(localized: "Changed the order of exercises", bundle: .app, locale: .app)
-            case .sets(let name): line = String(localized: "Changed the number of sets for \(name)", bundle: .app, locale: .app)
-            case .setTypes(let name): line = String(localized: "Changed set kinds for \(name)", bundle: .app, locale: .app, comment: "Set kinds are warm-up, drop, failure and normal sets")
-            case .rest(let name): line = String(localized: "Changed the rest for \(name)", bundle: .app, locale: .app)
-            case .superset(let name): line = String(localized: "Changed the superset for \(name)", bundle: .app, locale: .app)
+            case .sets(let name): line = String(localized: "Changed the number of sets for \(ExerciseLibrary.displayName(name))", bundle: .app, locale: .app)
+            case .setTypes(let name): line = String(localized: "Changed set kinds for \(ExerciseLibrary.displayName(name))", bundle: .app, locale: .app, comment: "Set kinds are warm-up, drop, failure and normal sets")
+            case .rest(let name): line = String(localized: "Changed the rest for \(ExerciseLibrary.displayName(name))", bundle: .app, locale: .app)
+            case .superset(let name): line = String(localized: "Changed the superset for \(ExerciseLibrary.displayName(name))", bundle: .app, locale: .app)
             }
             if !lines.contains(line) { lines.append(line) }
         }

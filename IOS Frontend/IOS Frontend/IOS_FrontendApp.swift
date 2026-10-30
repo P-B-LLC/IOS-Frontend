@@ -320,6 +320,8 @@ private struct AppRootView: View {
                 case "saved":
                     NavigationStack { SavedWorkoutsView() }
                         .environment(WorkoutStore.previewWithLibrary)
+                case "effort":
+                    EffortChartPreviewScreen()
                 default:
                     let store = WorkoutStore.sharedPreviewActiveSession
                     NavigationStack { DayWorkoutView(day: store.activeSession?.day ?? .monday) }
@@ -837,6 +839,32 @@ private struct AppRootView: View {
 }
 
 #if DEBUG
+/// The effort chart as the activity log shows it, rated at
+/// `REPBASE_EFFORT_VALUE` (64 if unset, "none" for not rated). Logging an
+/// activity needs a server and several taps, and screenshots on several screen
+/// sizes need neither.
+private struct EffortChartPreviewScreen: View {
+    @State private var value: Int? = {
+        let raw = ProcessInfo.processInfo.environment["REPBASE_EFFORT_VALUE"]
+        return raw == "none" ? nil : Int(raw ?? "") ?? 64
+    }()
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("HOW HARD WAS IT?")
+                    .font(.community(.caption, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                EffortChart(value: $value, phase: .prepare)
+                    .padding(14)
+                    .workoutOutline(radius: 18)
+            }
+            .padding(20)
+        }
+        .repbaseScreen(.prepare)
+    }
+}
+
 /// The rotation editor with the workout builder already pushed onto it.
 ///
 /// `simctl` cannot tap, so the only way to see what the pushed builder looks

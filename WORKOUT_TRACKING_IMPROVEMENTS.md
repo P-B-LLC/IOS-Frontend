@@ -231,12 +231,98 @@ Same branches, still uncommitted. Backend migrations `0083`–`0085` (see below)
 
 ## Known limits
 
-- Exercise names, aliases and instructions are English (they are data, like
-  server exercise names); muscle, equipment, pattern and category labels are
-  translated. No exercise images yet.
+- Exercise names and instructions are translated since the third pass (below);
+  aliases stay English, and somebody's own exercises keep the name they gave
+  them. No exercise images yet.
 - The rest-over notification uses the normal interruption level: Time Sensitive
   needs the `com.apple.developer.usernotifications.time-sensitive` entitlement
   and App ID capability, which signing here cannot add without a device.
 - Apple Health import still maps only run/ride/swim/lifting.
 - Older app builds see new activities by family only (tennis as a lifting
   workout without exercises).
+
+# Exercise library in every language, effort chart redesign and haptics — 30 October 2026 (third pass)
+
+App only; no backend or API change.
+
+## What changed
+
+- **Exercise library translated.** All 1,023 exercise names and 3,785 unique
+  instruction steps are in all nine translated languages, in a second string
+  catalog, `ExerciseLibrary.xcstrings` (see LOCALIZATION.md, "The exercise
+  library"). Names follow local gym usage ("Press de banca (Barra)",
+  "Bankdrücken (Langhantel)", "ベンチプレス（バーベル）", "卧推（杠铃）"),
+  keep the equipment in brackets, and use the app's own words for muscles and
+  equipment. Steps convert imperial measures to metric.
+- **Shown everywhere a library exercise appears:** picker, exercise page
+  (name, steps, variations; the English name leads "Also called"), builder,
+  saved workouts, the day and session screens, personal records, lift
+  progress, plan-change summaries, posts, and the Lock Screen Live Activity.
+  Matching and saving still use the English name. Only a library exercise's
+  own name is translated; custom exercises keep their names.
+- **Search in the reader's language:** "press de banca" finds Bench Press
+  (Barbell), and the English name and aliases still work. Lists without a
+  query sort by the shown name in that language's order.
+- **Effort chart redesigned.** Twenty rounded bars rise left to right in five
+  groups of four, one group per effort band, replacing the five outlined
+  columns. Lit bars are caramel that deepens up the ramp, unlit bars a quiet
+  track. The band edges (0 to 100) sit under the gaps, and the two around the
+  rating are picked out. While dragging, a bubble shows the number and the bar
+  under the finger lifts. Bars rise in on appear. Reduce Motion drops the
+  movement. It mirrors in Arabic, and numbers use the language's digits. The
+  history glyph matches.
+- **Haptics.** `Services/EffortHaptics.swift` decides, and the chart plays it
+  through SwiftUI `sensoryFeedback`. One tick each time a bar lights or
+  empties, firming from soft to rigid as effort rises; a stronger tick
+  entering each band; a solid stop on the last bar and a cushioned one at 0.
+  Steps closer than 35 ms are skipped so a fast swipe does not buzz; band
+  changes and the ends never are. System feedback follows the iPhone's System
+  Haptics setting and does nothing on devices without a Taptic Engine.
+  VoiceOver's swipe-to-adjust ticks the same way.
+- **Fixed along the way:**
+  - "Time for your next set" (rest timer) and both plan-update choices were
+    English in every language.
+  - "Rotation" was one key for the weekly rotation and the twisting movement
+    pattern. The pattern now has its own key ("Rotation (movement pattern)"),
+    which fixes Chinese and Arabic.
+  - The Language screen kept its English title after a live switch.
+  - `ExerciseLibrary.exercise(named:)` looks names up by index, not by
+    scanning the list.
+- Debug: `REPBASE_WORKOUT_PREVIEW=effort` (with `REPBASE_EFFORT_VALUE=0…100`
+  or `none`) opens the chart alone, for screenshots on any simulator.
+
+## Size
+
+The compiled library tables add about 1 to 1.8 MB per language, roughly
+12 MB uncompressed for the nine. The catalog source is 13 MB of JSON.
+
+## Tests (30 October 2026, all green)
+
+- Build: the CI command (`generic/platform=iOS Simulator`, Debug) succeeds
+  with no warnings in the changed files. `Scripts/sync-localizations.sh`
+  leaves nothing untranslated or stale.
+- App unit tests: `bash Scripts/test-account-safety.sh`: 294 tests, 0 failures.
+  New:
+  - `EffortHapticsTests` (8): bar math, one tick per bar, fast-swipe
+    throttling, firmness.
+  - `ExerciseLibraryLocalizationTests` (11): coverage in nine languages,
+    script, unique names, brackets, no generated symbols, runtime lookup,
+    search by translated name, live switching.
+- End to end: `bash Scripts/run-e2e-ui-tests.sh`: 9 of 9 pass, on a Friday.
+  The new `test10WorkoutsInAnotherLanguage` switches to Spanish in Settings
+  and checks the screen changes live. It then relaunches (the choice is kept)
+  and checks Spanish activity names, the builder title, the effort chart's
+  spoken value, a library search for "press de banca", and the Spanish steps.
+  It switches back to English at the end.
+- Fixed in the suite: it failed on whichever weekday was Friday, Saturday or
+  Sunday. Those tests used fixed days, and today holds the seed's workout and
+  test03's open session. `weekday(_:otherwise:)` and `createWorkout(onDay:)`
+  now pick a plain day.
+- Checked by screenshot on iPhone 17e and iPhone 18 Pro Max: unrated and
+  rated, dark mode, and Arabic (mirrored, Arabic digits).
+
+## Still to check on a device
+
+- How the haptics feel: the simulator has no Taptic Engine. The intensity and
+  firmness steps are in `EffortHaptics.Tick` if they need tuning.
+- The scrubbing bubble and the bar lift need a finger; XCUITest only taps.

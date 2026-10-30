@@ -408,7 +408,7 @@ struct DayWorkoutView: View {
         setSuccessMessage = showSessionReadyMoment
             ? String(localized: "Every set is in. Finish strong.", bundle: .app, locale: .app)
             : completedExercise.map {
-                String(localized: "\($0.name) complete", bundle: .app, locale: .app, comment: "The placeholder is the name of an exercise")
+                String(localized: "\($0.displayName) complete", bundle: .app, locale: .app, comment: "The placeholder is the name of an exercise")
             }
 
         setFeedbackTask = Task { @MainActor in
@@ -1533,7 +1533,7 @@ struct DayWorkoutView: View {
                     ForEach(Array(session.exercises.enumerated()), id: \.element.id) { index, exercise in
                         HStack(spacing: 12) {
                             VStack(alignment: .leading, spacing: 3) {
-                                Text(exercise.name).font(.community(.headline))
+                                Text(exercise.displayName).font(.community(.headline))
                                 Text(loggedSetSummary(exercise))
                                     .font(.community(.caption))
                                     .foregroundStyle(phase.secondaryText)
@@ -1782,7 +1782,7 @@ struct DayWorkoutView: View {
                         .font(.community(.caption, weight: .bold).monospacedDigit())
                         .foregroundStyle(RepbasePalette.caramel)
                         .frame(width: 26, alignment: .leading)
-                    Text(line.name)
+                    Text(line.displayName)
                         .font(.community(.subheadline, weight: .semibold))
                     Spacer(minLength: 8)
                     Text(line.setsText(in: store.preferences.weightUnit))
@@ -1807,7 +1807,7 @@ struct DayWorkoutView: View {
         return VStack(alignment: .leading, spacing: 14) {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(exercise.name)
+                    Text(exercise.displayName)
                         .font(.community(.headline))
                         .foregroundStyle(phase.primaryText)
                     Text("\(exercise.sets.filter(\.isLogged).count) of \(exercise.sets.count) logged")
@@ -2186,7 +2186,7 @@ private struct PersonalRecordRow: View {
                 .background(phase.accent.opacity(0.16), in: Circle())
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(record.exerciseName)
+                Text(record.exerciseDisplayName)
                     .font(.community(.subheadline, weight: .semibold))
                     .lineLimit(1)
                 Text("\(record.kind.title) · \(record.detailText(in: unit))")
@@ -2209,7 +2209,7 @@ private struct PersonalRecordRow: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
-            "\(record.exerciseName), \(record.kind.title), \(record.valueText(in: unit)), \(record.detailText(in: unit))"
+            "\(record.exerciseDisplayName), \(record.kind.title), \(record.valueText(in: unit)), \(record.detailText(in: unit))"
         )
     }
 }
@@ -2408,7 +2408,7 @@ private struct PlannedExerciseRow: View {
                 .foregroundStyle(WorkoutVisualPhase.prepare.accent)
                 .frame(width: 34, height: 34)
                 .background(WorkoutVisualPhase.prepare.accent.opacity(0.12), in: Circle())
-            Text(exercise.name)
+            Text(exercise.displayName)
                 .font(.community(.body, weight: .medium))
             Spacer()
             Text(exercise.sets == 1 ? "1 set" : "\(exercise.sets) sets")

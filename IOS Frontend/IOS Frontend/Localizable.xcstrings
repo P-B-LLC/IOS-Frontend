@@ -79349,6 +79349,64 @@
         }
       }
     },
+    "Next time, %@ opens with today’s exercises, order, sets and rests." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "في المرة القادمة، يُفتح %@ بتمارين اليوم وترتيبها ومجموعاتها وفترات الراحة."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beim nächsten Mal startet %@ mit den Übungen, der Reihenfolge, den Sätzen und Pausen von heute."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La próxima vez, %@ se abrirá con los ejercicios, el orden, las series y los descansos de hoy."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La prochaine fois, %@ s’ouvrira avec les exercices, l’ordre, les séries et les repos d’aujourd’hui."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "अगली बार %@ आज की एक्सरसाइज़, क्रम, सेट और आराम के साथ खुलेगा।"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "次回の%@は、今日の種目・順番・セット・休息で始まります。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Na próxima vez, %@ vai abrir com os exercícios, a ordem, as séries e os descansos de hoje."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В следующий раз %@ откроется с сегодняшними упражнениями, порядком, подходами и отдыхом."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下次打开 %@ 时，会使用今天的动作、顺序、组数和休息时间。"
+          }
+        }
+      }
+    },
     "Next up" : {
       "localizations" : {
         "ar" : {
@@ -105361,7 +105419,7 @@
       }
     },
     "Rotation" : {
-      "comment" : "A movement pattern: twisting or resisting a twist",
+      "comment" : "Title of the rotation screen: workouts that repeat in a fixed cycle of days",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -105415,6 +105473,72 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "轮换"
+          }
+        }
+      }
+    },
+    "Rotation (movement pattern)" : {
+      "comment" : "A movement pattern: twisting or resisting a twist. Not the weekly workout rotation",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حركات الدوران"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rotation"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Rotation"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rotación"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rotation"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रोटेशन"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "回旋"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rotação"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вращение"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "旋转"
           }
         }
       }
@@ -128697,6 +128821,64 @@
         }
       }
     },
+    "Time for your next set" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حان وقت مجموعتك التالية"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeit für deinen nächsten Satz"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hora de tu siguiente serie"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "C’est l’heure de votre prochaine série"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "अगले सेट का समय हो गया"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "次のセットの時間です"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hora da sua próxima série"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пора к следующему подходу"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "该做下一组了"
+          }
+        }
+      }
+    },
     "Time for your next set." : {
       "localizations" : {
         "ar" : {
@@ -129157,6 +129339,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "今天"
+          }
+        }
+      }
+    },
+    "Today is saved as you trained it. %@ stays as it was." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يُحفظ تمرين اليوم كما أدّيته، ويبقى %@ كما كان."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heute wird so gespeichert, wie du trainiert hast. %@ bleibt, wie es war."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoy se guarda tal como entrenaste. %@ se queda como estaba."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La séance du jour est enregistrée telle que vous l’avez faite. %@ reste inchangé."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आज का वर्कआउट वैसे ही सेव होगा जैसे आपने किया। %@ पहले जैसा ही रहेगा।"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今日は実際に行った内容で保存されます。%@は変わりません。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoje fica salvo do jeito que você treinou. %@ continua como estava."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сегодняшняя тренировка сохранится так, как вы её выполнили. %@ останется без изменений."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天会按你实际的训练保存。%@ 保持不变。"
           }
         }
       }

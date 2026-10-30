@@ -34,6 +34,12 @@ cp "$repo/Tests/AccountSafety/ExerciseLibraryTests.swift" "$test_package/Tests/A
 cp "$repo/IOS Frontend/IOS Frontend/Models/WorkoutActivity.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/Models/ActivityLog.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/Models/ExerciseLibrary.swift" "$test_package/Sources/AccountSafety/"
+# The library in every language: reads ExerciseLibrary.xcstrings and compiles
+# it with xcstringstool, as the catalog tests do for Localizable.
+cp "$repo/Tests/AccountSafety/ExerciseLibraryLocalizationTests.swift" "$test_package/Tests/AccountSafetyTests/"
+# The effort chart's bars and haptic ticks.
+cp "$repo/Tests/AccountSafety/EffortHapticsTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/IOS Frontend/IOS Frontend/Services/EffortHaptics.swift" "$test_package/Sources/AccountSafety/"
 # The workout models themselves, for checkpoint compatibility across updates.
 cp "$repo/Tests/AccountSafety/WorkoutCheckpointTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/IOS Frontend/IOS Frontend/Models/Workout.swift" "$test_package/Sources/AccountSafety/"
