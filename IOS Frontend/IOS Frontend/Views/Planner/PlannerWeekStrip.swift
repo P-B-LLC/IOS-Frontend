@@ -25,7 +25,6 @@ struct PlannerWeekStrip: View {
             }
             dayTabs
         }
-        .plannerSurface(padding: 12)
     }
 
     // MARK: - Opening the month
@@ -121,7 +120,7 @@ struct PlannerWeekStrip: View {
                 .frame(height: 10)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 9)
+            .padding(.vertical, 7)
             .background {
                 RoundedRectangle(cornerRadius: 14)
                     .fill(hasEntries || isSelected ? tint.opacity(0.09) : timeOfDay.selectorSurface.opacity(0.5))

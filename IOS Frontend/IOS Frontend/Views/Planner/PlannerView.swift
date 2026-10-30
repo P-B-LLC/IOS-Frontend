@@ -23,7 +23,6 @@ struct PlannerView: View {
     @State private var editor: PlannerEntryEditorView.Mode?
     @State private var categoryFilter: PlannerCategory?
     @State private var isMonthShown = false
-    @State private var showsCompleted = false
     @State private var openingDay: Weekday?
     @State private var handledCompletionID: UUID?
     @State private var completedEntryID: PlannerEntry.ID?
@@ -35,7 +34,7 @@ struct PlannerView: View {
         let timeOfDay = HomeTimeOfDay.current
 
         GeometryReader { geometry in
-            plannerContent(timeOfDay: timeOfDay, timelineHeight: min(380, max(240, geometry.size.height * 0.46)))
+            plannerContent(timeOfDay: timeOfDay, timelineHeight: min(320, max(220, geometry.size.height * 0.40)))
         }
         .toolbar(.hidden, for: .navigationBar)
         .homeTimeScreen(timeOfDay)
@@ -72,7 +71,6 @@ struct PlannerView: View {
         // left over from yesterday would read as an empty day.
         .onChange(of: store.selectedDate) {
             categoryFilter = nil
-            showsCompleted = false
         }
         .onChange(of: store.latestCompletionEvent) { _, event in
             handleCompletion(event)
@@ -108,6 +106,7 @@ struct PlannerView: View {
                     .foregroundStyle(timeOfDay.canvasPrimaryText)
                 }
                 if let error = store.persistenceError { errorCard(error, timeOfDay: timeOfDay) }
+                PlannerWeekStrip(onToggleMonth: { isMonthShown = true })
                 daySection(timeOfDay: timeOfDay, timelineHeight: timelineHeight)
                 otherDaysSection(timeOfDay: timeOfDay)
             }
@@ -210,7 +209,6 @@ struct PlannerView: View {
                     categoryMenu(timeOfDay: timeOfDay)
                 }
             }
-            dateNavigation(timeOfDay: timeOfDay)
             rotationStrip(timeOfDay: timeOfDay)
             if let reason = store.editingBlockedReason {
                 Text(reason)
@@ -247,16 +245,6 @@ struct PlannerView: View {
                         .foregroundStyle(PlannerStyle.success)
                         .padding(.vertical, 8)
                 }
-                if !completedTasks.isEmpty {
-                    DisclosureGroup(isExpanded: $showsCompleted) {
-                        LazyVStack(spacing: 8) {
-                            ForEach(completedTasks) { entry in agendaRow(entry) }
-                        }
-                    } label: {
-                        disclosureHeading("Completed", count: completedTasks.count, timeOfDay: timeOfDay)
-                    }
-                    .tint(timeOfDay.canvasSecondaryText)
-                }
             }
         }
     }
@@ -279,43 +267,6 @@ struct PlannerView: View {
                 }
             }
         }
-    }
-
-    private func dateNavigation(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack(spacing: 4) {
-            Button { isMonthShown = true } label: {
-                HStack(spacing: 5) {
-                    Text(store.selectedDate.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day().locale(.app)))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                    Image(systemName: "chevron.down").font(.community(.caption2, weight: .bold))
-                }
-                .font(.community(.subheadline, weight: .semibold))
-                .frame(minHeight: 44)
-            }
-            .accessibilityIdentifier("planner.viewMonth")
-            .accessibilityHint("Open the full month calendar")
-            Spacer(minLength: 4)
-            Button("Today") { store.showToday() }
-                .font(.community(.footnote, weight: .semibold))
-                .foregroundStyle(PlannerStyle.accentText)
-                .frame(minWidth: 44, minHeight: 44)
-            dayButton("chevron.backward", label: "Previous day", offset: -1)
-            dayButton("chevron.forward", label: "Next day", offset: 1)
-        }
-        .buttonStyle(.plain)
-        .foregroundStyle(timeOfDay.canvasPrimaryText)
-    }
-
-    private func dayButton(_ symbol: String, label: LocalizedStringKey, offset: Int) -> some View {
-        Button {
-            if let date = PlannerHourAgenda.movingDays(offset, from: store.selectedDate) { store.select(date) }
-        } label: {
-            Image(systemName: symbol)
-                .font(.community(.footnote, weight: .semibold))
-                .frame(width: 44, height: 44)
-        }
-        .accessibilityLabel(label)
     }
 
     @ViewBuilder
@@ -361,10 +312,9 @@ struct PlannerView: View {
 
     private var openTasks: [PlannerEntry] { filtered.filter { $0.kind == .task && !$0.isComplete } }
     private var completedTasks: [PlannerEntry] { filtered.filter { $0.kind == .task && $0.isComplete } }
-    /// One plan, not separate task/event modes. Events remain visible even
-    /// when the day's tasks are finished; only completed tasks are tucked away.
+    /// Completion changes the row's checkmark, not its place in the day.
     private var dayAgenda: [PlannerEntry] {
-        PlannerAgendaOrder.ordered(filtered.filter { $0.kind == .event || !$0.isComplete }, time: { $0.time })
+        PlannerAgendaOrder.ordered(filtered, time: { $0.time })
     }
 
     private func agendaRow(_ entry: PlannerEntry) -> some View {
