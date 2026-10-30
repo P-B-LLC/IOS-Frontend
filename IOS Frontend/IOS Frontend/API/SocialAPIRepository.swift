@@ -301,22 +301,27 @@ actor SocialAPIRepository {
 
     // MARK: - Posting
 
-    /// Posts something the signed-in user owns.
+    /// Posts something the signed-in user owns, or a photo or video alone.
     ///
     /// Only which object, never its contents: the server reads the workout,
     /// meal or entry itself and builds the snapshot from it, so nothing the
-    /// phone sends can decide what a post claims was done.
+    /// phone sends can decide what a post claims was done. A `.media` post
+    /// names no source; its picture is the post.
     @discardableResult
     func post(
         kind: PostKind,
-        sourceID: Int,
+        sourceID: Int?,
         caption: String,
         visibility: PostVisibility,
         showsWeights: Bool = true,
         photo: PostPhoto? = nil,
         // How the meal was made. The server keeps it on a meal post's
         // snapshot and ignores it for any other kind.
-        cookingInstructions: String = ""
+        cookingInstructions: String = "",
+        // A clip goes up next, to the post this makes. Says so, because a
+        // media post with no photo is otherwise refused as empty -- and it
+        // stays its author's alone until the clip is ready.
+        expectsVideo: Bool = false
     ) async throws -> FeedPost {
         guard let kindPayload = Components.Schemas.CreatePostKindEnum(
             rawValue: kind.apiValue
@@ -354,17 +359,27 @@ actor SocialAPIRepository {
                     // not read as somebody having written nothing on purpose.
                     cookingInstructions: cookingInstructions.isEmpty
                         ? nil
-                        : cookingInstructions
+                        : cookingInstructions,
+                    expectsVideo: expectsVideo ? true : nil
                 )
             )
         )
         switch output {
         case .created(let response):
             return Self.post(from: try response.body.json)
-        case .undocumented(let statusCode, _):
-            throw APIServiceError.undocumentedStatus(statusCode)
+        case .undocumented(let statusCode, let payload):
+            // The server's own sentence: "Add a photo or a video to post." is
+            // something to act on, and "HTTP 400" is not.
+            throw await RepbaseAPIHTTPError.decode(
+                statusCode: statusCode, payload: payload, unlabeled: Self.postRefusalFields
+            )
         }
     }
+
+    /// Fields whose refusals are already sentences about the post being made.
+    private static let postRefusalFields: Set<String> = [
+        "image_base64", "source_id", "video", "caption", "kind",
+    ]
 
     /// The caption and who can see it. The snapshot is a record of what
     /// happened and the API will not take an edit to it.
@@ -637,7 +652,12 @@ actor SocialAPIRepository {
             ? .videoQuicktime(bytes) : .videoMp4(bytes)
         switch try await client.socialPostsVideoCreate(path: .init(id: postID), body: body) {
         case .ok(let response): return Self.post(from: try response.body.json)
-        case .undocumented(let statusCode, _): throw APIServiceError.undocumentedStatus(statusCode)
+        case .undocumented(let statusCode, let payload):
+            // "Finish your pending video before uploading another." says what
+            // to do; the status code alone does not.
+            throw await RepbaseAPIHTTPError.decode(
+                statusCode: statusCode, payload: payload, unlabeled: Self.postRefusalFields
+            )
         }
     }
 

@@ -10985,6 +10985,8 @@ public struct Client: APIProtocol {
     }
     /// Post a workout, meal or planner entry the requester owns. The server reads the source and builds the snapshot; the request names the object and never carries its contents.
     ///
+    /// Or post a photo or a clip on its own, with `kind` `media` and no `source_id`. Send the photo here; send a clip next to `posts/{id}/video/`, saying so with `expects_video`. A media post with nothing yet to show -- its clip uploading, processing or waiting for review -- is visible to its author alone.
+    ///
     /// - Remark: HTTP `POST /api/v1/social/posts/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts//post(social_posts_create)`.
     public func socialPostsCreate(_ input: Operations.SocialPostsCreate.Input) async throws -> Operations.SocialPostsCreate.Output {

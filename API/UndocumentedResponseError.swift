@@ -28,15 +28,20 @@ public struct RepbaseAPIHTTPError: LocalizedError, Sendable {
         return "The server returned an unexpected response (HTTP \(statusCode))."
     }
 
+    /// `unlabeled` names fields whose messages are already whole sentences
+    /// about the one thing the request sent, so naming the field in front of
+    /// them -- "Image Base64: Add a photo or a video to post." -- would only
+    /// put the wire's vocabulary on screen.
     public static func decode(
         statusCode: Int,
-        payload: UndocumentedPayload
+        payload: UndocumentedPayload,
+        unlabeled: Set<String> = []
     ) async -> Self {
         guard Self.userActionableStatuses.contains(statusCode),
               let body = payload.body,
               let data = try? await Data(collecting: body, upTo: 16 * 1024),
               let value = try? JSONSerialization.jsonObject(with: data),
-              let message = Self.readableMessage(from: value) else {
+              let message = Self.readableMessage(from: value, unlabeled: unlabeled) else {
             return Self(statusCode: statusCode, serverMessage: nil)
         }
 
@@ -45,7 +50,7 @@ public struct RepbaseAPIHTTPError: LocalizedError, Sendable {
 
     private static let userActionableStatuses = [400, 409, 422]
 
-    private static func readableMessage(from value: Any) -> String? {
+    private static func readableMessage(from value: Any, unlabeled: Set<String>) -> String? {
         let lines: [String]
 
         if let dictionary = value as? [String: Any] {
@@ -54,7 +59,7 @@ public struct RepbaseAPIHTTPError: LocalizedError, Sendable {
                 let values = textValues(from: fieldValue)
                 guard !values.isEmpty else { return [] }
 
-                if key == "detail" || key == "non_field_errors" {
+                if key == "detail" || key == "non_field_errors" || unlabeled.contains(key) {
                     return values
                 }
 

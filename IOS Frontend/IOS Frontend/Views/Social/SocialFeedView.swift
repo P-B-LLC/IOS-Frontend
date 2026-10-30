@@ -850,6 +850,13 @@ struct PostCard: View {
     /// The engagement figures always come from `post`.
     private var shown: RepostedPost { post.displayed }
 
+    /// The author's own photo or video post with nothing anybody else can
+    /// see yet: no photo, and a clip still on its way or none at all.
+    private var isUnseenMediaPost: Bool {
+        post.viewerIsAuthor && post.repostOf == nil && shown.kind == .media
+            && shown.imageURL == nil && !(shown.video?.canPlay ?? false)
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             if post.repostOf != nil {
@@ -907,6 +914,21 @@ struct PostCard: View {
                                   canReplace: post.viewerIsAuthor && post.repostOf == nil)
                 }
 
+                // Only ever drawn for the author: nobody else is sent a photo
+                // or video post with nothing in it yet to see.
+                if isUnseenMediaPost {
+                    Label(
+                        shown.video == nil
+                            ? "This post has no video yet, so only you can see it."
+                            : shown.video?.failed == true
+                                ? "Only you can see this post until another video is added."
+                                : "Only you can see this post until its video is ready.",
+                        systemImage: "lock.fill"
+                    )
+                    .font(.community(.caption))
+                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+                }
+
                 if let imageURL = drawnPhotoURL(shown) {
                     photo(imageURL, meal: shown.meal)
 
@@ -931,7 +953,9 @@ struct PostCard: View {
                     compactMealAttachment(meal, imageAttached: false)
                 } else if let planner = shown.planner {
                     compactPlannerAttachment(planner)
-                } else {
+                } else if shown.kind != .media {
+                    // A photo or video post has no snapshot by design; its
+                    // picture, drawn above, is the post.
                     unsupportedBody
                 }
 

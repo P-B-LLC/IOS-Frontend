@@ -3,11 +3,13 @@
 //  IOS Frontend
 //
 //  Writing a post. Pick something already recorded — a finished session, a
-//  logged meal, a calendar entry — add a caption, and choose who sees it.
+//  logged meal, a calendar entry — or just a photo or a video, add a caption,
+//  and choose who sees it.
 //
 //  Only the reference goes out. The server reads the source and builds the
 //  snapshot from it, so what a post claims was done is never the phone's to
-//  decide, and this screen never gathers contents to send.
+//  decide, and this screen never gathers contents to send. A photo or video
+//  post references nothing: the picture is the post, and claims nothing.
 //
 
 import Foundation
@@ -46,6 +48,10 @@ struct PostComposerView: View {
     @State private var videoImportTask: Task<Void, Never>?
     @State private var videoImportGeneration = UUID()
     @State private var pendingVideoPostID: Int?
+    /// Whether the post saved without its clip has nothing else in it -- a
+    /// video post with no photo. Nobody else can see it, and giving up on it
+    /// should remove it rather than leave an empty post on the profile.
+    @State private var pendingVideoPostIsEmpty = false
     /// The chosen picture, already encoded. Held as bytes as well so the sheet
     /// can show what is about to be posted.
     @State private var photoData: Data?
@@ -322,15 +328,17 @@ struct PostComposerView: View {
 
     private func composerIntroduction(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(source == .meal ? "SHARE FOOD" : source == .workout ? "SHARE WORKOUT" : "SHARE YOUR DAY")
+            Text(introductionEyebrow)
                 .font(.community(.caption2, weight: .bold))
                 .tracking(1.1)
                 .foregroundStyle(timeOfDay.accent)
-            Text(source == .meal ? "Tell the story of this meal." : source == .workout ? "Share the work." : "Share the moment.")
+            Text(isMediaOnly ? "Share the moment." : source == .meal ? "Tell the story of this meal." : source == .workout ? "Share the work." : "Share the moment.")
                 .font(.community(.title, weight: .bold))
                 .tracking(-0.5)
             Text(
-                source == .meal
+                isMediaOnly
+                    ? "Add a caption. Linking something you recorded is optional."
+                    : source == .meal
                     ? "Nutrition comes from your log. You choose what to say."
                     : source == .workout
                         ? "Your session is ready. Decide what others can see."
@@ -340,6 +348,23 @@ struct PostComposerView: View {
             .foregroundStyle(timeOfDay.canvasSecondaryText)
         }
     }
+
+    /// Names what is being shared. A photo or video with nothing linked is
+    /// not a workout post, whichever tab the picker below is showing.
+    private var introductionEyebrow: LocalizedStringKey {
+        if isMediaOnly {
+            return videoDraft != nil && photoData == nil ? "SHARE A VIDEO" : "SHARE A PHOTO"
+        }
+        return source == .meal ? "SHARE FOOD" : source == .workout ? "SHARE WORKOUT" : "SHARE YOUR DAY"
+    }
+
+    /// A picture is attached and nothing recorded is chosen: this posts as a
+    /// photo or video post, made from nothing but the picture.
+    private var isMediaOnly: Bool {
+        fixedSubject == nil && selection == nil && hasMedia
+    }
+
+    private var hasMedia: Bool { photoData != nil || videoDraft != nil }
 
     // MARK: - Already chosen
 
@@ -429,7 +454,9 @@ struct PostComposerView: View {
         VStack(alignment: .leading, spacing: 13) {
             EditorialSectionTitle(
                 title: candidateSectionTitle,
-                detail: "A post is built from what you have already recorded."
+                detail: hasMedia
+                    ? "Optional with a photo or video. Linking something adds its details."
+                    : "Pick something you recorded, or add a photo or video below."
             )
 
             if usesDayPicker {
@@ -922,7 +949,7 @@ struct PostComposerView: View {
     private func postingOverlay(timeOfDay: HomeTimeOfDay) -> some View {
         ZStack {
             Color.black.opacity(0.12).ignoresSafeArea()
-            ProgressView("Posting…")
+            ProgressView(social.postingStep == .uploadingVideo ? "Uploading video…" : "Publishing…")
                 .padding(18)
                 .foregroundStyle(timeOfDay.primaryText)
                 .background(
@@ -970,8 +997,10 @@ struct PostComposerView: View {
         )
     }
 
+    /// Something recorded, or a picture: either is a post. Neither, and there
+    /// is nothing to show anybody.
     private var canPost: Bool {
-        selection != nil && social.isConnected && !social.isPosting && !isImportingVideo
+        (selection != nil || hasMedia) && social.isConnected && !social.isPosting && !isImportingVideo
             && !isImportingPhoto && !choosingMedia && framing == nil
             && photoError == nil && videoError == nil
             && (pendingVideoPostID == nil || videoDraft != nil)
@@ -992,9 +1021,21 @@ struct PostComposerView: View {
                     videoDraft?.discard(); videoDraft = nil; pickedVideo = nil; videoError = nil
                 }.disabled(social.isPosting)
             }
-            if pendingVideoPostID != nil {
-                Text("Your post is saved. Retry attaches the video to that same post.")
-                    .font(.caption).foregroundStyle(.secondary)
+            if let pendingVideoPostID {
+                Text(
+                    pendingVideoPostIsEmpty
+                        ? "Your post is saved, but only you can see it until its video is added. Retry attaches the video to that same post."
+                        : "Your post is saved. Retry attaches the video to that same post."
+                )
+                .font(.caption).foregroundStyle(.secondary)
+                if pendingVideoPostIsEmpty {
+                    Button("Discard post", role: .destructive) {
+                        Task {
+                            if await social.discard(postID: pendingVideoPostID) { dismiss() }
+                        }
+                    }
+                    .disabled(social.isPosting)
+                }
             }
             if let videoError { Text(videoError).font(.caption).foregroundStyle(.red) }
             if videoError != nil && videoDraft == nil {
@@ -1045,15 +1086,17 @@ struct PostComposerView: View {
     }
 
     private func post() {
-        guard let selection else { return }
+        // Nothing recorded chosen makes it a photo or video post, which needs
+        // its picture; canPost has already said there is one.
+        guard selection != nil || hasMedia else { return }
         Task {
             if let pendingVideoPostID, let videoDraft {
                 if await social.retryVideo(postID: pendingVideoPostID, draft: videoDraft) { dismiss() }
                 return
             }
             let sent = await social.post(
-                kind: selection.kind,
-                sourceID: selection.sourceID,
+                kind: selection?.kind ?? .media,
+                sourceID: selection?.sourceID,
                 caption: caption.trimmingCharacters(in: .whitespacesAndNewlines),
                 visibility: visibility,
                 showsWeights: showsWeights,
@@ -1068,7 +1111,10 @@ struct PostComposerView: View {
             // Left open when it failed, so the error is read beside the post it
             // belongs to and the caption is not lost.
             if sent { dismiss() }
-            else if videoDraft != nil, let saved = social.lastPosted { pendingVideoPostID = saved.id }
+            else if videoDraft != nil, let saved = social.lastPosted {
+                pendingVideoPostID = saved.id
+                pendingVideoPostIsEmpty = saved.kind == .media && saved.imageURL == nil
+            }
         }
     }
 
