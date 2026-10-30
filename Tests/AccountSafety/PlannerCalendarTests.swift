@@ -21,6 +21,52 @@ final class PlannerCalendarTests: XCTestCase {
         XCTAssertEqual(PlannerAgendaOrder.ordered([String](), time: { $0 }), [])
     }
 
+    func testHourlyAgendaKeepsOverlappingEntriesAndExactMinuteOrder() {
+        struct Item { let id: Int; let time: String? }
+        let items = [Item(id: 1, time: "09:45:00"), Item(id: 2, time: "09:15:00"),
+                     Item(id: 3, time: "09:15:00"), Item(id: 4, time: "00:00:00"),
+                     Item(id: 5, time: "23:59:59"), Item(id: 6, time: nil)]
+        let groups = PlannerHourAgenda.grouped(items, time: { $0.time })
+        XCTAssertEqual(groups[9]?.map(\.id), [2, 3, 1], "Overlapping tasks must not replace one another")
+        XCTAssertEqual(groups[0]?.map(\.id), [4])
+        XCTAssertEqual(groups[23]?.map(\.id), [5])
+        XCTAssertEqual(Set(groups.values.flatMap { $0.map(\.id) }), [1, 2, 3, 4, 5])
+        XCTAssertEqual(groups.values.reduce(0) { $0 + $1.count }, 5)
+    }
+
+    func testUntimedOrInvalidClocksAreNeverPlacedAtAnInventedHour() {
+        let invalid: [String?] = [nil, "", "9:00", "24:00:00", "09:60:00", "09:00:60", "09:00:nan", "later"]
+        for time in invalid {
+            XCTAssertNil(PlannerHourAgenda.hour(from: time), "\(time ?? "nil") should stay outside the hourly grid")
+        }
+        XCTAssertEqual(PlannerHourAgenda.hour(from: "09:30"), 9)
+        XCTAssertEqual(PlannerHourAgenda.hour(from: "23:59:59.5"), 23)
+    }
+
+    func testEmptyDayStillHasHoursAndAnAccessibleInitialPosition() {
+        let empty: [String] = []
+        XCTAssertTrue(PlannerHourAgenda.grouped(empty, time: { $0 }).isEmpty)
+        XCTAssertEqual(PlannerHourAgenda.hours.first, 0)
+        XCTAssertEqual(PlannerHourAgenda.hours.last, 23)
+        XCTAssertEqual(PlannerHourAgenda.hours.count, 24)
+        XCTAssertEqual(PlannerHourAgenda.initialHour(scheduledHours: [], isToday: true, currentHour: 23), 23)
+        XCTAssertEqual(PlannerHourAgenda.initialHour(scheduledHours: [], isToday: false, currentHour: 23), 8)
+        XCTAssertEqual(PlannerHourAgenda.initialHour(scheduledHours: [23, 9, 12], isToday: true, currentHour: 18), 9)
+    }
+
+    func testDayNavigationUsesCalendarDaysAcrossDaylightSavingAndYearEnd() throws {
+        for (start, expected, elapsed) in [
+            (date(2026, 3, 8), date(2026, 3, 9), 23.0 * 3600),
+            (date(2026, 11, 1), date(2026, 11, 2), 25.0 * 3600),
+            (date(2026, 12, 31), date(2027, 1, 1), 24.0 * 3600)
+        ] {
+            let next = try XCTUnwrap(PlannerHourAgenda.movingDays(1, from: start, calendar: calendar))
+            XCTAssertEqual(next, expected)
+            XCTAssertEqual(next.timeIntervalSince(start), elapsed)
+            XCTAssertEqual(PlannerHourAgenda.movingDays(-1, from: next, calendar: calendar), start)
+        }
+    }
+
     private var calendar: Calendar {
         var value = Calendar(identifier: .gregorian)
         value.timeZone = TimeZone(identifier: "America/Chicago")!

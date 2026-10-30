@@ -21,18 +21,22 @@ intact. Keep the integration branch history shared; do not force-push it.
 
 ## Calendar structure refresh — October 30, 2026
 
-The calendar now keeps date navigation separate from the selected day's agenda.
-The month button, Today and week arrows stay together; task/event creation is
-visible below. Your day owns its filters, progress, rotation context, scheduled
-items and anytime items. Completed items, overdue tasks and upcoming events are
-expandable. Expanding upcoming events shows every item already loaded in the
-existing horizon rather than stopping at six with a non-interactive count.
-The previous design is preserved in integration history at `24aaedb`.
+The compact task/event buttons sit directly below the brand/header. The week
+card and empty-day callout are removed. Your day has a compact date/month
+control, Today and day arrows, followed by a separately scrollable hourly
+agenda whose height is bounded to part of the screen. All 24 clock hours remain
+available, including on empty days. Entries stack within their starting hour
+and retain their exact time-range labels; card heights do not claim a duration.
+Untimed entries remain outside the hour grid. Completed items, overdue tasks
+and upcoming events remain expandable; the overdue count is red in both themes.
+Expanding upcoming shows every item already loaded in the existing horizon.
+The preceding calendar layout is preserved at `a0a015e` in integration history.
 
 This is presentation work: planner persistence, completion/subtask requests,
-notification scheduling and calendar date arithmetic are unchanged. Existing
-appearance tokens provide light/dark variants. The two new headings have all
-nine non-English translations in `Localizable.xcstrings`.
+notification scheduling are unchanged. Day navigation uses calendar arithmetic
+across DST/year boundaries. The new grouping/initial-position rules have unit
+coverage, and new copy has all nine non-English translations. Existing task
+rows preserve subtask controls, retry/pending state and workout confirmation.
 
 Before promotion, run `INSTALL_SIMULATOR=1 bash Scripts/validate-planner-refresh.sh`
 on the Mac with a booted simulator. When `REPBASE_API_URL` is unset, the script
@@ -45,7 +49,7 @@ Windows syntax/catalog checks do not replace an Xcode build or visual QA.
 Interactive checks:
 
 1. Open the month, browse across a month/year boundary, choose a date and return.
-   Test Today and both week arrows, including a week spanning two months.
+   Test Today and both day arrows across month/year and DST boundaries.
 2. Add a task/event on a non-today date. Verify scheduled ordering, anytime
    placement, edits, completion/undo, subtask expansion and workout navigation.
 3. Filter a day, remove its last matching entry, clear the filter, and switch
@@ -53,10 +57,14 @@ Interactive checks:
 4. Expand completed, past-due and upcoming groups. Verify dates and all loaded
    upcoming events are accessible, including more than six. Selected-date items
    must not also appear under the other-day groups.
-5. Check loading, retry, editing blocked, empty and all-tasks-complete states;
-   undo completion and verify the week marker reverts from green.
+5. Check loading, retry, editing blocked, empty and all-tasks-complete states.
+   Empty days must still show scrollable hours. Scroll to midnight and 23:00;
+   test multiple entries in the same hour and expanding subtasks. Refresh/tick
+   a task while scrolled: the hour position should not reset. Switching dates
+   should position at the first scheduled hour, or the current hour when today is empty.
 6. Check light/dark mode, large text, a narrow screen, VoiceOver, Reduce Motion
-   and Arabic RTL. In particular, inspect month controls and the filter menu.
+   and Arabic RTL. Inspect the date/filter controls and verify the inner
+   schedule scrolls independently, while other-day disclosures stay reachable.
 
 ## Social search and own-post confirmation — October 28, 2026
 

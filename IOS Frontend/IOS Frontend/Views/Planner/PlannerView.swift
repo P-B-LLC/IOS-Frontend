@@ -34,44 +34,9 @@ struct PlannerView: View {
     var body: some View {
         let timeOfDay = HomeTimeOfDay.current
 
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                HStack {
-                    RytivoBrandLockup(size: 24)
-                    Spacer()
-                    Text("Calendar")
-                        .font(.community(.title3, weight: .bold))
-                        .foregroundStyle(timeOfDay.canvasPrimaryText)
-                }
-
-                if showsBackButton {
-                    Button { dismiss() } label: {
-                        Label("Back", systemImage: "chevron.backward")
-                            .font(.community(.subheadline, weight: .semibold))
-                            .frame(minHeight: 44)
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(timeOfDay.canvasPrimaryText)
-                }
-
-                if let error = store.persistenceError {
-                    errorCard(error, timeOfDay: timeOfDay)
-                }
-
-                PlannerWeekStrip(
-                    onToggleMonth: { isMonthShown = true }
-                )
-
-                addButtons(timeOfDay: timeOfDay)
-                daySection(timeOfDay: timeOfDay)
-                otherDaysSection(timeOfDay: timeOfDay)
-            }
-            .padding(.horizontal, 24)
-            .padding(.top, 16)
-            .padding(.bottom, RepbaseDesign.bottomBarClearance)
+        GeometryReader { geometry in
+            plannerContent(timeOfDay: timeOfDay, timelineHeight: min(380, max(240, geometry.size.height * 0.46)))
         }
-        .scrollIndicators(.hidden)
-        .minimizesBottomBarOnScroll()
         .toolbar(.hidden, for: .navigationBar)
         .homeTimeScreen(timeOfDay)
         .sheet(isPresented: $isMonthShown, onDismiss: {
@@ -120,6 +85,39 @@ struct PlannerView: View {
         }
     }
 
+    private func plannerContent(timeOfDay: HomeTimeOfDay, timelineHeight: CGFloat) -> some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                VStack(spacing: 12) {
+                    HStack {
+                        RytivoBrandLockup(size: 24)
+                        Spacer()
+                        Text("Calendar")
+                            .font(.community(.title3, weight: .bold))
+                            .foregroundStyle(timeOfDay.canvasPrimaryText)
+                    }
+                    addButtons(timeOfDay: timeOfDay)
+                }
+                if showsBackButton {
+                    Button { dismiss() } label: {
+                        Label("Back", systemImage: "chevron.backward")
+                            .font(.community(.subheadline, weight: .semibold))
+                            .frame(minHeight: 44)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(timeOfDay.canvasPrimaryText)
+                }
+                if let error = store.persistenceError { errorCard(error, timeOfDay: timeOfDay) }
+                daySection(timeOfDay: timeOfDay, timelineHeight: timelineHeight)
+                otherDaysSection(timeOfDay: timeOfDay)
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 16)
+            .padding(.bottom, RepbaseDesign.bottomBarClearance)
+        }
+        .scrollIndicators(.hidden)
+    }
+
     // MARK: - Adding
 
     private func addButtons(timeOfDay: HomeTimeOfDay) -> some View {
@@ -154,14 +152,16 @@ struct PlannerView: View {
             editor = .create(kind, store.selectedDate)
         } label: {
             Label(title, systemImage: systemImage)
-                .font(.community(.subheadline, weight: .semibold))
+                .font(.community(.footnote, weight: .semibold))
                 .foregroundStyle(primary ? timeOfDay.onPrimaryAction : timeOfDay.canvasPrimaryText)
-                .frame(maxWidth: .infinity, minHeight: 48)
+                .frame(maxWidth: .infinity, minHeight: 38)
                 .background(
                     primary ? timeOfDay.primaryActionSurface : timeOfDay.surfaceRaised,
-                    in: RoundedRectangle(cornerRadius: 16)
+                    in: RoundedRectangle(cornerRadius: 12)
                 )
-                .overlay { RoundedRectangle(cornerRadius: 16).strokeBorder(primary ? Color.clear : timeOfDay.canvasBorder) }
+                .overlay { RoundedRectangle(cornerRadius: 12).strokeBorder(primary ? Color.clear : timeOfDay.canvasBorder) }
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .disabled(!store.isEditingEnabled || store.isLoading)
@@ -197,8 +197,8 @@ struct PlannerView: View {
         }
     }
 
-    private func daySection(timeOfDay: HomeTimeOfDay) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
+    private func daySection(timeOfDay: HomeTimeOfDay, timelineHeight: CGFloat) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
             ViewThatFits(in: .horizontal) {
                 HStack(alignment: .top) {
                     dayHeading(timeOfDay: timeOfDay)
@@ -210,6 +210,7 @@ struct PlannerView: View {
                     categoryMenu(timeOfDay: timeOfDay)
                 }
             }
+            dateNavigation(timeOfDay: timeOfDay)
             rotationStrip(timeOfDay: timeOfDay)
             if let reason = store.editingBlockedReason {
                 Text(reason)
@@ -218,30 +219,28 @@ struct PlannerView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            if store.isLoading {
-                ProgressView("Loading your day…")
-                    .frame(maxWidth: .infinity, minHeight: 80)
-            } else if filtered.isEmpty {
-                VStack(alignment: .leading, spacing: 10) {
-                    Image(systemName: categoryFilter == nil ? "calendar.badge.plus" : "line.3.horizontal.decrease")
-                        .font(.community(.title2))
-                        .foregroundStyle(PlannerStyle.accentText)
-                        .accessibilityHidden(true)
-                    Text(categoryFilter == nil ? "Your day is open. Add a task or event to get started." : "Nothing in this category on this day.")
-                        .font(.community(.subheadline))
-                        .foregroundStyle(timeOfDay.canvasSecondaryText)
-                    if categoryFilter != nil {
-                        Button("Clear filters") { categoryFilter = nil }
-                            .font(.community(.subheadline, weight: .semibold))
-                            .frame(minHeight: 44)
-                            .tint(PlannerStyle.accentText)
-                    }
+            HStack(spacing: 5) {
+                Image(systemName: "arrow.up.arrow.down")
+                Text("Scroll through the hours")
+            }
+            .font(.community(.caption))
+            .foregroundStyle(timeOfDay.canvasSecondaryText)
+
+            PlannerDaySchedule(
+                entries: store.isLoading ? [] : dayAgenda.filter { PlannerHourAgenda.hour(from: $0.time) != nil },
+                onSelect: { editor = .edit($0) },
+                onOpenWorkout: { openingDay = $0 }
+            )
+            .frame(height: timelineHeight)
+
+            if !store.isLoading {
+                agendaGroup("Anytime", entries: dayAgenda.filter { PlannerHourAgenda.hour(from: $0.time) == nil }, timeOfDay: timeOfDay)
+                if categoryFilter != nil {
+                    Button("Clear filters") { categoryFilter = nil }
+                        .font(.community(.footnote, weight: .semibold))
+                        .frame(minHeight: 44)
+                        .tint(PlannerStyle.accentText)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .plannerSurface(soft: true)
-            } else {
-                agendaGroup("Scheduled", entries: dayAgenda.filter { $0.time != nil }, timeOfDay: timeOfDay)
-                agendaGroup("Anytime", entries: dayAgenda.filter { $0.time == nil }, timeOfDay: timeOfDay)
                 if openTasks.isEmpty, !completedTasks.isEmpty {
                     Label(categoryFilter == nil ? "All tasks done. A little room to breathe." : "All tasks in this category are done.", systemImage: "checkmark.circle.fill")
                         .font(.community(.subheadline))
@@ -267,20 +266,12 @@ struct PlannerView: View {
             Text("Your day")
                 .font(.community(.title2, weight: .bold))
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
-            Text(store.selectedDate.formatted(.dateTime.weekday(.wide).month(.abbreviated).day().locale(.app)))
-                .font(.community(.subheadline))
-                .foregroundStyle(timeOfDay.canvasSecondaryText)
             if !store.isLoading, !filtered.isEmpty {
                 let tasks = filtered.filter { $0.kind == .task }
                 if !tasks.isEmpty {
                     Text("\(completedTasks.count) of \(tasks.count) tasks done")
                         .font(.community(.footnote))
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
-                    ProgressView(value: Double(completedTasks.count), total: Double(tasks.count))
-                        .tint(completedTasks.count == tasks.count ? PlannerStyle.success : PlannerStyle.accentText)
-                        .frame(maxWidth: 180)
-                        .padding(.top, 5)
-                        .accessibilityLabel("\(completedTasks.count) of \(tasks.count) tasks done")
                 } else {
                     Text("\(tasks.count) tasks · \(filtered.filter { $0.kind == .event }.count) events")
                         .font(.community(.footnote))
@@ -288,6 +279,43 @@ struct PlannerView: View {
                 }
             }
         }
+    }
+
+    private func dateNavigation(timeOfDay: HomeTimeOfDay) -> some View {
+        HStack(spacing: 4) {
+            Button { isMonthShown = true } label: {
+                HStack(spacing: 5) {
+                    Text(store.selectedDate.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day().locale(.app)))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                    Image(systemName: "chevron.down").font(.community(.caption2, weight: .bold))
+                }
+                .font(.community(.subheadline, weight: .semibold))
+                .frame(minHeight: 44)
+            }
+            .accessibilityIdentifier("planner.viewMonth")
+            .accessibilityHint("Open the full month calendar")
+            Spacer(minLength: 4)
+            Button("Today") { store.showToday() }
+                .font(.community(.footnote, weight: .semibold))
+                .foregroundStyle(PlannerStyle.accentText)
+                .frame(minWidth: 44, minHeight: 44)
+            dayButton("chevron.backward", label: "Previous day", offset: -1)
+            dayButton("chevron.forward", label: "Next day", offset: 1)
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(timeOfDay.canvasPrimaryText)
+    }
+
+    private func dayButton(_ symbol: String, label: LocalizedStringKey, offset: Int) -> some View {
+        Button {
+            if let date = PlannerHourAgenda.movingDays(offset, from: store.selectedDate) { store.select(date) }
+        } label: {
+            Image(systemName: symbol)
+                .font(.community(.footnote, weight: .semibold))
+                .frame(width: 44, height: 44)
+        }
+        .accessibilityLabel(label)
     }
 
     @ViewBuilder
@@ -511,7 +539,7 @@ struct PlannerView: View {
                     }
                 }
             } label: {
-                disclosureHeading("Past due", count: entries.count, timeOfDay: timeOfDay)
+                disclosureHeading("Past due", count: entries.count, timeOfDay: timeOfDay, isOverdue: true)
             }
             .tint(timeOfDay.canvasSecondaryText)
         }
@@ -544,7 +572,8 @@ struct PlannerView: View {
     private func disclosureHeading(
         _ title: LocalizedStringKey,
         count: Int,
-        timeOfDay: HomeTimeOfDay
+        timeOfDay: HomeTimeOfDay,
+        isOverdue: Bool = false
     ) -> some View {
         HStack(spacing: 8) {
             Text(title)
@@ -553,10 +582,10 @@ struct PlannerView: View {
             Spacer(minLength: 0)
             Text(count, format: .number.locale(.app))
                 .font(.community(.footnote, weight: .semibold))
-                .foregroundStyle(timeOfDay.canvasSecondaryText)
+                .foregroundStyle(isOverdue ? PlannerStyle.overdueCount : timeOfDay.canvasSecondaryText)
                 .padding(.horizontal, 9)
                 .padding(.vertical, 4)
-                .background(timeOfDay.selectorSurface, in: Capsule())
+                .background(isOverdue ? PlannerStyle.overdueCount.opacity(0.12) : timeOfDay.selectorSurface, in: Capsule())
         }
         .frame(minHeight: 44)
     }
