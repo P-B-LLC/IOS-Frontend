@@ -585,7 +585,7 @@ struct PlannerView: View {
                 .foregroundStyle(isOverdue ? PlannerStyle.overdueCount : timeOfDay.canvasSecondaryText)
                 .padding(.horizontal, 9)
                 .padding(.vertical, 4)
-                .background(isOverdue ? PlannerStyle.overdueCount.opacity(0.12) : timeOfDay.selectorSurface, in: Capsule())
+                .background(isOverdue ? PlannerStyle.overdueCount.opacity(0.08) : timeOfDay.selectorSurface, in: Capsule())
         }
         .frame(minHeight: 44)
     }
