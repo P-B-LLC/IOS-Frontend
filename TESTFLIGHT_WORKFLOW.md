@@ -106,6 +106,29 @@ Interactive checks:
    and Arabic RTL. Inspect the date/filter controls and verify the inner
    schedule scrolls independently, while other-day disclosures stay reachable.
 
+### Warm week picker — October 30, 2026
+
+The approved [Warm week design](https://www.figma.com/design/FbMNgG8cuZfrRFzQTtIVCy?node-id=138-1630)
+is implemented in `PlannerWeekStrip`: opaque peach planned days, a green
+surface and check for completed days, and an orange outline for the selected
+date. Today remains labelled when another date is selected and after today's
+last task is completed. Empty days are not labelled complete; event-only
+days stay planned because events are not completable tasks.
+
+The month, Today, and week buttons have visible outlines and 44-point
+minimum heights. The controls reflow to two rows on narrow screens or at
+larger text sizes. Press feedback respects Reduce Motion, and selecting a
+different date provides selection haptics. The existing month sheet, hourly
+agenda, inline completion, subtask controls and data requests are retained.
+Both new labels have all nine non-English translations. The prior picker is
+preserved in branch history at `db9e12e`.
+
+Use the same simulator validation command above. Also check selecting a
+completed date, completing/undoing today's last task, browsing away from
+Today and returning, an event-only day, French month/Today labels, Arabic
+RTL, and a narrow iPhone at larger text sizes. Confirm the selected date's
+orange outline remains independent of its green completion state.
+
 ## Social search and own-post confirmation — October 28, 2026
 
 Work remains on `work/testflight-fixes-2026-10-27` in draft
