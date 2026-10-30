@@ -238,20 +238,6 @@ struct SocialProfileView: View {
         .accessibilityHint("Opens the post composer")
     }
 
-    /// What the button says, which is one of three things rather than two.
-    ///
-    /// A closed profile cannot be followed on a tap, so between "Follow" and
-    /// "Following" there is a state where the answer is somebody else's to
-    /// give. Read from the store first because that is what the tap updates;
-    /// the profile payload is a snapshot from before it.
-    private var followActionTitle: LocalizedStringKey {
-        if viewerFollowsSubject { return "Following" }
-        if let subjectID, social.requestedUserIDs.contains(subjectID) {
-            return "Requested"
-        }
-        return profile.viewerHasRequested ? "Requested" : "Follow"
-    }
-
     /// Your own profile is a place in the app; somebody else's is somewhere you
     /// navigated to. So only the second one gets a header, carrying the name
     /// of whoever you are looking at and the way back to where you came from.
@@ -447,25 +433,25 @@ struct SocialProfileView: View {
         subjectID.flatMap { social.followingByUser[$0]?.count } ?? 0
     }
 
+    /// Both sides of the relationship: whether they follow you, as a label,
+    /// above the button that acts on whether you follow them.
+    @ViewBuilder
     private func followButton(timeOfDay: HomeTimeOfDay) -> some View {
-        Button {
-            guard let author = subjectAsAuthor else { return }
-            Task {
-                await social.setFollowing(
-                    !viewerFollowsSubject,
-                    user: author,
-                    viewerID: store.viewerID
-                )
+        if let author = subjectAsAuthor, let subjectID {
+            let relationship = social.relationship(
+                with: subjectID,
+                viewerID: store.viewerID,
+                isPrivate: !profile.isProfilePublic,
+                viewerFollowsHint: profile.viewerFollows,
+                requestedHint: profile.viewerHasRequested,
+                followsViewerHint: profile.followsViewer
+            )
+            VStack(alignment: .leading, spacing: 8) {
+                RelationshipBadge(relationship: relationship)
+                FollowButton(person: author, relationship: relationship, viewerID: store.viewerID, size: .large)
             }
-        } label: {
-            Text(followActionTitle)
-                .font(.community(.footnote, weight: .bold))
-                .foregroundStyle(timeOfDay.onPrimaryAction)
-                .frame(maxWidth: .infinity, minHeight: 38)
-                .background(timeOfDay.primaryActionSurface, in: RoundedRectangle(cornerRadius: 12))
+            .animation(.snappy(duration: 0.2), value: relationship)
         }
-        .buttonStyle(.plain)
-        .disabled(subjectAsAuthor.map { social.changingFollowFor.contains($0.id) } ?? true)
     }
 
     private func profileStat(_ value: String, label: String) -> some View {
@@ -1084,6 +1070,19 @@ private struct ProfileSettingsView: View {
                         .pickerStyle(.segmented)
                         .padding(.vertical, 14)
                         .accessibilityHint("Changes the appearance throughout Rytivo")
+                    }
+
+                    settingsSection("WORKOUTS", timeOfDay: timeOfDay) {
+                        NavigationLink {
+                            WorkoutSettingsView()
+                        } label: {
+                            settingsRow(
+                                "Workouts",
+                                detail: "Weight unit, rest timer, and Lock Screen",
+                                symbol: "dumbbell"
+                            )
+                        }
+                        .buttonStyle(RepbaseSettingsRowButtonStyle())
                     }
 
                     settingsSection("LANGUAGE", timeOfDay: timeOfDay) {

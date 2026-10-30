@@ -23,6 +23,15 @@
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<!--
+	  A lifting session shows on the Lock Screen and in the Dynamic Island
+	  while it runs: the current set, the rest countdown, and buttons to log
+	  the set or pause, extend and skip the rest. The activity is drawn by the
+	  RytivoWorkoutActivity extension and updated only by this app, locally;
+	  no push token is requested, so no frequent-updates key is needed.
+	-->
+	<key>NSSupportsLiveActivities</key>
+	<true/>
+	<!--
 	  CFBundleName is deliberately NOT here. It is set by PRODUCT_NAME in the
 	  project file, because that is the only thing that actually sets it, and
 	  finding that out cost two wrong attempts worth recording:
@@ -99,16 +108,19 @@
 	<key>NSMotionUsageDescription</key>
 	<string>Rytivo reads your device's barometer during a run, ride, or swim to measure the elevation you climb. It is only used while a session you started is running.</string>
 	<!--
-	  HealthKit. Reading only, and only this key.
-	  NSHealthUpdateUsageDescription was here too, added on the belief that
-	  an app linking HealthKit needs both or is killed at launch. Only writing
-	  needs it: removing it was tried, and the app launches and reads fine.
+	  HealthKit. Reading only.
+	  NSHealthUpdateUsageDescription is required anyway: App Store Connect
+	  rejects the upload (ITMS-90683) without it, because the binary calls
+	  requestAuthorization(toShare:read:), even with an empty share set.
+	  The app launches without it, so only an upload ever catches this.
 
 	  Apple's sheet still reads "access and update your Health data" either
 	  way. That header is Apple's own boilerplate, not something this file
 	  controls; the part that reflects the request says "Allow to read" and
 	  lists only Steps.
 	-->
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Rytivo does not write to Health. It only reads your step count and workouts so your training shows up without entering it twice.</string>
 	<key>NSHealthShareUsageDescription</key>
 	<string>Rytivo reads your step count and the runs, rides, and swims recorded by your iPhone or Apple Watch, so your training shows up here without entering it twice.</string>
 </dict>

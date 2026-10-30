@@ -69,6 +69,43 @@ final class SocialStore {
     /// snapshot: after the tap that made the request, the button has to change
     /// without the profile being fetched again.
     private(set) var requestedUserIDs: Set<Int> = []
+    /// What a follow tap still in flight is expected to make of the
+    /// relationship, shown at once so the button answers the tap. Removed
+    /// when the server answers: kept on success, put back on failure.
+    private(set) var pendingFollow: [Int: FollowRelationship.Outgoing] = [:]
+
+    /// Where the viewer stands with this person, both ways round, for any
+    /// button that follows or unfollows.
+    ///
+    /// Read from the lists the store keeps rather than from a profile payload,
+    /// so every screen showing this person agrees, and agrees again the moment
+    /// a tap anywhere changes it. The payload's own answers are only used
+    /// until the viewer's lists have been read.
+    func relationship(
+        with personID: Int,
+        viewerID: Int?,
+        isPrivate: Bool = false,
+        viewerFollowsHint: Bool = false,
+        requestedHint: Bool = false,
+        followsViewerHint: Bool? = nil
+    ) -> FollowRelationship {
+        let outgoing: FollowRelationship.Outgoing
+        if let pending = pendingFollow[personID] {
+            outgoing = pending
+        } else if let viewerID, let following = followingByUser[viewerID] {
+            outgoing = following.contains { $0.id == personID }
+                ? .following
+                : (requestedUserIDs.contains(personID) ? .requested : .none)
+        } else {
+            outgoing = viewerFollowsHint ? .following
+                : (requestedHint || requestedUserIDs.contains(personID) ? .requested : .none)
+        }
+        let followsViewer = viewerID
+            .flatMap { followersByUser[$0] }
+            .map { followers in followers.contains { $0.id == personID } }
+            ?? followsViewerHint
+        return FollowRelationship(outgoing: outgoing, followsViewer: followsViewer, isPrivate: isPrivate)
+    }
 
     var isConnected: Bool { repository != nil }
 
@@ -149,6 +186,7 @@ final class SocialStore {
         followersByUser = [:]
         followingByUser = [:]
         changingFollowFor = []
+        pendingFollow = [:]
         // Who is waiting on this account, and who this account is waiting on.
         // Both belong to whoever was signed in, and neither may outlive them.
         followRequests = []
@@ -269,33 +307,67 @@ final class SocialStore {
         }
     }
 
-    func setFollowing(_ follows: Bool, user: PostAuthor, viewerID: Int?) async {
-        guard let repository, !changingFollowFor.contains(user.id) else { return }
+    /// Follows, unfollows, requests or withdraws a request.
+    ///
+    /// The button changes at once -- `pendingFollow` holds what the tap is
+    /// expected to do -- and the server's answer then settles it: a closed
+    /// profile answers a follow with a request, and a failure puts the button
+    /// back where it was and says why. A second tap while one is in flight is
+    /// ignored, which is what keeps rapid tapping from sending a follow and an
+    /// unfollow that could land in either order. The server allows one follow
+    /// per pair, so even a repeated request cannot make a duplicate.
+    @discardableResult
+    func setFollowing(_ follows: Bool, user: PostAuthor, viewerID: Int?, expectsRequest: Bool = false) async -> Bool {
+        guard let repository, !changingFollowFor.contains(user.id) else { return false }
+        let generation = connectionGeneration
         changingFollowFor.insert(user.id)
-        defer { changingFollowFor.remove(user.id) }
+        pendingFollow[user.id] = follows ? (expectsRequest ? .requested : .following) : FollowRelationship.Outgoing.none
+        defer {
+            if connectionGeneration == generation {
+                changingFollowFor.remove(user.id)
+                pendingFollow.removeValue(forKey: user.id)
+            }
+        }
         do {
             if follows {
                 // A closed profile cannot be followed outright; the same tap
                 // leaves a request instead, and the button has to say so
                 // rather than claiming a follow that did not happen.
                 let outcome = try await repository.follow(user.id)
+                guard connectionGeneration == generation else { return false }
                 switch outcome {
                 case .requested:
                     requestedUserIDs.insert(user.id)
-                    return
+                    return true
                 case .following:
                     requestedUserIDs.remove(user.id)
                 }
             } else {
                 try await repository.unfollow(user.id)
+                guard connectionGeneration == generation else { return false }
                 // Unfollowing and withdrawing a request are the same call and
                 // the same button, so both states clear together.
                 requestedUserIDs.remove(user.id)
             }
             applyToAuthor(user.id) { $0.viewerFollowsAuthor = follows }
-            if let viewerID { await loadRelationships(for: viewerID) }
+            // Patched in place first, so the button does not flick back to
+            // its old state between the answer and the reload behind it.
+            if let viewerID {
+                if follows {
+                    if followingByUser[viewerID]?.contains(where: { $0.id == user.id }) == false {
+                        followingByUser[viewerID]?.insert(user, at: 0)
+                    }
+                } else {
+                    followingByUser[viewerID]?.removeAll { $0.id == user.id }
+                }
+                pendingFollow.removeValue(forKey: user.id)
+                await loadRelationships(for: viewerID)
+            }
+            return true
         } catch {
+            guard connectionGeneration == generation else { return false }
             showFailure(error)
+            return false
         }
     }
 

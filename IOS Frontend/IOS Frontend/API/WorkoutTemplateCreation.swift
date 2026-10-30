@@ -7,12 +7,25 @@ nonisolated enum WorkoutTemplateCreation {
     struct Selection: Sendable {
         let exerciseID: Int
         let targetSets: Int?
+        var targetReps: Int? = nil
+        var targetWeightKilograms: String? = nil
+        var restSeconds: Int? = nil
+        var supersetGroup: Int? = nil
+        /// Raw API values, so this file needs no app model to compile alone.
+        var setTypes: [Components.Schemas.SetTypeEnum] = []
     }
 
     static func initialExercises(_ selections: [Selection]) -> [Components.Schemas.InitialWorkoutExerciseRequest] {
         selections.enumerated().map { index, selection in
             .init(exercise: selection.exerciseID, order: Int64(index + 1),
-                  targetSets: selection.targetSets.map(Int64.init))
+                  targetSets: selection.targetSets.map(Int64.init),
+                  targetReps: selection.targetReps.map(Int64.init),
+                  targetWeightKg: selection.targetWeightKilograms,
+                  restSeconds: selection.restSeconds,
+                  supersetGroup: selection.supersetGroup,
+                  // Left out rather than sent empty when there are none, so
+                  // the request reads the same as one from before set kinds.
+                  setTypes: selection.setTypes.isEmpty ? nil : selection.setTypes)
         }
     }
 

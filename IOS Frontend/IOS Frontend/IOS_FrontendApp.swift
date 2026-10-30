@@ -197,6 +197,7 @@ private struct AppRootView: View {
             || environment["REPBASE_STEPS_PREVIEW"] != nil
             || environment["REPBASE_CYCLE_PREVIEW"] != nil
             || environment["REPBASE_SOCIAL_PREVIEW"] != nil
+            || environment["REPBASE_WORKOUT_PREVIEW"] != nil
             || environment["REPBASE_PROMPT_PREVIEW"] != nil
             || environment["REPBASE_LIFTS_PREVIEW"] != nil
             || environment["REPBASE_LANGUAGE_PREVIEW"] != nil
@@ -294,11 +295,36 @@ private struct AppRootView: View {
                         // `-avatar` shows the profile configuration of the
                         // same view: square, circular, no choice of shape.
                         PhotoCropperPreview()
+                    case "follow":
+                        // Every state of the follow button and its label,
+                        // which otherwise needs a second account in each
+                        // relationship to see.
+                        FollowStatesPreview()
                     default:
                         SocialFeedView()
                     }
                 }
                 .environment(SocialStore.preview)
+            } else if let workoutPreview = ProcessInfo.processInfo.environment["REPBASE_WORKOUT_PREVIEW"] {
+                // The live lifting screen, the plan review and workout
+                // settings, each a server and several taps away. "active"
+                // also starts the Lock Screen activity, which the simulator
+                // shows on its own lock screen.
+                switch workoutPreview {
+                case "builder":
+                    WorkoutEditorView(mode: .edit(WorkoutStore.previewWorkouts[0]))
+                        .environment(WorkoutStore.previewWithLibrary)
+                case "settings":
+                    NavigationStack { WorkoutSettingsView() }
+                        .environment(WorkoutStore.previewWithLibrary)
+                case "saved":
+                    NavigationStack { SavedWorkoutsView() }
+                        .environment(WorkoutStore.previewWithLibrary)
+                default:
+                    let store = WorkoutStore.sharedPreviewActiveSession
+                    NavigationStack { DayWorkoutView(day: store.activeSession?.day ?? .monday) }
+                        .environment(store)
+                }
             } else if ProcessInfo.processInfo.environment["REPBASE_CYCLE_PREVIEW"] != nil {
                 // A rotation is several taps deep and needs a saved library
                 // behind it, neither of which a script can arrange.
@@ -828,6 +854,34 @@ private struct CycleEditorPreviewPush: View {
                     suggestions: workoutStore.knownWorkouts
                 )
             }
+    }
+}
+#endif
+
+#if DEBUG
+/// The follow control in each relationship, for checking in the simulator.
+private struct FollowStatesPreview: View {
+    private let person = PostAuthor(id: 77, username: "sam.lifts", firstName: "Sam", lastName: "Lee", photoURL: nil)
+    private let states: [(String, FollowRelationship)] = [
+        ("none", .init(outgoing: .none, followsViewer: false, isPrivate: false)),
+        ("they follow you", .init(outgoing: .none, followsViewer: true, isPrivate: false)),
+        ("private", .init(outgoing: .none, followsViewer: false, isPrivate: true)),
+        ("requested", .init(outgoing: .requested, followsViewer: false, isPrivate: true)),
+        ("one way", .init(outgoing: .following, followsViewer: false, isPrivate: false)),
+        ("mutual", .init(outgoing: .following, followsViewer: true, isPrivate: false)),
+    ]
+
+    var body: some View {
+        List(states, id: \.0) { state in
+            VStack(alignment: .leading, spacing: 8) {
+                Text(verbatim: state.0).font(.caption).foregroundStyle(.secondary)
+                RelationshipBadge(relationship: state.1)
+                HStack {
+                    FollowButton(person: person, relationship: state.1, viewerID: 1, size: .large)
+                    FollowButton(person: person, relationship: state.1, viewerID: 1)
+                }
+            }
+        }
     }
 }
 #endif

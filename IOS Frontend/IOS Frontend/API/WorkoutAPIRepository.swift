@@ -10,6 +10,7 @@ import Foundation
 // type is an OpenAPIRuntime value container.
 import OpenAPIRuntime
 import RepbaseAPI
+import CryptoKit
 
 actor WorkoutAPIRepository {
     private let configuration: APIConfiguration
@@ -110,19 +111,7 @@ actor WorkoutAPIRepository {
                 .sorted {
                     ($0.order ?? 1, $0.id) < ($1.order ?? 1, $1.id)
                 }
-                .map { relation in
-                    Exercise(
-                        // The row joining this exercise into this workout.
-                        // Two sets of the same movement are two rows sharing
-                        // one exercise id, so that id cannot tell them apart.
-                        id: .stable(forServerID: relation.id),
-                        serverID: relation.exercise,
-                        workoutExerciseID: relation.id,
-                        serverName: relation.exerciseName,
-                        name: relation.exerciseName,
-                        sets: Self.safeSetCount(relation.targetSets)
-                    )
-                }
+                .map(Self.plannedExercise(from:))
 
             result[day, default: []].append(
                 Workout(
@@ -135,6 +124,7 @@ actor WorkoutAPIRepository {
                     scheduledDate: schedule.scheduledDate,
                     name: template.name,
                     type: Self.workoutType(from: template.workoutType),
+                    activity: Self.activity(of: template),
                     cardioMachine: Self.cardioMachine(from: template.cardioMachine),
                     cardioTargetMinutes: template.cardioTargetMinutes.map(Int.init),
                     recurrenceID: recurrenceIDs[
@@ -168,21 +158,58 @@ actor WorkoutAPIRepository {
             serverID: template.id,
             name: template.name,
             type: workoutType(from: template.workoutType),
+            activity: activity(of: template),
             exercises: template.exercises
                 .sorted { ($0.order ?? 1, $0.id) < ($1.order ?? 1, $1.id) }
-                .map { relation in
-                    Exercise(
-                        id: .stable(forServerID: relation.id),
-                        serverID: relation.exercise,
-                        // Was not carried here, which left this copy unable
-                        // to say which row of the workout it is.
-                        workoutExerciseID: relation.id,
-                        serverName: relation.exerciseName,
-                        name: relation.exerciseName,
-                        sets: safeSetCount(relation.targetSets)
-                    )
-                }
+                .map(plannedExercise(from:)),
+            cardioMachine: cardioMachine(from: template.cardioMachine),
+            cardioTargetMinutes: template.cardioTargetMinutes.map(Int.init),
+            // Nil from a server that does not report it yet; the library then
+            // simply does not say when a workout was last done.
+            lastPerformedAt: template.lastPerformedAt
         )
+    }
+
+    /// One planned exercise, as a workout's saved row describes it.
+    ///
+    /// The row's id is the identity, not the exercise's: two sets of the same
+    /// movement are two rows sharing one exercise id, so that id cannot tell
+    /// them apart. Fields a server does not send yet read as "nothing
+    /// planned", which is what they meant before they existed.
+    private static func plannedExercise(
+        from relation: Components.Schemas.WorkoutExercise
+    ) -> Exercise {
+        Exercise(
+            id: .stable(forServerID: relation.id),
+            serverID: relation.exercise,
+            workoutExerciseID: relation.id,
+            serverName: relation.exerciseName,
+            name: relation.exerciseName,
+            sets: safeSetCount(relation.targetSets),
+            setTypes: (relation.setTypes ?? []).map(setType(from:)),
+            restSeconds: relation.restSeconds,
+            supersetGroup: relation.supersetGroup,
+            targetReps: relation.targetReps.flatMap { Int(exactly: $0) },
+            targetWeightKilograms: relation.targetWeightKg
+        )
+    }
+
+    nonisolated static func setType(from value: Components.Schemas.SetTypeEnum) -> WorkoutSetType {
+        switch value {
+        case .normal: return .normal
+        case .warmup: return .warmup
+        case .drop: return .drop
+        case .failure: return .failure
+        }
+    }
+
+    nonisolated static func setTypePayload(_ type: WorkoutSetType) -> Components.Schemas.SetTypeEnum {
+        switch type {
+        case .normal: return .normal
+        case .warmup: return .warmup
+        case .drop: return .drop
+        case .failure: return .failure
+        }
     }
 
     /// Identifies a repeat by the workout it schedules and the day it lands on,
@@ -355,12 +382,19 @@ actor WorkoutAPIRepository {
             // an existing template. Explicit reuse goes through scheduling by ID.
             var resolved: [String: Int] = [:]
             var selections: [WorkoutTemplateCreation.Selection] = []
-            for exercise in draft.exercises {
+            let supersets = WorkoutStructureDiff.normalizedSupersets(draft.exercises.map(\.supersetGroup))
+            for (exercise, superset) in zip(draft.exercises, supersets) {
                 let exerciseID = try await resolveExercise(exercise, resolved: &resolved)
-                selections.append(.init(exerciseID: exerciseID, targetSets: exercise.targetSets))
+                selections.append(.init(
+                    exerciseID: exerciseID, targetSets: exercise.targetSets,
+                    targetReps: exercise.targetReps, targetWeightKilograms: exercise.targetWeightKilograms,
+                    restSeconds: exercise.restSeconds, supersetGroup: superset,
+                    setTypes: WorkoutStructureDiff.storedSetTypes(exercise.plannedSetTypes).map(Self.setTypePayload)
+                ))
             }
             let request = try Components.Schemas.WorkoutTemplateRequest(
                 name: draft.name, workoutType: Self.workoutTypePayload(draft.type),
+                activity: draft.activity.rawValue,
                 cardioMachine: draft.cardioMachine.flatMap(Self.cardioEnum)
                     .map { .CardioMachineEnum($0) } ?? .NullEnum(.init()),
                 cardioTargetMinutes: draft.cardioTargetMinutes.map(Int64.init),
@@ -418,26 +452,69 @@ actor WorkoutAPIRepository {
         }
     }
 
+    /// Saves a library workout edited outside any day: its name, kind and
+    /// plan, without scheduling it anywhere.
+    func updateTemplate(_ draft: Workout) async throws {
+        guard let workoutID = draft.serverID else {
+            throw APIServiceError.missingServerIdentifier(
+                String(localized: "Workout", bundle: .app, locale: .app, comment: "Names what is missing in “%@ has not been saved to the server yet.”")
+            )
+        }
+        try await updateWorkout(draft, existing: draft, workoutID: workoutID)
+    }
+
+    /// Replaces only a workout's exercise plan, leaving its name, kind and
+    /// finisher alone. Used when a reshaped session is kept as the plan.
+    func replacePlan(workoutID: Int, exercises: [Exercise]) async throws {
+        let plan = try await planRequest(for: exercises)
+        let output = try await client.workoutsPartialUpdate(
+            path: .init(id: workoutID),
+            body: .json(.init(exercisePlan: plan))
+        )
+        switch output {
+        case .ok: return
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload)
+        }
+    }
+
+    /// The plan rows a PATCH carries. A row that came from the saved workout
+    /// names its `relation_id`, so the server updates it in place and its
+    /// history stays attached; a new one is created.
+    private func planRequest(for exercises: [Exercise]) async throws -> [Components.Schemas.WorkoutPlanExerciseRequest] {
+        var resolved: [String: Int] = [:]
+        var plan: [Components.Schemas.WorkoutPlanExerciseRequest] = []
+        let supersets = WorkoutStructureDiff.normalizedSupersets(exercises.map(\.supersetGroup))
+        for (index, (exercise, superset)) in zip(exercises, supersets).enumerated() {
+            let exerciseID = try await resolveExercise(exercise, resolved: &resolved)
+            plan.append(.init(
+                relationId: exercise.workoutExerciseID,
+                exercise: exerciseID, order: index + 1,
+                targetSets: exercise.targetSets.map(Int64.init),
+                targetReps: exercise.targetReps.map(Int64.init),
+                targetWeightKg: exercise.targetWeightKilograms,
+                restSeconds: exercise.restSeconds,
+                supersetGroup: superset,
+                // Always sent, even empty: on an edit, leaving it out would
+                // keep the old kinds, and clearing them is a real change.
+                setTypes: WorkoutStructureDiff.storedSetTypes(exercise.plannedSetTypes).map(Self.setTypePayload)
+            ))
+        }
+        return plan
+    }
+
     private func updateWorkout(
         _ draft: Workout,
         existing: Workout,
         workoutID: Int
     ) async throws {
-        var resolved: [String: Int] = [:]
-        var plan: [Components.Schemas.WorkoutPlanExerciseRequest] = []
-        for (index, exercise) in draft.exercises.enumerated() {
-            let exerciseID = try await resolveExercise(exercise, resolved: &resolved)
-            plan.append(.init(
-                relationId: exercise.workoutExerciseID,
-                exercise: exerciseID, order: index + 1,
-                targetSets: exercise.targetSets.map(Int64.init)
-            ))
-        }
+        let plan = try await planRequest(for: draft.exercises)
         let output = try await client.workoutsPartialUpdate(
             path: .init(id: workoutID),
             body: .json(.init(
                 name: draft.name,
                 workoutType: Self.workoutTypePayload(draft.type),
+                activity: draft.activity.rawValue,
                 cardioMachine: draft.cardioMachine.flatMap(Self.cardioEnum)
                     .map { .CardioMachineEnum($0) } ?? .NullEnum(.init()),
                 cardioTargetMinutes: draft.cardioTargetMinutes.map(Int64.init),
@@ -475,9 +552,15 @@ actor WorkoutAPIRepository {
             return match.id
         }
 
+        // A library exercise the server does not have yet -- an older server
+        // without the library -- is created as the account's own, and keeps
+        // its muscle group so filters still place it.
         let output = try await client.exercisesCreate(
             body: .json(
-                Components.Schemas.ExerciseRequest(name: draft.name)
+                Components.Schemas.ExerciseRequest(
+                    name: draft.name,
+                    muscleGroup: ExerciseLibrary.shared?.exercise(named: draft.name)?.region?.serverName
+                )
             )
         )
         switch output {
@@ -518,10 +601,31 @@ actor WorkoutAPIRepository {
         }
     }
 
-    /// Page on demand; the OAS exposes an exact-name filter, not substring
-    /// search. The picker searches loaded pages and explicitly offers more.
-    func exerciseChoices(page: Int = 1) async throws -> WorkoutExercisePage {
-        let output = try await client.exercisesList(query: .init(page: page))
+    /// Saves the unit weights are shown in by default, on the account, so
+    /// every device and the web show the same one.
+    @discardableResult
+    func setPreferredWeightUnit(_ unit: WorkoutWeightUnit) async throws -> WorkoutWeightUnit {
+        let output = try await client.mePartialUpdate(
+            body: .json(.init(unitPreference: unit == .imperial ? .imperial : .metric))
+        )
+        switch output {
+        case .ok(let response):
+            return try response.body.json.unitPreference?.rawValue == "imperial" ? .imperial : .metric
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// Page on demand. `search` narrows to names containing it and `mine` to
+    /// the account's own exercises; a server from before either existed
+    /// ignores them and answers with the plain page, which the catalogue
+    /// filters itself, so neither is relied on to be honoured.
+    func exerciseChoices(page: Int = 1, search: String? = nil, mine: Bool = false) async throws -> WorkoutExercisePage {
+        let output = try await client.exercisesList(query: .init(
+            mine: mine ? true : nil,
+            page: page,
+            search: search.flatMap { $0.isEmpty ? nil : $0 }
+        ))
         switch output {
         case .ok(let success):
             let response = try success.body.json
@@ -529,7 +633,13 @@ actor WorkoutAPIRepository {
             let next = try nextPage(response.next, visited: &visited)
             guard next == nil || next! > page else { throw APIServiceError.untrustedPaginationURL }
             return WorkoutExercisePage(items: response.results.map {
-                WorkoutExerciseChoice(id: $0.id, name: $0.name, muscleGroup: $0.muscleGroup ?? "")
+                WorkoutExerciseChoice(
+                    id: $0.id, name: $0.name, muscleGroup: $0.muscleGroup ?? "",
+                    // Somebody's own exercise has its creator set; the shared
+                    // catalogue's does not. The server never returns another
+                    // person's custom exercises.
+                    isCustom: $0.createdBy != nil
+                )
             }, nextPage: next)
         case .undocumented(let statusCode, _):
             throw APIServiceError.undocumentedStatus(statusCode)
@@ -614,7 +724,8 @@ actor WorkoutAPIRepository {
         }
 
         var exercises: [SessionExerciseDraft] = []
-        for (exercise, relationIndex) in zip(workout.exercises, relationIndices) {
+        let supersets = WorkoutStructureDiff.normalizedSupersets(workout.exercises.map(\.supersetGroup))
+        for ((exercise, relationIndex), superset) in zip(zip(workout.exercises, relationIndices), supersets) {
             let relation = sessionRelations[relationIndex]
             exercises.append(
                 SessionExerciseDraft(
@@ -622,7 +733,12 @@ actor WorkoutAPIRepository {
                     exerciseServerID: relation.exercise,
                     sessionExerciseID: relation.id,
                     name: relation.exerciseName,
-                    sets: Self.makeSetDrafts(count: exercise.sets)
+                    sets: Self.makeSetDrafts(types: exercise.plannedSetTypes),
+                    workoutExerciseID: exercise.workoutExerciseID,
+                    restSeconds: exercise.restSeconds,
+                    supersetGroup: superset,
+                    targetReps: exercise.targetReps,
+                    targetWeightKilograms: exercise.targetWeightKilograms
                 )
             )
         }
@@ -638,10 +754,16 @@ actor WorkoutAPIRepository {
             // known and authoritative.
             workoutName: started.workoutName ?? workout.name,
             workoutType: workout.type,
+            activity: workout.activity,
             startedAt: started.startedAt ?? Date(),
-            exercises: exercises
+            exercises: exercises,
+            focusedExerciseID: exercises.first?.id
         )
-        return try await reconcileLoggedSets(session)
+        // The plan's shape as the session began, taken from the session
+        // itself so the two are built the same way and compare cleanly.
+        var opened = try await reconcileLoggedSets(session)
+        opened.plan = opened.structure
+        return opened
     }
 
     func recoverPendingSessionStart() async throws -> ActiveWorkoutSession? {
@@ -701,7 +823,10 @@ actor WorkoutAPIRepository {
                     weightKg: trimmedWeight.isEmpty ? nil : trimmedWeight,
                     reps: reps,
                     distanceKm: distanceKilometers,
-                    completedAt: Date()
+                    completedAt: Date(),
+                    // Sent only when it says something: a normal set reads
+                    // the same to a server from before set kinds existed.
+                    setType: set.setType == .normal ? nil : Self.setTypePayload(set.setType)
                 )
         let receipt = try await WorkoutWriteRecovery.create(
             key: Self.setWriteKey(sessionExerciseID, set.setNumber), payload: request, scope: recoveryScope,
@@ -721,6 +846,91 @@ actor WorkoutAPIRepository {
 
     private nonisolated static func setWriteKey(_ exercise: Int, _ number: Int) -> String {
         "set-write-\(exercise)-\(number)"
+    }
+
+    /// Corrects the kind of a set already logged, leaving its numbers alone.
+    /// A PATCH of one field, so repeating it after a lost reply is harmless.
+    func updateSetType(entryID: Int, type: WorkoutSetType) async throws {
+        let output = try await client.setEntriesPartialUpdate(
+            path: .init(id: entryID),
+            body: .json(.init(setType: Self.setTypePayload(type)))
+        )
+        switch output {
+        case .ok: return
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    // MARK: - Reshaping a session
+
+    struct AddedSessionExercise: Sendable {
+        let sessionExerciseID: Int
+        let exerciseID: Int
+        let name: String
+        /// Whether it was added by name rather than from the catalogue, so the
+        /// catalogue knows to read the account's exercises again.
+        let created: Bool
+    }
+
+    /// Adds an exercise to a session in progress, after the ones it has.
+    ///
+    /// The server keeps one order number per row and refuses a taken one, and
+    /// numbers can have gaps after a removal, so the next free number is read
+    /// rather than counted. The create carries an idempotency key, so a retry
+    /// after a lost reply cannot add the exercise twice.
+    func addSessionExercise(_ exercise: Exercise, toSession sessionID: Int) async throws -> AddedSessionExercise {
+        var resolved: [String: Int] = [:]
+        let known = exercise.serverID != nil
+        let exerciseID = try await resolveExercise(exercise, resolved: &resolved)
+        let existing = try await fetchSessionExercises(session: sessionID)
+        let order = (existing.compactMap(\.order).max() ?? Int64(existing.count)) + 1
+        let output = try await client.sessionExercisesCreate(
+            headers: .init(idempotencyKey: UUID().uuidString),
+            body: .json(.init(session: sessionID, exercise: exerciseID, order: order))
+        )
+        switch output {
+        case .created(let response):
+            let row = try response.body.json
+            guard row.session == sessionID else { throw APIServiceError.malformedResponse }
+            return AddedSessionExercise(
+                sessionExerciseID: row.id,
+                exerciseID: row.exercise,
+                name: row.exerciseName,
+                // A name typed rather than chosen may have just been created.
+                created: !known
+            )
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload)
+        }
+    }
+
+    /// Removes an exercise from a session, and the sets logged in it with it.
+    func removeSessionExercise(id: Int) async throws {
+        let output = try await client.sessionExercisesDestroy(path: .init(id: id))
+        switch output {
+        case .noContent:
+            return
+        case .undocumented(404, _):
+            return // Already gone; a lost DELETE reply is safe to repeat.
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// Saves the order a session's exercises are now in, in one step.
+    func reorderSessionExercises(sessionID: Int, sessionExerciseIDs: [Int]) async throws {
+        let output = try await client.sessionsReorderCreate(
+            path: .init(id: sessionID),
+            body: .json(.init(sessionExercises: sessionExerciseIDs.map(Int64.init)))
+        )
+        switch output {
+        case .ok(let response):
+            let rows = try response.body.json
+            guard rows.map(\.id) == sessionExerciseIDs else { throw APIServiceError.malformedResponse }
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
     }
 
     func unlogSet(id: Int, sessionExerciseID: Int, setNumber: Int) async throws {
@@ -766,6 +976,9 @@ actor WorkoutAPIRepository {
                     session.exercises[exerciseIndex].sets[setIndex].weightKilograms = entry.weightKg ?? ""
                     session.exercises[exerciseIndex].sets[setIndex].reps = entry.reps.map(String.init) ?? ""
                     session.exercises[exerciseIndex].sets[setIndex].distanceKilometers = entry.distanceKm ?? ""
+                    if let kind = entry.setType {
+                        session.exercises[exerciseIndex].sets[setIndex].setType = Self.setType(from: kind)
+                    }
                 } else if let recoveryScope {
                     let key = Self.setWriteKey(relation, number)
                     if let receipt = try await EditorDraftRecovery.shared.load(
@@ -1158,7 +1371,8 @@ actor WorkoutAPIRepository {
                     // An unrecognised value is left nil rather than guessed.
                     workoutType: session.workoutType
                         .flatMap { WorkoutType(rawValue: $0) },
-                    loggedSetCount: session.loggedSetCount
+                    loggedSetCount: session.loggedSetCount,
+                    activitySummary: Self.activitySummary(of: session)
                 )
             }
             .sorted { $0.performedAt > $1.performedAt }
@@ -1220,7 +1434,8 @@ actor WorkoutAPIRepository {
                     PreviousSet(
                         setNumber: row.setNumber,
                         weightKilograms: row.weightKg.flatMap { Decimal(string: $0) },
-                        reps: row.reps
+                        reps: row.reps,
+                        setType: row.setType.map { Self.setType(from: $0.value1) }
                     )
                 )
             }
@@ -1294,7 +1509,8 @@ actor WorkoutAPIRepository {
                 PreviousSet(
                     setNumber: Int(entry.setNumber),
                     weightKilograms: entry.weightKg.flatMap { Decimal(string: $0) },
-                    reps: entry.reps.map(Int.init)
+                    reps: entry.reps.map(Int.init),
+                    setType: entry.setType.map(Self.setType(from:))
                 )
             )
         }
@@ -1418,6 +1634,128 @@ actor WorkoutAPIRepository {
         case .undocumented(let statusCode, _):
             throw APIServiceError.undocumentedStatus(statusCode)
         }
+    }
+
+    // MARK: - Activities logged afterwards
+
+    /// Logs a finished activity in one request; answers the new session's id.
+    ///
+    /// The idempotency key is worked out from what is being logged, so tapping
+    /// Save again after an answer that never arrived replays the session the
+    /// first tap made instead of logging the match twice. Logging the same
+    /// thing again on purpose -- same start, same length, same everything --
+    /// is the same session, so nothing is lost by that.
+    func logActivity(_ entry: ActivityLogEntry, workoutServerID: Int?, scheduledDate: String) async throws -> Int {
+        let request = Components.Schemas.ActivityLogRequest(
+            workout: workoutServerID.map(Int64.init),
+            workoutName: workoutServerID == nil ? entry.workoutName : nil,
+            activity: entry.activity.rawValue,
+            scheduledDate: scheduledDate,
+            startedAt: entry.startedAt,
+            durationSeconds: entry.durationSeconds,
+            perceivedEffort: entry.perceivedEffort,
+            manualCaloriesKcal: entry.caloriesKilocalories,
+            manualDistanceKm: entry.distanceKilometers.map(Self.decimalString),
+            activityDetails: entry.details.isEmpty ? nil : .init(additionalProperties: try Self.detailsContainers(entry.details)),
+            notes: entry.notes.isEmpty ? nil : entry.notes
+        )
+        let key = Self.idempotencyKey(for: [
+            "log", workoutServerID.map(String.init) ?? entry.workoutName, entry.activity.rawValue, scheduledDate,
+            String(entry.startedAt.timeIntervalSince1970), String(entry.durationSeconds),
+            entry.perceivedEffort.map(String.init) ?? "", entry.caloriesKilocalories.map(String.init) ?? "",
+            entry.distanceKilometers.map(Self.decimalString) ?? "", entry.notes,
+            entry.details.values.sorted { $0.key < $1.key }.map { "\($0.key)=\($0.value)" }.joined(separator: ","),
+        ])
+        let output = try await client.sessionsLogCreate(
+            headers: .init(idempotencyKey: key.uuidString),
+            body: .json(request)
+        )
+        switch output {
+        case .created(let response):
+            return try response.body.json.id
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload)
+        }
+    }
+
+    /// Saves how a finished session felt onto it. Answers false when the
+    /// server took the request but kept none of it, which is what a server
+    /// from before these fields does: it ignores what it does not know.
+    func saveSessionFeedback(_ feedback: SessionFeedback, sessionID: Int) async throws -> Bool {
+        let output = try await client.sessionsPartialUpdate(
+            path: .init(id: sessionID),
+            body: .json(.init(
+                perceivedEffort: feedback.perceivedEffort,
+                manualCaloriesKcal: feedback.caloriesKilocalories,
+                manualDistanceKm: feedback.distanceKilometers.map(Self.decimalString),
+                notes: feedback.notes.isEmpty ? nil : feedback.notes,
+                activityDetails: feedback.details.isEmpty ? nil : .init(additionalProperties: try Self.detailsContainers(feedback.details))
+            ))
+        )
+        switch output {
+        case .ok(let response):
+            return try response.body.json.isManualEntry != nil
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload)
+        }
+    }
+
+    /// The activity a template is, from the server when it says, else the
+    /// one its type always meant.
+    private static func activity(of template: Components.Schemas.WorkoutTemplate) -> WorkoutActivity {
+        WorkoutActivity(serverValue: template.activity, family: workoutType(from: template.workoutType))
+    }
+
+    /// Everything a session recorded beyond its sets. Every field is optional
+    /// in the contract, so a server from before them gives an empty summary.
+    private static func activitySummary(of session: Components.Schemas.WorkoutSession) -> SessionActivitySummary {
+        let family = session.workoutType.flatMap { WorkoutType(rawValue: $0) } ?? .lifting
+        var details = ActivityDetails()
+        for (key, container) in session.activityDetails?.additionalProperties ?? [:] {
+            guard let field = ActivityDetailField(rawValue: key) else { continue }
+            switch container.value {
+            case let number as Int: details[field] = .integer(number)
+            case let number as Double where number.rounded() == number: details[field] = .integer(Int(number))
+            case let text as String: details[field] = .text(text)
+            default: continue
+            }
+        }
+        return SessionActivitySummary(
+            activity: session.activity.map { WorkoutActivity(serverValue: $0, family: family) },
+            perceivedEffort: session.perceivedEffort,
+            manualCaloriesKilocalories: session.manualCaloriesKcal,
+            manualDistanceKilometers: session.manualDistanceKm.flatMap(Double.init),
+            measuredDistanceKilometers: session.routeDistanceKm ?? session.healthDistanceKm.flatMap(Double.init),
+            details: details,
+            notes: session.notes ?? "",
+            isManualEntry: session.isManualEntry ?? false
+        )
+    }
+
+    private static func detailsContainers(_ details: ActivityDetails) throws -> [String: OpenAPIValueContainer] {
+        try details.values.mapValues { value in
+            switch value {
+            case .integer(let number): try OpenAPIValueContainer(unvalidatedValue: number)
+            case .text(let text): try OpenAPIValueContainer(unvalidatedValue: text)
+            }
+        }
+    }
+
+    /// "4.989": three decimals at most, as the contract's pattern allows.
+    private static func decimalString(_ value: Decimal) -> String {
+        var value = value
+        var rounded = Decimal()
+        NSDecimalRound(&rounded, &value, 3, .plain)
+        return NSDecimalNumber(decimal: rounded).stringValue
+    }
+
+    /// A UUID that is the same for the same parts, from their SHA-256.
+    private static func idempotencyKey(for parts: [String]) -> UUID {
+        var bytes = Array(SHA256.hash(data: Data(parts.joined(separator: "\u{1F}").utf8)).prefix(16))
+        bytes[6] = (bytes[6] & 0x0F) | 0x50
+        bytes[8] = (bytes[8] & 0x3F) | 0x80
+        return UUID(uuid: (bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
+                           bytes[8], bytes[9], bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15]))
     }
 
     // MARK: - Pagination
@@ -1550,9 +1888,8 @@ actor WorkoutAPIRepository {
         return count
     }
 
-    private static func makeSetDrafts(count: Int) -> [WorkoutSetDraft] {
-        guard count > 0 else { return [] }
-        return (1...count).map { WorkoutSetDraft(setNumber: $0) }
+    private static func makeSetDrafts(types: [WorkoutSetType]) -> [WorkoutSetDraft] {
+        types.enumerated().map { WorkoutSetDraft(setNumber: $0.offset + 1, setType: $0.element) }
     }
 
     /// Maps the generated `workout_type` enum onto the app-facing type. An

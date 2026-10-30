@@ -537,6 +537,13 @@ extension NotificationScheduler: UNUserNotificationCenterDelegate {
         withCompletionHandler completionHandler:
             @escaping (UNNotificationPresentationOptions) -> Void
     ) {
+        // The end of a rest, while the workout screen can show it itself:
+        // the sound is the useful part, and a banner would cover the set the
+        // person is about to log.
+        if notification.request.identifier == RestTimerNotifier.identifier {
+            completionHandler([.sound])
+            return
+        }
         let owner = notification.request.content.userInfo["accountID"] as? Int
         Task { @MainActor in
             completionHandler(owner != nil && owner == self.accountID ? [.banner, .sound] : [])

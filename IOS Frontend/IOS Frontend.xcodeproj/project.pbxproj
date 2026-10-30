@@ -8,21 +8,103 @@
 
 /* Begin PBXBuildFile section */
 		B218230A0000000000000001 /* RepbaseAPI in Frameworks */ = {isa = PBXBuildFile; productRef = B218230A000000000000000E /* RepbaseAPI */; };
+		C0DE5EED0000000000000005 /* RytivoWorkoutActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C0DE5EED0000000000000001 /* RytivoWorkoutActivity.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		C0DE5EED0000000000000007 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FA6A73D1302913740028C89A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C0DE5EED0000000000000009;
+			remoteInfo = RytivoWorkoutActivity;
+		};
+		C0DE5EED0000000000000103 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FA6A73D1302913740028C89A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FA6A73D8302913740028C89A;
+			remoteInfo = "IOS Frontend";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		C0DE5EED0000000000000006 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				C0DE5EED0000000000000005 /* RytivoWorkoutActivity.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		C0DE5EED0000000000000001 /* RytivoWorkoutActivity.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RytivoWorkoutActivity.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		C0DE5EED0000000000000101 /* RytivoUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RytivoUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		FA6A73D9302913740028C89A /* Rytivo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Rytivo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		C0DE5EED0000000000000003 /* Exceptions for "RytivoWorkoutActivity" folder in "RytivoWorkoutActivity" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = C0DE5EED0000000000000009 /* RytivoWorkoutActivity */;
+		};
+		C0DE5EED0000000000000004 /* Exceptions for "IOS Frontend" folder in "RytivoWorkoutActivity" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				LiveActivity/WorkoutActivityAttributes.swift,
+				LiveActivity/WorkoutActivityIntents.swift,
+			);
+			target = C0DE5EED0000000000000009 /* RytivoWorkoutActivity */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		C0DE5EED0000000000000002 /* RytivoWorkoutActivity */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C0DE5EED0000000000000003 /* Exceptions for "RytivoWorkoutActivity" folder in "RytivoWorkoutActivity" target */,
+			);
+			path = RytivoWorkoutActivity;
+			sourceTree = "<group>";
+		};
+		C0DE5EED0000000000000102 /* RytivoUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = RytivoUITests;
+			sourceTree = "<group>";
+		};
 		FA6A73DB302913740028C89A /* IOS Frontend */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C0DE5EED0000000000000004 /* Exceptions for "IOS Frontend" folder in "RytivoWorkoutActivity" target */,
+			);
 			path = "IOS Frontend";
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		C0DE5EED000000000000000B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C0DE5EED0000000000000107 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FA6A73D6302913740028C89A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -38,6 +120,8 @@
 			isa = PBXGroup;
 			children = (
 				FA6A73DB302913740028C89A /* IOS Frontend */,
+				C0DE5EED0000000000000002 /* RytivoWorkoutActivity */,
+				C0DE5EED0000000000000102 /* RytivoUITests */,
 				FA6A73DA302913740028C89A /* Products */,
 			);
 			sourceTree = "<group>";
@@ -46,6 +130,8 @@
 			isa = PBXGroup;
 			children = (
 				FA6A73D9302913740028C89A /* Rytivo.app */,
+				C0DE5EED0000000000000001 /* RytivoWorkoutActivity.appex */,
+				C0DE5EED0000000000000101 /* RytivoUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -53,6 +139,51 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		C0DE5EED0000000000000009 /* RytivoWorkoutActivity */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C0DE5EED000000000000000D /* Build configuration list for PBXNativeTarget "RytivoWorkoutActivity" */;
+			buildPhases = (
+				C0DE5EED000000000000000A /* Sources */,
+				C0DE5EED000000000000000B /* Frameworks */,
+				C0DE5EED000000000000000C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				C0DE5EED0000000000000002 /* RytivoWorkoutActivity */,
+			);
+			name = RytivoWorkoutActivity;
+			packageProductDependencies = (
+			);
+			productName = RytivoWorkoutActivity;
+			productReference = C0DE5EED0000000000000001 /* RytivoWorkoutActivity.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		C0DE5EED0000000000000105 /* RytivoUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C0DE5EED0000000000000109 /* Build configuration list for PBXNativeTarget "RytivoUITests" */;
+			buildPhases = (
+				C0DE5EED0000000000000106 /* Sources */,
+				C0DE5EED0000000000000107 /* Frameworks */,
+				C0DE5EED0000000000000108 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C0DE5EED0000000000000104 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				C0DE5EED0000000000000102 /* RytivoUITests */,
+			);
+			name = RytivoUITests;
+			packageProductDependencies = (
+			);
+			productName = RytivoUITests;
+			productReference = C0DE5EED0000000000000101 /* RytivoUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		FA6A73D8302913740028C89A /* IOS Frontend */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = FA6A73E4302913750028C89A /* Build configuration list for PBXNativeTarget "IOS Frontend" */;
@@ -60,10 +191,12 @@
 				FA6A73D5302913740028C89A /* Sources */,
 				FA6A73D6302913740028C89A /* Frameworks */,
 				FA6A73D7302913740028C89A /* Resources */,
+				C0DE5EED0000000000000006 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				C0DE5EED0000000000000008 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				FA6A73DB302913740028C89A /* IOS Frontend */,
@@ -86,6 +219,13 @@
 				LastSwiftUpdateCheck = 2660;
 				LastUpgradeCheck = 2660;
 				TargetAttributes = {
+					C0DE5EED0000000000000009 = {
+						CreatedOnToolsVersion = 27.1;
+					};
+					C0DE5EED0000000000000105 = {
+						CreatedOnToolsVersion = 27.1;
+						TestTargetID = FA6A73D8302913740028C89A;
+					};
 					FA6A73D8302913740028C89A = {
 						CreatedOnToolsVersion = 26.6;
 					};
@@ -118,11 +258,27 @@
 			projectRoot = "";
 			targets = (
 				FA6A73D8302913740028C89A /* IOS Frontend */,
+				C0DE5EED0000000000000009 /* RytivoWorkoutActivity */,
+				C0DE5EED0000000000000105 /* RytivoUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		C0DE5EED000000000000000C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C0DE5EED0000000000000108 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FA6A73D7302913740028C89A /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -133,6 +289,20 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		C0DE5EED000000000000000A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C0DE5EED0000000000000106 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FA6A73D5302913740028C89A /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -142,7 +312,108 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		C0DE5EED0000000000000008 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C0DE5EED0000000000000009 /* RytivoWorkoutActivity */;
+			targetProxy = C0DE5EED0000000000000007 /* PBXContainerItemProxy */;
+		};
+		C0DE5EED0000000000000104 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FA6A73D8302913740028C89A /* IOS Frontend */;
+			targetProxy = C0DE5EED0000000000000103 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		C0DE5EED000000000000000E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = UGTPKHHJ5F;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RytivoWorkoutActivity/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Rytivo;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pbllc.rytivo.WorkoutActivity;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C0DE5EED000000000000000F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = UGTPKHHJ5F;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RytivoWorkoutActivity/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Rytivo;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pbllc.rytivo.WorkoutActivity;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		C0DE5EED000000000000010A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = UGTPKHHJ5F;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pbllc.rytivo.UITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "IOS Frontend";
+			};
+			name = Debug;
+		};
+		C0DE5EED000000000000010B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = UGTPKHHJ5F;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pbllc.rytivo.UITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "IOS Frontend";
+			};
+			name = Release;
+		};
 		FA6A73E2302913750028C89A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -340,6 +611,24 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		C0DE5EED000000000000000D /* Build configuration list for PBXNativeTarget "RytivoWorkoutActivity" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C0DE5EED000000000000000E /* Debug */,
+				C0DE5EED000000000000000F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C0DE5EED0000000000000109 /* Build configuration list for PBXNativeTarget "RytivoUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C0DE5EED000000000000010A /* Debug */,
+				C0DE5EED000000000000010B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		FA6A73D4302913740028C89A /* Build configuration list for PBXProject "IOS Frontend" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

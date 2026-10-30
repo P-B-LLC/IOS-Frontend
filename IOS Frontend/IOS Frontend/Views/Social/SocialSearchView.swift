@@ -351,31 +351,17 @@ struct SocialSearchView: View {
             .accessibilityHint("Opens this person's profile")
 
             if person.id != profileStore.viewerID {
-                Button {
-                    Task {
-                        await store.setFollowing(!isFollowing(person), user: person, viewerID: profileStore.viewerID)
-                    }
-                } label: {
-                    Text(followTitle(person))
-                        .font(.community(.caption, weight: .semibold))
-                        .frame(minHeight: 44)
-                }
-                .buttonStyle(.bordered)
-                .buttonBorderShape(.capsule)
-                .disabled(store.changingFollowFor.contains(person.id) || store.requestedUserIDs.contains(person.id))
+                // The shared button: "Follow back" when they follow you, and
+                // a confirmation before "Following" or "Requested" undoes
+                // anything, so a stray tap in a list cannot unfollow.
+                FollowButton(
+                    person: person,
+                    relationship: store.relationship(with: person.id, viewerID: profileStore.viewerID),
+                    viewerID: profileStore.viewerID
+                )
             }
         }
         .padding(.horizontal, RepbaseDesign.pageInset)
         .padding(.vertical, 4)
-    }
-
-    private func isFollowing(_ person: PostAuthor) -> Bool {
-        guard let viewerID = profileStore.viewerID else { return false }
-        return store.followingByUser[viewerID]?.contains(where: { $0.id == person.id }) == true
-    }
-
-    private func followTitle(_ person: PostAuthor) -> LocalizedStringKey {
-        if isFollowing(person) { return "Following" }
-        return store.requestedUserIDs.contains(person.id) ? "Requested" : "Follow"
     }
 }

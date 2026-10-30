@@ -150,6 +150,8 @@ struct SocialProfile: Codable, Equatable {
     var viewerFollows: Bool = false
     /// Waiting on an answer from this person.
     var viewerHasRequested: Bool = false
+    /// Whether this person follows the reader, when the server says.
+    var followsViewer: Bool? = nil
     var disciplines: Set<AthleteDiscipline>
     var gym: GymIdentity?
     var profileImageData: Data?
@@ -461,6 +463,7 @@ final class SocialProfileStore {
             isReadable: remote.isReadable,
             viewerFollows: remote.viewerFollows,
             viewerHasRequested: remote.viewerHasRequested,
+            followsViewer: remote.followsViewer,
             disciplines: Set(remote.disciplines.compactMap(AthleteDiscipline.init(apiValue:))),
             gym: remote.gymID.map {
                 GymIdentity(

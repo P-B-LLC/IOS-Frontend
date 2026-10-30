@@ -867,7 +867,7 @@ private struct GuidedDayFlow: View {
             let remaining = max(workout.exercises.count - 1, 0)
             return remaining == 0 ? first.name : String(localized: "\(first.name) and \(remaining) more", bundle: .app, locale: .app)
         }
-        return workout.type.title
+        return workout.activity.title
     }
 
     /// The next thing on the day being looked at, and only that day.

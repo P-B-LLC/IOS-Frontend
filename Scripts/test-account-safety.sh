@@ -19,6 +19,27 @@ cp "$repo/IOS Frontend/IOS Frontend/API/WorkoutTemplateCreation.swift" "$test_pa
 cp "$repo/IOS Frontend/IOS Frontend/Services/WorkoutSelectionPolicy.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/Services/WorkoutFocusPolicy.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/Services/WorkoutWeightUnit.swift" "$test_package/Sources/AccountSafety/"
+# Lifting-session rules: set kinds, rest, supersets, reshaping, following.
+# All Foundation only, so they run here without a simulator.
+cp "$repo/Tests/AccountSafety/WorkoutSessionPolicyTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/IOS Frontend/IOS Frontend/Models/WorkoutSetType.swift" "$test_package/Sources/AccountSafety/"
+cp "$repo/IOS Frontend/IOS Frontend/Services/WorkoutSetPolicy.swift" "$test_package/Sources/AccountSafety/"
+cp "$repo/IOS Frontend/IOS Frontend/Services/RestTimer.swift" "$test_package/Sources/AccountSafety/"
+cp "$repo/IOS Frontend/IOS Frontend/Services/WorkoutStructureChanges.swift" "$test_package/Sources/AccountSafety/"
+cp "$repo/IOS Frontend/IOS Frontend/Services/FollowRelationship.swift" "$test_package/Sources/AccountSafety/"
+# Activities, logging after the fact, effort, and the exercise library. The
+# library test also reads the copy of the library the app ships.
+cp "$repo/Tests/AccountSafety/WorkoutActivityTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/Tests/AccountSafety/ExerciseLibraryTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/IOS Frontend/IOS Frontend/Models/WorkoutActivity.swift" "$test_package/Sources/AccountSafety/"
+cp "$repo/IOS Frontend/IOS Frontend/Models/ActivityLog.swift" "$test_package/Sources/AccountSafety/"
+cp "$repo/IOS Frontend/IOS Frontend/Models/ExerciseLibrary.swift" "$test_package/Sources/AccountSafety/"
+# The workout models themselves, for checkpoint compatibility across updates.
+cp "$repo/Tests/AccountSafety/WorkoutCheckpointTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/IOS Frontend/IOS Frontend/Models/Workout.swift" "$test_package/Sources/AccountSafety/"
+cp "$repo/IOS Frontend/IOS Frontend/Models/Nutrition.swift" "$test_package/Sources/AccountSafety/"
+cp "$repo/IOS Frontend/IOS Frontend/Models/ImperialUnits.swift" "$test_package/Sources/AccountSafety/"
+cp "$repo/IOS Frontend/IOS Frontend/Models/StableIdentity.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/Services/StepGoalCelebrationGate.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/Models/TrainingStats.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/Models/PlannerRepeatWeekday.swift" "$test_package/Sources/AccountSafety/"

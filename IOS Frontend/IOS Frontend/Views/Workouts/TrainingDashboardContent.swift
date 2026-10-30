@@ -46,7 +46,7 @@ struct TrainingDashboardContent: View {
                         Text("Your session is still open. Continue it or finish it from its workout day.")
                             .font(.community(.footnote))
                         NavigationLink("Open recovered session") { DayWorkoutView(day: session.day) }
-                        if session.tracksDistance {
+                        if session.activity.tracksRoute {
                             Button("Resume GPS tracking") { store.resumeRecoveredTracking() }
                         }
                     }
@@ -242,10 +242,12 @@ struct TrainingDashboardContent: View {
                 WorkoutFocusCard(
                     eyebrow: "SESSION IN PROGRESS",
                     title: session.workoutName,
-                    detail: String(localized: "\(session.loggedSetCount) of \(session.totalSetCount) sets logged", bundle: .app, locale: .app),
+                    detail: session.tracksDistance
+                        ? String(localized: "\(session.activity.title) · in progress", bundle: .app, locale: .app, comment: "An activity being timed, such as “Tennis · in progress”")
+                        : String(localized: "\(session.loggedSetCount) of \(session.totalSetCount) sets logged", bundle: .app, locale: .app),
                     completed: metrics.completedThisWeek,
                     goal: metrics.weeklyGoal,
-                    workoutType: session.workoutType
+                    symbol: session.activity.symbol
                 )
             }
             .buttonStyle(.plain)
@@ -259,7 +261,7 @@ struct TrainingDashboardContent: View {
                     detail: focusDescription(for: day),
                     completed: completedThisWeek,
                     goal: metrics.weeklyGoal,
-                    workoutType: store.workout(on: day)?.type ?? .lifting,
+                    symbol: store.workout(on: day)?.activity.symbol ?? WorkoutActivity.weightlifting.symbol,
                     isDayComplete: hiddenCompletedDay != day && store.workout(on: day).map {
                         store.isCompleted(
                             workoutName: $0.name,
@@ -287,6 +289,11 @@ struct TrainingDashboardContent: View {
             totalsCard
             trendCard
             milestoneCard
+            RecentActivityList(
+                sessions: Array(store.dashboardSessions.filter(\.recordedSomething).prefix(8)),
+                phase: phase,
+                unit: store.preferences.weightUnit == .imperial ? .miles : .kilometers
+            )
 
             if store.isLoadingDashboardSessions && store.dashboardSessions.isEmpty {
                 ProgressView("Loading progress from Rytivo...")
@@ -573,7 +580,7 @@ private struct WorkoutFocusCard: View {
     let detail: String
     let completed: Int
     let goal: Int
-    let workoutType: WorkoutType
+    let symbol: String
     var isDayComplete = false
     var celebratesCompletion = false
 
@@ -582,7 +589,7 @@ private struct WorkoutFocusCard: View {
             HStack {
                 Text(eyebrow).font(.community(.caption2, weight: .bold))
                 Spacer()
-                Image(systemName: workoutType.builderSymbol).font(.system(size: 20))
+                Image(systemName: symbol).font(.system(size: 20))
             }.foregroundStyle(RepbaseDesign.warning)
             Text(title).font(.community(.title, weight: .bold))
             Text(detail).font(.community(.caption)).foregroundStyle(.secondary)

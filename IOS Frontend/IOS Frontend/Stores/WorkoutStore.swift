@@ -46,16 +46,26 @@ final class WorkoutStore {
         return unit
     }
 
-    func exerciseChoices(page: Int = 1) async throws -> WorkoutExercisePage {
+    func exerciseChoices(page: Int = 1, search: String? = nil, mine: Bool = false) async throws -> WorkoutExercisePage {
         guard let repository else {
             throw APIServiceError.missingServerIdentifier(
                 String(localized: "Account connection", bundle: .app, locale: .app, comment: "Names what is missing in “%@ has not been saved to the server yet.”")
             )
         }
         let generation = connectionGeneration
-        let result = try await repository.exerciseChoices(page: page)
+        let result = try await repository.exerciseChoices(page: page, search: search, mine: mine)
         guard generation == connectionGeneration else { throw CancellationError() }
         return result
+    }
+
+    /// Writes the account's default weight unit and answers with what the
+    /// server stored.
+    func savePreferredWeightUnit(_ unit: WorkoutWeightUnit) async throws -> WorkoutWeightUnit {
+        guard let repository else { throw APIServiceError.undocumentedStatus(0) }
+        let generation = connectionGeneration
+        let saved = try await repository.setPreferredWeightUnit(unit)
+        guard generation == connectionGeneration else { throw CancellationError() }
+        return saved
     }
     private var connectionGeneration = UUID()
     private let scheduleReads = CalendarReadGate()
@@ -72,8 +82,24 @@ final class WorkoutStore {
     private(set) var isLoading = false
     private(set) var isSaving = false
     private(set) var activeSession: ActiveWorkoutSession? {
-        didSet { checkpointActiveSession() }
+        didSet {
+            checkpointActiveSession()
+            publishSessionSignals()
+        }
     }
+    /// Weight unit and rest settings, read by every workout screen.
+    let preferences = WorkoutPreferences()
+    /// The exercises people choose from, shared by the workout builder and
+    /// the add-exercise sheet of a session in progress, so an exercise
+    /// created in one is offered in the other straight away.
+    let catalog = ExerciseCatalog()
+    /// Keeps the Lock Screen and Dynamic Island in step with the session.
+    private let liveActivity = WorkoutLiveActivityController()
+    /// Says when a rest is over while the app is not on screen.
+    private let restNotifier = RestTimerNotifier()
+    /// Set while a connection is restoring the session; see
+    /// `publishSessionSignals`.
+    private var holdsSessionSignals = false
     private(set) var recoveredActiveSession = false
     private var lastCheckpointAt = Date.distantPast
     private struct ActiveCheckpoint: Codable {
@@ -158,8 +184,46 @@ final class WorkoutStore {
 
     init(initialSchedule: [Weekday: [Workout]] = [:]) {
         schedule = initialSchedule
+        // Read the exercise library off the main thread now, so the first
+        // search in the builder does not pay for parsing it.
+        Task.detached(priority: .utility) { _ = ExerciseLibrary.shared }
         routeTracker.onPointsChanged = { [weak self] in self?.checkpointActiveSession(force: false) }
+        catalog.source = { [weak self] page, search, mine in
+            guard let self else { throw CancellationError() }
+            return try await self.exerciseChoices(page: page, search: search, mine: mine)
+        }
+        // Lock Screen buttons run their intent in this process. Installed
+        // here, at launch, so a tap that wakes the app finds somewhere to go.
+        WorkoutActivityActionCenter.shared.install { [weak self] action in
+            await self?.handleLiveActivityAction(action)
+        }
     }
+
+    /// Tells the Lock Screen and the rest notification what the session looks
+    /// like now. Called on every change to it; both skip work when nothing
+    /// they show has changed.
+    private func publishSessionSignals() {
+        // A connection clears the session and then restores it from the
+        // checkpoint. In between it is nil only because it has not been read
+        // yet, and taking that for "the workout ended" would remove the Lock
+        // Screen activity -- which, with the app woken in the background by a
+        // tap on it, could not be started again until it was opened.
+        guard !holdsSessionSignals else { return }
+        let session = activeSession.flatMap { $0.tracksDistance ? nil : $0 }
+        liveActivity.sync(
+            session: session,
+            enabled: preferences.liveActivity,
+            unit: preferences.weightUnit,
+            previous: { [weak self] exercise, index in self?.previousSet(for: exercise, at: index) }
+        )
+        restNotifier.sync(
+            session: session,
+            enabled: preferences.restAlerts
+        )
+    }
+
+    /// For a settings switch that changes what the signals should show.
+    func refreshSessionSignals() { publishSessionSignals() }
 
     // MARK: - Connection
 
@@ -170,11 +234,18 @@ final class WorkoutStore {
         connectionGeneration = generation
         scheduleReads.invalidate()
         lastSavedWorkoutID = nil
+        holdsSessionSignals = true
         activeSession = nil
         pendingSetIDs = []
         // A fresh connection owns these flags; never inherit a stuck one.
         isLoading = false
         isSaving = false
+        defer {
+            if connectionGeneration == generation {
+                holdsSessionSignals = false
+                publishSessionSignals()
+            }
+        }
 
         do {
             let repository = try WorkoutAPIRepository(
@@ -183,12 +254,19 @@ final class WorkoutStore {
                 recoveryScope: EditorDraftRecovery.shared.scope
             )
             self.repository = repository
+            catalog.reset()
             await reloadWeek(
                 using: repository,
                 generation: generation,
                 showsLoadingState: true
             )
             await restoreActiveCheckpoint(using: repository, generation: generation)
+            // Read once per connection rather than by every screen that shows
+            // a weight. A failure keeps kilograms, which is what the stored
+            // numbers are; it is never a reason to stop a workout.
+            if let unit = try? await repository.preferredWeightUnit(), generation == connectionGeneration {
+                preferences.adoptAccountUnit(unit)
+            }
         } catch {
             self.repository = nil
             schedule = [:]
@@ -211,6 +289,8 @@ final class WorkoutStore {
         repository = nil
         schedule = [:]
         lastSavedWorkoutID = nil
+        // Signing out does end the session on this phone, Lock Screen and all.
+        holdsSessionSignals = false
         activeSession = nil
         pendingSetIDs = []
         persistenceError = nil
@@ -235,6 +315,8 @@ final class WorkoutStore {
         liftProgress = []
         routeSummary = nil
         completedRoute = []
+        preferences.reset()
+        catalog.reset()
     }
 
     // MARK: - Whether a day has been trained
@@ -383,6 +465,19 @@ final class WorkoutStore {
             return nil
         }
         return sets.first { $0.setNumber == setNumber } ?? sets.last
+    }
+
+    /// The hint for the set in this row, matched by kind and place: today's
+    /// first working set against last time's first working set, warm-ups
+    /// against warm-ups. See `WorkoutSetPolicy.previousIndex`.
+    func previousSet(for exercise: SessionExerciseDraft, at index: Int) -> PreviousSet? {
+        guard let sets = previousSets[exercise.exerciseServerID], !sets.isEmpty else { return nil }
+        let match = WorkoutSetPolicy.previousIndex(
+            at: index,
+            types: exercise.sets.map(\.setType),
+            previousTypes: sets.map { $0.setType ?? .normal }
+        )
+        return match.map { sets[$0] }
     }
 
     /// Reads what was lifted last time, for the session that just started.
@@ -666,6 +761,7 @@ final class WorkoutStore {
             }
             try await repository.acknowledgeTemplateSave(draftID: workout.id)
             guard connectionGeneration == generation else { return nil }
+            await catalog.refreshMine()
             return id
         } catch {
             guard connectionGeneration == generation else { return nil }
@@ -724,6 +820,8 @@ final class WorkoutStore {
             try await repository.acknowledgeTemplateSave(draftID: workout.id)
             guard connectionGeneration == generation else { return false }
             lastSavedWorkoutID = confirmed.id
+            // A save can create exercises; Explore should offer them at once.
+            await catalog.refreshMine()
             return true
         } catch {
             guard connectionGeneration == generation else { return false }
@@ -847,9 +945,10 @@ final class WorkoutStore {
                 routeSummary = nil
                 completedRoute = []
                 previousSets = [:]
-                // Only a run, ride, or swim records a track, and only for as
-                // long as its session is active.
-                if session.tracksDistance {
+                // Only an activity that moves from place to place records a
+                // track -- a run or a ride, not a pool, a court or a mat --
+                // and only for as long as its session is active.
+                if session.activity.tracksRoute {
                     routeTracker.startTracking()
                 }
                 // Read after the session is on screen rather than before, so
@@ -896,6 +995,52 @@ final class WorkoutStore {
         exerciseID: Exercise.ID,
         setID: WorkoutSetDraft.ID
     ) {
+        Task { await toggleSessionSetLoggedNow(on: day, exerciseID: exerciseID, setID: setID) }
+    }
+
+    /// Completes a set from its row's check, filling an empty field from the
+    /// hint first.
+    ///
+    /// The hint -- the target, or what was lifted last time -- is printed in
+    /// the empty field, so checking the row is a deliberate "I did what it
+    /// says". Nothing is filled in until that tap: an untouched field still
+    /// never pretends to be today's number.
+    func completeSessionSet(on day: Weekday, exerciseID: Exercise.ID, setID: WorkoutSetDraft.ID) {
+        Task { await completeSessionSetNow(on: day, exerciseID: exerciseID, setID: setID) }
+    }
+
+    func completeSessionSetNow(on day: Weekday, exerciseID: Exercise.ID, setID: WorkoutSetDraft.ID) async {
+        guard let exercise = sessionExercise(on: day, id: exerciseID),
+              let index = exercise.sets.firstIndex(where: { $0.id == setID }),
+              !exercise.sets[index].isLogged else { return }
+        let set = exercise.sets[index]
+        let hint = previousSet(for: exercise, at: index)
+        if set.reps.trimmingCharacters(in: .whitespaces).isEmpty,
+           let reps = exercise.targetReps(for: set) ?? hint?.reps {
+            updateSessionSet(on: day, exerciseID: exerciseID, setID: setID, reps: String(reps))
+        }
+        if set.weightKilograms.trimmingCharacters(in: .whitespaces).isEmpty,
+           let weight = exercise.targetWeightKilograms(for: set) ?? hint?.weightKilograms.map({ "\($0)" }) {
+            updateSessionSet(on: day, exerciseID: exerciseID, setID: setID, weightKilograms: weight)
+        }
+        await toggleSessionSetLoggedNow(on: day, exerciseID: exerciseID, setID: setID)
+    }
+
+    /// Whether checking this set would log it: it has reps of its own, or a
+    /// hint to take them from.
+    func canComplete(_ set: WorkoutSetDraft, in exercise: SessionExerciseDraft) -> Bool {
+        guard set.isWeightValid else { return false }
+        if set.areRepsValid { return true }
+        guard set.reps.trimmingCharacters(in: .whitespaces).isEmpty,
+              let index = exercise.sets.firstIndex(where: { $0.id == set.id }) else { return false }
+        return exercise.targetReps(for: set) != nil || previousSet(for: exercise, at: index)?.reps != nil
+    }
+
+    func toggleSessionSetLoggedNow(
+        on day: Weekday,
+        exerciseID: Exercise.ID,
+        setID: WorkoutSetDraft.ID
+    ) async {
         guard let repository,
               !pendingSetIDs.contains(setID),
               let session = activeSession(on: day),
@@ -908,7 +1053,7 @@ final class WorkoutStore {
 
         pendingSetIDs.insert(setID)
         persistenceError = nil
-        Task {
+        do {
             defer { if connectionGeneration == generation { pendingSetIDs.remove(setID) } }
             do {
                 if set.isLogged {
@@ -940,6 +1085,9 @@ final class WorkoutStore {
                         $0.reps = reps
                         $0.distanceKilometers = distance
                     }
+                    if !workoutType.tracksDistance {
+                        advanceAfterLogging(exerciseID: exerciseID, on: day)
+                    }
                     if weight != set.weightKilograms || reps != set.reps || distance != set.distanceKilometers {
                         persistenceError = String(
                             localized: "Your earlier set was saved. Its saved values are shown; unlog it first if you want to change them.",
@@ -955,44 +1103,63 @@ final class WorkoutStore {
         }
     }
 
-    func addSessionSet(on day: Weekday, exerciseID: Exercise.ID) {
+    /// Adds a set at the end of an exercise. A new set copies the kind of the
+    /// one before it unless told otherwise -- a fourth working set after three
+    /// is far more common than a fourth that is suddenly a warm-up -- but a
+    /// drop set is never copied: two in a row is a choice, not a habit.
+    func addSessionSet(on day: Weekday, exerciseID: Exercise.ID, type: WorkoutSetType? = nil) {
         mutateSession(on: day) { session in
             guard let index = session.exercises.firstIndex(
                 where: { $0.id == exerciseID }
             ) else {
                 return
             }
-            let nextNumber = session.exercises[index].sets.count + 1
+            let previous = session.exercises[index].sets.last?.setType
+            let kind = type ?? (previous == .drop ? .normal : previous ?? .normal)
             session.exercises[index].sets.append(
-                WorkoutSetDraft(setNumber: nextNumber)
+                WorkoutSetDraft(setNumber: session.exercises[index].nextSetNumber, setType: kind)
             )
         }
     }
 
     func removeLastSessionSet(on day: Weekday, exerciseID: Exercise.ID) {
+        guard let exercise = sessionExercise(on: day, id: exerciseID),
+              exercise.sets.count > 1,
+              let lastSet = exercise.sets.last else {
+            return
+        }
+        removeSessionSet(on: day, exerciseID: exerciseID, setID: lastSet.id)
+    }
+
+    /// Deletes one set, wherever it is in the exercise. A logged set's entry
+    /// is removed from the server first; the row only goes once that is
+    /// confirmed, so a failure leaves both where they were. The other sets
+    /// keep their numbers -- they are the server's keys -- and their rows
+    /// close up, because what a row shows is its place, not its number.
+    func removeSessionSet(on day: Weekday, exerciseID: Exercise.ID, setID: WorkoutSetDraft.ID) {
         guard let repository,
               let exercise = sessionExercise(on: day, id: exerciseID),
               exercise.sets.count > 1,
-              let lastSet = exercise.sets.last,
-              !pendingSetIDs.contains(lastSet.id) else {
+              let doomed = exercise.sets.first(where: { $0.id == setID }),
+              !pendingSetIDs.contains(doomed.id) else {
             return
         }
 
         let generation = connectionGeneration
-        pendingSetIDs.insert(lastSet.id)
+        pendingSetIDs.insert(doomed.id)
         Task {
-            defer { if connectionGeneration == generation { pendingSetIDs.remove(lastSet.id) } }
+            defer { if connectionGeneration == generation { pendingSetIDs.remove(doomed.id) } }
             do {
-                if let entryID = lastSet.serverID {
-                    try await repository.unlogSet(id: entryID, sessionExerciseID: exercise.sessionExerciseID, setNumber: lastSet.setNumber)
+                if let entryID = doomed.serverID {
+                    try await repository.unlogSet(id: entryID, sessionExerciseID: exercise.sessionExerciseID, setNumber: doomed.setNumber)
                 } else {
-                    try await repository.removeUnconfirmedSet(sessionExerciseID: exercise.sessionExerciseID, setNumber: lastSet.setNumber)
+                    try await repository.removeUnconfirmedSet(sessionExerciseID: exercise.sessionExerciseID, setNumber: doomed.setNumber)
                 }
                 guard connectionGeneration == generation else { return }
-                removeSessionSet(
+                removeSessionSetRow(
                     on: day,
                     exerciseID: exerciseID,
-                    setID: lastSet.id
+                    setID: doomed.id
                 )
             } catch {
                 guard connectionGeneration == generation else { return }
@@ -1001,7 +1168,383 @@ final class WorkoutStore {
         }
     }
 
-    func endSession(on day: Weekday) async -> Int? {
+    /// Changes what a set is for. An unlogged set changes here and is sent
+    /// when it is logged; a logged one is corrected on the server too, without
+    /// unlogging it, so fixing a label never costs the set.
+    func setSessionSetType(
+        _ type: WorkoutSetType,
+        on day: Weekday,
+        exerciseID: Exercise.ID,
+        setID: WorkoutSetDraft.ID
+    ) {
+        guard !pendingSetIDs.contains(setID),
+              let set = sessionExercise(on: day, id: exerciseID)?.sets.first(where: { $0.id == setID }),
+              set.setType != type else { return }
+        let previousType = set.setType
+        mutateSet(on: day, exerciseID: exerciseID, setID: setID) { $0.setType = type }
+        guard set.isLogged, let entryID = set.serverID, let repository else { return }
+
+        let generation = connectionGeneration
+        pendingSetIDs.insert(setID)
+        Task {
+            defer { if connectionGeneration == generation { pendingSetIDs.remove(setID) } }
+            do {
+                try await repository.updateSetType(entryID: entryID, type: type)
+            } catch {
+                guard connectionGeneration == generation else { return }
+                mutateSet(on: day, exerciseID: exerciseID, setID: setID) { $0.setType = previousType }
+                persistenceError = error.userFacingMessage
+            }
+        }
+    }
+
+    // MARK: - Reshaping a session in progress
+    //
+    // Every change here applies to this session at once and to nothing else.
+    // Whether it should also become the saved workout's plan is asked once,
+    // when the session finishes, rather than after every edit.
+
+    /// Exercises being added, so the sheet can show progress and refuse a
+    /// second tap while the first is on its way.
+    private(set) var addingExerciseNames: Set<String> = []
+
+    /// Adds an exercise to the end of the session: a catalog choice, or a
+    /// name the account has never used, which is created first.
+    @discardableResult
+    func addSessionExercise(_ exercise: Exercise, on day: Weekday) async -> Bool {
+        guard let repository, let session = activeSession(on: day) else { return false }
+        let key = exercise.name.lowercased()
+        guard !addingExerciseNames.contains(key) else { return false }
+        let generation = connectionGeneration
+        addingExerciseNames.insert(key)
+        persistenceError = nil
+        defer { if connectionGeneration == generation { addingExerciseNames.remove(key) } }
+        do {
+            let added = try await repository.addSessionExercise(exercise, toSession: session.serverID)
+            guard connectionGeneration == generation, activeSession?.serverID == session.serverID else { return false }
+            let count = max(exercise.sets, 1)
+            let types = exercise.plannedSetTypes
+            mutateSession(on: day) { session in
+                session.exercises.append(SessionExerciseDraft(
+                    id: UUID(),
+                    exerciseServerID: added.exerciseID,
+                    sessionExerciseID: added.sessionExerciseID,
+                    name: added.name,
+                    sets: (1...count).map {
+                        WorkoutSetDraft(setNumber: $0, setType: types.indices.contains($0 - 1) ? types[$0 - 1] : .normal)
+                    },
+                    restSeconds: exercise.restSeconds,
+                    targetReps: exercise.targetReps,
+                    targetWeightKilograms: exercise.targetWeightKilograms
+                ))
+                if session.exercises.allSatisfy({ $0.isComplete || $0.id == session.exercises.last?.id }) {
+                    session.focusedExerciseID = session.exercises.last?.id
+                }
+            }
+            if added.created { await catalog.refreshMine() }
+            // Hints for an exercise trained in some other workout. Quietly,
+            // like the first read: it is a hint, not the session.
+            if previousSets[added.exerciseID] == nil,
+               let loaded = try? await repository.previousSets(excludingSessionID: session.serverID),
+               connectionGeneration == generation {
+                previousSets = loaded
+            }
+            return true
+        } catch {
+            guard connectionGeneration == generation else { return false }
+            persistenceError = error.userFacingMessage
+            return false
+        }
+    }
+
+    /// Takes an exercise out of the session, with any sets already logged in
+    /// it. The view asks first when there are; this does what it is told.
+    func removeSessionExercise(on day: Weekday, exerciseID: Exercise.ID) async {
+        guard let repository,
+              let exercise = sessionExercise(on: day, id: exerciseID),
+              !exercise.sets.contains(where: { pendingSetIDs.contains($0.id) }) else { return }
+        let generation = connectionGeneration
+        exercise.sets.forEach { pendingSetIDs.insert($0.id) }
+        defer { if connectionGeneration == generation { exercise.sets.forEach { pendingSetIDs.remove($0.id) } } }
+        persistenceError = nil
+        do {
+            try await repository.removeSessionExercise(id: exercise.sessionExerciseID)
+            guard connectionGeneration == generation else { return }
+            mutateSession(on: day) { session in
+                guard let index = session.exercises.firstIndex(where: { $0.id == exerciseID }) else { return }
+                session.exercises.remove(at: index)
+                if session.focusedExerciseID == exerciseID {
+                    session.focusedExerciseID = session.exercises.first { !$0.isComplete }?.id
+                        ?? session.exercises.first?.id
+                }
+                // A superset of one is just an exercise.
+                Self.dissolveLoneSupersets(in: &session)
+            }
+        } catch {
+            guard connectionGeneration == generation else { return }
+            persistenceError = error.userFacingMessage
+        }
+    }
+
+    /// Moves exercises within the session. The order changes here at once;
+    /// the server is told behind it, and asked again at Finish if that did
+    /// not get through. Sets, logged or not, travel with their exercise, and
+    /// a rest in progress keeps counting.
+    func moveSessionExercises(on day: Weekday, fromOffsets source: IndexSet, toOffset destination: Int) {
+        mutateSession(on: day) { session in
+            // The same rule as a SwiftUI list's move: `destination` is an
+            // offset in the list as it was, before anything was taken out.
+            let moving = source.sorted().map { session.exercises[$0] }
+            var remaining = session.exercises.enumerated()
+                .filter { !source.contains($0.offset) }
+                .map(\.element)
+            let insertion = destination - source.filter { $0 < destination }.count
+            remaining.insert(contentsOf: moving, at: min(max(insertion, 0), remaining.count))
+            guard remaining.map(\.id) != session.exercises.map(\.id) else { return }
+            session.exercises = remaining
+            session.orderNeedsSync = true
+        }
+        Task { await syncSessionOrder() }
+    }
+
+    private func syncSessionOrder() async {
+        guard let repository, let session = activeSession, session.orderNeedsSync else { return }
+        let generation = connectionGeneration
+        let order = session.exercises.map(\.sessionExerciseID)
+        do {
+            try await repository.reorderSessionExercises(sessionID: session.serverID, sessionExerciseIDs: order)
+            guard connectionGeneration == generation,
+                  activeSession?.exercises.map(\.sessionExerciseID) == order else { return }
+            mutateActiveSession { $0.orderNeedsSync = false }
+        } catch {
+            // Kept flagged and tried again at Finish. The order on this
+            // screen is already right; only the saved record would differ.
+        }
+    }
+
+    /// Seconds to rest after each set of this exercise, for this session.
+    /// Nil returns it to the default. A rest already running is left alone.
+    func setSessionRest(on day: Weekday, exerciseID: Exercise.ID, seconds: Int?) {
+        mutateSession(on: day) { session in
+            guard let index = session.exercises.firstIndex(where: { $0.id == exerciseID }) else { return }
+            session.exercises[index].restSeconds = seconds.map { min(max($0, 0), Int(RestTimer.maximumSeconds)) }
+        }
+    }
+
+    /// Joins two exercises into a superset, or adds one to its partner's
+    /// existing superset.
+    func supersetSessionExercise(on day: Weekday, exerciseID: Exercise.ID, with partnerID: Exercise.ID) {
+        guard exerciseID != partnerID else { return }
+        mutateSession(on: day) { session in
+            guard let index = session.exercises.firstIndex(where: { $0.id == exerciseID }),
+                  let partner = session.exercises.firstIndex(where: { $0.id == partnerID }) else { return }
+            let group = session.exercises[partner].supersetGroup
+                ?? session.exercises[index].supersetGroup
+                ?? ((session.exercises.compactMap(\.supersetGroup).max() ?? 0) + 1)
+            session.exercises[index].supersetGroup = group
+            session.exercises[partner].supersetGroup = group
+        }
+    }
+
+    func removeFromSuperset(on day: Weekday, exerciseID: Exercise.ID) {
+        mutateSession(on: day) { session in
+            guard let index = session.exercises.firstIndex(where: { $0.id == exerciseID }) else { return }
+            session.exercises[index].supersetGroup = nil
+            Self.dissolveLoneSupersets(in: &session)
+        }
+    }
+
+    private static func dissolveLoneSupersets(in session: inout ActiveWorkoutSession) {
+        let counts = Dictionary(grouping: session.exercises.compactMap(\.supersetGroup), by: { $0 }).mapValues(\.count)
+        for index in session.exercises.indices {
+            if let group = session.exercises[index].supersetGroup, counts[group, default: 0] < 2 {
+                session.exercises[index].supersetGroup = nil
+            }
+        }
+    }
+
+    /// Which exercise the screen and the Lock Screen point at. Switching never
+    /// logs, unlogs or resets anything.
+    func focusSessionExercise(_ exerciseID: Exercise.ID) {
+        mutateActiveSession { session in
+            guard session.exercises.contains(where: { $0.id == exerciseID }) else { return }
+            session.focusedExerciseID = exerciseID
+        }
+    }
+
+    /// The exercise to work on now: the chosen one while it still exists,
+    /// otherwise the first with a set left.
+    func focusedExercise(in session: ActiveWorkoutSession) -> SessionExerciseDraft? {
+        if let id = session.focusedExerciseID, let chosen = session.exercises.first(where: { $0.id == id }) {
+            return chosen
+        }
+        return session.exercises.first { !$0.isComplete } ?? session.exercises.first
+    }
+
+    /// Decides what happens once a set is in: start the rest, go to the next
+    /// exercise of a superset, or carry straight on into a drop set.
+    ///
+    /// Logging a set always ends a rest still showing from before -- the
+    /// person is plainly not resting -- and only a logged set starts one, so
+    /// moving between exercises, editing or reordering never resets it.
+    private func advanceAfterLogging(exerciseID: Exercise.ID, on day: Weekday) {
+        guard let session = activeSession(on: day) else { return }
+        let progress = session.exercises.map {
+            WorkoutSetPolicy.ExerciseProgress(
+                id: $0.id,
+                supersetGroup: $0.supersetGroup,
+                pendingTypes: $0.sets.filter { !$0.isLogged }.map(\.setType),
+                loggedCount: $0.loggedCount,
+                restSeconds: $0.restSeconds
+            )
+        }
+        let decision = WorkoutSetPolicy.afterLogging(
+            exerciseID: exerciseID,
+            exercises: progress,
+            defaultRestSeconds: preferences.defaultRestSeconds,
+            autoStartRest: preferences.autoStartRest
+        )
+        mutateSession(on: day) { session in
+            session.restTimer = nil
+            switch decision {
+            case .rest(let seconds, let focus):
+                session.restTimer = .start(seconds: TimeInterval(seconds), exerciseID: exerciseID)
+                if let focus { session.focusedExerciseID = focus }
+            case .move(let next):
+                session.focusedExerciseID = next
+            case .stay(let focus):
+                if let focus { session.focusedExerciseID = focus }
+            }
+        }
+    }
+
+    // MARK: - Rest timer
+
+    /// Starts a rest by hand, for somebody whose timer does not start itself
+    /// or who wants one between exercises.
+    func startRest(seconds: Int, exerciseID: Exercise.ID? = nil) {
+        guard seconds > 0 else { return }
+        mutateActiveSession { session in
+            session.restTimer = .start(
+                seconds: TimeInterval(seconds),
+                exerciseID: exerciseID ?? session.focusedExerciseID
+            )
+        }
+    }
+
+    func pauseRest() { mutateActiveSession { $0.restTimer?.pause() } }
+    func resumeRest() { mutateActiveSession { $0.restTimer?.resume() } }
+
+    func toggleRestPause() {
+        mutateActiveSession { session in
+            guard var timer = session.restTimer else { return }
+            switch timer.phase() {
+            case .running: timer.pause()
+            case .paused: timer.resume()
+            case .finished: return
+            }
+            session.restTimer = timer
+        }
+    }
+
+    /// Ends the rest now. Also how a finished rest is cleared away.
+    func skipRest() { mutateActiveSession { $0.restTimer = nil } }
+
+    /// Starts the same rest again from its full length.
+    func resetRest() { mutateActiveSession { $0.restTimer?.reset() } }
+
+    func adjustRest(by seconds: TimeInterval) {
+        mutateActiveSession { $0.restTimer?.adjust(by: seconds) }
+    }
+
+    // MARK: - Lock Screen
+
+    /// Runs a tap from the Lock Screen or Dynamic Island.
+    ///
+    /// The intent wakes this process if it was suspended, and may have
+    /// launched it. A launched app restores its session from the checkpoint
+    /// once its account reconnects, so this waits a little for that before
+    /// deciding there is nothing to act on. Every action names the session
+    /// and the rest or set it was drawn for, so a stale button cannot act on
+    /// whatever happens to be current now.
+    func handleLiveActivityAction(_ action: WorkoutActivityAction) async {
+        for _ in 0..<40 where activeSession == nil {
+            try? await Task.sleep(for: .milliseconds(250))
+        }
+        guard let session = activeSession, session.serverID == action.sessionID else {
+            await liveActivity.applyWithoutSession(action)
+            return
+        }
+        switch action {
+        case .completeSet(_, let exerciseID, let setID):
+            await completeSessionSetNow(on: session.day, exerciseID: exerciseID, setID: setID)
+        case .toggleRest(_, let restID):
+            guard session.restTimer?.id == restID else { return }
+            toggleRestPause()
+        case .skipRest(_, let restID):
+            guard session.restTimer?.id == restID else { return }
+            skipRest()
+        case .addRest(_, let restID, let seconds):
+            guard session.restTimer?.id == restID else { return }
+            adjustRest(by: TimeInterval(seconds))
+        }
+        await liveActivity.flush()
+    }
+
+    // MARK: - Saving today's shape as the plan
+
+    /// Makes the saved workout match this session's exercises, order, sets,
+    /// set kinds, rests and supersets. Asked for at Finish, never assumed.
+    ///
+    /// Exercises the plan already had keep their saved rows, and with them
+    /// their targets; new ones are added and dropped ones removed. Weights and
+    /// reps are not copied into targets: they are what happened today, not a
+    /// decision about every session after it.
+    @discardableResult
+    func saveStructureAsPlan(_ session: ActiveWorkoutSession) async -> Bool {
+        guard let repository else {
+            persistenceError = SaveFailure.notConnected
+            return false
+        }
+        let generation = connectionGeneration
+        let supersets = WorkoutStructureDiff.normalizedSupersets(session.exercises.map(\.supersetGroup))
+        let plan = zip(session.exercises, supersets).map { exercise, superset in
+            Exercise(
+                serverID: exercise.exerciseServerID,
+                workoutExerciseID: exercise.workoutExerciseID,
+                serverName: exercise.name,
+                name: exercise.name,
+                sets: exercise.sets.count,
+                setTypes: WorkoutStructureDiff.storedSetTypes(exercise.sets.map(\.setType)),
+                restSeconds: exercise.restSeconds,
+                supersetGroup: superset,
+                targetReps: exercise.targetReps,
+                targetWeightKilograms: exercise.targetWeightKilograms
+            )
+        }
+        do {
+            try await repository.replacePlan(workoutID: session.workoutServerID, exercises: plan)
+            guard connectionGeneration == generation else { return false }
+            scheduleReads.invalidate()
+            await reloadWeek(using: repository, generation: generation, showsLoadingState: false)
+            return true
+        } catch {
+            guard connectionGeneration == generation else { return false }
+            persistenceError = String(
+                localized: "Your workout is saved, but its plan could not be updated. \(error.userFacingMessage ?? error.localizedDescription)",
+                bundle: .app,
+                locale: .app
+            )
+            return false
+        }
+    }
+
+    /// Finishes the session. `updatingPlan` is the answer to "make this the
+    /// saved workout's plan?", asked by the screen only when the session was
+    /// reshaped; it is applied after the finish is confirmed, so a failure to
+    /// update the plan can never cost the workout itself.
+    func endSession(on day: Weekday, updatingPlan: Bool = false) async -> Int? {
+        if activeSession?.orderNeedsSync == true { await syncSessionOrder() }
         guard let repository,
               let session = activeSession,
               session.day == day,
@@ -1013,7 +1556,22 @@ final class WorkoutStore {
         let generation = connectionGeneration
         isSaving = true
         persistenceError = nil
-        defer { if connectionGeneration == generation { isSaving = false } }
+        defer {
+            if connectionGeneration == generation { isSaving = false }
+        }
+        let result = await finish(session, using: repository, generation: generation)
+        if result != nil, updatingPlan, !session.structureChanges.isEmpty, connectionGeneration == generation {
+            isSaving = false
+            await saveStructureAsPlan(session)
+        }
+        return result
+    }
+
+    private func finish(
+        _ session: ActiveWorkoutSession,
+        using repository: WorkoutAPIRepository,
+        generation: UUID
+    ) async -> Int? {
         do {
             let statsBeforeCompletion = trainingStats
             guard let ownerID = recoveryOwnerID else {
@@ -1115,6 +1673,69 @@ final class WorkoutStore {
         }
     }
 
+    // MARK: - Activities logged afterwards
+
+    /// Saves an activity that already happened -- a tennis match, a hike --
+    /// to this day's history in one request. The server files it under the
+    /// workout of that name (making one if there is none), puts that workout
+    /// on the day, and records the session as finished. Answers a problem to
+    /// show, or nil once it is saved and the day and the totals show it.
+    func logActivity(_ entry: ActivityLogEntry, on day: Weekday, workoutServerID: Int? = nil) async -> String? {
+        guard let repository else { return SaveFailure.notConnected }
+        let generation = connectionGeneration
+        persistenceError = nil
+        do {
+            _ = try await repository.logActivity(
+                entry,
+                workoutServerID: workoutServerID,
+                scheduledDate: Self.dateString(workoutDate(for: day))
+            )
+            guard generation == connectionGeneration else { return nil }
+            scheduleReads.invalidate()
+            await reloadWeek(using: repository, generation: generation, showsLoadingState: false)
+            await refreshTrainingHistory(using: repository, generation: generation)
+            return nil
+        } catch {
+            guard generation == connectionGeneration else { return nil }
+            return error.userFacingMessage ?? error.localizedDescription
+        }
+    }
+
+    /// Saves "how did it feel" onto a session that has finished. The values
+    /// are the person's own; a distance is only sent where nothing measured
+    /// one.
+    func saveSessionFeedback(_ feedback: SessionFeedback, sessionID: Int) async -> String? {
+        guard let repository else { return SaveFailure.notConnected }
+        let generation = connectionGeneration
+        do {
+            let saved = try await repository.saveSessionFeedback(feedback, sessionID: sessionID)
+            guard generation == connectionGeneration else { return nil }
+            // A server from before effort existed answers 200 and keeps none
+            // of it. Saying "saved" then would be untrue.
+            guard saved else {
+                return String(localized: "Your Rytivo server doesn’t store effort yet. Update the server, then try again.", bundle: .app, locale: .app)
+            }
+            await refreshTrainingHistory(using: repository, generation: generation)
+            return nil
+        } catch {
+            guard generation == connectionGeneration else { return nil }
+            return error.userFacingMessage ?? error.localizedDescription
+        }
+    }
+
+    /// The totals and the recent sessions, read again after something was
+    /// added to them. Quietly: a failure leaves what was shown.
+    private func refreshTrainingHistory(using repository: WorkoutAPIRepository, generation: UUID) async {
+        if let stats = try? await repository.trainingStats(), generation == connectionGeneration {
+            trainingStats = stats
+        }
+        if let refreshed = try? await repository.completedSessions(
+            since: Calendar.current.date(byAdding: .day, value: -Self.badgeHistoryDays, to: Date())
+        ), generation == connectionGeneration {
+            dashboardSessions = refreshed
+        }
+    }
+
     /// Hands a completion reward to Training exactly once. Waiting for the
     /// dashboard to consume it prevents confetti and progress motion from
     /// playing underneath the completion screen where nobody can see them.
@@ -1123,13 +1744,25 @@ final class WorkoutStore {
         return pendingTrainingDashboardReward
     }
 
-    func discardSession(on day: Weekday) async {
-        guard let repository,
-              let session = activeSession,
-              session.day == day,
-              pendingSetIDs.isEmpty,
-              !isSaving else {
-            return
+    /// Deletes the session in progress and everything logged in it.
+    ///
+    /// Asked for after a confirmation, so it does what it is told -- but it
+    /// says when it cannot, rather than returning quietly and leaving the
+    /// workout open with no explanation, which is how a started workout used
+    /// to look impossible to delete. A session the server no longer has is
+    /// already gone, so that counts as done: the phone must not hold on to a
+    /// workout nothing else knows about. The Lock Screen activity and the
+    /// rest notification go with it, because both follow `activeSession`.
+    @discardableResult
+    func discardSession(on day: Weekday) async -> Bool {
+        guard let session = activeSession, session.day == day else { return false }
+        guard let repository else {
+            persistenceError = String(localized: "Reconnect to delete this workout. Nothing has been deleted.", bundle: .app, locale: .app)
+            return false
+        }
+        guard pendingSetIDs.isEmpty, !isSaving else {
+            persistenceError = String(localized: "A set is still saving. Try again in a moment.", bundle: .app, locale: .app)
+            return false
         }
 
         let generation = connectionGeneration
@@ -1137,8 +1770,13 @@ final class WorkoutStore {
         persistenceError = nil
         defer { if connectionGeneration == generation { isSaving = false } }
         do {
-            try await repository.discardSession(id: session.serverID)
-            guard connectionGeneration == generation else { return }
+            do {
+                try await repository.discardSession(id: session.serverID)
+            } catch APIServiceError.undocumentedStatus(404) {
+                // Already deleted, from another device or by a retry whose
+                // first answer was lost.
+            }
+            guard connectionGeneration == generation else { return false }
             if let ownerID = recoveryOwnerID {
                 do {
                     try recovery.discardSession(ownerID: ownerID, origin: recoveryOrigin, sessionID: session.serverID)
@@ -1153,9 +1791,16 @@ final class WorkoutStore {
             routeTracker.reset()
             routeSummary = nil
             completedRoute = []
+            previousSets = [:]
+            return true
         } catch {
-            guard connectionGeneration == generation else { return }
-            persistenceError = error.userFacingMessage
+            guard connectionGeneration == generation else { return false }
+            persistenceError = String(
+                localized: "Couldn’t delete this workout, so it’s still open and nothing was lost. \(error.userFacingMessage ?? error.localizedDescription)",
+                bundle: .app,
+                locale: .app
+            )
+            return false
         }
     }
 
@@ -1225,7 +1870,7 @@ final class WorkoutStore {
     }
 
     func resumeRecoveredTracking() {
-        guard recoveredActiveSession, activeSession?.tracksDistance == true else { return }
+        guard recoveredActiveSession, activeSession?.activity.tracksRoute == true else { return }
         routeTracker.startTracking(preservingPoints: true)
         if routeTracker.isTracking { recoveredActiveSession = false }
     }
@@ -1369,6 +2014,79 @@ final class WorkoutStore {
         }
     }
 
+    // MARK: - The saved-workout library
+
+    /// Saves changes to a library workout without putting it on a day. Days it
+    /// is already planned on show the new plan, because they are that
+    /// workout, not copies of it.
+    func updateSavedWorkout(_ workout: Workout) async -> String? {
+        guard let repository else { return SaveFailure.notConnected }
+        guard !isSaving else { return SaveFailure.alreadySaving }
+        let generation = connectionGeneration
+        isSaving = true
+        persistenceError = nil
+        defer { if connectionGeneration == generation { isSaving = false } }
+        do {
+            try await repository.updateTemplate(Self.normalized(workout))
+            guard connectionGeneration == generation else { return SaveFailure.unexplained }
+            scheduleReads.invalidate()
+            await reloadWeek(using: repository, generation: generation, showsLoadingState: false)
+            await catalog.refreshMine()
+            return nil
+        } catch {
+            guard connectionGeneration == generation else { return SaveFailure.unexplained }
+            persistenceError = error.userFacingMessage
+            return persistenceError ?? SaveFailure.unexplained
+        }
+    }
+
+    /// Makes a copy of a saved workout under a free name, "Push Day copy",
+    /// "Push Day copy 2" and so on. Names are unique per account, so the
+    /// first free one is chosen here rather than refused by the server.
+    @discardableResult
+    func duplicateSavedWorkout(_ summary: WorkoutSummary) async -> Int? {
+        let taken = Set(knownWorkouts.map { $0.name.lowercased() })
+        let base = String(localized: "\(summary.name) copy", bundle: .app, locale: .app, comment: "The name of a copied workout; the placeholder is the original's name")
+        var name = base
+        var number = 2
+        while taken.contains(name.lowercased()) {
+            name = "\(base) \(number)"
+            number += 1
+        }
+        var copy = summary.asWorkout
+        copy = Workout(
+            name: String(name.prefix(150)),
+            type: copy.type,
+            activity: copy.activity,
+            cardioMachine: copy.cardioMachine,
+            cardioTargetMinutes: copy.cardioTargetMinutes,
+            // New rows for the copy: sharing the original's would edit it.
+            exercises: copy.exercises.map {
+                Exercise(
+                    serverID: $0.serverID, serverName: $0.serverName, name: $0.name, sets: $0.sets,
+                    setTypes: $0.setTypes, restSeconds: $0.restSeconds, supersetGroup: $0.supersetGroup,
+                    targetReps: $0.targetReps, targetWeightKilograms: $0.targetWeightKilograms
+                )
+            }
+        )
+        return await createTemplate(copy)
+    }
+
+    /// Starts a saved workout today: it is put on today first if it is not
+    /// already there, then started. Answers with the day to open.
+    func startSavedWorkout(_ summary: WorkoutSummary) async -> Weekday? {
+        guard let today else { return nil }
+        if workouts(on: today).first(where: { $0.serverID == summary.serverID }) == nil {
+            guard await scheduleKnownWorkout(summary, on: workoutDate(for: today)) else { return nil }
+        }
+        guard let scheduled = workouts(on: today).first(where: { $0.serverID == summary.serverID }) else {
+            persistenceError = String(localized: "This workout is no longer scheduled on this day. Reload the day and choose it again.", bundle: .app, locale: .app)
+            return nil
+        }
+        if activeSession == nil { startSession(on: today, workoutID: scheduled.id) }
+        return today
+    }
+
     /// Whether there is anything planned to clear. Offering the button over an
     /// empty calendar would be offering to do nothing.
     var hasAnythingScheduled: Bool {
@@ -1467,7 +2185,7 @@ final class WorkoutStore {
         }
     }
 
-    private func removeSessionSet(
+    private func removeSessionSetRow(
         on day: Weekday,
         exerciseID: Exercise.ID,
         setID: WorkoutSetDraft.ID
@@ -1488,6 +2206,15 @@ final class WorkoutStore {
     ) {
         guard var session = activeSession, session.day == day else { return }
         mutation(&session)
+        activeSession = session
+    }
+
+    /// For changes that belong to whichever session is running -- its rest,
+    /// its focus -- wherever they are made from.
+    private func mutateActiveSession(_ mutation: (inout ActiveWorkoutSession) -> Void) {
+        guard var session = activeSession else { return }
+        mutation(&session)
+        guard session != activeSession else { return }
         activeSession = session
     }
 
@@ -1612,8 +2339,14 @@ final class WorkoutStore {
         // Named in English whatever the interface language: the server finds
         // an exercise again by its name, so a translated one would start a
         // second exercise, and a second history, after a language change.
+        // An activity saved before activities existed keeps the name its
+        // history is under ("Biking", not "Cycling"); a newer one is named
+        // after itself, so a hike's efforts are not filed as running.
+        let label = workout.activity == .legacyDefault(for: workout.type)
+            ? workout.type.rawValue.capitalized
+            : workout.activity.rawValue.split(separator: "_").map { $0.capitalized }.joined(separator: " ")
         workout.exercises = [
-            Exercise(name: workout.type.rawValue.capitalized, sets: 1)
+            Exercise(name: label, sets: 1)
         ]
         return workout
     }
@@ -1667,9 +2400,71 @@ extension WorkoutStore {
                 serverID: index + 1,
                 name: workout.name,
                 type: .lifting,
-                exercises: workout.exercises
+                exercises: workout.exercises,
+                lastPerformedAt: index == 0 ? Date().addingTimeInterval(-3 * 86_400)
+                    : index == 1 ? Date().addingTimeInterval(-9 * 86_400) : nil
             )
         }
         return store
     }
+
+#if DEBUG
+    /// A lifting session part way through: a warm-up and a working set in,
+    /// a superset, a rest running, and an exercise added since the start.
+    /// The live screen is several taps and a server away, which is out of a
+    /// script's reach, so this is how it is looked at in the simulator.
+    static var previewActiveSession: WorkoutStore {
+        let store = previewWithLibrary
+        let day = store.today ?? .monday
+        let bench = UUID(), incline = UUID(), fly = UUID(), dips = UUID()
+        func sets(_ types: [WorkoutSetType], logged: Int, weight: String, reps: String) -> [WorkoutSetDraft] {
+            types.enumerated().map { index, type in
+                WorkoutSetDraft(
+                    serverID: index < logged ? 900 + index : nil,
+                    setNumber: index + 1,
+                    weightKilograms: index < logged ? weight : "",
+                    reps: index < logged ? reps : "",
+                    isLogged: index < logged,
+                    setType: type
+                )
+            }
+        }
+        var session = ActiveWorkoutSession(
+            id: UUID(), serverID: 4242, day: day, workoutID: UUID(), workoutServerID: 1,
+            workoutName: "Upper Body", workoutType: .lifting,
+            startedAt: Date().addingTimeInterval(-24 * 60),
+            exercises: [
+                SessionExerciseDraft(id: bench, exerciseServerID: 11, sessionExerciseID: 101, name: "Bench Press",
+                                     sets: sets([.warmup, .normal, .normal, .normal, .drop], logged: 2, weight: "60", reps: "8"),
+                                     workoutExerciseID: 1, restSeconds: 150, targetReps: 8),
+                SessionExerciseDraft(id: incline, exerciseServerID: 12, sessionExerciseID: 102, name: "Incline Dumbbell Press",
+                                     sets: sets([.normal, .normal, .normal], logged: 0, weight: "", reps: ""),
+                                     workoutExerciseID: 2, supersetGroup: 1),
+                SessionExerciseDraft(id: fly, exerciseServerID: 13, sessionExerciseID: 103, name: "Cable Fly",
+                                     sets: sets([.normal, .normal, .failure], logged: 0, weight: "", reps: ""),
+                                     workoutExerciseID: 3, supersetGroup: 1),
+                SessionExerciseDraft(id: dips, exerciseServerID: 14, sessionExerciseID: 104, name: "Dips",
+                                     sets: sets([.normal, .normal], logged: 0, weight: "", reps: ""))
+            ],
+            restTimer: .start(seconds: 150, exerciseID: bench, at: Date().addingTimeInterval(-38)),
+            focusedExerciseID: bench
+        )
+        var plan = session.structure
+        plan.items.removeLast()
+        session.plan = plan
+        store.previousSets = [
+            11: [PreviousSet(setNumber: 1, weightKilograms: 40, reps: 10, setType: .warmup),
+                 PreviousSet(setNumber: 2, weightKilograms: Decimal(string: "57.5"), reps: 8),
+                 PreviousSet(setNumber: 3, weightKilograms: Decimal(string: "57.5"), reps: 7)],
+            12: [PreviousSet(setNumber: 1, weightKilograms: 22, reps: 10)]
+        ]
+        store.activeSession = session
+        return store
+    }
+
+    /// One instance for the launch flag. The app's root is rebuilt as it
+    /// comes to the front, and a fresh store each time would hand the screen
+    /// a session with new ids, which reads to it as a change of focus.
+    static let sharedPreviewActiveSession = previewActiveSession
+#endif
 }

@@ -13,7 +13,9 @@ final class WorkoutFlowTests: XCTestCase {
 
     func testWeightConversionPreservesKilogramWireValuesAndInvalidInput() {
         XCTAssertEqual(WorkoutWeightUnit.imperial.kilograms(display: "135"), "61.23")
-        XCTAssertEqual(WorkoutWeightUnit.imperial.display(kilograms: "61.23"), "134.99")
+        // Pounds are shown to a tenth from two-decimal kilograms, so 135 lb
+        // typed in comes back as 135 rather than 134.99.
+        XCTAssertEqual(WorkoutWeightUnit.imperial.display(kilograms: "61.23"), "135")
         XCTAssertEqual(WorkoutWeightUnit.metric.kilograms(display: "12,5"), "12.5")
         XCTAssertEqual(WorkoutWeightUnit.metric.kilograms(display: ""), "")
         XCTAssertEqual(WorkoutWeightUnit.imperial.kilograms(display: "0"), "0")

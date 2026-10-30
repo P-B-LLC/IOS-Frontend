@@ -715,6 +715,11 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /api/v1/sessions/{id}/records/`.
     /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/records//get(sessions_records_list)`.
     func sessionsRecordsList(_ input: Operations.SessionsRecordsList.Input) async throws -> Operations.SessionsRecordsList.Output
+    /// Put an active session's exercises in a new order, all at once. The body lists every SessionExercise id of the session exactly once; they are renumbered 1 to n in that order and the session's exercises are returned in it. A list that leaves one out, repeats one or names another session's is a 400 and changes nothing, as is a session that is planned or completed. Sending the same list again changes nothing.
+    ///
+    /// - Remark: HTTP `POST /api/v1/sessions/{id}/reorder/`.
+    /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/reorder//post(sessions_reorder_create)`.
+    func sessionsReorderCreate(_ input: Operations.SessionsReorderCreate.Input) async throws -> Operations.SessionsReorderCreate.Output
     /// Read or append the GPS track recorded during a session.
     ///
     /// Uploaded points are stored raw; distance and pace are derived from them
@@ -743,6 +748,11 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /api/v1/sessions/import-health/`.
     /// - Remark: Generated from `#/paths//api/v1/sessions/import-health//post(sessions_import_health_create)`.
     func sessionsImportHealthCreate(_ input: Operations.SessionsImportHealthCreate.Input) async throws -> Operations.SessionsImportHealthCreate.Output
+    /// Log a finished session after the fact: an activity, when it started and how long it lasted, with optional effort, calories, distance, details and notes. Creates a completed session marked `is_manual_entry`, ending `duration_seconds` after `started_at` (at most five minutes from now). The workout is `workout` (one of yours, of this activity) or the one named `workout_name`, ignoring case, made with this activity if you have none; a named workout of another activity is a 400. `scheduled_date` also schedules the workout on that day, reusing the day's entry if there is one. The day's planner task for the workout is ticked, as finishing a live session does. Send an `Idempotency-Key` to make retries replay the same session instead of logging a second one.
+    ///
+    /// - Remark: HTTP `POST /api/v1/sessions/log/`.
+    /// - Remark: Generated from `#/paths//api/v1/sessions/log//post(sessions_log_create)`.
+    func sessionsLogCreate(_ input: Operations.SessionsLogCreate.Input) async throws -> Operations.SessionsLogCreate.Output
     /// What this user last lifted, per exercise.
     ///
     /// One pass over their own set entries, newest first, keeping the first
@@ -2870,6 +2880,21 @@ extension APIProtocol {
             headers: headers
         ))
     }
+    /// Put an active session's exercises in a new order, all at once. The body lists every SessionExercise id of the session exactly once; they are renumbered 1 to n in that order and the session's exercises are returned in it. A list that leaves one out, repeats one or names another session's is a 400 and changes nothing, as is a session that is planned or completed. Sending the same list again changes nothing.
+    ///
+    /// - Remark: HTTP `POST /api/v1/sessions/{id}/reorder/`.
+    /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/reorder//post(sessions_reorder_create)`.
+    public func sessionsReorderCreate(
+        path: Operations.SessionsReorderCreate.Input.Path,
+        headers: Operations.SessionsReorderCreate.Input.Headers = .init(),
+        body: Operations.SessionsReorderCreate.Input.Body
+    ) async throws -> Operations.SessionsReorderCreate.Output {
+        try await sessionsReorderCreate(Operations.SessionsReorderCreate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
     /// Read or append the GPS track recorded during a session.
     ///
     /// Uploaded points are stored raw; distance and pace are derived from them
@@ -2930,6 +2955,19 @@ extension APIProtocol {
         body: Operations.SessionsImportHealthCreate.Input.Body
     ) async throws -> Operations.SessionsImportHealthCreate.Output {
         try await sessionsImportHealthCreate(Operations.SessionsImportHealthCreate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Log a finished session after the fact: an activity, when it started and how long it lasted, with optional effort, calories, distance, details and notes. Creates a completed session marked `is_manual_entry`, ending `duration_seconds` after `started_at` (at most five minutes from now). The workout is `workout` (one of yours, of this activity) or the one named `workout_name`, ignoring case, made with this activity if you have none; a named workout of another activity is a 400. `scheduled_date` also schedules the workout on that day, reusing the day's entry if there is one. The day's planner task for the workout is ticked, as finishing a live session does. Send an `Idempotency-Key` to make retries replay the same session instead of logging a second one.
+    ///
+    /// - Remark: HTTP `POST /api/v1/sessions/log/`.
+    /// - Remark: Generated from `#/paths//api/v1/sessions/log//post(sessions_log_create)`.
+    public func sessionsLogCreate(
+        headers: Operations.SessionsLogCreate.Input.Headers = .init(),
+        body: Operations.SessionsLogCreate.Input.Body
+    ) async throws -> Operations.SessionsLogCreate.Output {
+        try await sessionsLogCreate(Operations.SessionsLogCreate.Input(
             headers: headers,
             body: body
         ))
@@ -4120,6 +4158,129 @@ public enum Components {
                 case accepted
             }
         }
+        /// A session entered after the fact: what it was, when, and for how long.
+        ///
+        /// The workout is one of the caller's, by id, or by name -- found ignoring
+        /// case, or made with this activity when there is none. Either way it must
+        /// already be this activity: a log never changes what a workout is.
+        ///
+        /// - Remark: Generated from `#/components/schemas/ActivityLogRequest`.
+        public struct ActivityLogRequest: Codable, Hashable, Sendable {
+            /// One of your workouts. Its activity must equal `activity`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ActivityLogRequest/workout`.
+            public var workout: Swift.Int64?
+            /// Required when `workout` is absent, ignored when it is given. Matched to your workouts ignoring case; a new workout with this activity is made when none matches.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ActivityLogRequest/workout_name`.
+            public var workoutName: Swift.String?
+            /// What was done: a slug from the activity list.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ActivityLogRequest/activity`.
+            public var activity: Swift.String
+            /// The day this fulfils on the schedule. The workout is scheduled on it if it was not already.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ActivityLogRequest/scheduled_date`.
+            public var scheduledDate: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/ActivityLogRequest/started_at`.
+            public var startedAt: Foundation.Date
+            /// How long it lasted. The session ends this long after started_at.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ActivityLogRequest/duration_seconds`.
+            public var durationSeconds: Swift.Int
+            /// How hard it felt, 0 to 100, in the person's own judgement. Never measured.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ActivityLogRequest/perceived_effort`.
+            public var perceivedEffort: Swift.Int?
+            /// Calories the person entered themselves, e.g. from a machine's display. Never measured or estimated by Repbase: show it as the person's own number, not as a reading.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ActivityLogRequest/manual_calories_kcal`.
+            public var manualCaloriesKcal: Swift.Int?
+            /// A distance the person typed in, in kilometres. When the session has no GPS or Apple Health distance it also becomes recorded_distance_km, so it counts towards gear and totals; clearing it clears that.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ActivityLogRequest/manual_distance_km`.
+            public var manualDistanceKm: Swift.String?
+            /// Activity-specific values the person entered (rounds, a style, a pool length). Only the keys the workout's activity allows are accepted; an unknown key or a wrong type is a 400 naming the key. A key sent as null is dropped. The whole object is replaced; send {} to clear it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ActivityLogRequest/activity_details`.
+            public struct ActivityDetailsPayload: Codable, Hashable, Sendable {
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+                /// Creates a new `ActivityDetailsPayload`.
+                ///
+                /// - Parameters:
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()) {
+                    self.additionalProperties = additionalProperties
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Activity-specific values the person entered (rounds, a style, a pool length). Only the keys the workout's activity allows are accepted; an unknown key or a wrong type is a 400 naming the key. A key sent as null is dropped. The whole object is replaced; send {} to clear it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ActivityLogRequest/activity_details`.
+            public var activityDetails: Components.Schemas.ActivityLogRequest.ActivityDetailsPayload?
+            /// The person's own notes on the session.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ActivityLogRequest/notes`.
+            public var notes: Swift.String?
+            /// Creates a new `ActivityLogRequest`.
+            ///
+            /// - Parameters:
+            ///   - workout: One of your workouts. Its activity must equal `activity`.
+            ///   - workoutName: Required when `workout` is absent, ignored when it is given. Matched to your workouts ignoring case; a new workout with this activity is made when none matches.
+            ///   - activity: What was done: a slug from the activity list.
+            ///   - scheduledDate: The day this fulfils on the schedule. The workout is scheduled on it if it was not already.
+            ///   - startedAt:
+            ///   - durationSeconds: How long it lasted. The session ends this long after started_at.
+            ///   - perceivedEffort: How hard it felt, 0 to 100, in the person's own judgement. Never measured.
+            ///   - manualCaloriesKcal: Calories the person entered themselves, e.g. from a machine's display. Never measured or estimated by Repbase: show it as the person's own number, not as a reading.
+            ///   - manualDistanceKm: A distance the person typed in, in kilometres. When the session has no GPS or Apple Health distance it also becomes recorded_distance_km, so it counts towards gear and totals; clearing it clears that.
+            ///   - activityDetails: Activity-specific values the person entered (rounds, a style, a pool length). Only the keys the workout's activity allows are accepted; an unknown key or a wrong type is a 400 naming the key. A key sent as null is dropped. The whole object is replaced; send {} to clear it.
+            ///   - notes: The person's own notes on the session.
+            public init(
+                workout: Swift.Int64? = nil,
+                workoutName: Swift.String? = nil,
+                activity: Swift.String,
+                scheduledDate: Swift.String? = nil,
+                startedAt: Foundation.Date,
+                durationSeconds: Swift.Int,
+                perceivedEffort: Swift.Int? = nil,
+                manualCaloriesKcal: Swift.Int? = nil,
+                manualDistanceKm: Swift.String? = nil,
+                activityDetails: Components.Schemas.ActivityLogRequest.ActivityDetailsPayload? = nil,
+                notes: Swift.String? = nil
+            ) {
+                self.workout = workout
+                self.workoutName = workoutName
+                self.activity = activity
+                self.scheduledDate = scheduledDate
+                self.startedAt = startedAt
+                self.durationSeconds = durationSeconds
+                self.perceivedEffort = perceivedEffort
+                self.manualCaloriesKcal = manualCaloriesKcal
+                self.manualDistanceKm = manualDistanceKm
+                self.activityDetails = activityDetails
+                self.notes = notes
+            }
+            public enum CodingKeys: String, CodingKey {
+                case workout
+                case workoutName = "workout_name"
+                case activity
+                case scheduledDate = "scheduled_date"
+                case startedAt = "started_at"
+                case durationSeconds = "duration_seconds"
+                case perceivedEffort = "perceived_effort"
+                case manualCaloriesKcal = "manual_calories_kcal"
+                case manualDistanceKm = "manual_distance_km"
+                case activityDetails = "activity_details"
+                case notes
+            }
+        }
         /// * `superowner` - superowner
         /// * `owner` - owner
         /// * `analytics` - analytics
@@ -5068,6 +5229,32 @@ public enum Components {
             public var muscleGroup: Swift.String?
             /// - Remark: Generated from `#/components/schemas/Exercise/created_by`.
             public var createdBy: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/Exercise/slug`.
+            public var slug: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Exercise/aliases`.
+            public var aliases: [Swift.String]?
+            /// - Remark: Generated from `#/components/schemas/Exercise/category`.
+            public var category: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Exercise/equipment`.
+            public var equipment: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Exercise/movement_pattern`.
+            public var movementPattern: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Exercise/level`.
+            public var level: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Exercise/mechanic`.
+            public var mechanic: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Exercise/force`.
+            public var force: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Exercise/family`.
+            public var family: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Exercise/primary_muscles`.
+            public var primaryMuscles: [Swift.String]?
+            /// - Remark: Generated from `#/components/schemas/Exercise/secondary_muscles`.
+            public var secondaryMuscles: [Swift.String]?
+            /// - Remark: Generated from `#/components/schemas/Exercise/disciplines`.
+            public var disciplines: [Swift.String]?
+            /// - Remark: Generated from `#/components/schemas/Exercise/instructions`.
+            public var instructions: [Swift.String]?
             /// - Remark: Generated from `#/components/schemas/Exercise/created_at`.
             public var createdAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/Exercise/updated_at`.
@@ -5079,6 +5266,19 @@ public enum Components {
             ///   - name:
             ///   - muscleGroup:
             ///   - createdBy:
+            ///   - slug:
+            ///   - aliases:
+            ///   - category:
+            ///   - equipment:
+            ///   - movementPattern:
+            ///   - level:
+            ///   - mechanic:
+            ///   - force:
+            ///   - family:
+            ///   - primaryMuscles:
+            ///   - secondaryMuscles:
+            ///   - disciplines:
+            ///   - instructions:
             ///   - createdAt:
             ///   - updatedAt:
             public init(
@@ -5086,6 +5286,19 @@ public enum Components {
                 name: Swift.String,
                 muscleGroup: Swift.String? = nil,
                 createdBy: Swift.Int? = nil,
+                slug: Swift.String? = nil,
+                aliases: [Swift.String]? = nil,
+                category: Swift.String? = nil,
+                equipment: Swift.String? = nil,
+                movementPattern: Swift.String? = nil,
+                level: Swift.String? = nil,
+                mechanic: Swift.String? = nil,
+                force: Swift.String? = nil,
+                family: Swift.String? = nil,
+                primaryMuscles: [Swift.String]? = nil,
+                secondaryMuscles: [Swift.String]? = nil,
+                disciplines: [Swift.String]? = nil,
+                instructions: [Swift.String]? = nil,
                 createdAt: Foundation.Date,
                 updatedAt: Foundation.Date
             ) {
@@ -5093,6 +5306,19 @@ public enum Components {
                 self.name = name
                 self.muscleGroup = muscleGroup
                 self.createdBy = createdBy
+                self.slug = slug
+                self.aliases = aliases
+                self.category = category
+                self.equipment = equipment
+                self.movementPattern = movementPattern
+                self.level = level
+                self.mechanic = mechanic
+                self.force = force
+                self.family = family
+                self.primaryMuscles = primaryMuscles
+                self.secondaryMuscles = secondaryMuscles
+                self.disciplines = disciplines
+                self.instructions = instructions
                 self.createdAt = createdAt
                 self.updatedAt = updatedAt
             }
@@ -5101,6 +5327,19 @@ public enum Components {
                 case name
                 case muscleGroup = "muscle_group"
                 case createdBy = "created_by"
+                case slug
+                case aliases
+                case category
+                case equipment
+                case movementPattern = "movement_pattern"
+                case level
+                case mechanic
+                case force
+                case family
+                case primaryMuscles = "primary_muscles"
+                case secondaryMuscles = "secondary_muscles"
+                case disciplines
+                case instructions
                 case createdAt = "created_at"
                 case updatedAt = "updated_at"
             }
@@ -6427,6 +6666,18 @@ public enum Components {
             public var targetWeightKg: Swift.String?
             /// - Remark: Generated from `#/components/schemas/InitialWorkoutExercise/notes`.
             public var notes: Swift.String?
+            /// Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
+            ///
+            /// - Remark: Generated from `#/components/schemas/InitialWorkoutExercise/rest_seconds`.
+            public var restSeconds: Swift.Int?
+            /// Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
+            ///
+            /// - Remark: Generated from `#/components/schemas/InitialWorkoutExercise/superset_group`.
+            public var supersetGroup: Swift.Int?
+            /// The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
+            ///
+            /// - Remark: Generated from `#/components/schemas/InitialWorkoutExercise/set_types`.
+            public var setTypes: [Components.Schemas.SetTypeEnum]?
             /// Creates a new `InitialWorkoutExercise`.
             ///
             /// - Parameters:
@@ -6436,13 +6687,19 @@ public enum Components {
             ///   - targetReps:
             ///   - targetWeightKg:
             ///   - notes:
+            ///   - restSeconds: Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
+            ///   - supersetGroup: Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
+            ///   - setTypes: The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
             public init(
                 exercise: Swift.Int,
                 order: Swift.Int64? = nil,
                 targetSets: Swift.Int64? = nil,
                 targetReps: Swift.Int64? = nil,
                 targetWeightKg: Swift.String? = nil,
-                notes: Swift.String? = nil
+                notes: Swift.String? = nil,
+                restSeconds: Swift.Int? = nil,
+                supersetGroup: Swift.Int? = nil,
+                setTypes: [Components.Schemas.SetTypeEnum]? = nil
             ) {
                 self.exercise = exercise
                 self.order = order
@@ -6450,6 +6707,9 @@ public enum Components {
                 self.targetReps = targetReps
                 self.targetWeightKg = targetWeightKg
                 self.notes = notes
+                self.restSeconds = restSeconds
+                self.supersetGroup = supersetGroup
+                self.setTypes = setTypes
             }
             public enum CodingKeys: String, CodingKey {
                 case exercise
@@ -6458,6 +6718,9 @@ public enum Components {
                 case targetReps = "target_reps"
                 case targetWeightKg = "target_weight_kg"
                 case notes
+                case restSeconds = "rest_seconds"
+                case supersetGroup = "superset_group"
+                case setTypes = "set_types"
             }
         }
         /// - Remark: Generated from `#/components/schemas/InitialWorkoutExerciseRequest`.
@@ -6474,6 +6737,18 @@ public enum Components {
             public var targetWeightKg: Swift.String?
             /// - Remark: Generated from `#/components/schemas/InitialWorkoutExerciseRequest/notes`.
             public var notes: Swift.String?
+            /// Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
+            ///
+            /// - Remark: Generated from `#/components/schemas/InitialWorkoutExerciseRequest/rest_seconds`.
+            public var restSeconds: Swift.Int?
+            /// Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
+            ///
+            /// - Remark: Generated from `#/components/schemas/InitialWorkoutExerciseRequest/superset_group`.
+            public var supersetGroup: Swift.Int?
+            /// The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
+            ///
+            /// - Remark: Generated from `#/components/schemas/InitialWorkoutExerciseRequest/set_types`.
+            public var setTypes: [Components.Schemas.SetTypeEnum]?
             /// Creates a new `InitialWorkoutExerciseRequest`.
             ///
             /// - Parameters:
@@ -6483,13 +6758,19 @@ public enum Components {
             ///   - targetReps:
             ///   - targetWeightKg:
             ///   - notes:
+            ///   - restSeconds: Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
+            ///   - supersetGroup: Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
+            ///   - setTypes: The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
             public init(
                 exercise: Swift.Int,
                 order: Swift.Int64? = nil,
                 targetSets: Swift.Int64? = nil,
                 targetReps: Swift.Int64? = nil,
                 targetWeightKg: Swift.String? = nil,
-                notes: Swift.String? = nil
+                notes: Swift.String? = nil,
+                restSeconds: Swift.Int? = nil,
+                supersetGroup: Swift.Int? = nil,
+                setTypes: [Components.Schemas.SetTypeEnum]? = nil
             ) {
                 self.exercise = exercise
                 self.order = order
@@ -6497,6 +6778,9 @@ public enum Components {
                 self.targetReps = targetReps
                 self.targetWeightKg = targetWeightKg
                 self.notes = notes
+                self.restSeconds = restSeconds
+                self.supersetGroup = supersetGroup
+                self.setTypes = setTypes
             }
             public enum CodingKeys: String, CodingKey {
                 case exercise
@@ -6505,6 +6789,9 @@ public enum Components {
                 case targetReps = "target_reps"
                 case targetWeightKg = "target_weight_kg"
                 case notes
+                case restSeconds = "rest_seconds"
+                case supersetGroup = "superset_group"
+                case setTypes = "set_types"
             }
         }
         /// One topic the For You page has picked up about the reader.
@@ -8496,6 +8783,8 @@ public enum Components {
             public var distanceKm: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PatchedSetEntryRequest/completed_at`.
             public var completedAt: Foundation.Date?
+            /// - Remark: Generated from `#/components/schemas/PatchedSetEntryRequest/set_type`.
+            public var setType: Components.Schemas.SetTypeEnum?
             /// Creates a new `PatchedSetEntryRequest`.
             ///
             /// - Parameters:
@@ -8505,13 +8794,15 @@ public enum Components {
             ///   - reps:
             ///   - distanceKm:
             ///   - completedAt:
+            ///   - setType:
             public init(
                 sessionExercise: Swift.Int? = nil,
                 setNumber: Swift.Int64? = nil,
                 weightKg: Swift.String? = nil,
                 reps: Swift.Int64? = nil,
                 distanceKm: Swift.String? = nil,
-                completedAt: Foundation.Date? = nil
+                completedAt: Foundation.Date? = nil,
+                setType: Components.Schemas.SetTypeEnum? = nil
             ) {
                 self.sessionExercise = sessionExercise
                 self.setNumber = setNumber
@@ -8519,6 +8810,7 @@ public enum Components {
                 self.reps = reps
                 self.distanceKm = distanceKm
                 self.completedAt = completedAt
+                self.setType = setType
             }
             public enum CodingKeys: String, CodingKey {
                 case sessionExercise = "session_exercise"
@@ -8527,6 +8819,7 @@ public enum Components {
                 case reps
                 case distanceKm = "distance_km"
                 case completedAt = "completed_at"
+                case setType = "set_type"
             }
         }
         /// A change to the reader's For You choices. Any field may be left out.
@@ -8652,6 +8945,18 @@ public enum Components {
             public var targetWeightKg: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PatchedWorkoutExerciseRequest/notes`.
             public var notes: Swift.String?
+            /// Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PatchedWorkoutExerciseRequest/rest_seconds`.
+            public var restSeconds: Swift.Int?
+            /// Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PatchedWorkoutExerciseRequest/superset_group`.
+            public var supersetGroup: Swift.Int?
+            /// The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PatchedWorkoutExerciseRequest/set_types`.
+            public var setTypes: [Components.Schemas.SetTypeEnum]?
             /// Creates a new `PatchedWorkoutExerciseRequest`.
             ///
             /// - Parameters:
@@ -8662,6 +8967,9 @@ public enum Components {
             ///   - targetReps:
             ///   - targetWeightKg:
             ///   - notes:
+            ///   - restSeconds: Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
+            ///   - supersetGroup: Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
+            ///   - setTypes: The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
             public init(
                 workout: Swift.Int? = nil,
                 exercise: Swift.Int? = nil,
@@ -8669,7 +8977,10 @@ public enum Components {
                 targetSets: Swift.Int64? = nil,
                 targetReps: Swift.Int64? = nil,
                 targetWeightKg: Swift.String? = nil,
-                notes: Swift.String? = nil
+                notes: Swift.String? = nil,
+                restSeconds: Swift.Int? = nil,
+                supersetGroup: Swift.Int? = nil,
+                setTypes: [Components.Schemas.SetTypeEnum]? = nil
             ) {
                 self.workout = workout
                 self.exercise = exercise
@@ -8678,6 +8989,9 @@ public enum Components {
                 self.targetReps = targetReps
                 self.targetWeightKg = targetWeightKg
                 self.notes = notes
+                self.restSeconds = restSeconds
+                self.supersetGroup = supersetGroup
+                self.setTypes = setTypes
             }
             public enum CodingKeys: String, CodingKey {
                 case workout
@@ -8687,6 +9001,9 @@ public enum Components {
                 case targetReps = "target_reps"
                 case targetWeightKg = "target_weight_kg"
                 case notes
+                case restSeconds = "rest_seconds"
+                case supersetGroup = "superset_group"
+                case setTypes = "set_types"
             }
         }
         /// - Remark: Generated from `#/components/schemas/PatchedWorkoutScheduleRequest`.
@@ -8724,21 +9041,81 @@ public enum Components {
             public var workout: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/PatchedWorkoutSessionRequest/gear`.
             public var gear: Swift.Int?
+            /// How hard it felt, 0 to 100, in the person's own judgement. Never measured.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PatchedWorkoutSessionRequest/perceived_effort`.
+            public var perceivedEffort: Swift.Int?
+            /// Calories the person entered themselves, e.g. from a machine's display. Never measured or estimated by Repbase: show it as the person's own number, not as a reading.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PatchedWorkoutSessionRequest/manual_calories_kcal`.
+            public var manualCaloriesKcal: Swift.Int?
+            /// A distance the person typed in, in kilometres. When the session has no GPS or Apple Health distance it also becomes recorded_distance_km, so it counts towards gear and totals; clearing it clears that.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PatchedWorkoutSessionRequest/manual_distance_km`.
+            public var manualDistanceKm: Swift.String?
+            /// The person's own notes on the session.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PatchedWorkoutSessionRequest/notes`.
+            public var notes: Swift.String?
+            /// Activity-specific values the person entered (rounds, a style, a pool length). Only the keys the workout's activity allows are accepted; an unknown key or a wrong type is a 400 naming the key. A key sent as null is dropped. The whole object is replaced; send {} to clear it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PatchedWorkoutSessionRequest/activity_details`.
+            public struct ActivityDetailsPayload: Codable, Hashable, Sendable {
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+                /// Creates a new `ActivityDetailsPayload`.
+                ///
+                /// - Parameters:
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()) {
+                    self.additionalProperties = additionalProperties
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Activity-specific values the person entered (rounds, a style, a pool length). Only the keys the workout's activity allows are accepted; an unknown key or a wrong type is a 400 naming the key. A key sent as null is dropped. The whole object is replaced; send {} to clear it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PatchedWorkoutSessionRequest/activity_details`.
+            public var activityDetails: Components.Schemas.PatchedWorkoutSessionRequest.ActivityDetailsPayload?
             /// Creates a new `PatchedWorkoutSessionRequest`.
             ///
             /// - Parameters:
             ///   - workout:
             ///   - gear:
+            ///   - perceivedEffort: How hard it felt, 0 to 100, in the person's own judgement. Never measured.
+            ///   - manualCaloriesKcal: Calories the person entered themselves, e.g. from a machine's display. Never measured or estimated by Repbase: show it as the person's own number, not as a reading.
+            ///   - manualDistanceKm: A distance the person typed in, in kilometres. When the session has no GPS or Apple Health distance it also becomes recorded_distance_km, so it counts towards gear and totals; clearing it clears that.
+            ///   - notes: The person's own notes on the session.
+            ///   - activityDetails: Activity-specific values the person entered (rounds, a style, a pool length). Only the keys the workout's activity allows are accepted; an unknown key or a wrong type is a 400 naming the key. A key sent as null is dropped. The whole object is replaced; send {} to clear it.
             public init(
                 workout: Swift.Int? = nil,
-                gear: Swift.Int? = nil
+                gear: Swift.Int? = nil,
+                perceivedEffort: Swift.Int? = nil,
+                manualCaloriesKcal: Swift.Int? = nil,
+                manualDistanceKm: Swift.String? = nil,
+                notes: Swift.String? = nil,
+                activityDetails: Components.Schemas.PatchedWorkoutSessionRequest.ActivityDetailsPayload? = nil
             ) {
                 self.workout = workout
                 self.gear = gear
+                self.perceivedEffort = perceivedEffort
+                self.manualCaloriesKcal = manualCaloriesKcal
+                self.manualDistanceKm = manualDistanceKm
+                self.notes = notes
+                self.activityDetails = activityDetails
             }
             public enum CodingKeys: String, CodingKey {
                 case workout
                 case gear
+                case perceivedEffort = "perceived_effort"
+                case manualCaloriesKcal = "manual_calories_kcal"
+                case manualDistanceKm = "manual_distance_km"
+                case notes
+                case activityDetails = "activity_details"
             }
         }
         /// - Remark: Generated from `#/components/schemas/PatchedWorkoutTemplateRequest`.
@@ -8747,6 +9124,10 @@ public enum Components {
             public var name: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PatchedWorkoutTemplateRequest/workout_type`.
             public var workoutType: Components.Schemas.WorkoutTypeEnum?
+            /// What the workout is: a slug from the server's activity list (weightlifting, running, tennis, yoga, ...). Setting it also sets workout_type to the activity's family. Always present in responses; treat a slug you do not know as `other`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PatchedWorkoutTemplateRequest/activity`.
+            public var activity: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PatchedWorkoutTemplateRequest/cardio_machine`.
             @frozen public enum CardioMachinePayload: Codable, Hashable, Sendable {
                 /// - Remark: Generated from `#/components/schemas/PatchedWorkoutTemplateRequest/cardio_machine/case1`.
@@ -8805,6 +9186,7 @@ public enum Components {
             /// - Parameters:
             ///   - name:
             ///   - workoutType:
+            ///   - activity: What the workout is: a slug from the server's activity list (weightlifting, running, tennis, yoga, ...). Setting it also sets workout_type to the activity's family. Always present in responses; treat a slug you do not know as `other`.
             ///   - cardioMachine:
             ///   - cardioTargetMinutes:
             ///   - description:
@@ -8814,6 +9196,7 @@ public enum Components {
             public init(
                 name: Swift.String? = nil,
                 workoutType: Components.Schemas.WorkoutTypeEnum? = nil,
+                activity: Swift.String? = nil,
                 cardioMachine: Components.Schemas.PatchedWorkoutTemplateRequest.CardioMachinePayload? = nil,
                 cardioTargetMinutes: Swift.Int64? = nil,
                 description: Swift.String? = nil,
@@ -8823,6 +9206,7 @@ public enum Components {
             ) {
                 self.name = name
                 self.workoutType = workoutType
+                self.activity = activity
                 self.cardioMachine = cardioMachine
                 self.cardioTargetMinutes = cardioTargetMinutes
                 self.description = description
@@ -8833,6 +9217,7 @@ public enum Components {
             public enum CodingKeys: String, CodingKey {
                 case name
                 case workoutType = "workout_type"
+                case activity
                 case cardioMachine = "cardio_machine"
                 case cardioTargetMinutes = "cardio_target_minutes"
                 case description
@@ -10211,6 +10596,8 @@ public enum Components {
             public var title: Swift.String
             /// - Remark: Generated from `#/components/schemas/PostWorkout/workout_type`.
             public var workoutType: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PostWorkout/activity`.
+            public var activity: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PostWorkout/performed_at`.
             public var performedAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/PostWorkout/duration_seconds`.
@@ -10240,6 +10627,7 @@ public enum Components {
             /// - Parameters:
             ///   - title:
             ///   - workoutType:
+            ///   - activity:
             ///   - performedAt:
             ///   - durationSeconds:
             ///   - cardioMachine:
@@ -10255,6 +10643,7 @@ public enum Components {
             public init(
                 title: Swift.String,
                 workoutType: Swift.String? = nil,
+                activity: Swift.String? = nil,
                 performedAt: Foundation.Date,
                 durationSeconds: Swift.Int? = nil,
                 cardioMachine: Swift.String? = nil,
@@ -10270,6 +10659,7 @@ public enum Components {
             ) {
                 self.title = title
                 self.workoutType = workoutType
+                self.activity = activity
                 self.performedAt = performedAt
                 self.durationSeconds = durationSeconds
                 self.cardioMachine = cardioMachine
@@ -10286,6 +10676,7 @@ public enum Components {
             public enum CodingKeys: String, CodingKey {
                 case title
                 case workoutType = "workout_type"
+                case activity
                 case performedAt = "performed_at"
                 case durationSeconds = "duration_seconds"
                 case cardioMachine = "cardio_machine"
@@ -10381,6 +10772,26 @@ public enum Components {
             public var reps: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/PreviousSet/performed_at`.
             public var performedAt: Foundation.Date?
+            /// - Remark: Generated from `#/components/schemas/PreviousSet/set_type`.
+            public struct SetTypePayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PreviousSet/set_type/value1`.
+                public var value1: Components.Schemas.SetTypeEnum
+                /// Creates a new `SetTypePayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.SetTypeEnum) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try decoder.decodeFromSingleValueContainer()
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeToSingleValueContainer(self.value1)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/PreviousSet/set_type`.
+            public var setType: Components.Schemas.PreviousSet.SetTypePayload?
             /// Creates a new `PreviousSet`.
             ///
             /// - Parameters:
@@ -10389,18 +10800,21 @@ public enum Components {
             ///   - weightKg:
             ///   - reps:
             ///   - performedAt:
+            ///   - setType:
             public init(
                 exercise: Swift.Int,
                 setNumber: Swift.Int,
                 weightKg: Swift.String? = nil,
                 reps: Swift.Int? = nil,
-                performedAt: Foundation.Date? = nil
+                performedAt: Foundation.Date? = nil,
+                setType: Components.Schemas.PreviousSet.SetTypePayload? = nil
             ) {
                 self.exercise = exercise
                 self.setNumber = setNumber
                 self.weightKg = weightKg
                 self.reps = reps
                 self.performedAt = performedAt
+                self.setType = setType
             }
             public enum CodingKeys: String, CodingKey {
                 case exercise
@@ -10408,6 +10822,7 @@ public enum Components {
                 case weightKg = "weight_kg"
                 case reps
                 case performedAt = "performed_at"
+                case setType = "set_type"
             }
         }
         /// * `low` - Low
@@ -10814,6 +11229,8 @@ public enum Components {
             public var viewerFollows: Swift.Bool
             /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/viewer_has_requested`.
             public var viewerHasRequested: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/follows_viewer`.
+            public var followsViewer: Swift.Bool?
             /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/created_at`.
             public var createdAt: Foundation.Date
             /// Creates a new `PublicRepbaseUser`.
@@ -10844,6 +11261,7 @@ public enum Components {
             ///   - isReadable:
             ///   - viewerFollows:
             ///   - viewerHasRequested:
+            ///   - followsViewer:
             ///   - createdAt:
             public init(
                 communityLabel: Swift.String,
@@ -10871,6 +11289,7 @@ public enum Components {
                 isReadable: Swift.Bool,
                 viewerFollows: Swift.Bool,
                 viewerHasRequested: Swift.Bool,
+                followsViewer: Swift.Bool? = nil,
                 createdAt: Foundation.Date
             ) {
                 self.communityLabel = communityLabel
@@ -10898,6 +11317,7 @@ public enum Components {
                 self.isReadable = isReadable
                 self.viewerFollows = viewerFollows
                 self.viewerHasRequested = viewerHasRequested
+                self.followsViewer = followsViewer
                 self.createdAt = createdAt
             }
             public enum CodingKeys: String, CodingKey {
@@ -10926,6 +11346,7 @@ public enum Components {
                 case isReadable = "is_readable"
                 case viewerFollows = "viewer_follows"
                 case viewerHasRequested = "viewer_has_requested"
+                case followsViewer = "follows_viewer"
                 case createdAt = "created_at"
             }
         }
@@ -12207,6 +12628,31 @@ public enum Components {
                 case endedAt = "ended_at"
             }
         }
+        /// A session's exercises, in the order they should now be in.
+        ///
+        /// The whole list rather than a move of one row. The app holds the order it
+        /// is drawing, so it can say it in full, and a full list can be checked: it
+        /// must be exactly this session's exercises, each once, or it is refused --
+        /// which means a stale screen fails loudly instead of quietly shuffling rows
+        /// it never saw.
+        ///
+        /// - Remark: Generated from `#/components/schemas/SessionReorderRequest`.
+        public struct SessionReorderRequest: Codable, Hashable, Sendable {
+            /// Every SessionExercise id of this session, each exactly once, in the new order. The first becomes order 1.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SessionReorderRequest/session_exercises`.
+            public var sessionExercises: [Swift.Int64]
+            /// Creates a new `SessionReorderRequest`.
+            ///
+            /// - Parameters:
+            ///   - sessionExercises: Every SessionExercise id of this session, each exactly once, in the new order. The first becomes order 1.
+            public init(sessionExercises: [Swift.Int64]) {
+                self.sessionExercises = sessionExercises
+            }
+            public enum CodingKeys: String, CodingKey {
+                case sessionExercises = "session_exercises"
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/SessionRoutePoint`.
         public struct SessionRoutePoint: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/SessionRoutePoint/id`.
@@ -12362,6 +12808,8 @@ public enum Components {
             public var distanceKm: Swift.String?
             /// - Remark: Generated from `#/components/schemas/SetEntry/completed_at`.
             public var completedAt: Foundation.Date?
+            /// - Remark: Generated from `#/components/schemas/SetEntry/set_type`.
+            public var setType: Components.Schemas.SetTypeEnum?
             /// - Remark: Generated from `#/components/schemas/SetEntry/created_at`.
             public var createdAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/SetEntry/updated_at`.
@@ -12376,6 +12824,7 @@ public enum Components {
             ///   - reps:
             ///   - distanceKm:
             ///   - completedAt:
+            ///   - setType:
             ///   - createdAt:
             ///   - updatedAt:
             public init(
@@ -12386,6 +12835,7 @@ public enum Components {
                 reps: Swift.Int64? = nil,
                 distanceKm: Swift.String? = nil,
                 completedAt: Foundation.Date? = nil,
+                setType: Components.Schemas.SetTypeEnum? = nil,
                 createdAt: Foundation.Date,
                 updatedAt: Foundation.Date
             ) {
@@ -12396,6 +12846,7 @@ public enum Components {
                 self.reps = reps
                 self.distanceKm = distanceKm
                 self.completedAt = completedAt
+                self.setType = setType
                 self.createdAt = createdAt
                 self.updatedAt = updatedAt
             }
@@ -12407,6 +12858,7 @@ public enum Components {
                 case reps
                 case distanceKm = "distance_km"
                 case completedAt = "completed_at"
+                case setType = "set_type"
                 case createdAt = "created_at"
                 case updatedAt = "updated_at"
             }
@@ -12425,6 +12877,8 @@ public enum Components {
             public var distanceKm: Swift.String?
             /// - Remark: Generated from `#/components/schemas/SetEntryRequest/completed_at`.
             public var completedAt: Foundation.Date?
+            /// - Remark: Generated from `#/components/schemas/SetEntryRequest/set_type`.
+            public var setType: Components.Schemas.SetTypeEnum?
             /// Creates a new `SetEntryRequest`.
             ///
             /// - Parameters:
@@ -12434,13 +12888,15 @@ public enum Components {
             ///   - reps:
             ///   - distanceKm:
             ///   - completedAt:
+            ///   - setType:
             public init(
                 sessionExercise: Swift.Int,
                 setNumber: Swift.Int64,
                 weightKg: Swift.String? = nil,
                 reps: Swift.Int64? = nil,
                 distanceKm: Swift.String? = nil,
-                completedAt: Foundation.Date? = nil
+                completedAt: Foundation.Date? = nil,
+                setType: Components.Schemas.SetTypeEnum? = nil
             ) {
                 self.sessionExercise = sessionExercise
                 self.setNumber = setNumber
@@ -12448,6 +12904,7 @@ public enum Components {
                 self.reps = reps
                 self.distanceKm = distanceKm
                 self.completedAt = completedAt
+                self.setType = setType
             }
             public enum CodingKeys: String, CodingKey {
                 case sessionExercise = "session_exercise"
@@ -12456,7 +12913,20 @@ public enum Components {
                 case reps
                 case distanceKm = "distance_km"
                 case completedAt = "completed_at"
+                case setType = "set_type"
             }
+        }
+        /// * `normal` - Normal
+        /// * `warmup` - Warm-up
+        /// * `drop` - Drop set
+        /// * `failure` - Failure
+        ///
+        /// - Remark: Generated from `#/components/schemas/SetTypeEnum`.
+        @frozen public enum SetTypeEnum: String, Codable, Hashable, Sendable, CaseIterable {
+            case normal = "normal"
+            case warmup = "warmup"
+            case drop = "drop"
+            case failure = "failure"
         }
         /// * `planned` - Planned
         /// * `active` - Active
@@ -13019,6 +13489,18 @@ public enum Components {
             public var targetWeightKg: Swift.String?
             /// - Remark: Generated from `#/components/schemas/WorkoutExercise/notes`.
             public var notes: Swift.String?
+            /// Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutExercise/rest_seconds`.
+            public var restSeconds: Swift.Int?
+            /// Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutExercise/superset_group`.
+            public var supersetGroup: Swift.Int?
+            /// The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutExercise/set_types`.
+            public var setTypes: [Components.Schemas.SetTypeEnum]?
             /// Creates a new `WorkoutExercise`.
             ///
             /// - Parameters:
@@ -13031,6 +13513,9 @@ public enum Components {
             ///   - targetReps:
             ///   - targetWeightKg:
             ///   - notes:
+            ///   - restSeconds: Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
+            ///   - supersetGroup: Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
+            ///   - setTypes: The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
             public init(
                 id: Swift.Int,
                 workout: Swift.Int,
@@ -13040,7 +13525,10 @@ public enum Components {
                 targetSets: Swift.Int64? = nil,
                 targetReps: Swift.Int64? = nil,
                 targetWeightKg: Swift.String? = nil,
-                notes: Swift.String? = nil
+                notes: Swift.String? = nil,
+                restSeconds: Swift.Int? = nil,
+                supersetGroup: Swift.Int? = nil,
+                setTypes: [Components.Schemas.SetTypeEnum]? = nil
             ) {
                 self.id = id
                 self.workout = workout
@@ -13051,6 +13539,9 @@ public enum Components {
                 self.targetReps = targetReps
                 self.targetWeightKg = targetWeightKg
                 self.notes = notes
+                self.restSeconds = restSeconds
+                self.supersetGroup = supersetGroup
+                self.setTypes = setTypes
             }
             public enum CodingKeys: String, CodingKey {
                 case id
@@ -13062,6 +13553,9 @@ public enum Components {
                 case targetReps = "target_reps"
                 case targetWeightKg = "target_weight_kg"
                 case notes
+                case restSeconds = "rest_seconds"
+                case supersetGroup = "superset_group"
+                case setTypes = "set_types"
             }
         }
         /// - Remark: Generated from `#/components/schemas/WorkoutExerciseRequest`.
@@ -13080,6 +13574,18 @@ public enum Components {
             public var targetWeightKg: Swift.String?
             /// - Remark: Generated from `#/components/schemas/WorkoutExerciseRequest/notes`.
             public var notes: Swift.String?
+            /// Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutExerciseRequest/rest_seconds`.
+            public var restSeconds: Swift.Int?
+            /// Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutExerciseRequest/superset_group`.
+            public var supersetGroup: Swift.Int?
+            /// The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutExerciseRequest/set_types`.
+            public var setTypes: [Components.Schemas.SetTypeEnum]?
             /// Creates a new `WorkoutExerciseRequest`.
             ///
             /// - Parameters:
@@ -13090,6 +13596,9 @@ public enum Components {
             ///   - targetReps:
             ///   - targetWeightKg:
             ///   - notes:
+            ///   - restSeconds: Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
+            ///   - supersetGroup: Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
+            ///   - setTypes: The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
             public init(
                 workout: Swift.Int,
                 exercise: Swift.Int,
@@ -13097,7 +13606,10 @@ public enum Components {
                 targetSets: Swift.Int64? = nil,
                 targetReps: Swift.Int64? = nil,
                 targetWeightKg: Swift.String? = nil,
-                notes: Swift.String? = nil
+                notes: Swift.String? = nil,
+                restSeconds: Swift.Int? = nil,
+                supersetGroup: Swift.Int? = nil,
+                setTypes: [Components.Schemas.SetTypeEnum]? = nil
             ) {
                 self.workout = workout
                 self.exercise = exercise
@@ -13106,6 +13618,9 @@ public enum Components {
                 self.targetReps = targetReps
                 self.targetWeightKg = targetWeightKg
                 self.notes = notes
+                self.restSeconds = restSeconds
+                self.supersetGroup = supersetGroup
+                self.setTypes = setTypes
             }
             public enum CodingKeys: String, CodingKey {
                 case workout
@@ -13115,6 +13630,9 @@ public enum Components {
                 case targetReps = "target_reps"
                 case targetWeightKg = "target_weight_kg"
                 case notes
+                case restSeconds = "rest_seconds"
+                case supersetGroup = "superset_group"
+                case setTypes = "set_types"
             }
         }
         /// - Remark: Generated from `#/components/schemas/WorkoutPlanExercise`.
@@ -13133,6 +13651,18 @@ public enum Components {
             public var targetWeightKg: Swift.String?
             /// - Remark: Generated from `#/components/schemas/WorkoutPlanExercise/notes`.
             public var notes: Swift.String?
+            /// Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlanExercise/rest_seconds`.
+            public var restSeconds: Swift.Int?
+            /// Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlanExercise/superset_group`.
+            public var supersetGroup: Swift.Int?
+            /// The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlanExercise/set_types`.
+            public var setTypes: [Components.Schemas.SetTypeEnum]?
             /// Creates a new `WorkoutPlanExercise`.
             ///
             /// - Parameters:
@@ -13143,6 +13673,9 @@ public enum Components {
             ///   - targetReps:
             ///   - targetWeightKg:
             ///   - notes:
+            ///   - restSeconds: Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
+            ///   - supersetGroup: Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
+            ///   - setTypes: The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
             public init(
                 relationId: Swift.Int? = nil,
                 exercise: Swift.Int,
@@ -13150,7 +13683,10 @@ public enum Components {
                 targetSets: Swift.Int64? = nil,
                 targetReps: Swift.Int64? = nil,
                 targetWeightKg: Swift.String? = nil,
-                notes: Swift.String? = nil
+                notes: Swift.String? = nil,
+                restSeconds: Swift.Int? = nil,
+                supersetGroup: Swift.Int? = nil,
+                setTypes: [Components.Schemas.SetTypeEnum]? = nil
             ) {
                 self.relationId = relationId
                 self.exercise = exercise
@@ -13159,6 +13695,9 @@ public enum Components {
                 self.targetReps = targetReps
                 self.targetWeightKg = targetWeightKg
                 self.notes = notes
+                self.restSeconds = restSeconds
+                self.supersetGroup = supersetGroup
+                self.setTypes = setTypes
             }
             public enum CodingKeys: String, CodingKey {
                 case relationId = "relation_id"
@@ -13168,6 +13707,9 @@ public enum Components {
                 case targetReps = "target_reps"
                 case targetWeightKg = "target_weight_kg"
                 case notes
+                case restSeconds = "rest_seconds"
+                case supersetGroup = "superset_group"
+                case setTypes = "set_types"
             }
         }
         /// - Remark: Generated from `#/components/schemas/WorkoutPlanExerciseRequest`.
@@ -13186,6 +13728,18 @@ public enum Components {
             public var targetWeightKg: Swift.String?
             /// - Remark: Generated from `#/components/schemas/WorkoutPlanExerciseRequest/notes`.
             public var notes: Swift.String?
+            /// Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlanExerciseRequest/rest_seconds`.
+            public var restSeconds: Swift.Int?
+            /// Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlanExerciseRequest/superset_group`.
+            public var supersetGroup: Swift.Int?
+            /// The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlanExerciseRequest/set_types`.
+            public var setTypes: [Components.Schemas.SetTypeEnum]?
             /// Creates a new `WorkoutPlanExerciseRequest`.
             ///
             /// - Parameters:
@@ -13196,6 +13750,9 @@ public enum Components {
             ///   - targetReps:
             ///   - targetWeightKg:
             ///   - notes:
+            ///   - restSeconds: Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
+            ///   - supersetGroup: Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
+            ///   - setTypes: The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
             public init(
                 relationId: Swift.Int? = nil,
                 exercise: Swift.Int,
@@ -13203,7 +13760,10 @@ public enum Components {
                 targetSets: Swift.Int64? = nil,
                 targetReps: Swift.Int64? = nil,
                 targetWeightKg: Swift.String? = nil,
-                notes: Swift.String? = nil
+                notes: Swift.String? = nil,
+                restSeconds: Swift.Int? = nil,
+                supersetGroup: Swift.Int? = nil,
+                setTypes: [Components.Schemas.SetTypeEnum]? = nil
             ) {
                 self.relationId = relationId
                 self.exercise = exercise
@@ -13212,6 +13772,9 @@ public enum Components {
                 self.targetReps = targetReps
                 self.targetWeightKg = targetWeightKg
                 self.notes = notes
+                self.restSeconds = restSeconds
+                self.supersetGroup = supersetGroup
+                self.setTypes = setTypes
             }
             public enum CodingKeys: String, CodingKey {
                 case relationId = "relation_id"
@@ -13221,6 +13784,9 @@ public enum Components {
                 case targetReps = "target_reps"
                 case targetWeightKg = "target_weight_kg"
                 case notes
+                case restSeconds = "rest_seconds"
+                case supersetGroup = "superset_group"
+                case setTypes = "set_types"
             }
         }
         /// A workout repeating weekly.
@@ -13461,6 +14027,8 @@ public enum Components {
             public var workoutName: Swift.String?
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/workout_type`.
             public var workoutType: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/activity`.
+            public var activity: Swift.String?
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/status`.
             public struct StatusPayload: Codable, Hashable, Sendable {
                 /// - Remark: Generated from `#/components/schemas/WorkoutSession/status/value1`.
@@ -13554,6 +14122,48 @@ public enum Components {
             public var splits: [Components.Schemas.SessionSplit]
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/logged_set_count`.
             public var loggedSetCount: Swift.Int
+            /// How hard it felt, 0 to 100, in the person's own judgement. Never measured.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/perceived_effort`.
+            public var perceivedEffort: Swift.Int?
+            /// Calories the person entered themselves, e.g. from a machine's display. Never measured or estimated by Repbase: show it as the person's own number, not as a reading.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/manual_calories_kcal`.
+            public var manualCaloriesKcal: Swift.Int?
+            /// A distance the person typed in, in kilometres. When the session has no GPS or Apple Health distance it also becomes recorded_distance_km, so it counts towards gear and totals; clearing it clears that.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/manual_distance_km`.
+            public var manualDistanceKm: Swift.String?
+            /// The person's own notes on the session.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/notes`.
+            public var notes: Swift.String?
+            /// Activity-specific values the person entered (rounds, a style, a pool length). Only the keys the workout's activity allows are accepted; an unknown key or a wrong type is a 400 naming the key. A key sent as null is dropped. The whole object is replaced; send {} to clear it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/activity_details`.
+            public struct ActivityDetailsPayload: Codable, Hashable, Sendable {
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+                /// Creates a new `ActivityDetailsPayload`.
+                ///
+                /// - Parameters:
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()) {
+                    self.additionalProperties = additionalProperties
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Activity-specific values the person entered (rounds, a style, a pool length). Only the keys the workout's activity allows are accepted; an unknown key or a wrong type is a 400 naming the key. A key sent as null is dropped. The whole object is replaced; send {} to clear it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/activity_details`.
+            public var activityDetails: Components.Schemas.WorkoutSession.ActivityDetailsPayload?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/is_manual_entry`.
+            public var isManualEntry: Swift.Bool?
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/created_at`.
             public var createdAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/updated_at`.
@@ -13566,6 +14176,7 @@ public enum Components {
             ///   - workout:
             ///   - workoutName:
             ///   - workoutType:
+            ///   - activity:
             ///   - status:
             ///   - startedAt:
             ///   - endedAt:
@@ -13586,6 +14197,12 @@ public enum Components {
             ///   - elevationLossM:
             ///   - splits:
             ///   - loggedSetCount:
+            ///   - perceivedEffort: How hard it felt, 0 to 100, in the person's own judgement. Never measured.
+            ///   - manualCaloriesKcal: Calories the person entered themselves, e.g. from a machine's display. Never measured or estimated by Repbase: show it as the person's own number, not as a reading.
+            ///   - manualDistanceKm: A distance the person typed in, in kilometres. When the session has no GPS or Apple Health distance it also becomes recorded_distance_km, so it counts towards gear and totals; clearing it clears that.
+            ///   - notes: The person's own notes on the session.
+            ///   - activityDetails: Activity-specific values the person entered (rounds, a style, a pool length). Only the keys the workout's activity allows are accepted; an unknown key or a wrong type is a 400 naming the key. A key sent as null is dropped. The whole object is replaced; send {} to clear it.
+            ///   - isManualEntry:
             ///   - createdAt:
             ///   - updatedAt:
             public init(
@@ -13594,6 +14211,7 @@ public enum Components {
                 workout: Swift.Int? = nil,
                 workoutName: Swift.String? = nil,
                 workoutType: Swift.String? = nil,
+                activity: Swift.String? = nil,
                 status: Components.Schemas.WorkoutSession.StatusPayload,
                 startedAt: Foundation.Date? = nil,
                 endedAt: Foundation.Date? = nil,
@@ -13614,6 +14232,12 @@ public enum Components {
                 elevationLossM: Swift.Double? = nil,
                 splits: [Components.Schemas.SessionSplit],
                 loggedSetCount: Swift.Int,
+                perceivedEffort: Swift.Int? = nil,
+                manualCaloriesKcal: Swift.Int? = nil,
+                manualDistanceKm: Swift.String? = nil,
+                notes: Swift.String? = nil,
+                activityDetails: Components.Schemas.WorkoutSession.ActivityDetailsPayload? = nil,
+                isManualEntry: Swift.Bool? = nil,
                 createdAt: Foundation.Date,
                 updatedAt: Foundation.Date
             ) {
@@ -13622,6 +14246,7 @@ public enum Components {
                 self.workout = workout
                 self.workoutName = workoutName
                 self.workoutType = workoutType
+                self.activity = activity
                 self.status = status
                 self.startedAt = startedAt
                 self.endedAt = endedAt
@@ -13642,6 +14267,12 @@ public enum Components {
                 self.elevationLossM = elevationLossM
                 self.splits = splits
                 self.loggedSetCount = loggedSetCount
+                self.perceivedEffort = perceivedEffort
+                self.manualCaloriesKcal = manualCaloriesKcal
+                self.manualDistanceKm = manualDistanceKm
+                self.notes = notes
+                self.activityDetails = activityDetails
+                self.isManualEntry = isManualEntry
                 self.createdAt = createdAt
                 self.updatedAt = updatedAt
             }
@@ -13651,6 +14282,7 @@ public enum Components {
                 case workout
                 case workoutName = "workout_name"
                 case workoutType = "workout_type"
+                case activity
                 case status
                 case startedAt = "started_at"
                 case endedAt = "ended_at"
@@ -13671,6 +14303,12 @@ public enum Components {
                 case elevationLossM = "elevation_loss_m"
                 case splits
                 case loggedSetCount = "logged_set_count"
+                case perceivedEffort = "perceived_effort"
+                case manualCaloriesKcal = "manual_calories_kcal"
+                case manualDistanceKm = "manual_distance_km"
+                case notes
+                case activityDetails = "activity_details"
+                case isManualEntry = "is_manual_entry"
                 case createdAt = "created_at"
                 case updatedAt = "updated_at"
             }
@@ -13681,21 +14319,81 @@ public enum Components {
             public var workout: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/WorkoutSessionRequest/gear`.
             public var gear: Swift.Int?
+            /// How hard it felt, 0 to 100, in the person's own judgement. Never measured.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutSessionRequest/perceived_effort`.
+            public var perceivedEffort: Swift.Int?
+            /// Calories the person entered themselves, e.g. from a machine's display. Never measured or estimated by Repbase: show it as the person's own number, not as a reading.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutSessionRequest/manual_calories_kcal`.
+            public var manualCaloriesKcal: Swift.Int?
+            /// A distance the person typed in, in kilometres. When the session has no GPS or Apple Health distance it also becomes recorded_distance_km, so it counts towards gear and totals; clearing it clears that.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutSessionRequest/manual_distance_km`.
+            public var manualDistanceKm: Swift.String?
+            /// The person's own notes on the session.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutSessionRequest/notes`.
+            public var notes: Swift.String?
+            /// Activity-specific values the person entered (rounds, a style, a pool length). Only the keys the workout's activity allows are accepted; an unknown key or a wrong type is a 400 naming the key. A key sent as null is dropped. The whole object is replaced; send {} to clear it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutSessionRequest/activity_details`.
+            public struct ActivityDetailsPayload: Codable, Hashable, Sendable {
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+                /// Creates a new `ActivityDetailsPayload`.
+                ///
+                /// - Parameters:
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()) {
+                    self.additionalProperties = additionalProperties
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Activity-specific values the person entered (rounds, a style, a pool length). Only the keys the workout's activity allows are accepted; an unknown key or a wrong type is a 400 naming the key. A key sent as null is dropped. The whole object is replaced; send {} to clear it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutSessionRequest/activity_details`.
+            public var activityDetails: Components.Schemas.WorkoutSessionRequest.ActivityDetailsPayload?
             /// Creates a new `WorkoutSessionRequest`.
             ///
             /// - Parameters:
             ///   - workout:
             ///   - gear:
+            ///   - perceivedEffort: How hard it felt, 0 to 100, in the person's own judgement. Never measured.
+            ///   - manualCaloriesKcal: Calories the person entered themselves, e.g. from a machine's display. Never measured or estimated by Repbase: show it as the person's own number, not as a reading.
+            ///   - manualDistanceKm: A distance the person typed in, in kilometres. When the session has no GPS or Apple Health distance it also becomes recorded_distance_km, so it counts towards gear and totals; clearing it clears that.
+            ///   - notes: The person's own notes on the session.
+            ///   - activityDetails: Activity-specific values the person entered (rounds, a style, a pool length). Only the keys the workout's activity allows are accepted; an unknown key or a wrong type is a 400 naming the key. A key sent as null is dropped. The whole object is replaced; send {} to clear it.
             public init(
                 workout: Swift.Int? = nil,
-                gear: Swift.Int? = nil
+                gear: Swift.Int? = nil,
+                perceivedEffort: Swift.Int? = nil,
+                manualCaloriesKcal: Swift.Int? = nil,
+                manualDistanceKm: Swift.String? = nil,
+                notes: Swift.String? = nil,
+                activityDetails: Components.Schemas.WorkoutSessionRequest.ActivityDetailsPayload? = nil
             ) {
                 self.workout = workout
                 self.gear = gear
+                self.perceivedEffort = perceivedEffort
+                self.manualCaloriesKcal = manualCaloriesKcal
+                self.manualDistanceKm = manualDistanceKm
+                self.notes = notes
+                self.activityDetails = activityDetails
             }
             public enum CodingKeys: String, CodingKey {
                 case workout
                 case gear
+                case perceivedEffort = "perceived_effort"
+                case manualCaloriesKcal = "manual_calories_kcal"
+                case manualDistanceKm = "manual_distance_km"
+                case notes
+                case activityDetails = "activity_details"
             }
         }
         /// - Remark: Generated from `#/components/schemas/WorkoutTemplate`.
@@ -13708,6 +14406,10 @@ public enum Components {
             public var name: Swift.String
             /// - Remark: Generated from `#/components/schemas/WorkoutTemplate/workout_type`.
             public var workoutType: Components.Schemas.WorkoutTypeEnum?
+            /// What the workout is: a slug from the server's activity list (weightlifting, running, tennis, yoga, ...). Setting it also sets workout_type to the activity's family. Always present in responses; treat a slug you do not know as `other`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutTemplate/activity`.
+            public var activity: Swift.String?
             /// - Remark: Generated from `#/components/schemas/WorkoutTemplate/cardio_machine`.
             @frozen public enum CardioMachinePayload: Codable, Hashable, Sendable {
                 /// - Remark: Generated from `#/components/schemas/WorkoutTemplate/cardio_machine/case1`.
@@ -13751,6 +14453,8 @@ public enum Components {
             public var description: Swift.String?
             /// - Remark: Generated from `#/components/schemas/WorkoutTemplate/exercises`.
             public var exercises: [Components.Schemas.WorkoutExercise]
+            /// - Remark: Generated from `#/components/schemas/WorkoutTemplate/last_performed_at`.
+            public var lastPerformedAt: Foundation.Date?
             /// - Remark: Generated from `#/components/schemas/WorkoutTemplate/created_at`.
             public var createdAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/WorkoutTemplate/updated_at`.
@@ -13762,10 +14466,12 @@ public enum Components {
             ///   - owner:
             ///   - name:
             ///   - workoutType:
+            ///   - activity: What the workout is: a slug from the server's activity list (weightlifting, running, tennis, yoga, ...). Setting it also sets workout_type to the activity's family. Always present in responses; treat a slug you do not know as `other`.
             ///   - cardioMachine:
             ///   - cardioTargetMinutes:
             ///   - description:
             ///   - exercises:
+            ///   - lastPerformedAt:
             ///   - createdAt:
             ///   - updatedAt:
             public init(
@@ -13773,10 +14479,12 @@ public enum Components {
                 owner: Swift.Int,
                 name: Swift.String,
                 workoutType: Components.Schemas.WorkoutTypeEnum? = nil,
+                activity: Swift.String? = nil,
                 cardioMachine: Components.Schemas.WorkoutTemplate.CardioMachinePayload? = nil,
                 cardioTargetMinutes: Swift.Int64? = nil,
                 description: Swift.String? = nil,
                 exercises: [Components.Schemas.WorkoutExercise],
+                lastPerformedAt: Foundation.Date? = nil,
                 createdAt: Foundation.Date,
                 updatedAt: Foundation.Date
             ) {
@@ -13784,10 +14492,12 @@ public enum Components {
                 self.owner = owner
                 self.name = name
                 self.workoutType = workoutType
+                self.activity = activity
                 self.cardioMachine = cardioMachine
                 self.cardioTargetMinutes = cardioTargetMinutes
                 self.description = description
                 self.exercises = exercises
+                self.lastPerformedAt = lastPerformedAt
                 self.createdAt = createdAt
                 self.updatedAt = updatedAt
             }
@@ -13796,10 +14506,12 @@ public enum Components {
                 case owner
                 case name
                 case workoutType = "workout_type"
+                case activity
                 case cardioMachine = "cardio_machine"
                 case cardioTargetMinutes = "cardio_target_minutes"
                 case description
                 case exercises
+                case lastPerformedAt = "last_performed_at"
                 case createdAt = "created_at"
                 case updatedAt = "updated_at"
             }
@@ -13810,6 +14522,10 @@ public enum Components {
             public var name: Swift.String
             /// - Remark: Generated from `#/components/schemas/WorkoutTemplateRequest/workout_type`.
             public var workoutType: Components.Schemas.WorkoutTypeEnum?
+            /// What the workout is: a slug from the server's activity list (weightlifting, running, tennis, yoga, ...). Setting it also sets workout_type to the activity's family. Always present in responses; treat a slug you do not know as `other`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutTemplateRequest/activity`.
+            public var activity: Swift.String?
             /// - Remark: Generated from `#/components/schemas/WorkoutTemplateRequest/cardio_machine`.
             @frozen public enum CardioMachinePayload: Codable, Hashable, Sendable {
                 /// - Remark: Generated from `#/components/schemas/WorkoutTemplateRequest/cardio_machine/case1`.
@@ -13868,6 +14584,7 @@ public enum Components {
             /// - Parameters:
             ///   - name:
             ///   - workoutType:
+            ///   - activity: What the workout is: a slug from the server's activity list (weightlifting, running, tennis, yoga, ...). Setting it also sets workout_type to the activity's family. Always present in responses; treat a slug you do not know as `other`.
             ///   - cardioMachine:
             ///   - cardioTargetMinutes:
             ///   - description:
@@ -13877,6 +14594,7 @@ public enum Components {
             public init(
                 name: Swift.String,
                 workoutType: Components.Schemas.WorkoutTypeEnum? = nil,
+                activity: Swift.String? = nil,
                 cardioMachine: Components.Schemas.WorkoutTemplateRequest.CardioMachinePayload? = nil,
                 cardioTargetMinutes: Swift.Int64? = nil,
                 description: Swift.String? = nil,
@@ -13886,6 +14604,7 @@ public enum Components {
             ) {
                 self.name = name
                 self.workoutType = workoutType
+                self.activity = activity
                 self.cardioMachine = cardioMachine
                 self.cardioTargetMinutes = cardioTargetMinutes
                 self.description = description
@@ -13896,6 +14615,7 @@ public enum Components {
             public enum CodingKeys: String, CodingKey {
                 case name
                 case workoutType = "workout_type"
+                case activity
                 case cardioMachine = "cardio_machine"
                 case cardioTargetMinutes = "cardio_target_minutes"
                 case description
@@ -17350,6 +18070,22 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/api/v1/exercises/GET/query`.
             public struct Query: Sendable, Hashable {
+                /// Return only exercises in this library category, ignoring case.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/exercises/GET/query/category`.
+                public var category: Swift.String?
+                /// Return only exercises using this equipment (`barbell`, `dumbbell`, ...), ignoring case.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/exercises/GET/query/equipment`.
+                public var equipment: Swift.String?
+                /// `true` returns only the exercises the reader created, leaving out the shared catalogue. `false` or omitted returns both. Anything else is a 400.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/exercises/GET/query/mine`.
+                public var mine: Swift.Bool?
+                /// Return only exercises with this among their primary muscles (`chest`, `lats`, ...), ignoring case.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/exercises/GET/query/muscle`.
+                public var muscle: Swift.String?
                 /// Return only exercises with this exact name, matched without regard to case or surrounding space. Lets a client resolve one exercise instead of reading every page of the catalogue to find it.
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/exercises/GET/query/name`.
@@ -17358,17 +18094,43 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/exercises/GET/query/page`.
                 public var page: Swift.Int?
+                /// Return only exercises with this movement pattern, ignoring case.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/exercises/GET/query/pattern`.
+                public var pattern: Swift.String?
+                /// Return only exercises whose name or one of whose aliases contains this, ignoring case and surrounding space, for a picker that narrows as the person types. Blank is the same as omitted. Only the first 100 characters are used. Combines with every other filter.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/exercises/GET/query/search`.
+                public var search: Swift.String?
                 /// Creates a new `Query`.
                 ///
                 /// - Parameters:
+                ///   - category: Return only exercises in this library category, ignoring case.
+                ///   - equipment: Return only exercises using this equipment (`barbell`, `dumbbell`, ...), ignoring case.
+                ///   - mine: `true` returns only the exercises the reader created, leaving out the shared catalogue. `false` or omitted returns both. Anything else is a 400.
+                ///   - muscle: Return only exercises with this among their primary muscles (`chest`, `lats`, ...), ignoring case.
                 ///   - name: Return only exercises with this exact name, matched without regard to case or surrounding space. Lets a client resolve one exercise instead of reading every page of the catalogue to find it.
                 ///   - page: A page number within the paginated result set.
+                ///   - pattern: Return only exercises with this movement pattern, ignoring case.
+                ///   - search: Return only exercises whose name or one of whose aliases contains this, ignoring case and surrounding space, for a picker that narrows as the person types. Blank is the same as omitted. Only the first 100 characters are used. Combines with every other filter.
                 public init(
+                    category: Swift.String? = nil,
+                    equipment: Swift.String? = nil,
+                    mine: Swift.Bool? = nil,
+                    muscle: Swift.String? = nil,
                     name: Swift.String? = nil,
-                    page: Swift.Int? = nil
+                    page: Swift.Int? = nil,
+                    pattern: Swift.String? = nil,
+                    search: Swift.String? = nil
                 ) {
+                    self.category = category
+                    self.equipment = equipment
+                    self.mine = mine
+                    self.muscle = muscle
                     self.name = name
                     self.page = page
+                    self.pattern = pattern
+                    self.search = search
                 }
             }
             public var query: Operations.ExercisesList.Input.Query
@@ -28448,6 +29210,10 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/api/v1/sessions/GET/query`.
             public struct Query: Sendable, Hashable {
+                /// Return only sessions whose workout is this activity (`tennis`, `running`, ...). A slug the server does not know matches nothing.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/sessions/GET/query/activity`.
+                public var activity: Swift.String?
                 /// A page number within the paginated result set.
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/sessions/GET/query/page`.
@@ -28477,18 +29243,21 @@ public enum Operations {
                 /// Creates a new `Query`.
                 ///
                 /// - Parameters:
+                ///   - activity: Return only sessions whose workout is this activity (`tennis`, `running`, ...). A slug the server does not know matches nothing.
                 ///   - page: A page number within the paginated result set.
                 ///   - since: Only sessions on or after this date, so a client can ask for a week without paging its whole history.
                 ///   - status: Return only sessions in this state.
                 ///   - workout: Return only sessions for this workout template.
                 ///   - workoutName: Return only sessions whose workout has this name, matched without regard to case. Groups a workout's history by what it is called rather than by record.
                 public init(
+                    activity: Swift.String? = nil,
                     page: Swift.Int? = nil,
                     since: Swift.String? = nil,
                     status: Operations.SessionsList.Input.Query.StatusPayload? = nil,
                     workout: Swift.Int? = nil,
                     workoutName: Swift.String? = nil
                 ) {
+                    self.activity = activity
                     self.page = page
                     self.since = since
                     self.status = status
@@ -29619,6 +30388,145 @@ public enum Operations {
             }
         }
     }
+    /// Put an active session's exercises in a new order, all at once. The body lists every SessionExercise id of the session exactly once; they are renumbered 1 to n in that order and the session's exercises are returned in it. A list that leaves one out, repeats one or names another session's is a 400 and changes nothing, as is a session that is planned or completed. Sending the same list again changes nothing.
+    ///
+    /// - Remark: HTTP `POST /api/v1/sessions/{id}/reorder/`.
+    /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/reorder//post(sessions_reorder_create)`.
+    public enum SessionsReorderCreate {
+        public static let id: Swift.String = "sessions_reorder_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/reorder/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this workout session.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/reorder/POST/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this workout session.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SessionsReorderCreate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/reorder/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SessionsReorderCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SessionsReorderCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SessionsReorderCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/reorder/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/reorder/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.SessionReorderRequest)
+            }
+            public var body: Operations.SessionsReorderCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.SessionsReorderCreate.Input.Path,
+                headers: Operations.SessionsReorderCreate.Input.Headers = .init(),
+                body: Operations.SessionsReorderCreate.Input.Body
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/reorder/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/sessions/{id}/reorder/POST/responses/200/content/application\/json`.
+                    case json([Components.Schemas.SessionExercise])
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: [Components.Schemas.SessionExercise] {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SessionsReorderCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SessionsReorderCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/reorder//post(sessions_reorder_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SessionsReorderCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SessionsReorderCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
     /// Read or append the GPS track recorded during a session.
     ///
     /// Uploaded points are stored raw; distance and pace are derived from them
@@ -30129,6 +31037,136 @@ public enum Operations {
                     default:
                         try throwUnexpectedResponseStatus(
                             expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Log a finished session after the fact: an activity, when it started and how long it lasted, with optional effort, calories, distance, details and notes. Creates a completed session marked `is_manual_entry`, ending `duration_seconds` after `started_at` (at most five minutes from now). The workout is `workout` (one of yours, of this activity) or the one named `workout_name`, ignoring case, made with this activity if you have none; a named workout of another activity is a 400. `scheduled_date` also schedules the workout on that day, reusing the day's entry if there is one. The day's planner task for the workout is ticked, as finishing a live session does. Send an `Idempotency-Key` to make retries replay the same session instead of logging a second one.
+    ///
+    /// - Remark: HTTP `POST /api/v1/sessions/log/`.
+    /// - Remark: Generated from `#/paths//api/v1/sessions/log//post(sessions_log_create)`.
+    public enum SessionsLogCreate {
+        public static let id: Swift.String = "sessions_log_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/sessions/log/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                /// Persist a fresh UUID per intended create and reuse it with the same JSON body on retry. Successful responses are replayed without a second create. Reusing the key with changed input returns 409. Keys are scoped to the authenticated account and endpoint and retained until account deletion.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/sessions/log/POST/header/Idempotency-Key`.
+                public var idempotencyKey: Swift.String?
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SessionsLogCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - idempotencyKey: Persist a fresh UUID per intended create and reuse it with the same JSON body on retry. Successful responses are replayed without a second create. Reusing the key with changed input returns 409. Keys are scoped to the authenticated account and endpoint and retained until account deletion.
+                ///   - accept:
+                public init(
+                    idempotencyKey: Swift.String? = nil,
+                    accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SessionsLogCreate.AcceptableContentType>] = .defaultValues()
+                ) {
+                    self.idempotencyKey = idempotencyKey
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SessionsLogCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/sessions/log/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/sessions/log/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.ActivityLogRequest)
+            }
+            public var body: Operations.SessionsLogCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.SessionsLogCreate.Input.Headers = .init(),
+                body: Operations.SessionsLogCreate.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Created: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/sessions/log/POST/responses/201/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/sessions/log/POST/responses/201/content/application\/json`.
+                    case json(Components.Schemas.WorkoutSession)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.WorkoutSession {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SessionsLogCreate.Output.Created.Body
+                /// Creates a new `Created`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SessionsLogCreate.Output.Created.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/sessions/log//post(sessions_log_create)/responses/201`.
+            ///
+            /// HTTP response code: `201 created`.
+            case created(Operations.SessionsLogCreate.Output.Created)
+            /// The associated value of the enum case if `self` is `.created`.
+            ///
+            /// - Throws: An error if `self` is not `.created`.
+            /// - SeeAlso: `.created`.
+            public var created: Operations.SessionsLogCreate.Output.Created {
+                get throws {
+                    switch self {
+                    case let .created(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "created",
                             response: self
                         )
                     }

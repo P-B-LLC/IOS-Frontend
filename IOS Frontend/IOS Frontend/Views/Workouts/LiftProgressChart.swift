@@ -29,6 +29,8 @@ struct LiftProgressChart: View {
     }
 
     @State private var metric: Metric = .heaviest
+    @Environment(WorkoutStore.self) private var store
+    private var unit: WorkoutWeightUnit { store.preferences.weightUnit }
     @State private var selectedExerciseID: Int?
 
     private var selected: LiftProgressSeries? {
@@ -154,9 +156,14 @@ struct LiftProgressChart: View {
 
     private func value(for day: LiftProgressSeries.Day) -> Double {
         switch metric {
-        case .heaviest: return day.heaviestKilograms
-        case .volume: return day.volumeKilograms
+        // Drawn in the unit being shown; the series itself stays kilograms.
+        case .heaviest: return Self.shown(day.heaviestKilograms, in: unit)
+        case .volume: return Self.shown(day.volumeKilograms, in: unit)
         }
+    }
+
+    private static func shown(_ kilograms: Double, in unit: WorkoutWeightUnit) -> Double {
+        unit == .imperial ? kilograms / 0.45359237 : kilograms
     }
 
     private func caption(for entry: LiftProgressSeries) -> String? {
@@ -174,12 +181,22 @@ struct LiftProgressChart: View {
             guard abs(change) >= 0.5 else {
                 return String(localized: "Heaviest is holding steady.", bundle: .app, locale: .app)
             }
+            if unit == .imperial {
+                return change > 0
+                    ? String(localized: "Up \(amount) lb since your first session.", bundle: .app, locale: .app, comment: "The placeholder is a weight in pounds")
+                    : String(localized: "Down \(amount) lb since your first session.", bundle: .app, locale: .app, comment: "The placeholder is a weight in pounds")
+            }
             return change > 0
                 ? String(localized: "Up \(amount) kg since your first session.", bundle: .app, locale: .app, comment: "The placeholder is a weight in kilograms")
                 : String(localized: "Down \(amount) kg since your first session.", bundle: .app, locale: .app, comment: "The placeholder is a weight in kilograms")
         case .volume:
             guard abs(change) >= 0.5 else {
                 return String(localized: "Volume is holding steady.", bundle: .app, locale: .app)
+            }
+            if unit == .imperial {
+                return change > 0
+                    ? String(localized: "Up \(amount) lb lifted since your first session.", bundle: .app, locale: .app, comment: "The placeholder is a weight in pounds")
+                    : String(localized: "Down \(amount) lb lifted since your first session.", bundle: .app, locale: .app, comment: "The placeholder is a weight in pounds")
             }
             return change > 0
                 ? String(localized: "Up \(amount) kg lifted since your first session.", bundle: .app, locale: .app, comment: "The placeholder is a weight in kilograms")

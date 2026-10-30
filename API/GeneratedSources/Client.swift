@@ -1855,6 +1855,34 @@ public struct Client: APIProtocol {
                     in: &request,
                     style: .form,
                     explode: true,
+                    name: "category",
+                    value: input.query.category
+                )
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "equipment",
+                    value: input.query.equipment
+                )
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "mine",
+                    value: input.query.mine
+                )
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "muscle",
+                    value: input.query.muscle
+                )
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
                     name: "name",
                     value: input.query.name
                 )
@@ -1864,6 +1892,20 @@ public struct Client: APIProtocol {
                     explode: true,
                     name: "page",
                     value: input.query.page
+                )
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "pattern",
+                    value: input.query.pattern
+                )
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "search",
+                    value: input.query.search
                 )
                 converter.setAcceptHeader(
                     in: &request.headerFields,
@@ -7838,6 +7880,13 @@ public struct Client: APIProtocol {
                     in: &request,
                     style: .form,
                     explode: true,
+                    name: "activity",
+                    value: input.query.activity
+                )
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
                     name: "page",
                     value: input.query.page
                 )
@@ -8435,6 +8484,77 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// Put an active session's exercises in a new order, all at once. The body lists every SessionExercise id of the session exactly once; they are renumbered 1 to n in that order and the session's exercises are returned in it. A list that leaves one out, repeats one or names another session's is a 400 and changes nothing, as is a session that is planned or completed. Sending the same list again changes nothing.
+    ///
+    /// - Remark: HTTP `POST /api/v1/sessions/{id}/reorder/`.
+    /// - Remark: Generated from `#/paths//api/v1/sessions/{id}/reorder//post(sessions_reorder_create)`.
+    public func sessionsReorderCreate(_ input: Operations.SessionsReorderCreate.Input) async throws -> Operations.SessionsReorderCreate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SessionsReorderCreate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/sessions/{}/reorder/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .post
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                let body: OpenAPIRuntime.HTTPBody?
+                switch input.body {
+                case let .json(value):
+                    body = try converter.setRequiredRequestBodyAsJSON(
+                        value,
+                        headerFields: &request.headerFields,
+                        contentType: "application/json; charset=utf-8"
+                    )
+                }
+                return (request, body)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SessionsReorderCreate.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            [Components.Schemas.SessionExercise].self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
     /// Read or append the GPS track recorded during a session.
     ///
     /// Uploaded points are stored raw; distance and pace are derived from them
@@ -8702,6 +8822,80 @@ public struct Client: APIProtocol {
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
                     return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Log a finished session after the fact: an activity, when it started and how long it lasted, with optional effort, calories, distance, details and notes. Creates a completed session marked `is_manual_entry`, ending `duration_seconds` after `started_at` (at most five minutes from now). The workout is `workout` (one of yours, of this activity) or the one named `workout_name`, ignoring case, made with this activity if you have none; a named workout of another activity is a 400. `scheduled_date` also schedules the workout on that day, reusing the day's entry if there is one. The day's planner task for the workout is ticked, as finishing a live session does. Send an `Idempotency-Key` to make retries replay the same session instead of logging a second one.
+    ///
+    /// - Remark: HTTP `POST /api/v1/sessions/log/`.
+    /// - Remark: Generated from `#/paths//api/v1/sessions/log//post(sessions_log_create)`.
+    public func sessionsLogCreate(_ input: Operations.SessionsLogCreate.Input) async throws -> Operations.SessionsLogCreate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SessionsLogCreate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/sessions/log/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .post
+                )
+                suppressMutabilityWarning(&request)
+                try converter.setHeaderFieldAsURI(
+                    in: &request.headerFields,
+                    name: "Idempotency-Key",
+                    value: input.headers.idempotencyKey
+                )
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                let body: OpenAPIRuntime.HTTPBody?
+                switch input.body {
+                case let .json(value):
+                    body = try converter.setRequiredRequestBodyAsJSON(
+                        value,
+                        headerFields: &request.headerFields,
+                        contentType: "application/json; charset=utf-8"
+                    )
+                }
+                return (request, body)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 201:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SessionsLogCreate.Output.Created.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.WorkoutSession.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .created(.init(body: body))
                 default:
                     return .undocumented(
                         statusCode: response.status.code,

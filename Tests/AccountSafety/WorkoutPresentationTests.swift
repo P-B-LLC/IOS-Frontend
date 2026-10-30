@@ -33,7 +33,8 @@ final class WorkoutPresentationTests: XCTestCase {
         let builder = try source("Views/Workouts/GuidedWorkoutBuilder.swift")
         let picker = try XCTUnwrap(builder.range(of: "private var exercisePicker:"))
         let selected = try XCTUnwrap(builder.range(of: "selectedExercises", range: picker.upperBound..<builder.endIndex))
-        let catalog = try XCTUnwrap(builder.range(of: "ForEach(filtered)", range: picker.upperBound..<builder.endIndex))
+        // The catalogue is the shared picker the session's add sheet uses too.
+        let catalog = try XCTUnwrap(builder.range(of: "ExerciseCatalogPicker(", range: picker.upperBound..<builder.endIndex))
         XCTAssertLessThan(selected.lowerBound, catalog.lowerBound)
         XCTAssertTrue(builder.contains("workout-builder-selected-exercises"))
         XCTAssertTrue(builder.contains("Not saved yet"))

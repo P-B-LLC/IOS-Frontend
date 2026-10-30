@@ -497,10 +497,6 @@ struct SocialFeedView: View {
         }
     }
 
-    private func isFollowing(_ person: PostAuthor) -> Bool {
-        guard let viewerID = profileStore.viewerID else { return false }
-        return store.followingByUser[viewerID]?.contains(where: { $0.id == person.id }) == true
-    }
 
     private var isListLoading: Bool {
         switch feedMode {
@@ -669,19 +665,11 @@ struct SocialFeedView: View {
                 // The gap is part of the row, so the whole line opens the
                 // profile rather than just the name.
                 .contentShape(Rectangle())
-            Button(followTitle(person)) {
-                Task {
-                    await store.setFollowing(
-                        !isFollowing(person),
-                        user: person,
-                        viewerID: profileStore.viewerID
-                    )
-                }
-            }
-            .font(.community(.caption, weight: .bold))
-            .buttonStyle(.bordered)
-            .buttonBorderShape(.capsule)
-            .disabled(store.changingFollowFor.contains(person.id))
+            FollowButton(
+                person: person,
+                relationship: store.relationship(with: person.id, viewerID: profileStore.viewerID),
+                viewerID: profileStore.viewerID
+            )
 
             Button {
                 Task { await store.setSuggestionDismissed(true, person: suggestion) }
@@ -699,14 +687,6 @@ struct SocialFeedView: View {
         .contentShape(Rectangle())
         // Not a Button wrapping the row: it holds two buttons of its own.
         .onTapGesture { visiting = VisitedPerson(id: person.id) }
-    }
-
-    /// "Requested" for a closed profile asked to, which the follow list alone
-    /// cannot say.
-    private func followTitle(_ person: PostAuthor) -> LocalizedStringKey {
-        if isFollowing(person) { return "Following" }
-        if store.requestedUserIDs.contains(person.id) { return "Requested" }
-        return "Follow"
     }
 
     /// The line at the end of the people you follow.

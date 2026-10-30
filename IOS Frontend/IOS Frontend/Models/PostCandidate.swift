@@ -28,6 +28,14 @@ nonisolated struct PostableSession: Identifiable, Hashable, Sendable {
     let workoutType: WorkoutType?
     /// How many sets the session recorded, counted by the server.
     let loggedSetCount: Int
+    /// Effort, entered values and details. Empty from a server that predates
+    /// them, and for a lifting session nobody rated.
+    var activitySummary: SessionActivitySummary
+
+    /// The activity, from the server when it says, else the type's own.
+    var activity: WorkoutActivity? {
+        activitySummary.activity ?? workoutType.map(WorkoutActivity.legacyDefault(for:))
+    }
 
     init(
         sessionID: Int,
@@ -37,7 +45,8 @@ nonisolated struct PostableSession: Identifiable, Hashable, Sendable {
         durationSeconds: Double?,
         routeDistanceKilometers: Double?,
         workoutType: WorkoutType?,
-        loggedSetCount: Int
+        loggedSetCount: Int,
+        activitySummary: SessionActivitySummary = SessionActivitySummary()
     ) {
         self.sessionID = sessionID
         self.workoutServerID = workoutServerID
@@ -47,6 +56,7 @@ nonisolated struct PostableSession: Identifiable, Hashable, Sendable {
         self.routeDistanceKilometers = routeDistanceKilometers
         self.workoutType = workoutType
         self.loggedSetCount = loggedSetCount
+        self.activitySummary = activitySummary
     }
 
     var id: Int { sessionID }
@@ -63,13 +73,16 @@ nonisolated struct PostableSession: Identifiable, Hashable, Sendable {
     /// simulator recorded "nothing" and never got its completed badge. Time is
     /// the evidence there: a run that took twenty minutes happened, whether or
     /// not GPS was watching.
+    ///
+    /// Every activity that is not sets-based is judged the same way: a tennis
+    /// match or a yoga class logged with its length happened.
     var recordedSomething: Bool {
-        switch workoutType {
-        case .running, .biking, .swimming:
-            (routeDistanceKilometers ?? 0) > 0 || (durationSeconds ?? 0) > 0
-        case .lifting, nil:
-            loggedSetCount > 0
-        }
+        SessionTraining.recordedSomething(
+            activity: activity,
+            loggedSetCount: loggedSetCount,
+            durationSeconds: durationSeconds,
+            distanceKilometers: activitySummary.distanceKilometers ?? routeDistanceKilometers
+        )
     }
 }
 

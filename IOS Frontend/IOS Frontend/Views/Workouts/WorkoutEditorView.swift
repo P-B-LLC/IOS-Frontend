@@ -28,6 +28,12 @@ struct WorkoutEditorView: View {
     /// environment so previews stand alone.
     var suggestions: [WorkoutSummary] = []
     var onSaved: ((Workout) async -> String?)?
+    /// Logging a finished activity straight to history, where there is a day
+    /// to log it on. Answers a problem to show, or nil once it is saved.
+    var onLogged: ((ActivityLogEntry) async -> String?)?
+    var logDefaultEnd = Date()
+    var logFinishedRange: ClosedRange<Date> = Date.distantPast...Date()
+    var logDistanceUnit: ActivityLogDraft.DistanceUnit = .kilometers
 
     @State private var isSaving = false
     @State private var saveError: String?
@@ -39,12 +45,20 @@ struct WorkoutEditorView: View {
         mode: Mode,
         suggestions: [WorkoutSummary] = [],
         recoveryContext: String = "library",
-        onSaved: ((Workout) async -> String?)? = nil
+        onSaved: ((Workout) async -> String?)? = nil,
+        onLogged: ((ActivityLogEntry) async -> String?)? = nil,
+        logDefaultEnd: Date = Date(),
+        logFinishedRange: ClosedRange<Date> = Date.distantPast...Date(),
+        logDistanceUnit: ActivityLogDraft.DistanceUnit = .kilometers
     ) {
         self.mode = mode
         self.suggestions = suggestions
         self.recoveryContext = recoveryContext
         self.onSaved = onSaved
+        self.onLogged = onLogged
+        self.logDefaultEnd = logDefaultEnd
+        self.logFinishedRange = logFinishedRange
+        self.logDistanceUnit = logDistanceUnit
         switch mode {
         case .create:
             _draft = State(initialValue: Workout(name: "", exercises: []))
@@ -77,7 +91,8 @@ struct WorkoutEditorView: View {
                 suggestions: suggestions,
                 startsAtReview: { if case .edit = mode { return true }; return false }(),
                 isSaving: isSaving,
-                onSave: save
+                onSave: save,
+                logging: logging
             )
             .saveFeedback(isSaving: isSaving, error: saveError)
             .recoverableDraft(key: recoveryKey, value: $draft, saved: $draftSaved, error: $saveError,
@@ -85,6 +100,24 @@ struct WorkoutEditorView: View {
         }
     }
 
+
+    /// Only when creating: editing a saved plan is never a log.
+    private var logging: ActivityLogging? {
+        if case .edit = mode { return nil }
+        guard onLogged != nil else { return nil }
+        return ActivityLogging(defaultEnd: logDefaultEnd, finishedRange: logFinishedRange, distanceUnit: logDistanceUnit, onLog: log)
+    }
+
+    private func log(_ entry: ActivityLogEntry) {
+        guard !isSaving, let onLogged else { return }
+        isSaving = true
+        saveError = nil
+        Task {
+            defer { isSaving = false }
+            if let problem = await onLogged(entry) { saveError = problem }
+            else { draftSaved = true; dismiss() }
+        }
+    }
 
     private func save() {
         guard !isSaving, canSave, let onSaved else { return }

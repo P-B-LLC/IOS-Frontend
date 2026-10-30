@@ -1,9 +1,34 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "CFBundleDisplayName" : {
+      "comment" : "Bundle display name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Rytivo"
+          }
+        }
+      },
+      "shouldTranslate" : false
+    },
+    "CFBundleName" : {
+      "comment" : "Bundle name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Rytivo"
+          }
+        }
+      },
+      "shouldTranslate" : false
+    },
     "NSCameraUsageDescription" : {
       "comment" : "iOS camera permission prompt",
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -69,7 +94,6 @@
     },
     "NSHealthShareUsageDescription" : {
       "comment" : "Apple Health read permission prompt",
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -135,7 +159,6 @@
     },
     "NSHealthUpdateUsageDescription" : {
       "comment" : "Apple Health write permission prompt (the app never writes)",
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -201,7 +224,6 @@
     },
     "NSLocationWhenInUseUsageDescription" : {
       "comment" : "iOS location permission prompt",
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -267,7 +289,6 @@
     },
     "NSMicrophoneUsageDescription" : {
       "comment" : "iOS microphone permission prompt",
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -333,7 +354,6 @@
     },
     "NSMotionUsageDescription" : {
       "comment" : "iOS motion and fitness permission prompt",
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
