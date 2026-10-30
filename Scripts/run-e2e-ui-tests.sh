@@ -43,6 +43,13 @@ fi
 # type a word hangs until its ten-minute allowance. Mark the tip as seen.
 xcrun simctl bootstatus "$device" -b >/dev/null
 xcrun simctl spawn "$device" defaults write com.apple.Preferences DidShowContinuousPathIntroduction -bool true
+# Later keyboard tips and predictions do the same a few tests in, once the
+# keyboard has been used enough: the suite stalled at whichever test typed
+# then. Nothing here tests the keyboard, so turn its extras off.
+for key in KeyboardContinuousPathEnabled KeyboardPrediction KeyboardAutocorrection \
+    KeyboardInlinePredictions KeyboardShowPredictionBar; do
+    xcrun simctl spawn "$device" defaults write com.apple.Preferences "$key" -bool false
+done
 
 (cd "$backend" && "$python" manage.py migrate --noinput >/dev/null)
 (cd "$backend" && "$python" manage.py shell -c "exec(open('$repo/Scripts/e2e-seed.py').read())")
