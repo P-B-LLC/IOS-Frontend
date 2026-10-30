@@ -37,6 +37,13 @@ if [ -z "$device" ]; then
     trap 'xcrun simctl delete "$device" >/dev/null 2>&1 || true' EXIT
 fi
 
+# A fresh simulator shows the keyboard's one-time "slide to type" tip the
+# first time a letter keyboard comes up. Its animation never ends, so every
+# step after it waits for an app that never goes idle, and the first test to
+# type a word hangs until its ten-minute allowance. Mark the tip as seen.
+xcrun simctl bootstatus "$device" -b >/dev/null
+xcrun simctl spawn "$device" defaults write com.apple.Preferences DidShowContinuousPathIntroduction -bool true
+
 (cd "$backend" && "$python" manage.py migrate --noinput >/dev/null)
 (cd "$backend" && "$python" manage.py shell -c "exec(open('$repo/Scripts/e2e-seed.py').read())")
 (cd "$backend" && exec "$python" manage.py runserver "127.0.0.1:$port" --noreload) > "$scratch/server.log" 2>&1 &
@@ -60,4 +67,6 @@ xcodebuild test-without-building -xctestrun "$(ls "$derived"/Build/Products/*.xc
     -only-testing:RytivoUITests/RytivoE2ETests/test06WorkoutSettings \
     -only-testing:RytivoUITests/RytivoE2ETests/test08LogTennis \
     -only-testing:RytivoUITests/RytivoE2ETests/test09ExerciseLibrary \
-    -only-testing:RytivoUITests/RytivoE2ETests/test10WorkoutsInAnotherLanguage
+    -only-testing:RytivoUITests/RytivoE2ETests/test10WorkoutsInAnotherLanguage \
+    -only-testing:RytivoUITests/RytivoE2ETests/test11Activity \
+    -only-testing:RytivoUITests/RytivoE2ETests/test12CalendarAgenda

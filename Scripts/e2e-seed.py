@@ -76,4 +76,23 @@ Follow.objects.filter(follower=lifter).delete()
 WorkoutTemplate.objects.filter(owner=lifter).exclude(name="Push Day").delete()
 Exercise.objects.filter(created_by=lifter).delete()
 Follow.objects.get_or_create(follower=buddy, following=lifter)
+
+# Activity for test11: Ben follows Lena, and likes and comments on a post of
+# the finished session. notify() is what the API calls, so these are the rows
+# a real like, comment and follow leave.
+from core.models import Notification, Post, PostComment, PostLike, PlannerEntry, notify
+from core.views import create_post_from_source
+
+Notification.objects.filter(recipient=lifter).delete()
+Post.objects.filter(author=lifter).delete()
+shared = create_post_from_source(lifter, Post.Kind.WORKOUT, past, "Bench felt strong", Post.Visibility.PUBLIC)
+PostLike.objects.create(post=shared, user=buddy)
+notify(lifter, buddy, Notification.Kind.LIKE, post=shared)
+reply = PostComment.objects.create(post=shared, author=buddy, body="Nice work!")
+notify(lifter, buddy, Notification.Kind.COMMENT, post=shared, comment=reply)
+notify(lifter, buddy, Notification.Kind.FOLLOW)
+
+# test12 adds and deletes its own task; one left by an interrupted run would
+# make the agenda show two.
+PlannerEntry.objects.filter(owner=lifter, title="Stretch E2E").delete()
 print("seeded", {"structure_fields": has_structure, "today": str(today), "users": ["lifter", "buddy"]})

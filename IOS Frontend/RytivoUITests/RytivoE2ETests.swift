@@ -663,4 +663,61 @@ final class RytivoE2ETests: XCTestCase {
         chooseLanguage("English", account: "Cuenta", settings: "Configuración", language: "Idioma")
         waitUntil(10, "back to English") { self.app.navigationBars["Language"].exists }
     }
+
+    /// The seed has Ben follow Lena, then like and comment on her post. The
+    /// bell says there is something unread; Activity shows the follow on its
+    /// own and the like and comment as one card for the post, counted; that
+    /// card opens to each of them.
+    func test11Activity() throws {
+        signInIfNeeded()
+        XCTAssertTrue(app.buttons["Social"].waitForExistence(timeout: 20))
+        app.buttons["Social"].tap()
+        let bell = app.buttons["Notifications"]
+        XCTAssertTrue(bell.waitForExistence(timeout: 10), "notifications button")
+        waitUntil(15, "unread activity is announced") { (bell.value as? String) == "Unread notifications" }
+        bell.tap()
+
+        XCTAssertTrue(element(labelContaining: "Ben Buddy started following you").waitForExistence(timeout: 15), "the follow")
+        let postCard = element(labelContaining: "Ben Buddy interacted with a post")
+        XCTAssertTrue(postCard.exists, "the like and comment, grouped")
+        XCTAssertTrue(element(labelContaining: "1 like · 1 comment").exists, "counted, singular in English")
+        shot("01 activity")
+
+        postCard.tap()
+        XCTAssertTrue(app.navigationBars["Post activity"].waitForExistence(timeout: 10), "the post's activity opened")
+        XCTAssertTrue(element(labelContaining: "Ben Buddy liked your post").waitForExistence(timeout: 10), "the like")
+        XCTAssertTrue(element(labelContaining: "Ben Buddy commented on your post").exists, "the comment")
+        shot("02 post activity")
+    }
+
+    /// The calendar's day agenda. Today's planned workout is on it; a task
+    /// added from the Calendar tab lands on the selected day, and deleting it
+    /// from its actions takes it off again.
+    func test12CalendarAgenda() throws {
+        signInIfNeeded()
+        XCTAssertTrue(app.buttons["Calendar"].waitForExistence(timeout: 20))
+        app.buttons["Calendar"].tap()
+        XCTAssertTrue(element(labelContaining: "Push Day").waitForExistence(timeout: 20), "today's workout is on the agenda")
+        shot("01 agenda")
+
+        let add = app.buttons["Add Task"].firstMatch
+        XCTAssertTrue(add.waitForExistence(timeout: 10), "add a task")
+        add.tap()
+        let title = app.textFields["What needs doing?"]
+        XCTAssertTrue(title.waitForExistence(timeout: 10), "task editor")
+        type("Stretch E2E", into: title)
+        dismissKeyboard()
+        app.buttons["Add task"].firstMatch.tap()
+
+        let actions = app.buttons["Actions for Stretch E2E"].firstMatch
+        XCTAssertTrue(actions.waitForExistence(timeout: 15), "the new task is on the agenda")
+        shot("02 task added")
+        actions.tap()
+        let delete = app.buttons["Delete"].firstMatch
+        XCTAssertTrue(delete.waitForExistence(timeout: 5), "delete is offered")
+        delete.tap()
+        waitUntil(15, "the task is gone") { !actions.exists }
+        XCTAssertTrue(element(labelContaining: "Push Day").exists, "the workout stays")
+        shot("03 task deleted")
+    }
 }
