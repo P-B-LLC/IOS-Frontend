@@ -59,6 +59,32 @@ struct DayWorkoutView: View {
     }
 
     var body: some View {
+        presentationContent
+            .overlay {
+                if store.isSaving {
+                    ZStack {
+                        Color.black.opacity(0.08).ignoresSafeArea()
+                        ProgressView("Saving to Rytivo...")
+                            .padding(18)
+                            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+                    }
+                }
+            }
+            .overlay(alignment: .bottom) {
+                if let setSuccessMessage {
+                    LiveSetSuccessToast(message: setSuccessMessage)
+                        .padding(.horizontal, RepbaseDesign.pageInset)
+                        .padding(.bottom, RepbaseDesign.bottomBarClearance - 26)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
+            .sensoryFeedback(.success, trigger: recentlyLoggedSetID)
+            .onDisappear { setFeedbackTask?.cancel() }
+    }
+
+    // Keep modifier chains small and the editor's optional async callback
+    // explicitly typed, outside the body's type-checking expression.
+    private var confirmationContent: some View {
         styledContent
         // The bar is a safeAreaInset, so the keyboard lifts it and parks it
         // on top of the row being typed into -- which during a session is the
@@ -94,6 +120,10 @@ struct DayWorkoutView: View {
                 onKeep: { commitFinish(updatingPlan: false) }
             )
         }
+    }
+
+    private var lifecycleContent: some View {
+        confirmationContent
         .task {
             // Only when nothing has been read yet. The dashboard loads the
             // same history, so arriving from the workouts page already has it,
@@ -140,31 +170,12 @@ struct DayWorkoutView: View {
             }
             store.routeTracker.startTracking()
         }
+    }
+
+    private var presentationContent: some View {
+        lifecycleContent
         .fullScreenCover(item: $editor) { mode in
-            WorkoutEditorView(
-                mode: mode,
-                suggestions: store.knownWorkouts,
-                recoveryContext: WorkoutStore.dateString(store.workoutDate(for: day)),
-                onSaved: { savedWorkout in
-                    let problem = await store.saveWorkoutReportingFailure(savedWorkout, on: day)
-                    if problem == nil {
-                        highlightedWorkoutID = store.lastSavedWorkoutID
-                        savedWorkoutMessage = Self.savedMessage(savedWorkout.name, on: day)
-                    }
-                    return problem
-                },
-                onLogged: canLogOnThisDay ? { entry in
-                    let problem = await store.logActivity(entry, on: day)
-                    if problem == nil {
-                        savedWorkoutMessage = Self.loggedMessage(entry.workoutName)
-                        RepbaseCelebrations.show(.workoutLogged)
-                    }
-                    return problem
-                } : nil,
-                logDefaultEnd: defaultLogEnd,
-                logFinishedRange: logFinishedRange,
-                logDistanceUnit: store.preferences.weightUnit == .imperial ? .miles : .kilometers
-            )
+            workoutEditor(for: mode)
         }
         .sheet(item: $loggingWorkout) { workout in
             ActivityLogSheet(
@@ -185,32 +196,42 @@ struct DayWorkoutView: View {
                 )
             }
         }
-        .overlay {
-            if store.isSaving {
-                ZStack {
-                    Color.black.opacity(0.08)
-                        .ignoresSafeArea()
-                    ProgressView("Saving to Rytivo...")
-                        .padding(18)
-                        .background(
-                            .regularMaterial,
-                            in: RoundedRectangle(cornerRadius: 16)
-                        )
-                }
-            }
+    }
+
+    private func workoutEditor(for mode: WorkoutEditorView.Mode) -> WorkoutEditorView {
+        WorkoutEditorView(
+            mode: mode,
+            suggestions: store.knownWorkouts,
+            recoveryContext: WorkoutStore.dateString(store.workoutDate(for: day)),
+            onSaved: saveEditedWorkout,
+            onLogged: activityLogAction,
+            logDefaultEnd: defaultLogEnd,
+            logFinishedRange: logFinishedRange,
+            logDistanceUnit: store.preferences.weightUnit == .imperial ? .miles : .kilometers
+        )
+    }
+
+    private func saveEditedWorkout(_ workout: Workout) async -> String? {
+        let problem = await store.saveWorkoutReportingFailure(workout, on: day)
+        if problem == nil {
+            highlightedWorkoutID = store.lastSavedWorkoutID
+            savedWorkoutMessage = Self.savedMessage(workout.name, on: day)
         }
-        .overlay(alignment: .bottom) {
-            if let setSuccessMessage {
-                LiveSetSuccessToast(message: setSuccessMessage)
-                    .padding(.horizontal, RepbaseDesign.pageInset)
-                    .padding(.bottom, RepbaseDesign.bottomBarClearance - 26)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
+        return problem
+    }
+
+    private var activityLogAction: ((ActivityLogEntry) async -> String?)? {
+        guard canLogOnThisDay else { return nil }
+        return logActivity
+    }
+
+    private func logActivity(_ entry: ActivityLogEntry) async -> String? {
+        let problem = await store.logActivity(entry, on: day)
+        if problem == nil {
+            savedWorkoutMessage = Self.loggedMessage(entry.workoutName)
+            RepbaseCelebrations.show(.workoutLogged)
         }
-        .sensoryFeedback(.success, trigger: recentlyLoggedSetID)
-        .onDisappear {
-            setFeedbackTask?.cancel()
-        }
+        return problem
     }
 
     /// The scrolling page with its appearance applied.

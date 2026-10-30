@@ -25,10 +25,17 @@ bash Scripts/test-account-safety.sh
 # Reuse intermediates instead of retaining a new multi-GB build on every run.
 build_dir="${DERIVED_DATA_PATH:-$repo/.build/planner-validation}"
 mkdir -p "$build_dir"
-xcodebuild -project 'IOS Frontend/IOS Frontend.xcodeproj' -scheme 'IOS Frontend' \
+if xcodebuild -project 'IOS Frontend/IOS Frontend.xcodeproj' -scheme 'IOS Frontend' \
     -configuration Debug -destination 'generic/platform=iOS Simulator' \
     -derivedDataPath "$build_dir" CODE_SIGNING_ALLOWED=NO \
-    REPBASE_API_URL="$REPBASE_API_URL" build 2>&1 | tee "$build_dir/build.log"
+    REPBASE_API_URL="$REPBASE_API_URL" build 2>&1 | tee "$build_dir/build.log"; then
+    :
+else
+    build_status=$?
+    echo "Build failed. Compiler diagnostics from $build_dir/build.log:" >&2
+    grep -n -B 4 -A 8 'error:' "$build_dir/build.log" | head -n 120 || true
+    exit "$build_status"
+fi
 if [ "${INSTALL_SIMULATOR:-0}" = 1 ]; then
     xcrun simctl install booted "$build_dir/Build/Products/Debug-iphonesimulator/Rytivo.app"
     xcrun simctl terminate booted com.pbllc.rytivo >/dev/null 2>&1 || true
