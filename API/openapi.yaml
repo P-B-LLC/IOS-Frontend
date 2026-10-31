@@ -1637,6 +1637,12 @@ paths:
       operationId: food_saved_meals_list
       description: Meals kept to reuse.
       parameters:
+      - in: query
+        name: cookbook
+        schema:
+          type: integer
+        description: Only recipes in this owned cookbook; omitted returns the owner's
+          complete recipe library.
       - name: page
         required: false
         in: query
@@ -7086,7 +7092,9 @@ components:
       properties:
         cookbook:
           type: integer
+          maximum: 9223372036854775807
           minimum: 1
+          format: int64
       required:
       - cookbook
     CookbookIngredient:
@@ -9602,7 +9610,11 @@ components:
           maxLength: 150
         cookbook:
           type: integer
+          maximum: 9223372036854775807
           minimum: 1
+          format: int64
+          description: Required on creation. Omit on edits to keep the recipe in its
+            existing cookbook.
         ingredients:
           type: array
           items:
@@ -11887,7 +11899,11 @@ components:
           maxLength: 150
         cookbook:
           type: integer
+          maximum: 9223372036854775807
           minimum: 1
+          format: int64
+          description: Required on creation. Omit on edits to keep the recipe in its
+            existing cookbook.
         ingredients:
           type: array
           items:
@@ -11921,7 +11937,11 @@ components:
           maxLength: 150
         cookbook:
           type: integer
+          maximum: 9223372036854775807
           minimum: 1
+          format: int64
+          description: Required on creation. Omit on edits to keep the recipe in its
+            existing cookbook.
         ingredients:
           type: array
           items:
