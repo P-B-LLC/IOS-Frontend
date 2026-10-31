@@ -5011,12 +5011,12 @@ public enum Components {
         /// - Remark: Generated from `#/components/schemas/CookbookDestinationRequest`.
         public struct CookbookDestinationRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/CookbookDestinationRequest/cookbook`.
-            public var cookbook: Swift.Int
+            public var cookbook: Swift.Int64
             /// Creates a new `CookbookDestinationRequest`.
             ///
             /// - Parameters:
             ///   - cookbook:
-            public init(cookbook: Swift.Int) {
+            public init(cookbook: Swift.Int64) {
                 self.cookbook = cookbook
             }
             public enum CodingKeys: String, CodingKey {
@@ -9101,8 +9101,10 @@ public enum Components {
         public struct PatchedSavedFoodMealRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PatchedSavedFoodMealRequest/name`.
             public var name: Swift.String?
+            /// Required on creation. Omit on edits to keep the recipe in its existing cookbook.
+            ///
             /// - Remark: Generated from `#/components/schemas/PatchedSavedFoodMealRequest/cookbook`.
-            public var cookbook: Swift.Int?
+            public var cookbook: Swift.Int64?
             /// - Remark: Generated from `#/components/schemas/PatchedSavedFoodMealRequest/ingredients`.
             public var ingredients: [Components.Schemas.SavedFoodIngredientRequest]?
             /// - Remark: Generated from `#/components/schemas/PatchedSavedFoodMealRequest/cooking_instructions`.
@@ -9111,12 +9113,12 @@ public enum Components {
             ///
             /// - Parameters:
             ///   - name:
-            ///   - cookbook:
+            ///   - cookbook: Required on creation. Omit on edits to keep the recipe in its existing cookbook.
             ///   - ingredients:
             ///   - cookingInstructions:
             public init(
                 name: Swift.String? = nil,
-                cookbook: Swift.Int? = nil,
+                cookbook: Swift.Int64? = nil,
                 ingredients: [Components.Schemas.SavedFoodIngredientRequest]? = nil,
                 cookingInstructions: Swift.String? = nil
             ) {
@@ -12829,8 +12831,10 @@ public enum Components {
             public var id: Swift.Int
             /// - Remark: Generated from `#/components/schemas/SavedFoodMeal/name`.
             public var name: Swift.String
+            /// Required on creation. Omit on edits to keep the recipe in its existing cookbook.
+            ///
             /// - Remark: Generated from `#/components/schemas/SavedFoodMeal/cookbook`.
-            public var cookbook: Swift.Int?
+            public var cookbook: Swift.Int64?
             /// - Remark: Generated from `#/components/schemas/SavedFoodMeal/ingredients`.
             public var ingredients: [Components.Schemas.SavedFoodIngredient]
             /// - Remark: Generated from `#/components/schemas/SavedFoodMeal/cooking_instructions`.
@@ -12844,7 +12848,7 @@ public enum Components {
             /// - Parameters:
             ///   - id:
             ///   - name:
-            ///   - cookbook:
+            ///   - cookbook: Required on creation. Omit on edits to keep the recipe in its existing cookbook.
             ///   - ingredients:
             ///   - cookingInstructions:
             ///   - createdAt:
@@ -12852,7 +12856,7 @@ public enum Components {
             public init(
                 id: Swift.Int,
                 name: Swift.String,
-                cookbook: Swift.Int? = nil,
+                cookbook: Swift.Int64? = nil,
                 ingredients: [Components.Schemas.SavedFoodIngredient],
                 cookingInstructions: Swift.String? = nil,
                 createdAt: Foundation.Date,
@@ -12883,8 +12887,10 @@ public enum Components {
         public struct SavedFoodMealRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/SavedFoodMealRequest/name`.
             public var name: Swift.String
+            /// Required on creation. Omit on edits to keep the recipe in its existing cookbook.
+            ///
             /// - Remark: Generated from `#/components/schemas/SavedFoodMealRequest/cookbook`.
-            public var cookbook: Swift.Int?
+            public var cookbook: Swift.Int64?
             /// - Remark: Generated from `#/components/schemas/SavedFoodMealRequest/ingredients`.
             public var ingredients: [Components.Schemas.SavedFoodIngredientRequest]
             /// - Remark: Generated from `#/components/schemas/SavedFoodMealRequest/cooking_instructions`.
@@ -12893,12 +12899,12 @@ public enum Components {
             ///
             /// - Parameters:
             ///   - name:
-            ///   - cookbook:
+            ///   - cookbook: Required on creation. Omit on edits to keep the recipe in its existing cookbook.
             ///   - ingredients:
             ///   - cookingInstructions:
             public init(
                 name: Swift.String,
-                cookbook: Swift.Int? = nil,
+                cookbook: Swift.Int64? = nil,
                 ingredients: [Components.Schemas.SavedFoodIngredientRequest],
                 cookingInstructions: Swift.String? = nil
             ) {
@@ -22171,6 +22177,10 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/GET/query`.
             public struct Query: Sendable, Hashable {
+                /// Only recipes in this owned cookbook; omitted returns the owner's complete recipe library.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/GET/query/cookbook`.
+                public var cookbook: Swift.Int?
                 /// A page number within the paginated result set.
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/GET/query/page`.
@@ -22178,8 +22188,13 @@ public enum Operations {
                 /// Creates a new `Query`.
                 ///
                 /// - Parameters:
+                ///   - cookbook: Only recipes in this owned cookbook; omitted returns the owner's complete recipe library.
                 ///   - page: A page number within the paginated result set.
-                public init(page: Swift.Int? = nil) {
+                public init(
+                    cookbook: Swift.Int? = nil,
+                    page: Swift.Int? = nil
+                ) {
+                    self.cookbook = cookbook
                     self.page = page
                 }
             }

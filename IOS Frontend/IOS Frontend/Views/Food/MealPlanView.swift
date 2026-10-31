@@ -67,9 +67,8 @@ struct MealPlanView: View {
                 .disabled(plan.isEmpty || isApplying || store.isSaving)
             }
         }
-        // No fetch here. Saved meals are read once when the account connects
-        // and SavedMealsView reads the same list without refetching; asking
-        // again on open would be a request for something already in hand.
+        // The complete library is only needed while assembling a plan.
+        .task(id: store.isConnected) { if store.isConnected { await store.reloadAllSavedRecipes() } }
     }
 
     // MARK: - Totals

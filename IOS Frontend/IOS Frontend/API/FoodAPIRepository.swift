@@ -210,12 +210,12 @@ actor FoodAPIRepository {
         }
     }
 
-    func savedMeals() async throws -> [SavedFoodMeal] {
+    func savedMeals(cookbookID: Int? = nil) async throws -> [SavedFoodMeal] {
         var page: Int?
         var visited: Set<Int> = []
         var values: [SavedFoodMeal] = []
         repeat {
-            let output = try await client.foodSavedMealsList(query: .init(page: page))
+            let output = try await client.foodSavedMealsList(query: .init(cookbook: cookbookID, page: page))
             let response: Components.Schemas.PaginatedSavedFoodMealList
             switch output {
             case .ok(let success):

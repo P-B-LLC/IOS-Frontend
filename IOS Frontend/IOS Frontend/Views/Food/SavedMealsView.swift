@@ -12,6 +12,7 @@ struct SavedMealsView: View {
     @Environment(FoodTrackingStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     @Environment(\.workoutVisualPhase) private var phase
+    @Environment(\.scenePhase) private var scenePhase
 
     let referenceDate: Date
 
@@ -49,6 +50,7 @@ struct SavedMealsView: View {
     @State private var isCreatingCookbook = false
     @State private var isPostingCookbook = false
     @State private var recipeToMove: SavedFoodMeal?
+    @State private var isVisible = false
 
     /// Put `savedMeal` where the caller said, or ask when nobody said.
     private func apply(_ savedMeal: SavedFoodMeal) {
@@ -83,6 +85,13 @@ struct SavedMealsView: View {
         Group {
             if cookbookID == nil {
                 CookbookLibraryView(referenceDate: referenceDate, destination: destination)
+            } else if store.isLoadingCookbooks && recipes.isEmpty {
+                ProgressView("Loading…")
+            } else if let error = store.cookbookError, recipes.isEmpty {
+                VStack(spacing: 16) {
+                    Text(error).font(.community(.body)).foregroundStyle(.secondary)
+                    Button("Retry") { Task { await store.reloadCookbookLibrary(cookbookID: cookbookID) } }
+                }.padding(RepbaseDesign.pageInset)
             } else if recipes.isEmpty {
                 emptyLibrary
             } else {
@@ -154,8 +163,18 @@ struct SavedMealsView: View {
                 }
             }
         }
-        .task(id: store.isConnected) { if store.isConnected { await store.reloadCookbookLibrary() } }
-        .refreshable { await store.reloadCookbookLibrary() }
+        .task(id: store.isConnected) {
+            if store.isConnected { await store.reloadCookbookLibrary(cookbookID: cookbookID, minimumInterval: 15) }
+        }
+        .onAppear {
+            isVisible = true
+            if store.isConnected { Task { await store.reloadCookbookLibrary(cookbookID: cookbookID, minimumInterval: 15) } }
+        }
+        .onDisappear { isVisible = false }
+        .onChange(of: scenePhase) { _, value in
+            if value == .active && isVisible { Task { await store.reloadCookbookLibrary(cookbookID: cookbookID) } }
+        }
+        .refreshable { await store.reloadCookbookLibrary(cookbookID: cookbookID) }
 #if DEBUG
         // Opens the editor on the first saved meal that carries a recipe.
         // It is a tap inside a list inside a tab, and simctl cannot tap, so

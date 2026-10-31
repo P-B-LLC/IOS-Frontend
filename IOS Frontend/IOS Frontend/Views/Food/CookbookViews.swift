@@ -34,7 +34,6 @@ struct CookbookRow: View {
 struct CookbookLibraryView: View {
     @Environment(FoodTrackingStore.self) private var store
     @Environment(\.workoutVisualPhase) private var phase
-    @Environment(\.scenePhase) private var scenePhase
     let referenceDate: Date
     var destination: SavedMealsView.Destination?
     @State private var editing: Cookbook?
@@ -55,16 +54,20 @@ struct CookbookLibraryView: View {
                         .font(.community(.body)).foregroundStyle(phase.secondaryText)
                 }
                 ForEach(store.cookbooks) { book in
-                    NavigationLink {
-                        SavedMealsView(referenceDate: referenceDate, destination: destination, cookbookID: book.id)
-                    } label: { CookbookRow(cookbook: book) }
-                    .buttonStyle(.plain)
-                    .contextMenu {
-                        Button("Rename cookbook", systemImage: "pencil") { editing = book }
-                        Button("Delete cookbook", systemImage: "trash", role: .destructive) { deleting = book }
-                            .disabled(book.recipeCount > 0)
+                    HStack(spacing: 0) {
+                        NavigationLink {
+                            SavedMealsView(referenceDate: referenceDate, destination: destination, cookbookID: book.id)
+                        } label: { CookbookRow(cookbook: book) }
+                        .buttonStyle(.plain)
+                        Menu {
+                            Button("Rename cookbook", systemImage: "pencil") { editing = book }
+                            Button("Delete cookbook", systemImage: "trash", role: .destructive) { deleting = book }
+                                .disabled(book.recipeCount > 0)
+                        } label: {
+                            Image(systemName: "ellipsis").frame(width: 44, height: 44)
+                        }
+                        .accessibilityLabel("Cookbook options")
                     }
-                    .accessibilityAction(named: Text("Rename cookbook")) { editing = book }
                 }
                 Button("New cookbook", systemImage: "plus") { creating = true }
                     .buttonStyle(RepbasePrimaryButtonStyle())
@@ -79,9 +82,6 @@ struct CookbookLibraryView: View {
             if let book = deleting {
                 Button("Delete cookbook", role: .destructive) { Task { _ = await store.deleteCookbook(book) } }
             }
-        }
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .active { Task { await store.reloadCookbookLibrary() } }
         }
     }
 }
@@ -189,7 +189,7 @@ struct CookbookPickerView: View {
         .navigationTitle("Choose a cookbook").navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } } }
         .sheet(isPresented: $creating) { NavigationStack { CookbookEditorView() } }
-        .task(id: store.isConnected) { if store.isConnected { await store.reloadCookbookLibrary() } }
+        .task(id: store.isConnected) { if store.isConnected { await store.reloadCookbookLibrary(minimumInterval: 15) } }
         .refreshable { await store.reloadCookbookLibrary() }
         .saveFeedback(isSaving: saving, error: nil)
         .repbaseScreen(phase)
