@@ -191,13 +191,14 @@ struct MealPlanView: View {
     @ViewBuilder
     private var library: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("SAVED MEALS")
+            Text("Cookbooks")
+                .textCase(.uppercase)
                 .font(.community(.caption2, weight: .bold))
                 .tracking(1.2)
                 .foregroundStyle(RepbasePalette.caramel)
 
             if store.savedMeals.isEmpty {
-                Text("No saved meals yet. Save a meal from a day to reuse it here.")
+                Text("Create your first cookbook, then save recipes into it.")
                     .font(.community(.footnote))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -209,6 +210,9 @@ struct MealPlanView: View {
                         HStack(spacing: 10) {
                             VStack(alignment: .leading, spacing: 1) {
                                 Text(meal.name).font(.community(.subheadline, weight: .semibold))
+                                if let book = store.cookbooks.first(where: { $0.id == meal.cookbookID }) {
+                                    Text(book.name).font(.community(.caption)).foregroundStyle(.secondary)
+                                }
                                 Text("\(meal.totalNutrition.calories.nutritionText) kcal")
                                     .font(.community(.caption))
                                     .foregroundStyle(.secondary)
@@ -224,6 +228,7 @@ struct MealPlanView: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Add \(meal.name) to the plan")
+                    .accessibilityValue(Text(store.cookbooks.first(where: { $0.id == meal.cookbookID })?.name ?? ""))
                     .accessibilityHint("Adds it as meal \(plan.count + 1) of the planned day")
                     if index < store.savedMeals.count - 1 { Divider().opacity(0.45) }
                 }

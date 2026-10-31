@@ -70,7 +70,7 @@ actor FoodAPIRepository {
                 throw APIServiceError.undocumentedStatus(statusCode)
             }
         } while page != nil
-        return values
+        return values.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
     func createCookbook(name: String, key: UUID) async throws -> Cookbook {

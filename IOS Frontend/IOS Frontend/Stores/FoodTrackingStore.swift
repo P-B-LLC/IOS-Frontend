@@ -509,9 +509,13 @@ final class FoodTrackingStore {
         let generation = connectionGeneration
         let revision = librarySync.beginRead()
         do {
-            let recipes = try await repository.savedMeals()
+            async let recipesRequest = repository.savedMeals()
+            async let booksRequest = repository.cookbooks()
+            let (recipes, books) = try await (recipesRequest, booksRequest)
             guard generation == connectionGeneration, librarySync.accepts(revision) else { return }
             savedMeals = recipes
+            cookbooks = books
+            lastCookbooksRefresh = Date()
             cookbookError = nil
         } catch {
             guard generation == connectionGeneration, librarySync.accepts(revision) else { return }
