@@ -139,22 +139,6 @@ jobs:
             build
 
       # A release build reads its server from REPBASE_API_URL in the bundle
-      - name: Cookbook simulator previews when related screens change
-        if: steps.scope.outputs.code == 'true'
-        run: |
-          if git diff --name-only HEAD^ HEAD | grep -Eq 'Cookbook|cookbook|SavedMealsView|FoodTrackingStore'; then
-            bash Scripts/capture-cookbooks-preview.sh
-          fi
-
-      - name: Save cookbook simulator previews
-        if: steps.scope.outputs.code == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: cookbook-previews
-          path: .build/cookbook-previews/*.png
-          if-no-files-found: ignore
-
-      # A release build reads its server from REPBASE_API_URL in the bundle
       # and refuses to run without an https one. That plumbing was broken and
       # nothing noticed, because nothing here had ever built Release: the key
       # was set as INFOPLIST_KEY_REPBASE_API_URL, which only works for keys
@@ -245,6 +229,24 @@ jobs:
       - name: Account safety regression tests
         if: steps.scope.outputs.code == 'true'
         run: bash Scripts/test-account-safety.sh
+
+      - name: Cookbook simulator previews when related screens change
+        if: steps.scope.outputs.code == 'true'
+        timeout-minutes: 15
+        env:
+          DOWNLOAD_COOKBOOK_RUNTIME: '1'
+        run: |
+          if git diff --name-only HEAD^ HEAD | grep -Eq 'Cookbook|cookbook|SavedMealsView|FoodTrackingStore'; then
+            bash Scripts/capture-cookbooks-preview.sh
+          fi
+
+      - name: Save cookbook simulator previews
+        if: always() && steps.scope.outputs.code == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: cookbook-previews
+          path: .build/cookbook-previews/*.png
+          if-no-files-found: ignore
 
       # Legal/*.html is generated from the Swift the app renders, so the two
       # can drift, and one of them is published. The privacy policy is what
