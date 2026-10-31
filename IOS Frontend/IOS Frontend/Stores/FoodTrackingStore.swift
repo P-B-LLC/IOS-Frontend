@@ -463,7 +463,7 @@ final class FoodTrackingStore {
     }
 
     func reloadCookbookLibrary(cookbookID: Int? = nil, minimumInterval: TimeInterval = 0) async {
-        guard let repository else { return }
+        guard let repository else { cookbookError = SaveFailure.notConnected; return }
         if isLoadingCookbooks && currentLibraryCookbookID == cookbookID { return }
         activeCookbookID = cookbookID
         let recipesAreFresh = cookbookID.map { id in
@@ -505,7 +505,7 @@ final class FoodTrackingStore {
     }
 
     func reloadAllSavedRecipes() async {
-        guard let repository else { return }
+        guard let repository else { cookbookError = SaveFailure.notConnected; return }
         let generation = connectionGeneration
         let revision = librarySync.beginRead()
         do {
@@ -524,7 +524,10 @@ final class FoodTrackingStore {
     }
 
     func createCookbook(name: String, key: UUID) async -> Cookbook? {
-        guard let repository, !isSaving else { return nil }
+        guard let repository, !isSaving else {
+            cookbookError = self.repository == nil ? SaveFailure.notConnected : SaveFailure.alreadySaving
+            return nil
+        }
         let generation = connectionGeneration
         librarySync.wrote()
         isSaving = true
@@ -545,7 +548,10 @@ final class FoodTrackingStore {
     }
 
     func renameCookbook(_ book: Cookbook, name: String) async -> Bool {
-        guard let repository, !isSaving else { return false }
+        guard let repository, !isSaving else {
+            cookbookError = self.repository == nil ? SaveFailure.notConnected : SaveFailure.alreadySaving
+            return false
+        }
         let generation = connectionGeneration
         librarySync.wrote()
         isSaving = true
@@ -566,7 +572,10 @@ final class FoodTrackingStore {
     }
 
     func deleteCookbook(_ book: Cookbook) async -> Bool {
-        guard let repository, !isSaving else { return false }
+        guard let repository, !isSaving else {
+            cookbookError = self.repository == nil ? SaveFailure.notConnected : SaveFailure.alreadySaving
+            return false
+        }
         let generation = connectionGeneration
         librarySync.wrote()
         isSaving = true
@@ -585,7 +594,10 @@ final class FoodTrackingStore {
     }
 
     func moveRecipe(_ recipe: SavedFoodMeal, to book: Cookbook) async -> Bool {
-        guard let repository, let id = recipe.serverID, !isSaving else { return false }
+        guard let repository, let id = recipe.serverID, !isSaving else {
+            cookbookError = self.repository == nil ? SaveFailure.notConnected : SaveFailure.alreadySaving
+            return false
+        }
         let generation = connectionGeneration
         librarySync.wrote()
         isSaving = true
