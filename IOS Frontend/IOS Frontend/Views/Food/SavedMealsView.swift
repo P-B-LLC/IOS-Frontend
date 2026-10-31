@@ -172,7 +172,9 @@ struct SavedMealsView: View {
         }
         .onDisappear { isVisible = false }
         .onChange(of: scenePhase) { _, value in
-            if value == .active && isVisible { Task { await store.reloadCookbookLibrary(cookbookID: cookbookID) } }
+            if value == .active && isVisible && store.isConnected {
+                Task { await store.reloadCookbookLibrary(cookbookID: cookbookID) }
+            }
         }
         .refreshable { await store.reloadCookbookLibrary(cookbookID: cookbookID) }
 #if DEBUG

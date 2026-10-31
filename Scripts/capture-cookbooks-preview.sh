@@ -43,6 +43,7 @@ for appearance in light dark; do
     xcrun simctl ui "$device" appearance "$appearance"
     for screen in saved cookbook cookbook-picker cookbook-create cookbook-post; do
         SIMCTL_CHILD_REPBASE_FOOD_PREVIEW="$screen" \
+            SIMCTL_CHILD_REPBASE_APPEARANCE="$appearance" \
             xcrun simctl launch --terminate-running-process "$device" com.pbllc.rytivo
         sleep 2
         xcrun simctl io "$device" screenshot "$output/$screen-$appearance.png"
