@@ -1,7 +1,7 @@
 # Cookbooks integration testing
 
 Feature branch: `work/testflight-fixes-2026-10-27`.
-Backend: `P-B-LLC/repbase`, `work/testflight-calendar-sync-2026-10-28`, migration 0087.
+Backend: `P-B-LLC/repbase`, `work/testflight-calendar-sync-2026-10-28`, migrations 0087/0088.
 No production deployment or main promotion is part of this change.
 
 Editable design: https://www.figma.com/design/FbMNgG8cuZfrRFzQTtIVCy?node-id=161-2949
@@ -14,7 +14,8 @@ open it, and add/edit recipes. Every recipe must have a selected cookbook.
 Social meal saves open the same destination picker; full folders show their
 capacity and are disabled. Create another cookbook directly from the picker.
 Move recipes with the recipe editor's Cookbook field or the row context menu.
-An empty cookbook can be deleted through the visible options menu.
+An empty cookbook can be deleted through the visible options menu. Recipe names
+are scoped to their cookbook, so different cookbooks may keep the same name.
 
 Post cookbook previews the whole collection and asks for caption/audience.
 The server freezes all recipes, with ingredients, nutrition and method, into
@@ -33,7 +34,7 @@ overwrite a later save or a newer refresh; old-account responses are discarded.
 The API client was regenerated on macOS, not manually edited. The native CI
 checks Debug, Release, generated-client parity, catalog coverage and regression
 tests. CookbookSyncTests exercise stale and deliberately reordered responses.
-Backend Cookbook integration runs 55 affected tests on PostgreSQL 17, including
+Backend Cookbook integration runs 59 affected tests on PostgreSQL 17, including
 concurrent saves into the twentieth slot and migration of 43 legacy recipes.
 
 For real synchronization testing, use an HTTPS TESTING backend with migration
