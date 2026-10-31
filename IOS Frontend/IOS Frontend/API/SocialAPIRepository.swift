@@ -561,8 +561,8 @@ actor SocialAPIRepository {
                 wasRenamed: result.renamed,
                 wasAlreadySaved: true
             )
-        case .undocumented(let statusCode, _):
-            throw APIServiceError.undocumentedStatus(statusCode)
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload, unlabeled: ["cookbook", "post"])
         }
     }
 

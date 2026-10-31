@@ -1076,6 +1076,12 @@ extension FoodTrackingStore {
                 ]
             )
         ]
+        for index in store.savedMeals.indices { store.savedMeals[index].cookbookID = 1 }
+        store.cookbooks = [
+            Cookbook(id: 1, name: "Weeknight favorites", recipeCount: 2, capacity: 20),
+            Cookbook(id: 2, name: "Breakfast ideas", recipeCount: 0, capacity: 20),
+            Cookbook(id: 3, name: "Sunday meal prep", recipeCount: 20, capacity: 20)
+        ]
         store.recentFoods = breakfast.entries + lunch.entries + snack.entries
         return store
     }

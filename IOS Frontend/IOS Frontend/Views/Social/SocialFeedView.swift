@@ -980,7 +980,9 @@ struct PostCard: View {
         }
         .sheet(isPresented: $choosingCookbook) {
             NavigationStack {
-                CookbookPickerView { book in await store.saveMeal(from: post, cookbookID: book.id) }
+                CookbookPickerView(failureMessage: { store.errorMessage }) { book in
+                    await store.saveMeal(from: post, cookbookID: book.id)
+                }
             }
         }
         .sheet(isPresented: $openingCookbook) { NavigationStack { PublishedCookbookView(post: post) } }

@@ -466,6 +466,15 @@ private struct AppRootView: View {
                 NavigationStack {
                     FoodPickerView(date: Date(), mealID: meal.id)
                 }
+            } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "cookbook" {
+                NavigationStack { SavedMealsView(referenceDate: Date(), cookbookID: 1) }
+            } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "cookbook-picker" {
+                NavigationStack { CookbookPickerView { _ in false } }
+            } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "cookbook-create" {
+                NavigationStack { CookbookEditorView() }
+            } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "cookbook-post",
+                      let cookbook = foodTrackingStore.cookbooks.first {
+                NavigationStack { CookbookPostComposer(cookbook: cookbook) }
             } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "saved"
                         || ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "recipe" {
                 NavigationStack {

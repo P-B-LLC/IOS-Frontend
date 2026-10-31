@@ -399,8 +399,9 @@ actor FoodAPIRepository {
             switch output {
             case .ok(let response):
                 return Self.savedMeal(from: try response.body.json)
-            case .undocumented(let statusCode, _):
-                throw APIServiceError.undocumentedStatus(statusCode)
+            case .undocumented(let statusCode, let payload):
+                throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload,
+                    unlabeled: ["cookbook", "name", "ingredients", "cooking_instructions"])
             }
         }
 
@@ -425,9 +426,10 @@ actor FoodAPIRepository {
             }
             if let recoveryScope { try await EditorDraftRecovery.shared.remove(key: operationKey, scope: recoveryScope) }
             return saved
-        case .undocumented(let statusCode, _):
+        case .undocumented(let statusCode, let payload):
             if statusCode == 400, let recoveryScope { try await EditorDraftRecovery.shared.remove(key: operationKey, scope: recoveryScope) }
-            throw APIServiceError.undocumentedStatus(statusCode)
+            throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload,
+                unlabeled: ["cookbook", "name", "ingredients", "cooking_instructions"])
         }
     }
 

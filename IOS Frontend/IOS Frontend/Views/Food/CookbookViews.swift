@@ -108,14 +108,15 @@ struct CookbookEditorView: View {
                 Text("A name is all you need. Start small and add recipes as you go.")
                     .font(.community(.body)).foregroundStyle(phase.secondaryText)
             }
-            Section("Cookbook name") {
+            Section {
                 TextField("For example: Weeknight favorites", text: $name)
                     .font(.community(.body)).textInputAutocapitalization(.sentences)
                     .onChange(of: name) { _, value in
                         if value.count > 80 { name = String(value.prefix(80)) }
                         requestKey = UUID()
                     }
-            } footer: { Text("Up to 20 recipes. You can rename it anytime.") }
+            } header: { Text("Cookbook name") }
+            footer: { Text("Up to 20 recipes. You can rename it anytime.") }
         }
         .navigationTitle(existing == nil ? String(localized: "New cookbook", bundle: .app, locale: .app) : String(localized: "Rename cookbook", bundle: .app, locale: .app))
         .navigationBarTitleDisplayMode(.inline)
@@ -151,6 +152,7 @@ struct CookbookPickerView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.workoutVisualPhase) private var phase
     var excluding: Int? = nil
+    var failureMessage: () -> String? = { nil }
     let onChoose: (Cookbook) async -> Bool
     @State private var creating = false
     @State private var saving = false
@@ -174,7 +176,11 @@ struct CookbookPickerView: View {
                         Task {
                             defer { saving = false }
                             if await onChoose(book) { dismiss() }
-                            else { error = store.cookbookError ?? store.errorMessage ?? String(localized: "Couldn't save. Please try again.", bundle: .app, locale: .app) }
+                            else {
+                                let message = failureMessage() ?? store.cookbookError ?? store.errorMessage
+                                await store.refreshCookbooks()
+                                error = message ?? String(localized: "Couldn't save. Please try again.", bundle: .app, locale: .app)
+                            }
                         }
                     } label: { CookbookRow(cookbook: book) }
                     .buttonStyle(.plain).disabled(book.isFull || saving)
