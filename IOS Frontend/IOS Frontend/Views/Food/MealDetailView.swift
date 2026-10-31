@@ -62,7 +62,7 @@ struct MealDetailView: View {
                             addFoodButton
                         }
                         HStack {
-                            Button("Saved meals →") { isShowingSavedMeals = true }
+                            Button("Cookbooks →") { isShowingSavedMeals = true }
                             Spacer()
                             Button("Enter manually +") { isEnteringFood = true }
                         }

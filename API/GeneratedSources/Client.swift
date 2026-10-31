@@ -2252,6 +2252,379 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// - Remark: HTTP `GET /api/v1/food/cookbooks/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks//get(food_cookbooks_list)`.
+    public func foodCookbooksList(_ input: Operations.FoodCookbooksList.Input) async throws -> Operations.FoodCookbooksList.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.FoodCookbooksList.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/food/cookbooks/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .get
+                )
+                suppressMutabilityWarning(&request)
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "page",
+                    value: input.query.page
+                )
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.FoodCookbooksList.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.PaginatedCookbookList.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// - Remark: HTTP `POST /api/v1/food/cookbooks/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks//post(food_cookbooks_create)`.
+    public func foodCookbooksCreate(_ input: Operations.FoodCookbooksCreate.Input) async throws -> Operations.FoodCookbooksCreate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.FoodCookbooksCreate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/food/cookbooks/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .post
+                )
+                suppressMutabilityWarning(&request)
+                try converter.setHeaderFieldAsURI(
+                    in: &request.headerFields,
+                    name: "Idempotency-Key",
+                    value: input.headers.idempotencyKey
+                )
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                let body: OpenAPIRuntime.HTTPBody?
+                switch input.body {
+                case let .json(value):
+                    body = try converter.setRequiredRequestBodyAsJSON(
+                        value,
+                        headerFields: &request.headerFields,
+                        contentType: "application/json; charset=utf-8"
+                    )
+                }
+                return (request, body)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 201:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.FoodCookbooksCreate.Output.Created.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.Cookbook.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .created(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// - Remark: HTTP `GET /api/v1/food/cookbooks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//get(food_cookbooks_retrieve)`.
+    public func foodCookbooksRetrieve(_ input: Operations.FoodCookbooksRetrieve.Input) async throws -> Operations.FoodCookbooksRetrieve.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.FoodCookbooksRetrieve.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/food/cookbooks/{}/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .get
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.FoodCookbooksRetrieve.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.Cookbook.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// - Remark: HTTP `PATCH /api/v1/food/cookbooks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//patch(food_cookbooks_partial_update)`.
+    public func foodCookbooksPartialUpdate(_ input: Operations.FoodCookbooksPartialUpdate.Input) async throws -> Operations.FoodCookbooksPartialUpdate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.FoodCookbooksPartialUpdate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/food/cookbooks/{}/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .patch
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                let body: OpenAPIRuntime.HTTPBody?
+                switch input.body {
+                case .none:
+                    body = nil
+                case let .json(value):
+                    body = try converter.setOptionalRequestBodyAsJSON(
+                        value,
+                        headerFields: &request.headerFields,
+                        contentType: "application/json; charset=utf-8"
+                    )
+                }
+                return (request, body)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.FoodCookbooksPartialUpdate.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.Cookbook.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// - Remark: HTTP `PUT /api/v1/food/cookbooks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//put(food_cookbooks_update)`.
+    public func foodCookbooksUpdate(_ input: Operations.FoodCookbooksUpdate.Input) async throws -> Operations.FoodCookbooksUpdate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.FoodCookbooksUpdate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/food/cookbooks/{}/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .put
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                let body: OpenAPIRuntime.HTTPBody?
+                switch input.body {
+                case let .json(value):
+                    body = try converter.setRequiredRequestBodyAsJSON(
+                        value,
+                        headerFields: &request.headerFields,
+                        contentType: "application/json; charset=utf-8"
+                    )
+                }
+                return (request, body)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.FoodCookbooksUpdate.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.Cookbook.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// - Remark: HTTP `DELETE /api/v1/food/cookbooks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//delete(food_cookbooks_destroy)`.
+    public func foodCookbooksDestroy(_ input: Operations.FoodCookbooksDestroy.Input) async throws -> Operations.FoodCookbooksDestroy.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.FoodCookbooksDestroy.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/food/cookbooks/{}/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .delete
+                )
+                suppressMutabilityWarning(&request)
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 204:
+                    return .noContent(.init())
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
     /// Foods inside meals. Ownership is the meal's owner, one step away.
     ///
     /// - Remark: HTTP `GET /api/v1/food/entries/`.
@@ -11249,6 +11622,74 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// Posts: what someone has chosen to show other people.
+    ///
+    /// Reading and writing use different querysets on purpose. A reader gets
+    /// everything the visibility rules allow; an author gets their own rows and
+    /// nothing else, so somebody else's post is a 404 to a PATCH for the same
+    /// reason it is a 404 to a GET of a session that is not theirs — it was never
+    /// in the set.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/posts/{id}/cookbook/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/cookbook//get(social_posts_cookbook_retrieve)`.
+    public func socialPostsCookbookRetrieve(_ input: Operations.SocialPostsCookbookRetrieve.Input) async throws -> Operations.SocialPostsCookbookRetrieve.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SocialPostsCookbookRetrieve.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/social/posts/{}/cookbook/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .get
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SocialPostsCookbookRetrieve.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.PublishedCookbook.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
     /// Ask for fewer posts like this one on your For You page. It leaves the page at once, and its kind of content -- its topics and the exercises in it -- is shown less from then on; its author only a little less, unlike "not interested". Replaces "not interested" or "more like this" on the same post. Saying it twice is not an error.
     ///
     /// - Remark: HTTP `POST /api/v1/social/posts/{id}/fewer-like-this/`.
@@ -11818,6 +12259,96 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// Posts: what someone has chosen to show other people.
+    ///
+    /// Reading and writing use different querysets on purpose. A reader gets
+    /// everything the visibility rules allow; an author gets their own rows and
+    /// nothing else, so somebody else's post is a 404 to a PATCH for the same
+    /// reason it is a 404 to a GET of a session that is not theirs — it was never
+    /// in the set.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/save-cookbook/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-cookbook//post(social_posts_save_cookbook_create)`.
+    public func socialPostsSaveCookbookCreate(_ input: Operations.SocialPostsSaveCookbookCreate.Input) async throws -> Operations.SocialPostsSaveCookbookCreate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SocialPostsSaveCookbookCreate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/social/posts/{}/save-cookbook/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .post
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SocialPostsSaveCookbookCreate.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.Cookbook.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                case 201:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SocialPostsSaveCookbookCreate.Output.Created.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.Cookbook.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .created(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
     /// Copy a posted meal into your own saved meals. The foods and their servings are taken whole, so applying it to a day later gives the same numbers the post showed.
     ///
     /// Saving the same post again does not make a second copy: the one already saved is returned with already_saved true, and a 200 rather than a 201, because nothing was created.
@@ -11844,7 +12375,16 @@ public struct Client: APIProtocol {
                     in: &request.headerFields,
                     contentTypes: input.headers.accept
                 )
-                return (request, nil)
+                let body: OpenAPIRuntime.HTTPBody?
+                switch input.body {
+                case let .json(value):
+                    body = try converter.setRequiredRequestBodyAsJSON(
+                        value,
+                        headerFields: &request.headerFields,
+                        contentType: "application/json; charset=utf-8"
+                    )
+                }
+                return (request, body)
             },
             deserializer: { response, responseBody in
                 switch response.status.code {

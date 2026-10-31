@@ -248,7 +248,7 @@ private enum TrainingQuickAction: String, Identifiable {
         switch self {
         case .postFood: "Post food"
         case .planMeals: "Plan meals"
-        case .savedMeals: "Saved meals"
+        case .savedMeals: "Cookbooks"
         case .postWorkout: "Post workout"
         case .savedWorkouts: "Saved workouts"
         }
@@ -268,7 +268,8 @@ private enum TrainingQuickAction: String, Identifiable {
         switch self {
         case .postFood, .postWorkout: "square.and.arrow.up"
         case .planMeals: "calendar.badge.plus"
-        case .savedMeals, .savedWorkouts: "bookmark.fill"
+        case .savedMeals: "books.vertical"
+        case .savedWorkouts: "bookmark.fill"
         }
     }
 

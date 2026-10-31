@@ -553,7 +553,7 @@ struct FoodTrackingView: View {
                 Button {
                     isShowingSavedMeals = true
                 } label: {
-                    Label("Saved foods", systemImage: "bookmark")
+                    Label("Cookbooks", systemImage: "books.vertical")
                         .font(.community(.subheadline, weight: .semibold))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 11)

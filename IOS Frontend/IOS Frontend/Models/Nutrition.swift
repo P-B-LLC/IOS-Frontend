@@ -134,6 +134,7 @@ nonisolated struct SavedFoodMeal: Identifiable, Equatable, Hashable, Codable, Se
     /// The backend identifier. Nil only for a recipe being written that has
     /// not been saved yet.
     var serverID: Int?
+    var cookbookID: Int? = nil
     var name: String
     var ingredients: [FoodEntry]
     /// How it is made, when whoever saved it had a recipe to keep.
@@ -148,10 +149,12 @@ nonisolated struct SavedFoodMeal: Identifiable, Equatable, Hashable, Codable, Se
         serverID: Int? = nil,
         name: String,
         ingredients: [FoodEntry] = [],
-        cookingInstructions: String = ""
+        cookingInstructions: String = "",
+        cookbookID: Int? = nil
     ) {
         self.id = id
         self.serverID = serverID
+        self.cookbookID = cookbookID
         self.name = name
         self.ingredients = ingredients
         self.cookingInstructions = cookingInstructions

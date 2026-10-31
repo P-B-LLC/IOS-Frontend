@@ -838,6 +838,8 @@ struct PostCard: View {
 
     /// Set when Report was chosen, which raises the reasons.
     @State private var reportingPost: FeedPost?
+    @State private var choosingCookbook = false
+    @State private var openingCookbook = false
 
     /// The shape the photo was posted at, once its bytes have arrived.
     ///
@@ -946,6 +948,8 @@ struct PostCard: View {
                         compactMealAttachment(meal, imageAttached: true)
                     } else if let planner = shown.planner {
                         compactPlannerAttachment(planner)
+                    } else if let cookbook = shown.cookbook {
+                        cookbookAttachment(cookbook)
                     }
                 } else if let workout = shown.workout {
                     compactWorkoutAttachment(workout, imageAttached: false)
@@ -953,6 +957,8 @@ struct PostCard: View {
                     compactMealAttachment(meal, imageAttached: false)
                 } else if let planner = shown.planner {
                     compactPlannerAttachment(planner)
+                } else if let cookbook = shown.cookbook {
+                    cookbookAttachment(cookbook)
                 } else if shown.kind != .media {
                     // A photo or video post has no snapshot by design; its
                     // picture, drawn above, is the post.
@@ -972,6 +978,26 @@ struct PostCard: View {
         .sheet(item: $reportingPost) { target in
             PostReportSheet(post: target, timeOfDay: timeOfDay)
         }
+        .sheet(isPresented: $choosingCookbook) {
+            NavigationStack {
+                CookbookPickerView { book in await store.saveMeal(from: post, cookbookID: book.id) }
+            }
+        }
+        .sheet(isPresented: $openingCookbook) { NavigationStack { PublishedCookbookView(post: post) } }
+    }
+
+    private func cookbookAttachment(_ cookbook: CookbookPostSummary) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Cookbook", systemImage: "books.vertical")
+                .font(.community(.caption, weight: .bold)).foregroundStyle(timeOfDay.accent)
+            Text(cookbook.name).font(.community(.title3, weight: .bold))
+            Text("\(cookbook.recipeCount) recipes · Ingredients & steps included")
+                .font(.community(.subheadline)).foregroundStyle(timeOfDay.secondaryText)
+            Button("View all recipes") { openingCookbook = true }
+                .buttonStyle(RepbasePrimaryButtonStyle())
+        }
+        .padding(18).frame(maxWidth: .infinity, alignment: .leading)
+        .background(timeOfDay.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 24))
     }
 
     /// Who passed it on, above the post itself — so the name beside the
@@ -1618,7 +1644,7 @@ struct PostCard: View {
             isSaved: post.viewerHasSaved,
             tint: RepbaseDesign.success
         ) {
-            await store.saveMeal(from: post)
+            choosingCookbook = true
         }
     }
 

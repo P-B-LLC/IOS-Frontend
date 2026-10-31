@@ -30,6 +30,34 @@ actor SocialAPIRepository {
 
     // MARK: - Reading
 
+    func cookbook(postID: Int) async throws -> PublishedCookbook {
+        switch try await client.socialPostsCookbookRetrieve(path: .init(id: postID)) {
+        case .ok(let response):
+            let body = try response.body.json
+            return PublishedCookbook(name: body.name, recipes: body.recipes.map { recipe in
+                SavedFoodMeal(name: recipe.name, ingredients: recipe.ingredients.map { item in
+                    FoodEntry(name: item.name, servings: FoodDecimal.value(item.servings),
+                              nutritionPerServing: NutritionAmount(calories: FoodDecimal.value(item.calories),
+                                proteinGrams: FoodDecimal.value(item.proteinGrams),
+                                carbohydrateGrams: FoodDecimal.value(item.carbohydrateGrams),
+                                fatGrams: FoodDecimal.value(item.fatGrams)))
+                }, cookingInstructions: recipe.cookingInstructions)
+            })
+        case .undocumented(let statusCode, _): throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    func saveCookbook(postID: Int) async throws -> Cookbook {
+        let value: Components.Schemas.Cookbook
+        switch try await client.socialPostsSaveCookbookCreate(path: .init(id: postID)) {
+        case .created(let response): value = try response.body.json
+        case .ok(let response): value = try response.body.json
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload, unlabeled: ["cookbook"])
+        }
+        return Cookbook(id: value.id, name: value.name, recipeCount: value.recipeCount, capacity: value.capacity)
+    }
+
     /// A page of what the people you follow have posted, newest first.
     ///
     /// Paged by cursor rather than by number because the feed is written to
@@ -511,9 +539,10 @@ actor SocialAPIRepository {
     /// Returns the name for the same reason the workout call does: saved meal
     /// names are unique per person and everyone has a "Meal 1", so the copy
     /// very often lands under a different one.
-    func saveMeal(fromPost postID: Int) async throws -> SavedMealOutcome {
+    func saveMeal(fromPost postID: Int, cookbookID: Int) async throws -> SavedMealOutcome {
         let output = try await client.socialPostsSaveMealCreate(
-            path: .init(id: postID)
+            path: .init(id: postID),
+            body: .json(.init(cookbook: cookbookID))
         )
         switch output {
         case .created(let response):
@@ -979,6 +1008,7 @@ actor SocialAPIRepository {
             workout: payload.workout.map { workout(from: $0.value1) },
             meal: payload.meal.map { meal(from: $0.value1) },
             planner: payload.planner.map { planner(from: $0.value1) },
+            cookbook: payload.cookbook.map { CookbookPostSummary(name: $0.value1.name, recipeCount: $0.value1.recipeCount) },
             likeCount: payload.likeCount,
             commentCount: payload.commentCount,
             repostCount: payload.repostCount,
@@ -1015,6 +1045,7 @@ actor SocialAPIRepository {
             workout: payload.workout.map { workout(from: $0.value1) },
             meal: payload.meal.map { meal(from: $0.value1) },
             planner: payload.planner.map { planner(from: $0.value1) },
+            cookbook: payload.cookbook.map { CookbookPostSummary(name: $0.value1.name, recipeCount: $0.value1.recipeCount) },
             likeCount: payload.likeCount,
             commentCount: payload.commentCount,
             repostCount: payload.repostCount,
@@ -1085,6 +1116,7 @@ actor SocialAPIRepository {
             workout: payload.workout.map { workout(from: $0.value1) },
             meal: payload.meal.map { meal(from: $0.value1) },
             planner: payload.planner.map { planner(from: $0.value1) },
+            cookbook: payload.cookbook.map { CookbookPostSummary(name: $0.value1.name, recipeCount: $0.value1.recipeCount) },
             video: payload.video.map { video(from: $0.value1) },
             publishedAt: payload.publishedAt
         )

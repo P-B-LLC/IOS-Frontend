@@ -17,6 +17,7 @@ import Foundation
 nonisolated enum PostKind: Equatable, Hashable, Sendable {
     case workout
     case meal
+    case cookbook
     case planner
     /// Someone else's post, passed on. Carries no snapshot of its own: what
     /// it shows is the post it points at.
@@ -30,6 +31,7 @@ nonisolated enum PostKind: Equatable, Hashable, Sendable {
         switch raw {
         case "workout": self = .workout
         case "meal": self = .meal
+        case "cookbook": self = .cookbook
         case "planner": self = .planner
         case "repost": self = .repost
         case "media": self = .media
@@ -41,6 +43,7 @@ nonisolated enum PostKind: Equatable, Hashable, Sendable {
         switch self {
         case .workout: "workout"
         case .meal: "meal"
+        case .cookbook: "cookbook"
         case .planner: "planner"
         case .repost: "repost"
         case .media: "media"
@@ -199,6 +202,7 @@ nonisolated struct RepostedPost: Equatable, Hashable, Sendable {
     var workout: PostWorkoutSnapshot?
     var meal: PostMealSnapshot?
     var planner: PostPlannerSnapshot?
+    var cookbook: CookbookPostSummary? = nil
     var video: PostVideoMedia? = nil
     var publishedAt: Date? = nil
     var displayDate: Date { publishedAt ?? createdAt }
@@ -238,6 +242,7 @@ nonisolated struct FeedPost: Identifiable, Equatable, Hashable, Sendable {
     var workout: PostWorkoutSnapshot?
     var meal: PostMealSnapshot?
     var planner: PostPlannerSnapshot?
+    var cookbook: CookbookPostSummary? = nil
 
     // What other people have done with it. Counted by the server, because a
     // client only ever sees the page in front of it.
@@ -309,8 +314,9 @@ nonisolated struct FeedPost: Identifiable, Equatable, Hashable, Sendable {
             return repostOf.workout != nil
                 || repostOf.meal != nil
                 || repostOf.planner != nil
+                || repostOf.cookbook != nil
         }
-        return workout != nil || meal != nil || planner != nil
+        return workout != nil || meal != nil || planner != nil || cookbook != nil
     }
 
     /// What the card actually draws — the original for a repost, itself
@@ -327,6 +333,7 @@ nonisolated struct FeedPost: Identifiable, Equatable, Hashable, Sendable {
             workout: workout,
             meal: meal,
             planner: planner,
+            cookbook: cookbook,
             video: video,
             publishedAt: publishedAt
         )

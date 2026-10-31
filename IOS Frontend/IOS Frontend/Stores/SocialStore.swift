@@ -1343,8 +1343,8 @@ final class SocialStore {
     /// Not optimistic and not silent, for the same reason as the workout: the
     /// name it lands under is not always the one on the post, and only the
     /// server knows which.
-    func saveMeal(from post: FeedPost) async {
-        guard let repository, !savingMealFor.contains(post.id) else { return }
+    func saveMeal(from post: FeedPost, cookbookID: Int) async -> Bool {
+        guard let repository, !savingMealFor.contains(post.id) else { return false }
         let generation = connectionGeneration
         savingMealFor.insert(post.id)
         defer {
@@ -1354,15 +1354,49 @@ final class SocialStore {
         }
 
         do {
-            let outcome = try await repository.saveMeal(fromPost: post.id)
-            guard connectionGeneration == generation else { return }
+            let outcome = try await repository.saveMeal(fromPost: post.id, cookbookID: cookbookID)
+            guard connectionGeneration == generation else { return false }
             lastSavedWorkout = nil
             lastSavedMeal = outcome
             apply(to: post.id) { $0.viewerHasSaved = true }
             await onSavedMealsChanged?()
+            return true
         } catch {
-            guard connectionGeneration == generation else { return }
+            guard connectionGeneration == generation else { return false }
             showFailure(error)
+            return false
+        }
+    }
+
+    func loadCookbook(postID: Int) async -> PublishedCookbook? {
+        guard let repository else { return nil }
+        let generation = connectionGeneration
+        do {
+            let cookbook = try await repository.cookbook(postID: postID)
+            guard connectionGeneration == generation else { return nil }
+            return cookbook
+        } catch {
+            guard connectionGeneration == generation else { return nil }
+            showFailure(error)
+            return nil
+        }
+    }
+
+    func saveCookbook(from post: FeedPost) async -> Bool {
+        guard let repository, !savingMealFor.contains(post.id) else { return false }
+        let generation = connectionGeneration
+        savingMealFor.insert(post.id)
+        defer { if connectionGeneration == generation { savingMealFor.remove(post.id) } }
+        do {
+            _ = try await repository.saveCookbook(postID: post.id)
+            guard generation == connectionGeneration else { return false }
+            apply(to: post.id) { $0.viewerHasSaved = true }
+            await onSavedMealsChanged?()
+            return true
+        } catch {
+            guard generation == connectionGeneration else { return false }
+            showFailure(error)
+            return false
         }
     }
 

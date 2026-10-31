@@ -56,6 +56,61 @@ actor FoodAPIRepository {
 
     // MARK: - Reading
 
+    func cookbooks() async throws -> [Cookbook] {
+        var page: Int?
+        var visited: Set<Int> = []
+        var values: [Cookbook] = []
+        repeat {
+            switch try await client.foodCookbooksList(query: .init(page: page)) {
+            case .ok(let response):
+                let body = try response.body.json
+                values.append(contentsOf: body.results.map(Self.cookbook(from:)))
+                page = try nextPage(body.next, visited: &visited)
+            case .undocumented(let statusCode, _):
+                throw APIServiceError.undocumentedStatus(statusCode)
+            }
+        } while page != nil
+        return values
+    }
+
+    func createCookbook(name: String, key: UUID) async throws -> Cookbook {
+        switch try await client.foodCookbooksCreate(
+            headers: .init(idempotencyKey: key.uuidString), body: .json(.init(name: name))
+        ) {
+        case .created(let response): return Self.cookbook(from: try response.body.json)
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload, unlabeled: ["name", "cookbook"])
+        }
+    }
+
+    func renameCookbook(_ id: Int, name: String) async throws -> Cookbook {
+        switch try await client.foodCookbooksUpdate(path: .init(id: id), body: .json(.init(name: name))) {
+        case .ok(let response): return Self.cookbook(from: try response.body.json)
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload, unlabeled: ["name", "cookbook"])
+        }
+    }
+
+    func deleteCookbook(_ id: Int) async throws {
+        switch try await client.foodCookbooksDestroy(path: .init(id: id)) {
+        case .noContent: return
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload, unlabeled: ["cookbook"])
+        }
+    }
+
+    func moveRecipe(_ id: Int, to cookbookID: Int) async throws -> SavedFoodMeal {
+        switch try await client.foodSavedMealsPartialUpdate(path: .init(id: id), body: .json(.init(cookbook: cookbookID))) {
+        case .ok(let response): return Self.savedMeal(from: try response.body.json)
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload, unlabeled: ["cookbook"])
+        }
+    }
+
+    static func cookbook(from value: Components.Schemas.Cookbook) -> Cookbook {
+        Cookbook(id: value.id, name: value.name, recipeCount: value.recipeCount, capacity: value.capacity)
+    }
+
     /// Every meal between two dates, grouped by the day it belongs to.
     ///
     /// Grouped here rather than in the store because the server already orders
@@ -335,6 +390,7 @@ actor FoodAPIRepository {
                 body: .json(
                     Components.Schemas.SavedFoodMealRequest(
                         name: recipe.name,
+                        cookbook: recipe.cookbookID,
                         ingredients: ingredients,
                         cookingInstructions: recipe.cookingInstructions
                     )
@@ -353,6 +409,7 @@ actor FoodAPIRepository {
             body: .json(
                 Components.Schemas.SavedFoodMealRequest(
                     name: recipe.name,
+                    cookbook: recipe.cookbookID,
                     ingredients: ingredients,
                     cookingInstructions: recipe.cookingInstructions
                 )
@@ -489,7 +546,8 @@ actor FoodAPIRepository {
                     )
                 )
             },
-            cookingInstructions: payload.cookingInstructions ?? ""
+            cookingInstructions: payload.cookingInstructions ?? "",
+            cookbookID: payload.cookbook
         )
     }
 

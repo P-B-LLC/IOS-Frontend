@@ -37,6 +37,10 @@ final class FoodTrackingStore {
     /// Meals by `YYYY-MM-DD`, exactly as the server groups them.
     private(set) var days: [String: [FoodMeal]] = [:]
     private(set) var savedMeals: [SavedFoodMeal] = []
+    private(set) var cookbooks: [Cookbook] = []
+    private(set) var cookbookError: String?
+    private(set) var isLoadingCookbooks = false
+    private var librarySync = CookbookSyncGate()
     private(set) var recentFoods: [FoodEntry] = []
     private(set) var goals: NutritionGoals = .default
     private(set) var isLoading = false
@@ -130,6 +134,7 @@ final class FoodTrackingStore {
             // Started together rather than awaited one after another. These
             // four reads do not depend on each other, and run sequentially they
             // cost four round-trips of latency to show one screen.
+            let libraryRead = librarySync.beginRead()
             async let recipesRequest = repository.savedMeals()
             async let targetsRequest = repository.goals()
             async let recentRequest = repository.recentFoods()
@@ -141,7 +146,7 @@ final class FoodTrackingStore {
 
             guard connectionGeneration == generation else { return }
             mergeDays(loaded, from: start, to: end, read: read)
-            savedMeals = recipes
+            if librarySync.accepts(libraryRead) { savedMeals = recipes }
             goals = targets
             recentFoods = recent
 
@@ -172,6 +177,10 @@ final class FoodTrackingStore {
         loadedMonths = []
         isLoadingMonth = false
         savedMeals = []
+        cookbooks = []
+        cookbookError = nil
+        isLoadingCookbooks = false
+        librarySync.wrote()
         recentFoods = []
         goals = .default
         isLoading = false
@@ -432,6 +441,122 @@ final class FoodTrackingStore {
 
     // MARK: - Recipes
 
+    func refreshCookbooks() async {
+        guard let repository else { return }
+        let generation = connectionGeneration
+        let revision = librarySync.beginRead()
+        do {
+            let loaded = try await repository.cookbooks()
+            guard generation == connectionGeneration, librarySync.accepts(revision) else { return }
+            cookbooks = loaded
+            cookbookError = nil
+        } catch {
+            guard generation == connectionGeneration else { return }
+            cookbookError = error.userFacingMessage
+        }
+    }
+
+    func reloadCookbookLibrary() async {
+        guard let repository, !isLoadingCookbooks else { return }
+        let generation = connectionGeneration
+        let revision = librarySync.beginRead()
+        isLoadingCookbooks = true
+        defer { if generation == connectionGeneration { isLoadingCookbooks = false } }
+        do {
+            async let books = repository.cookbooks()
+            async let recipes = repository.savedMeals()
+            let loaded = try await (books, recipes)
+            guard generation == connectionGeneration, librarySync.accepts(revision) else { return }
+            cookbooks = loaded.0
+            savedMeals = loaded.1
+            cookbookError = nil
+        } catch {
+            guard generation == connectionGeneration else { return }
+            cookbookError = error.userFacingMessage
+        }
+    }
+
+    func createCookbook(name: String, key: UUID) async -> Cookbook? {
+        guard let repository, !isSaving else { return nil }
+        let generation = connectionGeneration
+        librarySync.wrote()
+        isSaving = true
+        cookbookError = nil
+        defer { if generation == connectionGeneration { librarySync.wrote(); isSaving = false } }
+        do {
+            let book = try await repository.createCookbook(name: name, key: key)
+            guard generation == connectionGeneration else { return nil }
+            cookbooks.removeAll { $0.id == book.id }
+            cookbooks.append(book)
+            cookbooks.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+            return book
+        } catch {
+            guard generation == connectionGeneration else { return nil }
+            cookbookError = error.userFacingMessage
+            return nil
+        }
+    }
+
+    func renameCookbook(_ book: Cookbook, name: String) async -> Bool {
+        guard let repository, !isSaving else { return false }
+        let generation = connectionGeneration
+        librarySync.wrote()
+        isSaving = true
+        cookbookError = nil
+        defer { if generation == connectionGeneration { librarySync.wrote(); isSaving = false } }
+        do {
+            let saved = try await repository.renameCookbook(book.id, name: name)
+            guard generation == connectionGeneration else { return false }
+            cookbooks.removeAll { $0.id == saved.id }
+            cookbooks.append(saved)
+            cookbooks.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+            return true
+        } catch {
+            guard generation == connectionGeneration else { return false }
+            cookbookError = error.userFacingMessage
+            return false
+        }
+    }
+
+    func deleteCookbook(_ book: Cookbook) async -> Bool {
+        guard let repository, !isSaving else { return false }
+        let generation = connectionGeneration
+        librarySync.wrote()
+        isSaving = true
+        cookbookError = nil
+        defer { if generation == connectionGeneration { librarySync.wrote(); isSaving = false } }
+        do {
+            try await repository.deleteCookbook(book.id)
+            guard generation == connectionGeneration else { return false }
+            cookbooks.removeAll { $0.id == book.id }
+            return true
+        } catch {
+            guard generation == connectionGeneration else { return false }
+            cookbookError = error.userFacingMessage
+            return false
+        }
+    }
+
+    func moveRecipe(_ recipe: SavedFoodMeal, to book: Cookbook) async -> Bool {
+        guard let repository, let id = recipe.serverID, !isSaving else { return false }
+        let generation = connectionGeneration
+        librarySync.wrote()
+        isSaving = true
+        cookbookError = nil
+        defer { if generation == connectionGeneration { librarySync.wrote(); isSaving = false } }
+        do {
+            let moved = try await repository.moveRecipe(id, to: book.id)
+            guard generation == connectionGeneration else { return false }
+            if let index = savedMeals.firstIndex(where: { $0.serverID == id }) { savedMeals[index] = moved }
+            await refreshCookbooks()
+            return true
+        } catch {
+            guard generation == connectionGeneration else { return false }
+            cookbookError = error.userFacingMessage
+            return false
+        }
+    }
+
     func saveReusableMeal(_ savedMeal: SavedFoodMeal) async -> Bool {
         guard let repository else {
             errorMessage = SaveFailure.notConnected
@@ -442,9 +567,10 @@ final class FoodTrackingStore {
             return false
         }
         let generation = connectionGeneration
+        librarySync.wrote()
         isSaving = true
         errorMessage = nil
-        defer { if connectionGeneration == generation { isSaving = false } }
+        defer { if connectionGeneration == generation { librarySync.wrote(); isSaving = false } }
         do {
             let saved = try await repository.saveRecipe(savedMeal)
             guard connectionGeneration == generation else { return false }
@@ -458,6 +584,7 @@ final class FoodTrackingStore {
             savedMeals.sort {
                 $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
             }
+            await refreshCookbooks()
             return true
         } catch {
             report(error, generation: generation)
@@ -470,11 +597,13 @@ final class FoodTrackingStore {
               let serverID = savedMeals.first(where: { $0.id == id })?.serverID
         else { return }
         let generation = connectionGeneration
+        librarySync.wrote()
         Task {
             do {
                 try await repository.deleteRecipe(serverID)
                 guard connectionGeneration == generation else { return }
                 savedMeals.removeAll { $0.serverID == serverID }
+                await refreshCookbooks()
             } catch {
                 report(error, generation: generation)
             }
@@ -786,10 +915,12 @@ final class FoodTrackingStore {
     func reloadSavedMeals() async {
         guard let repository else { return }
         let generation = connectionGeneration
+        let revision = librarySync.beginRead()
         do {
             let loaded = try await repository.savedMeals()
-            guard connectionGeneration == generation else { return }
+            guard connectionGeneration == generation, librarySync.accepts(revision) else { return }
             savedMeals = loaded
+            await refreshCookbooks()
         } catch {
             // Left quiet on purpose. This runs behind a save that already
             // succeeded and said so; failing to refresh a list is not worth

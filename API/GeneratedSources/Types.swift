@@ -145,6 +145,24 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/exercises/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/exercises/{id}//delete(exercises_destroy)`.
     func exercisesDestroy(_ input: Operations.ExercisesDestroy.Input) async throws -> Operations.ExercisesDestroy.Output
+    /// - Remark: HTTP `GET /api/v1/food/cookbooks/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks//get(food_cookbooks_list)`.
+    func foodCookbooksList(_ input: Operations.FoodCookbooksList.Input) async throws -> Operations.FoodCookbooksList.Output
+    /// - Remark: HTTP `POST /api/v1/food/cookbooks/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks//post(food_cookbooks_create)`.
+    func foodCookbooksCreate(_ input: Operations.FoodCookbooksCreate.Input) async throws -> Operations.FoodCookbooksCreate.Output
+    /// - Remark: HTTP `GET /api/v1/food/cookbooks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//get(food_cookbooks_retrieve)`.
+    func foodCookbooksRetrieve(_ input: Operations.FoodCookbooksRetrieve.Input) async throws -> Operations.FoodCookbooksRetrieve.Output
+    /// - Remark: HTTP `PATCH /api/v1/food/cookbooks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//patch(food_cookbooks_partial_update)`.
+    func foodCookbooksPartialUpdate(_ input: Operations.FoodCookbooksPartialUpdate.Input) async throws -> Operations.FoodCookbooksPartialUpdate.Output
+    /// - Remark: HTTP `PUT /api/v1/food/cookbooks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//put(food_cookbooks_update)`.
+    func foodCookbooksUpdate(_ input: Operations.FoodCookbooksUpdate.Input) async throws -> Operations.FoodCookbooksUpdate.Output
+    /// - Remark: HTTP `DELETE /api/v1/food/cookbooks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//delete(food_cookbooks_destroy)`.
+    func foodCookbooksDestroy(_ input: Operations.FoodCookbooksDestroy.Input) async throws -> Operations.FoodCookbooksDestroy.Output
     /// Foods inside meals. Ownership is the meal's owner, one step away.
     ///
     /// - Remark: HTTP `GET /api/v1/food/entries/`.
@@ -1042,6 +1060,17 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}//delete(social_posts_destroy)`.
     func socialPostsDestroy(_ input: Operations.SocialPostsDestroy.Input) async throws -> Operations.SocialPostsDestroy.Output
+    /// Posts: what someone has chosen to show other people.
+    ///
+    /// Reading and writing use different querysets on purpose. A reader gets
+    /// everything the visibility rules allow; an author gets their own rows and
+    /// nothing else, so somebody else's post is a 404 to a PATCH for the same
+    /// reason it is a 404 to a GET of a session that is not theirs — it was never
+    /// in the set.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/posts/{id}/cookbook/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/cookbook//get(social_posts_cookbook_retrieve)`.
+    func socialPostsCookbookRetrieve(_ input: Operations.SocialPostsCookbookRetrieve.Input) async throws -> Operations.SocialPostsCookbookRetrieve.Output
     /// Ask for fewer posts like this one on your For You page. It leaves the page at once, and its kind of content -- its topics and the exercises in it -- is shown less from then on; its author only a little less, unlike "not interested". Replaces "not interested" or "more like this" on the same post. Saying it twice is not an error.
     ///
     /// - Remark: HTTP `POST /api/v1/social/posts/{id}/fewer-like-this/`.
@@ -1097,6 +1126,17 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/repost/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/repost//delete(social_posts_repost_destroy)`.
     func socialPostsRepostDestroy(_ input: Operations.SocialPostsRepostDestroy.Input) async throws -> Operations.SocialPostsRepostDestroy.Output
+    /// Posts: what someone has chosen to show other people.
+    ///
+    /// Reading and writing use different querysets on purpose. A reader gets
+    /// everything the visibility rules allow; an author gets their own rows and
+    /// nothing else, so somebody else's post is a 404 to a PATCH for the same
+    /// reason it is a 404 to a GET of a session that is not theirs — it was never
+    /// in the set.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/save-cookbook/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-cookbook//post(social_posts_save_cookbook_create)`.
+    func socialPostsSaveCookbookCreate(_ input: Operations.SocialPostsSaveCookbookCreate.Input) async throws -> Operations.SocialPostsSaveCookbookCreate.Output
     /// Copy a posted meal into your own saved meals. The foods and their servings are taken whole, so applying it to a day later gives the same numbers the post showed.
     ///
     /// Saving the same post again does not make a second copy: the one already saved is returned with already_saved true, and a 200 rather than a 201, because nothing was created.
@@ -1661,6 +1701,70 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//api/v1/exercises/{id}//delete(exercises_destroy)`.
     public func exercisesDestroy(path: Operations.ExercisesDestroy.Input.Path) async throws -> Operations.ExercisesDestroy.Output {
         try await exercisesDestroy(Operations.ExercisesDestroy.Input(path: path))
+    }
+    /// - Remark: HTTP `GET /api/v1/food/cookbooks/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks//get(food_cookbooks_list)`.
+    public func foodCookbooksList(
+        query: Operations.FoodCookbooksList.Input.Query = .init(),
+        headers: Operations.FoodCookbooksList.Input.Headers = .init()
+    ) async throws -> Operations.FoodCookbooksList.Output {
+        try await foodCookbooksList(Operations.FoodCookbooksList.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// - Remark: HTTP `POST /api/v1/food/cookbooks/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks//post(food_cookbooks_create)`.
+    public func foodCookbooksCreate(
+        headers: Operations.FoodCookbooksCreate.Input.Headers = .init(),
+        body: Operations.FoodCookbooksCreate.Input.Body
+    ) async throws -> Operations.FoodCookbooksCreate.Output {
+        try await foodCookbooksCreate(Operations.FoodCookbooksCreate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// - Remark: HTTP `GET /api/v1/food/cookbooks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//get(food_cookbooks_retrieve)`.
+    public func foodCookbooksRetrieve(
+        path: Operations.FoodCookbooksRetrieve.Input.Path,
+        headers: Operations.FoodCookbooksRetrieve.Input.Headers = .init()
+    ) async throws -> Operations.FoodCookbooksRetrieve.Output {
+        try await foodCookbooksRetrieve(Operations.FoodCookbooksRetrieve.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// - Remark: HTTP `PATCH /api/v1/food/cookbooks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//patch(food_cookbooks_partial_update)`.
+    public func foodCookbooksPartialUpdate(
+        path: Operations.FoodCookbooksPartialUpdate.Input.Path,
+        headers: Operations.FoodCookbooksPartialUpdate.Input.Headers = .init(),
+        body: Operations.FoodCookbooksPartialUpdate.Input.Body? = nil
+    ) async throws -> Operations.FoodCookbooksPartialUpdate.Output {
+        try await foodCookbooksPartialUpdate(Operations.FoodCookbooksPartialUpdate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// - Remark: HTTP `PUT /api/v1/food/cookbooks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//put(food_cookbooks_update)`.
+    public func foodCookbooksUpdate(
+        path: Operations.FoodCookbooksUpdate.Input.Path,
+        headers: Operations.FoodCookbooksUpdate.Input.Headers = .init(),
+        body: Operations.FoodCookbooksUpdate.Input.Body
+    ) async throws -> Operations.FoodCookbooksUpdate.Output {
+        try await foodCookbooksUpdate(Operations.FoodCookbooksUpdate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// - Remark: HTTP `DELETE /api/v1/food/cookbooks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//delete(food_cookbooks_destroy)`.
+    public func foodCookbooksDestroy(path: Operations.FoodCookbooksDestroy.Input.Path) async throws -> Operations.FoodCookbooksDestroy.Output {
+        try await foodCookbooksDestroy(Operations.FoodCookbooksDestroy.Input(path: path))
     }
     /// Foods inside meals. Ownership is the meal's owner, one step away.
     ///
@@ -3491,6 +3595,25 @@ extension APIProtocol {
     public func socialPostsDestroy(path: Operations.SocialPostsDestroy.Input.Path) async throws -> Operations.SocialPostsDestroy.Output {
         try await socialPostsDestroy(Operations.SocialPostsDestroy.Input(path: path))
     }
+    /// Posts: what someone has chosen to show other people.
+    ///
+    /// Reading and writing use different querysets on purpose. A reader gets
+    /// everything the visibility rules allow; an author gets their own rows and
+    /// nothing else, so somebody else's post is a 404 to a PATCH for the same
+    /// reason it is a 404 to a GET of a session that is not theirs — it was never
+    /// in the set.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/posts/{id}/cookbook/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/cookbook//get(social_posts_cookbook_retrieve)`.
+    public func socialPostsCookbookRetrieve(
+        path: Operations.SocialPostsCookbookRetrieve.Input.Path,
+        headers: Operations.SocialPostsCookbookRetrieve.Input.Headers = .init()
+    ) async throws -> Operations.SocialPostsCookbookRetrieve.Output {
+        try await socialPostsCookbookRetrieve(Operations.SocialPostsCookbookRetrieve.Input(
+            path: path,
+            headers: headers
+        ))
+    }
     /// Ask for fewer posts like this one on your For You page. It leaves the page at once, and its kind of content -- its topics and the exercises in it -- is shown less from then on; its author only a little less, unlike "not interested". Replaces "not interested" or "more like this" on the same post. Saying it twice is not an error.
     ///
     /// - Remark: HTTP `POST /api/v1/social/posts/{id}/fewer-like-this/`.
@@ -3600,6 +3723,25 @@ extension APIProtocol {
             headers: headers
         ))
     }
+    /// Posts: what someone has chosen to show other people.
+    ///
+    /// Reading and writing use different querysets on purpose. A reader gets
+    /// everything the visibility rules allow; an author gets their own rows and
+    /// nothing else, so somebody else's post is a 404 to a PATCH for the same
+    /// reason it is a 404 to a GET of a session that is not theirs — it was never
+    /// in the set.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/save-cookbook/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-cookbook//post(social_posts_save_cookbook_create)`.
+    public func socialPostsSaveCookbookCreate(
+        path: Operations.SocialPostsSaveCookbookCreate.Input.Path,
+        headers: Operations.SocialPostsSaveCookbookCreate.Input.Headers = .init()
+    ) async throws -> Operations.SocialPostsSaveCookbookCreate.Output {
+        try await socialPostsSaveCookbookCreate(Operations.SocialPostsSaveCookbookCreate.Input(
+            path: path,
+            headers: headers
+        ))
+    }
     /// Copy a posted meal into your own saved meals. The foods and their servings are taken whole, so applying it to a day later gives the same numbers the post showed.
     ///
     /// Saving the same post again does not make a second copy: the one already saved is returned with already_saved true, and a 200 rather than a 201, because nothing was created.
@@ -3608,11 +3750,13 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-meal//post(social_posts_save_meal_create)`.
     public func socialPostsSaveMealCreate(
         path: Operations.SocialPostsSaveMealCreate.Input.Path,
-        headers: Operations.SocialPostsSaveMealCreate.Input.Headers = .init()
+        headers: Operations.SocialPostsSaveMealCreate.Input.Headers = .init(),
+        body: Operations.SocialPostsSaveMealCreate.Input.Body
     ) async throws -> Operations.SocialPostsSaveMealCreate.Output {
         try await socialPostsSaveMealCreate(Operations.SocialPostsSaveMealCreate.Input(
             path: path,
-            headers: headers
+            headers: headers,
+            body: body
         ))
     }
     /// Copy a posted workout into your own workouts. The exercises and their set counts are taken; weights are not, because a workout you save is a plan to follow rather than a record of somebody else's session.
@@ -4817,6 +4961,159 @@ public enum Components {
             case imagePng = "image/png"
             case imageWebp = "image/webp"
         }
+        /// - Remark: Generated from `#/components/schemas/Cookbook`.
+        public struct Cookbook: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/Cookbook/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/Cookbook/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/Cookbook/recipe_count`.
+            public var recipeCount: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/Cookbook/capacity`.
+            public var capacity: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/Cookbook/created_at`.
+            public var createdAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/Cookbook/updated_at`.
+            public var updatedAt: Foundation.Date
+            /// Creates a new `Cookbook`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - name:
+            ///   - recipeCount:
+            ///   - capacity:
+            ///   - createdAt:
+            ///   - updatedAt:
+            public init(
+                id: Swift.Int,
+                name: Swift.String,
+                recipeCount: Swift.Int,
+                capacity: Swift.Int,
+                createdAt: Foundation.Date,
+                updatedAt: Foundation.Date
+            ) {
+                self.id = id
+                self.name = name
+                self.recipeCount = recipeCount
+                self.capacity = capacity
+                self.createdAt = createdAt
+                self.updatedAt = updatedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case name
+                case recipeCount = "recipe_count"
+                case capacity
+                case createdAt = "created_at"
+                case updatedAt = "updated_at"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CookbookDestinationRequest`.
+        public struct CookbookDestinationRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CookbookDestinationRequest/cookbook`.
+            public var cookbook: Swift.Int
+            /// Creates a new `CookbookDestinationRequest`.
+            ///
+            /// - Parameters:
+            ///   - cookbook:
+            public init(cookbook: Swift.Int) {
+                self.cookbook = cookbook
+            }
+            public enum CodingKeys: String, CodingKey {
+                case cookbook
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CookbookIngredient`.
+        public struct CookbookIngredient: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CookbookIngredient/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CookbookIngredient/servings`.
+            public var servings: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CookbookIngredient/calories`.
+            public var calories: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CookbookIngredient/protein_grams`.
+            public var proteinGrams: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CookbookIngredient/carbohydrate_grams`.
+            public var carbohydrateGrams: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CookbookIngredient/fat_grams`.
+            public var fatGrams: Swift.String
+            /// Creates a new `CookbookIngredient`.
+            ///
+            /// - Parameters:
+            ///   - name:
+            ///   - servings:
+            ///   - calories:
+            ///   - proteinGrams:
+            ///   - carbohydrateGrams:
+            ///   - fatGrams:
+            public init(
+                name: Swift.String,
+                servings: Swift.String,
+                calories: Swift.String,
+                proteinGrams: Swift.String,
+                carbohydrateGrams: Swift.String,
+                fatGrams: Swift.String
+            ) {
+                self.name = name
+                self.servings = servings
+                self.calories = calories
+                self.proteinGrams = proteinGrams
+                self.carbohydrateGrams = carbohydrateGrams
+                self.fatGrams = fatGrams
+            }
+            public enum CodingKeys: String, CodingKey {
+                case name
+                case servings
+                case calories
+                case proteinGrams = "protein_grams"
+                case carbohydrateGrams = "carbohydrate_grams"
+                case fatGrams = "fat_grams"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CookbookRecipe`.
+        public struct CookbookRecipe: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CookbookRecipe/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CookbookRecipe/cooking_instructions`.
+            public var cookingInstructions: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CookbookRecipe/ingredients`.
+            public var ingredients: [Components.Schemas.CookbookIngredient]
+            /// Creates a new `CookbookRecipe`.
+            ///
+            /// - Parameters:
+            ///   - name:
+            ///   - cookingInstructions:
+            ///   - ingredients:
+            public init(
+                name: Swift.String,
+                cookingInstructions: Swift.String,
+                ingredients: [Components.Schemas.CookbookIngredient]
+            ) {
+                self.name = name
+                self.cookingInstructions = cookingInstructions
+                self.ingredients = ingredients
+            }
+            public enum CodingKeys: String, CodingKey {
+                case name
+                case cookingInstructions = "cooking_instructions"
+                case ingredients
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CookbookRequest`.
+        public struct CookbookRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CookbookRequest/name`.
+            public var name: Swift.String
+            /// Creates a new `CookbookRequest`.
+            ///
+            /// - Parameters:
+            ///   - name:
+            public init(name: Swift.String) {
+                self.name = name
+            }
+            public enum CodingKeys: String, CodingKey {
+                case name
+            }
+        }
         /// Which day to copy the eating from, and which day to put it on.
         ///
         /// Two dates rather than "yesterday": the rule about which day is being
@@ -4849,6 +5146,7 @@ public enum Components {
         }
         /// * `workout` - Workout
         /// * `meal` - Meal
+        /// * `cookbook` - Cookbook
         /// * `planner` - Planner
         /// * `media` - Photo or video
         ///
@@ -4856,6 +5154,7 @@ public enum Components {
         @frozen public enum CreatePostKindEnum: String, Codable, Hashable, Sendable, CaseIterable {
             case workout = "workout"
             case meal = "meal"
+            case cookbook = "cookbook"
             case planner = "planner"
             case media = "media"
         }
@@ -5976,6 +6275,26 @@ public enum Components {
             }
             /// - Remark: Generated from `#/components/schemas/ForYouPost/planner`.
             public var planner: Components.Schemas.ForYouPost.PlannerPayload?
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/cookbook`.
+            public struct CookbookPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/ForYouPost/cookbook/value1`.
+                public var value1: Components.Schemas.PostCookbook
+                /// Creates a new `CookbookPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PostCookbook) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/cookbook`.
+            public var cookbook: Components.Schemas.ForYouPost.CookbookPayload?
             /// - Remark: Generated from `#/components/schemas/ForYouPost/source_id`.
             public var sourceId: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/ForYouPost/viewer_follows_author`.
@@ -6058,6 +6377,7 @@ public enum Components {
             ///   - workout:
             ///   - meal:
             ///   - planner:
+            ///   - cookbook:
             ///   - sourceId:
             ///   - viewerFollowsAuthor:
             ///   - showsWeights:
@@ -6086,6 +6406,7 @@ public enum Components {
                 workout: Components.Schemas.ForYouPost.WorkoutPayload? = nil,
                 meal: Components.Schemas.ForYouPost.MealPayload? = nil,
                 planner: Components.Schemas.ForYouPost.PlannerPayload? = nil,
+                cookbook: Components.Schemas.ForYouPost.CookbookPayload? = nil,
                 sourceId: Swift.Int? = nil,
                 viewerFollowsAuthor: Swift.Bool,
                 showsWeights: Swift.Bool,
@@ -6114,6 +6435,7 @@ public enum Components {
                 self.workout = workout
                 self.meal = meal
                 self.planner = planner
+                self.cookbook = cookbook
                 self.sourceId = sourceId
                 self.viewerFollowsAuthor = viewerFollowsAuthor
                 self.showsWeights = showsWeights
@@ -6143,6 +6465,7 @@ public enum Components {
                 case workout
                 case meal
                 case planner
+                case cookbook
                 case sourceId = "source_id"
                 case viewerFollowsAuthor = "viewer_follows_author"
                 case showsWeights = "shows_weights"
@@ -7312,6 +7635,41 @@ public enum Components {
                 case results
             }
         }
+        /// - Remark: Generated from `#/components/schemas/PaginatedCookbookList`.
+        public struct PaginatedCookbookList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PaginatedCookbookList/count`.
+            public var count: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PaginatedCookbookList/next`.
+            public var next: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedCookbookList/previous`.
+            public var previous: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedCookbookList/results`.
+            public var results: [Components.Schemas.Cookbook]
+            /// Creates a new `PaginatedCookbookList`.
+            ///
+            /// - Parameters:
+            ///   - count:
+            ///   - next:
+            ///   - previous:
+            ///   - results:
+            public init(
+                count: Swift.Int,
+                next: Swift.String? = nil,
+                previous: Swift.String? = nil,
+                results: [Components.Schemas.Cookbook]
+            ) {
+                self.count = count
+                self.next = next
+                self.previous = previous
+                self.results = results
+            }
+            public enum CodingKeys: String, CodingKey {
+                case count
+                case next
+                case previous
+                case results
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/PaginatedDailyStepCountList`.
         public struct PaginatedDailyStepCountList: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PaginatedDailyStepCountList/count`.
@@ -8161,6 +8519,21 @@ public enum Components {
                 case notes
             }
         }
+        /// - Remark: Generated from `#/components/schemas/PatchedCookbookRequest`.
+        public struct PatchedCookbookRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PatchedCookbookRequest/name`.
+            public var name: Swift.String?
+            /// Creates a new `PatchedCookbookRequest`.
+            ///
+            /// - Parameters:
+            ///   - name:
+            public init(name: Swift.String? = nil) {
+                self.name = name
+            }
+            public enum CodingKeys: String, CodingKey {
+                case name
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/PatchedExerciseRequest`.
         public struct PatchedExerciseRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PatchedExerciseRequest/name`.
@@ -8728,6 +9101,8 @@ public enum Components {
         public struct PatchedSavedFoodMealRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PatchedSavedFoodMealRequest/name`.
             public var name: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedSavedFoodMealRequest/cookbook`.
+            public var cookbook: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/PatchedSavedFoodMealRequest/ingredients`.
             public var ingredients: [Components.Schemas.SavedFoodIngredientRequest]?
             /// - Remark: Generated from `#/components/schemas/PatchedSavedFoodMealRequest/cooking_instructions`.
@@ -8736,19 +9111,23 @@ public enum Components {
             ///
             /// - Parameters:
             ///   - name:
+            ///   - cookbook:
             ///   - ingredients:
             ///   - cookingInstructions:
             public init(
                 name: Swift.String? = nil,
+                cookbook: Swift.Int? = nil,
                 ingredients: [Components.Schemas.SavedFoodIngredientRequest]? = nil,
                 cookingInstructions: Swift.String? = nil
             ) {
                 self.name = name
+                self.cookbook = cookbook
                 self.ingredients = ingredients
                 self.cookingInstructions = cookingInstructions
             }
             public enum CodingKeys: String, CodingKey {
                 case name
+                case cookbook
                 case ingredients
                 case cookingInstructions = "cooking_instructions"
             }
@@ -9914,6 +10293,26 @@ public enum Components {
             }
             /// - Remark: Generated from `#/components/schemas/Post/planner`.
             public var planner: Components.Schemas.Post.PlannerPayload?
+            /// - Remark: Generated from `#/components/schemas/Post/cookbook`.
+            public struct CookbookPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/Post/cookbook/value1`.
+                public var value1: Components.Schemas.PostCookbook
+                /// Creates a new `CookbookPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PostCookbook) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/Post/cookbook`.
+            public var cookbook: Components.Schemas.Post.CookbookPayload?
             /// - Remark: Generated from `#/components/schemas/Post/source_id`.
             public var sourceId: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/Post/viewer_follows_author`.
@@ -9976,6 +10375,7 @@ public enum Components {
             ///   - workout:
             ///   - meal:
             ///   - planner:
+            ///   - cookbook:
             ///   - sourceId:
             ///   - viewerFollowsAuthor:
             ///   - showsWeights:
@@ -10003,6 +10403,7 @@ public enum Components {
                 workout: Components.Schemas.Post.WorkoutPayload? = nil,
                 meal: Components.Schemas.Post.MealPayload? = nil,
                 planner: Components.Schemas.Post.PlannerPayload? = nil,
+                cookbook: Components.Schemas.Post.CookbookPayload? = nil,
                 sourceId: Swift.Int? = nil,
                 viewerFollowsAuthor: Swift.Bool,
                 showsWeights: Swift.Bool,
@@ -10030,6 +10431,7 @@ public enum Components {
                 self.workout = workout
                 self.meal = meal
                 self.planner = planner
+                self.cookbook = cookbook
                 self.sourceId = sourceId
                 self.viewerFollowsAuthor = viewerFollowsAuthor
                 self.showsWeights = showsWeights
@@ -10058,6 +10460,7 @@ public enum Components {
                 case workout
                 case meal
                 case planner
+                case cookbook
                 case sourceId = "source_id"
                 case viewerFollowsAuthor = "viewer_follows_author"
                 case showsWeights = "shows_weights"
@@ -10197,6 +10600,29 @@ public enum Components {
                 case post
                 case parent
                 case body
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PostCookbook`.
+        public struct PostCookbook: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PostCookbook/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PostCookbook/recipe_count`.
+            public var recipeCount: Swift.Int
+            /// Creates a new `PostCookbook`.
+            ///
+            /// - Parameters:
+            ///   - name:
+            ///   - recipeCount:
+            public init(
+                name: Swift.String,
+                recipeCount: Swift.Int
+            ) {
+                self.name = name
+                self.recipeCount = recipeCount
+            }
+            public enum CodingKeys: String, CodingKey {
+                case name
+                case recipeCount = "recipe_count"
             }
         }
         /// A posted meal, frozen at the moment it was posted.
@@ -11416,6 +11842,35 @@ public enum Components {
                 case isProfilePublic = "is_profile_public"
             }
         }
+        /// - Remark: Generated from `#/components/schemas/PublishedCookbook`.
+        public struct PublishedCookbook: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PublishedCookbook/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PublishedCookbook/recipe_count`.
+            public var recipeCount: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PublishedCookbook/recipes`.
+            public var recipes: [Components.Schemas.CookbookRecipe]
+            /// Creates a new `PublishedCookbook`.
+            ///
+            /// - Parameters:
+            ///   - name:
+            ///   - recipeCount:
+            ///   - recipes:
+            public init(
+                name: Swift.String,
+                recipeCount: Swift.Int,
+                recipes: [Components.Schemas.CookbookRecipe]
+            ) {
+                self.name = name
+                self.recipeCount = recipeCount
+                self.recipes = recipes
+            }
+            public enum CodingKeys: String, CodingKey {
+                case name
+                case recipeCount = "recipe_count"
+                case recipes
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/PushDeviceRegistrationRequest`.
         public struct PushDeviceRegistrationRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PushDeviceRegistrationRequest/token`.
@@ -12122,6 +12577,26 @@ public enum Components {
             }
             /// - Remark: Generated from `#/components/schemas/RepostedPost/planner`.
             public var planner: Components.Schemas.RepostedPost.PlannerPayload?
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/cookbook`.
+            public struct CookbookPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/RepostedPost/cookbook/value1`.
+                public var value1: Components.Schemas.PostCookbook
+                /// Creates a new `CookbookPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PostCookbook) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/cookbook`.
+            public var cookbook: Components.Schemas.RepostedPost.CookbookPayload?
             /// - Remark: Generated from `#/components/schemas/RepostedPost/created_at`.
             public var createdAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/RepostedPost/published_at`.
@@ -12139,6 +12614,7 @@ public enum Components {
             ///   - workout:
             ///   - meal:
             ///   - planner:
+            ///   - cookbook:
             ///   - createdAt:
             ///   - publishedAt:
             public init(
@@ -12152,6 +12628,7 @@ public enum Components {
                 workout: Components.Schemas.RepostedPost.WorkoutPayload? = nil,
                 meal: Components.Schemas.RepostedPost.MealPayload? = nil,
                 planner: Components.Schemas.RepostedPost.PlannerPayload? = nil,
+                cookbook: Components.Schemas.RepostedPost.CookbookPayload? = nil,
                 createdAt: Foundation.Date,
                 publishedAt: Foundation.Date? = nil
             ) {
@@ -12165,6 +12642,7 @@ public enum Components {
                 self.workout = workout
                 self.meal = meal
                 self.planner = planner
+                self.cookbook = cookbook
                 self.createdAt = createdAt
                 self.publishedAt = publishedAt
             }
@@ -12179,6 +12657,7 @@ public enum Components {
                 case workout
                 case meal
                 case planner
+                case cookbook
                 case createdAt = "created_at"
                 case publishedAt = "published_at"
             }
@@ -12350,6 +12829,8 @@ public enum Components {
             public var id: Swift.Int
             /// - Remark: Generated from `#/components/schemas/SavedFoodMeal/name`.
             public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SavedFoodMeal/cookbook`.
+            public var cookbook: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/SavedFoodMeal/ingredients`.
             public var ingredients: [Components.Schemas.SavedFoodIngredient]
             /// - Remark: Generated from `#/components/schemas/SavedFoodMeal/cooking_instructions`.
@@ -12363,6 +12844,7 @@ public enum Components {
             /// - Parameters:
             ///   - id:
             ///   - name:
+            ///   - cookbook:
             ///   - ingredients:
             ///   - cookingInstructions:
             ///   - createdAt:
@@ -12370,6 +12852,7 @@ public enum Components {
             public init(
                 id: Swift.Int,
                 name: Swift.String,
+                cookbook: Swift.Int? = nil,
                 ingredients: [Components.Schemas.SavedFoodIngredient],
                 cookingInstructions: Swift.String? = nil,
                 createdAt: Foundation.Date,
@@ -12377,6 +12860,7 @@ public enum Components {
             ) {
                 self.id = id
                 self.name = name
+                self.cookbook = cookbook
                 self.ingredients = ingredients
                 self.cookingInstructions = cookingInstructions
                 self.createdAt = createdAt
@@ -12385,6 +12869,7 @@ public enum Components {
             public enum CodingKeys: String, CodingKey {
                 case id
                 case name
+                case cookbook
                 case ingredients
                 case cookingInstructions = "cooking_instructions"
                 case createdAt = "created_at"
@@ -12398,6 +12883,8 @@ public enum Components {
         public struct SavedFoodMealRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/SavedFoodMealRequest/name`.
             public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SavedFoodMealRequest/cookbook`.
+            public var cookbook: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/SavedFoodMealRequest/ingredients`.
             public var ingredients: [Components.Schemas.SavedFoodIngredientRequest]
             /// - Remark: Generated from `#/components/schemas/SavedFoodMealRequest/cooking_instructions`.
@@ -12406,19 +12893,23 @@ public enum Components {
             ///
             /// - Parameters:
             ///   - name:
+            ///   - cookbook:
             ///   - ingredients:
             ///   - cookingInstructions:
             public init(
                 name: Swift.String,
+                cookbook: Swift.Int? = nil,
                 ingredients: [Components.Schemas.SavedFoodIngredientRequest],
                 cookingInstructions: Swift.String? = nil
             ) {
                 self.name = name
+                self.cookbook = cookbook
                 self.ingredients = ingredients
                 self.cookingInstructions = cookingInstructions
             }
             public enum CodingKeys: String, CodingKey {
                 case name
+                case cookbook
                 case ingredients
                 case cookingInstructions = "cooking_instructions"
             }
@@ -18834,6 +19325,734 @@ public enum Operations {
             /// - Throws: An error if `self` is not `.noContent`.
             /// - SeeAlso: `.noContent`.
             public var noContent: Operations.ExercisesDestroy.Output.NoContent {
+                get throws {
+                    switch self {
+                    case let .noContent(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "noContent",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// - Remark: HTTP `GET /api/v1/food/cookbooks/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks//get(food_cookbooks_list)`.
+    public enum FoodCookbooksList {
+        public static let id: Swift.String = "food_cookbooks_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/GET/query/page`.
+                public var page: Swift.Int?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - page: A page number within the paginated result set.
+                public init(page: Swift.Int? = nil) {
+                    self.page = page
+                }
+            }
+            public var query: Operations.FoodCookbooksList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodCookbooksList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodCookbooksList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodCookbooksList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.FoodCookbooksList.Input.Query = .init(),
+                headers: Operations.FoodCookbooksList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedCookbookList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedCookbookList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodCookbooksList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodCookbooksList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/cookbooks//get(food_cookbooks_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.FoodCookbooksList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.FoodCookbooksList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// - Remark: HTTP `POST /api/v1/food/cookbooks/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks//post(food_cookbooks_create)`.
+    public enum FoodCookbooksCreate {
+        public static let id: Swift.String = "food_cookbooks_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                /// Persist a fresh UUID per intended create and reuse it with the same JSON body on retry. Successful responses are replayed without a second create. Reusing the key with changed input returns 409. Keys are scoped to the authenticated account and endpoint and retained until account deletion.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/POST/header/Idempotency-Key`.
+                public var idempotencyKey: Swift.String?
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodCookbooksCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - idempotencyKey: Persist a fresh UUID per intended create and reuse it with the same JSON body on retry. Successful responses are replayed without a second create. Reusing the key with changed input returns 409. Keys are scoped to the authenticated account and endpoint and retained until account deletion.
+                ///   - accept:
+                public init(
+                    idempotencyKey: Swift.String? = nil,
+                    accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodCookbooksCreate.AcceptableContentType>] = .defaultValues()
+                ) {
+                    self.idempotencyKey = idempotencyKey
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodCookbooksCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.CookbookRequest)
+            }
+            public var body: Operations.FoodCookbooksCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.FoodCookbooksCreate.Input.Headers = .init(),
+                body: Operations.FoodCookbooksCreate.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Created: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/POST/responses/201/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/POST/responses/201/content/application\/json`.
+                    case json(Components.Schemas.Cookbook)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Cookbook {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodCookbooksCreate.Output.Created.Body
+                /// Creates a new `Created`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodCookbooksCreate.Output.Created.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/cookbooks//post(food_cookbooks_create)/responses/201`.
+            ///
+            /// HTTP response code: `201 created`.
+            case created(Operations.FoodCookbooksCreate.Output.Created)
+            /// The associated value of the enum case if `self` is `.created`.
+            ///
+            /// - Throws: An error if `self` is not `.created`.
+            /// - SeeAlso: `.created`.
+            public var created: Operations.FoodCookbooksCreate.Output.Created {
+                get throws {
+                    switch self {
+                    case let .created(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "created",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// - Remark: HTTP `GET /api/v1/food/cookbooks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//get(food_cookbooks_retrieve)`.
+    public enum FoodCookbooksRetrieve {
+        public static let id: Swift.String = "food_cookbooks_retrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/GET/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this cookbook.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/GET/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this cookbook.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.FoodCookbooksRetrieve.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodCookbooksRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodCookbooksRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodCookbooksRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.FoodCookbooksRetrieve.Input.Path,
+                headers: Operations.FoodCookbooksRetrieve.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Cookbook)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Cookbook {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodCookbooksRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodCookbooksRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//get(food_cookbooks_retrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.FoodCookbooksRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.FoodCookbooksRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// - Remark: HTTP `PATCH /api/v1/food/cookbooks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//patch(food_cookbooks_partial_update)`.
+    public enum FoodCookbooksPartialUpdate {
+        public static let id: Swift.String = "food_cookbooks_partial_update"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/PATCH/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this cookbook.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/PATCH/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this cookbook.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.FoodCookbooksPartialUpdate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/PATCH/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodCookbooksPartialUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodCookbooksPartialUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodCookbooksPartialUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/PATCH/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/PATCH/requestBody/content/application\/json`.
+                case json(Components.Schemas.PatchedCookbookRequest)
+            }
+            public var body: Operations.FoodCookbooksPartialUpdate.Input.Body?
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.FoodCookbooksPartialUpdate.Input.Path,
+                headers: Operations.FoodCookbooksPartialUpdate.Input.Headers = .init(),
+                body: Operations.FoodCookbooksPartialUpdate.Input.Body? = nil
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/PATCH/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/PATCH/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Cookbook)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Cookbook {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodCookbooksPartialUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodCookbooksPartialUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//patch(food_cookbooks_partial_update)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.FoodCookbooksPartialUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.FoodCookbooksPartialUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// - Remark: HTTP `PUT /api/v1/food/cookbooks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//put(food_cookbooks_update)`.
+    public enum FoodCookbooksUpdate {
+        public static let id: Swift.String = "food_cookbooks_update"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/PUT/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this cookbook.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/PUT/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this cookbook.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.FoodCookbooksUpdate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/PUT/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodCookbooksUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodCookbooksUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodCookbooksUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/PUT/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/PUT/requestBody/content/application\/json`.
+                case json(Components.Schemas.CookbookRequest)
+            }
+            public var body: Operations.FoodCookbooksUpdate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.FoodCookbooksUpdate.Input.Path,
+                headers: Operations.FoodCookbooksUpdate.Input.Headers = .init(),
+                body: Operations.FoodCookbooksUpdate.Input.Body
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/PUT/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/PUT/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Cookbook)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Cookbook {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodCookbooksUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodCookbooksUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//put(food_cookbooks_update)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.FoodCookbooksUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.FoodCookbooksUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// - Remark: HTTP `DELETE /api/v1/food/cookbooks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//delete(food_cookbooks_destroy)`.
+    public enum FoodCookbooksDestroy {
+        public static let id: Swift.String = "food_cookbooks_destroy"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/DELETE/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this cookbook.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/DELETE/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this cookbook.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.FoodCookbooksDestroy.Input.Path
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            public init(path: Operations.FoodCookbooksDestroy.Input.Path) {
+                self.path = path
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct NoContent: Sendable, Hashable {
+                /// Creates a new `NoContent`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//delete(food_cookbooks_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            case noContent(Operations.FoodCookbooksDestroy.Output.NoContent)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//delete(food_cookbooks_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            public static var noContent: Self {
+                .noContent(.init())
+            }
+            /// The associated value of the enum case if `self` is `.noContent`.
+            ///
+            /// - Throws: An error if `self` is not `.noContent`.
+            /// - SeeAlso: `.noContent`.
+            public var noContent: Operations.FoodCookbooksDestroy.Output.NoContent {
                 get throws {
                     switch self {
                     case let .noContent(response):
@@ -35506,6 +36725,142 @@ public enum Operations {
             case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
         }
     }
+    /// Posts: what someone has chosen to show other people.
+    ///
+    /// Reading and writing use different querysets on purpose. A reader gets
+    /// everything the visibility rules allow; an author gets their own rows and
+    /// nothing else, so somebody else's post is a 404 to a PATCH for the same
+    /// reason it is a 404 to a GET of a session that is not theirs — it was never
+    /// in the set.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/posts/{id}/cookbook/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/cookbook//get(social_posts_cookbook_retrieve)`.
+    public enum SocialPostsCookbookRetrieve {
+        public static let id: Swift.String = "social_posts_cookbook_retrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/cookbook/GET/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this post.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/cookbook/GET/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this post.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialPostsCookbookRetrieve.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/cookbook/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsCookbookRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsCookbookRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialPostsCookbookRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.SocialPostsCookbookRetrieve.Input.Path,
+                headers: Operations.SocialPostsCookbookRetrieve.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/cookbook/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/cookbook/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PublishedCookbook)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PublishedCookbook {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialPostsCookbookRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialPostsCookbookRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/cookbook//get(social_posts_cookbook_retrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialPostsCookbookRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialPostsCookbookRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
     /// Ask for fewer posts like this one on your For You page. It leaves the page at once, and its kind of content -- its topics and the exercises in it -- is shown less from then on; its author only a little less, unlike "not interested". Replaces "not interested" or "more like this" on the same post. Saying it twice is not an error.
     ///
     /// - Remark: HTTP `POST /api/v1/social/posts/{id}/fewer-like-this/`.
@@ -36648,6 +38003,193 @@ public enum Operations {
             }
         }
     }
+    /// Posts: what someone has chosen to show other people.
+    ///
+    /// Reading and writing use different querysets on purpose. A reader gets
+    /// everything the visibility rules allow; an author gets their own rows and
+    /// nothing else, so somebody else's post is a 404 to a PATCH for the same
+    /// reason it is a 404 to a GET of a session that is not theirs — it was never
+    /// in the set.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/save-cookbook/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-cookbook//post(social_posts_save_cookbook_create)`.
+    public enum SocialPostsSaveCookbookCreate {
+        public static let id: Swift.String = "social_posts_save_cookbook_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-cookbook/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this post.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-cookbook/POST/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this post.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialPostsSaveCookbookCreate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-cookbook/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsSaveCookbookCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsSaveCookbookCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialPostsSaveCookbookCreate.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.SocialPostsSaveCookbookCreate.Input.Path,
+                headers: Operations.SocialPostsSaveCookbookCreate.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-cookbook/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-cookbook/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Cookbook)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Cookbook {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialPostsSaveCookbookCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialPostsSaveCookbookCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-cookbook//post(social_posts_save_cookbook_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialPostsSaveCookbookCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialPostsSaveCookbookCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct Created: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-cookbook/POST/responses/201/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-cookbook/POST/responses/201/content/application\/json`.
+                    case json(Components.Schemas.Cookbook)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Cookbook {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialPostsSaveCookbookCreate.Output.Created.Body
+                /// Creates a new `Created`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialPostsSaveCookbookCreate.Output.Created.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-cookbook//post(social_posts_save_cookbook_create)/responses/201`.
+            ///
+            /// HTTP response code: `201 created`.
+            case created(Operations.SocialPostsSaveCookbookCreate.Output.Created)
+            /// The associated value of the enum case if `self` is `.created`.
+            ///
+            /// - Throws: An error if `self` is not `.created`.
+            /// - SeeAlso: `.created`.
+            public var created: Operations.SocialPostsSaveCookbookCreate.Output.Created {
+                get throws {
+                    switch self {
+                    case let .created(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "created",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
     /// Copy a posted meal into your own saved meals. The foods and their servings are taken whole, so applying it to a day later gives the same numbers the post showed.
     ///
     /// Saving the same post again does not make a second copy: the one already saved is returned with already_saved true, and a 200 rather than a 201, because nothing was created.
@@ -36684,17 +38226,26 @@ public enum Operations {
                 }
             }
             public var headers: Operations.SocialPostsSaveMealCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-meal/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-meal/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.CookbookDestinationRequest)
+            }
+            public var body: Operations.SocialPostsSaveMealCreate.Input.Body
             /// Creates a new `Input`.
             ///
             /// - Parameters:
             ///   - path:
             ///   - headers:
+            ///   - body:
             public init(
                 path: Operations.SocialPostsSaveMealCreate.Input.Path,
-                headers: Operations.SocialPostsSaveMealCreate.Input.Headers = .init()
+                headers: Operations.SocialPostsSaveMealCreate.Input.Headers = .init(),
+                body: Operations.SocialPostsSaveMealCreate.Input.Body
             ) {
                 self.path = path
                 self.headers = headers
+                self.body = body
             }
         }
         @frozen public enum Output: Sendable, Hashable {
