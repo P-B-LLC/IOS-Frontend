@@ -20,7 +20,6 @@ struct DayWorkoutView: View {
     @State private var confirmingDiscard = false
     /// The planned activity being logged after the fact, if any.
     @State private var loggingWorkout: Workout?
-    @State private var setupDraft = Workout(name: "", exercises: [])
     @State private var editor: WorkoutEditorView.Mode?
     @State private var savedWorkoutMessage: String?
     @State private var highlightedWorkoutID: Workout.ID?
@@ -355,7 +354,13 @@ struct DayWorkoutView: View {
                             .font(.community(.largeTitle, weight: .bold))
                         Text("Start small. You can build as you go.")
                             .font(.community(.subheadline)).foregroundStyle(.secondary)
-                        Button { editor = .build(setupDraft) } label: {
+                        // A new draft every time. This used to open one draft
+                        // kept for the life of the screen, and its id is the
+                        // save's idempotency key: after one workout saved,
+                        // the next one made here -- another day's, or this
+                        // day's after removing the first -- reused that key
+                        // and the server refused it with a 409.
+                        Button { editor = .create } label: {
                             Label("Create a workout", systemImage: "plus").frame(maxWidth: .infinity)
                         }
                         .buttonStyle(WorkoutPrimaryButtonStyle(phase: .prepare))
@@ -875,7 +880,7 @@ struct DayWorkoutView: View {
         return min(candidate, now)
     }
 
-    private static func savedMessage(_ name: String, on day: Weekday) -> String {
+    static func savedMessage(_ name: String, on day: Weekday) -> String {
         switch day {
         case .monday: return String(localized: "\(name) saved for Monday.", bundle: .app, locale: .app)
         case .tuesday: return String(localized: "\(name) saved for Tuesday.", bundle: .app, locale: .app)
@@ -2140,7 +2145,7 @@ struct DayWorkoutView: View {
 
 }
 
-private struct DayWorkoutCardSurface: ViewModifier {
+struct DayWorkoutCardSurface: ViewModifier {
     let highlighted: Bool
     private let phase = WorkoutVisualPhase.prepare
 
@@ -2424,7 +2429,7 @@ private struct LiveSetSparkBurst: View {
     }
 }
 
-private struct PlannedExerciseRow: View {
+struct PlannedExerciseRow: View {
     let position: Int
     let exercise: Exercise
 

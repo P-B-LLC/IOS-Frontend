@@ -75,6 +75,9 @@ final class WorkoutStore {
     /// Current-week projection of concrete API WorkoutSchedule records. A date
     /// can hold more than one schedule, so each day maps to a list.
     private(set) var schedule: [Weekday: [Workout]]
+    /// What is planned on the days after this week that can be planned on,
+    /// by `YYYY-MM-DD`. Read with the week; see `WorkoutPlanningWindow`.
+    private(set) var upcoming: [String: [Workout]] = [:]
     /// Set only after a save's returned template is found in the authoritative
     /// schedule. The day view can reveal exactly the newly saved card.
     private(set) var lastSavedWorkoutID: Workout.ID?
@@ -270,6 +273,7 @@ final class WorkoutStore {
         } catch {
             self.repository = nil
             schedule = [:]
+            upcoming = [:]
             persistenceError = error.userFacingMessage
         }
     }
@@ -288,6 +292,7 @@ final class WorkoutStore {
         completedSessions = []
         repository = nil
         schedule = [:]
+        upcoming = [:]
         lastSavedWorkoutID = nil
         // Signing out does end the session on this phone, Lock Screen and all.
         holdsSessionSignals = false
@@ -600,6 +605,26 @@ final class WorkoutStore {
         schedule[day]?.first { $0.id == id }
     }
 
+    /// Everything planned on a calendar date: a day of this week, or one of
+    /// the days after it that can be planned on. Empty for any other date,
+    /// which the week does not hold.
+    func workouts(onDate date: Date) -> [Workout] {
+        let key = Self.dateString(date)
+        if let day = weekday(forDateString: key) { return workouts(on: day) }
+        return upcoming[key] ?? []
+    }
+
+    /// Monday to Sunday of next week, at the start of each day.
+    var nextWeekDates: [Date] {
+        WorkoutPlanningWindow.nextWeek(from: Date(), calendar: .current)
+    }
+
+    /// Whether a workout can be planned on the day holding `date`: today or
+    /// up to `WorkoutPlanningWindow.daysAhead` days after it.
+    func canPlan(on date: Date) -> Bool {
+        WorkoutPlanningWindow.contains(date, now: Date(), calendar: .current)
+    }
+
     func activeSession(on day: Weekday) -> ActiveWorkoutSession? {
         guard activeSession?.day == day else { return nil }
         return activeSession
@@ -712,13 +737,7 @@ final class WorkoutStore {
     /// `YYYY-MM-DD` in the device's own calendar, matching every other date
     /// this app sends.
     nonisolated static func dateString(_ date: Date) -> String {
-        let parts = Calendar.current.dateComponents([.year, .month, .day], from: date)
-        return String(
-            format: "%04d-%02d-%02d",
-            parts.year ?? 0,
-            parts.month ?? 0,
-            parts.day ?? 0
-        )
+        WorkoutPlanningWindow.dateString(date, calendar: .current)
     }
 
     /// Saves a workout without putting it on any date, and answers with its
@@ -773,10 +792,22 @@ final class WorkoutStore {
     /// `nil` when it saved, and otherwise why it did not, for the editor to
     /// show instead of a sentence it made up. See `PlannerStore`'s equivalent.
     func saveWorkoutReportingFailure(_ workout: Workout, on day: Weekday) async -> String? {
-        await saveWorkout(workout, on: day) ? nil : (persistenceError ?? SaveFailure.unexplained)
+        await saveWorkoutReportingFailure(workout, onDate: workoutDate(for: day))
+    }
+
+    /// The same for a calendar date, which may be after this week.
+    func saveWorkoutReportingFailure(_ workout: Workout, onDate day: Date) async -> String? {
+        await saveWorkout(workout, onDate: day) ? nil : (persistenceError ?? SaveFailure.unexplained)
     }
 
     func saveWorkout(_ workout: Workout, on day: Weekday) async -> Bool {
+        await saveWorkout(workout, onDate: workoutDate(for: day))
+    }
+
+    /// Saves a workout onto a calendar date: a day of this week, or one of
+    /// the days after it that can be planned on. Every activity takes this
+    /// one path, so a match and a lifting day are planned the same way.
+    func saveWorkout(_ workout: Workout, onDate day: Date) async -> Bool {
         guard let repository else {
             persistenceError = SaveFailure.notConnected
             return false
@@ -785,11 +816,17 @@ final class WorkoutStore {
             persistenceError = SaveFailure.alreadySaving
             return false
         }
+        let date = Self.dateString(day)
+        // A date the week does not hold could be saved but never confirmed,
+        // and "saved, but could not be confirmed" would then be untrue.
+        guard weekday(forDateString: date) != nil || canPlan(on: day) else {
+            persistenceError = SaveFailure.beyondPlanningWindow
+            return false
+        }
         let generation = connectionGeneration
         // Only an edit of a workout already on this day replaces it; anything
         // else is scheduled alongside whatever is already planned.
-        let existing = schedule[day]?.first { $0.id == workout.id }
-        let date = dateString(for: day)
+        let existing = workouts(onDate: day).first { $0.id == workout.id }
         let workout = Self.normalized(workout)
         isSaving = true
         persistenceError = nil
@@ -809,7 +846,7 @@ final class WorkoutStore {
                 generation: generation,
                 showsLoadingState: false
             )
-            guard reloaded, let confirmed = schedule[day]?.first(where: {
+            guard reloaded, let confirmed = workouts(onDate: day).first(where: {
                 $0.serverID == templateID && $0.scheduledDate == date
             }) else {
                 if connectionGeneration == generation, persistenceError == nil {
@@ -833,8 +870,14 @@ final class WorkoutStore {
     /// Removes one workout from a day. Other workouts planned for that day are
     /// untouched, and the workout template itself is kept.
     func removeWorkout(_ workout: Workout, on day: Weekday) {
+        removeWorkout(workout, onDate: workoutDate(for: day))
+    }
+
+    /// The same for a calendar date, which may be after this week.
+    func removeWorkout(_ workout: Workout, onDate day: Date) {
         guard let repository, !isSaving else { return }
         let generation = connectionGeneration
+        let date = Self.dateString(day)
         isSaving = true
         persistenceError = nil
 
@@ -844,9 +887,16 @@ final class WorkoutStore {
                 guard connectionGeneration == generation else { return }
                 scheduleReads.invalidate()
                 isLoading = false
-                schedule[day]?.removeAll { $0.id == workout.id }
-                if schedule[day]?.isEmpty == true {
-                    schedule.removeValue(forKey: day)
+                if let weekday = weekday(forDateString: date) {
+                    schedule[weekday]?.removeAll { $0.id == workout.id }
+                    if schedule[weekday]?.isEmpty == true {
+                        schedule.removeValue(forKey: weekday)
+                    }
+                } else {
+                    upcoming[date]?.removeAll { $0.id == workout.id }
+                    if upcoming[date]?.isEmpty == true {
+                        upcoming.removeValue(forKey: date)
+                    }
                 }
                 calendarRevision &+= 1
             } catch {
@@ -2098,7 +2148,7 @@ final class WorkoutStore {
     /// Whether there is anything planned to clear. Offering the button over an
     /// empty calendar would be offering to do nothing.
     var hasAnythingScheduled: Bool {
-        schedule.values.contains { !$0.isEmpty }
+        schedule.values.contains { !$0.isEmpty } || upcoming.values.contains { !$0.isEmpty }
     }
 
     /// Reads the visible week back from the server.
@@ -2151,11 +2201,14 @@ final class WorkoutStore {
 
         persistenceError = nil
         do {
+            let now = Date()
             let loaded = try await repository.loadWeek(
-                dateByDay: dateStringsForCurrentWeek()
+                dateByDay: dateStringsForCurrentWeek(referenceDate: now),
+                upcomingDays: upcomingDays(referenceDate: now)
             )
             guard connectionGeneration == generation, scheduleReads.accepts(readID) else { return false }
             schedule = loaded.schedule
+            upcoming = loaded.upcoming
             // Names to offer when creating a workout, built from the templates
             // the schedule was built from. This was a second sequential request
             // for rows the first one had already read.
@@ -2236,22 +2289,23 @@ final class WorkoutStore {
         )
     }
 
+    /// The days after this week that can be planned on, by `YYYY-MM-DD`,
+    /// with the weekday each falls on.
+    private func upcomingDays(referenceDate: Date) -> [String: Weekday] {
+        let calendar = Calendar.current
+        var days: [String: Weekday] = [:]
+        for date in WorkoutPlanningWindow.daysAfterThisWeek(from: referenceDate, calendar: calendar) {
+            guard let weekday = Weekday(calendarWeekday: calendar.component(.weekday, from: date)) else { continue }
+            days[Self.dateString(date)] = weekday
+        }
+        return days
+    }
+
     private func dateString(
         for day: Weekday,
         referenceDate: Date = Date()
     ) -> String {
-        let calendar = Calendar.current
-        let date = workoutDate(for: day, referenceDate: referenceDate)
-        let components = calendar.dateComponents(
-            [.year, .month, .day],
-            from: date
-        )
-        return String(
-            format: "%04d-%02d-%02d",
-            components.year ?? 0,
-            components.month ?? 0,
-            components.day ?? 0
-        )
+        Self.dateString(workoutDate(for: day, referenceDate: referenceDate))
     }
 
     /// The weekday a `YYYY-MM-DD` date falls on, but only within the week the
@@ -2271,19 +2325,8 @@ final class WorkoutStore {
         referenceDate: Date = Date()
     ) -> Date {
         let calendar = Calendar.current
-        let start = calendar.startOfDay(for: referenceDate)
-        let calendarWeekday = calendar.component(.weekday, from: start)
-        let daysSinceMonday = (calendarWeekday + 5) % 7
-        let monday = calendar.date(
-            byAdding: .day,
-            value: -daysSinceMonday,
-            to: start
-        ) ?? start
-        return calendar.date(
-            byAdding: .day,
-            value: day.rawValue - 1,
-            to: monday
-        ) ?? monday
+        let monday = WorkoutPlanningWindow.weekStart(containing: referenceDate, calendar: calendar)
+        return WorkoutPlanningWindow.day(day.rawValue - 1, from: monday, calendar: calendar)
     }
 
     /// Begins timing a cardio finisher for a session that has already ended.

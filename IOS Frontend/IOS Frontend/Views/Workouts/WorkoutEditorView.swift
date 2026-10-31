@@ -9,14 +9,15 @@ import SwiftUI
 
 struct WorkoutEditorView: View {
     enum Mode: Identifiable {
+        /// A new workout. Every presentation starts a draft with a new id,
+        /// which is also the create's idempotency key; reusing one draft for
+        /// two workouts makes the server refuse the second.
         case create
-        case build(Workout)
         case edit(Workout)
 
         var id: String {
             switch self {
             case .create: return "create"
-            case .build(let workout): return "build-\(workout.id.uuidString)"
             case .edit(let workout): return workout.id.uuidString
             }
         }
@@ -62,8 +63,6 @@ struct WorkoutEditorView: View {
         switch mode {
         case .create:
             _draft = State(initialValue: Workout(name: "", exercises: []))
-        case .build(let workout):
-            _draft = State(initialValue: workout)
         case .edit(let workout):
             _draft = State(initialValue: workout)
         }
@@ -72,7 +71,7 @@ struct WorkoutEditorView: View {
 
     private var recoveryKey: String {
         switch mode {
-        case .create, .build:
+        case .create:
             return "workout-new-\(recoveryContext)"
         case .edit(let workout):
             return "workout-edit-\(workout.serverID.map(String.init) ?? workout.id.uuidString)"
