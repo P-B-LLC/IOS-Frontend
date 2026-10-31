@@ -542,7 +542,7 @@ actor SocialAPIRepository {
     func saveMeal(fromPost postID: Int, cookbookID: Int) async throws -> SavedMealOutcome {
         let output = try await client.socialPostsSaveMealCreate(
             path: .init(id: postID),
-            body: .json(.init(cookbook: cookbookID))
+            body: .json(.init(cookbook: Int64(cookbookID)))
         )
         switch output {
         case .created(let response):

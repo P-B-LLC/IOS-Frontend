@@ -100,7 +100,7 @@ actor FoodAPIRepository {
     }
 
     func moveRecipe(_ id: Int, to cookbookID: Int) async throws -> SavedFoodMeal {
-        switch try await client.foodSavedMealsPartialUpdate(path: .init(id: id), body: .json(.init(cookbook: cookbookID))) {
+        switch try await client.foodSavedMealsPartialUpdate(path: .init(id: id), body: .json(.init(cookbook: Int64(cookbookID)))) {
         case .ok(let response): return Self.savedMeal(from: try response.body.json)
         case .undocumented(let statusCode, let payload):
             throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload, unlabeled: ["cookbook"])
@@ -390,7 +390,7 @@ actor FoodAPIRepository {
                 body: .json(
                     Components.Schemas.SavedFoodMealRequest(
                         name: recipe.name,
-                        cookbook: recipe.cookbookID,
+                        cookbook: recipe.cookbookID.map { Int64($0) },
                         ingredients: ingredients,
                         cookingInstructions: recipe.cookingInstructions
                     )
@@ -409,7 +409,7 @@ actor FoodAPIRepository {
             body: .json(
                 Components.Schemas.SavedFoodMealRequest(
                     name: recipe.name,
-                    cookbook: recipe.cookbookID,
+                    cookbook: recipe.cookbookID.map { Int64($0) },
                     ingredients: ingredients,
                     cookingInstructions: recipe.cookingInstructions
                 )
@@ -547,7 +547,7 @@ actor FoodAPIRepository {
                 )
             },
             cookingInstructions: payload.cookingInstructions ?? "",
-            cookbookID: payload.cookbook
+            cookbookID: payload.cookbook.map { Int($0) }
         )
     }
 
