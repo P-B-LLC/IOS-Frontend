@@ -61,6 +61,7 @@ struct WorkoutLiveActivityWidget: Widget {
                         view.progress
                         view.controls
                     }
+                    .padding(.top, 4)
                 }
             } compactLeading: {
                 Image(systemName: view.isResting ? "timer" : "dumbbell.fill")
@@ -122,6 +123,10 @@ private struct Presentation {
         }
     }
 
+    /// One filled button for what is most likely next and quiet ones beside
+    /// it, as the system's own controls do. Every button used to be filled,
+    /// the two without a tint in system blue, so three equal shouts sat
+    /// under the timer.
     @ViewBuilder var controls: some View {
         HStack(spacing: 8) {
             if (isResting || isPaused), let restID = state.restID {
@@ -130,26 +135,30 @@ private struct Presentation {
                           systemImage: isPaused ? "play.fill" : "pause.fill")
                         .frame(maxWidth: .infinity)
                 }
+                .buttonStyle(.borderedProminent)
                 .tint(Palette.accent)
                 Button(intent: AddRestTimeIntent(sessionID: state.sessionID, restID: restID, seconds: 15)) {
                     Text(state.labels.addTime)
                         .frame(maxWidth: .infinity)
                 }
+                .buttonStyle(.bordered)
+                .tint(Color.primary)
                 Button(intent: SkipRestTimerIntent(sessionID: state.sessionID, restID: restID)) {
                     Label(state.labels.skip, systemImage: "forward.end.fill")
                         .frame(maxWidth: .infinity)
                 }
+                .buttonStyle(.bordered)
+                .tint(Color.primary)
             } else if state.phase == .done {
                 Label(state.labels.workoutDone, systemImage: "checkmark.seal.fill")
-                    .font(.caption.weight(.semibold))
                     .foregroundStyle(Palette.success)
                     .frame(maxWidth: .infinity)
             } else if state.canCompleteSet, let exerciseID = state.exerciseID, let setID = state.setID {
                 Button(intent: CompleteWorkoutSetIntent(sessionID: state.sessionID, exerciseID: exerciseID, setID: setID)) {
                     Label(state.labels.completeSet, systemImage: "checkmark")
-                        .font(.subheadline.weight(.semibold))
                         .frame(maxWidth: .infinity)
                 }
+                .buttonStyle(.borderedProminent)
                 .tint(Palette.success)
             } else {
                 Text(state.labels.openToContinue)
@@ -158,7 +167,9 @@ private struct Presentation {
                     .frame(maxWidth: .infinity)
             }
         }
-        .buttonStyle(.borderedProminent)
+        .font(.footnote.weight(.semibold))
+        .lineLimit(1)
+        .minimumScaleFactor(0.85)
         .buttonBorderShape(.capsule)
         .controlSize(.small)
         .labelStyle(.titleAndIcon)
@@ -196,85 +207,110 @@ private struct LockScreenView: View {
     private var view: Presentation { Presentation(context: context) }
     private var state: WorkoutActivityAttributes.ContentState { context.state }
 
+    /// The system gives this banner at most 160 points of height and cuts
+    /// off whatever does not fit, top and bottom alike. The earlier layout
+    /// needed about 190 -- a header, four lines, the bar, the buttons and a
+    /// "next" line -- so the header sat on the banner's edge and the buttons
+    /// were sliced through. This one needs about 150 with the margins the
+    /// system's own banners use, and text is held at the default size so a
+    /// larger setting cannot push it back over.
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Image(systemName: "dumbbell.fill")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(Palette.accent)
-                Text(context.attributes.workoutName)
-                    .font(.caption.weight(.semibold))
-                    .lineLimit(1)
-                Text(context.attributes.startedAt, style: .timer)
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: 64, alignment: .leading)
-                Spacer(minLength: 4)
-                Text(state.progressText)
-                    .font(.caption.weight(.semibold).monospacedDigit())
-                    .foregroundStyle(.secondary)
-            }
+        VStack(alignment: .leading, spacing: 8) {
+            header
 
             HStack(alignment: .center, spacing: 12) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(state.exerciseName)
-                        .font(.headline)
-                        .lineLimit(1)
-                    HStack(spacing: 6) {
-                        if let badge = state.setBadge {
-                            Text(badge)
-                                .font(.caption2.weight(.heavy))
-                                .foregroundStyle(.white)
-                                .frame(width: 18, height: 18)
-                                .background(Palette.accent, in: RoundedRectangle(cornerRadius: 5))
-                        }
-                        Text(state.setTitle)
-                            .font(.subheadline.weight(.medium))
-                            .lineLimit(1)
-                    }
-                    if let target = state.targetText {
-                        Text(target)
-                            .font(.subheadline.weight(.semibold).monospacedDigit())
-                            .foregroundStyle(Palette.accent)
-                    }
-                    if let previous = state.previousText {
-                        Text(previous)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
-                }
+                details
                 Spacer(minLength: 8)
-                VStack(alignment: .trailing, spacing: 2) {
-                    if view.isResting || view.isPaused {
-                        Text(view.isPaused
-                             ? state.labels.restPaused
-                             : isLuminanceReduced ? (state.labels.restEndsAt ?? state.labels.rest) : state.labels.rest)
-                            .font(.caption2.weight(.bold))
-                            .foregroundStyle(.secondary)
-                    } else if view.restIsOver {
-                        Text(state.labels.restOver)
-                            .font(.caption2.weight(.bold))
-                            .foregroundStyle(Palette.success)
-                    }
-                    HeadlineFigure(view: view)
-                        .font(.system(size: 34, weight: .semibold, design: .rounded).monospacedDigit())
-                        .foregroundStyle(view.isResting ? Palette.accent : .primary)
-                        .frame(maxWidth: 120, alignment: .trailing)
-                }
+                figure
             }
 
             view.progress
+                .padding(.bottom, 2)
 
             view.controls
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .dynamicTypeSize(...DynamicTypeSize.large)
+    }
 
-            if let next = state.nextText, !(view.isResting || view.isPaused) {
-                Text(next)
+    private var header: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Image(systemName: "dumbbell.fill")
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(Palette.accent)
+            Text(context.attributes.workoutName)
+                .font(.caption.weight(.semibold))
+                .lineLimit(1)
+            Text(context.attributes.startedAt, style: .timer)
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: 56, alignment: .leading)
+            Spacer(minLength: 4)
+            Text(state.progressText)
+                .font(.caption.weight(.medium).monospacedDigit())
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+        }
+    }
+
+    /// Three lines: the exercise; the set with what it aims at; and last
+    /// time's numbers, or what comes next when there are none.
+    private var details: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(state.exerciseName)
+                .font(.headline)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+            HStack(spacing: 5) {
+                if let badge = state.setBadge {
+                    Text(badge)
+                        .font(.caption2.weight(.heavy))
+                        .foregroundStyle(.white)
+                        .frame(width: 16, height: 16)
+                        .background(Palette.accent, in: RoundedRectangle(cornerRadius: 4))
+                }
+                Text(state.setTitle)
+                    .font(.footnote.weight(.medium))
+                if let target = state.targetText {
+                    Text(verbatim: "·")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                    Text(target)
+                        .font(.footnote.weight(.semibold).monospacedDigit())
+                        .foregroundStyle(Palette.accent)
+                }
+            }
+            .lineLimit(1)
+            .minimumScaleFactor(0.85)
+            if let line = state.previousText ?? (view.isResting || view.isPaused ? nil : state.nextText) {
+                Text(line)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
         }
-        .padding(16)
+    }
+
+    private var figure: some View {
+        VStack(alignment: .trailing, spacing: 0) {
+            if view.isResting || view.isPaused {
+                Text(view.isPaused
+                     ? state.labels.restPaused
+                     : isLuminanceReduced ? (state.labels.restEndsAt ?? state.labels.rest) : state.labels.rest)
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(.secondary)
+            } else if view.restIsOver {
+                Text(state.labels.restOver)
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(Palette.success)
+            }
+            HeadlineFigure(view: view)
+                .font(.system(size: 32, weight: .semibold, design: .rounded).monospacedDigit())
+                .foregroundStyle(view.isResting ? Palette.accent : .primary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .frame(maxWidth: 112, alignment: .trailing)
+        }
     }
 }

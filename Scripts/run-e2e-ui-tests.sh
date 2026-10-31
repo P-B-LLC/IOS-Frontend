@@ -62,18 +62,22 @@ derived="$repo/.build/DerivedDataE2E"
 xcodebuild build-for-testing -project "$repo/IOS Frontend/IOS Frontend.xcodeproj" -scheme "IOS Frontend" \
     -destination "platform=iOS Simulator,id=$device" -derivedDataPath "$derived" \
     REPBASE_API_URL="http://127.0.0.1:$port/" CODE_SIGNING_ALLOWED=NO
+
+# Every test, in order, unless RYTIVO_E2E_ONLY names some: the Lock Screen
+# layout test is run that way, alone, on each screen size --
+#   RYTIVO_E2E_ONLY=test15LiveActivityLayout bash Scripts/run-e2e-ui-tests.sh
+# -- and its screenshots are the result. The xcresult is kept in
+# RYTIVO_E2E_RESULT when that is set.
+tests="${RYTIVO_E2E_ONLY:-test01DiscardStartedWorkout test02LiftingSession test03SavedWorkouts \
+test04ExploreExercises test05Following test06WorkoutSettings test08LogTennis test09ExerciseLibrary \
+test10WorkoutsInAnotherLanguage test11Activity test12CalendarAgenda test13PlanAhead \
+test14LoggedActivityOutlivesRestart}"
+only=()
+for test in $tests; do only+=("-only-testing:RytivoUITests/RytivoE2ETests/$test"); done
+result=()
+if [ -n "${RYTIVO_E2E_RESULT:-}" ]; then result=(-resultBundlePath "$RYTIVO_E2E_RESULT"); fi
 TEST_RUNNER_RYTIVO_E2E=1 TEST_RUNNER_RYTIVO_E2E_PASSWORD="$RYTIVO_E2E_PASSWORD" \
 xcodebuild test-without-building -xctestrun "$(ls "$derived"/Build/Products/*.xctestrun | head -1)" \
     -destination "platform=iOS Simulator,id=$device" -parallel-testing-enabled NO \
     -test-timeouts-enabled YES -default-test-execution-time-allowance 600 \
-    -only-testing:RytivoUITests/RytivoE2ETests/test01DiscardStartedWorkout \
-    -only-testing:RytivoUITests/RytivoE2ETests/test02LiftingSession \
-    -only-testing:RytivoUITests/RytivoE2ETests/test03SavedWorkouts \
-    -only-testing:RytivoUITests/RytivoE2ETests/test04ExploreExercises \
-    -only-testing:RytivoUITests/RytivoE2ETests/test05Following \
-    -only-testing:RytivoUITests/RytivoE2ETests/test06WorkoutSettings \
-    -only-testing:RytivoUITests/RytivoE2ETests/test08LogTennis \
-    -only-testing:RytivoUITests/RytivoE2ETests/test09ExerciseLibrary \
-    -only-testing:RytivoUITests/RytivoE2ETests/test10WorkoutsInAnotherLanguage \
-    -only-testing:RytivoUITests/RytivoE2ETests/test11Activity \
-    -only-testing:RytivoUITests/RytivoE2ETests/test12CalendarAgenda
+    ${result[@]+"${result[@]}"} "${only[@]}"

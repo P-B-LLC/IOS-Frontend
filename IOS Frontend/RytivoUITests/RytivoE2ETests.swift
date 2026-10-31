@@ -128,6 +128,22 @@ final class RytivoE2ETests: XCTestCase {
         if app.keyboards.count > 0, app.buttons["Done"].firstMatch.exists { app.buttons["Done"].firstMatch.tap() }
     }
 
+    /// Taps once the element has stopped moving. A bar kept above the
+    /// keyboard slides with it, and a tap aimed while it moves lands where
+    /// the bar was a moment before.
+    func tapWhenSettled(_ element: XCUIElement) {
+        XCTAssertTrue(element.waitForExistence(timeout: 10))
+        var last = element.frame
+        let end = Date().addingTimeInterval(5)
+        repeat {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.3))
+            let now = element.frame
+            if now == last { break }
+            last = now
+        } while Date() < end
+        element.tap()
+    }
+
     /// Against a backend from before set kinds, rests and supersets: the plan
     /// arrives without them, and nothing new may break the old flow.
     private var legacyBackend: Bool { ProcessInfo.processInfo.environment["RYTIVO_E2E_LEGACY"] == "1" }
@@ -506,8 +522,11 @@ final class RytivoE2ETests: XCTestCase {
         let calories = app.textFields["Calories, your estimate"]
         for _ in 0..<4 where !calories.isHittable { app.swipeUp() }
         type("540", into: calories)
+        waitUntil(5, "calories typed") { (calories.value as? String) == "540" }
         dismissKeyboard()
-        app.buttons["workout-builder-primary"].tap()
+        // A number pad has no key to put it away, so the Save bar rides up
+        // above it; tapped mid-slide, the tap landed where the bar had been.
+        tapWhenSettled(app.buttons["workout-builder-primary"])
         XCTAssertTrue(element(labelContaining: "saved to your history").waitForExistence(timeout: 20), "saved")
         XCTAssertTrue(element(labelContaining: "540 kcal").waitForExistence(timeout: 10), "the day shows it")
         XCTAssertTrue(element(labelContaining: "Your estimate").exists, "calories are labelled as an estimate")
@@ -727,5 +746,164 @@ final class RytivoE2ETests: XCTestCase {
         waitUntil(15, "the task is gone") { !actions.exists }
         XCTAssertTrue(element(labelContaining: "Push Day").exists, "the workout stays")
         shot("03 task deleted")
+    }
+
+    /// `YYYY-MM-DD` in the simulator's own zone, as the app's tiles are keyed.
+    func dateKey(_ date: Date) -> String {
+        let parts = Calendar.current.dateComponents([.year, .month, .day], from: date)
+        return String(format: "%04d-%02d-%02d", parts.year!, parts.month!, parts.day!)
+    }
+
+    func openTraining() {
+        signInIfNeeded()
+        XCTAssertTrue(app.buttons["Training"].waitForExistence(timeout: 20))
+        app.buttons["Training"].tap()
+        XCTAssertTrue(app.buttons["This week"].waitForExistence(timeout: 20), "the workout plan's week switch")
+    }
+
+    /// In the builder: picks an activity, names the workout and saves it as a
+    /// plan. On today or a past day the builder offers logging first, and
+    /// planning is the other half of that switch.
+    func planActivity(_ identifier: String, named name: String) {
+        let activity = app.buttons[identifier]
+        XCTAssertTrue(activity.waitForExistence(timeout: 10), identifier)
+        activity.tap()
+        type(name, into: app.textFields.firstMatch)
+        dismissKeyboard()
+        tapWhenSettled(app.buttons["workout-builder-primary"])
+        let plan = app.buttons["Plan for later"]
+        if plan.waitForExistence(timeout: 3) { plan.tap() }
+        let save = app.buttons["workout-builder-primary"]
+        waitUntil(10, "\(name) can be saved") { save.isEnabled && save.label.contains("Save workout") }
+        tapWhenSettled(save)
+    }
+
+    /// Planning ahead. Next week's days open from the plan's week switch, as
+    /// far as a week from today and no further, and take a workout like any
+    /// other day. A day of this week takes two new workouts in a row from its
+    /// "Create a workout": the second used to be refused with HTTP 409,
+    /// because the screen gave both the same draft id, which is the save's
+    /// idempotency key. Everything is still there after a restart.
+    func test13PlanAhead() throws {
+        openTraining()
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let weekAway = calendar.date(byAdding: .day, value: 7, to: today)!
+        let tooFar = calendar.date(byAdding: .day, value: 8, to: today)!
+
+        app.buttons["Next week"].tap()
+        let weekAwayTile = app.buttons["plan-day-\(dateKey(weekAway))"]
+        XCTAssertTrue(weekAwayTile.waitForExistence(timeout: 10), "a week from today can be planned")
+        XCTAssertFalse(app.buttons["plan-day-\(dateKey(tooFar))"].exists, "eight days away cannot")
+        shot("01 next week")
+        weekAwayTile.tap()
+        app.buttons["upcoming-day-create"].tap()
+        planActivity("activity-cycling", named: "Ride a week out")
+        XCTAssertTrue(element(labelContaining: "Ride a week out saved for").waitForExistence(timeout: 20), "planned a week out")
+        XCTAssertFalse(element(labelContaining: "HTTP").exists, "no server error")
+
+        // A saved workout goes on the same day as it is.
+        app.buttons["upcoming-day-add-saved"].tap()
+        let pushDay = button(labelStartingWith: "Push Day")
+        XCTAssertTrue(pushDay.waitForExistence(timeout: 10), "saved workouts are offered")
+        pushDay.tap()
+        XCTAssertTrue(element(labelContaining: "Push Day added to").waitForExistence(timeout: 20), "added a week out")
+        shot("02 a week out planned")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+
+        // An empty day of this week, twice from its first "Create a workout".
+        app.buttons["This week"].tap()
+        let emptyDay = app.buttons.matching(NSPredicate(format: "label ENDSWITH ', add workout'")).firstMatch
+        XCTAssertTrue(emptyDay.waitForExistence(timeout: 10), "an empty day this week")
+        let dayName = emptyDay.label.replacingOccurrences(of: ", add workout", with: "")
+        emptyDay.tap()
+        for name in ["Twice A", "Twice B"] {
+            let create = app.buttons["Create a workout"]
+            XCTAssertTrue(create.waitForExistence(timeout: 15), "\(dayName) is empty")
+            create.tap()
+            planActivity("activity-tennis", named: name)
+            XCTAssertTrue(element(labelContaining: "\(name) saved for").waitForExistence(timeout: 20), "\(name) saved")
+            XCTAssertFalse(element(labelContaining: "HTTP 409").exists, "no key reuse")
+            guard name == "Twice A" else { break }
+            let options = app.buttons["Schedule & options"].firstMatch
+            for _ in 0..<6 where !options.isHittable { app.swipeUp() }
+            options.tap()
+            let remove = app.buttons["Remove from this day"].firstMatch
+            for _ in 0..<4 where !remove.isHittable { app.swipeUp() }
+            remove.tap()
+        }
+        shot("03 second workout saved")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+
+        // Still there after the app restarts.
+        app.terminate()
+        app.launch()
+        openTraining()
+        let thisWeekDay = button(labelStartingWith: "\(dayName), ")
+        XCTAssertTrue(thisWeekDay.waitForExistence(timeout: 20))
+        waitUntil(10, "\(dayName) kept its workout") { thisWeekDay.label.contains("Twice B") }
+        XCTAssertFalse(thisWeekDay.label.contains("Twice A"), "the removed one stays removed")
+        app.buttons["Next week"].tap()
+        let reloaded = app.buttons["plan-day-\(dateKey(weekAway))"]
+        XCTAssertTrue(reloaded.waitForExistence(timeout: 10))
+        waitUntil(10, "a week out kept both") {
+            reloaded.label.contains("Ride a week out") && reloaded.label.contains("Push Day")
+        }
+        reloaded.tap()
+        XCTAssertTrue(element(labelContaining: "Ride a week out").waitForExistence(timeout: 10), "the day lists it")
+        shot("04 after restart")
+    }
+
+    /// An activity logged after the fact is on the server, not only on the
+    /// screen: it is still in the history after the app restarts.
+    func test14LoggedActivityOutlivesRestart() throws {
+        openTraining()
+        let today = button(labelStartingWith: "TODAY")
+        XCTAssertTrue(today.waitForExistence(timeout: 10))
+        today.tap()
+        let another = app.buttons["Add another workout"]
+        for _ in 0..<6 where !another.isHittable { app.swipeUp() }
+        another.tap()
+        app.buttons["activity-cycling"].tap()
+        app.buttons["workout-builder-primary"].tap()
+        XCTAssertTrue(element(labelContaining: "HOW LONG?").waitForExistence(timeout: 10), "asks how long")
+        app.buttons["45 min"].tap()
+        app.buttons["workout-builder-primary"].tap()
+        XCTAssertTrue(element(labelContaining: "saved to your history").waitForExistence(timeout: 20), "saved")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+
+        app.terminate()
+        app.launch()
+        openTraining()
+        let recent = element(labelContaining: "Recent activity")
+        for _ in 0..<10 where !recent.isHittable { app.swipeUp() }
+        XCTAssertTrue(button(labelStartingWith: "Cycling").waitForExistence(timeout: 10), "in recent history after a restart")
+        shot("01 ride after restart")
+    }
+
+    /// The Lock Screen banner during a rest. Notification Center draws the
+    /// same presentation and can be opened from a test, so it is captured
+    /// there. Not in the default run: the script runs it on each screen size
+    /// with RYTIVO_E2E_ONLY, and the screenshots are the result.
+    func test15LiveActivityLayout() throws {
+        openTodayAndStart()
+        type("40", into: weightFields.element(boundBy: 0))
+        type("10", into: repsFields.element(boundBy: 0))
+        dismissKeyboard()
+        logButtons.element(boundBy: 0).tap()
+        waitUntil(15, "a set logged") { self.loggedButtons.count == 1 }
+        waitUntil(5, "resting") { self.element(labelContaining: "RESTING").exists }
+
+        XCUIDevice.shared.press(.home)
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.005))
+            .press(forDuration: 0.1, thenDragTo: springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.75)))
+        let banner = springboard.descendants(matching: .any)
+            .matching(NSPredicate(format: "label CONTAINS 'Push Day'")).firstMatch
+        XCTAssertTrue(banner.waitForExistence(timeout: 15), "the Live Activity is on the Lock Screen")
+        let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        attachment.name = "lock screen live activity"
+        attachment.lifetime = .keepAlways
+        add(attachment)
     }
 }

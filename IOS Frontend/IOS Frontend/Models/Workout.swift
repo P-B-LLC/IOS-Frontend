@@ -933,6 +933,8 @@ nonisolated struct CompletedWorkoutSession: Identifiable, Hashable, Sendable {
 /// because they are built from the same templates.
 nonisolated struct LoadedWeek: Sendable {
     var schedule: [Weekday: [Workout]]
+    /// The days after this week that can be planned on, by `YYYY-MM-DD`.
+    var upcoming: [String: [Workout]] = [:]
     var library: [WorkoutSummary]
 }
 

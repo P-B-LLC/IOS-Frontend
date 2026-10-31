@@ -34,6 +34,10 @@ cp "$repo/Tests/AccountSafety/ExerciseLibraryTests.swift" "$test_package/Tests/A
 cp "$repo/IOS Frontend/IOS Frontend/Models/WorkoutActivity.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/Models/ActivityLog.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/Models/ExerciseLibrary.swift" "$test_package/Sources/AccountSafety/"
+# Which days a workout can be planned on, in any zone, and every activity
+# logged the same way.
+cp "$repo/Tests/AccountSafety/WorkoutSchedulingTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/IOS Frontend/IOS Frontend/Services/WorkoutPlanningWindow.swift" "$test_package/Sources/AccountSafety/"
 # The library in every language: reads ExerciseLibrary.xcstrings and compiles
 # it with xcstringstool, as the catalog tests do for Localizable.
 cp "$repo/Tests/AccountSafety/ExerciseLibraryLocalizationTests.swift" "$test_package/Tests/AccountSafetyTests/"

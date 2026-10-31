@@ -50,6 +50,12 @@ actor WorkoutAPIRepository {
     private struct TemplateCreateIntent: Codable, Sendable {
         let draft: Workout
         let request: Components.Schemas.WorkoutTemplateRequest
+        /// The Idempotency-Key, when it is not the draft's id. Set only after
+        /// the server said the draft's id had already saved something else;
+        /// nil in every intent written before that could happen.
+        var operationID: UUID?
+
+        var key: UUID { operationID ?? draft.id }
     }
 
     init(configuration: APIConfiguration, token: String, recoveryScope: EditorDraftRecovery.Scope? = nil) throws {
@@ -67,13 +73,23 @@ actor WorkoutAPIRepository {
     /// Every workout scheduled in the week, grouped by day. A date can carry
     /// more than one schedule, so each day maps to a list in schedule order
     /// rather than a single workout.
-    func loadWeek(dateByDay: [Weekday: String]) async throws -> LoadedWeek {
+    ///
+    /// `upcomingDays` are the days after this week that can be planned on,
+    /// with the weekday each falls on. Their workouts come back in
+    /// `LoadedWeek.upcoming`, by date.
+    func loadWeek(dateByDay: [Weekday: String], upcomingDays: [String: Weekday] = [:]) async throws -> LoadedWeek {
         // Fill the week in from the user's weekly repeats before reading it, so
         // a new week arrives already planned rather than empty. The server
         // leaves finished weeks alone, and adding a day it already planned is a
         // no-op, so this is safe on every load.
         if let weekStart = dateByDay[.monday] {
             try await planWeek(start: weekStart)
+        }
+        // The days after this week are next week's, and somebody planning
+        // next Tuesday should see the workout that repeats every Tuesday
+        // there, not an empty day it would later turn up on.
+        if let nextWeekStart = upcomingDays.first(where: { $0.value == .monday })?.key {
+            try await planWeek(start: nextWeekStart)
         }
 
         async let schedulesRequest = fetchAllSchedules()
@@ -101,8 +117,10 @@ actor WorkoutAPIRepository {
         }
 
         var result: [Weekday: [Workout]] = [:]
+        var upcoming: [String: [Workout]] = [:]
         for schedule in schedules.sorted(by: { $0.id < $1.id }) {
-            guard let day = dayByDate[schedule.scheduledDate],
+            let thisWeek = dayByDate[schedule.scheduledDate]
+            guard let day = thisWeek ?? upcomingDays[schedule.scheduledDate],
                   let template = templateByID[schedule.workout] else {
                 continue
             }
@@ -113,29 +131,32 @@ actor WorkoutAPIRepository {
                 }
                 .map(Self.plannedExercise(from:))
 
-            result[day, default: []].append(
-                Workout(
-                    // The schedule row, not the template: the same workout
-                    // planned on Monday and Wednesday is two of these, and
-                    // keying on the template would make them one.
-                    id: .stable(forServerID: schedule.id),
-                    serverID: template.id,
-                    scheduleID: schedule.id,
-                    scheduledDate: schedule.scheduledDate,
-                    name: template.name,
-                    type: Self.workoutType(from: template.workoutType),
-                    activity: Self.activity(of: template),
-                    cardioMachine: Self.cardioMachine(from: template.cardioMachine),
-                    cardioTargetMinutes: template.cardioTargetMinutes.map(Int.init),
-                    recurrenceID: recurrenceIDs[
-                        Self.recurrenceKey(
-                            workout: template.id,
-                            weekday: day.apiValue
-                        )
-                    ],
-                    exercises: exercises
-                )
+            let workout = Workout(
+                // The schedule row, not the template: the same workout
+                // planned on Monday and Wednesday is two of these, and
+                // keying on the template would make them one.
+                id: .stable(forServerID: schedule.id),
+                serverID: template.id,
+                scheduleID: schedule.id,
+                scheduledDate: schedule.scheduledDate,
+                name: template.name,
+                type: Self.workoutType(from: template.workoutType),
+                activity: Self.activity(of: template),
+                cardioMachine: Self.cardioMachine(from: template.cardioMachine),
+                cardioTargetMinutes: template.cardioTargetMinutes.map(Int.init),
+                recurrenceID: recurrenceIDs[
+                    Self.recurrenceKey(
+                        workout: template.id,
+                        weekday: day.apiValue
+                    )
+                ],
+                exercises: exercises
             )
+            if thisWeek != nil {
+                result[day, default: []].append(workout)
+            } else {
+                upcoming[schedule.scheduledDate, default: []].append(workout)
+            }
         }
 
         // Built from the templates already in hand. This used to be a second
@@ -147,7 +168,7 @@ actor WorkoutAPIRepository {
                 $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
             }
 
-        return LoadedWeek(schedule: result, library: library)
+        return LoadedWeek(schedule: result, upcoming: upcoming, library: library)
     }
 
     /// One workout as the name-suggestion list wants it.
@@ -405,16 +426,14 @@ actor WorkoutAPIRepository {
                 intent = try await EditorDraftRecovery.shared.capture(snapshot, key: operationKey, scope: recoveryScope)
             } else { intent = snapshot }
         }
-        guard let intent else {
+        guard var intent else {
             throw APIServiceError.missingServerIdentifier(
                 String(localized: "Workout save intent", bundle: .app, locale: .app, comment: "Names what is missing in “%@ has not been saved to the server yet.”")
             )
         }
         let template: Components.Schemas.WorkoutTemplate
         do {
-            template = try await WorkoutTemplateCreation.send(
-                intent.request, operationID: intent.draft.id, using: client
-            )
+            template = try await sendCreate(&intent, operationKey: operationKey)
         } catch APIServiceError.undocumentedStatus(400) {
             if let recoveryScope { try await EditorDraftRecovery.shared.remove(key: operationKey, scope: recoveryScope) }
             throw APIServiceError.undocumentedStatus(400)
@@ -425,6 +444,31 @@ actor WorkoutAPIRepository {
         // Keep the original request until the store confirms the saved
         // template/date by ID. A failed readback must remain retry-safe.
         return template.id
+    }
+
+    /// Sends a create, and once more under a key of its own if the server
+    /// says this key already saved something else.
+    ///
+    /// The server keeps one answer per key and says 409 when a key that
+    /// already saved a different workout comes back with this one. Nothing of
+    /// this request was saved, so it is sent again under a fresh key -- kept
+    /// with the intent, so a retry after a lost answer still replays this
+    /// save rather than making two. A day screen used to give every new
+    /// workout the same draft id, which is how a key came to be spent;
+    /// drafts recovered from then still carry it.
+    private func sendCreate(
+        _ intent: inout TemplateCreateIntent,
+        operationKey: String
+    ) async throws -> Components.Schemas.WorkoutTemplate {
+        do {
+            return try await WorkoutTemplateCreation.send(intent.request, operationID: intent.key, using: client)
+        } catch APIServiceError.undocumentedStatus(409) {
+            intent.operationID = UUID()
+            if let recoveryScope {
+                try await EditorDraftRecovery.shared.save(intent, key: operationKey, scope: recoveryScope)
+            }
+            return try await WorkoutTemplateCreation.send(intent.request, operationID: intent.key, using: client)
+        }
     }
 
     func acknowledgeTemplateSave(draftID: UUID) async throws {
@@ -1673,9 +1717,18 @@ actor WorkoutAPIRepository {
         switch output {
         case .created(let response):
             return try response.body.json.id
+        case .undocumented(let statusCode, _) where statusCode == 404 || statusCode == 405:
+            // A server from before this endpoint routes `log` to a session's
+            // own URL, where a POST is not allowed. Saying "HTTP 405" told
+            // nobody that the server is what needs updating.
+            throw ActivityLogUnsupported()
         case .undocumented(let statusCode, let payload):
             throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload)
         }
+    }
+
+    struct ActivityLogUnsupported: LocalizedError {
+        var errorDescription: String? { SaveFailure.logNotSupported }
     }
 
     /// Saves how a finished session felt onto it. Answers false when the
