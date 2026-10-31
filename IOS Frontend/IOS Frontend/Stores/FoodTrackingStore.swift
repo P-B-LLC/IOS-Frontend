@@ -465,13 +465,15 @@ final class FoodTrackingStore {
     func reloadCookbookLibrary(cookbookID: Int? = nil, minimumInterval: TimeInterval = 0) async {
         guard let repository else { return }
         if isLoadingCookbooks && currentLibraryCookbookID == cookbookID { return }
+        activeCookbookID = cookbookID
         let recipesAreFresh = cookbookID.map { id in
             recipeRefreshDates[id].map { Date().timeIntervalSince($0) < minimumInterval } ?? false
         } ?? true
         if minimumInterval > 0, cookbookError == nil,
            let booksDate = lastCookbooksRefresh, Date().timeIntervalSince(booksDate) < minimumInterval,
            recipesAreFresh { return }
-        if let cookbookID { activeCookbookID = cookbookID }
+        let shouldLoadBooks = minimumInterval == 0
+            || lastCookbooksRefresh.map { Date().timeIntervalSince($0) >= minimumInterval } != false
         let generation = connectionGeneration
         let revision = librarySync.beginRead()
         let readID = UUID()
@@ -480,14 +482,16 @@ final class FoodTrackingStore {
         isLoadingCookbooks = true
         defer { if generation == connectionGeneration, libraryReadID == readID { isLoadingCookbooks = false } }
         do {
-            async let books = repository.cookbooks()
+            async let books: [Cookbook]? = shouldLoadBooks ? try await repository.cookbooks() : nil
             let recipes: [SavedFoodMeal]?
             if let cookbookID { recipes = try await repository.savedMeals(cookbookID: cookbookID) }
             else { recipes = nil }
             let loadedBooks = try await books
             guard generation == connectionGeneration, librarySync.accepts(revision) else { return }
-            cookbooks = loadedBooks
-            lastCookbooksRefresh = Date()
+            if let loadedBooks {
+                cookbooks = loadedBooks
+                lastCookbooksRefresh = Date()
+            }
             if let cookbookID, let recipes {
                 savedMeals.removeAll { $0.cookbookID == cookbookID }
                 savedMeals.append(contentsOf: recipes)
@@ -953,6 +957,7 @@ final class FoodTrackingStore {
     /// but did not write, so there has to be something to call that is not
     /// the whole first-load.
     func reloadSavedMeals() async {
+        recipeRefreshDates = [:]
         await reloadCookbookLibrary(cookbookID: activeCookbookID)
     }
 
