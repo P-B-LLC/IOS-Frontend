@@ -26,7 +26,7 @@ enum RepbaseTactileTone {
 
 struct RepbaseTactileCardBackground: View {
     @Environment(\.colorScheme) private var colorScheme
-    @Environment(\.accessibilityContrast) private var contrast
+    @Environment(\.colorSchemeContrast) private var contrast
     var tone: RepbaseTactileTone = .warm
     var cornerRadius: CGFloat = RepbaseTactileDesign.cardRadius
 
@@ -81,7 +81,7 @@ enum RepbaseTactileActionTone {
 
 struct RepbaseTactileControlBackground: View {
     @Environment(\.colorScheme) private var colorScheme
-    @Environment(\.accessibilityContrast) private var contrast
+    @Environment(\.colorSchemeContrast) private var contrast
     var tone: RepbaseTactileActionTone = .neutral
     var cornerRadius: CGFloat = 100
 

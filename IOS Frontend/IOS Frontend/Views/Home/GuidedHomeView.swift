@@ -509,7 +509,7 @@ private struct GuidedDayFlow: View {
                     Text("Today").font(.community(size: 13, weight: .semibold))
                         .foregroundStyle(HomeWidgetColors.secondaryText)
                 }
-                Text(activity.stepsToday?.formatted() ?? "—")
+                Text("\(activity.stepsToday?.formatted() ?? "—") steps")
                     .font(.community(size: 24, weight: .bold))
                     .foregroundStyle(RepbaseTactileDesign.ink)
                 Text(activity.stepsToday == nil ? "Not reported today" : "of \(activity.stepGoal.formatted()) steps")
