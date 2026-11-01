@@ -15,13 +15,14 @@ enum HomeSunriseStyle {
 }
 
 struct HomeSunriseGlow: View {
-    @Environment(\.layoutDirection) private var layoutDirection
     var body: some View {
         // Exact 160 × 160 light/dark exports from the approved Figma layer.
         Image("HomeSunriseGlow")
             .renderingMode(.original)
             .frame(width: 160, height: 160)
-            .offset(x: layoutDirection == .rightToLeft ? -48 : 48)
+            // SwiftUI mirrors horizontal offsets in a right-to-left layout.
+            // Together with topTrailing alignment this stays off the edge.
+            .offset(x: 48)
             .allowsHitTesting(false)
             .accessibilityHidden(true)
     }
