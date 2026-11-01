@@ -99,7 +99,7 @@ final class WorkoutSelectionTests: XCTestCase {
     func testSameNameRejectionNeverReturnsOrModifiesTheExistingTemplate() async throws {
         // The backend owns exact-name uniqueness. A rejection is not permission
         // to schedule or overwrite an older template with different exercises.
-        let transport = WorkoutCreateTransport(status: 400, responseBody: "{}")
+        let transport = WorkoutCreateTransport(status: 400, responseBody: #"{"name":["You already have a workout with this name."]}"#)
         let request = Components.Schemas.WorkoutTemplateRequest(
             name: "Leg Day", initialExercises: WorkoutTemplateCreation.initialExercises([
                 .init(exerciseID: 53, targetSets: 3), .init(exerciseID: 21, targetSets: 4)
@@ -108,7 +108,10 @@ final class WorkoutSelectionTests: XCTestCase {
         do {
             _ = try await WorkoutTemplateCreation.send(request, operationID: UUID(), using: client(transport))
             XCTFail("A duplicate-name failure must keep the selected draft open, never reuse an old template")
-        } catch APIServiceError.undocumentedStatus(400) {}
+        } catch let error as RepbaseAPIHTTPError {
+            XCTAssertEqual(error.statusCode, 400)
+            XCTAssertEqual(error.errorDescription, "You already have a workout with this name.")
+        }
         let requests = await transport.requests
         XCTAssertEqual(requests.count, 1)
         XCTAssertEqual(requests.first?.method, .post)
@@ -117,6 +120,50 @@ final class WorkoutSelectionTests: XCTestCase {
         let json = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
         let rows = try XCTUnwrap(json["initial_exercises"] as? [[String: Any]])
         XCTAssertEqual(rows.compactMap { $0["exercise"] as? Int }, [53, 21])
+    }
+
+    func testUnstructuredSaveFailureStillHasSafeFallback() async throws {
+        let transport = WorkoutCreateTransport(status: 400, responseBody: "<html>Bad request</html>")
+        do {
+            _ = try await WorkoutTemplateCreation.send(.init(name: "Push Day"), operationID: UUID(), using: client(transport))
+            XCTFail("An invalid request must not appear saved")
+        } catch let error as RepbaseAPIHTTPError {
+            XCTAssertEqual(error.statusCode, 400)
+            XCTAssertEqual(error.errorDescription, "The server returned an unexpected response (HTTP 400).")
+        }
+    }
+
+    func testNewPlanWithTakenNameNeedsRenameButUnconfirmedCreateCanRetry() {
+        let names = ["Push Day", "Push Day (2)"]
+        XCTAssertTrue(WorkoutNamePolicy.blocksCreate(name: "  Push Day\n", savedNames: names, serverID: nil, hasPendingSave: false))
+        XCTAssertFalse(WorkoutNamePolicy.blocksCreate(name: "Push Day", savedNames: names, serverID: nil, hasPendingSave: true),
+                       "An already-committed save must remain confirmable with its original key")
+        XCTAssertFalse(WorkoutNamePolicy.blocksCreate(name: "Push Day", savedNames: names, serverID: 91, hasPendingSave: false),
+                       "Editing an existing template is not another create")
+        XCTAssertFalse(WorkoutNamePolicy.blocksCreate(name: "Push Day B", savedNames: names, serverID: nil, hasPendingSave: false))
+        XCTAssertFalse(WorkoutNamePolicy.conflicts("push day", with: names), "The API enforces exact names, not case folding")
+    }
+
+    func testSuggestedNameSkipsExistingCopiesAndOnlyChangesNewDraftName() {
+        let originalID = UUID()
+        let selected = [Exercise(serverID: 53, name: "Bench press", sets: 4), Exercise(serverID: 21, name: "Fly", sets: 3)]
+        var draft = Workout(id: originalID, name: "Push Day", exercises: selected)
+        draft.name = WorkoutNamePolicy.availableName(for: draft.name, savedNames: ["Push Day", "Push Day (2)", "Push Day (4)"])
+        XCTAssertEqual(draft.name, "Push Day (3)")
+        XCTAssertEqual(draft.id, originalID)
+        XCTAssertEqual(draft.exercises, selected)
+        XCTAssertNil(draft.serverID)
+        XCTAssertEqual(WorkoutNamePolicy.availableName(for: "  Push Day B  ", savedNames: ["Push Day"]), "Push Day B")
+    }
+
+    func testSuggestedNamesRespectServerLengthIncludingUnicodeAndSuffix() {
+        let longName = String(repeating: "a", count: 150)
+        let suggestion = WorkoutNamePolicy.availableName(for: longName, savedNames: [longName])
+        XCTAssertEqual(suggestion, String(repeating: "a", count: 146) + " (2)")
+        XCTAssertEqual(suggestion.unicodeScalars.count, 150)
+        let combinedName = String(repeating: "e\u{301}", count: 100)
+        let bounded = WorkoutNamePolicy.availableName(for: combinedName, savedNames: [])
+        XCTAssertEqual(bounded.unicodeScalars.count, 150)
     }
 
     func testRetrySendsTheOriginalOperationAndPlan() async throws {

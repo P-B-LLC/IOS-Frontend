@@ -3,6 +3,28 @@ import XCTest
 @testable import AccountSafety
 
 final class EditorDraftRecoveryTests: XCTestCase {
+    @MainActor func testPendingWriteDetectionSurvivesRelaunchAndRespectsAccountAndOrigin() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let defaults = UserDefaults(suiteName: UUID().uuidString)!
+        let scope = EditorDraftRecovery.Scope(ownerID: 5, origin: "https://one.invalid")
+        let otherAccount = EditorDraftRecovery.Scope(ownerID: 6, origin: scope.origin)
+        let otherOrigin = EditorDraftRecovery.Scope(ownerID: 5, origin: "https://two.invalid")
+        let key = WorkoutTemplateCreation.recoveryKey(for: UUID())
+        let storage = EditorDraftRecovery(directory: directory, defaults: defaults)
+        XCTAssertFalse(storage.contains(key: key, scope: scope))
+        try storage.save(["name": "Push Day"], key: key, scope: scope)
+        let reopened = EditorDraftRecovery(directory: directory, defaults: defaults)
+        XCTAssertTrue(reopened.contains(key: key, scope: scope))
+        XCTAssertFalse(reopened.contains(key: key, scope: otherAccount))
+        XCTAssertFalse(reopened.contains(key: key, scope: otherOrigin))
+        try reopened.remove(key: key, scope: scope)
+        XCTAssertFalse(storage.contains(key: key, scope: scope))
+        try storage.save(["name": "Push Day"], key: key, scope: scope)
+        try reopened.removeAccount(scope: scope)
+        XCTAssertFalse(storage.contains(key: key, scope: scope))
+    }
+
     @MainActor func testCorruptPendingRequestCannotBeReplacedByANewPayload() throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: directory) }

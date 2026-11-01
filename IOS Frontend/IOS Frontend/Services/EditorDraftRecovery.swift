@@ -28,6 +28,12 @@ final class EditorDraftRecovery {
         return try JSONDecoder().decode(type, from: Data(contentsOf: file))
     }
 
+    /// Checking for an unconfirmed write must not discard an unreadable
+    /// receipt or expose a different account's operation.
+    func contains(key: String, scope: Scope) -> Bool {
+        !isDeleted(scope) && FileManager.default.fileExists(atPath: url(key: key, scope: scope).path)
+    }
+
     func save<T: Encodable>(_ value: T, key: String, scope: Scope) throws {
         try requireAvailable(scope)
         let file = url(key: key, scope: scope)

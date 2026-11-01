@@ -372,7 +372,7 @@ actor WorkoutAPIRepository {
     /// day the cycle did not choose, and the cycle would then write its own
     /// alongside it.
     func createTemplate(_ draft: Workout, initialDate: String? = nil) async throws -> Int {
-        let operationKey = "create-workout-\(draft.id)"
+        let operationKey = WorkoutTemplateCreation.recoveryKey(for: draft.id)
         var intent: TemplateCreateIntent?
         if let recoveryScope {
             intent = try await EditorDraftRecovery.shared.load(TemplateCreateIntent.self, key: operationKey, scope: recoveryScope)
@@ -415,9 +415,9 @@ actor WorkoutAPIRepository {
             template = try await WorkoutTemplateCreation.send(
                 intent.request, operationID: intent.draft.id, using: client
             )
-        } catch APIServiceError.undocumentedStatus(400) {
+        } catch let error as RepbaseAPIHTTPError where error.statusCode == 400 {
             if let recoveryScope { try await EditorDraftRecovery.shared.remove(key: operationKey, scope: recoveryScope) }
-            throw APIServiceError.undocumentedStatus(400)
+            throw error
         }
         if intent.draft != draft {
             try await updateWorkout(draft, existing: intent.draft, workoutID: template.id)
@@ -429,7 +429,7 @@ actor WorkoutAPIRepository {
 
     func acknowledgeTemplateSave(draftID: UUID) async throws {
         guard let recoveryScope else { return }
-        try await EditorDraftRecovery.shared.remove(key: "create-workout-\(draftID)", scope: recoveryScope)
+        try await EditorDraftRecovery.shared.remove(key: WorkoutTemplateCreation.recoveryKey(for: draftID), scope: recoveryScope)
     }
 
     private func scheduleWorkout(

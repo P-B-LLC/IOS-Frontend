@@ -1,5 +1,36 @@
 # TestFlight development workflow
 
+## Rotation workout names and saved-plan selection — November 1, 2026
+
+Creating a different workout named `Push Day` when that exact name is already
+saved previously submitted a duplicate create and showed only HTTP 400. New
+plans now offer an available name such as `Push Day (2)` before saving. The
+action changes only the name: the selected exercises, their order and targets,
+and the draft's operation identity stay intact. Copying a saved workout also
+starts with an available name. The server's per-account name uniqueness stays
+in place; no existing workout is overwritten or substituted by its name.
+
+An unconfirmed create keeps its original idempotent retry available, including
+after relaunch. A definitive 400 still clears the rejected request snapshot so
+the corrected draft can save, while preserving the server's readable reason.
+Rotation days separately offer saved workouts by server ID or Create new;
+choosing a saved plan writes no template or calendar entry.
+
+Regression coverage includes name suggestions/length limits, pending-save and
+account isolation, readable validation errors, repeated rotation templates,
+and stale rotation days. On a Mac, run `bash Scripts/test-account-safety.sh`
+and build the simulator app. Interactive checks before promotion:
+
+1. Build a new `Push Day` with different exercises from the saved one. Use the
+   suggested distinct name and save it into a rotation day. Verify both saved
+   plans keep their own exercises, set kinds, targets, rests and order.
+2. Choose one saved workout for multiple rotation days. Verify selection does
+   not create a duplicate template or schedule any date until the rotation saves.
+3. Cancel a new workout and return to the picker; cancel the picker and verify
+   the rotation is unchanged. Saving a new workout returns to its rotation day.
+4. Interrupt a save after its server write, relaunch and continue the draft.
+   Save again to confirm the original operation without creating another plan.
+
 ## Branches
 
 Notification-center testing work is documented in

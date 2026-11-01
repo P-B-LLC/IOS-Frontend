@@ -226,22 +226,19 @@ struct CycleEditorView: View {
         )
     }
 
-    /// A day, and the way into building what goes on it.
-    ///
-    /// The builder is pushed rather than presented, so its Cancel is the way
-    /// back to this list and saving lands the user here too, with the day
-    /// filled in — rather than dropping them somewhere else mid-rotation.
+    /// Choosing an existing plan is distinct from building a new template.
+    /// A saved workout can fill several days without being created again.
     private func slotRow(_ slot: WorkoutCycleSlot) -> some View {
         NavigationLink {
-            WorkoutEditorView(
-                mode: .create,
-                // The workouts already saved, offered as chips inside the
-                // builder. An eight-day split usually repeats three or four
-                // workouts, so reuse has to be a tap and not a retype.
-                suggestions: workoutStore.knownWorkouts
-            ) { built in
-                await assign(built, at: slot.position)
-            }
+            CycleWorkoutPicker(
+                slot: slot,
+                workouts: workoutStore.knownWorkouts,
+                recoveryContext: "rotation-\(mode.id)-day-\(slot.position)",
+                onChoose: { selected in
+                    draft.selectSavedWorkout(id: selected.serverID, name: selected.name, at: slot.position)
+                },
+                onCreate: { built in await assign(built, at: slot.position) }
+            )
         } label: {
             HStack(spacing: 12) {
                 Text("\(slot.position)")
@@ -291,11 +288,9 @@ struct CycleEditorView: View {
         }
         // The rotation changed under the editor, so there is no longer a slot
         // to put this in. The workout itself was created and is not lost.
-        guard let index = draft.slots.firstIndex(where: { $0.position == position }) else {
+        guard draft.selectSavedWorkout(id: id, name: built.name, at: position) else {
             return String(localized: "Day \(position) is no longer part of this rotation. The workout was saved and is in your list.", bundle: .app, locale: .app)
         }
-        draft.slots[index].workoutID = id
-        draft.slots[index].workoutName = built.name
         return nil
     }
 
@@ -317,6 +312,102 @@ struct CycleEditorView: View {
             updated.anchorDate = draft.anchorDate
             updated.slots = draft.slots
             await store.update(updated, stoppingWeeklyRepeats: stoppingWeeklyRepeats)
+        }
+    }
+}
+
+/// The saved-library path never enters the builder or sends a workout write.
+/// A newly built workout returns here only after its confirmed save closes
+/// the editor, then returns to the rotation with its day filled in.
+private struct CycleWorkoutPicker: View {
+    let slot: WorkoutCycleSlot
+    let workouts: [WorkoutSummary]
+    let recoveryContext: String
+    let onChoose: (WorkoutSummary) -> Bool
+    let onCreate: (Workout) async -> String?
+
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.homeTimeOfDay) private var timeOfDay
+    @State private var buildingWorkout = false
+    @State private var createdWorkout = false
+    @State private var selectionError: String?
+
+    var body: some View {
+        List {
+            Section {
+                Button {
+                    createdWorkout = false
+                    buildingWorkout = true
+                } label: {
+                    Label("Create new workout", systemImage: "plus.circle")
+                }
+                .accessibilityIdentifier("rotation-create-workout")
+            }
+
+            Section {
+                if workouts.isEmpty {
+                    Text("No saved workouts yet")
+                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                }
+                ForEach(workouts) { workout in
+                    Button {
+                        guard onChoose(workout) else {
+                            selectionError = String(localized: "This day is no longer part of the rotation.", bundle: .app, locale: .app)
+                            return
+                        }
+                        dismiss()
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: workout.activity.symbol)
+                                .foregroundStyle(timeOfDay.accent)
+                                .frame(width: 28)
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(workout.name)
+                                    .font(.community(.subheadline, weight: .semibold))
+                                    .foregroundStyle(timeOfDay.canvasPrimaryText)
+                                Text(workout.activity.title)
+                                    .font(.community(.caption))
+                                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+                            }
+                            Spacer()
+                            if slot.workoutID == workout.serverID {
+                                Image(systemName: "checkmark")
+                                    .foregroundStyle(timeOfDay.accent)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                    .accessibilityIdentifier("rotation-saved-workout-\(workout.serverID)")
+                }
+            } header: {
+                Text("Saved workouts")
+            } footer: {
+                Text("Uses the saved plan without changing it.")
+            }
+
+            if let selectionError {
+                Section {
+                    Text(selectionError).foregroundStyle(.red)
+                }
+            }
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .navigationTitle("Choose a workout")
+        .navigationBarTitleDisplayMode(.inline)
+        .homeTimeScreen(timeOfDay)
+        .fullScreenCover(isPresented: $buildingWorkout, onDismiss: {
+            if createdWorkout { dismiss() }
+        }) {
+            WorkoutEditorView(
+                mode: .create,
+                suggestions: workouts,
+                recoveryContext: recoveryContext
+            ) { built in
+                let problem = await onCreate(built)
+                if problem == nil { createdWorkout = true }
+                return problem
+            }
         }
     }
 }

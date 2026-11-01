@@ -213,7 +213,7 @@ struct GuidedWorkoutBuilder: View {
                     HStack(spacing: 12) {
                         Image(systemName: "clock.arrow.circlepath")
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Use your saved workouts").font(.community(.subheadline, weight: .bold))
+                            Text("Copy a saved workout").font(.community(.subheadline, weight: .bold))
                             Text("Choose a saved plan to copy its exercises").font(.community(.caption2)).foregroundStyle(phase.secondaryText)
                         }
                         Spacer(minLength: 0)
@@ -595,6 +595,7 @@ struct GuidedWorkoutBuilder: View {
 
     /// The plan, named after its activity when nobody named it.
     private func savePlan() {
+        guard canSave else { return }
         if !isStrength {
             if draft.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 draft.name = draft.activity.title
@@ -653,22 +654,46 @@ struct GuidedWorkoutBuilder: View {
 
     private var canSave: Bool {
         let name = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
-        // The matching library row may be this draft's committed write whose
-        // read-back failed. Warn, but keep its idempotent Retry available.
-        return (!name.isEmpty || !isStrength) && name.count <= 150 && (draft.tracksDistance || !draft.exercises.isEmpty)
+        return (!name.isEmpty || !isStrength) && plannedName.unicodeScalars.count <= 150 && (draft.tracksDistance || !draft.exercises.isEmpty)
             && draft.exercises.allSatisfy { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && $0.name.count <= 150 && $0.sets >= 1 }
+            && !WorkoutNamePolicy.blocksCreate(name: plannedName, savedNames: suggestions.map(\.name),
+                                               serverID: draft.serverID, hasPendingSave: hasPendingTemplateSave)
+    }
+
+    private var plannedName: String {
+        let name = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return name.isEmpty && !isStrength ? draft.activity.title : name
+    }
+
+    private var hasPendingTemplateSave: Bool {
+        WorkoutTemplateCreation.hasPendingSave(draftID: draft.id)
     }
 
     private var hasDuplicateSavedName: Bool {
         guard draft.serverID == nil else { return false }
-        let name = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
-        return !name.isEmpty && suggestions.contains { $0.name == name }
+        return WorkoutNamePolicy.conflicts(plannedName, with: suggestions.map(\.name))
     }
 
     private var duplicateNameNotice: some View {
-        Label("This name is already in your library. Choose a different name for a new workout. If you’re retrying a save, keep the name so we can confirm it.", systemImage: "info.circle")
-            .font(.community(.caption)).foregroundStyle(phase.accent)
-            .fixedSize(horizontal: false, vertical: true)
+        VStack(alignment: .leading, spacing: 10) {
+            if hasPendingTemplateSave {
+                Label("A previous save is waiting for confirmation. Save again to confirm it safely.", systemImage: "info.circle")
+            } else {
+                Label("A different workout already uses this name. Choose another name to save this workout.", systemImage: "info.circle")
+                let suggestion = WorkoutNamePolicy.availableName(for: plannedName, savedNames: suggestions.map(\.name))
+                Button {
+                    // Renaming never replaces the selected exercises or the
+                    // draft's operation identity with the older template.
+                    draft.name = suggestion
+                } label: {
+                    Text("Use “\(suggestion)”")
+                }
+                .buttonStyle(.bordered)
+                .accessibilityIdentifier("workout-builder-unique-name")
+            }
+        }
+        .font(.community(.caption)).foregroundStyle(phase.accent)
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     private func eyebrow(_ label: LocalizedStringKey) -> some View {
@@ -715,8 +740,10 @@ struct GuidedWorkoutBuilder: View {
         NavigationStack {
             List(suggestions) { saved in
                 Button {
-                    draft.name = saved.name
+                    draft.name = WorkoutNamePolicy.availableName(for: saved.name, savedNames: suggestions.map(\.name))
                     draft.activity = saved.activity
+                    draft.cardioMachine = saved.cardioMachine
+                    draft.cardioTargetMinutes = saved.cardioTargetMinutes
                     // The whole plan is copied, set kinds and rests included,
                     // but never the saved rows themselves: this is a new
                     // workout, and it gets rows of its own.
