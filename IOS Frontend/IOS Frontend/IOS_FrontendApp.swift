@@ -53,9 +53,12 @@ struct IOS_FrontendApp: App {
             initialValue: AuthenticationStore(configuration: configuration)
         )
 #if DEBUG
+        let homePreview = ProcessInfo.processInfo.environment["REPBASE_HOME_PREVIEW"]
+        let hasHomeFixture = homePreview != nil && homePreview != "empty"
         _activityStore = State(
             initialValue: ProcessInfo.processInfo.environment["REPBASE_HEALTH_PREVIEW"] != nil
                 || ProcessInfo.processInfo.environment["REPBASE_STEPS_PREVIEW"] != nil
+                || hasHomeFixture
                 ? .preview
                 : ActivityStore()
         )
@@ -66,15 +69,18 @@ struct IOS_FrontendApp: App {
         )
         _socialStore = State(initialValue: SocialStore())
         _foodTrackingStore = State(
-            initialValue: isPreviewingFood ? .preview : FoodTrackingStore()
+            initialValue: isPreviewingFood || hasHomeFixture ? .preview : FoodTrackingStore()
         )
         let plannerPreview = ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"]
         _plannerStore = State(
-            initialValue: plannerPreview != nil ? .preview : PlannerStore()
+            initialValue: plannerPreview != nil || hasHomeFixture ? .preview : PlannerStore()
         )
         // The home page draws workouts too, so previewing it needs both.
         _workoutStore = State(
-            initialValue: plannerPreview == "home" ? .preview : WorkoutStore()
+            initialValue: hasHomeFixture
+                ? WorkoutStore(initialSchedule: Dictionary(uniqueKeysWithValues:
+                    Weekday.allCases.map { ($0, [WorkoutStore.previewWorkouts[0]]) }))
+                : (plannerPreview == "home" ? .preview : WorkoutStore())
         )
 #else
         _activityStore = State(initialValue: ActivityStore())
@@ -184,6 +190,7 @@ private struct AppRootView: View {
     static var isPreviewing: Bool {
         let environment = ProcessInfo.processInfo.environment
         return environment["REPBASE_FOOD_PREVIEW"] != nil
+            || environment["REPBASE_HOME_PREVIEW"] != nil
             || environment["REPBASE_PLANNER_PREVIEW"] != nil
             || environment["REPBASE_PROFILE_PREVIEW"] != nil
             || environment["REPBASE_AUTH_PREVIEW"] != nil
@@ -217,7 +224,13 @@ private struct AppRootView: View {
     var body: some View {
         Group {
 #if DEBUG
-            if ProcessInfo.processInfo.environment["REPBASE_ROUTE_CHECK"] != nil {
+            if ProcessInfo.processInfo.environment["REPBASE_HOME_PREVIEW"] != nil {
+                // Uses the real tab shell and Home, with disconnected sample
+                // stores. No account, hosted API or production data is needed.
+                RepbaseRootView()
+                    .dynamicTypeSize(ProcessInfo.processInfo.environment["REPBASE_HOME_LARGE_TEXT"] == "1"
+                        ? .accessibility3 : .large)
+            } else if ProcessInfo.processInfo.environment["REPBASE_ROUTE_CHECK"] != nil {
                 // The GPS path has never run end to end, because recording a
                 // run starts with a tap and nothing here can tap. simctl can
                 // drive the location and grant the authorisation, so this
