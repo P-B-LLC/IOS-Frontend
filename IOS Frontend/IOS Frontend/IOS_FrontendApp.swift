@@ -79,7 +79,9 @@ struct IOS_FrontendApp: App {
         _workoutStore = State(
             initialValue: hasHomeFixture
                 ? WorkoutStore(initialSchedule: Dictionary(uniqueKeysWithValues:
-                    Weekday.allCases.map { ($0, [WorkoutStore.previewWorkouts[0]]) }))
+                    Weekday.allCases.map { ($0, [homePreview == "cardio"
+                        ? Workout(name: "Easy run", activity: .running)
+                        : WorkoutStore.previewWorkouts[0]]) }))
                 : (plannerPreview == "home" ? .preview : WorkoutStore())
         )
 #else

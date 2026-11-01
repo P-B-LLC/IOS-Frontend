@@ -67,6 +67,9 @@ capture food-large-text dark populated home.food 1
 capture home-arabic dark populated '' 0 ar
 capture workout-arabic dark populated home.workout 0 ar
 capture food-arabic light populated home.food 0 ar
+capture home-japanese light populated '' 0 ja
+capture home-german light populated '' 0 de
+capture workout-cardio light cardio home.workout
 # The narrowest current supported fixture, when installed Xcode offers it.
 narrow_type="$(xcrun simctl list devicetypes -j | python3 -c 'import json,sys; types=json.load(sys.stdin)["devicetypes"]; print(next((t["identifier"] for t in types if t["name"]=="iPhone SE (3rd generation)"),""))')"
 if [ -n "$narrow_type" ]; then

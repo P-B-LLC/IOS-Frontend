@@ -254,7 +254,7 @@ jobs:
         env:
           DOWNLOAD_HOME_RUNTIME: '1'
         run: |
-          if git diff --name-only HEAD^ HEAD | grep -Eq 'GuidedHomeView|RepbaseTactileDesign|Tactile.*colorset|capture-home-preview'; then
+          if git diff --name-only HEAD^ HEAD | grep -Eq 'GuidedHomeView|RepbaseTactileDesign|HomeSunrise|Sunrise.*colorset|Tactile.*colorset|capture-home-preview'; then
             bash Scripts/capture-home-preview.sh
           fi
 

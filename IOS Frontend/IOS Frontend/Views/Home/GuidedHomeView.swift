@@ -57,6 +57,10 @@ struct GuidedHomeView: View {
                     .padding(.horizontal, RepbaseTactileDesign.pageInset)
                     .padding(.top, 16)
                     .padding(.bottom, RepbaseTactileDesign.sheetOverlap + 16)
+                    .background(alignment: .topTrailing) {
+                        HomeSunriseGlow()
+                    }
+                    .clipped()
 
                     VStack(alignment: .leading, spacing: RepbaseTactileDesign.sectionSpacing) {
                         GuidedDayFlow(selectedDate: selectedDate, today: context.date, emphasis: emphasis)
@@ -77,7 +81,7 @@ struct GuidedHomeView: View {
 #endif
             .minimizesBottomBarOnScroll()
             .background {
-                RepbaseTactileDesign.weekBackdrop.ignoresSafeArea(edges: .top)
+                HomeSunriseStyle.backdropGradient.ignoresSafeArea(edges: .top)
             }
             .background {
                 RepbaseTactileDesign.surface.ignoresSafeArea()
@@ -213,7 +217,7 @@ private struct GuidedHomeWeekStrip: View {
     @Binding var selection: Date
 
     var body: some View {
-        HStack(spacing: 3) {
+        HStack(spacing: 0) {
             ForEach(weekDates, id: \.self) { day in
                 Button {
                     withAnimation(.easeOut(duration: 0.18)) {
@@ -230,12 +234,14 @@ private struct GuidedHomeWeekStrip: View {
                             .font(.community(size: 18, weight: .bold))
                     }
                     .foregroundStyle(isSelected(day) ? RepbasePalette.ink : RepbaseTactileDesign.ink)
-                    .frame(maxWidth: .infinity, minHeight: 58)
+                    .frame(width: 44)
+                    .frame(minHeight: 58)
                     .background {
                         if isSelected(day) {
                             RepbaseTactileControlBackground(tone: .accent)
                         }
                     }
+                    .frame(maxWidth: .infinity)
                     .padding(.bottom, 7)
                     .overlay(alignment: .bottom) {
                         Circle()
@@ -255,6 +261,8 @@ private struct GuidedHomeWeekStrip: View {
         // the label on each button, so nothing is lost by holding the glyphs
         // to a size that fits a seventh of the screen.
         .typeSizeCeiling()
+        .padding(8)
+        .background(HomeSunriseWeekBackground())
     }
 
     private var weekDates: [Date] {
@@ -449,25 +457,20 @@ private struct GuidedDayFlow: View {
     private var upNextSection: some View {
         Button { navigate(.planner) } label: {
             VStack(alignment: .leading, spacing: 16) {
-                HStack {
-                    Text("Next up")
-                    Spacer()
-                    if let entry = nextEntry {
-                        Text(entry.displayTime ?? String(localized: "No time set", bundle: .app, locale: .app))
+                if typeSize.isAccessibilitySize {
+                    VStack(alignment: .leading, spacing: 16) {
+                        nextUpCopy
+                        if let entry = nextEntry {
+                            HomeSunriseTimeBadge(displayTime: entry.displayTime)
+                        }
                     }
-                }
-                .font(.community(size: 13, weight: .semibold))
-                .foregroundStyle(RepbaseTactileDesign.accentText)
-                if let entry = nextEntry {
-                    Text(entry.title)
-                        .font(.community(size: 34, weight: .bold))
-                        .foregroundStyle(RepbaseTactileDesign.ink)
-                        .fixedSize(horizontal: false, vertical: true)
                 } else {
-                    Text("Your schedule is clear")
-                        .font(.community(size: 34, weight: .bold))
-                        .foregroundStyle(RepbaseTactileDesign.ink)
-                        .fixedSize(horizontal: false, vertical: true)
+                    HStack(spacing: 16) {
+                        nextUpCopy
+                        if let entry = nextEntry {
+                            HomeSunriseTimeBadge(displayTime: entry.displayTime)
+                        }
+                    }
                 }
                 ViewThatFits(in: .horizontal) {
                     HStack(spacing: 16) {
@@ -485,14 +488,35 @@ private struct GuidedDayFlow: View {
                 .foregroundStyle(HomeWidgetColors.secondaryText)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(32)
-            .repbaseTactileCard()
+            .padding(24)
+            .background(HomeSunriseCardBackground())
+            .padding(.bottom, 8)
             .contentShape(Rectangle())
         }
         .buttonStyle(RepbaseTactilePressStyle())
         .accessibilityHint("Opens your calendar")
         .accessibilityValue(Text(nextEntry.map { priorityLabel($0.priority) } ?? ""))
         .accessibilityIdentifier("home.next-up")
+    }
+
+    private var nextUpCopy: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Next up")
+                .font(.community(size: 13, weight: .semibold))
+                .foregroundStyle(RepbaseTactileDesign.accentText)
+            if let entry = nextEntry {
+                Text(entry.title)
+                    .font(.community(size: 34, weight: .bold))
+                    .foregroundStyle(RepbaseTactileDesign.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                Text("Your schedule is clear")
+                    .font(.community(size: 34, weight: .bold))
+                    .foregroundStyle(RepbaseTactileDesign.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var upNextSummary: LocalizedStringKey {
@@ -544,37 +568,27 @@ private struct GuidedDayFlow: View {
 
     private func trainingSection(number: Int) -> some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Text("Your workout")
-                    .font(.community(size: 13, weight: .semibold))
-                    .foregroundStyle(HomeWidgetColors.secondaryText)
-                Spacer()
-                if isTrained {
-                    Label("Completed", systemImage: "checkmark.circle.fill")
-                        .font(.community(size: 13, weight: .semibold))
-                        .foregroundStyle(RepbaseTactileDesign.success)
+            if let workout, workout.activity.usesSets, !workout.exercises.isEmpty {
+                if typeSize.isAccessibilitySize {
+                    trainingCopy
+                    Text("\(workout.exercises.count) exercises")
+                        .font(.community(.footnote, weight: .semibold))
+                        .foregroundStyle(HomeWidgetColors.secondaryText)
+                } else {
+                    HStack(spacing: 16) {
+                        trainingCopy
+                        HomeSunriseExerciseBadge(count: workout.exercises.count)
+                    }
                 }
+            } else {
+                trainingCopy
             }
-            Text(workout?.name ?? String(localized: "Plan your workout", bundle: .app, locale: .app))
-                .font(.community(size: 24, weight: .bold))
-                .foregroundStyle(RepbaseTactileDesign.ink)
-                .fixedSize(horizontal: false, vertical: true)
-            ViewThatFits(in: .horizontal) {
-                HStack(alignment: .bottom, spacing: 16) {
-                    trainingMetadata
-                        .frame(idealWidth: 100, maxWidth: .infinity, alignment: .leading)
-                    trainingAction
-                        .fixedSize(horizontal: true, vertical: false)
-                }
-                VStack(alignment: .leading, spacing: 16) {
-                    trainingMetadata
-                    trainingAction
-                }
-            }
+            trainingAction
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(32)
-        .repbaseTactileCard()
+        .padding(24)
+        .background(HomeSunriseCardBackground(isWorkout: true))
+        .padding(.bottom, 8)
         .accessibilityIdentifier("home.workout")
         .id("home.workout")
         .contextMenu {
@@ -583,8 +597,7 @@ private struct GuidedDayFlow: View {
                     .disabled(workouts.isSaving)
             }
         }
-        // Asked about, unlike the destructive controls here that act on a tap:
-        // this empties weeks of planning at once and cannot be undone.
+        // This clears weeks of planning and cannot be undone.
         .confirmationDialog(
             "Clear everything you have planned?",
             isPresented: $isConfirmingClear,
@@ -599,6 +612,35 @@ private struct GuidedDayFlow: View {
         }
     }
 
+    private var trainingCopy: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Your workout")
+                .font(.community(size: 13, weight: .semibold))
+                .foregroundStyle(HomeWidgetColors.secondaryText)
+            Text(workout?.name ?? String(localized: "Plan your workout", bundle: .app, locale: .app))
+                .font(.community(size: 24, weight: .bold))
+                .foregroundStyle(RepbaseTactileDesign.ink)
+                .fixedSize(horizontal: false, vertical: true)
+            if let workout, workout.activity.usesSets, !workout.exercises.isEmpty {
+                Text("\(workout.totalSets) target sets")
+                    .font(.community(size: 13, weight: .semibold))
+                    .foregroundStyle(HomeWidgetColors.secondaryText)
+            } else if let workout, !workout.activity.usesSets {
+                Text(workout.activity.title)
+                    .font(.community(size: 13, weight: .semibold))
+                    .foregroundStyle(HomeWidgetColors.secondaryText)
+            } else {
+                trainingMetadata
+            }
+            if isTrained {
+                Label("Completed", systemImage: "checkmark.circle.fill")
+                    .font(.community(size: 13, weight: .semibold))
+                    .foregroundStyle(RepbaseTactileDesign.success)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
     private var trainingMetadata: some View {
         Text(workoutMetadata)
             .font(.community(size: 13, weight: .semibold))
@@ -608,7 +650,7 @@ private struct GuidedDayFlow: View {
 
     private var trainingAction: some View {
         Button { navigate(workoutRoute) } label: {
-            RepbaseTactileActionLabel(title: workoutActionTitle)
+            RepbaseTactileActionLabel(title: workoutActionTitle, tone: .success, fillsWidth: true)
         }
         .buttonStyle(RepbaseTactilePressStyle())
         .accessibilityHint(workoutDetail)

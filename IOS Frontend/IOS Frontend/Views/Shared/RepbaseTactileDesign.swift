@@ -29,6 +29,7 @@ struct RepbaseTactileCardBackground: View {
     @Environment(\.colorSchemeContrast) private var contrast
     var tone: RepbaseTactileTone = .warm
     var cornerRadius: CGFloat = RepbaseTactileDesign.cardRadius
+    var tint: Color? = nil
 
     private var shape: RoundedRectangle {
         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
@@ -38,7 +39,7 @@ struct RepbaseTactileCardBackground: View {
         shape
             .fill(LinearGradient(
                 colors: [RepbaseTactileDesign.surface,
-                         tone == .movement ? RepbaseTactileDesign.successTint : RepbaseTactileDesign.cardTint],
+                         tint ?? (tone == .movement ? RepbaseTactileDesign.successTint : RepbaseTactileDesign.cardTint)],
                 startPoint: .top, endPoint: .bottom
             ))
             // Only the background shape casts shadows, not a rasterized copy
@@ -76,7 +77,7 @@ struct RepbaseTactileSheetBackground: View {
 }
 
 enum RepbaseTactileActionTone {
-    case accent, neutral
+    case accent, neutral, success
 }
 
 struct RepbaseTactileControlBackground: View {
@@ -88,7 +89,7 @@ struct RepbaseTactileControlBackground: View {
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
         shape
-            .fill(tone == .accent ? RepbaseTactileDesign.accent : RepbaseTactileDesign.surface)
+            .fill(fillColor)
             .overlay {
                 shape.fill(LinearGradient(
                     colors: [Color.white.opacity(colorScheme == .dark ? 0.10 : 0.26), .clear],
@@ -108,6 +109,14 @@ struct RepbaseTactileControlBackground: View {
                     radius: 2, x: 0, y: 1)
             .allowsHitTesting(false)
     }
+
+    private var fillColor: Color {
+        switch tone {
+        case .accent: RepbaseTactileDesign.accent
+        case .neutral: RepbaseTactileDesign.surface
+        case .success: RepbaseTactileDesign.success
+        }
+    }
 }
 
 /// A label, not a nested button: Next up keeps its existing whole-card action.
@@ -115,23 +124,33 @@ struct RepbaseTactileActionLabel: View {
     @Environment(\.layoutDirection) private var layoutDirection
     let title: LocalizedStringKey
     var tone: RepbaseTactileActionTone = .neutral
+    var fillsWidth = false
 
     var body: some View {
         HStack(spacing: 14) {
             Text(title)
                 .font(.community(size: 15))
                 .fixedSize(horizontal: false, vertical: true)
+            if fillsWidth { Spacer(minLength: 0) }
             Image(systemName: "arrow.right")
                 .font(.system(size: 18))
                 .scaleEffect(x: layoutDirection == .rightToLeft ? -1 : 1, y: 1)
                 .accessibilityHidden(true)
         }
-        .foregroundStyle(tone == .accent ? RepbasePalette.ink : RepbaseTactileDesign.ink)
+        .foregroundStyle(foregroundColor)
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
         .frame(minHeight: 44)
         .background(RepbaseTactileControlBackground(tone: tone))
         .contentShape(Capsule())
+    }
+
+    private var foregroundColor: Color {
+        switch tone {
+        case .accent: RepbasePalette.ink
+        case .neutral: RepbaseTactileDesign.ink
+        case .success: RepbaseTactileDesign.surface
+        }
     }
 }
 
