@@ -34,6 +34,13 @@ final class PlannerStore {
         entry.serverID.map { completions.isPending($0) } ?? false
     }
 
+    /// Told after a calendar write that changed which workouts are planned on
+    /// which days: adding, moving, re-pointing or deleting a workout task.
+    /// The server moves the workout's schedule with its task, and the week
+    /// Training and Home read belongs to the workout store -- so, as with
+    /// `CycleStore.onCalendarChanged`, whoever owns that week is told to read it.
+    var onWorkoutPlanChanged: (@MainActor () async -> Void)?
+
     /// The visible month plus the current Home/Training week, keyed by date.
     /// Browsing another month must not empty Home's agenda. The cache remains
     /// bounded to these ranges rather than accumulating every visited month.
@@ -330,13 +337,13 @@ final class PlannerStore {
         }
         let generation = connectionGeneration
         var draft = draft
+        let current = draft.serverID.flatMap { serverID in
+            entriesByDate.values.joined().first(where: { $0.serverID == serverID })
+                ?? pastDue.first(where: { $0.serverID == serverID })
+        }
         // The editor may have opened before a checkbox was confirmed elsewhere.
         // Saving its title/schedule must not restore that old completion value.
-        if let serverID = draft.serverID,
-           let current = entriesByDate.values.joined().first(where: { $0.serverID == serverID })
-                ?? pastDue.first(where: { $0.serverID == serverID }) {
-            draft.isComplete = current.isComplete
-        }
+        if let current { draft.isComplete = current.isComplete }
         draft.title = draft.title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !draft.title.isEmpty else {
             persistenceError = String(localized: "A task needs a title.", bundle: .app, locale: .app)
@@ -367,6 +374,12 @@ final class PlannerStore {
             }
             entriesByDate[saved.date, default: []].append(saved.identified(as: draft.id))
             await reloadMonth(generation: generation, showsLoadingState: false)
+            guard connectionGeneration == generation else { return false }
+            // Before or after the edit, a workout task is a planned day. An
+            // entry not held here could have been one, so it counts too.
+            if draft.standsForWorkout || (current?.standsForWorkout ?? (draft.serverID != nil)) {
+                await onWorkoutPlanChanged?()
+            }
             return connectionGeneration == generation
         } catch {
             guard connectionGeneration == generation else { return false }
@@ -514,6 +527,7 @@ final class PlannerStore {
                     // guessed at from here.
                     isSaving = false
                     await reloadMonth(generation: generation, showsLoadingState: false)
+                    if entry.standsForWorkout { await onWorkoutPlanChanged?() }
                     return
                 }
                 // Same reasoning as `apply`: the row is held under a different
@@ -525,9 +539,10 @@ final class PlannerStore {
                 pastDue.removeAll { $0.isSameEntry(as: entry) }
                 upcomingEvents.removeAll { $0.isSameEntry(as: entry) }
                 reminderEntries.removeAll { $0.isSameEntry(as: entry) }
-                // An overlapping schedule refresh must not restore this row.
-                // The server remembers deliberately deleted generated tasks.
+                // An overlapping schedule refresh must not restore this row:
+                // deleting a workout task removed its scheduled day as well.
                 await refreshScheduledWorkouts()
+                if entry.standsForWorkout { await onWorkoutPlanChanged?() }
             } catch {
                 guard connectionGeneration == generation else { return }
                 persistenceError = error.userFacingMessage

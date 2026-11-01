@@ -7411,7 +7411,7 @@ public struct Client: APIProtocol {
             }
         )
     }
-    /// Put a planner task on every scheduled day in the range that has not had one yet, and return the tasks that were created. Idempotent: a day whose task already exists, or whose task the user deleted, is left alone.
+    /// Put a planner task on every scheduled day in the range that has not had one yet, and on every day from today on that has lost its task, and return the tasks that were created. Idempotent: a day whose task already exists is left alone, and deleting a workout's task removes the scheduled day as well.
     ///
     /// - Remark: HTTP `POST /api/v1/schedules/sync-planner/`.
     /// - Remark: Generated from `#/paths//api/v1/schedules/sync-planner//post(schedules_sync_planner_create)`.

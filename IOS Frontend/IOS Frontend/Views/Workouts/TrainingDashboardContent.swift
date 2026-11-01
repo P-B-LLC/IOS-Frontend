@@ -146,6 +146,9 @@ struct TrainingDashboardContent: View {
                             )
                         }
                         .buttonStyle(.plain)
+                        // The same key as next week's days, by date: a label
+                        // starting with the weekday also matches Home's dates.
+                        .accessibilityIdentifier("plan-day-\(WorkoutStore.dateString(store.workoutDate(for: day)))")
                     }
                 }
             }

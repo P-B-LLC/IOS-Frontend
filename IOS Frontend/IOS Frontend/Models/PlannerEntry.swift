@@ -456,6 +456,11 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
     /// Only a task is ticked off. An event happens whether or not you attend.
     var isCompletable: Bool { kind == .task }
 
+    /// The calendar's copy of a planned workout: a task, not a step, naming a
+    /// workout. The server plans, moves and removes the workout's day along
+    /// with it, so writing one changes what Training and Home show as well.
+    var standsForWorkout: Bool { kind == .task && parentID == nil && workoutID != nil }
+
     /// The time shown beside the title, e.g. "16:00". Nil when untimed.
     var displayTime: String? {
         guard let minutes = PlannerDuration.minutesPastMidnight(time) else {
