@@ -37,7 +37,6 @@ struct GuidedHomeView: View {
     @State private var selectedDate = Calendar.current.startOfDay(for: Date())
     @State private var emphasis = HomeEmphasis.training
 #if DEBUG
-    @State private var previewScrollPosition = ScrollPosition(edge: .top)
     // The emphasis is set four taps into a settings flow, and simctl has no
     // tap, so the three orderings cannot otherwise be looked at.
     private let forcedEmphasis = ProcessInfo.processInfo
@@ -70,22 +69,18 @@ struct GuidedHomeView: View {
                     .background(RepbaseTactileSheetBackground())
                 }
             }
+            // Keep scrolled cards out of the clock and home-indicator areas.
+            .clipped()
             .scrollIndicators(.hidden)
 #if DEBUG
-            .scrollPosition($previewScrollPosition)
-            .task {
-                guard ProcessInfo.processInfo.environment["REPBASE_HOME_PREVIEW"] != nil,
-                      let target = ProcessInfo.processInfo.environment["REPBASE_HOME_SCROLL"],
-                      !target.isEmpty else { return }
-                // Delayed only in the screenshot harness so layout has an
-                // actual scroll geometry before the requested card is shown.
-                try? await Task.sleep(for: .milliseconds(250))
-                previewScrollPosition.scrollTo(id: target, anchor: .top)
-            }
+            .modifier(GuidedHomePreviewPosition())
 #endif
             .minimizesBottomBarOnScroll()
             .background {
-                RepbaseTactileDesign.weekBackdrop.ignoresSafeArea()
+                RepbaseTactileDesign.weekBackdrop.ignoresSafeArea(edges: .top)
+            }
+            .background {
+                RepbaseTactileDesign.surface.ignoresSafeArea()
             }
             .toolbar(.hidden, for: .navigationBar)
             // Keyed on the connection: home appears before the session is
@@ -108,6 +103,23 @@ struct GuidedHomeView: View {
         }
     }
 }
+
+#if DEBUG
+/// Scrolls the real Home only for its disconnected screenshot harness.
+private struct GuidedHomePreviewPosition: ViewModifier {
+    func body(content: Content) -> some View {
+        ScrollViewReader { proxy in
+            content.task {
+                guard ProcessInfo.processInfo.environment["REPBASE_HOME_PREVIEW"] != nil,
+                      let target = ProcessInfo.processInfo.environment["REPBASE_HOME_SCROLL"],
+                      !target.isEmpty else { return }
+                try? await Task.sleep(for: .milliseconds(250))
+                proxy.scrollTo(target, anchor: .top)
+            }
+        }
+    }
+}
+#endif
 
 // MARK: - Header
 
@@ -484,7 +496,11 @@ private struct GuidedDayFlow: View {
     }
 
     private var upNextSummary: LocalizedStringKey {
-        remainingTasks.isEmpty ? "Calendar" : "\(remainingTasks.count) tasks left"
+        // The card describes the selected day. Overdue items remain in the
+        // existing More section rather than inflating this day's caption.
+        let count = planner.entries(on: selectedDate)
+            .filter { $0.isCompletable && !$0.isComplete }.count
+        return count == 0 ? "Calendar" : "\(count) tasks left"
     }
 
     @ViewBuilder
@@ -544,10 +560,11 @@ private struct GuidedDayFlow: View {
                 .foregroundStyle(RepbaseTactileDesign.ink)
                 .fixedSize(horizontal: false, vertical: true)
             ViewThatFits(in: .horizontal) {
-                HStack(spacing: 16) {
+                HStack(alignment: .bottom, spacing: 16) {
                     trainingMetadata
-                    Spacer(minLength: 0)
+                        .frame(idealWidth: 100, maxWidth: .infinity, alignment: .leading)
                     trainingAction
+                        .fixedSize(horizontal: true, vertical: false)
                 }
                 VStack(alignment: .leading, spacing: 16) {
                     trainingMetadata
@@ -630,7 +647,7 @@ private struct GuidedDayFlow: View {
 
             let macroLayout = typeSize.isAccessibilitySize
                 ? AnyLayout(VStackLayout(alignment: .leading, spacing: 16))
-                : AnyLayout(HStackLayout(alignment: .top, spacing: 16))
+                : AnyLayout(HStackLayout(alignment: .bottom, spacing: 16))
             macroLayout {
                 GuidedMacroMetric(
                     label: "Protein",

@@ -16,6 +16,9 @@ opt-in; the existing global palette and other screens are unchanged. Background
 shapes cast the shadows without rasterizing each card's content. All displayed
 steps, dates, workouts, food totals, goals, errors, and actions retain their
 existing stores and routes. Personalization still determines section order.
+The shared tab bar's compact labels use the existing text-size ceiling to avoid
+overlap at accessibility sizes; destination content remains fully scalable and
+VoiceOver retains the complete tab names. Normal-size tab styling is unchanged.
 
 ## Build and review
 

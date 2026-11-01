@@ -128,6 +128,7 @@ struct RepbaseTactileActionLabel: View {
         }
         .foregroundStyle(tone == .accent ? RepbasePalette.ink : RepbaseTactileDesign.ink)
         .padding(.horizontal, 16)
+        .padding(.vertical, 8)
         .frame(minHeight: 44)
         .background(RepbaseTactileControlBackground(tone: tone))
         .contentShape(Capsule())

@@ -267,6 +267,10 @@ struct RepbaseBottomNavigation: View {
             if !isMinimized {
                 Text(item.title)
                     .font(.community(.caption2, weight: .bold))
+                    // A compact navigation index, like the seven-day strip.
+                    // Destinations retain full Dynamic Type; VoiceOver still
+                    // reads the complete tab label at every text size.
+                    .typeSizeCeiling()
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
             }
