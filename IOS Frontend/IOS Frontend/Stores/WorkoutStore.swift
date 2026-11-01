@@ -901,7 +901,15 @@ final class WorkoutStore {
                 calendarRevision &+= 1
             } catch {
                 guard connectionGeneration == generation else { return }
-                persistenceError = error.userFacingMessage
+                let message = error.userFacingMessage
+                // Whether the day went is unknown after a failure, so the
+                // week is read back rather than left as it was guessed to be.
+                // The read clears the error it finds, so the reason is set
+                // after it.
+                scheduleReads.invalidate()
+                await reloadWeek(using: repository, generation: generation, showsLoadingState: false)
+                guard connectionGeneration == generation else { return }
+                persistenceError = message
             }
             // Cleared unconditionally. Operations are serialized by the
             // `!isSaving` guard at entry, so no newer save can be running, and

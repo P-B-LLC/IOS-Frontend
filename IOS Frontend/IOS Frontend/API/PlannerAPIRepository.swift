@@ -319,6 +319,10 @@ actor PlannerAPIRepository {
         switch output {
         case .noContent:
             return
+        case .undocumented(404, _) where !endsRepeat:
+            // Already gone: a workout task leaves with its scheduled day when
+            // the workout is removed in Training. That is what was asked.
+            return
         case .undocumented(let statusCode, let payload):
             throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload)
         }

@@ -71,7 +71,7 @@ xcodebuild build-for-testing -project "$repo/IOS Frontend/IOS Frontend.xcodeproj
 tests="${RYTIVO_E2E_ONLY:-test01DiscardStartedWorkout test02LiftingSession test03SavedWorkouts \
 test04ExploreExercises test05Following test06WorkoutSettings test08LogTennis test09ExerciseLibrary \
 test10WorkoutsInAnotherLanguage test11Activity test12CalendarAgenda test13PlanAhead \
-test14LoggedActivityOutlivesRestart}"
+test14LoggedActivityOutlivesRestart test16RemovalReachesEveryScreen}"
 only=()
 for test in $tests; do only+=("-only-testing:RytivoUITests/RytivoE2ETests/$test"); done
 result=()

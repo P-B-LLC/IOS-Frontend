@@ -381,6 +381,10 @@ actor WorkoutAPIRepository {
         switch output {
         case .noContent:
             return
+        case .undocumented(404, _):
+            // Already gone -- removed from the calendar, or on another device,
+            // which takes the scheduled day with it. That is what was asked.
+            return
         case .undocumented(let statusCode, _):
             throw APIServiceError.undocumentedStatus(statusCode)
         }

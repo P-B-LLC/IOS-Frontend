@@ -659,6 +659,12 @@ private struct AppRootView: View {
                 accountID: user.id
             )
             guard authentication.token == token, !Task.isCancelled else { return }
+            // A workout added, moved or deleted on the calendar is moved on
+            // the server's schedule too. Training and Home's workout card read
+            // that schedule from the workout store, so it reads the week again.
+            plannerStore.onWorkoutPlanChanged = { [workoutStore] in
+                await workoutStore.reloadSchedule()
+            }
             await plannerStore.connect(
                 configuration: authentication.configuration,
                 token: token
