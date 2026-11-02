@@ -7944,6 +7944,8 @@ components:
       - fat_grams
       - name
       - protein_grams
+      - serving_description
+      - source_id
     ForYouPage:
       type: object
       description: One page of the For You feed, in the shape every cursor page has.
