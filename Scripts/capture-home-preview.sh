@@ -51,7 +51,9 @@ preview_section=''
 capture() {
     local name="$1" appearance="$2" fixture="$3" target="${4:-}" large="${5:-0}" language="${6:-en}"
     local focus='Training'
-    local -a extra_environment=()
+    # macOS Bash 3.2 treats an empty array as unset under `set -u`.
+    # Always clear an inherited flag, and only set it for the Food preview.
+    local -a extra_environment=('-u' 'SIMCTL_CHILD_REPBASE_QUICK_ACTIONS')
     if [ -n "$preview_quick" ]; then
         extra_environment+=("SIMCTL_CHILD_REPBASE_QUICK_ACTIONS=$preview_quick")
     fi
