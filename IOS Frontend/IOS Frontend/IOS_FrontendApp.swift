@@ -474,6 +474,16 @@ private struct AppRootView: View {
                     .repbaseScreen(.prepare)
                     .navigationTitle("Home")
                 }
+            } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "meal",
+                      let meal = foodTrackingStore.meals(on: Date()).first {
+                NavigationStack {
+                    MealDetailView(date: Date(), mealID: meal.id)
+                }
+            } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "meal-empty",
+                      let meal = foodTrackingStore.meals(on: Date()).first(where: { $0.entries.isEmpty }) {
+                NavigationStack {
+                    MealDetailView(date: Date(), mealID: meal.id)
+                }
             } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "entry",
                       let meal = foodTrackingStore.meals(on: Date()).first {
                 NavigationStack {

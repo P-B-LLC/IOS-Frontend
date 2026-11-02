@@ -241,6 +241,9 @@ jobs:
           if git diff --name-only HEAD^ HEAD | grep -Eq 'Cookbook|cookbook|SavedMealsView|FoodTrackingStore'; then
             bash Scripts/capture-cookbooks-preview.sh
           fi
+          if git diff --name-only HEAD^ HEAD | grep -Eq 'MealDetailView|MealSunriseStyle'; then
+            FOOD_PREVIEW_SCREENS='meal meal-empty' bash Scripts/capture-cookbooks-preview.sh
+          fi
 
       - name: Save cookbook simulator previews
         if: always() && steps.scope.outputs.code == 'true'

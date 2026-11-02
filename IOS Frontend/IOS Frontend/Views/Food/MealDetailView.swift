@@ -9,17 +9,15 @@ import SwiftUI
 
 struct MealDetailView: View {
     @Environment(FoodTrackingStore.self) private var store
-    @Environment(\.workoutVisualPhase) private var phase
+    @Environment(BottomBarChrome.self) private var bottomBar: BottomBarChrome?
+    @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(\.dismiss) private var dismiss
+    @ScaledMetric(relativeTo: .body) private var recentCardWidth: CGFloat = 171
 
     let date: Date
     let mealID: FoodMeal.ID
 
-    /// Which slot this is, counting from one, as the header labels it.
-    ///
-    /// Positional: a meal has no number of its own, it is the third thing in
-    /// the day. Nil if the day has not loaded yet, which only leaves the
-    /// saved-meal library asking the way it used to.
+    /// The existing saved-meal destination uses the day's one-based slot.
     private var mealNumber: Int? {
         store.meals(on: date)
             .firstIndex { $0.id == mealID }
@@ -38,66 +36,11 @@ struct MealDetailView: View {
     var body: some View {
         Group {
             if let meal {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 28) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(meal.entries.isEmpty ? "Let’s add your first food." : "What’s on the menu?")
-                                .font(.community(.largeTitle, weight: .bold))
-                            Text(meal.entries.isEmpty
-                                 ? "Start with one ingredient. You can add the rest as you go."
-                                 : "Your favorites. Your portions. Your plate.")
-                                .font(.community(.subheadline))
-                                .foregroundStyle(.secondary)
-                        }
-                        if meal.entries.isEmpty {
-                            VStack(alignment: .leading, spacing: 22) {
-                                Label("Find a food you love", systemImage: "1.circle")
-                                Label("Make the portion yours", systemImage: "2.circle")
-                                Label("Add it. You’re on your way.", systemImage: "3.circle")
-                            }
-                            .font(.community(.headline))
-                            .padding(.vertical, 12)
-                            addFoodButton
-                        } else {
-                            addFoodButton
-                        }
-                        HStack {
-                            Button("Cookbooks →") { isShowingSavedMeals = true }
-                            Spacer()
-                            Button("Enter manually +") { isEnteringFood = true }
-                        }
-                        .font(.community(.subheadline, weight: .semibold))
-                        .tint(phase.accent)
-
-                        if !meal.entries.isEmpty {
-                            mealSummary(meal)
-                            foodList(meal)
-                        }
-                        if !store.recentFoods.isEmpty { recentFoodShelf }
-                        if !meal.entries.isEmpty {
-                            DisclosureGroup("Nutrition details", isExpanded: $showsNutritionDetails) {
-                                NutritionBreakdownView(meals: [meal], scope: .meal)
-                                    .padding(.top, 12)
-                            }
-                            .font(.community(.subheadline, weight: .semibold))
-                            .tint(phase.accent)
-                        }
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Foods save as you add them.")
-                                .font(.community(.caption)).foregroundStyle(.secondary)
-                            Button("Done") { dismiss() }
-                                .buttonStyle(RepbasePrimaryButtonStyle())
-                        }
-                    }
-                    .padding(.horizontal)
-                    .padding(.vertical, 12)
-                    // Pushed inside the tab, so the bottom bar overlays it.
-                    .padding(.bottom, RepbaseDesign.bottomBarClearance)
-                }
-                .background(Color(.systemBackground))
-                .navigationTitle(meal.displayName)
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar { mealToolbar(meal) }
+                mealWorkspace(meal)
+                    .navigationTitle(meal.displayName)
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbarBackground(.hidden, for: .navigationBar)
+                    .toolbar { mealToolbar(meal) }
             } else {
                 ContentUnavailableView(
                     "Meal Not Found",
@@ -106,6 +49,7 @@ struct MealDetailView: View {
                 )
             }
         }
+        .tint(RepbaseTactileDesign.accentText)
         .fullScreenCover(isPresented: $isAddingFood) {
             NavigationStack {
                 FoodPickerView(date: date, mealID: mealID, initialFood: recentFoodSelection)
@@ -118,9 +62,6 @@ struct MealDetailView: View {
         }
         .fullScreenCover(isPresented: $isShowingSavedMeals) {
             NavigationStack {
-                // The day and the slot are both already settled by being
-                // here, so the library applies straight into them rather
-                // than asking again.
                 SavedMealsView(
                     referenceDate: date,
                     destination: mealNumber.map {
@@ -143,183 +84,250 @@ struct MealDetailView: View {
         }
     }
 
-    private func mealSummary(_ meal: FoodMeal) -> some View {
-        VStack(alignment: .leading, spacing: 18) {
-            Text("YOUR PLATE, COMING TOGETHER")
-                .font(.community(.caption2, weight: .semibold))
-                .foregroundStyle(.secondary)
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: 24) {
-                    mealRing(meal)
-                    mealLegend(meal)
+    private func mealWorkspace(_ meal: FoodMeal) -> some View {
+        VStack(spacing: 0) {
+            mealIntroduction(meal)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    addFoodActions
+                    if !meal.entries.isEmpty {
+                        mealSummary(meal)
+                        foodList(meal)
+                    }
+                    if !store.recentFoods.isEmpty { recentFoodShelf }
+                    if !meal.entries.isEmpty {
+                        DisclosureGroup("Nutrition details", isExpanded: $showsNutritionDetails) {
+                            NutritionBreakdownView(meals: [meal], scope: .meal)
+                                .padding(.top, 12)
+                        }
+                        .font(.community(.subheadline, weight: .semibold))
+                    }
                 }
-                VStack(alignment: .leading, spacing: 20) {
-                    mealRing(meal)
-                    mealLegend(meal)
+                .padding(RepbaseTactileDesign.pageInset)
+            }
+            .background(RepbaseTactileSheetBackground())
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                mealFooter
+            }
+        }
+        .foregroundStyle(RytivoSunriseDesign.ink)
+        .background {
+            HomeSunriseStyle.backdrop
+                .overlay { Rectangle().fill(MealLiftGloss(opacity: 0.36)) }
+                .ignoresSafeArea()
+        }
+    }
+
+    private func mealIntroduction(_ meal: FoodMeal) -> some View {
+        HStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(meal.entries.isEmpty ? "Build your plate." : "Your plate, your way.")
+                    .font(.community(.title2, weight: .bold))
+                Text(meal.entries.isEmpty
+                     ? "One ingredient at a time."
+                     : "Add more, or adjust your portions.")
+                    .font(.community(.subheadline))
+                    .foregroundStyle(RytivoSunriseDesign.secondary)
+            }
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            if !typeSize.isAccessibilitySize { MealPlateIllustration() }
+        }
+        .padding(.horizontal, RepbaseTactileDesign.pageInset)
+        .padding(.top, 8)
+        .padding(.bottom, 16)
+    }
+
+    private var addFoodActions: some View {
+        VStack(spacing: 12) {
+            Button {
+                recentFoodSelection = nil
+                isAddingFood = true
+            } label: {
+                Label("Search foods", systemImage: "magnifyingglass")
+                    .font(.community(.headline))
+                    .foregroundStyle(RepbasePalette.ink)
+                    .frame(maxWidth: .infinity, minHeight: 56)
+                    .background(MealLiftSurface(fill: RepbaseTactileDesign.accent, kind: .primary))
+                    .contentShape(Capsule())
+            }
+            .accessibilityIdentifier("meal.search")
+
+            let layout = typeSize.isAccessibilitySize
+                ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+                : AnyLayout(HStackLayout(alignment: .top, spacing: 12))
+            layout {
+                mealActionTile("Cookbooks", detail: "Use a saved recipe",
+                               symbol: "books.vertical", isWarm: true) {
+                    isShowingSavedMeals = true
+                }
+                .accessibilityIdentifier("meal.cookbooks")
+                mealActionTile("Enter manually", detail: "Add from a label",
+                               symbol: "square.and.pencil", isWarm: false) {
+                    isEnteringFood = true
+                }
+                .accessibilityIdentifier("meal.manual")
+            }
+        }
+        .buttonStyle(RepbaseTactilePressStyle())
+    }
+
+    private func mealActionTile(
+        _ title: LocalizedStringKey, detail: LocalizedStringKey,
+        symbol: String, isWarm: Bool, action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 5) {
+                Image(systemName: symbol)
+                    .font(.system(size: 21))
+                    .foregroundStyle(RepbaseTactileDesign.accentText)
+                    .frame(width: 42, height: 42)
+                    .background(MealLiftSurface(
+                        fill: isWarm ? RytivoSunriseDesign.surface : HomeSunriseStyle.heroTint,
+                        kind: .control, radius: 14
+                    ))
+                    .accessibilityHidden(true)
+                Text(title).font(.community(.headline))
+                Text(detail)
+                    .font(.community(.caption))
+                    .foregroundStyle(RytivoSunriseDesign.secondary)
+            }
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, minHeight: 96, alignment: .topLeading)
+            .padding(16)
+            .background(MealLiftSurface(
+                fill: isWarm ? HomeSunriseStyle.heroTint : RytivoSunriseDesign.surface
+            ))
+            .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        }
+    }
+
+    private func mealSummary(_ meal: FoodMeal) -> some View {
+        let nutrition = meal.totalNutrition
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top, spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Meal total")
+                        .font(.community(.caption))
+                        .foregroundStyle(RytivoSunriseDesign.secondary)
+                    Text("\(nutrition.calories.nutritionText) kcal")
+                        .font(.community(.title2, weight: .bold))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
+                Text("\(meal.entries.count) foods")
+                    .font(.community(.caption))
+                    .foregroundStyle(RytivoSunriseDesign.secondary)
+            }
+            let layout = typeSize.isAccessibilitySize
+                ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+                : AnyLayout(HStackLayout(alignment: .top, spacing: 12))
+            layout {
+                ForEach(Macro.allCases) { macro in
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(macro.title)
+                            .font(.community(.caption2, weight: .semibold))
+                            .foregroundStyle(RytivoSunriseDesign.secondary)
+                        Text("\(macro.grams(in: nutrition).nutritionText) g")
+                            .font(.community(.headline))
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityElement(children: .combine)
                 }
             }
         }
-        .padding(.vertical, 8)
-    }
-
-    private func mealRing(_ meal: FoodMeal) -> some View {
-                MacroMixRing(nutrition: meal.totalNutrition)
-                    .frame(width: 146, height: 146)
-    }
-
-    private func mealLegend(_ meal: FoodMeal) -> some View {
-                VStack(alignment: .leading, spacing: 16) {
-                    ForEach(Macro.allCases) { macro in
-                        Text(legendText(for: macro, grams: macro.grams(in: meal.totalNutrition).nutritionText))
-                            .font(.community(.subheadline, weight: .semibold))
-                            .foregroundStyle(macro.color)
-                    }
-                }
-    }
-
-    /// Whole phrases per macro, so a translation can put words between the
-    /// amount and the name.
-    private func legendText(for macro: Macro, grams: String) -> LocalizedStringKey {
-        switch macro {
-        case .protein: "\(grams) g  Protein"
-        case .carbs: "\(grams) g  Carbs"
-        case .fat: "\(grams) g  Fat"
-        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(MealLiftSurface(fill: HomeSunriseStyle.heroTint))
     }
 
     private var recentFoodShelf: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Have it again").font(.community(.title3, weight: .bold))
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Have it again").font(.community(.headline))
+                Text("Your recently logged foods.")
+                    .font(.community(.caption))
+                    .foregroundStyle(RytivoSunriseDesign.secondary)
+            }
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(alignment: .top, spacing: 24) {
+                HStack(alignment: .top, spacing: 12) {
                     ForEach(store.recentFoods.prefix(8)) { food in
-                        Button { recentFoodSelection = food; isAddingFood = true } label: {
-                            VStack(alignment: .leading, spacing: 10) {
-                                Capsule().fill(phase.accent).frame(width: 42, height: 3)
-                                Text(food.name).font(.community(.headline)).foregroundStyle(.primary)
-                                Text("\(food.servings.nutritionText) servings · \(food.totalNutrition.calories.nutritionText) kcal")
-                                    .font(.community(.caption)).foregroundStyle(.secondary)
-                                Text("+ Add").font(.community(.subheadline, weight: .semibold))
-                                    .foregroundStyle(phase.accent)
+                        Button {
+                            recentFoodSelection = food
+                            isAddingFood = true
+                        } label: {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(food.name)
+                                    .font(.community(.subheadline, weight: .semibold))
+                                MealFoodQuantity(food: food)
+                                // A label inside the existing whole-card button.
+                                MealCompactActionLabel(title: "Choose portion", symbol: "plus")
                             }
-                            .frame(width: 170, alignment: .leading)
-                            .padding(.vertical, 8)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .frame(width: recentCardWidth - 32, alignment: .leading)
+                            .frame(minHeight: 124, alignment: .topLeading)
+                            .padding(16)
+                            .background(MealLiftSurface(fill: RytivoSunriseDesign.surface))
+                            .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(RepbaseTactilePressStyle())
                     }
                 }
+                // Keep shadows inside the horizontal scroll view's bounds.
+                .padding(.horizontal, 12)
+                .padding(.bottom, 20)
+                .padding(.top, 4)
             }
+            .padding(.horizontal, -12)
         }
-    }
-
-    private var emptyMealActions: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("BUILD YOUR MEAL")
-                .font(.community(.caption2, weight: .bold))
-                .tracking(1.2)
-                .foregroundStyle(phase.accent)
-            Text("Choose where to start")
-                .font(.community(.title2, weight: .bold))
-            Text("Add something new or reuse what already works.")
-                .font(.community(.footnote))
-                .foregroundStyle(.secondary)
-
-            VStack(spacing: 0) {
-                mealAction("Search foods", detail: "Find food from your history or database", symbol: "magnifyingglass") { isAddingFood = true }
-                Divider().padding(.leading, 52)
-                mealAction("Enter manually", detail: "Add calories and macros yourself", symbol: "square.and.pencil") { isEnteringFood = true }
-                Divider().padding(.leading, 52)
-                mealAction("Use a saved meal", detail: "Apply a meal you have already built", symbol: "bookmark.fill") { isShowingSavedMeals = true }
-            }
-            .foodCard()
-        }
-    }
-
-    private func mealAction(_ title: LocalizedStringKey, detail: LocalizedStringKey, symbol: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 12) {
-                Image(systemName: symbol)
-                    .font(.community(.subheadline, weight: .semibold))
-                    .foregroundStyle(phase.accent)
-                    .frame(width: 36, height: 36)
-                    .background(phase.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 11))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title).font(.community(.subheadline, weight: .semibold))
-                    Text(detail).font(.community(.caption2)).foregroundStyle(.secondary)
-                }
-                Spacer()
-                Image(systemName: "chevron.forward").font(.community(.caption, weight: .bold)).foregroundStyle(.secondary)
-            }
-            .padding(.vertical, 7)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-    }
-
-    private var mealGuidance: some View {
-        Label {
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Macros update as you add foods").font(.community(.subheadline, weight: .semibold))
-                Text("Review the totals before leaving this meal.").font(.community(.caption)).foregroundStyle(.secondary)
-            }
-        } icon: {
-            Image(systemName: "chart.bar.fill")
-        }
-        .foregroundStyle(RepbaseDesign.success)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(RepbaseDesign.success.opacity(0.12), in: RoundedRectangle(cornerRadius: 20))
     }
 
     private func foodList(_ meal: FoodMeal) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("On your plate · Tap to edit portions")
-                .font(.community(.title3, weight: .bold))
-
-            if meal.entries.isEmpty {
-                ContentUnavailableView(
-                    "No Food Logged",
-                    systemImage: "takeoutbag.and.cup.and.straw",
-                    description: Text("Add nutrition manually to start this meal.")
-                )
-                .frame(maxWidth: .infinity)
-                .foodCard()
-            } else {
-                ForEach(meal.entries) { food in
-                    Button {
-                        editingFood = food
-                    } label: {
-                        FoodEntryRow(food: food)
-                    }
-                    .buttonStyle(.plain)
-                    .swipeActions {
-                        Button("Delete", systemImage: "trash", role: .destructive) {
-                            store.removeFood(id: food.id, from: mealID, on: date)
-                        }
+        VStack(alignment: .leading, spacing: 12) {
+            Text("On your plate").font(.community(.headline))
+            ForEach(meal.entries) { food in
+                Button {
+                    editingFood = food
+                } label: {
+                    MealFoodEntryLabel(food: food)
+                }
+                .buttonStyle(RepbaseTactilePressStyle())
+                .swipeActions {
+                    Button("Delete", systemImage: "trash", role: .destructive) {
+                        store.removeFood(id: food.id, from: mealID, on: date)
                     }
                 }
             }
         }
     }
 
-    private var addFoodButton: some View {
-        Button {
-            recentFoodSelection = nil
-            isAddingFood = true
-        } label: {
-            Label("Search foods", systemImage: "magnifyingglass")
-                .font(.community(.headline))
-                .frame(maxWidth: .infinity)
+    private var mealFooter: some View {
+        let layout = typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+            : AnyLayout(HStackLayout(alignment: .center, spacing: 16))
+        return layout {
+            Text("Foods save as you add them.")
+                .font(.community(.caption))
+                .foregroundStyle(RytivoSunriseDesign.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Button { dismiss() } label: {
+                MealCompactActionLabel(title: "Done", symbol: "checkmark", isDone: true)
+            }
+            .buttonStyle(RepbaseTactilePressStyle())
+            .accessibilityIdentifier("meal.done")
         }
-        .buttonStyle(RepbasePrimaryButtonStyle())
+        .padding(.horizontal, RepbaseTactileDesign.pageInset)
+        .padding(.vertical, 12)
+        // The shell's floating bar is outside this navigation stack. Reserve
+        // the same clearance as the other Training pages, not inside the scroll.
+        .padding(.bottom, bottomBar == nil ? 0 : RepbaseDesign.bottomBarClearance)
+        .background(RytivoSunriseDesign.surface.ignoresSafeArea(edges: .bottom))
     }
 
     @ToolbarContentBuilder
     private func mealToolbar(_ meal: FoodMeal) -> some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             Menu {
-                // Sharing is not here. It lives on the food page, which lists
-                // every meal and can therefore ask which one to post.
                 Button("Rename Meal", systemImage: "pencil") {
                     renamedMeal = meal.name
                     isRenamingMeal = true
@@ -329,135 +337,51 @@ struct MealDetailView: View {
                     dismiss()
                 }
             } label: {
-                Image(systemName: "ellipsis.circle")
+                Image(systemName: "ellipsis")
+                    .frame(minWidth: 44, minHeight: 44)
             }
+            .accessibilityLabel("Meal options")
         }
     }
 
     private var meal: FoodMeal? {
         store.meals(on: date).first { $0.id == mealID }
     }
-
 }
 
-private struct MealMacro: View {
-    let title: String
-    let value: Decimal
-    let share: Double
-    let color: Color
-
-    var body: some View {
-        HStack(spacing: 9) {
-            Circle().fill(color).frame(width: 8, height: 8)
-            Text(title)
-                .font(.community(.caption, weight: .medium))
-                .foregroundStyle(.secondary)
-            Spacer()
-            VStack(alignment: .trailing, spacing: 1) {
-                Text("\(value.nutritionText)g").font(.community(.subheadline, weight: .bold))
-                Text(share.formatted(.percent.precision(.fractionLength(0))))
-                    .font(.community(size: 9, weight: .semibold))
-                    .foregroundStyle(color)
-            }
-        }
-        .padding(12)
-        .background(color.opacity(0.07), in: RoundedRectangle(cornerRadius: 14))
-    }
-}
-
-private struct MacroMixRing: View {
-    let nutrition: NutritionAmount
-
-    var body: some View {
-        ZStack {
-            Circle().stroke(RepbasePalette.oatmeal, lineWidth: 14)
-            ForEach(Macro.allCases) { macro in
-                Circle()
-                    .trim(from: 0, to: max(0, nutrition.energyShare(for: macro) - 0.018))
-                    .stroke(macro.color, style: StrokeStyle(lineWidth: 14, lineCap: .round))
-                    .rotationEffect(.degrees(-90 + nutrition.startAngle(for: macro)))
-            }
-            VStack(spacing: 2) {
-                Text(nutrition.calories.nutritionText).font(.community(.largeTitle, weight: .bold))
-                    .minimumScaleFactor(0.6).lineLimit(1)
-                Text("kcal")
-                    .font(.community(size: 8, weight: .bold))
-                    .tracking(0.8)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .accessibilityLabel("Meal macro energy composition")
-    }
-}
-
-private struct MacroMixRibbon: View {
-    let nutrition: NutritionAmount
-
-    var body: some View {
-        GeometryReader { proxy in
-            let availableWidth = max(0, proxy.size.width - 6)
-            HStack(spacing: 3) {
-                ForEach(Macro.allCases) { macro in
-                    Capsule()
-                        .fill(macro.color.opacity(0.78))
-                        .frame(width: max(3, availableWidth * nutrition.energyShare(for: macro)))
-                }
-            }
-        }
-        .frame(height: 8)
-        .accessibilityHidden(true)
-    }
-}
-
-private extension NutritionAmount {
-    func energyShare(for macro: Macro) -> Double {
-        let total = macroEnergyTotal
-        guard total > 0 else { return 0 }
-        return energy(for: macro) / total
-    }
-
-    func startAngle(for macro: Macro) -> Double {
-        switch macro {
-        case .protein: 0
-        case .carbs: energyShare(for: .protein) * 360
-        case .fat: (energyShare(for: .protein) + energyShare(for: .carbs)) * 360
-        }
-    }
-
-    private var macroEnergyTotal: Double {
-        Macro.allCases.reduce(0) { $0 + energy(for: $1) }
-    }
-
-    private func energy(for macro: Macro) -> Double {
-        NSDecimalNumber(decimal: macro.grams(in: self)).doubleValue * macro.caloriesPerGram
-    }
-}
-
-private struct FoodEntryRow: View {
+private struct MealFoodQuantity: View {
     let food: FoodEntry
 
     var body: some View {
-        HStack(spacing: 13) {
+        Text(food.servings == 1
+             ? "\(food.servings.nutritionText) serving · \(food.totalNutrition.calories.nutritionText) kcal"
+             : "\(food.servings.nutritionText) servings · \(food.totalNutrition.calories.nutritionText) kcal")
+            .font(.community(.caption))
+            .foregroundStyle(RytivoSunriseDesign.secondary)
+    }
+}
+
+private struct MealFoodEntryLabel: View {
+    @Environment(\.dynamicTypeSize) private var typeSize
+    let food: FoodEntry
+
+    var body: some View {
+        let layout = typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+            : AnyLayout(HStackLayout(alignment: .center, spacing: 12))
+        layout {
             VStack(alignment: .leading, spacing: 4) {
-                Text(food.name)
-                    .font(.community(.headline))
-                    .foregroundStyle(.primary)
-                Text(food.servings == 1
-                     ? "\(food.servings.nutritionText) serving"
-                     : "\(food.servings.nutritionText) servings")
-                    .font(.community(.caption))
-                    .foregroundStyle(.secondary)
+                Text(food.name).font(.community(.headline))
+                MealFoodQuantity(food: food)
             }
-            Spacer()
-            VStack(alignment: .trailing, spacing: 3) {
-                Text("\(food.totalNutrition.calories.nutritionText) cal")
-                    .font(.community(.subheadline, weight: .semibold))
-                Text("P \(food.totalNutrition.proteinGrams.nutritionText) · C \(food.totalNutrition.carbohydrateGrams.nutritionText) · F \(food.totalNutrition.fatGrams.nutritionText)")
-                    .font(.community(.caption2))
-                    .foregroundStyle(.secondary)
-            }
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            MealCompactActionLabel(title: "Edit", symbol: "pencil")
         }
-        .padding(.vertical, 16)
+        .frame(minHeight: 54)
+        .padding(16)
+        .background(MealLiftSurface(fill: RytivoSunriseDesign.surface))
+        .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
     }
 }
 

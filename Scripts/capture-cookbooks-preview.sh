@@ -41,7 +41,7 @@ original_appearance="$(xcrun simctl ui "$device" appearance)"
 trap 'xcrun simctl ui "$device" appearance "$original_appearance" >/dev/null 2>&1 || true' EXIT
 for appearance in light dark; do
     xcrun simctl ui "$device" appearance "$appearance"
-    for screen in saved cookbook cookbook-picker cookbook-create cookbook-post; do
+    for screen in ${FOOD_PREVIEW_SCREENS:-saved cookbook cookbook-picker cookbook-create cookbook-post}; do
         SIMCTL_CHILD_REPBASE_FOOD_PREVIEW="$screen" \
             SIMCTL_CHILD_REPBASE_APPEARANCE="$appearance" \
             xcrun simctl launch --terminate-running-process "$device" com.pbllc.rytivo

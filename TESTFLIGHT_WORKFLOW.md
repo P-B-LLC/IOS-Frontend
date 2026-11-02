@@ -1,5 +1,34 @@
 # TestFlight development workflow
 
+## Meal workspace: gentle depth — November 2, 2026
+
+The approved [Meal review](https://www.figma.com/design/FbMNgG8cuZfrRFzQTtIVCy?node-id=308-14257)
+adds a Sunrise heading with a decorative plate, raised Search/Cookbooks/manual
+controls, recent-food portion cards, meal totals, and explicit Edit labels.
+Done stays above the shell's floating navigation instead of inside the scroll.
+The prior UI is preserved in integration history at `e08be05`.
+
+This changes presentation only. Meal IDs, date/slot selection, stores, API
+requests, autosave, food deletion, rename/remove, nutrition disclosure, and
+all four existing full-screen destinations are retained. Recent cards still
+open portion selection; their labels are not additional nested buttons.
+Large text reflows controls vertically, Reduce Motion uses the shared press
+style, and new copy is translated in all ten languages, including food counts.
+
+On the Mac, use `INSTALL_SIMULATOR=1 bash Scripts/validate-sunrise-refresh.sh`.
+The script reads the installed app's HTTPS API configuration when the environment
+does not supply one. It installs over the existing app without erasing data.
+CI also captures illustrative empty/populated Meal screens in both themes
+through the existing debug-only food preview harness. To capture them locally:
+`FOOD_PREVIEW_SCREENS='meal meal-empty' bash Scripts/capture-cookbooks-preview.sh /path/to/Rytivo.app`.
+
+Before promotion, check both themes in the signed-in Training tab, a narrow
+screen, large text, VoiceOver and Arabic RTL. Open each source of food, choose
+a recent portion, edit an entry, expand nutrition, rename/remove a meal and
+return with Done/back. Scroll the last entry clear of the footer, and confirm
+Done remains above the full and minimized app bar. Preview screenshots use
+fixtures and do not verify a live save or the signed-in shell.
+
 ## Rotation workout names and saved-plan selection — November 1, 2026
 
 Creating a different workout named `Push Day` when that exact name is already
