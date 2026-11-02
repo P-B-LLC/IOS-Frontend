@@ -36,11 +36,14 @@ actor SocialAPIRepository {
             let body = try response.body.json
             return PublishedCookbook(name: body.name, recipes: body.recipes.map { recipe in
                 SavedFoodMeal(name: recipe.name, ingredients: recipe.ingredients.map { item in
-                    FoodEntry(name: item.name, servings: FoodDecimal.value(item.servings),
+                    FoodSnapshotPolicy.attaching(to: FoodEntry(name: item.name, servings: FoodDecimal.value(item.servings),
                               nutritionPerServing: NutritionAmount(calories: FoodDecimal.value(item.calories),
                                 proteinGrams: FoodDecimal.value(item.proteinGrams),
                                 carbohydrateGrams: FoodDecimal.value(item.carbohydrateGrams),
-                                fatGrams: FoodDecimal.value(item.fatGrams)))
+                                fatGrams: FoodDecimal.value(item.fatGrams))),
+                        sourceID: item.sourceId, servingDescription: item.servingDescription,
+                        referenceQuantity: item.referenceQuantity, referenceUnit: item.referenceUnit,
+                        nutrients: item.nutrients?.additionalProperties)
                 }, cookingInstructions: recipe.cookingInstructions)
             })
         case .undocumented(let statusCode, _): throw APIServiceError.undocumentedStatus(statusCode)

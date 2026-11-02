@@ -60,4 +60,45 @@ final class FoodPortionMeasurementTests: XCTestCase {
         XCTAssertNil(FoodPortionMeasurement.positive("1.000", locale: Locale(identifier: "de")))
         XCTAssertNil(FoodPortionMeasurement.positive("1,000٫5", locale: Locale(identifier: "en")))
     }
+
+    func testKnownLabelReferenceNeedsOnlyWeightEaten() throws {
+        let basis = try XCTUnwrap(FoodPortionReference(quantity: 20, unit: "g", legacyDescription: "1 tbsp (20 g)"))
+        let multiplier = try XCTUnwrap(FoodPortionMeasurement.multiplier(amount: 75, measured: true,
+            ounces: false, gramsPerServing: basis.quantity))
+        XCTAssertEqual(multiplier, Decimal(string: "3.75"))
+        XCTAssertEqual(FoodPortionMeasurement.savedMultiplier(multiplier), multiplier)
+    }
+
+    func testReferenceDoesNotGuessMassFromCountsOrLiquidVolume() {
+        XCTAssertNil(FoodPortionReference(quantity: nil, unit: nil, legacyDescription: "1 banana"))
+        XCTAssertNil(FoodPortionReference(quantity: nil, unit: nil, legacyDescription: "1 serving of this food entry"))
+        XCTAssertNil(FoodPortionReference(quantity: 0, unit: "g", legacyDescription: "100 g"))
+        XCTAssertNil(FoodPortionReference(quantity: 20, unit: "oz", legacyDescription: nil))
+        XCTAssertEqual(FoodPortionReference(quantity: 250, unit: "ml", legacyDescription: nil)?.unit, "ml")
+        XCTAssertEqual(FoodPortionReference(quantity: nil, unit: nil, legacyDescription: "100 g")?.quantity, 100)
+    }
+
+    func testFractionalWeightRatiosRoundToApiPrecisionBeforePreviewAndSave() {
+        let raw = FoodPortionMeasurement.multiplier(amount: 73, measured: true, ounces: false, gramsPerServing: 7)!
+        XCTAssertEqual(FoodPortionMeasurement.savedMultiplier(raw), Decimal(string: "10.428571"))
+        XCTAssertNil(FoodPortionMeasurement.savedMultiplier(Decimal(string: "0.0000001")!))
+        XCTAssertNil(FoodPortionMeasurement.savedMultiplier(.nan))
+        XCTAssertNil(FoodPortionMeasurement.savedMultiplier(1001))
+    }
+
+    func testKnownZeroMacrosCanBeEditedWithoutPermissiveParsing() {
+        XCTAssertEqual(FoodPortionMeasurement.nonnegative("0", locale: Locale(identifier: "en")), 0)
+        XCTAssertNil(FoodPortionMeasurement.nonnegative("", locale: Locale(identifier: "en")))
+        XCTAssertNil(FoodPortionMeasurement.nonnegative("12abc", locale: Locale(identifier: "en")))
+        XCTAssertEqual(FoodPortionMeasurement.nonnegative("12,34", locale: Locale(identifier: "de")), Decimal(string: "12.34"))
+    }
+
+    func testServingMetadataAndNutrientsAreNotDroppedByThePortionUi() throws {
+        let root = URL(fileURLWithPath: try XCTUnwrap(ProcessInfo.processInfo.environment["RYTIVO_TEST_REPOSITORY"]))
+        let view = try String(contentsOf: root.appendingPathComponent("IOS Frontend/IOS Frontend/Views/Food/FoodPickerView.swift"), encoding: .utf8)
+        XCTAssertTrue(view.contains("food.copyForLogging()"))
+        XCTAssertTrue(view.contains("FoodPortionReference(quantity: food.referenceQuantity"))
+        XCTAssertTrue(view.contains("FoodPortionMeasurement.savedMultiplier"))
+        XCTAssertFalse(view.contains("TextField(\"Grams in one serving\""))
+    }
 }

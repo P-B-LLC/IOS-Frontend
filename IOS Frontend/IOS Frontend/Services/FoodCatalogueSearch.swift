@@ -87,3 +87,49 @@ nonisolated struct FoodDatabaseResult: Identifiable, Hashable, Sendable {
 
     var id: String { sourceID }
 }
+
+/// Shared diary/catalogue snapshot mapping. Dictionary values use canonical
+/// API units (g, mg or ug in the key), not the contributor's OFF input unit.
+nonisolated enum FoodSnapshotPolicy {
+    static let nutrientKeys: Set<String> = [
+        "fiber_g", "saturated_fat_g", "sugars_g", "sodium_mg", "potassium_mg",
+        "calcium_mg", "iron_mg", "magnesium_mg", "vitamin_c_mg", "vitamin_d_ug"
+    ]
+
+    static func decimal(_ text: String?) -> Decimal? {
+        guard let text,
+              let match = text.range(of: #"^[0-9]+(?:\.[0-9]+)?$"#, options: .regularExpression),
+              match.lowerBound == text.startIndex, match.upperBound == text.endIndex,
+              let value = Decimal(string: text, locale: Locale(identifier: "en_US_POSIX")),
+              !value.isNaN, value >= 0 else { return nil }
+        return value
+    }
+
+    static func nutrients(_ values: [String: String]?) -> [String: Decimal] {
+        (values ?? [:]).reduce(into: [:]) { result, pair in
+            guard nutrientKeys.contains(pair.key), let value = decimal(pair.value) else { return }
+            result[pair.key] = value
+        }
+    }
+
+    static func attaching(
+        to food: FoodEntry, sourceID: String?, servingDescription: String?,
+        referenceQuantity: String?, referenceUnit: String?, nutrients: [String: String]?
+    ) -> FoodEntry {
+        var food = food
+        let source = sourceID?.trimmingCharacters(in: .whitespacesAndNewlines)
+        food.sourceID = source.flatMap { FoodCataloguePolicy.barcode(sourceID: $0) == nil ? nil : $0 }
+        let description = servingDescription?.trimmingCharacters(in: .whitespacesAndNewlines)
+        food.servingDescription = description?.isEmpty == false ? description : nil
+        if let value = decimal(referenceQuantity), value > 0,
+           referenceUnit == "g" || referenceUnit == "ml" {
+            food.referenceQuantity = value
+            food.referenceUnit = referenceUnit
+        } else {
+            food.referenceQuantity = nil
+            food.referenceUnit = nil
+        }
+        food.nutrients = Self.nutrients(nutrients)
+        return food
+    }
+}

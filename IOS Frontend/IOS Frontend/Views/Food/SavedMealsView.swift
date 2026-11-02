@@ -614,6 +614,7 @@ private struct RecipeIngredientEditorView: View {
     @Environment(\.workoutVisualPhase) private var phase
 
     private let ingredientID: FoodEntry.ID
+    private let originalFood: FoodEntry?
     private let onSave: (FoodEntry) -> Void
 
     @State private var name: String
@@ -625,13 +626,14 @@ private struct RecipeIngredientEditorView: View {
 
     init(existing: FoodEntry? = nil, onSave: @escaping (FoodEntry) -> Void) {
         ingredientID = existing?.id ?? UUID()
+        originalFood = existing
         self.onSave = onSave
         _name = State(initialValue: existing?.name ?? "")
-        _servings = State(initialValue: existing?.servings.nutritionText ?? "1")
-        _calories = State(initialValue: existing?.nutritionPerServing.calories.nutritionText ?? "")
-        _protein = State(initialValue: existing?.nutritionPerServing.proteinGrams.nutritionText ?? "")
-        _carbohydrates = State(initialValue: existing?.nutritionPerServing.carbohydrateGrams.nutritionText ?? "")
-        _fat = State(initialValue: existing?.nutritionPerServing.fatGrams.nutritionText ?? "")
+        _servings = State(initialValue: existing.map { Self.editable($0.servings) } ?? "1")
+        _calories = State(initialValue: existing.map { Self.editable($0.nutritionPerServing.calories) } ?? "")
+        _protein = State(initialValue: existing.map { Self.editable($0.nutritionPerServing.proteinGrams) } ?? "")
+        _carbohydrates = State(initialValue: existing.map { Self.editable($0.nutritionPerServing.carbohydrateGrams) } ?? "")
+        _fat = State(initialValue: existing.map { Self.editable($0.nutritionPerServing.fatGrams) } ?? "")
     }
 
     var body: some View {
@@ -739,9 +741,9 @@ private struct RecipeIngredientEditorView: View {
             return
         }
 
-        onSave(
-            FoodEntry(
+        var ingredient = FoodEntry(
                 id: ingredientID,
+                serverID: originalFood?.serverID,
                 name: name.trimmingCharacters(in: .whitespacesAndNewlines),
                 servings: servings,
                 nutritionPerServing: NutritionAmount(
@@ -751,8 +753,13 @@ private struct RecipeIngredientEditorView: View {
                     fatGrams: fat
                 )
             )
-        )
+        ingredient.preserveSourceDetails(ifNutritionMatches: originalFood)
+        onSave(ingredient)
         dismiss()
+    }
+
+    private static func editable(_ value: Decimal) -> String {
+        value.formatted(.number.locale(.app).precision(.fractionLength(0...6)).grouping(.never))
     }
 
     private func positiveDecimal(_ value: String) -> Decimal? {
@@ -766,7 +773,7 @@ private struct RecipeIngredientEditorView: View {
     }
 
     private func decimal(_ value: String) -> Decimal? {
-        Decimal(string: value.trimmingCharacters(in: .whitespacesAndNewlines), locale: .current)
+        FoodPortionMeasurement.nonnegative(value, locale: .app)
     }
 }
 

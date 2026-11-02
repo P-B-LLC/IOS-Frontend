@@ -5043,6 +5043,38 @@ public enum Components {
         }
         /// - Remark: Generated from `#/components/schemas/CookbookIngredient`.
         public struct CookbookIngredient: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CookbookIngredient/source_id`.
+            public var sourceId: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/CookbookIngredient/serving_description`.
+            public var servingDescription: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/CookbookIngredient/reference_quantity`.
+            public var referenceQuantity: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/CookbookIngredient/reference_unit`.
+            public var referenceUnit: Swift.String?
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CookbookIngredient/nutrients`.
+            public struct NutrientsPayload: Codable, Hashable, Sendable {
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: Swift.String]
+                /// Creates a new `NutrientsPayload`.
+                ///
+                /// - Parameters:
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(additionalProperties: [String: Swift.String] = .init()) {
+                    self.additionalProperties = additionalProperties
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CookbookIngredient/nutrients`.
+            public var nutrients: Components.Schemas.CookbookIngredient.NutrientsPayload?
             /// - Remark: Generated from `#/components/schemas/CookbookIngredient/name`.
             public var name: Swift.String
             /// - Remark: Generated from `#/components/schemas/CookbookIngredient/servings`.
@@ -5058,6 +5090,11 @@ public enum Components {
             /// Creates a new `CookbookIngredient`.
             ///
             /// - Parameters:
+            ///   - sourceId:
+            ///   - servingDescription:
+            ///   - referenceQuantity:
+            ///   - referenceUnit:
+            ///   - nutrients: Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
             ///   - name:
             ///   - servings:
             ///   - calories:
@@ -5065,6 +5102,11 @@ public enum Components {
             ///   - carbohydrateGrams:
             ///   - fatGrams:
             public init(
+                sourceId: Swift.String? = nil,
+                servingDescription: Swift.String? = nil,
+                referenceQuantity: Swift.String? = nil,
+                referenceUnit: Swift.String? = nil,
+                nutrients: Components.Schemas.CookbookIngredient.NutrientsPayload? = nil,
                 name: Swift.String,
                 servings: Swift.String,
                 calories: Swift.String,
@@ -5072,6 +5114,11 @@ public enum Components {
                 carbohydrateGrams: Swift.String,
                 fatGrams: Swift.String
             ) {
+                self.sourceId = sourceId
+                self.servingDescription = servingDescription
+                self.referenceQuantity = referenceQuantity
+                self.referenceUnit = referenceUnit
+                self.nutrients = nutrients
                 self.name = name
                 self.servings = servings
                 self.calories = calories
@@ -5080,6 +5127,11 @@ public enum Components {
                 self.fatGrams = fatGrams
             }
             public enum CodingKeys: String, CodingKey {
+                case sourceId = "source_id"
+                case servingDescription = "serving_description"
+                case referenceQuantity = "reference_quantity"
+                case referenceUnit = "reference_unit"
+                case nutrients
                 case name
                 case servings
                 case calories
@@ -5845,6 +5897,38 @@ public enum Components {
             public var id: Swift.Int
             /// - Remark: Generated from `#/components/schemas/FoodEntry/meal`.
             public var meal: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/FoodEntry/source_id`.
+            public var sourceId: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/FoodEntry/serving_description`.
+            public var servingDescription: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/FoodEntry/reference_quantity`.
+            public var referenceQuantity: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/FoodEntry/reference_unit`.
+            public var referenceUnit: Swift.String?
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FoodEntry/nutrients`.
+            public struct NutrientsPayload: Codable, Hashable, Sendable {
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: Swift.String]
+                /// Creates a new `NutrientsPayload`.
+                ///
+                /// - Parameters:
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(additionalProperties: [String: Swift.String] = .init()) {
+                    self.additionalProperties = additionalProperties
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FoodEntry/nutrients`.
+            public var nutrients: Components.Schemas.FoodEntry.NutrientsPayload?
             /// - Remark: Generated from `#/components/schemas/FoodEntry/name`.
             public var name: Swift.String
             /// - Remark: Generated from `#/components/schemas/FoodEntry/servings`.
@@ -5876,6 +5960,11 @@ public enum Components {
             /// - Parameters:
             ///   - id:
             ///   - meal:
+            ///   - sourceId:
+            ///   - servingDescription:
+            ///   - referenceQuantity:
+            ///   - referenceUnit:
+            ///   - nutrients: Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
             ///   - name:
             ///   - servings:
             ///   - calories:
@@ -5892,6 +5981,11 @@ public enum Components {
             public init(
                 id: Swift.Int,
                 meal: Swift.Int,
+                sourceId: Swift.String? = nil,
+                servingDescription: Swift.String? = nil,
+                referenceQuantity: Swift.String? = nil,
+                referenceUnit: Swift.String? = nil,
+                nutrients: Components.Schemas.FoodEntry.NutrientsPayload? = nil,
                 name: Swift.String,
                 servings: Swift.String? = nil,
                 calories: Swift.String? = nil,
@@ -5908,6 +6002,11 @@ public enum Components {
             ) {
                 self.id = id
                 self.meal = meal
+                self.sourceId = sourceId
+                self.servingDescription = servingDescription
+                self.referenceQuantity = referenceQuantity
+                self.referenceUnit = referenceUnit
+                self.nutrients = nutrients
                 self.name = name
                 self.servings = servings
                 self.calories = calories
@@ -5925,6 +6024,11 @@ public enum Components {
             public enum CodingKeys: String, CodingKey {
                 case id
                 case meal
+                case sourceId = "source_id"
+                case servingDescription = "serving_description"
+                case referenceQuantity = "reference_quantity"
+                case referenceUnit = "reference_unit"
+                case nutrients
                 case name
                 case servings
                 case calories
@@ -5947,6 +6051,38 @@ public enum Components {
         public struct FoodEntryRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/FoodEntryRequest/meal`.
             public var meal: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/FoodEntryRequest/source_id`.
+            public var sourceId: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/FoodEntryRequest/serving_description`.
+            public var servingDescription: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/FoodEntryRequest/reference_quantity`.
+            public var referenceQuantity: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/FoodEntryRequest/reference_unit`.
+            public var referenceUnit: Swift.String?
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FoodEntryRequest/nutrients`.
+            public struct NutrientsPayload: Codable, Hashable, Sendable {
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: Swift.String]
+                /// Creates a new `NutrientsPayload`.
+                ///
+                /// - Parameters:
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(additionalProperties: [String: Swift.String] = .init()) {
+                    self.additionalProperties = additionalProperties
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FoodEntryRequest/nutrients`.
+            public var nutrients: Components.Schemas.FoodEntryRequest.NutrientsPayload?
             /// - Remark: Generated from `#/components/schemas/FoodEntryRequest/name`.
             public var name: Swift.String
             /// - Remark: Generated from `#/components/schemas/FoodEntryRequest/servings`.
@@ -5965,6 +6101,11 @@ public enum Components {
             ///
             /// - Parameters:
             ///   - meal:
+            ///   - sourceId:
+            ///   - servingDescription:
+            ///   - referenceQuantity:
+            ///   - referenceUnit:
+            ///   - nutrients: Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
             ///   - name:
             ///   - servings:
             ///   - calories:
@@ -5974,6 +6115,11 @@ public enum Components {
             ///   - position:
             public init(
                 meal: Swift.Int,
+                sourceId: Swift.String? = nil,
+                servingDescription: Swift.String? = nil,
+                referenceQuantity: Swift.String? = nil,
+                referenceUnit: Swift.String? = nil,
+                nutrients: Components.Schemas.FoodEntryRequest.NutrientsPayload? = nil,
                 name: Swift.String,
                 servings: Swift.String? = nil,
                 calories: Swift.String? = nil,
@@ -5983,6 +6129,11 @@ public enum Components {
                 position: Swift.Int64? = nil
             ) {
                 self.meal = meal
+                self.sourceId = sourceId
+                self.servingDescription = servingDescription
+                self.referenceQuantity = referenceQuantity
+                self.referenceUnit = referenceUnit
+                self.nutrients = nutrients
                 self.name = name
                 self.servings = servings
                 self.calories = calories
@@ -5993,6 +6144,11 @@ public enum Components {
             }
             public enum CodingKeys: String, CodingKey {
                 case meal
+                case sourceId = "source_id"
+                case servingDescription = "serving_description"
+                case referenceQuantity = "reference_quantity"
+                case referenceUnit = "reference_unit"
+                case nutrients
                 case name
                 case servings
                 case calories
@@ -6125,12 +6281,40 @@ public enum Components {
         public struct FoodSearchResult: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/FoodSearchResult/source_id`.
             public var sourceId: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FoodSearchResult/serving_description`.
+            public var servingDescription: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FoodSearchResult/reference_quantity`.
+            public var referenceQuantity: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/FoodSearchResult/reference_unit`.
+            public var referenceUnit: Swift.String?
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FoodSearchResult/nutrients`.
+            public struct NutrientsPayload: Codable, Hashable, Sendable {
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: Swift.String]
+                /// Creates a new `NutrientsPayload`.
+                ///
+                /// - Parameters:
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(additionalProperties: [String: Swift.String] = .init()) {
+                    self.additionalProperties = additionalProperties
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FoodSearchResult/nutrients`.
+            public var nutrients: Components.Schemas.FoodSearchResult.NutrientsPayload?
             /// - Remark: Generated from `#/components/schemas/FoodSearchResult/name`.
             public var name: Swift.String
             /// - Remark: Generated from `#/components/schemas/FoodSearchResult/brand`.
             public var brand: Swift.String
-            /// - Remark: Generated from `#/components/schemas/FoodSearchResult/serving_description`.
-            public var servingDescription: Swift.String
             /// - Remark: Generated from `#/components/schemas/FoodSearchResult/calories`.
             public var calories: Swift.String
             /// - Remark: Generated from `#/components/schemas/FoodSearchResult/protein_grams`.
@@ -6143,27 +6327,36 @@ public enum Components {
             ///
             /// - Parameters:
             ///   - sourceId:
+            ///   - servingDescription:
+            ///   - referenceQuantity:
+            ///   - referenceUnit:
+            ///   - nutrients: Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
             ///   - name:
             ///   - brand:
-            ///   - servingDescription:
             ///   - calories:
             ///   - proteinGrams:
             ///   - carbohydrateGrams:
             ///   - fatGrams:
             public init(
                 sourceId: Swift.String,
+                servingDescription: Swift.String,
+                referenceQuantity: Swift.String? = nil,
+                referenceUnit: Swift.String? = nil,
+                nutrients: Components.Schemas.FoodSearchResult.NutrientsPayload? = nil,
                 name: Swift.String,
                 brand: Swift.String,
-                servingDescription: Swift.String,
                 calories: Swift.String,
                 proteinGrams: Swift.String,
                 carbohydrateGrams: Swift.String,
                 fatGrams: Swift.String
             ) {
                 self.sourceId = sourceId
+                self.servingDescription = servingDescription
+                self.referenceQuantity = referenceQuantity
+                self.referenceUnit = referenceUnit
+                self.nutrients = nutrients
                 self.name = name
                 self.brand = brand
-                self.servingDescription = servingDescription
                 self.calories = calories
                 self.proteinGrams = proteinGrams
                 self.carbohydrateGrams = carbohydrateGrams
@@ -6171,9 +6364,12 @@ public enum Components {
             }
             public enum CodingKeys: String, CodingKey {
                 case sourceId = "source_id"
+                case servingDescription = "serving_description"
+                case referenceQuantity = "reference_quantity"
+                case referenceUnit = "reference_unit"
+                case nutrients
                 case name
                 case brand
-                case servingDescription = "serving_description"
                 case calories
                 case proteinGrams = "protein_grams"
                 case carbohydrateGrams = "carbohydrate_grams"
@@ -8616,6 +8812,38 @@ public enum Components {
         public struct PatchedFoodEntryRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PatchedFoodEntryRequest/meal`.
             public var meal: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PatchedFoodEntryRequest/source_id`.
+            public var sourceId: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedFoodEntryRequest/serving_description`.
+            public var servingDescription: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedFoodEntryRequest/reference_quantity`.
+            public var referenceQuantity: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedFoodEntryRequest/reference_unit`.
+            public var referenceUnit: Swift.String?
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PatchedFoodEntryRequest/nutrients`.
+            public struct NutrientsPayload: Codable, Hashable, Sendable {
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: Swift.String]
+                /// Creates a new `NutrientsPayload`.
+                ///
+                /// - Parameters:
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(additionalProperties: [String: Swift.String] = .init()) {
+                    self.additionalProperties = additionalProperties
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PatchedFoodEntryRequest/nutrients`.
+            public var nutrients: Components.Schemas.PatchedFoodEntryRequest.NutrientsPayload?
             /// - Remark: Generated from `#/components/schemas/PatchedFoodEntryRequest/name`.
             public var name: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PatchedFoodEntryRequest/servings`.
@@ -8634,6 +8862,11 @@ public enum Components {
             ///
             /// - Parameters:
             ///   - meal:
+            ///   - sourceId:
+            ///   - servingDescription:
+            ///   - referenceQuantity:
+            ///   - referenceUnit:
+            ///   - nutrients: Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
             ///   - name:
             ///   - servings:
             ///   - calories:
@@ -8643,6 +8876,11 @@ public enum Components {
             ///   - position:
             public init(
                 meal: Swift.Int? = nil,
+                sourceId: Swift.String? = nil,
+                servingDescription: Swift.String? = nil,
+                referenceQuantity: Swift.String? = nil,
+                referenceUnit: Swift.String? = nil,
+                nutrients: Components.Schemas.PatchedFoodEntryRequest.NutrientsPayload? = nil,
                 name: Swift.String? = nil,
                 servings: Swift.String? = nil,
                 calories: Swift.String? = nil,
@@ -8652,6 +8890,11 @@ public enum Components {
                 position: Swift.Int64? = nil
             ) {
                 self.meal = meal
+                self.sourceId = sourceId
+                self.servingDescription = servingDescription
+                self.referenceQuantity = referenceQuantity
+                self.referenceUnit = referenceUnit
+                self.nutrients = nutrients
                 self.name = name
                 self.servings = servings
                 self.calories = calories
@@ -8662,6 +8905,11 @@ public enum Components {
             }
             public enum CodingKeys: String, CodingKey {
                 case meal
+                case sourceId = "source_id"
+                case servingDescription = "serving_description"
+                case referenceQuantity = "reference_quantity"
+                case referenceUnit = "reference_unit"
+                case nutrients
                 case name
                 case servings
                 case calories
@@ -10751,6 +10999,38 @@ public enum Components {
         public struct PostMealEntry: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PostMealEntry/id`.
             public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PostMealEntry/source_id`.
+            public var sourceId: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PostMealEntry/serving_description`.
+            public var servingDescription: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PostMealEntry/reference_quantity`.
+            public var referenceQuantity: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PostMealEntry/reference_unit`.
+            public var referenceUnit: Swift.String?
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PostMealEntry/nutrients`.
+            public struct NutrientsPayload: Codable, Hashable, Sendable {
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: Swift.String]
+                /// Creates a new `NutrientsPayload`.
+                ///
+                /// - Parameters:
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(additionalProperties: [String: Swift.String] = .init()) {
+                    self.additionalProperties = additionalProperties
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PostMealEntry/nutrients`.
+            public var nutrients: Components.Schemas.PostMealEntry.NutrientsPayload?
             /// - Remark: Generated from `#/components/schemas/PostMealEntry/name`.
             public var name: Swift.String
             /// - Remark: Generated from `#/components/schemas/PostMealEntry/servings`.
@@ -10777,6 +11057,11 @@ public enum Components {
             ///
             /// - Parameters:
             ///   - id:
+            ///   - sourceId:
+            ///   - servingDescription:
+            ///   - referenceQuantity:
+            ///   - referenceUnit:
+            ///   - nutrients: Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
             ///   - name:
             ///   - servings:
             ///   - calories:
@@ -10790,6 +11075,11 @@ public enum Components {
             ///   - position:
             public init(
                 id: Swift.Int,
+                sourceId: Swift.String? = nil,
+                servingDescription: Swift.String? = nil,
+                referenceQuantity: Swift.String? = nil,
+                referenceUnit: Swift.String? = nil,
+                nutrients: Components.Schemas.PostMealEntry.NutrientsPayload? = nil,
                 name: Swift.String,
                 servings: Swift.String,
                 calories: Swift.String,
@@ -10803,6 +11093,11 @@ public enum Components {
                 position: Swift.Int
             ) {
                 self.id = id
+                self.sourceId = sourceId
+                self.servingDescription = servingDescription
+                self.referenceQuantity = referenceQuantity
+                self.referenceUnit = referenceUnit
+                self.nutrients = nutrients
                 self.name = name
                 self.servings = servings
                 self.calories = calories
@@ -10817,6 +11112,11 @@ public enum Components {
             }
             public enum CodingKeys: String, CodingKey {
                 case id
+                case sourceId = "source_id"
+                case servingDescription = "serving_description"
+                case referenceQuantity = "reference_quantity"
+                case referenceUnit = "reference_unit"
+                case nutrients
                 case name
                 case servings
                 case calories
@@ -12030,6 +12330,38 @@ public enum Components {
         ///
         /// - Remark: Generated from `#/components/schemas/RecentFood`.
         public struct RecentFood: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/RecentFood/source_id`.
+            public var sourceId: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/RecentFood/serving_description`.
+            public var servingDescription: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/RecentFood/reference_quantity`.
+            public var referenceQuantity: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/RecentFood/reference_unit`.
+            public var referenceUnit: Swift.String?
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/RecentFood/nutrients`.
+            public struct NutrientsPayload: Codable, Hashable, Sendable {
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: Swift.String]
+                /// Creates a new `NutrientsPayload`.
+                ///
+                /// - Parameters:
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(additionalProperties: [String: Swift.String] = .init()) {
+                    self.additionalProperties = additionalProperties
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/RecentFood/nutrients`.
+            public var nutrients: Components.Schemas.RecentFood.NutrientsPayload?
             /// - Remark: Generated from `#/components/schemas/RecentFood/name`.
             public var name: Swift.String
             /// - Remark: Generated from `#/components/schemas/RecentFood/servings`.
@@ -12045,6 +12377,11 @@ public enum Components {
             /// Creates a new `RecentFood`.
             ///
             /// - Parameters:
+            ///   - sourceId:
+            ///   - servingDescription:
+            ///   - referenceQuantity:
+            ///   - referenceUnit:
+            ///   - nutrients: Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
             ///   - name:
             ///   - servings:
             ///   - calories:
@@ -12052,6 +12389,11 @@ public enum Components {
             ///   - carbohydrateGrams:
             ///   - fatGrams:
             public init(
+                sourceId: Swift.String? = nil,
+                servingDescription: Swift.String? = nil,
+                referenceQuantity: Swift.String? = nil,
+                referenceUnit: Swift.String? = nil,
+                nutrients: Components.Schemas.RecentFood.NutrientsPayload? = nil,
                 name: Swift.String,
                 servings: Swift.String,
                 calories: Swift.String,
@@ -12059,6 +12401,11 @@ public enum Components {
                 carbohydrateGrams: Swift.String,
                 fatGrams: Swift.String
             ) {
+                self.sourceId = sourceId
+                self.servingDescription = servingDescription
+                self.referenceQuantity = referenceQuantity
+                self.referenceUnit = referenceUnit
+                self.nutrients = nutrients
                 self.name = name
                 self.servings = servings
                 self.calories = calories
@@ -12067,6 +12414,11 @@ public enum Components {
                 self.fatGrams = fatGrams
             }
             public enum CodingKeys: String, CodingKey {
+                case sourceId = "source_id"
+                case servingDescription = "serving_description"
+                case referenceQuantity = "reference_quantity"
+                case referenceUnit = "reference_unit"
+                case nutrients
                 case name
                 case servings
                 case calories
@@ -12766,6 +13118,38 @@ public enum Components {
         public struct SavedFoodIngredient: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/SavedFoodIngredient/id`.
             public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredient/source_id`.
+            public var sourceId: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredient/serving_description`.
+            public var servingDescription: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredient/reference_quantity`.
+            public var referenceQuantity: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredient/reference_unit`.
+            public var referenceUnit: Swift.String?
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredient/nutrients`.
+            public struct NutrientsPayload: Codable, Hashable, Sendable {
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: Swift.String]
+                /// Creates a new `NutrientsPayload`.
+                ///
+                /// - Parameters:
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(additionalProperties: [String: Swift.String] = .init()) {
+                    self.additionalProperties = additionalProperties
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredient/nutrients`.
+            public var nutrients: Components.Schemas.SavedFoodIngredient.NutrientsPayload?
             /// - Remark: Generated from `#/components/schemas/SavedFoodIngredient/name`.
             public var name: Swift.String
             /// - Remark: Generated from `#/components/schemas/SavedFoodIngredient/servings`.
@@ -12784,6 +13168,11 @@ public enum Components {
             ///
             /// - Parameters:
             ///   - id:
+            ///   - sourceId:
+            ///   - servingDescription:
+            ///   - referenceQuantity:
+            ///   - referenceUnit:
+            ///   - nutrients: Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
             ///   - name:
             ///   - servings:
             ///   - calories:
@@ -12793,6 +13182,11 @@ public enum Components {
             ///   - position:
             public init(
                 id: Swift.Int,
+                sourceId: Swift.String? = nil,
+                servingDescription: Swift.String? = nil,
+                referenceQuantity: Swift.String? = nil,
+                referenceUnit: Swift.String? = nil,
+                nutrients: Components.Schemas.SavedFoodIngredient.NutrientsPayload? = nil,
                 name: Swift.String,
                 servings: Swift.String? = nil,
                 calories: Swift.String? = nil,
@@ -12802,6 +13196,11 @@ public enum Components {
                 position: Swift.Int64? = nil
             ) {
                 self.id = id
+                self.sourceId = sourceId
+                self.servingDescription = servingDescription
+                self.referenceQuantity = referenceQuantity
+                self.referenceUnit = referenceUnit
+                self.nutrients = nutrients
                 self.name = name
                 self.servings = servings
                 self.calories = calories
@@ -12812,6 +13211,11 @@ public enum Components {
             }
             public enum CodingKeys: String, CodingKey {
                 case id
+                case sourceId = "source_id"
+                case servingDescription = "serving_description"
+                case referenceQuantity = "reference_quantity"
+                case referenceUnit = "reference_unit"
+                case nutrients
                 case name
                 case servings
                 case calories
@@ -12823,6 +13227,38 @@ public enum Components {
         }
         /// - Remark: Generated from `#/components/schemas/SavedFoodIngredientRequest`.
         public struct SavedFoodIngredientRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredientRequest/source_id`.
+            public var sourceId: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredientRequest/serving_description`.
+            public var servingDescription: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredientRequest/reference_quantity`.
+            public var referenceQuantity: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredientRequest/reference_unit`.
+            public var referenceUnit: Swift.String?
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredientRequest/nutrients`.
+            public struct NutrientsPayload: Codable, Hashable, Sendable {
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: Swift.String]
+                /// Creates a new `NutrientsPayload`.
+                ///
+                /// - Parameters:
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(additionalProperties: [String: Swift.String] = .init()) {
+                    self.additionalProperties = additionalProperties
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredientRequest/nutrients`.
+            public var nutrients: Components.Schemas.SavedFoodIngredientRequest.NutrientsPayload?
             /// - Remark: Generated from `#/components/schemas/SavedFoodIngredientRequest/name`.
             public var name: Swift.String
             /// - Remark: Generated from `#/components/schemas/SavedFoodIngredientRequest/servings`.
@@ -12840,6 +13276,11 @@ public enum Components {
             /// Creates a new `SavedFoodIngredientRequest`.
             ///
             /// - Parameters:
+            ///   - sourceId:
+            ///   - servingDescription:
+            ///   - referenceQuantity:
+            ///   - referenceUnit:
+            ///   - nutrients: Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
             ///   - name:
             ///   - servings:
             ///   - calories:
@@ -12848,6 +13289,11 @@ public enum Components {
             ///   - fatGrams:
             ///   - position:
             public init(
+                sourceId: Swift.String? = nil,
+                servingDescription: Swift.String? = nil,
+                referenceQuantity: Swift.String? = nil,
+                referenceUnit: Swift.String? = nil,
+                nutrients: Components.Schemas.SavedFoodIngredientRequest.NutrientsPayload? = nil,
                 name: Swift.String,
                 servings: Swift.String? = nil,
                 calories: Swift.String? = nil,
@@ -12856,6 +13302,11 @@ public enum Components {
                 fatGrams: Swift.String? = nil,
                 position: Swift.Int64? = nil
             ) {
+                self.sourceId = sourceId
+                self.servingDescription = servingDescription
+                self.referenceQuantity = referenceQuantity
+                self.referenceUnit = referenceUnit
+                self.nutrients = nutrients
                 self.name = name
                 self.servings = servings
                 self.calories = calories
@@ -12865,6 +13316,11 @@ public enum Components {
                 self.position = position
             }
             public enum CodingKeys: String, CodingKey {
+                case sourceId = "source_id"
+                case servingDescription = "serving_description"
+                case referenceQuantity = "reference_quantity"
+                case referenceUnit = "reference_unit"
+                case nutrients
                 case name
                 case servings
                 case calories

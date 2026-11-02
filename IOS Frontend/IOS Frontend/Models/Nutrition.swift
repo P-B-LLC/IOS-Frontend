@@ -63,23 +63,106 @@ nonisolated struct FoodEntry: Identifiable, Equatable, Hashable, Codable, Sendab
     var name: String
     var servings: Decimal
     var nutritionPerServing: NutritionAmount
+    /// The source and reference survive saving, recents, and recipe copies.
+    /// A reference is the SAME basis as nutritionPerServing and nutrients:
+    /// 20 g can mean a labelled serving; 100 g can mean a database reference.
+    /// Missing metadata on historical/manual foods must never become 100 g.
+    var sourceID: String?
+    var servingDescription: String?
+    var referenceQuantity: Decimal?
+    var referenceUnit: String?
+    /// Canonical nutrient keys and units are defined by the API. Absent is
+    /// unknown, not zero. These amounts are per reference, like the macros.
+    var nutrients: [String: Decimal]
+    /// Local recovery-format version, never a wire field. Version-one drafts
+    /// were originally submitted with two-decimal serving multipliers; their
+    /// retry must keep that payload fingerprint after an app upgrade.
+    var snapshotVersion: Int
 
     init(
         id: UUID = UUID(),
         serverID: Int? = nil,
         name: String,
         servings: Decimal = 1,
-        nutritionPerServing: NutritionAmount
+        nutritionPerServing: NutritionAmount,
+        sourceID: String? = nil,
+        servingDescription: String? = nil,
+        referenceQuantity: Decimal? = nil,
+        referenceUnit: String? = nil,
+        nutrients: [String: Decimal] = [:]
     ) {
         self.id = id
         self.serverID = serverID
         self.name = name
         self.servings = servings
         self.nutritionPerServing = nutritionPerServing
+        self.sourceID = sourceID
+        self.servingDescription = servingDescription
+        self.referenceQuantity = referenceQuantity
+        self.referenceUnit = referenceUnit
+        self.nutrients = nutrients
+        snapshotVersion = 2
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, serverID, name, servings, nutritionPerServing
+        case sourceID, servingDescription, referenceQuantity, referenceUnit, nutrients, snapshotVersion
+    }
+
+    /// Recovery files written before serving metadata was introduced remain
+    /// readable and preserve their original identity, macros and multiplier.
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        id = try values.decode(UUID.self, forKey: .id)
+        serverID = try values.decodeIfPresent(Int.self, forKey: .serverID)
+        name = try values.decode(String.self, forKey: .name)
+        servings = try values.decode(Decimal.self, forKey: .servings)
+        nutritionPerServing = try values.decode(NutritionAmount.self, forKey: .nutritionPerServing)
+        sourceID = try values.decodeIfPresent(String.self, forKey: .sourceID)
+        servingDescription = try values.decodeIfPresent(String.self, forKey: .servingDescription)
+        referenceQuantity = try values.decodeIfPresent(Decimal.self, forKey: .referenceQuantity)
+        referenceUnit = try values.decodeIfPresent(String.self, forKey: .referenceUnit)
+        nutrients = try values.decodeIfPresent([String: Decimal].self, forKey: .nutrients) ?? [:]
+        snapshotVersion = try values.decodeIfPresent(Int.self, forKey: .snapshotVersion) ?? 1
     }
 
     var totalNutrition: NutritionAmount {
         nutritionPerServing * servings
+    }
+
+    var totalNutrients: [String: Decimal] {
+        nutrients.mapValues { $0 * servings }
+    }
+
+    var hasSourceDetails: Bool {
+        sourceID?.isEmpty == false || servingDescription?.isEmpty == false ||
+        referenceQuantity != nil || referenceUnit?.isEmpty == false || !nutrients.isEmpty
+    }
+
+    /// A new log has a new identity but keeps the source's immutable
+    /// nutrition/reference snapshot; retry keeps this copy's identity.
+    func copyForLogging() -> FoodEntry {
+        FoodEntry(name: name, servings: servings, nutritionPerServing: nutritionPerServing,
+                  sourceID: sourceID, servingDescription: servingDescription,
+                  referenceQuantity: referenceQuantity, referenceUnit: referenceUnit,
+                  nutrients: nutrients)
+    }
+
+    /// Manual editors only edit the four macro figures. Renaming a food or
+    /// changing its amount preserves the verified snapshot; changing those
+    /// figures makes the old source/micronutrients no longer authoritative.
+    mutating func preserveSourceDetails(ifNutritionMatches original: FoodEntry?) {
+        sourceID = nil
+        servingDescription = nil
+        referenceQuantity = nil
+        referenceUnit = nil
+        nutrients = [:]
+        guard let original, nutritionPerServing == original.nutritionPerServing else { return }
+        sourceID = original.sourceID
+        servingDescription = original.servingDescription
+        referenceQuantity = original.referenceQuantity
+        referenceUnit = original.referenceUnit
+        nutrients = original.nutrients
     }
 }
 

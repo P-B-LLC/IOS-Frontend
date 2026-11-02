@@ -33,6 +33,7 @@ struct FoodEntryEditorView: View {
     let date: Date
     let mealID: FoodMeal.ID
     private let existingServerID: Int?
+    private let originalFood: FoodEntry?
     @State private var existingID: FoodEntry.ID
     private let isEditing: Bool
     /// Called instead of `dismiss()` after a successful save. Lets a presenting
@@ -56,14 +57,15 @@ struct FoodEntryEditorView: View {
         self.mealID = mealID
         self.onSaved = onSaved
         existingServerID = existing?.serverID
+        originalFood = existing
         _existingID = State(initialValue: existing?.id ?? UUID())
         isEditing = existing != nil
         _name = State(initialValue: existing?.name ?? "")
-        _servings = State(initialValue: existing?.servings.nutritionText ?? "1")
-        _calories = State(initialValue: existing?.nutritionPerServing.calories.nutritionText ?? "")
-        _protein = State(initialValue: existing?.nutritionPerServing.proteinGrams.nutritionText ?? "")
-        _carbohydrates = State(initialValue: existing?.nutritionPerServing.carbohydrateGrams.nutritionText ?? "")
-        _fat = State(initialValue: existing?.nutritionPerServing.fatGrams.nutritionText ?? "")
+        _servings = State(initialValue: existing.map { Self.editable($0.servings) } ?? "1")
+        _calories = State(initialValue: existing.map { Self.editable($0.nutritionPerServing.calories) } ?? "")
+        _protein = State(initialValue: existing.map { Self.editable($0.nutritionPerServing.proteinGrams) } ?? "")
+        _carbohydrates = State(initialValue: existing.map { Self.editable($0.nutritionPerServing.carbohydrateGrams) } ?? "")
+        _fat = State(initialValue: existing.map { Self.editable($0.nutritionPerServing.fatGrams) } ?? "")
     }
 
     var body: some View {
@@ -217,23 +219,20 @@ struct FoodEntryEditorView: View {
         }
 
         guard !isSaving else { return }
+        var entry = FoodEntry(
+            id: existingID, serverID: existingServerID,
+            name: name.trimmingCharacters(in: .whitespacesAndNewlines), servings: servings,
+            nutritionPerServing: NutritionAmount(calories: calories, proteinGrams: protein,
+                                                carbohydrateGrams: carbohydrates, fatGrams: fat)
+        )
+        entry.preserveSourceDetails(ifNutritionMatches: originalFood)
+        let entryToSave = entry
         isSaving = true
         saveError = nil
         Task {
             defer { isSaving = false }
             let saved = await store.saveFood(
-            FoodEntry(
-                id: existingID,
-                serverID: existingServerID,
-                name: name.trimmingCharacters(in: .whitespacesAndNewlines),
-                servings: servings,
-                nutritionPerServing: NutritionAmount(
-                    calories: calories,
-                    proteinGrams: protein,
-                    carbohydrateGrams: carbohydrates,
-                    fatGrams: fat
-                )
-            ),
+            entryToSave,
             in: mealID,
             on: date,
             celebrates: !isEditing
@@ -251,6 +250,10 @@ struct FoodEntryEditorView: View {
         }
     }
 
+    private static func editable(_ value: Decimal) -> String {
+        value.formatted(.number.locale(.app).precision(.fractionLength(0...6)).grouping(.never))
+    }
+
     private func positiveDecimal(_ value: String) -> Decimal? {
         guard let value = decimal(value), value > 0 else { return nil }
         return value
@@ -262,6 +265,6 @@ struct FoodEntryEditorView: View {
     }
 
     private func decimal(_ value: String) -> Decimal? {
-        Decimal(string: value.trimmingCharacters(in: .whitespacesAndNewlines), locale: .current)
+        FoodPortionMeasurement.nonnegative(value, locale: .app)
     }
 }

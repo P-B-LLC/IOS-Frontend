@@ -334,7 +334,10 @@ struct FoodPickerView: View {
     private func add(_ food: FoodEntry) {
         guard !isSaving else { return }
         if let pendingAdd,
-           pendingAdd.name != food.name || pendingAdd.servings != food.servings || pendingAdd.nutritionPerServing != food.nutritionPerServing {
+           pendingAdd.name != food.name || pendingAdd.servings != food.servings || pendingAdd.nutritionPerServing != food.nutritionPerServing ||
+            pendingAdd.sourceID != food.sourceID || pendingAdd.referenceQuantity != food.referenceQuantity ||
+            pendingAdd.referenceUnit != food.referenceUnit || pendingAdd.servingDescription != food.servingDescription ||
+            pendingAdd.nutrients != food.nutrients {
             saveError = String(
                 localized: "Please retry the previous food first so we can confirm whether it saved.",
                 bundle: .app,
@@ -342,8 +345,7 @@ struct FoodPickerView: View {
             )
             return
         }
-        let entry = pendingAdd ?? FoodEntry(name: food.name, servings: food.servings,
-                                           nutritionPerServing: food.nutritionPerServing)
+        let entry = pendingAdd ?? food.copyForLogging()
         pendingAdd = entry
         isSaving = true
         saveError = nil
@@ -487,32 +489,36 @@ private struct FoodPortionView: View {
     @State private var quantity: String
     @State private var usesMeasurement: Bool
     @State private var usesOunces = false
-    @State private var servingGrams = ""
+    @State private var showsNutrients = false
 
     init(food: FoodEntry, servingDescription: String, isSaving: Bool,
          error: String?, lockedForRetry: Bool, onAdd: @escaping (FoodEntry) -> Void) {
         self.food = food
-        self.servingDescription = servingDescription
+        self.servingDescription = food.servingDescription ?? servingDescription
         self.isSaving = isSaving
         self.error = error
         self.lockedForRetry = lockedForRetry
         self.onAdd = onAdd
-        let measured = servingDescription == "100 g" || servingDescription == "100 ml"
+        let reference = FoodPortionReference(quantity: food.referenceQuantity, unit: food.referenceUnit,
+                                              legacyDescription: food.servingDescription ?? servingDescription)
+        let measured = reference != nil
         _usesMeasurement = State(initialValue: measured)
-        _quantity = State(initialValue: (food.servings * (measured ? 100 : 1))
+        _quantity = State(initialValue: (food.servings * (reference?.quantity ?? 1))
             .formatted(.number.locale(.app).precision(.fractionLength(0...12)).grouping(.never)))
     }
 
     private var servings: Decimal? {
         guard let value = FoodPortionMeasurement.positive(quantity, locale: .app) else { return nil }
-        return FoodPortionMeasurement.multiplier(amount: value, measured: usesMeasurement,
-            ounces: usesOunces && !isLiquid, gramsPerServing: measurementBasis)
+        guard let multiplier = FoodPortionMeasurement.multiplier(amount: value, measured: usesMeasurement,
+            ounces: usesOunces && !isLiquid, gramsPerServing: measurementBasis) else { return nil }
+        return FoodPortionMeasurement.savedMultiplier(multiplier)
     }
-    private var isLiquid: Bool { servingDescription == "100 ml" }
-    private var measurementBasis: Decimal? {
-        if servingDescription == "100 g" || isLiquid { return 100 }
-        return FoodPortionMeasurement.positive(servingGrams, locale: .app)
+    private var reference: FoodPortionReference? {
+        FoodPortionReference(quantity: food.referenceQuantity, unit: food.referenceUnit,
+                             legacyDescription: servingDescription)
     }
+    private var isLiquid: Bool { reference?.unit == "ml" }
+    private var measurementBasis: Decimal? { reference?.quantity }
     private var measurementFactor: Decimal? {
         guard usesMeasurement else { return 1 }
         guard let basis = measurementBasis else { return nil }
@@ -527,6 +533,7 @@ private struct FoodPortionView: View {
                 Text(food.name).font(.community(.subheadline)).foregroundStyle(.secondary)
                 Text("YOUR PORTION").font(.community(.caption, weight: .semibold)).foregroundStyle(.secondary)
                 VStack(alignment: .leading, spacing: 16) {
+                    if reference != nil {
                     Picker("Portion", selection: Binding(get: { usesMeasurement }, set: { selected in
                         let previous = servings
                         usesMeasurement = selected
@@ -536,6 +543,7 @@ private struct FoodPortionView: View {
                         else { Text("Weight").tag(true) }
                         Text("Servings").tag(false)
                     }.pickerStyle(.segmented)
+                    }
                     if usesMeasurement && !isLiquid {
                         Picker("Weight", selection: Binding(get: { usesOunces }, set: { selected in
                             let previous = servings
@@ -545,13 +553,13 @@ private struct FoodPortionView: View {
                             Text("Grams").tag(false)
                             Text("Ounces").tag(true)
                         }.pickerStyle(.segmented)
-                        if servingDescription != "100 g" {
-                            Text("Grams in one serving")
-                            TextField("Grams in one serving", text: $servingGrams)
-                                .keyboardType(.decimalPad).textFieldStyle(.roundedBorder)
-                            Text("Enter the weight of one serving from the label. Do not guess.")
-                                .font(.community(.caption)).foregroundStyle(.secondary)
-                        }
+                    }
+                    if let reference {
+                        Text("1 serving = \(reference.quantity.formatted(.number.locale(.app).precision(.fractionLength(0...4)).grouping(.never))) \(reference.unit)")
+                            .font(.community(.caption)).foregroundStyle(.secondary)
+                    } else {
+                        Text("This food has no verified weight or volume. Use servings, or choose a database match.")
+                            .font(.community(.caption)).foregroundStyle(.secondary)
                     }
                     Text(portionUnit).font(.community(.headline))
                     TextField("Quantity", text: $quantity)
@@ -565,11 +573,23 @@ private struct FoodPortionView: View {
                     .font(.community(.caption)).foregroundStyle(.secondary)
                 VStack(alignment: .leading, spacing: 10) {
                     Text("For your portion").foregroundStyle(.secondary)
+                    if servings != nil {
                     Text("\(nutrition.calories.nutritionText) kcal").font(.community(.largeTitle, weight: .bold))
                     ForEach(Macro.allCases) { macro in
                         Text(amountText(for: macro))
                             .font(.community(.subheadline)).foregroundStyle(macro.color)
                     }
+                    } else {
+                        Text("Enter an amount to see nutrition.")
+                            .font(.community(.subheadline)).foregroundStyle(.secondary)
+                    }
+                }
+                if let servings {
+                    DisclosureGroup("Vitamins, minerals & more", isExpanded: $showsNutrients) {
+                        FoodNutrientsList(entries: [portionEntry(servings)], showsCoverage: false)
+                            .padding(.top, 12)
+                        FoodDailyValueFootnote().padding(.top, 12)
+                    }.tint(HomeTimeOfDay.current.accent)
                 }
                 if let error { Text(error).foregroundStyle(.red).accessibilityAddTraits(.isStaticText) }
                 if servings == nil { Text("Check the portion quantity.").foregroundStyle(.secondary) }
@@ -611,6 +631,12 @@ private struct FoodPortionView: View {
             return
         }
         quantity = (previous * factor).formatted(.number.locale(.app).precision(.fractionLength(0...12)).grouping(.never))
+    }
+
+    private func portionEntry(_ servings: Decimal) -> FoodEntry {
+        var entry = food
+        entry.servings = servings
+        return entry
     }
 
     private var portionUnit: LocalizedStringKey {

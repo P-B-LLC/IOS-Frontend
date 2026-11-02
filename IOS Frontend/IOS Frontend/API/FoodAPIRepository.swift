@@ -17,10 +17,26 @@ import RepbaseAPI
 /// out and another way on the way back.
 nonisolated enum FoodDecimal {
     static func string(_ value: Decimal) -> String {
+        string(value, scale: 2)
+    }
+
+    static func servingsString(_ value: Decimal, snapshotVersion: Int = 2) -> String {
+        string(value, scale: snapshotVersion < 2 ? 2 : 6)
+    }
+
+    static func referenceString(_ value: Decimal) -> String {
+        string(value, scale: 4)
+    }
+
+    static func nutrientString(_ value: Decimal) -> String {
+        string(value, scale: 6)
+    }
+
+    private static func string(_ value: Decimal, scale: Int16) -> String {
         NSDecimalNumber(decimal: value)
             .rounding(accordingToBehavior: NSDecimalNumberHandler(
                 roundingMode: .plain,
-                scale: 2,
+                scale: scale,
                 raiseOnExactness: false,
                 raiseOnOverflow: false,
                 raiseOnUnderflow: false,
@@ -52,6 +68,14 @@ actor FoodAPIRepository {
             token: token,
             allowInsecureLocalhost: configuration.allowsInsecureLocalhost
         )
+    }
+
+    /// Exercises the production mapping/write paths with an isolated generated
+    /// transport in tests. It does not construct or store credentials.
+    init(configuration: APIConfiguration, client: Client) {
+        self.configuration = configuration
+        self.client = client
+        recoveryScope = nil
     }
 
     // MARK: - Reading
@@ -194,7 +218,7 @@ actor FoodAPIRepository {
         switch output {
         case .ok(let response):
             return try response.body.json.map { payload in
-                FoodEntry(
+                FoodSnapshotPolicy.attaching(to: FoodEntry(
                     name: payload.name,
                     servings: FoodDecimal.value(payload.servings),
                     nutritionPerServing: NutritionAmount(
@@ -203,7 +227,9 @@ actor FoodAPIRepository {
                         carbohydrateGrams: FoodDecimal.value(payload.carbohydrateGrams),
                         fatGrams: FoodDecimal.value(payload.fatGrams)
                     )
-                )
+                ), sourceID: payload.sourceId, servingDescription: payload.servingDescription,
+                   referenceQuantity: payload.referenceQuantity, referenceUnit: payload.referenceUnit,
+                   nutrients: payload.nutrients?.additionalProperties)
             }
         case .undocumented(let statusCode, _):
             throw APIServiceError.undocumentedStatus(statusCode)
@@ -290,20 +316,22 @@ actor FoodAPIRepository {
     @discardableResult
     func saveFood(_ entry: FoodEntry, inMeal mealID: Int) async throws -> FoodEntry {
         if let serverID = entry.serverID {
+            var body = Components.Schemas.PatchedFoodEntryRequest(
+                name: entry.name,
+                servings: FoodDecimal.servingsString(entry.servings),
+                calories: FoodDecimal.string(entry.nutritionPerServing.calories),
+                proteinGrams: FoodDecimal.string(entry.nutritionPerServing.proteinGrams),
+                carbohydrateGrams: FoodDecimal.string(entry.nutritionPerServing.carbohydrateGrams),
+                fatGrams: FoodDecimal.string(entry.nutritionPerServing.fatGrams)
+            )
+            body.sourceId = entry.sourceID ?? ""
+            body.servingDescription = entry.servingDescription ?? ""
+            body.referenceQuantity = entry.referenceQuantity.map(FoodDecimal.referenceString)
+            body.referenceUnit = entry.referenceUnit ?? ""
+            body.nutrients = .init(additionalProperties: entry.nutrients.mapValues(FoodDecimal.nutrientString))
             let output = try await client.foodEntriesPartialUpdate(
                 path: .init(id: serverID),
-                body: .json(
-                    Components.Schemas.PatchedFoodEntryRequest(
-                        name: entry.name,
-                        servings: FoodDecimal.string(entry.servings),
-                        calories: FoodDecimal.string(entry.nutritionPerServing.calories),
-                        proteinGrams: FoodDecimal.string(entry.nutritionPerServing.proteinGrams),
-                        carbohydrateGrams: FoodDecimal.string(
-                            entry.nutritionPerServing.carbohydrateGrams
-                        ),
-                        fatGrams: FoodDecimal.string(entry.nutritionPerServing.fatGrams)
-                    )
-                )
+                body: .json(body)
             )
             switch output {
             case .ok(let response):
@@ -319,21 +347,28 @@ actor FoodAPIRepository {
         if let recoveryScope {
             submitted = try await EditorDraftRecovery.shared.capture(entry, key: operationKey, scope: recoveryScope)
         }
+        var body = Components.Schemas.FoodEntryRequest(
+            meal: mealID,
+            name: submitted.name,
+            servings: FoodDecimal.servingsString(submitted.servings, snapshotVersion: submitted.snapshotVersion),
+            calories: FoodDecimal.string(submitted.nutritionPerServing.calories),
+            proteinGrams: FoodDecimal.string(submitted.nutritionPerServing.proteinGrams),
+            carbohydrateGrams: FoodDecimal.string(submitted.nutritionPerServing.carbohydrateGrams),
+            fatGrams: FoodDecimal.string(submitted.nutritionPerServing.fatGrams)
+        )
+        // An old captured create must keep its original payload fingerprint
+        // when retried after upgrading. Omit unknown new metadata rather than
+        // adding empty fields to an already submitted idempotency key.
+        if submitted.hasSourceDetails {
+            body.sourceId = submitted.sourceID ?? ""
+            body.servingDescription = submitted.servingDescription ?? ""
+            body.referenceQuantity = submitted.referenceQuantity.map(FoodDecimal.referenceString)
+            body.referenceUnit = submitted.referenceUnit ?? ""
+            body.nutrients = .init(additionalProperties: submitted.nutrients.mapValues(FoodDecimal.nutrientString))
+        }
         let output = try await client.foodEntriesCreate(
             headers: .init(idempotencyKey: submitted.id.uuidString),
-            body: .json(
-                Components.Schemas.FoodEntryRequest(
-                    meal: mealID,
-                    name: submitted.name,
-                    servings: FoodDecimal.string(submitted.servings),
-                    calories: FoodDecimal.string(submitted.nutritionPerServing.calories),
-                    proteinGrams: FoodDecimal.string(submitted.nutritionPerServing.proteinGrams),
-                    carbohydrateGrams: FoodDecimal.string(
-                        submitted.nutritionPerServing.carbohydrateGrams
-                    ),
-                    fatGrams: FoodDecimal.string(submitted.nutritionPerServing.fatGrams)
-                )
-            )
+            body: .json(body)
         )
         switch output {
         case .created(let response):
@@ -372,9 +407,9 @@ actor FoodAPIRepository {
             recipe = try await EditorDraftRecovery.shared.capture(recipe, key: operationKey, scope: recoveryScope)
         }
         let ingredients = recipe.ingredients.map { ingredient in
-            Components.Schemas.SavedFoodIngredientRequest(
+            var body = Components.Schemas.SavedFoodIngredientRequest(
                 name: ingredient.name,
-                servings: FoodDecimal.string(ingredient.servings),
+                servings: FoodDecimal.servingsString(ingredient.servings, snapshotVersion: ingredient.snapshotVersion),
                 calories: FoodDecimal.string(ingredient.nutritionPerServing.calories),
                 proteinGrams: FoodDecimal.string(ingredient.nutritionPerServing.proteinGrams),
                 carbohydrateGrams: FoodDecimal.string(
@@ -382,6 +417,14 @@ actor FoodAPIRepository {
                 ),
                 fatGrams: FoodDecimal.string(ingredient.nutritionPerServing.fatGrams)
             )
+            if ingredient.hasSourceDetails {
+                body.sourceId = ingredient.sourceID ?? ""
+                body.servingDescription = ingredient.servingDescription ?? ""
+                body.referenceQuantity = ingredient.referenceQuantity.map(FoodDecimal.referenceString)
+                body.referenceUnit = ingredient.referenceUnit ?? ""
+                body.nutrients = .init(additionalProperties: ingredient.nutrients.mapValues(FoodDecimal.nutrientString))
+            }
+            return body
         }
 
         if let serverID = recipe.serverID {
@@ -506,7 +549,7 @@ actor FoodAPIRepository {
     }
 
     private static func entry(from payload: Components.Schemas.FoodEntry) -> FoodEntry {
-        FoodEntry(
+        FoodSnapshotPolicy.attaching(to: FoodEntry(
             // Held by the food editor as a sheet item: a new id mid-edit
             // closes the sheet out from under whoever is typing in it.
             id: .stable(forServerID: payload.id),
@@ -519,7 +562,9 @@ actor FoodAPIRepository {
                 carbohydrateGrams: FoodDecimal.value(payload.carbohydrateGrams),
                 fatGrams: FoodDecimal.value(payload.fatGrams)
             )
-        )
+        ), sourceID: payload.sourceId, servingDescription: payload.servingDescription,
+           referenceQuantity: payload.referenceQuantity, referenceUnit: payload.referenceUnit,
+           nutrients: payload.nutrients?.additionalProperties)
     }
 
     private static func savedMeal(
@@ -533,7 +578,7 @@ actor FoodAPIRepository {
             serverID: payload.id,
             name: payload.name,
             ingredients: payload.ingredients.map { ingredient in
-                FoodEntry(
+                FoodSnapshotPolicy.attaching(to: FoodEntry(
                     // The saved-meal ingredient row, so editing a recipe
                     // does not renumber the lines under the cursor.
                     id: .stable(forServerID: ingredient.id),
@@ -546,7 +591,9 @@ actor FoodAPIRepository {
                         carbohydrateGrams: FoodDecimal.value(ingredient.carbohydrateGrams),
                         fatGrams: FoodDecimal.value(ingredient.fatGrams)
                     )
-                )
+                ), sourceID: ingredient.sourceId, servingDescription: ingredient.servingDescription,
+                   referenceQuantity: ingredient.referenceQuantity, referenceUnit: ingredient.referenceUnit,
+                   nutrients: ingredient.nutrients?.additionalProperties)
             },
             cookingInstructions: payload.cookingInstructions ?? "",
             cookbookID: payload.cookbook.map { Int($0) }

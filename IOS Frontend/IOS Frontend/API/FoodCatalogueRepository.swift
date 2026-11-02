@@ -76,7 +76,12 @@ actor FoodDatabaseRepository {
                 let candidate = FoodCatalogueCandidate(sourceID: payload.sourceId, name: payload.name, brand: payload.brand)
                 return FoodDatabaseResult(
                     sourceID: payload.sourceId, servingDescription: payload.servingDescription,
-                    entry: FoodEntry(name: FoodCataloguePolicy.diaryName(candidate.title), servings: 1, nutritionPerServing: nutrition)
+                    entry: FoodSnapshotPolicy.attaching(
+                        to: FoodEntry(name: FoodCataloguePolicy.diaryName(candidate.title), servings: 1, nutritionPerServing: nutrition),
+                        sourceID: payload.sourceId, servingDescription: payload.servingDescription,
+                        referenceQuantity: payload.referenceQuantity, referenceUnit: payload.referenceUnit,
+                        nutrients: payload.nutrients?.additionalProperties
+                    )
                 )
             }
         case .undocumented(let statusCode, let payload):

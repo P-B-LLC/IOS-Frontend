@@ -158,6 +158,9 @@ struct FoodTrackingView: View {
                 VStack(alignment: .leading, spacing: 22) {
                     dailySummary(timeOfDay: timeOfDay)
 
+                    FoodDailyNutrientsCard(entries: store.meals(on: selectedDate).flatMap(\.entries),
+                                           date: selectedDate)
+
                     if let message = store.errorMessage {
                         syncNotice(message, timeOfDay: timeOfDay)
                     } else if !store.isConnected {
