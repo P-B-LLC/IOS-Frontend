@@ -494,6 +494,9 @@ struct TrainingDashboardContent: View {
         guard let workout = store.workout(on: day) else {
             return String(localized: "Add a name, exercises, and target sets.", bundle: .app, locale: .app)
         }
+        guard workout.activity.usesSets else {
+            return workout.activity.title
+        }
         let exercises = workout.exercises.count == 1
             ? String(localized: "1 exercise", bundle: .app, locale: .app)
             : String(localized: "\(workout.exercises.count) exercises", bundle: .app, locale: .app)
