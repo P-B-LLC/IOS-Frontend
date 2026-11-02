@@ -142,6 +142,86 @@ actor ActivityAPIRepository {
 
     // MARK: - Mapping
 
+    // MARK: - Body weight
+    //
+    // The endpoints have existed since the API did; nothing in the app had
+    // ever called them, so a weight recorded anywhere else was invisible here
+    // and one recorded here was impossible.
+
+    /// Every weigh-in the account holds, oldest first.
+    ///
+    /// Paged in full rather than windowed. Weight is one small row per
+    /// weigh-in and people weigh themselves daily at most, so a year is a few
+    /// hundred rows -- and a trend that silently began at an arbitrary cutoff
+    /// would answer "am I heavier than I was" with the wrong start.
+    func bodyWeightHistory() async throws -> [BodyWeightReading] {
+        var page: Int?
+        var visited: Set<Int> = []
+        var values: [BodyWeightReading] = []
+        repeat {
+            let output = try await client.bodyWeightList(query: .init(page: page))
+            let response: Components.Schemas.PaginatedBodyWeightEntryList
+            switch output {
+            case .ok(let success):
+                response = try success.body.json
+            case .undocumented(let statusCode, _):
+                throw APIServiceError.undocumentedStatus(statusCode)
+            }
+            values.append(contentsOf: response.results.compactMap(Self.reading(from:)))
+            page = try nextPage(response.next, visited: &visited)
+        } while page != nil
+        return values.oldestFirst
+    }
+
+    @discardableResult
+    func recordBodyWeight(
+        kilograms: Double,
+        at moment: Date,
+        notes: String = ""
+    ) async throws -> BodyWeightReading {
+        let output = try await client.bodyWeightCreate(
+            body: .json(.init(
+                // Two decimals, matching the contract's
+                // ^-?\d{0,4}(?:\.\d{0,2})?$ -- more would be refused, and
+                // nobody's scale is more precise than that anyway.
+                weightKg: String(format: "%.2f", kilograms),
+                recordedAt: moment,
+                notes: notes.isEmpty ? nil : notes
+            ))
+        )
+        switch output {
+        case .created(let response):
+            guard let reading = Self.reading(from: try response.body.json) else {
+                throw APIServiceError.undocumentedStatus(201)
+            }
+            return reading
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload)
+        }
+    }
+
+    func deleteBodyWeight(id: Int) async throws {
+        let output = try await client.bodyWeightDestroy(path: .init(id: id))
+        switch output {
+        case .noContent:
+            return
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload)
+        }
+    }
+
+    private nonisolated static func reading(
+        from entry: Components.Schemas.BodyWeightEntry
+    ) -> BodyWeightReading? {
+        guard let kilograms = Double(entry.weightKg) else { return nil }
+        return BodyWeightReading(
+            id: entry.id,
+            kilograms: kilograms,
+            recordedAt: entry.recordedAt ?? entry.createdAt,
+            notes: entry.notes ?? ""
+        )
+    }
+
     // MARK: - The step goal
 
     /// Steps a day the user is aiming for.
