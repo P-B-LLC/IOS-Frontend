@@ -623,6 +623,9 @@ private struct WorkoutFocusCard: View {
         .padding(20)
         .frame(minHeight: 248, alignment: .bottomLeading)
         .background(RytivoPhotoBackground(asset: photo))
+        // The photo ignores touches, so without this only the text and the
+        // capsule opened the day; a tap on the picture did nothing.
+        .contentShape(RoundedRectangle(cornerRadius: 24))
     }
 }
 

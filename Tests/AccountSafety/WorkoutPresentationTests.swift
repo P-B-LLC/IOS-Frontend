@@ -21,6 +21,43 @@ final class WorkoutPresentationTests: XCTestCase {
         XCTAssertTrue(day.contains("store.startSession(on: day, workoutID: workout.id)"))
     }
 
+    func testNonStrengthCardIsDescribedByItsActivityBeforeAnySetCount() throws {
+        let dashboard = try source("Views/Workouts/TrainingDashboardContent.swift")
+        let start = try XCTUnwrap(dashboard.range(of: "private func focusDescription(for day: Weekday) -> String {"))
+        let end = try XCTUnwrap(dashboard.range(of: "\n    }\n", range: start.upperBound..<dashboard.endIndex))
+        let body = String(dashboard[start.upperBound..<end.lowerBound])
+        let activityGuard = try XCTUnwrap(body.range(of: "guard workout.activity.usesSets else {\n            return workout.activity.title\n        }"))
+        let exerciseCount = try XCTUnwrap(body.range(of: "workout.exercises.count"))
+        let setCount = try XCTUnwrap(body.range(of: "workout.totalSets"))
+        XCTAssertLessThan(activityGuard.lowerBound, exerciseCount.lowerBound,
+                          "A run or a match has no exercises; \"0 exercises · 0 target sets\" must never be its card")
+        XCTAssertLessThan(activityGuard.lowerBound, setCount.lowerBound)
+    }
+
+    func testTappablePhotoCardsClaimTheirWholeShape() throws {
+        // RytivoPhotoBackground ignores touches. A link or button drawn on one
+        // responds only where its text is unless it declares a content shape,
+        // and the empty middle of the card is where people (and XCUITest) tap.
+        for path in ["Views/Workouts/TrainingDashboardContent.swift", "Views/Home/GuidedHomeView.swift"] {
+            let lines = try source(path).components(separatedBy: "\n")
+            for (index, line) in lines.enumerated() where line.contains(".background(RytivoPhotoBackground(") {
+                let following = lines[(index + 1)..<min(index + 4, lines.count)].joined(separator: "\n")
+                // Inside a label when one opens before the enclosing declaration.
+                // The dashboard's focus card is itself always a NavigationLink label.
+                var isTappable = path.hasSuffix("TrainingDashboardContent.swift")
+                for earlier in lines[..<index].reversed() {
+                    if earlier.contains("label: {") { isTappable = true; break }
+                    let trimmed = earlier.trimmingCharacters(in: .whitespaces)
+                    if ["var ", "func ", "struct ", "private var ", "private func ", "private struct "]
+                        .contains(where: trimmed.hasPrefix) { break }
+                }
+                if isTappable {
+                    XCTAssertTrue(following.contains(".contentShape("), "\(path):\(index + 1) photo card is not tappable across its area")
+                }
+            }
+        }
+    }
+
     func testSaveConfirmationUsesConfirmedReadBackIdentity() throws {
         let day = try source("Views/Workouts/DayWorkoutView.swift")
         XCTAssertTrue(day.contains("let problem = await store.saveWorkoutReportingFailure(savedWorkout, on: day)"))
