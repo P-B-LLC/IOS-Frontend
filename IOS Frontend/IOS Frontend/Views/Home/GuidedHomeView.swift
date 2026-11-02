@@ -336,20 +336,6 @@ private struct GuidedDayFlow: View {
         case finish = "FINISH"
     }
 
-    private var chapters: [Chapter] {
-        switch emphasis {
-        case .training:
-            [.training, .fuel, .finish]
-        case .nutrition:
-            [.fuel, .training, .finish]
-        case .movement:
-            // Movement is the one emphasis with no chapter of its own, so it
-            // gets one rather than quietly behaving like Training. Steps move
-            // out of the header and lead the day.
-            [.movement, .training, .fuel, .finish]
-        }
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: RepbaseTactileDesign.sectionSpacing) {
             upNextSection
@@ -404,15 +390,18 @@ private struct GuidedDayFlow: View {
             guard isHomeVisible else { return }
             presentLatestMealLogIfNeeded()
         }
-    }
-
-    @ViewBuilder
-    private func chapterView(_ chapter: Chapter, number: Int) -> some View {
-        switch chapter {
-        case .movement: movementSection(number: number)
-        case .training: trainingSection(number: number)
-        case .fuel: fuelSection(number: number)
-        case .finish: finishSection(number: number)
+        // This clears weeks of planning and cannot be undone.
+        .confirmationDialog(
+            "Clear everything you have planned?",
+            isPresented: $isConfirmingClear,
+            titleVisibility: .visible
+        ) {
+            Button("Clear my schedule", role: .destructive) {
+                Task { await workouts.clearSchedule() }
+            }
+            Button("Keep it", role: .cancel) {}
+        } message: {
+            Text("Every workout you have planned is removed, past days included, so you can plan again from scratch. Workouts you have already done stay in your history.")
         }
     }
 
@@ -439,28 +428,6 @@ private struct GuidedDayFlow: View {
             StepsWidget(explainsWhenEmpty: true)
         }
         .padding(.vertical, 14)
-    }
-
-    private var flowHeader: some View {
-        HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 0) {
-                Text("YOUR DAY")
-                    .font(.community(.caption2, weight: .bold))
-                    .tracking(0.55)
-                    .foregroundStyle(timeOfDay.accent)
-                Text("Follow what matters.")
-                    .font(.community(.title3, weight: .bold))
-                    .foregroundStyle(timeOfDay.primaryText)
-            }
-            Spacer()
-            Text(selectedDate.formatted(.dateTime.weekday(.abbreviated).day().locale(.app)))
-                .font(.community(.caption, weight: .bold))
-                .foregroundStyle(HomeWidgetColors.secondaryText)
-                .textCase(.uppercase)
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 12)
-        .padding(.bottom, 8)
     }
 
     private var focusOrder: [HomeEmphasis] {
@@ -612,7 +579,7 @@ private struct GuidedDayFlow: View {
         return layout {
             ForEach(focusOrder.filter { $0 != (focusedCard ?? emphasis) }, id: \.self) { card in
                 VStack(alignment: .leading, spacing: 5) {
-                    Text(focusTitle(card)).font(.community(.caption2, weight: .semibold)).textCase(.uppercase)
+                    Text(card == .movement ? "Today’s movement" : focusTitle(card)).font(.community(.caption2, weight: .semibold)).textCase(.uppercase)
                         .foregroundStyle(HomeWidgetColors.secondaryText)
                     switch card {
                     case .training:
@@ -714,19 +681,7 @@ private struct GuidedDayFlow: View {
                     .disabled(workouts.isSaving)
             }
         }
-        // This clears weeks of planning and cannot be undone.
-        .confirmationDialog(
-            "Clear everything you have planned?",
-            isPresented: $isConfirmingClear,
-            titleVisibility: .visible
-        ) {
-            Button("Clear my schedule", role: .destructive) {
-                Task { await workouts.clearSchedule() }
-            }
-            Button("Keep it", role: .cancel) {}
-        } message: {
-            Text("Every workout you have planned is removed, past days included, so you can plan again from scratch. Workouts you have already done stay in your history.")
-        }
+
     }
 
     private func fuelSection(number: Int) -> some View {

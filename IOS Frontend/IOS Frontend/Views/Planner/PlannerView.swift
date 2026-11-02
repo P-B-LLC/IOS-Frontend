@@ -38,6 +38,14 @@ struct PlannerView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .homeTimeScreen(timeOfDay)
+#if DEBUG
+        .task {
+            if ProcessInfo.processInfo.environment["REPBASE_HOME_PREVIEW"] != nil,
+               ProcessInfo.processInfo.environment["REPBASE_PLANNER_MONTH"] == "1" {
+                isMonthShown = true
+            }
+        }
+#endif
         .sheet(isPresented: $isMonthShown, onDismiss: {
             // Browsing a month doesn't change the selected day. Restore its
             // data when the sheet is dismissed without choosing another day.
@@ -87,34 +95,34 @@ struct PlannerView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: -24) {
                 VStack(alignment: .leading, spacing: 16) {
-                VStack(spacing: 12) {
-                    HStack {
-                        RytivoBrandLockup(size: 24)
-                        Spacer()
-                        Text("Calendar")
-                            .font(.community(.title3, weight: .bold))
-                            .foregroundStyle(timeOfDay.canvasPrimaryText)
+                    VStack(spacing: 12) {
+                        HStack {
+                            RytivoBrandLockup(size: 24)
+                            Spacer()
+                            Text("Calendar")
+                                .font(.community(.title3, weight: .bold))
+                                .foregroundStyle(timeOfDay.canvasPrimaryText)
+                        }
+                        addButtons(timeOfDay: timeOfDay)
                     }
-                    addButtons(timeOfDay: timeOfDay)
-                }
-                if showsBackButton {
-                    Button { dismiss() } label: {
-                        Label("Back", systemImage: "chevron.backward")
-                            .font(.community(.subheadline, weight: .semibold))
-                            .frame(minHeight: 44)
+                    if showsBackButton {
+                        Button { dismiss() } label: {
+                            Label("Back", systemImage: "chevron.backward")
+                                .font(.community(.subheadline, weight: .semibold))
+                                .frame(minHeight: 44)
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(timeOfDay.canvasPrimaryText)
                     }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(timeOfDay.canvasPrimaryText)
-                }
-                if let error = store.persistenceError { errorCard(error, timeOfDay: timeOfDay) }
-                PlannerWeekStrip(onToggleMonth: { isMonthShown = true })
-                }
+                    if let error = store.persistenceError { errorCard(error, timeOfDay: timeOfDay) }
+                    PlannerWeekStrip(onToggleMonth: { isMonthShown = true })
+                    }
                 .padding(.horizontal, 24)
                 .padding(.top, 16)
                 .padding(.bottom, 44)
                 VStack(alignment: .leading, spacing: 24) {
-                daySection(timeOfDay: timeOfDay, timelineHeight: timelineHeight)
-                otherDaysSection(timeOfDay: timeOfDay)
+                    daySection(timeOfDay: timeOfDay, timelineHeight: timelineHeight)
+                    otherDaysSection(timeOfDay: timeOfDay)
             }
                 .padding(.horizontal, 24)
                 .padding(.top, 24)
@@ -343,28 +351,28 @@ struct PlannerView: View {
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                     PlannerMonthCalendar(clearedDate: clearedDate, completionPulse: completionPulse)
                     VStack(alignment: .leading, spacing: 16) {
-                    if store.isLoading {
-                        ProgressView("Loading this month…")
-                            .frame(maxWidth: .infinity, minHeight: 80)
-                    } else if PlannerStore.isSameMonth(store.selectedDate, store.visibleMonth) {
-                        Text(store.selectedDate.formatted(.dateTime.weekday(.wide).month(.abbreviated).day().locale(.app)))
-                            .font(.community(.headline, weight: .bold))
-                        let counts = store.taskCounts(on: store.selectedDate)
-                        Text("\(counts.total) tasks · \(store.entries(on: store.selectedDate).filter { $0.kind == .event }.count) events")
-                            .font(.community(.footnote))
-                            .foregroundStyle(timeOfDay.canvasSecondaryText)
-                        ForEach(store.entries(on: store.selectedDate).prefix(3)) { entry in
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(entry.title).font(.community(.headline))
-                                Text(entry.displayTimeRange ?? String(localized: "Anytime", bundle: .app, locale: .app))
-                                    .font(.community(.footnote))
-                                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+                        if store.isLoading {
+                            ProgressView("Loading this month…")
+                                .frame(maxWidth: .infinity, minHeight: 80)
+                        } else if PlannerStore.isSameMonth(store.selectedDate, store.visibleMonth) {
+                            Text(store.selectedDate.formatted(.dateTime.weekday(.wide).month(.abbreviated).day().locale(.app)))
+                                .font(.community(.headline, weight: .bold))
+                            let counts = store.taskCounts(on: store.selectedDate)
+                            Text("\(counts.total) tasks · \(store.entries(on: store.selectedDate).filter { $0.kind == .event }.count) events")
+                                .font(.community(.footnote))
+                                .foregroundStyle(timeOfDay.canvasSecondaryText)
+                            ForEach(store.entries(on: store.selectedDate).prefix(3)) { entry in
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(entry.title).font(.community(.headline))
+                                    Text(entry.displayTimeRange ?? String(localized: "Anytime", bundle: .app, locale: .app))
+                                        .font(.community(.footnote))
+                                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .plannerSurface()
                             }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .plannerSurface()
                         }
-                    }
-                    if let error = store.persistenceError { errorCard(error, timeOfDay: timeOfDay) }
+                        if let error = store.persistenceError { errorCard(error, timeOfDay: timeOfDay) }
                     }
                     .padding(20)
                     .background(RepbaseTactileSheetBackground())
@@ -620,7 +628,9 @@ struct PlannerEntryRow: View {
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 8)
-        .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 18))
+        .background(entry.isComplete ? PlannerStyle.successSoft
+                    : (entry.category == .workout ? PlannerStyle.soft : timeOfDay.surfaceRaised),
+                    in: RoundedRectangle(cornerRadius: 18))
         .overlay {
             RoundedRectangle(cornerRadius: 18)
                 .strokeBorder(timeOfDay.canvasBorder)
@@ -668,7 +678,7 @@ struct PlannerEntryRow: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(entry.title)
                         .font(.community(.headline, weight: .bold))
-                        .foregroundStyle(timeOfDay.canvasPrimaryText)
+                        .foregroundStyle(entry.isComplete ? PlannerStyle.success : timeOfDay.canvasPrimaryText)
                         .strikethrough(entry.isComplete, color: timeOfDay.canvasSecondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                     if let badge = entry.priority.badge {

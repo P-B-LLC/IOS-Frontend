@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Approved Sunrise tokens are opt-in to Home. The other pages retain their
-/// own Figma review and the existing shared palette.
+/// Approved Sunrise colors, shared by the five reviewed main pages.
+/// Asset variants resolve with the existing appearance preference.
 enum HomeSunriseStyle {
     static let backdrop = Color("SunriseBackdrop")
     static let heroTint = Color("SunriseHeroTint")

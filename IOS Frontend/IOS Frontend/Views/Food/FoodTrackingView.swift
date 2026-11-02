@@ -140,67 +140,67 @@ struct FoodTrackingView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: -24) {
                 VStack(alignment: .leading, spacing: 14) {
-                if showsBackButton {
-                    HStack {
-                        RytivoBrandLockup(size: 24)
-                        Spacer()
-                        Text("Food")
-                            .font(.community(.title3, weight: .bold))
-                            .foregroundStyle(timeOfDay.canvasPrimaryText)
+                    if showsBackButton {
+                        HStack {
+                            RytivoBrandLockup(size: 24)
+                            Spacer()
+                            Text("Food")
+                                .font(.community(.title3, weight: .bold))
+                                .foregroundStyle(timeOfDay.canvasPrimaryText)
+                        }
                     }
-                }
-                foodHeader(timeOfDay: timeOfDay)
-                weekSelector(timeOfDay: timeOfDay)
-                }
+                    foodHeader(timeOfDay: timeOfDay)
+                    weekSelector(timeOfDay: timeOfDay)
+                    }
                 .padding(.horizontal, RepbaseDesign.pageInset)
                 .padding(.top, 16)
                 .padding(.bottom, 44)
                 VStack(alignment: .leading, spacing: 22) {
-                dailySummary(timeOfDay: timeOfDay)
+                    dailySummary(timeOfDay: timeOfDay)
 
-                if let message = store.errorMessage {
-                    syncNotice(message, timeOfDay: timeOfDay)
-                } else if !store.isConnected {
-                    syncNotice(
-                        String(
-                            localized: "Sign in to log food. Meals are kept on your account, not on this phone.",
-                            bundle: .app,
-                            locale: .app
-                        ),
-                        timeOfDay: timeOfDay
-                    )
-                }
+                    if let message = store.errorMessage {
+                        syncNotice(message, timeOfDay: timeOfDay)
+                    } else if !store.isConnected {
+                        syncNotice(
+                            String(
+                                localized: "Sign in to log food. Meals are kept on your account, not on this phone.",
+                                bundle: .app,
+                                locale: .app
+                            ),
+                            timeOfDay: timeOfDay
+                        )
+                    }
 
-                mealsSection(timeOfDay: timeOfDay)
-                DisclosureGroup(isExpanded: $showsDetailedTools) {
-                    VStack(alignment: .leading, spacing: 14) {
-                        Text("Plan ahead or take a closer look at your logged nutrition.")
-                            .font(.community(.subheadline))
-                            .foregroundStyle(.secondary)
-                        Button { isShowingMealPlan = true } label: {
-                            Label("Plan meals", systemImage: "calendar.badge.plus")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .frame(minHeight: 44)
+                    mealsSection(timeOfDay: timeOfDay)
+                    DisclosureGroup(isExpanded: $showsDetailedTools) {
+                        VStack(alignment: .leading, spacing: 14) {
+                            Text("Plan ahead or take a closer look at your logged nutrition.")
+                                .font(.community(.subheadline))
+                                .foregroundStyle(.secondary)
+                            Button { isShowingMealPlan = true } label: {
+                                Label("Plan meals", systemImage: "calendar.badge.plus")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .frame(minHeight: 44)
+                            }
+                            nutritionBreakdownLink(timeOfDay: timeOfDay)
+                            Button { isEditingGoals = true } label: {
+                                Label("Calorie & macro targets", systemImage: "slider.horizontal.3")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .frame(minHeight: 44)
+                            }
                         }
-                        nutritionBreakdownLink(timeOfDay: timeOfDay)
-                        Button { isEditingGoals = true } label: {
-                            Label("Calorie & macro targets", systemImage: "slider.horizontal.3")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .frame(minHeight: 44)
+                        .padding(.top, 12)
+                    } label: {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Planning & details")
+                                .font(.community(.headline))
+                            Text("Meal prep, targets and macro sources")
+                                .font(.community(.caption))
+                                .foregroundStyle(.secondary)
                         }
+                        .padding(.vertical, 10)
                     }
-                    .padding(.top, 12)
-                } label: {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Planning & details")
-                            .font(.community(.headline))
-                        Text("Meal prep, targets and macro sources")
-                            .font(.community(.caption))
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(.vertical, 10)
-                }
-                .tint(timeOfDay.accent)
+                    .tint(timeOfDay.accent)
             }
                 .padding(.horizontal, RepbaseDesign.pageInset)
                 .padding(.top, 24)

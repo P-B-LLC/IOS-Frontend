@@ -52,6 +52,7 @@ capture() {
     local name="$1" appearance="$2" fixture="$3" target="${4:-}" large="${5:-0}" language="${6:-en}"
     local focus='Training'
     if [ "$target" = home.food ]; then focus='Nutrition'; fi
+    if [ "$target" = home.steps ]; then focus='Movement'; fi
     xcrun simctl ui "$device" appearance "$appearance"
     SIMCTL_CHILD_REPBASE_HOME_PREVIEW="$fixture" \
         SIMCTL_CHILD_REPBASE_APPEARANCE="$appearance" \
@@ -71,6 +72,7 @@ prepare "$device"
 for appearance in light dark; do
     capture "home-$appearance" "$appearance" populated
     capture "food-$appearance" "$appearance" populated home.food
+    capture "movement-$appearance" "$appearance" populated home.steps
     capture "empty-$appearance" "$appearance" empty
 done
 capture home-large-text light populated '' 1
@@ -91,8 +93,10 @@ for appearance in light dark; do
     preview_quick=''
     preview_tab=planner
     capture "calendar-page-$appearance" "$appearance" populated
+    SIMCTL_CHILD_REPBASE_PLANNER_MONTH=1 capture "calendar-month-$appearance" "$appearance" populated
     preview_tab=account
     capture "profile-page-$appearance" "$appearance" populated
+    SIMCTL_CHILD_REPBASE_SETTINGS=1 capture "profile-settings-$appearance" "$appearance" populated
     preview_section=about
     capture "profile-about-$appearance" "$appearance" populated
     preview_section=''
@@ -106,6 +110,13 @@ preview_sport=''
 preview_tab=planner
 capture calendar-large-text dark populated '' 1
 capture calendar-arabic dark populated '' 0 ar
+preview_tab=training
+capture workouts-large-text light populated '' 1
+preview_quick=food
+capture food-page-large-text dark populated '' 1
+preview_quick=''
+preview_tab=account
+capture profile-large-text light populated '' 1
 preview_tab=home
 # The narrowest current supported fixture, when installed Xcode offers it.
 narrow_type="$(xcrun simctl list devicetypes -j | python3 -c 'import json,sys; types=json.load(sys.stdin)["devicetypes"]; print(next((t["identifier"] for t in types if t["name"]=="iPhone SE (3rd generation)"),""))')"

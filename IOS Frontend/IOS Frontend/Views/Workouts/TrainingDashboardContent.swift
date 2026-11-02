@@ -313,16 +313,15 @@ struct TrainingDashboardContent: View {
     }
 
     private var totalsCard: some View {
-        HStack(spacing: 0) {
+        HStack(alignment: .top, spacing: 12) {
             metric(
                 eyebrow: "TOTAL WORKOUTS",
                 value: "\(totalWorkouts)",
                 detail: metrics.monthDetail,
                 color: RepbaseDesign.warning
             )
-            Rectangle()
-                .fill(RepbasePalette.oatmeal)
-                .frame(width: 1, height: 76)
+            .padding(.vertical, 17)
+            .sunriseCard()
             metric(
                 eyebrow: "CURRENT STREAK",
                 value: metrics.currentStreakText,
@@ -331,9 +330,9 @@ struct TrainingDashboardContent: View {
                     : String(localized: "Best: \(metrics.bestStreakWeeks) weeks", bundle: .app, locale: .app),
                 color: phase.secondaryText
             )
+            .padding(.vertical, 17)
+            .sunriseCard(tint: RytivoSunriseDesign.sageTint)
         }
-        .padding(.vertical, 17)
-        .sunriseCard(tint: RytivoSunriseDesign.sageTint)
     }
 
     private func metric(eyebrow: LocalizedStringKey, value: String, detail: String, color: Color) -> some View {
@@ -386,7 +385,7 @@ struct TrainingDashboardContent: View {
                                 .fill(phase.secondaryText.opacity(0.08))
                                 .frame(height: 86)
                             Capsule()
-                                .fill(index == 5 ? HomeTimeOfDay.current.accent : phase.secondaryText.opacity(0.6))
+                                .fill(index == 5 ? RepbaseTactileDesign.accent : RytivoSunriseDesign.sage)
                                 .frame(height: metrics.barHeight(for: count))
                         }
                         Text(index == 5 ? "NOW" : "−\(5 - index)W", comment: "Week chart label: NOW is this week, −2W is two weeks ago")
@@ -405,8 +404,8 @@ struct TrainingDashboardContent: View {
             Text("Completed sessions, not weight lifted. This week is still in progress.")
                 .font(.community(.caption)).foregroundStyle(phase.secondaryText)
         }
-        .padding(.vertical, 18)
-        .overlay(alignment: .bottom) { Divider() }
+        .padding(18)
+        .sunriseCard()
     }
 
     private var milestoneCard: some View {
@@ -429,7 +428,8 @@ struct TrainingDashboardContent: View {
                     .foregroundStyle(phase.secondaryText)
             }
         }
-        .padding(.vertical, 14)
+        .padding(16)
+        .sunriseCard(tint: RytivoSunriseDesign.sageTint)
     }
 
     private func isCompleted(_ day: Weekday) -> Bool {
@@ -659,13 +659,7 @@ private struct TrainingRewardToast: View {
 }
 
 private extension View {
-    /// The dashboard's own card.
-    ///
-    /// It was RepbasePalette.paper at 94%, with a white hairline over it --
-    /// and paper is Color.white, flatly, at every appearance. In dark mode
-    /// that drew a white card on a black page and then wrote Color.primary on
-    /// it, which is white after dark: the card was legible only by its edges,
-    /// and everything printed on it disappeared.
+    /// Dashboard-only surfaces, after the Sunrise review.
     func dashboardSurface(radius: CGFloat) -> some View {
         sunriseCard(radius: radius)
     }

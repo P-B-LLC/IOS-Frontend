@@ -63,7 +63,7 @@ struct RytivoPhotoBackground: View {
                 }
                 // A constant scrim keeps white type readable in either theme,
                 // including photographs with a bright sky behind the title.
-                LinearGradient(colors: [.black.opacity(0.42), .black.opacity(0.78)],
+                LinearGradient(colors: [.black.opacity(0.60), .black.opacity(0.78)],
                                startPoint: .top, endPoint: .bottom)
             }
         }

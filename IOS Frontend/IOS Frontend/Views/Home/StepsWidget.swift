@@ -55,87 +55,42 @@ struct StepsWidget: View {
         let steps = store.stepsToday ?? 0
         let progress = min(Double(steps) / Double(max(goal, 1)), 1)
         let remaining = max(goal - steps, 0)
-        return VStack(alignment: .leading, spacing: 7) {
-            HStack(alignment: .center) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("YOUR DAILY ADVENTURE")
-                        .font(.community(size: 9, weight: .bold))
-                        .tracking(0.5)
-                        .foregroundStyle(timeOfDay.accent)
-
-                    HStack(alignment: .firstTextBaseline, spacing: 5) {
-                        Text(store.stepsToday == nil ? "—" : steps.formatted(.number))
-                            .font(.community(.title2, weight: .bold))
+        return VStack(alignment: .leading, spacing: 8) {
+            AdaptiveRow(spacing: 10) {
+                HStack(spacing: 12) {
+                    RepbaseTactileProgressRing(progress: progress)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("\(store.stepsToday?.formatted(.number) ?? "—") steps")
+                            .font(.community(.headline))
                             .contentTransition(.numericText())
-                        Text("steps into your day")
-                            .font(.community(.caption2, weight: .medium))
+                        Text(store.stepsToday == nil ? "Not reported today" : "of \(goal.formatted(.number)) steps")
+                            .font(.community(.caption))
                             .foregroundStyle(timeOfDay.secondaryText)
                     }
                 }
-
-                Spacer(minLength: 10)
-
-                VStack(alignment: .trailing, spacing: 2) {
-                    Button {
-                        goalDraft = goal
-                        isEditingGoal = true
-                    } label: {
-                        HStack(spacing: 3) {
-                            Text("Edit goal")
-                                .font(.community(size: 9, weight: .bold))
-                            Image(systemName: "slider.horizontal.3")
-                                .font(.community(size: 7, weight: .bold))
-                        }
-                        .foregroundStyle(timeOfDay.primaryText)
-                        // A label this small is hard to hit, so the target is
-                        // padded well past what is drawn.
+            } trailing: {
+                Button {
+                    goalDraft = goal
+                    isEditingGoal = true
+                } label: {
+                    Label("Edit goal", systemImage: "slider.horizontal.3")
+                        .font(.community(.caption, weight: .semibold))
                         .padding(.horizontal, 12)
                         .frame(minHeight: 44)
-                        .workoutOutline(radius: 12)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(
-                        "Change your daily step goal, currently \(goal.formatted(.number))"
-                    )
-                    Text("Daily goal \(goal.formatted(.number))")
-                        .font(.community(.caption2, weight: .semibold))
-                        .foregroundStyle(timeOfDay.secondaryText)
+                        .background(RytivoSunriseDesign.surface, in: Capsule())
                 }
+                .buttonStyle(RepbaseTactilePressStyle())
+                .accessibilityLabel("Change your daily step goal, currently \(goal.formatted(.number))")
             }
-
-            GeometryReader { proxy in
-                let markerX = max(13, min(proxy.size.width - 13, proxy.size.width * progress))
-                ZStack(alignment: .leading) {
-                    Capsule().fill(timeOfDay.secondaryText.opacity(0.15)).frame(height: 5).offset(y: 12)
-                    Capsule().fill(timeOfDay.accent).frame(width: proxy.size.width * progress, height: 5).offset(y: 12)
-                    ForEach(1...3, id: \.self) { index in
-                        Circle()
-                            .fill(Double(index) / 4 <= progress ? timeOfDay.accent : timeOfDay.secondaryText)
-                            .overlay(Circle().stroke(WorkoutVisualPhase.prepare.surfaceStart, lineWidth: 2))
-                            .frame(width: 8, height: 8)
-                            .position(x: proxy.size.width * CGFloat(index) / 4, y: 29)
-                    }
-                    Image(systemName: "figure.walk")
-                        .font(.system(size: 17)).foregroundStyle(WorkoutVisualPhase.prepare.onPrimaryAction)
-                        .frame(width: 26, height: 26).background(WorkoutVisualPhase.prepare.primaryActionSurface, in: Circle())
-                        .position(x: markerX, y: 13)
-                    Image(systemName: "flag.checkered").font(.system(size: 14)).foregroundStyle(timeOfDay.secondaryText)
-                        .position(x: proxy.size.width - 8, y: 9)
-                }
-            }
-            .frame(height: 36)
-            .accessibilityHidden(true)
-
             Text(store.stepsToday == nil ? "No steps reported for today yet." : remaining == 0 ? "Daily goal reached. Enjoy the win." : "\(remaining.formatted(.number)) steps to your goal")
-            .font(.community(size: 9, weight: .semibold))
-            .foregroundStyle(timeOfDay.secondaryText)
+                .font(.community(.caption))
+                .foregroundStyle(timeOfDay.secondaryText)
             if let error = store.persistenceError {
                 Text(error).font(.community(.caption2)).foregroundStyle(.red)
             }
         }
-        .padding(20)
-        .workoutOutline(radius: 20)
+        .padding(16)
+        .sunriseCard(tint: RytivoSunriseDesign.sageTint)
         .task { await store.refresh() }
         // Not combined into one element, or the goal button disappears from
         // VoiceOver along with everything else on the row.

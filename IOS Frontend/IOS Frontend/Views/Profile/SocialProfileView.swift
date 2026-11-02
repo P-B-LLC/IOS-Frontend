@@ -374,25 +374,25 @@ struct SocialProfileView: View {
     }
 
     private func socialCounts(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack(spacing: 7) {
-            profileCount("\(myPostCount) posts", color: timeOfDay.canvasPrimaryText)
-            Text("·").foregroundStyle(timeOfDay.secondaryText)
-            profileCount("\(followerCount) followers", color: timeOfDay.canvasPrimaryText)
-            Text("·").foregroundStyle(timeOfDay.secondaryText)
-            profileCount("\(followingCount) following", color: timeOfDay.canvasPrimaryText)
+        HStack(spacing: 12) {
+            profileCount(myPostCount, label: "Posts", phrase: "\(myPostCount) posts")
+            profileCount(followerCount, label: "Followers", phrase: "\(followerCount) followers")
+            profileCount(followingCount, label: "Following", phrase: "\(followingCount) following")
         }
-        .font(.community(.footnote, weight: .semibold))
-        .lineLimit(1)
-        .minimumScaleFactor(0.82)
-        .accessibilityElement(children: .combine)
+        .padding(.vertical, 4)
     }
 
-    /// Each count is one whole phrase, so a language can put the number
-    /// where it belongs and pick the plural form that goes with it.
-    private func profileCount(_ phrase: LocalizedStringKey, color: Color) -> some View {
-        Text(phrase)
-            .fontWeight(.semibold)
-            .foregroundStyle(color)
+    private func profileCount(_ value: Int, label: LocalizedStringKey, phrase: LocalizedStringKey) -> some View {
+        VStack(spacing: 4) {
+            Text(value, format: .number.locale(.app))
+                .font(.community(.title3, weight: .bold))
+                .foregroundStyle(RytivoSunriseDesign.ink)
+            Text(label).font(.community(.caption))
+                .foregroundStyle(RytivoSunriseDesign.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(phrase))
     }
 
     private var identitySummary: String {
