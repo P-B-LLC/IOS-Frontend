@@ -15,6 +15,11 @@ cp "$repo/Tests/AccountSafety/CalendarRefreshTests.swift" "$test_package/Tests/A
 cp "$repo/IOS Frontend/IOS Frontend/Services/CalendarRefreshCoordinator.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/Tests/AccountSafety/CookbookSyncTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/IOS Frontend/IOS Frontend/Services/CookbookSyncGate.swift" "$test_package/Sources/AccountSafety/"
+# The cookbook wire contract through the generated client, and the app-side
+# cookbook and feed models it decodes into.
+cp "$repo/Tests/AccountSafety/CookbookContractTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/IOS Frontend/IOS Frontend/Models/Cookbook.swift" "$test_package/Sources/AccountSafety/"
+cp "$repo/IOS Frontend/IOS Frontend/Models/SocialPost.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/Tests/AccountSafety/TrainingInsightTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/Tests/AccountSafety/WorkoutFlowTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/Tests/AccountSafety/WorkoutSelectionTests.swift" "$test_package/Tests/AccountSafetyTests/"

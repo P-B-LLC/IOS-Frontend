@@ -76,4 +76,5 @@ xcodebuild test-without-building -xctestrun "$(ls "$derived"/Build/Products/*.xc
     -only-testing:RytivoUITests/RytivoE2ETests/test09ExerciseLibrary \
     -only-testing:RytivoUITests/RytivoE2ETests/test10WorkoutsInAnotherLanguage \
     -only-testing:RytivoUITests/RytivoE2ETests/test11Activity \
-    -only-testing:RytivoUITests/RytivoE2ETests/test12CalendarAgenda
+    -only-testing:RytivoUITests/RytivoE2ETests/test12CalendarAgenda \
+    -only-testing:RytivoUITests/RytivoE2ETests/test17Cookbooks

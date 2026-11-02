@@ -507,7 +507,14 @@ final class RytivoE2ETests: XCTestCase {
         for _ in 0..<4 where !calories.isHittable { app.swipeUp() }
         type("540", into: calories)
         dismissKeyboard()
-        app.buttons["workout-builder-primary"].tap()
+        // The number pad has no Done key. On a slow simulator it is still
+        // sliding up when the tap is aimed, and the tap lands on the keyboard.
+        waitUntil(10, "the save bar stopped moving") {
+            let before = saveBar.frame
+            RunLoop.current.run(until: Date().addingTimeInterval(0.5))
+            return saveBar.isHittable && saveBar.frame == before
+        }
+        saveBar.tap()
         XCTAssertTrue(element(labelContaining: "saved to your history").waitForExistence(timeout: 20), "saved")
         XCTAssertTrue(element(labelContaining: "540 kcal").waitForExistence(timeout: 10), "the day shows it")
         XCTAssertTrue(element(labelContaining: "Your estimate").exists, "calories are labelled as an estimate")
@@ -727,5 +734,62 @@ final class RytivoE2ETests: XCTestCase {
         waitUntil(15, "the task is gone") { !actions.exists }
         XCTAssertTrue(element(labelContaining: "Push Day").exists, "the workout stays")
         shot("03 task deleted")
+    }
+
+    /// Food, then the cookbook library, from a fresh launch.
+    func openCookbooks() {
+        signInIfNeeded()
+        XCTAssertTrue(app.buttons["Training"].waitForExistence(timeout: 20))
+        app.buttons["Training"].tap()
+        let food = app.buttons["Food"].firstMatch
+        XCTAssertTrue(food.waitForExistence(timeout: 10), "the Food half")
+        food.tap()
+        let cookbooks = app.buttons["Cookbooks"].firstMatch
+        XCTAssertTrue(cookbooks.waitForExistence(timeout: 15), "the cookbook library button")
+        for _ in 0..<6 where !cookbooks.isHittable { app.swipeUp() }
+        cookbooks.tap()
+        XCTAssertTrue(app.buttons["New cookbook"].firstMatch.waitForExistence(timeout: 15), "the library opened")
+    }
+
+    /// Numbered past main's 13-16. A cookbook made in the app is written to
+    /// the backend: after a relaunch the library reads it back with the
+    /// server's capacity, it opens empty through the per-cookbook recipe
+    /// read, and an empty one can be deleted.
+    func test17Cookbooks() throws {
+        openCookbooks()
+        shot("01 library")
+        app.buttons["New cookbook"].firstMatch.tap()
+        let name = app.textFields["For example: Weeknight favorites"]
+        XCTAssertTrue(name.waitForExistence(timeout: 10), "cookbook editor")
+        type("E2E Dinners", into: name)
+        app.buttons["Save"].firstMatch.tap()
+        XCTAssertTrue(element(labelContaining: "E2E Dinners").waitForExistence(timeout: 15), "the new cookbook is listed")
+        shot("02 created")
+
+        // Not the copy this run appended: what the server says after a relaunch.
+        app.terminate()
+        app.launch()
+        openCookbooks()
+        let row = element(labelContaining: "E2E Dinners")
+        XCTAssertTrue(row.waitForExistence(timeout: 15), "the cookbook survived a relaunch")
+        XCTAssertTrue(element(labelContaining: "0 / 20 recipes").exists, "its count and the server's capacity")
+        shot("03 read back")
+
+        row.tap()
+        XCTAssertTrue(app.staticTexts["Your fastest meals will live here."].waitForExistence(timeout: 15),
+                      "an empty cookbook opens to its empty state")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+
+        let options = app.buttons["Cookbook options"].firstMatch
+        XCTAssertTrue(options.waitForExistence(timeout: 10), "the cookbook's options")
+        options.tap()
+        let delete = app.buttons["Delete cookbook"].firstMatch
+        XCTAssertTrue(delete.waitForExistence(timeout: 5), "an empty cookbook can be deleted")
+        delete.tap()
+        let confirm = app.buttons["Delete cookbook"].firstMatch
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5), "deleting asks first")
+        confirm.tap()
+        waitUntil(15, "the cookbook is gone") { !row.exists }
+        shot("04 deleted")
     }
 }

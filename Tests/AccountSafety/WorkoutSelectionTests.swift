@@ -133,6 +133,23 @@ final class WorkoutSelectionTests: XCTestCase {
         }
     }
 
+    func testReusedSaveKeyConflictIsAnHTTPErrorCarrying409() async throws {
+        // main's createTemplate gives a reused draft key a fresh one on 409.
+        // That catch has to match this error type -- an APIServiceError catch
+        // would compile and silently never run again.
+        let transport = WorkoutCreateTransport(
+            status: 409, responseBody: #"{"detail":"This save key was already used with different values."}"#)
+        do {
+            _ = try await WorkoutTemplateCreation.send(.init(name: "Push Day"), operationID: UUID(), using: client(transport))
+            XCTFail("A conflict must not read as a saved workout")
+        } catch let error as RepbaseAPIHTTPError {
+            XCTAssertEqual(error.statusCode, 409)
+            XCTAssertEqual(error.errorDescription, "This save key was already used with different values.")
+        }
+        let requests = await transport.requests
+        XCTAssertEqual(requests.count, 1, "The conflict is reported, not retried here with the same key")
+    }
+
     func testNewPlanWithTakenNameNeedsRenameButUnconfirmedCreateCanRetry() {
         let names = ["Push Day", "Push Day (2)"]
         XCTAssertTrue(WorkoutNamePolicy.blocksCreate(name: "  Push Day\n", savedNames: names, serverID: nil, hasPendingSave: false))
