@@ -25,7 +25,7 @@ private enum HomeWidgetColors {
 ///
 /// The personalization flow asks this outright and calls it "home screen
 /// emphasis", so the honest reading is that it decides the order of the day.
-nonisolated enum HomeEmphasis: String {
+nonisolated enum HomeEmphasis: String, Hashable {
     case training = "Training"
     case movement = "Movement"
     case nutrition = "Nutrition"
@@ -67,7 +67,7 @@ struct GuidedHomeView: View {
                         GuidedHomeErrors()
                     }
                     .padding(.horizontal, RepbaseTactileDesign.pageInset)
-                    .padding(.top, 32)
+                    .padding(.top, 22)
                     .padding(.bottom, RepbaseDesign.bottomBarClearance)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(RepbaseTactileSheetBackground())
@@ -317,6 +317,8 @@ private struct GuidedDayFlow: View {
     @State private var isHomeVisible = false
     @State private var foodProgressPulse = false
     @State private var foodProgressTask: Task<Void, Never>?
+    @State private var focusedCard: HomeEmphasis?
+    @ScaledMetric(relativeTo: .body) private var focusCardHeight: CGFloat = 214
 
     let selectedDate: Date
     let today: Date
@@ -351,12 +353,12 @@ private struct GuidedDayFlow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: RepbaseTactileDesign.sectionSpacing) {
             upNextSection
-            if emphasis == .nutrition { fuelSection(number: 1) }
-            movementAndTraining
-            if emphasis != .nutrition { fuelSection(number: 2) }
+            focusCarousel
+            supportingMetrics
             dayAgenda
             DisclosureGroup("More from your day") {
                 finishSection(number: 3)
+                fuelSection(number: 2)
                 if emphasis == .movement { movementSection(number: 1) }
                 momentumSection
                 if cycles.activeCycle == nil, workouts.hasAnythingScheduled {
@@ -370,6 +372,12 @@ private struct GuidedDayFlow: View {
             .padding(.top, 16)
         }
         .onAppear {
+            if focusedCard == nil { focusedCard = emphasis }
+#if DEBUG
+            if ProcessInfo.processInfo.environment["REPBASE_HOME_PREVIEW"] != nil,
+               let raw = ProcessInfo.processInfo.environment["REPBASE_HOME_FOCUS"],
+               let card = HomeEmphasis(rawValue: raw) { focusedCard = card }
+#endif
             isHomeVisible = true
             if displayedFoodTotal == nil {
                 synchronizeFoodProgress()
@@ -386,6 +394,7 @@ private struct GuidedDayFlow: View {
             synchronizeFoodProgress()
             presentLatestMealLogIfNeeded()
         }
+        .onChange(of: emphasis) { _, value in focusedCard = value }
         .onChange(of: food.total(on: selectedDate)) { _, newTotal in
             guard isHomeVisible, food.latestMealLogEvent == nil else { return }
             displayedFoodTotal = newTotal
@@ -454,69 +463,216 @@ private struct GuidedDayFlow: View {
         .padding(.bottom, 8)
     }
 
+    private var focusOrder: [HomeEmphasis] {
+        [emphasis] + [HomeEmphasis.training, .movement, .nutrition].filter { $0 != emphasis }
+    }
+
+    private func focusTitle(_ card: HomeEmphasis) -> LocalizedStringKey {
+        switch card {
+        case .training: "Training"
+        case .movement: "Movement"
+        case .nutrition: "Food"
+        }
+    }
+
+    private var focusIndex: Int { focusOrder.firstIndex(of: focusedCard ?? emphasis) ?? 0 }
+
+    private var focusCarousel: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            AdaptiveRow(spacing: 6) {
+                Text("Your focus").font(.community(.headline))
+            } trailing: {
+                Text("Swipe to explore").font(.community(.caption))
+                    .foregroundStyle(HomeWidgetColors.secondaryText)
+            }
+            ScrollView(.horizontal) {
+                LazyHStack(spacing: 12) {
+                    ForEach(focusOrder, id: \.self) { card in
+                        focusCard(card)
+                            .containerRelativeFrame(.horizontal) { width, _ in max(1, width - 32) }
+                            .frame(height: max(focusCardHeight, typeSize.isAccessibilitySize ? 360 : 214))
+                            .id(card)
+                    }
+                }
+                .scrollTargetLayout()
+            }
+            .scrollIndicators(.hidden)
+            .scrollTargetBehavior(.viewAligned)
+            .scrollPosition(id: $focusedCard)
+            .accessibilityIdentifier("home.focus-carousel")
+
+            HStack {
+                carouselArrow("chevron.backward", label: "Previous card", offset: -1)
+                Spacer(minLength: 8)
+                VStack(spacing: 6) {
+                    Text(focusTitle(focusedCard ?? emphasis))
+                        .font(.community(.caption, weight: .semibold))
+                    HStack(spacing: 4) {
+                        ForEach(focusOrder, id: \.self) { card in
+                            Capsule().fill(card == (focusedCard ?? emphasis)
+                                           ? RepbaseTactileDesign.accent : HomeWidgetColors.border)
+                                .frame(width: card == (focusedCard ?? emphasis) ? 16 : 5, height: 4)
+                        }
+                    }.accessibilityHidden(true)
+                }
+                .accessibilityValue(Text("\(focusIndex + 1) of \(focusOrder.count)"))
+                Spacer(minLength: 8)
+                carouselArrow("chevron.forward", label: "Next card", offset: 1)
+            }
+        }
+    }
+
+    private func carouselArrow(_ symbol: String, label: LocalizedStringKey, offset: Int) -> some View {
+        Button {
+            let index = min(max(focusIndex + offset, 0), focusOrder.count - 1)
+            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.25)) {
+                focusedCard = focusOrder[index]
+            }
+        } label: {
+            Image(systemName: symbol).font(.system(size: 12, weight: .semibold))
+                .frame(width: 44, height: 44)
+                .background(RytivoSunriseDesign.surface, in: Circle())
+                .overlay(Circle().strokeBorder(HomeWidgetColors.border, lineWidth: 0.75))
+        }
+        .buttonStyle(RepbaseTactilePressStyle())
+        .disabled(offset < 0 ? focusIndex == 0 : focusIndex == focusOrder.count - 1)
+        .accessibilityLabel(label)
+    }
+
+    @ViewBuilder
+    private func focusCard(_ card: HomeEmphasis) -> some View {
+        switch card {
+        case .training:
+            trainingSection(number: 1)
+        case .movement:
+            movementPhotoCard
+        case .nutrition:
+            Button { navigate(.food) } label: {
+                VStack(alignment: .leading, spacing: 8) {
+                    photoEyebrow("Your nutrition", symbol: "fork.knife")
+                    Spacer(minLength: 8)
+                    Text("Fuel your day").font(.community(.title2, weight: .bold))
+                    Text("\((displayedFoodTotal ?? food.total(on: selectedDate)).calories.nutritionText) / \(food.goals.calories.nutritionText) kcal")
+                        .font(.community(.caption))
+                    photoAction("Log food")
+                }
+                .padding(18)
+                .foregroundStyle(.white)
+                .background(RytivoPhotoBackground(asset: "SunriseFoodPhoto"))
+                .contentShape(RoundedRectangle(cornerRadius: 24))
+            }
+            .buttonStyle(RepbaseTactilePressStyle())
+            .accessibilityIdentifier("home.food")
+        }
+    }
+
+    private var movementPhotoCard: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            photoEyebrow("Today’s movement", symbol: "figure.walk")
+            Spacer(minLength: 8)
+            Text("\(activity.stepsToday?.formatted() ?? "—") steps")
+                .font(.community(.title2, weight: .bold))
+            Text(activity.stepsToday == nil ? "Not reported today" : "of \(activity.stepGoal.formatted()) steps")
+                .font(.community(.caption))
+            RepbaseTactileProgressTrack(progress: activity.stepGoal > 0
+                ? Double(activity.stepsToday ?? 0) / Double(activity.stepGoal) : 0,
+                                       tint: .white, height: 6)
+        }
+        .padding(18)
+        .foregroundStyle(.white)
+        .background(RytivoPhotoBackground(asset: "TrainingOutdoors"))
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("home.steps")
+    }
+
+    private func photoEyebrow(_ title: LocalizedStringKey, symbol: String) -> some View {
+        HStack(alignment: .top) {
+            Text(title).font(.community(.caption2, weight: .bold)).textCase(.uppercase)
+            Spacer(minLength: 8)
+            Image(systemName: symbol).font(.system(size: 18)).accessibilityHidden(true)
+        }
+    }
+
+    private func photoAction(_ title: LocalizedStringKey) -> some View {
+        HStack {
+            Text(title)
+            Spacer(minLength: 8)
+            Image(systemName: "arrow.forward").accessibilityHidden(true)
+        }
+        .font(.community(.footnote, weight: .semibold))
+        .foregroundStyle(Color(hex: 0x292421))
+        .padding(.horizontal, 14)
+        .frame(minHeight: 44)
+        .background(Color.white, in: Capsule())
+    }
+
+    private var supportingMetrics: some View {
+        let layout = typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(spacing: 12)) : AnyLayout(HStackLayout(spacing: 12))
+        return layout {
+            ForEach(focusOrder.filter { $0 != (focusedCard ?? emphasis) }, id: \.self) { card in
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(focusTitle(card)).font(.community(.caption2, weight: .semibold)).textCase(.uppercase)
+                        .foregroundStyle(HomeWidgetColors.secondaryText)
+                    switch card {
+                    case .training:
+                        Text(workout?.name ?? String(localized: "Plan workout", bundle: .app, locale: .app))
+                            .font(.community(.headline))
+                        Text(workout?.activity.usesSets == true ? workoutMetadata : workout?.activity.title ?? "")
+                            .font(.community(.caption))
+                    case .movement:
+                        Text(activity.stepsToday?.formatted() ?? "—").font(.community(.title2, weight: .bold))
+                        Text(activity.stepsToday == nil ? "Not reported today" : "of \(activity.stepGoal.formatted()) steps")
+                            .font(.community(.caption))
+                    case .nutrition:
+                        Text((displayedFoodTotal ?? food.total(on: selectedDate)).calories.nutritionText)
+                            .font(.community(.title2, weight: .bold))
+                        Text("of \(food.goals.calories.nutritionText) kcal").font(.community(.caption))
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(16)
+                .sunriseCard(tint: RepbaseTactileDesign.surface, radius: 20)
+                .accessibilityElement(children: .combine)
+            }
+        }
+    }
+
     private var upNextSection: some View {
         Button { navigate(.planner) } label: {
-            VStack(alignment: .leading, spacing: 16) {
-                if typeSize.isAccessibilitySize {
-                    VStack(alignment: .leading, spacing: 16) {
-                        nextUpCopy
-                        if let entry = nextEntry {
-                            HomeSunriseTimeBadge(displayTime: entry.displayTime)
-                        }
+            AdaptiveRow(spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 6) {
+                        Text("Next up")
+                        if let time = nextEntry?.displayTime { Text(time) }
                     }
-                } else {
-                    HStack(spacing: 16) {
-                        nextUpCopy
-                        if let entry = nextEntry {
-                            HomeSunriseTimeBadge(displayTime: entry.displayTime)
-                        }
-                    }
+                    .font(.community(.caption, weight: .semibold))
+                    .foregroundStyle(RepbaseTactileDesign.accentText)
+                    Text(nextEntry?.title ?? String(localized: "Your schedule is clear", bundle: .app, locale: .app))
+                        .font(.community(.headline))
+                        .foregroundStyle(RepbaseTactileDesign.ink)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(upNextSummary)
+                        .font(.community(.caption))
+                        .foregroundStyle(HomeWidgetColors.secondaryText)
                 }
-                ViewThatFits(in: .horizontal) {
-                    HStack(spacing: 16) {
-                        Text(upNextSummary)
-                        Spacer(minLength: 0)
-                        RepbaseTactileActionLabel(title: "View day", tone: .accent)
-                            .fixedSize(horizontal: true, vertical: false)
-                    }
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text(upNextSummary)
-                        RepbaseTactileActionLabel(title: "View day", tone: .accent)
-                    }
-                }
-                .font(.community(size: 13, weight: .semibold))
-                .foregroundStyle(HomeWidgetColors.secondaryText)
+            } trailing: {
+                Label("View day", systemImage: "arrow.forward")
+                    .font(.community(.caption, weight: .semibold))
+                    .foregroundStyle(RepbaseTactileDesign.ink)
+                    .padding(.horizontal, 12)
+                    .frame(minHeight: 44)
+                    .background(HomeSunriseStyle.heroTint, in: Capsule())
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(24)
-            .background(HomeSunriseCardBackground())
-            .padding(.bottom, 8)
+            .padding(18)
+            .sunriseCard(tint: RepbaseTactileDesign.surface)
             .contentShape(Rectangle())
         }
         .buttonStyle(RepbaseTactilePressStyle())
         .accessibilityHint("Opens your calendar")
         .accessibilityValue(Text(nextEntry.map { priorityLabel($0.priority) } ?? ""))
         .accessibilityIdentifier("home.next-up")
-    }
-
-    private var nextUpCopy: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Next up")
-                .font(.community(size: 13, weight: .semibold))
-                .foregroundStyle(RepbaseTactileDesign.accentText)
-            if let entry = nextEntry {
-                Text(entry.title)
-                    .font(.community(size: 34, weight: .bold))
-                    .foregroundStyle(RepbaseTactileDesign.ink)
-                    .fixedSize(horizontal: false, vertical: true)
-            } else {
-                Text("Your schedule is clear")
-                    .font(.community(size: 34, weight: .bold))
-                    .foregroundStyle(RepbaseTactileDesign.ink)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var upNextSummary: LocalizedStringKey {
@@ -527,68 +683,29 @@ private struct GuidedDayFlow: View {
         return count == 0 ? "Calendar" : "\(count) tasks left"
     }
 
-    @ViewBuilder
-    private var movementAndTraining: some View {
-        VStack(spacing: RepbaseTactileDesign.sectionSpacing) {
-            if emphasis == .movement {
-                stepsCard
-                trainingSection(number: 1)
-            } else {
-                trainingSection(number: 1)
-                stepsCard
-            }
-        }
-    }
-
-    private var stepsCard: some View {
-        HStack(spacing: 16) {
-            RepbaseTactileProgressRing(progress: activity.stepGoal > 0
-                ? min(max(Double(activity.stepsToday ?? 0) / Double(activity.stepGoal), 0), 1) : 0)
-            VStack(alignment: .leading, spacing: 8) {
-                if !isToday {
-                    Text("Today").font(.community(size: 13, weight: .semibold))
-                        .foregroundStyle(HomeWidgetColors.secondaryText)
-                }
-                Text("\(activity.stepsToday?.formatted() ?? "—") steps")
-                    .font(.community(size: 24, weight: .bold))
-                    .foregroundStyle(RepbaseTactileDesign.ink)
-                Text(activity.stepsToday == nil ? "Not reported today" : "of \(activity.stepGoal.formatted()) steps")
-                    .font(.community(size: 13, weight: .semibold))
-                    .foregroundStyle(HomeWidgetColors.secondaryText)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer(minLength: 0)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .repbaseTactileCard(tone: .movement)
-        .accessibilityElement(children: .combine)
-        .accessibilityIdentifier("home.steps")
-    }
-
     private func trainingSection(number: Int) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            if let workout, workout.activity.usesSets, !workout.exercises.isEmpty {
-                if typeSize.isAccessibilitySize {
-                    trainingCopy
-                    Text("\(workout.exercises.count) exercises")
-                        .font(.community(.footnote, weight: .semibold))
-                        .foregroundStyle(HomeWidgetColors.secondaryText)
-                } else {
-                    HStack(spacing: 16) {
-                        trainingCopy
-                        HomeSunriseExerciseBadge(count: workout.exercises.count)
-                    }
+        Button { navigate(workoutRoute) } label: {
+            VStack(alignment: .leading, spacing: 8) {
+                photoEyebrow("Your workout", symbol: workout?.activity.symbol ?? "dumbbell")
+                Spacer(minLength: 8)
+                Text(workout?.name ?? String(localized: "Plan your workout", bundle: .app, locale: .app))
+                    .font(.community(.title2, weight: .bold))
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(workout?.activity.usesSets == false ? workout?.activity.title ?? "" : workoutMetadata)
+                    .font(.community(.caption))
+                if isTrained {
+                    Label("Completed", systemImage: "checkmark.circle.fill")
+                        .font(.community(.caption, weight: .semibold))
                 }
-            } else {
-                trainingCopy
+                photoAction(workoutActionTitle)
             }
-            trainingAction
+            .padding(18)
+            .foregroundStyle(.white)
+            .background(RytivoPhotoBackground(asset: TrainingPhoto.asset(for: workout?.activity)))
+            .contentShape(RoundedRectangle(cornerRadius: 24))
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(24)
-        .background(HomeSunriseCardBackground(isWorkout: true))
-        .padding(.bottom, 8)
+        .buttonStyle(RepbaseTactilePressStyle())
+        .accessibilityHint(workoutDetail)
         .accessibilityIdentifier("home.workout")
         .id("home.workout")
         .contextMenu {
@@ -610,50 +727,6 @@ private struct GuidedDayFlow: View {
         } message: {
             Text("Every workout you have planned is removed, past days included, so you can plan again from scratch. Workouts you have already done stay in your history.")
         }
-    }
-
-    private var trainingCopy: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Your workout")
-                .font(.community(size: 13, weight: .semibold))
-                .foregroundStyle(HomeWidgetColors.secondaryText)
-            Text(workout?.name ?? String(localized: "Plan your workout", bundle: .app, locale: .app))
-                .font(.community(size: 24, weight: .bold))
-                .foregroundStyle(RepbaseTactileDesign.ink)
-                .fixedSize(horizontal: false, vertical: true)
-            if let workout, workout.activity.usesSets, !workout.exercises.isEmpty {
-                Text("\(workout.totalSets) target sets")
-                    .font(.community(size: 13, weight: .semibold))
-                    .foregroundStyle(HomeWidgetColors.secondaryText)
-            } else if let workout, !workout.activity.usesSets {
-                Text(workout.activity.title)
-                    .font(.community(size: 13, weight: .semibold))
-                    .foregroundStyle(HomeWidgetColors.secondaryText)
-            } else {
-                trainingMetadata
-            }
-            if isTrained {
-                Label("Completed", systemImage: "checkmark.circle.fill")
-                    .font(.community(size: 13, weight: .semibold))
-                    .foregroundStyle(RepbaseTactileDesign.success)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private var trainingMetadata: some View {
-        Text(workoutMetadata)
-            .font(.community(size: 13, weight: .semibold))
-            .foregroundStyle(HomeWidgetColors.secondaryText)
-            .fixedSize(horizontal: false, vertical: true)
-    }
-
-    private var trainingAction: some View {
-        Button { navigate(workoutRoute) } label: {
-            RepbaseTactileActionLabel(title: workoutActionTitle, tone: .success, fillsWidth: true)
-        }
-        .buttonStyle(RepbaseTactilePressStyle())
-        .accessibilityHint(workoutDetail)
     }
 
     private func fuelSection(number: Int) -> some View {
@@ -724,8 +797,8 @@ private struct GuidedDayFlow: View {
         }
         .scaleEffect(foodProgressPulse && !reduceMotion ? 1.008 : 1)
         .offset(y: foodProgressPulse && !reduceMotion ? -2 : 0)
-        .accessibilityIdentifier("home.food")
-        .id("home.food")
+        .accessibilityIdentifier("home.nutrition-details")
+        .id("home.nutrition-details")
     }
 
     private var fuelTitle: some View {

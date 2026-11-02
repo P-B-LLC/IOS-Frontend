@@ -138,7 +138,8 @@ struct FoodTrackingView: View {
 
     private func screen(timeOfDay: HomeTimeOfDay) -> some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: -24) {
+                VStack(alignment: .leading, spacing: 14) {
                 if showsBackButton {
                     HStack {
                         RytivoBrandLockup(size: 24)
@@ -150,6 +151,11 @@ struct FoodTrackingView: View {
                 }
                 foodHeader(timeOfDay: timeOfDay)
                 weekSelector(timeOfDay: timeOfDay)
+                }
+                .padding(.horizontal, RepbaseDesign.pageInset)
+                .padding(.top, 16)
+                .padding(.bottom, 44)
+                VStack(alignment: .leading, spacing: 22) {
                 dailySummary(timeOfDay: timeOfDay)
 
                 if let message = store.errorMessage {
@@ -196,14 +202,17 @@ struct FoodTrackingView: View {
                 }
                 .tint(timeOfDay.accent)
             }
-            .padding(.horizontal, RepbaseDesign.pageInset)
-            .padding(.top, 16)
-            .padding(.bottom, RepbaseDesign.bottomBarClearance)
+                .padding(.horizontal, RepbaseDesign.pageInset)
+                .padding(.top, 24)
+                .padding(.bottom, RepbaseDesign.bottomBarClearance)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(RepbaseTactileSheetBackground())
+            }
         }
         .scrollIndicators(.hidden)
         .minimizesBottomBarOnScroll()
         .toolbar(.hidden, for: .navigationBar)
-        .background(Color(.systemBackground))
+        .background(HomeSunriseStyle.backdropGradient.ignoresSafeArea(edges: .top))
         .overlay(alignment: .bottom) {
             if let mealSuccessMessage {
                 FoodLogSuccessToast(message: mealSuccessMessage)
@@ -241,7 +250,7 @@ struct FoodTrackingView: View {
                     .foregroundStyle(timeOfDay.accent)
                 Button { isShowingMonth = true } label: {
                     Text("Good food. Your rhythm.")
-                        .font(.community(.title, weight: .bold))
+                        .font(.community(.title2, weight: .bold))
                         .tracking(-0.5)
                         .foregroundStyle(timeOfDay.canvasPrimaryText)
                 }
@@ -424,7 +433,7 @@ struct FoodTrackingView: View {
                     endPoint: .bottomTrailing
                 )
                 : LinearGradient(
-                    colors: [timeOfDay.surfaceRaised, timeOfDay.surfaceRaised],
+                    colors: [RytivoSunriseDesign.surface, HomeSunriseStyle.heroTint],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 ),
@@ -502,13 +511,22 @@ struct FoodTrackingView: View {
                     NavigationLink {
                         MealDetailView(date: selectedDate, mealID: nextMeal.id)
                     } label: {
-                        Text("Log \(nextMeal.displayNameInSentence)").frame(maxWidth: .infinity)
+                        HStack {
+                            Text("Log \(nextMeal.displayNameInSentence)")
+                            Spacer(minLength: 8)
+                            Image(systemName: "arrow.forward")
+                        }
+                        .font(.community(.footnote, weight: .semibold))
+                        .foregroundStyle(Color.white)
+                        .padding(.horizontal, 16)
+                        .frame(minHeight: 44)
+                        .background(Color(hex: 0x38664E), in: Capsule())
                     }
-                    .buttonStyle(WorkoutPrimaryButtonStyle(phase: visualPhase))
+                    .buttonStyle(RepbaseTactilePressStyle())
                 }
                 .padding(20)
-                .foregroundStyle(RepbaseDesign.onInk)
-                .background(RepbaseDesign.ink, in: RoundedRectangle(cornerRadius: 24))
+                .foregroundStyle(RytivoSunriseDesign.ink)
+                .sunriseCard(tint: RytivoSunriseDesign.sageTint)
             } else {
                 Button { isChoosingMeal = true } label: {
                     Label("Log food", systemImage: "plus").frame(maxWidth: .infinity)

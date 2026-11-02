@@ -44,12 +44,24 @@ prepare() {
     xcrun simctl install "$1" "$app"
     xcrun simctl status_bar "$1" override --time '9:41' --batteryState charged --batteryLevel 100
 }
+preview_tab=home
+preview_quick=''
+preview_sport=''
+preview_section=''
 capture() {
     local name="$1" appearance="$2" fixture="$3" target="${4:-}" large="${5:-0}" language="${6:-en}"
+    local focus='Training'
+    if [ "$target" = home.food ]; then focus='Nutrition'; fi
     xcrun simctl ui "$device" appearance "$appearance"
     SIMCTL_CHILD_REPBASE_HOME_PREVIEW="$fixture" \
         SIMCTL_CHILD_REPBASE_APPEARANCE="$appearance" \
         SIMCTL_CHILD_REPBASE_HOME_SCROLL="$target" \
+        SIMCTL_CHILD_REPBASE_HOME_FOCUS="$focus" \
+        SIMCTL_CHILD_REPBASE_PROFILE_PREVIEW='1' \
+        SIMCTL_CHILD_REPBASE_PROFILE_SECTION="$preview_section" \
+        SIMCTL_CHILD_REPBASE_TAB="$preview_tab" \
+        SIMCTL_CHILD_REPBASE_QUICK_ACTIONS="$preview_quick" \
+        SIMCTL_CHILD_REPBASE_PREVIEW_SPORT="$preview_sport" \
         SIMCTL_CHILD_REPBASE_HOME_LARGE_TEXT="$large" \
         xcrun simctl launch --terminate-running-process "$device" com.pbllc.rytivo -AppleLanguages "($language)"
     sleep 2
@@ -70,6 +82,31 @@ capture food-arabic light populated home.food 0 ar
 capture home-japanese light populated '' 0 ja
 capture home-german light populated '' 0 de
 capture workout-cardio light cardio home.workout
+# Inspect the other approved pages in the real shell, using the same fixtures.
+for appearance in light dark; do
+    preview_tab=training
+    capture "workouts-page-$appearance" "$appearance" populated
+    preview_quick=food
+    capture "food-page-$appearance" "$appearance" populated
+    preview_quick=''
+    preview_tab=planner
+    capture "calendar-page-$appearance" "$appearance" populated
+    preview_tab=account
+    capture "profile-page-$appearance" "$appearance" populated
+    preview_section=about
+    capture "profile-about-$appearance" "$appearance" populated
+    preview_section=''
+done
+preview_tab=training
+for sport in running tennis soccer boxing yoga hiking other; do
+    preview_sport="$sport"
+    capture "workouts-$sport" light populated
+done
+preview_sport=''
+preview_tab=planner
+capture calendar-large-text dark populated '' 1
+capture calendar-arabic dark populated '' 0 ar
+preview_tab=home
 # The narrowest current supported fixture, when installed Xcode offers it.
 narrow_type="$(xcrun simctl list devicetypes -j | python3 -c 'import json,sys; types=json.load(sys.stdin)["devicetypes"]; print(next((t["identifier"] for t in types if t["name"]=="iPhone SE (3rd generation)"),""))')"
 if [ -n "$narrow_type" ]; then

@@ -44,8 +44,8 @@ struct RepbaseTactileCardBackground: View {
             ))
             // Only the background shape casts shadows, not a rasterized copy
             // of every label, image and progress update in the card.
-            .shadow(color: RepbasePalette.ink.opacity(colorScheme == .dark ? 0.40 : 0.11),
-                    radius: 11, x: 0, y: 9)
+            .shadow(color: RepbasePalette.ink.opacity(colorScheme == .dark ? 0.14 : 0.035),
+                    radius: 6, x: 0, y: 3)
             .shadow(color: Color.black.opacity(colorScheme == .dark ? 0 : 0.07),
                     radius: 2, x: 0, y: 1)
             .overlay {
@@ -70,8 +70,8 @@ struct RepbaseTactileSheetBackground: View {
             style: .continuous
         )
         .fill(RepbaseTactileDesign.surface)
-        .shadow(color: RepbasePalette.ink.opacity(colorScheme == .dark ? 0.40 : 0.13),
-                radius: 9, x: 0, y: -6)
+        .shadow(color: RepbasePalette.ink.opacity(colorScheme == .dark ? 0.14 : 0.035),
+                radius: 6, x: 0, y: -2)
         .allowsHitTesting(false)
     }
 }
@@ -103,8 +103,8 @@ struct RepbaseTactileControlBackground: View {
                     lineWidth: 1
                 )
             }
-            .shadow(color: RepbasePalette.ink.opacity(colorScheme == .dark ? 0.65 : 0.14),
-                    radius: 0, x: 0, y: 3)
+            .shadow(color: RepbasePalette.ink.opacity(colorScheme == .dark ? 0.12 : 0.035),
+                    radius: 3, x: 0, y: 1)
             .shadow(color: Color.black.opacity(colorScheme == .dark ? 0 : 0.08),
                     radius: 2, x: 0, y: 1)
             .allowsHitTesting(false)

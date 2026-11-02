@@ -81,7 +81,10 @@ struct IOS_FrontendApp: App {
                 ? WorkoutStore(initialSchedule: Dictionary(uniqueKeysWithValues:
                     Weekday.allCases.map { ($0, [homePreview == "cardio"
                         ? Workout(name: "Easy run", activity: .running)
-                        : WorkoutStore.previewWorkouts[0]]) }))
+                        : ProcessInfo.processInfo.environment["REPBASE_PREVIEW_SPORT"]
+                            .flatMap(WorkoutActivity.init(rawValue:))
+                            .map { Workout(name: $0.title, activity: $0) }
+                            ?? WorkoutStore.previewWorkouts[0]]) }))
                 : (plannerPreview == "home" ? .preview : WorkoutStore())
         )
 #else

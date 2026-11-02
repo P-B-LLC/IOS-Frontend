@@ -133,43 +133,43 @@ struct SocialProfileView: View {
         let timeOfDay = HomeTimeOfDay.current
 
         ScrollView {
-            VStack(spacing: 0) {
-                HStack {
-                    Text(isCurrentUser ? "Your space" : "Profile")
-                        .font(.community(.title3, weight: .bold))
-                        .foregroundStyle(timeOfDay.canvasPrimaryText)
-                    Spacer()
-                    if isCurrentUser {
-                        settingsButton(timeOfDay: timeOfDay)
+            VStack(spacing: -24) {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text(isCurrentUser ? "Your space" : "Profile")
+                            .font(.community(.title3, weight: .bold))
+                            .foregroundStyle(timeOfDay.canvasPrimaryText)
+                        Spacer()
+                        if isCurrentUser { settingsButton(timeOfDay: timeOfDay) }
+                    }
+                    profileHeader(timeOfDay: timeOfDay)
+                    identityCard(timeOfDay: timeOfDay)
+                }
+                .padding(.horizontal, RepbaseDesign.pageInset)
+                .padding(.top, 8)
+                .padding(.bottom, 36)
+
+                VStack(spacing: 18) {
+                    if isCurrentUser, let highlight = myHighlights.first {
+                        profileHighlight(highlight)
+                    }
+                    sectionPicker(timeOfDay: timeOfDay)
+                    if selectedSection == .posts {
+                        postsSection(timeOfDay: timeOfDay)
+                    } else {
+                        aboutSection(timeOfDay: timeOfDay)
                     }
                 }
-                profileHeader(timeOfDay: timeOfDay)
-                identityCard(timeOfDay: timeOfDay)
-                if isCurrentUser, let highlight = myHighlights.first {
-                    profileHighlight(highlight)
-                        .padding(.vertical, 16)
-                }
-                sectionPicker(timeOfDay: timeOfDay)
-
-                if selectedSection == .posts {
-                    postsSection(timeOfDay: timeOfDay)
-                } else {
-                    aboutSection(timeOfDay: timeOfDay)
-                }
+                .padding(.horizontal, RepbaseDesign.pageInset)
+                .padding(.top, 24)
+                .padding(.bottom, RepbaseDesign.bottomBarClearance)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(RepbaseTactileSheetBackground())
             }
-            .padding(.horizontal, RepbaseDesign.pageInset)
-            .padding(.top, 4)
-            .padding(.bottom, RepbaseDesign.bottomBarClearance)
         }
+        .background(HomeSunriseStyle.backdropGradient.ignoresSafeArea(edges: .top))
         .scrollIndicators(.hidden)
         .minimizesBottomBarOnScroll()
-        .overlay(alignment: .bottomTrailing) {
-            if isCurrentUser {
-                createPostButton(timeOfDay: timeOfDay)
-                    .padding(.trailing, RepbaseDesign.pageInset + 2)
-                    .padding(.bottom, 12)
-            }
-        }
         .toolbar(.hidden, for: .navigationBar)
         .homeTimeScreen(timeOfDay)
         .fullScreenCover(isPresented: $editingProfile) {
@@ -187,6 +187,9 @@ struct SocialProfileView: View {
 #if DEBUG
         .task {
             if opensSettingsOnLaunch { showingSettings = true }
+            if ProcessInfo.processInfo.environment["REPBASE_PROFILE_SECTION"] == "about" {
+                selectedSection = .about
+            }
         }
 #endif
         // Out here, not inside the TimelineView, which tears its contents down
@@ -213,28 +216,29 @@ struct SocialProfileView: View {
         }
     }
 
-    /// A fixed way to post that does not consume a row in the profile.
-    ///
-    /// The app shell lays its navigation bar into the safe area below this
-    /// view, so anchoring the button to the viewport's bottom edge keeps it
-    /// immediately above that bar while the profile feed moves underneath.
-    private func createPostButton(timeOfDay: HomeTimeOfDay) -> some View {
-        Button {
-            isComposing = true
-        } label: {
-            Image(systemName: "plus")
-                .font(.community(size: 20, weight: .semibold))
-                .foregroundStyle(Color.white)
-                .frame(width: 42, height: 42)
-                .background(timeOfDay.accent, in: Circle())
-                .overlay {
-                    Circle()
-                        .strokeBorder(Color.white.opacity(0.28), lineWidth: 1)
-                }
-                .shadow(color: timeOfDay.shadow.opacity(0.7), radius: 7, x: 0, y: 3)
+    private func editProfileAction(timeOfDay: HomeTimeOfDay) -> some View {
+        Button { editingProfile = true } label: {
+            Label("Edit profile", systemImage: "pencil")
+                .font(.community(.footnote, weight: .semibold))
+                .padding(.horizontal, 18)
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .foregroundStyle(timeOfDay.onPrimaryAction)
+                .background(timeOfDay.primaryActionSurface, in: Capsule())
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Create post")
+        .buttonStyle(RepbaseTactilePressStyle())
+    }
+
+    private func newPostAction(timeOfDay: HomeTimeOfDay) -> some View {
+        Button { isComposing = true } label: {
+            Label("New post", systemImage: "plus")
+                .font(.community(.footnote, weight: .semibold))
+                .padding(.horizontal, 18)
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .foregroundStyle(timeOfDay.canvasPrimaryText)
+                .background(RytivoSunriseDesign.surface, in: Capsule())
+                .overlay(Capsule().strokeBorder(RytivoSunriseDesign.border, lineWidth: 0.75))
+        }
+        .buttonStyle(RepbaseTactilePressStyle())
         .accessibilityHint("Opens the post composer")
     }
 
@@ -286,10 +290,12 @@ struct SocialProfileView: View {
         Button {
             showingSettings = true
         } label: {
-            Image(systemName: "gearshape")
-                .font(.community(size: 18, weight: .semibold))
+            Label("Settings", systemImage: "gearshape")
+                .font(.community(.caption, weight: .semibold))
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
-                .frame(width: 44, height: 44)
+                .padding(.horizontal, 12)
+                .frame(minHeight: 44)
+                .background(RytivoSunriseDesign.surface.opacity(0.7), in: Capsule())
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Profile and app settings")
@@ -303,7 +309,7 @@ struct SocialProfileView: View {
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(alignment: .center, spacing: 10) {
                         Text(profile.displayName)
-                            .font(.community(.largeTitle, weight: .bold))
+                            .font(.community(.title, weight: .bold))
                             .foregroundStyle(timeOfDay.canvasPrimaryText)
                             .fixedSize(horizontal: false, vertical: true)
 
@@ -337,20 +343,22 @@ struct SocialProfileView: View {
 
             socialCounts(timeOfDay: timeOfDay)
 
+            Label(profile.isProfilePublic ? "Public profile" : "Private profile",
+                  systemImage: profile.isProfilePublic ? "globe" : "lock")
+                .font(.community(.caption, weight: .semibold))
+                .foregroundStyle(timeOfDay.canvasSecondaryText)
+
             if isCurrentUser {
-                Button { editingProfile = true } label: {
-                    HStack {
-                        Text("Edit profile")
-                        Spacer()
-                        Image(systemName: "arrow.forward")
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 12) {
+                        editProfileAction(timeOfDay: timeOfDay)
+                        newPostAction(timeOfDay: timeOfDay)
                     }
-                    .font(.community(.subheadline, weight: .semibold))
-                    .foregroundStyle(timeOfDay.canvasPrimaryText)
-                    .padding(.horizontal, 20)
-                    .frame(minHeight: 48)
-                    .background(timeOfDay.accent.opacity(0.09), in: Capsule())
+                    VStack(spacing: 12) {
+                        editProfileAction(timeOfDay: timeOfDay)
+                        newPostAction(timeOfDay: timeOfDay)
+                    }
                 }
-                .buttonStyle(.plain)
             }
 
             if !isCurrentUser {
@@ -467,7 +475,7 @@ struct SocialProfileView: View {
     }
 
     private func sectionPicker(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 6) {
             ForEach(ProfileSection.allCases) { section in
                 Button {
                     withAnimation(.easeInOut(duration: 0.18)) {
@@ -489,16 +497,16 @@ struct SocialProfileView: View {
                             )
                     }
                     .padding(.horizontal, 22)
-                    .frame(minHeight: 44)
+                    .frame(maxWidth: .infinity, minHeight: 44)
                     .background(selectedSection == section ? timeOfDay.primaryActionSurface : Color.clear, in: Capsule())
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityAddTraits(selectedSection == section ? [.isSelected] : [])
             }
-            Spacer(minLength: 0)
         }
-        .padding(.vertical, 12)
+        .padding(3)
+        .background(HomeSunriseStyle.heroTint, in: Capsule())
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Profile section")
     }
@@ -586,7 +594,7 @@ struct SocialProfileView: View {
     }
 
     private func aboutSection(timeOfDay: HomeTimeOfDay) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 16) {
             if !myPrompts.isEmpty {
                 VStack(alignment: .leading, spacing: 18) {
                     ForEach(myPrompts) { prompt in
@@ -603,9 +611,8 @@ struct SocialProfileView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
-                .padding(.vertical, 18)
-
-                Divider()
+                .padding(16)
+                .sunriseCard()
             }
 
             if !trainingIdentityMetrics.isEmpty {
@@ -617,9 +624,8 @@ struct SocialProfileView: View {
                         }
                     }
                 }
-                .padding(.vertical, 4)
-
-                Divider()
+                .padding(16)
+                .sunriseCard(tint: RytivoSunriseDesign.surface)
             }
 
             if !myHighlights.isEmpty {
@@ -631,9 +637,8 @@ struct SocialProfileView: View {
                         }
                     }
                 }
-                .padding(.vertical, 4)
-
-                Divider()
+                .padding(16)
+                .sunriseCard(tint: RytivoSunriseDesign.surface)
             }
 
             if isAboutEmpty && myPrompts.isEmpty && myHighlights.isEmpty {
@@ -732,7 +737,7 @@ struct SocialProfileView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(20)
-        .background(RepbasePalette.ink, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .background(RytivoPhotoBackground(asset: "TrainingStrength"))
         .accessibilityElement(children: .combine)
     }
 
@@ -1320,6 +1325,7 @@ private struct ProfileSettingsView: View {
             }
             .scrollIndicators(.hidden)
             .toolbar(.hidden, for: .navigationBar)
+            .background(HomeSunriseStyle.backdropGradient.ignoresSafeArea(edges: .top))
             .homeTimeScreen(timeOfDay)
         }
 #if DEBUG
@@ -1443,23 +1449,7 @@ private struct ProfileSettingsView: View {
 
             content()
                 .padding(.horizontal, 14)
-                .background(
-                    Color.repbaseDynamic(
-                        light: Color.white,
-                        dark: Color(hex: 0x131011)
-                    ),
-                    in: RoundedRectangle(cornerRadius: 22, style: .continuous)
-                )
-                .overlay {
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .strokeBorder(
-                            Color.repbaseDynamic(
-                                light: RepbasePalette.espresso.opacity(0.10),
-                                dark: Color(hex: 0x3B2E2B)
-                            ),
-                            lineWidth: 1
-                        )
-                }
+                .sunriseCard(tint: RytivoSunriseDesign.surface, radius: 22)
         }
     }
 

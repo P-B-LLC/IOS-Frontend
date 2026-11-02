@@ -85,7 +85,8 @@ struct PlannerView: View {
 
     private func plannerContent(timeOfDay: HomeTimeOfDay, timelineHeight: CGFloat) -> some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: -24) {
+                VStack(alignment: .leading, spacing: 16) {
                 VStack(spacing: 12) {
                     HStack {
                         RytivoBrandLockup(size: 24)
@@ -107,13 +108,22 @@ struct PlannerView: View {
                 }
                 if let error = store.persistenceError { errorCard(error, timeOfDay: timeOfDay) }
                 PlannerWeekStrip(onToggleMonth: { isMonthShown = true })
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 16)
+                .padding(.bottom, 44)
+                VStack(alignment: .leading, spacing: 24) {
                 daySection(timeOfDay: timeOfDay, timelineHeight: timelineHeight)
                 otherDaysSection(timeOfDay: timeOfDay)
             }
-            .padding(.horizontal, 24)
-            .padding(.top, 16)
-            .padding(.bottom, RepbaseDesign.bottomBarClearance)
+                .padding(.horizontal, 24)
+                .padding(.top, 24)
+                .padding(.bottom, RepbaseDesign.bottomBarClearance)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(RepbaseTactileSheetBackground())
+            }
         }
+        .background(HomeSunriseStyle.backdropGradient.ignoresSafeArea(edges: .top))
         .scrollIndicators(.hidden)
     }
 
@@ -332,6 +342,7 @@ struct PlannerView: View {
                         .font(.community(.subheadline))
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                     PlannerMonthCalendar(clearedDate: clearedDate, completionPulse: completionPulse)
+                    VStack(alignment: .leading, spacing: 16) {
                     if store.isLoading {
                         ProgressView("Loading this month…")
                             .frame(maxWidth: .infinity, minHeight: 80)
@@ -354,9 +365,16 @@ struct PlannerView: View {
                         }
                     }
                     if let error = store.persistenceError { errorCard(error, timeOfDay: timeOfDay) }
+                    }
+                    .padding(20)
+                    .background(RepbaseTactileSheetBackground())
+                    .padding(.horizontal, -24)
                 }
                 .padding(24)
             }
+            .background(HomeSunriseStyle.backdropGradient.ignoresSafeArea())
+            .toolbarBackground(HomeSunriseStyle.backdrop, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .navigationTitle("Month overview")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { isMonthShown = false } } }

@@ -79,6 +79,7 @@ struct TrainingTabView: View {
             case .food: FoodTrackingView()
             }
         }
+        .background(HomeSunriseStyle.backdropGradient.ignoresSafeArea(edges: .top))
         .homeTimeScreen(timeOfDay)
         .animation(.spring(response: 0.3, dampingFraction: 0.82), value: isShowingQuickActions)
         // The two halves offer different actions, so an open row would be
@@ -132,7 +133,7 @@ struct TrainingTabView: View {
                             if item == half {
                                 RoundedRectangle(cornerRadius: 9)
                                     .fill(timeOfDay.primaryActionSurface)
-                                    .shadow(color: Color.black.opacity(0.16), radius: 6, x: 0, y: 3)
+                                    .shadow(color: Color.black.opacity(0.04), radius: 3, x: 0, y: 1)
                             }
                         }
                         .contentShape(Rectangle())

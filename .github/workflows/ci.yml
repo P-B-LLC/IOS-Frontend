@@ -172,7 +172,9 @@ jobs:
       # and as flicker everywhere else it happened.
       - name: Decoded models have stable ids
         if: steps.scope.outputs.code == 'true'
-        run: python3 Scripts/check-stable-ids.py
+        run: |
+          python3 Scripts/check-stable-ids.py
+          python3 Scripts/check-sunrise-assets.py
 
       # The catalog tests only see strings already in the catalog, and
       # xcodebuild never adds new ones, so a string written from the command

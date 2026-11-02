@@ -156,21 +156,21 @@ struct PlannerWeekStrip: View {
                     }
                 }
                     .font(.community(size: 11, weight: .semibold))
-                    .foregroundStyle(isSelected ? PlannerStyle.accentText : timeOfDay.canvasSecondaryText)
+                    .foregroundStyle(isSelected && !isComplete ? Color(hex: 0x292421) : timeOfDay.canvasSecondaryText)
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
                 Text(calendar.component(.day, from: date), format: .number.grouping(.never).locale(.app))
                     .font(.community(size: 20, weight: .bold))
-                    .foregroundStyle(isComplete ? PlannerStyle.success : (isSelected ? PlannerStyle.accentText : timeOfDay.canvasPrimaryText))
+                    .foregroundStyle(isComplete ? PlannerStyle.success : (isSelected ? Color(hex: 0x292421) : timeOfDay.canvasPrimaryText))
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
-                dayMarker(isToday: isToday, isComplete: isComplete, hasEntries: hasEntries)
+                dayMarker(isToday: isToday, isComplete: isComplete, hasEntries: hasEntries, isSelected: isSelected)
                     .frame(height: 14)
             }
             .frame(maxWidth: .infinity, minHeight: 78)
             .background {
                 RoundedRectangle(cornerRadius: PlannerStyle.weekRadius)
-                    .fill(isComplete ? PlannerStyle.successSoft : (hasEntries || isSelected ? PlannerStyle.soft : .clear))
+                    .fill(isComplete ? PlannerStyle.successSoft : (isSelected ? RepbaseTactileDesign.accent : (hasEntries ? PlannerStyle.soft : .clear)))
             }
             .overlay {
                 RoundedRectangle(cornerRadius: PlannerStyle.weekRadius)
@@ -185,17 +185,17 @@ struct PlannerWeekStrip: View {
     }
 
     @ViewBuilder
-    private func dayMarker(isToday: Bool, isComplete: Bool, hasEntries: Bool) -> some View {
+    private func dayMarker(isToday: Bool, isComplete: Bool, hasEntries: Bool, isSelected: Bool) -> some View {
         if isComplete {
             completionMark
         } else if isToday {
             Text("Today")
                 .font(.community(size: 9, weight: .bold))
-                .foregroundStyle(PlannerStyle.accentText)
+                .foregroundStyle(isSelected ? Color(hex: 0x292421) : PlannerStyle.accentText)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
         } else if hasEntries {
-            Circle().fill(PlannerStyle.accentText).frame(width: 4, height: 4)
+            Circle().fill(isSelected ? Color(hex: 0x292421) : PlannerStyle.accentText).frame(width: 4, height: 4)
         } else {
             Color.clear
         }
