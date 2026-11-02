@@ -51,6 +51,10 @@ preview_section=''
 capture() {
     local name="$1" appearance="$2" fixture="$3" target="${4:-}" large="${5:-0}" language="${6:-en}"
     local focus='Training'
+    local -a extra_environment=()
+    if [ -n "$preview_quick" ]; then
+        extra_environment+=("SIMCTL_CHILD_REPBASE_QUICK_ACTIONS=$preview_quick")
+    fi
     if [ "$target" = home.food ]; then focus='Nutrition'; fi
     if [ "$target" = home.steps ]; then focus='Movement'; fi
     xcrun simctl ui "$device" appearance "$appearance"
@@ -61,10 +65,9 @@ capture() {
         SIMCTL_CHILD_REPBASE_PROFILE_PREVIEW='1' \
         SIMCTL_CHILD_REPBASE_PROFILE_SECTION="$preview_section" \
         SIMCTL_CHILD_REPBASE_TAB="$preview_tab" \
-        SIMCTL_CHILD_REPBASE_QUICK_ACTIONS="$preview_quick" \
         SIMCTL_CHILD_REPBASE_PREVIEW_SPORT="$preview_sport" \
         SIMCTL_CHILD_REPBASE_HOME_LARGE_TEXT="$large" \
-        xcrun simctl launch --terminate-running-process "$device" com.pbllc.rytivo -AppleLanguages "($language)"
+        env "${extra_environment[@]}" xcrun simctl launch --terminate-running-process "$device" com.pbllc.rytivo -AppleLanguages "($language)"
     sleep 2
     xcrun simctl io "$device" screenshot "$output/$name.png"
 }

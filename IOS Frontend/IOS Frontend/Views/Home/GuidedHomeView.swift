@@ -457,7 +457,7 @@ private struct GuidedDayFlow: View {
                     ForEach(focusOrder, id: \.self) { card in
                         focusCard(card)
                             .containerRelativeFrame(.horizontal) { width, _ in max(1, width - 32) }
-                            .frame(height: max(focusCardHeight, typeSize.isAccessibilitySize ? 360 : 214))
+                            .frame(height: max(focusCardHeight, typeSize.isAccessibilitySize ? 520 : 214))
                             .id(card)
                     }
                 }
@@ -653,17 +653,15 @@ private struct GuidedDayFlow: View {
     private func trainingSection(number: Int) -> some View {
         Button { navigate(workoutRoute) } label: {
             VStack(alignment: .leading, spacing: 8) {
-                photoEyebrow("Your workout", symbol: workout?.activity.symbol ?? "dumbbell")
-                Spacer(minLength: 8)
+                photoEyebrow(isTrained ? "Completed" : "Your workout",
+                             symbol: isTrained ? "checkmark.circle.fill" : workout?.activity.symbol ?? "dumbbell")
+                Spacer(minLength: 0)
                 Text(workout?.name ?? String(localized: "Plan your workout", bundle: .app, locale: .app))
                     .font(.community(.title2, weight: .bold))
-                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(typeSize.isAccessibilitySize ? 3 : 2)
                 Text(workout?.activity.usesSets == false ? workout?.activity.title ?? "" : workoutMetadata)
                     .font(.community(.caption))
-                if isTrained {
-                    Label("Completed", systemImage: "checkmark.circle.fill")
-                        .font(.community(.caption, weight: .semibold))
-                }
+                    .lineLimit(2)
                 photoAction(workoutActionTitle)
             }
             .padding(18)
@@ -1088,21 +1086,6 @@ private struct GuidedDayFlow: View {
         let stats = workouts.trainingStats
         guard stats.weeklyGoal > 0 else { return 0 }
         return min(max(Double(stats.completedThisWeek) / Double(stats.weeklyGoal), 0), 1)
-    }
-
-    private var flowRailProgress: Double {
-        let mealCount = displayedMealCount ?? food.loggedMealCount(on: selectedDate)
-        if mealCount > 0,
-           let fuelIndex = chapters.firstIndex(of: .fuel),
-           chapters.count > 1 {
-            return Double(fuelIndex) / Double(chapters.count - 1)
-        }
-        if activeSession != nil,
-           let trainingIndex = chapters.firstIndex(of: .training),
-           chapters.count > 1 {
-            return Double(trainingIndex) / Double(chapters.count - 1)
-        }
-        return 0
     }
 
     private var fuelAccent: Color {
