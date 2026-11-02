@@ -101,6 +101,7 @@ final class FoodTrackingStore {
     func connect(configuration: APIConfiguration, token: String) async {
         let generation = UUID()
         connectionGeneration = generation
+        catalogue = nil
         resetDayReads()
         days = [:]
         isSaving = false
@@ -163,6 +164,7 @@ final class FoodTrackingStore {
         } catch {
             guard connectionGeneration == generation else { return }
             repository = nil
+            catalogue = nil
             errorMessage = error.userFacingMessage
         }
     }
@@ -171,6 +173,7 @@ final class FoodTrackingStore {
         connectionGeneration = UUID()
         resetDayReads()
         repository = nil
+        catalogue = nil
         pendingDays = []
         days = [:]
         // One user's month must never be shown to the next, and a month marked
@@ -1110,11 +1113,33 @@ extension FoodTrackingStore {
     ///
     /// Unavailable is distinct from no matches; recents/manual entry remain
     /// usable. Discard results belonging to an earlier account connection.
-    func searchCatalogue(_ query: String) async throws -> [FoodDatabaseResult] {
-        guard let catalogue else { throw URLError(.notConnectedToInternet) }
+    func searchCatalogue(_ query: String) async throws -> [FoodCatalogueCandidate] {
+        guard isConnected, let catalogue else { throw URLError(.notConnectedToInternet) }
         let generation = connectionGeneration
-        let results = try await catalogue.search(query)
-        guard generation == connectionGeneration, !Task.isCancelled else { throw CancellationError() }
-        return results
+        do {
+            let results = try await catalogue.search(query)
+            guard generation == connectionGeneration, !Task.isCancelled else { throw CancellationError() }
+            return results
+        } catch {
+            // Failed requests can finish after sign-out too. Do not show the
+            // previous account's failure in the next account's picker.
+            guard generation == connectionGeneration, !Task.isCancelled else { throw CancellationError() }
+            throw error
+        }
+    }
+
+    /// Discovery never supplies guessed calories/macros or a guessed portion.
+    /// Resolve the chosen identity against complete product details first.
+    func catalogueDetails(for candidate: FoodCatalogueCandidate) async throws -> FoodDatabaseResult? {
+        guard isConnected, let catalogue else { throw URLError(.notConnectedToInternet) }
+        let generation = connectionGeneration
+        do {
+            let result = try await catalogue.details(for: candidate)
+            guard generation == connectionGeneration, !Task.isCancelled else { throw CancellationError() }
+            return result
+        } catch {
+            guard generation == connectionGeneration, !Task.isCancelled else { throw CancellationError() }
+            throw error
+        }
     }
 }

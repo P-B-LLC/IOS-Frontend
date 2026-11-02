@@ -1,6 +1,396 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Checking nutrition…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checking nutrition…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprobando la información nutricional…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在核对营养信息…"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पोषण जानकारी जाँची जा रही है…"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جارٍ التحقق من المعلومات الغذائية…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérification des informations nutritionnelles…"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verificando informações nutricionais…"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Проверяем пищевую ценность…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "栄養情報を確認中…"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nährwerte werden geprüft…"
+          }
+        }
+      }
+    },
+    "Check nutrition and choose portion": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check nutrition and choose portion"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ver información nutricional y elegir porción"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "核对营养信息并选择份量"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पोषण जानकारी देखें और मात्रा चुनें"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تحقق من المعلومات الغذائية واختر الكمية"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifier les valeurs nutritionnelles et choisir la portion"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ver informações nutricionais e escolher a porção"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Проверить пищевую ценность и выбрать порцию"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "栄養情報を確認して量を選ぶ"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nährwerte prüfen und Portion wählen"
+          }
+        }
+      }
+    },
+    "Nutrition is incomplete for this product. Check another match or enter the label manually.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nutrition is incomplete for this product. Check another match or enter the label manually."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La información nutricional de este producto está incompleta. Elige otro resultado o introduce los datos de la etiqueta manualmente."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此产品的营养信息不完整。请选择其他匹配项，或手动输入标签信息。"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "इस उत्पाद की पोषण जानकारी अधूरी है। कोई दूसरा मिलान चुनें या लेबल की जानकारी स्वयं दर्ज करें।"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "المعلومات الغذائية لهذا المنتج غير مكتملة. اختر نتيجة أخرى أو أدخل معلومات الملصق يدويًا."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les informations nutritionnelles de ce produit sont incomplètes. Choisissez un autre résultat ou saisissez les informations de l’étiquette manuellement."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "As informações nutricionais deste produto estão incompletas. Escolha outro resultado ou insira os dados do rótulo manualmente."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пищевая ценность этого продукта указана не полностью. Выберите другой результат или введите данные с этикетки вручную."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この商品の栄養情報は不完全です。別の候補を選ぶか、ラベルの情報を手入力してください。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Nährwertangaben dieses Produkts sind unvollständig. Wähle einen anderen Treffer oder gib die Angaben vom Etikett manuell ein."
+          }
+        }
+      }
+    },
+    "Food search is busy. Wait a moment, then retry.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Food search is busy. Wait a moment, then retry."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La búsqueda de alimentos está ocupada. Espera un momento y vuelve a intentarlo."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "食物搜索繁忙。请稍等片刻后重试。"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "खाद्य खोज अभी व्यस्त है। थोड़ी देर रुककर फिर कोशिश करें।"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "البحث عن الأطعمة مشغول حاليًا. انتظر قليلًا ثم أعد المحاولة."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La recherche d’aliments est occupée. Patientez un instant, puis réessayez."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A busca de alimentos está ocupada. Aguarde um momento e tente novamente."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Поиск продуктов сейчас занят. Подождите немного и повторите попытку."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "食品検索が混み合っています。しばらく待ってから再試行してください。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Lebensmittelsuche ist ausgelastet. Warte einen Moment und versuche es erneut."
+          }
+        }
+      }
+    },
+    "Your session has expired. Sign in again to search foods.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your session has expired. Sign in again to search foods."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu sesión ha caducado. Inicia sesión de nuevo para buscar alimentos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你的登录已过期。请重新登录以搜索食物。"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आपका सत्र समाप्त हो गया है। खाद्य पदार्थ खोजने के लिए फिर से साइन इन करें।"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "انتهت صلاحية جلستك. سجّل الدخول مجددًا للبحث عن الأطعمة."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre session a expiré. Reconnectez-vous pour rechercher des aliments."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sua sessão expirou. Entre novamente para buscar alimentos."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Срок действия сеанса истёк. Войдите снова, чтобы искать продукты."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "セッションの有効期限が切れました。食品を検索するには、もう一度サインインしてください。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine Sitzung ist abgelaufen. Melde dich erneut an, um Lebensmittel zu suchen."
+          }
+        }
+      }
+    },
+    "Could not load this food’s nutrition. Please retry.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not load this food’s nutrition. Please retry."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo cargar la información nutricional de este alimento. Vuelve a intentarlo."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法加载此食物的营养信息。请重试。"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "इस खाद्य पदार्थ की पोषण जानकारी लोड नहीं हो सकी। कृपया फिर कोशिश करें।"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّر تحميل المعلومات الغذائية لهذا الطعام. أعد المحاولة."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de charger les informations nutritionnelles de cet aliment. Veuillez réessayer."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível carregar as informações nutricionais deste alimento. Tente novamente."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось загрузить пищевую ценность продукта. Повторите попытку."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この食品の栄養情報を読み込めませんでした。再試行してください。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Nährwerte dieses Lebensmittels konnten nicht geladen werden. Bitte versuche es erneut."
+          }
+        }
+      }
+    },
     "Next card" : {
       "extractionState" : "manual",
       "localizations" : {

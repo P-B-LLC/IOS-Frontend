@@ -26,10 +26,38 @@ final class FoodBarcodeTests: XCTestCase {
         XCTAssertFalse(picker.contains(".task(id: searchText)"))
         XCTAssertTrue(picker.contains(".task(id: searchRevision)"))
         XCTAssertTrue(picker.contains("query == submittedQuery"))
-        XCTAssertTrue(picker.contains("result.servingDescription"))
+        XCTAssertTrue(picker.contains("product.servingDescription"))
         let scanner = try String(contentsOf: root.appendingPathComponent("IOS Frontend/IOS Frontend/Views/Food/FoodBarcodeSheet.swift"), encoding: .utf8)
         XCTAssertFalse(scanner.contains("saveFood"))
         XCTAssertFalse(scanner.contains("URLSession"))
         XCTAssertTrue(scanner.contains("stopScanning()"))
+    }
+
+    func testSearchLifecycleDiscardsOldCredentialsAndFailures() throws {
+        let root = URL(fileURLWithPath: try XCTUnwrap(ProcessInfo.processInfo.environment["RYTIVO_TEST_REPOSITORY"]))
+        let source = try String(contentsOf: root.appendingPathComponent("IOS Frontend/IOS Frontend/Stores/FoodTrackingStore.swift"), encoding: .utf8)
+        let connect = try XCTUnwrap(source.components(separatedBy: "func connect(configuration:").last?
+            .components(separatedBy: "func disconnect()").first)
+        XCTAssertEqual(connect.components(separatedBy: "catalogue = nil").count - 1, 2,
+                       "Connecting resets an old credential client; failed connection clears its new client")
+        let disconnect = try XCTUnwrap(source.components(separatedBy: "func disconnect()").last?
+            .components(separatedBy: "func reset()").first)
+        XCTAssertTrue(disconnect.contains("catalogue = nil"))
+        let search = try XCTUnwrap(source.components(separatedBy: "func searchCatalogue(").last?
+            .components(separatedBy: "func catalogueDetails(").first)
+        XCTAssertTrue(search.contains("guard isConnected, let catalogue"))
+        XCTAssertTrue(search.contains("} catch {"))
+        XCTAssertEqual(search.components(separatedBy: "guard generation == connectionGeneration, !Task.isCancelled").count - 1, 2,
+                       "Both successful responses and failures must belong to the current account")
+    }
+
+    func testRepeatedSubmissionDoesNotRestartAnIdenticalInFlightSearch() throws {
+        let root = URL(fileURLWithPath: try XCTUnwrap(ProcessInfo.processInfo.environment["RYTIVO_TEST_REPOSITORY"]))
+        let picker = try String(contentsOf: root.appendingPathComponent("IOS Frontend/IOS Frontend/Views/Food/FoodPickerView.swift"), encoding: .utf8)
+        let submit = try XCTUnwrap(picker.components(separatedBy: "private func submitSearch()").last?
+            .components(separatedBy: "private func searchDatabase()").first)
+        XCTAssertTrue(submit.contains("guard !isSaving, query.count >= 2"))
+        XCTAssertTrue(submit.contains("!(isSearchingDatabase && submittedQuery == query)"))
+        XCTAssertTrue(submit.contains("submittedQuery = query"))
     }
 }

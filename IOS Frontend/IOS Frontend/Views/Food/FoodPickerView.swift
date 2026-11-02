@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import RepbaseAPI
 import SwiftUI
 
 struct FoodPickerView: View {
@@ -25,9 +26,13 @@ struct FoodPickerView: View {
     @State private var searchRevision = 0
     @State private var showingBarcode = false
     @State private var scannedBarcode: String?
-    @State private var databaseResults: [FoodDatabaseResult] = []
+    @State private var databaseResults: [FoodCatalogueCandidate] = []
     @State private var isSearchingDatabase = false
     @State private var databaseError: String?
+    @State private var pendingCandidate: FoodCatalogueCandidate?
+    @State private var detailRevision = 0
+    @State private var loadingCandidateID: String?
+    @State private var detailError: String?
     @State private var selectedFood: FoodEntry?
     @State private var servingDescription = String(localized: "1 serving of this food entry", bundle: .app, locale: .app)
     @State private var savedFood: FoodEntry?
@@ -77,13 +82,14 @@ struct FoodPickerView: View {
                         Image(systemName: "arrow.right.circle.fill").font(.title2)
                     }
                     .accessibilityLabel("Search")
-                    .disabled(searchText.trimmed.count < 2 || isSaving)
+                    .disabled(searchText.trimmed.count < 2 || isSaving ||
+                              (isSearchingDatabase && submittedQuery == searchText.trimmed))
                 }
                 .padding(.horizontal, 16)
                 .frame(height: 52)
                 .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 16))
 
-                Button { showingBarcode = true } label: {
+                Button { cancelProductDetails(); showingBarcode = true } label: {
                     Label("Scan barcode", systemImage: "barcode.viewfinder")
                         .frame(maxWidth: .infinity, minHeight: 48)
                 }
@@ -114,8 +120,10 @@ struct FoodPickerView: View {
         .recoverableDraft(key: "food-picker-\(mealID)", value: $pendingAdd,
                           saved: $draftSaved, error: $saveError)
         .task(id: searchRevision) { await searchDatabase() }
+        .task(id: detailRevision) { await loadProductDetails() }
         .onChange(of: searchText) { _, _ in
             // Typing invalidates an old response but never spends a provider call.
+            cancelProductDetails()
             submittedQuery = ""
             databaseResults = []
             databaseError = nil
@@ -124,6 +132,7 @@ struct FoodPickerView: View {
         .sheet(isPresented: $showingBarcode, onDismiss: {
             if let code = scannedBarcode {
                 scannedBarcode = nil
+                cancelProductDetails()
                 submittedQuery = "barcode:" + code
                 searchRevision += 1
             }
@@ -147,6 +156,7 @@ struct FoodPickerView: View {
             }
             .interactiveDismissDisabled(isSaving)
         }
+        .onDisappear { cancelProductDetails() }
     }
 
     private func pickerHeader(timeOfDay: HomeTimeOfDay) -> some View {
@@ -196,18 +206,35 @@ struct FoodPickerView: View {
                 VStack(spacing: 0) {
                     ForEach(Array(databaseResults.enumerated()), id: \.element.id) { index, result in
                         Button {
-                            servingDescription = result.servingDescription
-                            selectedFood = result.entry
+                            chooseProduct(result)
                         } label: {
                             VStack(alignment: .leading, spacing: 8) {
                                 DatabaseFoodRow(result: result)
-                                Text("Choose portion →").font(.community(.subheadline, weight: .semibold))
+                                if loadingCandidateID == result.id {
+                                    ProgressView("Checking nutrition…").font(.community(.subheadline))
+                                } else {
+                                Text("Check nutrition and choose portion").font(.community(.subheadline, weight: .semibold))
                                     .foregroundStyle(timeOfDay.accent)
+                                }
                             }.padding(.vertical, 12)
                         }
                         .buttonStyle(.plain)
-                        .disabled(isSaving || pendingAdd != nil)
+                        .disabled(isSaving || pendingAdd != nil || loadingCandidateID != nil)
+                        if loadingCandidateID == result.id {
+                            Button("Cancel") { cancelProductDetails() }
+                                .frame(maxWidth: .infinity, alignment: .trailing)
+                        }
                         if index < databaseResults.count - 1 { Divider() }
+                    }
+                }
+            }
+            if let detailError {
+                Text(detailError).font(.community(.caption)).foregroundStyle(.orange)
+                if pendingCandidate != nil {
+                    Button("Retry") {
+                        guard let pendingCandidate, loadingCandidateID == nil else { return }
+                        loadingCandidateID = pendingCandidate.id
+                        detailRevision += 1
                     }
                 }
             }
@@ -247,7 +274,7 @@ struct FoodPickerView: View {
                                 .padding(.vertical, 14)
                         }
                         .buttonStyle(.plain)
-                        .disabled(isSaving || pendingAdd != nil)
+                        .disabled(isSaving || pendingAdd != nil || loadingCandidateID != nil)
                         if index < filteredRecents.count - 1 { Divider() }
                     }
                 }
@@ -281,6 +308,7 @@ struct FoodPickerView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .disabled(isSaving || pendingAdd != nil || loadingCandidateID != nil)
         .overlay(alignment: .top) { Divider() }
         .overlay(alignment: .bottom) { Divider() }
     }
@@ -337,8 +365,13 @@ struct FoodPickerView: View {
     }
 
     private func submitSearch() {
-        guard searchText.trimmed.count >= 2 else { return }
-        submittedQuery = searchText.trimmed
+        let query = searchText.trimmed
+        // Repeated keyboard submits/taps must not cancel the same request
+        // and spend another backend/provider rate-limit slot.
+        guard !isSaving, query.count >= 2,
+              !(isSearchingDatabase && submittedQuery == query) else { return }
+        cancelProductDetails()
+        submittedQuery = query
         searchRevision += 1
     }
 
@@ -367,13 +400,77 @@ struct FoodPickerView: View {
         } catch {
             guard !Task.isCancelled, revision == searchRevision, query == submittedQuery else { return }
             databaseResults = []
-            databaseError = String(
-                localized: "The food database could not be reached. You can still reuse or enter a food manually.",
-                bundle: .app,
-                locale: .app
-            )
+            databaseError = catalogueError(error, details: false)
         }
         isSearchingDatabase = false
+    }
+
+    private func chooseProduct(_ candidate: FoodCatalogueCandidate) {
+        guard !isSaving, pendingAdd == nil, loadingCandidateID == nil else { return }
+        pendingCandidate = candidate
+        loadingCandidateID = candidate.id
+        detailError = nil
+        detailRevision += 1
+    }
+
+    private func cancelProductDetails() {
+        pendingCandidate = nil
+        loadingCandidateID = nil
+        detailError = nil
+        detailRevision += 1
+    }
+
+    private func loadProductDetails() async {
+        guard let candidate = pendingCandidate else { return }
+        let revision = detailRevision
+        loadingCandidateID = candidate.id
+        detailError = nil
+        defer { if revision == detailRevision { loadingCandidateID = nil } }
+        do {
+            try Task.checkCancellation()
+            let product = try await store.catalogueDetails(for: candidate)
+            guard !Task.isCancelled, revision == detailRevision,
+                  pendingCandidate?.id == candidate.id else { return }
+            guard let product else {
+                pendingCandidate = nil
+                detailError = String(localized: "Nutrition is incomplete for this product. Check another match or enter the label manually.",
+                                     bundle: .app, locale: .app)
+                return
+            }
+            servingDescription = product.servingDescription
+            pendingCandidate = nil
+            selectedFood = product.entry
+        } catch is CancellationError {
+            return
+        } catch {
+            guard !Task.isCancelled, revision == detailRevision,
+                  pendingCandidate?.id == candidate.id else { return }
+            detailError = catalogueError(error, details: true)
+        }
+    }
+
+    private func catalogueError(_ error: Error, details: Bool) -> String {
+        if let failure = error as? FoodCatalogueFailure {
+            switch failure {
+            case .busy:
+                return String(localized: "Food search is busy. Wait a moment, then retry.", bundle: .app, locale: .app)
+            case .sessionExpired:
+                return String(localized: "Your session has expired. Sign in again to search foods.", bundle: .app, locale: .app)
+            }
+        }
+        if let response = error as? RepbaseAPIHTTPError {
+            if response.statusCode == 429 {
+                return String(localized: "Food search is busy. Wait a moment, then retry.", bundle: .app, locale: .app)
+            }
+            if response.statusCode == 401 {
+                return String(localized: "Your session has expired. Sign in again to search foods.", bundle: .app, locale: .app)
+            }
+        }
+        if details {
+            return String(localized: "Could not load this food’s nutrition. Please retry.", bundle: .app, locale: .app)
+        }
+        return String(localized: "The food database could not be reached. You can still reuse or enter a food manually.",
+                      bundle: .app, locale: .app)
     }
 }
 
@@ -534,7 +631,7 @@ private extension String {
 /// catalogue products may be per 100 g, 100 ml, or a labelled serving. Adding one without
 /// reading that is how a chicken breast gets logged as a third of itself.
 private struct DatabaseFoodRow: View {
-    let result: FoodDatabaseResult
+    let result: FoodCatalogueCandidate
 
     var body: some View {
         HStack(spacing: 12) {
@@ -544,21 +641,27 @@ private struct DatabaseFoodRow: View {
                 .frame(width: 24, height: 34)
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(result.entry.name)
+                Text(result.title)
                     .font(.community(.headline))
                     .foregroundStyle(.primary)
                     .lineLimit(2)
-                Text("Per \(result.servingDescription) · P \(result.entry.totalNutrition.proteinGrams.nutritionText) · C \(result.entry.totalNutrition.carbohydrateGrams.nutritionText) · F \(result.entry.totalNutrition.fatGrams.nutritionText)")
+                if let verified = result.verifiedResult {
+                Text("Per \(verified.servingDescription) · P \(verified.entry.totalNutrition.proteinGrams.nutritionText) · C \(verified.entry.totalNutrition.carbohydrateGrams.nutritionText) · F \(verified.entry.totalNutrition.fatGrams.nutritionText)")
                     .font(.community(.caption2))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+                }
             }
 
             Spacer(minLength: 0)
 
-            Text("\(result.entry.totalNutrition.calories.nutritionText) cal")
+            if let verified = result.verifiedResult {
+            Text("\(verified.entry.totalNutrition.calories.nutritionText) cal")
                 .font(.community(.subheadline, weight: .semibold))
                 .foregroundStyle(.primary)
+            } else {
+                Image(systemName: "chevron.forward").foregroundStyle(.secondary)
+            }
         }
         .contentShape(Rectangle())
     }

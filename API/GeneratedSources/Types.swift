@@ -163,6 +163,11 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/food/cookbooks/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//delete(food_cookbooks_destroy)`.
     func foodCookbooksDestroy(_ input: Operations.FoodCookbooksDestroy.Input) async throws -> Operations.FoodCookbooksDestroy.Output
+    /// Searches the Open Food Facts index for product identities only. Candidates contain no nutrition or serving basis. Before offering portions or logging, resolve the source_id barcode with food/search. Attribute Open Food Facts (ODbL).
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/discover/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/discover//get(food_discover_list)`.
+    func foodDiscoverList(_ input: Operations.FoodDiscoverList.Input) async throws -> Operations.FoodDiscoverList.Output
     /// Foods inside meals. Ownership is the meal's owner, one step away.
     ///
     /// - Remark: HTTP `GET /api/v1/food/entries/`.
@@ -1765,6 +1770,19 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//delete(food_cookbooks_destroy)`.
     public func foodCookbooksDestroy(path: Operations.FoodCookbooksDestroy.Input.Path) async throws -> Operations.FoodCookbooksDestroy.Output {
         try await foodCookbooksDestroy(Operations.FoodCookbooksDestroy.Input(path: path))
+    }
+    /// Searches the Open Food Facts index for product identities only. Candidates contain no nutrition or serving basis. Before offering portions or logging, resolve the source_id barcode with food/search. Attribute Open Food Facts (ODbL).
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/discover/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/discover//get(food_discover_list)`.
+    public func foodDiscoverList(
+        query: Operations.FoodDiscoverList.Input.Query,
+        headers: Operations.FoodDiscoverList.Input.Headers = .init()
+    ) async throws -> Operations.FoodDiscoverList.Output {
+        try await foodDiscoverList(Operations.FoodDiscoverList.Input(
+            query: query,
+            headers: headers
+        ))
     }
     /// Foods inside meals. Ownership is the meal's owner, one step away.
     ///
@@ -5782,6 +5800,40 @@ public enum Components {
                 case lastName = "last_name"
                 case profilePhotoUrl = "profile_photo_url"
                 case createdAt = "created_at"
+            }
+        }
+        /// A search candidate, not nutrition and never a loggable food entry.
+        ///
+        /// Resolve source_id through food/search with barcode:<GTIN> before showing
+        /// portions or saving. The search index does not preserve a reliable basis.
+        ///
+        /// - Remark: Generated from `#/components/schemas/FoodDiscoveryResult`.
+        public struct FoodDiscoveryResult: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/FoodDiscoveryResult/source_id`.
+            public var sourceId: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FoodDiscoveryResult/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FoodDiscoveryResult/brand`.
+            public var brand: Swift.String
+            /// Creates a new `FoodDiscoveryResult`.
+            ///
+            /// - Parameters:
+            ///   - sourceId:
+            ///   - name:
+            ///   - brand:
+            public init(
+                sourceId: Swift.String,
+                name: Swift.String,
+                brand: Swift.String
+            ) {
+                self.sourceId = sourceId
+                self.name = name
+                self.brand = brand
+            }
+            public enum CodingKeys: String, CodingKey {
+                case sourceId = "source_id"
+                case name
+                case brand
             }
         }
         /// One food. Nutrition is per serving; totals are derived, never stored,
@@ -20075,6 +20127,136 @@ public enum Operations {
             ///
             /// A response with a code that is not documented in the OpenAPI document.
             case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// Searches the Open Food Facts index for product identities only. Candidates contain no nutrition or serving basis. Before offering portions or logging, resolve the source_id barcode with food/search. Attribute Open Food Facts (ODbL).
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/discover/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/discover//get(food_discover_list)`.
+    public enum FoodDiscoverList {
+        public static let id: Swift.String = "food_discover_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/discover/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// Submit a food/brand search (two characters minimum), not every keystroke.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/discover/GET/query/q`.
+                public var q: Swift.String
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - q: Submit a food/brand search (two characters minimum), not every keystroke.
+                public init(q: Swift.String) {
+                    self.q = q
+                }
+            }
+            public var query: Operations.FoodDiscoverList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/food/discover/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodDiscoverList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodDiscoverList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodDiscoverList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.FoodDiscoverList.Input.Query,
+                headers: Operations.FoodDiscoverList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/discover/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/discover/GET/responses/200/content/application\/json`.
+                    case json([Components.Schemas.FoodDiscoveryResult])
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: [Components.Schemas.FoodDiscoveryResult] {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodDiscoverList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodDiscoverList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/discover//get(food_discover_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.FoodDiscoverList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.FoodDiscoverList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
         }
     }
     /// Foods inside meals. Ownership is the meal's owner, one step away.
