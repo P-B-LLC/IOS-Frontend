@@ -1,5 +1,28 @@
 # TestFlight development workflow
 
+## Home photo clarity — November 3, 2026
+
+The Home workout (including completed), movement and food focus cards opt into
+a lighter photographic scrim: the small top label and lower text/actions keep
+stronger shading while the image's middle is more visible. Increase Contrast
+and accessibility text use stronger protection. Other Training/Profile photo
+cards retain their original scrim, and an unknown activity keeps its neutral
+fallback. Image interpolation is high quality; no blur, raster upscaling,
+network images, data/store changes or extra image copies are introduced.
+
+The existing approved Figma originals replace reduced exports for strength
+(577 × 1024 → 941 × 1672) and outdoors (1024 × 683 → 1536 × 1024). Food already
+uses its 1152 × 928 image. Assets remain under the existing per-image 3 MiB and
+total 16 MiB budgets; the asset check guards against smaller replacements.
+Originals came from the existing [category photo sources](https://www.figma.com/design/FbMNgG8cuZfrRFzQTtIVCy?node-id=248-8078),
+not newly generated artwork. The prior images remain in integration history.
+
+Mac CI captures the real Home focus cards in light/dark and larger text. Review
+all three cards, completed workout, bright portions of each photo, neutral
+fallback, narrow width, Increase Contrast, and RTL before promotion. A source
+wiring test or a higher pixel count does not establish rendered readability.
+Main, TestFlight and the live backend remain outside this testing-only change.
+
 ## Food Goals button — November 3, 2026
 
 The approved [Goals proposal](https://www.figma.com/design/FbMNgG8cuZfrRFzQTtIVCy?node-id=352-14502)

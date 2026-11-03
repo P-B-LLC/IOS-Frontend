@@ -91,6 +91,7 @@ cp "$repo/IOS Frontend/IOS Frontend/Services/FoodBarcode.swift" "$test_package/S
 cp "$repo/IOS Frontend/IOS Frontend/Services/FoodPortionMeasurement.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/Tests/AccountSafety/FoodPortionMeasurementTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/Tests/AccountSafety/FoodHeaderPresentationTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/Tests/AccountSafety/PhotoBackgroundPresentationTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/Tests/AccountSafety/PortionMacroMixTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/IOS Frontend/IOS Frontend/Views/Food/PortionMacroMix.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/Services/FoodDaySyncCoordinator.swift" "$test_package/Sources/AccountSafety/"

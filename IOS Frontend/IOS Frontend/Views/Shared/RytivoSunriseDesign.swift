@@ -49,27 +49,47 @@ enum TrainingPhoto {
 }
 
 struct RytivoPhotoBackground: View {
+    @Environment(\.colorSchemeContrast) private var contrast
+    @Environment(\.dynamicTypeSize) private var typeSize
     let asset: String?
     var radius: CGFloat = 24
+    /// Home's focus cards expose more of the photo. Other existing call sites
+    /// keep their original readability treatment until separately reviewed.
+    var emphasizesPhoto = false
 
     var body: some View {
         GeometryReader { geometry in
             ZStack {
                 Color(hex: 0x292D29)
                 if let asset {
-                    Image(asset).resizable().scaledToFill()
+                    Image(asset).resizable().interpolation(.high).scaledToFill()
                         .frame(width: geometry.size.width, height: geometry.size.height)
                         .clipped()
                 }
-                // A constant scrim keeps white type readable in either theme,
-                // including photographs with a bright sky behind the title.
-                LinearGradient(colors: [.black.opacity(0.60), .black.opacity(0.78)],
-                               startPoint: .top, endPoint: .bottom)
+                photoScrim
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
         .allowsHitTesting(false)
         .accessibilityHidden(true)
+    }
+
+    private var photoScrim: LinearGradient {
+        guard emphasizesPhoto, asset != nil else {
+            return LinearGradient(colors: [.black.opacity(0.60), .black.opacity(0.78)],
+                                  startPoint: .top, endPoint: .bottom)
+        }
+        // Protect the small top label and the lower text/actions, leaving a
+        // brighter window across the photograph instead of dimming it evenly.
+        // Extra-large text may occupy that window, so use the stronger scrim.
+        let stronger = contrast == .increased || typeSize.isAccessibilitySize
+        return LinearGradient(stops: [
+            .init(color: .black.opacity(stronger ? 0.68 : 0.56), location: 0),
+            .init(color: .black.opacity(stronger ? 0.68 : 0.56), location: 0.18),
+            .init(color: .black.opacity(stronger ? 0.60 : 0.24), location: 0.32),
+            .init(color: .black.opacity(stronger ? 0.68 : 0.54), location: 0.48),
+            .init(color: .black.opacity(stronger ? 0.80 : 0.68), location: 1)
+        ], startPoint: .top, endPoint: .bottom)
     }
 }
 

@@ -10,6 +10,9 @@ app = root / 'IOS Frontend' / 'IOS Frontend'
 presentation = (app / 'Views/Shared/RytivoSunriseDesign.swift').read_text(encoding='utf-8')
 names = set(re.findall(r'return "(Training\w+)"', presentation)) | {'SunriseFoodPhoto'}
 total = 0
+# Keep the approved high-resolution originals rather than reintroducing the
+# smaller exports that softened Home's wide Retina focus cards.
+minimum_dimensions = {'TrainingStrength': (900, 1600), 'TrainingOutdoors': (1500, 1000)}
 for name in sorted(names):
     folder = app / 'Assets.xcassets' / (name + '.imageset')
     manifest = json.loads((folder / 'Contents.json').read_text(encoding='utf-8-sig'))
@@ -33,6 +36,8 @@ for name in sorted(names):
                     break
                 offset += length + 2
         assert 480 <= width <= 2048 and 480 <= height <= 2048, f'{name}: unsuitable dimensions'
+        minimum_width, minimum_height = minimum_dimensions.get(name, (480, 480))
+        assert width >= minimum_width and height >= minimum_height, f'{name}: lower-resolution export replaced the original'
         assert len(data) <= 3 * 1024 * 1024, f'{name}: photo exceeds bundle budget'
         total += len(data)
 assert total <= 16 * 1024 * 1024, 'Sunrise photo bundle exceeds 16 MiB'

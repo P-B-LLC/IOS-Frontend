@@ -525,7 +525,7 @@ private struct GuidedDayFlow: View {
                 }
                 .padding(18)
                 .foregroundStyle(.white)
-                .background(RytivoPhotoBackground(asset: "SunriseFoodPhoto"))
+                .background(RytivoPhotoBackground(asset: "SunriseFoodPhoto", emphasizesPhoto: true))
                 .contentShape(RoundedRectangle(cornerRadius: 24))
             }
             .buttonStyle(RepbaseTactilePressStyle())
@@ -547,7 +547,7 @@ private struct GuidedDayFlow: View {
         }
         .padding(18)
         .foregroundStyle(.white)
-        .background(RytivoPhotoBackground(asset: "TrainingOutdoors"))
+        .background(RytivoPhotoBackground(asset: "TrainingOutdoors", emphasizesPhoto: true))
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("home.steps")
     }
@@ -666,7 +666,7 @@ private struct GuidedDayFlow: View {
             }
             .padding(18)
             .foregroundStyle(.white)
-            .background(RytivoPhotoBackground(asset: TrainingPhoto.asset(for: workout?.activity)))
+            .background(RytivoPhotoBackground(asset: TrainingPhoto.asset(for: workout?.activity), emphasizesPhoto: true))
             .contentShape(RoundedRectangle(cornerRadius: 24))
         }
         .buttonStyle(RepbaseTactilePressStyle())
