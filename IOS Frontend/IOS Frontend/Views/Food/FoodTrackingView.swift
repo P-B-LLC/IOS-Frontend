@@ -158,9 +158,6 @@ struct FoodTrackingView: View {
                 VStack(alignment: .leading, spacing: 22) {
                     dailySummary(timeOfDay: timeOfDay)
 
-                    FoodDailyNutrientsCard(entries: store.meals(on: selectedDate).flatMap(\.entries),
-                                           date: selectedDate)
-
                     if let message = store.errorMessage {
                         syncNotice(message, timeOfDay: timeOfDay)
                     } else if !store.isConnected {
@@ -204,6 +201,9 @@ struct FoodTrackingView: View {
                         .padding(.vertical, 10)
                     }
                     .tint(timeOfDay.accent)
+
+                    FoodDailyNutrientsCard(entries: store.meals(on: selectedDate).flatMap(\.entries),
+                                           date: selectedDate)
             }
                 .padding(.horizontal, RepbaseDesign.pageInset)
                 .padding(.top, 24)
