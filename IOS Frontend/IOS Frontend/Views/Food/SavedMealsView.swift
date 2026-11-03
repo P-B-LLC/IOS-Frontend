@@ -47,7 +47,6 @@ struct SavedMealsView: View {
     @State private var isCreatingMeal = false
     @State private var mealToEdit: SavedFoodMeal?
     @State private var mealToApply: SavedFoodMeal?
-    @State private var isCreatingCookbook = false
     @State private var isPostingCookbook = false
     @State private var recipeToMove: SavedFoodMeal?
     @State private var isVisible = false
@@ -140,11 +139,11 @@ struct SavedMealsView: View {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Done") { dismiss() }
             }
-            ToolbarItem(placement: .primaryAction) {
-                Button("New", systemImage: "plus") {
-                    if cookbookID == nil { isCreatingCookbook = true } else { isCreatingMeal = true }
+            if cookbookID != nil {
+                ToolbarItem(placement: .primaryAction) {
+                    Button("New", systemImage: "plus") { isCreatingMeal = true }
+                        .disabled(cookbook?.isFull == true)
                 }
-                .disabled(cookbook?.isFull == true)
             }
         }
         .fullScreenCover(isPresented: $isCreatingMeal) {
@@ -152,7 +151,6 @@ struct SavedMealsView: View {
                 SavedMealEditorView(cookbookID: cookbookID)
             }
         }
-        .sheet(isPresented: $isCreatingCookbook) { NavigationStack { CookbookEditorView() } }
         .sheet(isPresented: $isPostingCookbook) {
             if let cookbook { NavigationStack { CookbookPostComposer(cookbook: cookbook) } }
         }

@@ -1,5 +1,28 @@
 # TestFlight development workflow
 
+## Cookbook library: duplicate action and live 404 diagnosis — November 2, 2026
+
+The library now has one **New cookbook** action in its content. The duplicate
+navigation-bar plus, its unused presentation state, and its duplicate editor
+sheet are removed. Inside an individual cookbook, the existing plus still
+creates a recipe and remains disabled when that cookbook is full.
+
+Read-only verification against `https://rytivo.app` found the live backend at
+`faac069`, healthy at `/health/` (200), but missing
+`/api/v1/food/cookbooks/` (404). Its deployed `core/urls.py` has no cookbook
+registration. The existing saved-meal endpoint returns the expected 401 without
+credentials. The iOS generated client uses the documented cookbook path with
+its trailing slash; this is an undeployed backend feature, not an empty library
+or an authentication failure. Pulling/building iOS does not deploy repbase.
+
+Cookbooks remain on repbase's `work/testflight-calendar-sync-2026-10-28` branch.
+Before a coordinated rollout, reconcile its cookbook migration chain with
+main's `0087_link_workout_calendar_tasks`, validate the merged candidate, and
+handle older clients that omit the now-required cookbook destination. Follow
+repbase's `COOKBOOKS_TESTING.md` for the database backup and migration procedure.
+No live server, database, API contract, or synchronization behavior is changed
+by this UI fix. A simulator build alone will continue to receive the live 404.
+
 ## Portion screen: simple macro summary — November 3, 2026
 
 The approved [Portion review](https://www.figma.com/design/FbMNgG8cuZfrRFzQTtIVCy?node-id=329-14182)
