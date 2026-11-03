@@ -495,11 +495,13 @@ private struct AppRootView: View {
                 NavigationStack {
                     FoodEntryEditorView(date: Date(), mealID: meal.id)
                 }
-            } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "picker",
+            } else if let scenario = ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"],
+                      scenario == "picker" || scenario.hasPrefix("picker-"),
                       let meal = foodTrackingStore.meals(on: Date()).first {
                 NavigationStack {
-                    FoodPickerView(date: Date(), mealID: meal.id)
+                    FoodPickerView(date: Date(), mealID: meal.id, previewScenario: scenario)
                 }
+                .dynamicTypeSize(scenario == "picker-accessibility" ? .accessibility3 : .large)
             } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "cookbook" {
                 NavigationStack { SavedMealsView(referenceDate: Date(), cookbookID: 1) }
             } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "cookbook-picker" {

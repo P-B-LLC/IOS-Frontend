@@ -250,6 +250,15 @@ jobs:
           if git diff --name-only HEAD^ HEAD | grep -Eq 'FoodMealPlannerCard'; then
             FOOD_PREVIEW_SCREENS='meal-planner meal-planner-accessibility' bash Scripts/capture-cookbooks-preview.sh
           fi
+          if git diff --name-only HEAD^ HEAD | grep -Eq 'FoodPicker|capture-cookbooks-preview'; then
+            FOOD_PREVIEW_SCREENS='picker picker-results picker-empty picker-error picker-loading picker-accessibility' bash Scripts/capture-cookbooks-preview.sh
+            for preview in picker-light picker-dark picker-results-light picker-results-dark picker-error-light picker-error-dark picker-loading-light picker-loading-dark picker-empty-light picker-empty-dark picker-accessibility-light picker-accessibility-dark picker-results-arabic-light picker-results-arabic-dark; do
+              test -s ".build/cookbook-previews/$preview.png" || {
+                echo "Missing Food picker simulator preview: $preview"
+                exit 1
+              }
+            done
+          fi
 
       - name: Save cookbook simulator previews
         if: always() && steps.scope.outputs.code == 'true'

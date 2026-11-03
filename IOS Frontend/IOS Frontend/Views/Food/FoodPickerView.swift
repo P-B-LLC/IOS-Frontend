@@ -3,7 +3,7 @@
 //  IOS Frontend
 //
 //  Chooses how a food gets added to a meal: reuse something already logged,
-//  search a food database once the OAS documents one, or enter it manually.
+//  search the catalogue, scan a barcode, or enter a label manually.
 //
 
 import Foundation
@@ -13,6 +13,7 @@ import SwiftUI
 struct FoodPickerView: View {
     @Environment(FoodTrackingStore.self) private var store
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var isSaving = false
     @State private var saveError: String?
     @State private var pendingAdd: FoodEntry?
@@ -37,15 +38,17 @@ struct FoodPickerView: View {
     @State private var servingDescription = String(localized: "1 serving of this food entry", bundle: .app, locale: .app)
     @State private var savedFood: FoodEntry?
     @State private var openedInitialFood = false
+    @State private var showingSources = false
     var initialFood: FoodEntry? = nil
+    #if DEBUG
+    var previewScenario: String? = nil
+    #endif
 
     var body: some View {
-        let timeOfDay = HomeTimeOfDay.current
-
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                pickerHeader(timeOfDay: timeOfDay)
+            LazyVStack(alignment: .leading, spacing: 20) {
                 if let savedFood {
+                    VStack(alignment: .leading, spacing: 20) {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 54)).foregroundStyle(RepbaseDesign.success)
                     Text("Added to your meal")
@@ -60,68 +63,67 @@ struct FoodPickerView: View {
                         searchText = ""
                     }.buttonStyle(RepbasePrimaryButtonStyle())
                     Button("Done") { dismiss() }.buttonStyle(RepbasePrimaryButtonStyle())
-                } else {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Find your food.")
-                        .font(.community(.largeTitle, weight: .bold))
-                        .tracking(-0.8)
-                    Text("Search a food or brand, or scan the barcode on a packet.")
-                        .font(.community(.subheadline))
-                        .foregroundStyle(timeOfDay.canvasSecondaryText)
-                }
-
-                HStack(spacing: 12) {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundStyle(timeOfDay.canvasSecondaryText)
-                    TextField("Search foods", text: $searchText)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .submitLabel(.search)
-                        .onSubmit { submitSearch() }
-                    Button { submitSearch() } label: {
-                        Image(systemName: "arrow.right.circle.fill").font(.title2)
                     }
-                    .accessibilityLabel("Search")
-                    .disabled(searchText.trimmed.count < 2 || isSaving ||
-                              (isSearchingDatabase && submittedQuery == searchText.trimmed))
-                }
-                .padding(.horizontal, 16)
-                .frame(height: 52)
-                .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 16))
-
-                Button { cancelProductDetails(); showingBarcode = true } label: {
-                    Label("Scan barcode", systemImage: "barcode.viewfinder")
-                        .frame(maxWidth: .infinity, minHeight: 48)
-                }
-                .buttonStyle(.bordered)
-                .disabled(isSaving || pendingAdd != nil)
-
-                if let pendingAdd {
-                    Button("Retry saving \(pendingAdd.name)") { add(pendingAdd) }
-                        .font(.community(.subheadline, weight: .semibold))
-                        .disabled(isSaving)
-                }
-
-                databaseEditorialSection(timeOfDay: timeOfDay)
-                if !store.recentFoods.isEmpty {
-                    recentEditorialSection(timeOfDay: timeOfDay)
-                }
-
-                manualEntryCard(timeOfDay: timeOfDay)
+                    .padding(RepbaseDesign.pageInset)
+                } else {
+                    searchArea
+                    VStack(alignment: .leading, spacing: 24) {
+                        if let pendingAdd {
+                            Button("Retry saving \(pendingAdd.name)") { add(pendingAdd) }
+                                .font(.community(.subheadline, weight: .semibold))
+                                .frame(minHeight: 44)
+                                .disabled(isSaving)
+                        }
+                        if !submittedQuery.isEmpty { databaseEditorialSection }
+                        if submittedQuery.isEmpty || !filteredRecents.isEmpty {
+                            recentEditorialSection
+                        }
+                    }
+                    .padding(.horizontal, 18)
                 }
             }
-            .padding(.horizontal, RepbaseDesign.pageInset)
             .padding(.bottom, 28)
         }
         .scrollIndicators(.hidden)
-        .toolbar(.hidden, for: .navigationBar)
+        .scrollDismissesKeyboard(.interactively)
+        .navigationTitle("Add Food")
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbar(.visible, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") { dismiss() }.disabled(isSaving)
+            }
+            ToolbarItem(placement: .primaryAction) {
+                Button { showingSources = true } label: { Image(systemName: "info.circle") }
+                    .accessibilityLabel("Food data & sources")
+            }
+        }
+        .tint(RepbaseTactileDesign.accentText)
         .background(Color(.systemBackground))
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            Button { showingSources = true } label: {
+                HStack(spacing: 8) {
+                    Label("Food data & sources", systemImage: "info.circle")
+                    Image(systemName: "chevron.forward").accessibilityHidden(true)
+                }
+                .font(.community(.caption))
+                .foregroundStyle(RytivoSunriseDesign.secondary)
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .background(Color(.systemBackground))
+        }
         .saveFeedback(isSaving: isSaving, error: saveError)
-        .recoverableDraft(key: "food-picker-\(mealID)", value: $pendingAdd,
-                          saved: $draftSaved, error: $saveError)
+        .modifier(FoodPickerDraftRecovery(enabled: !isPreview, mealID: mealID,
+                                         pendingAdd: $pendingAdd, saved: $draftSaved, error: $saveError))
         .task(id: searchRevision) { await searchDatabase() }
         .task(id: detailRevision) { await loadProductDetails() }
         .onChange(of: searchText) { _, _ in
+            #if DEBUG
+            if previewScenario != nil { return }
+            #endif
             // Typing invalidates an old response but never spends a provider call.
             cancelProductDetails()
             submittedQuery = ""
@@ -143,6 +145,9 @@ struct FoodPickerView: View {
             }
         }
         .onAppear {
+            #if DEBUG
+            if let previewScenario, previewScenario != "picker" { searchText = "oats" }
+            #endif
             if let initialFood, !openedInitialFood {
                 openedInitialFood = true
                 selectedFood = initialFood
@@ -156,164 +161,194 @@ struct FoodPickerView: View {
             }
             .interactiveDismissDisabled(isSaving)
         }
+        .sheet(isPresented: $showingSources) { FoodDataSourcesSheet() }
         .onDisappear { cancelProductDetails() }
     }
 
-    private func pickerHeader(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack {
-            Button("Cancel") { dismiss() }
-                .font(.community(.subheadline, weight: .medium))
-                .buttonStyle(.plain)
-            Spacer()
-            Text("Add Food").font(.community(.subheadline, weight: .bold))
-            Spacer()
-            Color.clear.frame(width: 46, height: 1)
-        }
-        .foregroundStyle(timeOfDay.canvasPrimaryText)
-        .frame(height: 48)
-    }
-
-    private func databaseEditorialSection(timeOfDay: HomeTimeOfDay) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text("FOOD DATABASE")
-                    .font(.community(.caption2, weight: .bold))
-                    .tracking(1.2)
-                    .foregroundStyle(timeOfDay.accent)
-                Spacer()
-                if isSearchingDatabase { ProgressView().controlSize(.mini) }
-                else {
-                    Link("Open Food Facts", destination: URL(string: "https://world.openfoodfacts.org")!)
-                        .font(.community(.caption2, weight: .bold))
-                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+    private var searchArea: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Find your food.")
+                    .font(.community(.title, weight: .bold))
+                    .foregroundStyle(RytivoSunriseDesign.ink)
+                Text("Find a food, then choose how much you ate.")
+                    .font(.community(.footnote))
+                    .foregroundStyle(RytivoSunriseDesign.secondary)
+            }
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 8) { searchInput; searchButton }
+                VStack(alignment: .leading, spacing: 8) {
+                    searchInput
+                    searchButton.frame(maxWidth: .infinity, alignment: .trailing)
                 }
             }
+            .padding(8)
+            .padding(.leading, 8)
+            .background(FoodPickerSurface(fill: RytivoSunriseDesign.surface))
 
+            // Translations and accessibility text sizes may need a full row each.
+            if typeSize.isAccessibilitySize {
+                VStack(spacing: 12) { barcodeAction; manualEntryCard }
+            } else {
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 12) { barcodeAction; manualEntryCard }
+                    VStack(spacing: 12) { barcodeAction; manualEntryCard }
+                }
+            }
+        }
+        .padding(.horizontal, 18)
+        .padding(.top, 8)
+        .padding(.bottom, 20)
+        .background {
+            UnevenRoundedRectangle(bottomLeadingRadius: 28, bottomTrailingRadius: 28)
+                .fill(HomeSunriseStyle.backdropGradient)
+                .accessibilityHidden(true)
+        }
+    }
+
+    private var searchInput: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(RepbaseTactileDesign.accentText).accessibilityHidden(true)
+            TextField("Search foods or brands", text: $searchText)
+                .font(.community(.subheadline))
+                .foregroundStyle(RytivoSunriseDesign.ink)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .submitLabel(.search)
+                .onSubmit { submitSearch() }
+                .frame(minWidth: 100, minHeight: 44)
+                .accessibilityIdentifier("food-picker-search")
+        }
+    }
+
+    private var searchButton: some View {
+        Button { submitSearch() } label: {
+            Text("Search")
+                .font(.community(.footnote, weight: .bold))
+                .foregroundStyle(RepbasePalette.ink)
+                .fixedSize(horizontal: true, vertical: false)
+                .padding(.horizontal, 18)
+                .frame(minHeight: 44)
+                .background(MealLiftSurface(fill: RepbaseTactileDesign.accent, kind: .primary))
+        }
+        .buttonStyle(RepbaseTactilePressStyle())
+        .disabled(searchText.trimmed.count < 2 || isSaving ||
+                  (isSearchingDatabase && submittedQuery == searchText.trimmed))
+        .accessibilityIdentifier("food-picker-submit")
+    }
+
+    private var barcodeAction: some View {
+        Button { cancelProductDetails(); showingBarcode = true } label: {
+            FoodPickerActionLabel(title: "Scan barcode", detail: "Packaged foods",
+                                  symbol: "barcode.viewfinder", isAccent: true)
+        }
+        .buttonStyle(RepbaseTactilePressStyle())
+        .disabled(isSaving || pendingAdd != nil)
+    }
+
+    private var manualEntryCard: some View {
+        NavigationLink {
+            FoodEntryEditorView(date: date, mealID: mealID) { dismiss() }
+        } label: {
+            FoodPickerActionLabel(title: "Enter manually", detail: "From the label",
+                                  symbol: "square.and.pencil")
+        }
+        .buttonStyle(RepbaseTactilePressStyle())
+        .disabled(isSaving || pendingAdd != nil || loadingCandidateID != nil)
+    }
+
+    private var databaseEditorialSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            FoodPickerSectionHeading(title: "Choose your match") {
+                if !isSearchingDatabase && databaseError == nil {
+                    Text("\(databaseResults.count) results")
+                }
+            }
+            Text("Tap a food to review its nutrition and portion.")
+                .font(.community(.caption)).foregroundStyle(RytivoSunriseDesign.secondary)
             if let databaseError {
                 Text(databaseError)
                     .font(.community(.caption))
-                    .foregroundStyle(.orange)
-                Button("Retry") { searchRevision += 1 }
-            } else if submittedQuery.isEmpty {
-                Text("Type a name, then tap Search. Or scan a barcode.")
-                    .font(.community(.caption))
-                    .foregroundStyle(timeOfDay.canvasSecondaryText)
-            } else if !isSearchingDatabase && databaseResults.isEmpty {
+                    .foregroundStyle(RepbaseTactileDesign.accentText)
+                Button("Retry") { searchRevision += 1 }.frame(minHeight: 44)
+            } else if isSearchingDatabase {
+                ProgressView("Searching…")
+                    .font(.community(.subheadline))
+                    .frame(maxWidth: .infinity, minHeight: 76)
+                    .background(FoodPickerSurface(fill: HomeSunriseStyle.heroTint))
+            } else if databaseResults.isEmpty {
                 Text("No complete match found. Try another name or enter the label manually.")
                     .font(.community(.caption))
-                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+                    .foregroundStyle(RytivoSunriseDesign.secondary)
             } else {
-                VStack(spacing: 0) {
-                    ForEach(Array(databaseResults.enumerated()), id: \.element.id) { index, result in
-                        Button {
-                            chooseProduct(result)
-                        } label: {
-                            VStack(alignment: .leading, spacing: 8) {
-                                DatabaseFoodRow(result: result)
-                                if loadingCandidateID == result.id {
-                                    ProgressView("Checking nutrition…").font(.community(.subheadline))
-                                } else {
-                                Text("Check nutrition and choose portion").font(.community(.subheadline, weight: .semibold))
-                                    .foregroundStyle(timeOfDay.accent)
-                                }
-                            }.padding(.vertical, 12)
+                ForEach(databaseResults) { result in
+                    VStack(alignment: .leading, spacing: 8) {
+                        Button { chooseProduct(result) } label: {
+                            DatabaseFoodRow(result: result)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(RepbaseTactilePressStyle())
                         .disabled(isSaving || pendingAdd != nil || loadingCandidateID != nil)
                         if loadingCandidateID == result.id {
-                            Button("Cancel") { cancelProductDetails() }
-                                .frame(maxWidth: .infinity, alignment: .trailing)
+                            HStack {
+                                ProgressView("Checking nutrition…").font(.community(.caption))
+                                Spacer()
+                                Button("Cancel") { cancelProductDetails() }.frame(minHeight: 44)
+                            }
                         }
-                        if index < databaseResults.count - 1 { Divider() }
                     }
                 }
             }
             if let detailError {
-                Text(detailError).font(.community(.caption)).foregroundStyle(.orange)
+                Text(detailError).font(.community(.caption)).foregroundStyle(RepbaseTactileDesign.accentText)
                 if pendingCandidate != nil {
                     Button("Retry") {
                         guard let pendingCandidate, loadingCandidateID == nil else { return }
                         loadingCandidateID = pendingCandidate.id
                         detailRevision += 1
                     }
+                    .frame(minHeight: 44)
                 }
             }
-            Text("Community product data. Check the label and portion before adding.")
-                .font(.community(.caption2)).foregroundStyle(.secondary)
-            Link("ODbL", destination: URL(string: "https://opendatacommons.org/licenses/odbl/1-0/")!)
-                .font(.community(.caption2))
         }
-        .padding(.vertical, 14)
-        .overlay(alignment: .top) { Divider() }
-        .overlay(alignment: .bottom) { Divider() }
     }
 
-    private func recentEditorialSection(timeOfDay: HomeTimeOfDay) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("RECENTLY USED")
-                .font(.community(.caption2, weight: .bold))
-                .tracking(1.2)
-                .foregroundStyle(timeOfDay.accent)
-            Text("Choose a food, then check your portion")
-                .font(.community(.footnote))
-                .foregroundStyle(timeOfDay.canvasSecondaryText)
-            VStack(spacing: 0) {
+    private var recentEditorialSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            FoodPickerSectionHeading(title: "Have it again") { Text("Recent foods") }
+            Text("Your recent foods. Adjust the portion before adding.")
+                .font(.community(.caption))
+                .foregroundStyle(RytivoSunriseDesign.secondary)
                 if filteredRecents.isEmpty {
                     Text(recentEmptyMessage)
                         .font(.community(.subheadline))
-                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+                        .foregroundStyle(RytivoSunriseDesign.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.vertical, 22)
+                        .padding(.vertical, 12)
                 } else {
-                    ForEach(Array(filteredRecents.enumerated()), id: \.element.id) { index, food in
+                    ForEach(filteredRecents) { food in
                         Button {
                             servingDescription = String(localized: "1 serving of this food entry", bundle: .app, locale: .app)
                             selectedFood = food
                         } label: {
                             RecentFoodRow(food: food)
-                                .padding(.vertical, 14)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(RepbaseTactilePressStyle())
                         .disabled(isSaving || pendingAdd != nil || loadingCandidateID != nil)
-                        if index < filteredRecents.count - 1 { Divider() }
                     }
                 }
-            }
-            .overlay(alignment: .top) { Divider() }
-            .overlay(alignment: .bottom) { Divider() }
         }
-    }
-
-    private func manualEntryCard(timeOfDay: HomeTimeOfDay) -> some View {
-        NavigationLink {
-            FoodEntryEditorView(date: date, mealID: mealID) { dismiss() }
-        } label: {
-            HStack(spacing: 14) {
-                Image(systemName: "square.and.pencil")
-                    .font(.community(.subheadline, weight: .semibold))
-                    .foregroundStyle(timeOfDay.accent)
-                    .frame(width: 28, height: 44)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Enter nutrition manually").font(.community(.subheadline, weight: .semibold))
-                    Text("Calories, protein, carbs, and fat")
-                        .font(.community(.caption))
-                        .foregroundStyle(timeOfDay.canvasSecondaryText)
-                }
-                Spacer()
-                Image(systemName: "chevron.forward")
-                    .font(.community(.caption, weight: .bold))
-                    .foregroundStyle(timeOfDay.canvasSecondaryText)
-            }
-            .padding(.vertical, 14)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .disabled(isSaving || pendingAdd != nil || loadingCandidateID != nil)
-        .overlay(alignment: .top) { Divider() }
-        .overlay(alignment: .bottom) { Divider() }
     }
 
     // MARK: - Data
+
+    private var isPreview: Bool {
+        #if DEBUG
+        previewScenario != nil
+        #else
+        false
+        #endif
+    }
 
     private var filteredRecents: [FoodEntry] {
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -333,6 +368,13 @@ struct FoodPickerView: View {
     /// entry independent, so editing it never changes the original.
     private func add(_ food: FoodEntry) {
         guard !isSaving else { return }
+        #if DEBUG
+        if previewScenario != nil {
+            savedFood = food
+            selectedFood = nil
+            return
+        }
+        #endif
         if let pendingAdd,
            pendingAdd.name != food.name || pendingAdd.servings != food.servings || pendingAdd.nutritionPerServing != food.nutritionPerServing ||
             pendingAdd.sourceID != food.sourceID || pendingAdd.referenceQuantity != food.referenceQuantity ||
@@ -378,6 +420,17 @@ struct FoodPickerView: View {
     }
 
     private func searchDatabase() async {
+        #if DEBUG
+        if let previewScenario {
+            submittedQuery = previewScenario == "picker" ? "" : "oats"
+            databaseResults = ["picker-results", "picker-accessibility"].contains(previewScenario)
+                ? FoodPickerPreviewFixtures.candidates : []
+            isSearchingDatabase = previewScenario == "picker-loading"
+            databaseError = previewScenario == "picker-error"
+                ? catalogueError(FoodCatalogueFailure.busy, details: false) : nil
+            return
+        }
+        #endif
         let query = submittedQuery
         let revision = searchRevision
         guard query.count >= 2 else {
@@ -424,6 +477,20 @@ struct FoodPickerView: View {
 
     private func loadProductDetails() async {
         guard let candidate = pendingCandidate else { return }
+        #if DEBUG
+        if previewScenario != nil {
+            loadingCandidateID = nil
+            pendingCandidate = nil
+            if let product = FoodPickerPreviewFixtures.detail(for: candidate) {
+                servingDescription = product.servingDescription
+                selectedFood = product.entry
+            } else {
+                detailError = String(localized: "Nutrition is incomplete for this product. Check another match or enter the label manually.",
+                                     bundle: .app, locale: .app)
+            }
+            return
+        }
+        #endif
         let revision = detailRevision
         loadingCandidateID = candidate.id
         detailError = nil
@@ -492,36 +559,19 @@ private struct DatabaseFoodRow: View {
     let result: FoodCatalogueCandidate
 
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "magnifyingglass")
-                .font(.community(.subheadline))
-                .foregroundStyle(Color.orange)
-                .frame(width: 24, height: 34)
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text(result.title)
-                    .font(.community(.headline))
-                    .foregroundStyle(.primary)
-                    .lineLimit(2)
-                if let verified = result.verifiedResult {
-                Text("Per \(verified.servingDescription) · P \(verified.entry.totalNutrition.proteinGrams.nutritionText) · C \(verified.entry.totalNutrition.carbohydrateGrams.nutritionText) · F \(verified.entry.totalNutrition.fatGrams.nutritionText)")
-                    .font(.community(.caption2))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                }
-            }
-
-            Spacer(minLength: 0)
-
+        FoodPickerMatchLabel(name: result.name) {
             if let verified = result.verifiedResult {
-            Text("\(verified.entry.totalNutrition.calories.nutritionText) cal")
-                .font(.community(.subheadline, weight: .semibold))
-                .foregroundStyle(.primary)
+                Text("Per \(verified.servingDescription)")
+            } else if !result.brand.isEmpty {
+                Text(result.brand)
+            }
+        } value: {
+            if let verified = result.verifiedResult {
+                Text("\(verified.entry.totalNutrition.calories.nutritionText) kcal")
             } else {
-                Image(systemName: "chevron.forward").foregroundStyle(.secondary)
+                Text("Details")
             }
         }
-        .contentShape(Rectangle())
     }
 }
 
@@ -529,35 +579,11 @@ private struct RecentFoodRow: View {
     let food: FoodEntry
 
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "clock.arrow.circlepath")
-                .font(.community(.subheadline))
-                .foregroundStyle(Color.orange)
-                .frame(width: 24, height: 34)
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text(food.name)
-                    .font(.community(.headline))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-                Text("P \(food.totalNutrition.proteinGrams.nutritionText) · C \(food.totalNutrition.carbohydrateGrams.nutritionText) · F \(food.totalNutrition.fatGrams.nutritionText)")
-                    .font(.community(.caption2))
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer(minLength: 0)
-
-            Text("\(food.totalNutrition.calories.nutritionText) cal")
-                .font(.community(.subheadline, weight: .semibold))
-                .foregroundStyle(.primary)
-
-            Image(systemName: "plus")
-                .font(.community(.caption, weight: .bold))
-                .foregroundStyle(RepbaseDesign.onInk)
-                .frame(width: 30, height: 30)
-                .background(RepbaseDesign.ink, in: RoundedRectangle(cornerRadius: 9))
+        FoodPickerMatchLabel(name: food.name, isRecent: true) {
+            Text("Last logged portion")
+        } value: {
+            Text("\(food.totalNutrition.calories.nutritionText) kcal")
         }
-        .contentShape(.rect)
     }
 }
 

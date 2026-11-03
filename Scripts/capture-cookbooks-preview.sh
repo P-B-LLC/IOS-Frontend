@@ -44,9 +44,16 @@ for appearance in light dark; do
     for screen in ${FOOD_PREVIEW_SCREENS:-saved cookbook cookbook-picker cookbook-create cookbook-post}; do
         SIMCTL_CHILD_REPBASE_FOOD_PREVIEW="$screen" \
             SIMCTL_CHILD_REPBASE_APPEARANCE="$appearance" \
-            xcrun simctl launch --terminate-running-process "$device" com.pbllc.rytivo
+            xcrun simctl launch --terminate-running-process "$device" com.pbllc.rytivo -AppleLanguages '(en)'
         sleep 2
         xcrun simctl io "$device" screenshot "$output/$screen-$appearance.png"
+        if [ "$screen" = picker-results ]; then
+            SIMCTL_CHILD_REPBASE_FOOD_PREVIEW="$screen" \
+                SIMCTL_CHILD_REPBASE_APPEARANCE="$appearance" \
+                xcrun simctl launch --terminate-running-process "$device" com.pbllc.rytivo -AppleLanguages '(ar)'
+            sleep 2
+            xcrun simctl io "$device" screenshot "$output/$screen-arabic-$appearance.png"
+        fi
     done
 done
 xcrun simctl terminate "$device" com.pbllc.rytivo

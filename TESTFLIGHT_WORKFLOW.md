@@ -1,5 +1,31 @@
 # TestFlight development workflow
 
+## Food search and results — November 3, 2026
+
+The approved [food-search proposal](https://www.figma.com/design/FbMNgG8cuZfrRFzQTtIVCy?node-id=369-14533)
+is implemented on the shared iOS testing branch. A warm adaptive search area
+has a labeled Search action and visible barcode/manual-entry choices. Compact,
+outlined food cards open nutrition/portion review rather than instantly adding
+a food. Recent calories are labeled as the last logged portion; discovery
+identities show Details until authoritative nutrition is known. The main
+results heading no longer carries the provider name. Source attribution and
+ODbL links remain available through the info button and Food data & sources.
+
+The provider/API, explicit-submit policy, stale-response fences, detail lookup,
+portion calculations, retry-safe save snapshot and recovery key are unchanged.
+No backend deployment, main merge, TestFlight upload or API regeneration is
+part of this presentation change. Existing ten-language copy is retained and
+new copy is translated in the catalog.
+
+Mac CI builds both configurations, runs the account-safety suite and captures
+initial/results/empty/error/loading/large-text states in light and dark, plus
+Arabic results. DEBUG-only fixtures cannot make catalogue requests, save diary
+entries, or read/write an account's recovered picker draft. These fixtures
+are illustrative, not live product data. Source-wiring tests do not replace
+rendered review or interaction tests. Before promotion, check a real search,
+barcode (device), manual entry, portion edit, save/retry, back/cancel, source
+links, VoiceOver, large text, RTL and reduced motion against a test account.
+
 ## Home photo clarity — November 3, 2026
 
 The Home workout (including completed), movement and food focus cards opt into
