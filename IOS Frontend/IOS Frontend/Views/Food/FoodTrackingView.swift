@@ -508,16 +508,10 @@ struct FoodTrackingView: View {
                 .disabled(meals.isEmpty)
             }
 
-            HStack {
-                Text("Your meals")
-                    .font(.community(.caption2, weight: .bold))
-                    .tracking(1)
-                    .foregroundStyle(timeOfDay.canvasPrimaryText)
-                Spacer()
-                Button("Plan your week →") { isShowingMealPlan = true }
-                    .font(.community(.caption, weight: .semibold))
-                    .foregroundStyle(timeOfDay.accent)
-            }
+            Text("Your meals")
+                .font(.community(.caption2, weight: .bold))
+                .tracking(1)
+                .foregroundStyle(timeOfDay.canvasPrimaryText)
 
             VStack(spacing: 0) {
                 ForEach(Array(meals.enumerated()), id: \.element.id) { index, meal in
@@ -539,6 +533,8 @@ struct FoodTrackingView: View {
                 }
             }
             .padding(.horizontal, 6)
+
+            FoodMealPlannerCard { isShowingMealPlan = true }
 
             HStack(spacing: 9) {
                 Button {

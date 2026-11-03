@@ -247,6 +247,9 @@ jobs:
           if git diff --name-only HEAD^ HEAD | grep -Eq 'FoodPortion|PortionMacro'; then
             FOOD_PREVIEW_SCREENS='portion portion-large portion-weight portion-liquid portion-zero portion-saving portion-retry portion-accessibility' bash Scripts/capture-cookbooks-preview.sh
           fi
+          if git diff --name-only HEAD^ HEAD | grep -Eq 'FoodMealPlannerCard'; then
+            FOOD_PREVIEW_SCREENS='meal-planner meal-planner-accessibility' bash Scripts/capture-cookbooks-preview.sh
+          fi
 
       - name: Save cookbook simulator previews
         if: always() && steps.scope.outputs.code == 'true'

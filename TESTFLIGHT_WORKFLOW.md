@@ -1,5 +1,15 @@
 # TestFlight development workflow
 
+## Food page follow-up
+
+The [reviewed Meal planner card](https://www.figma.com/design/FbMNgG8cuZfrRFzQTtIVCy?node-id=339-14270)
+replaces the small Plan your week link. It sits after the meal list, directly
+above Cookbooks and Add meal, and opens the existing selected-day planner.
+Daily nutrients remains the final card. Planning & details is removed;
+Nutrition breakdown is available inside Daily nutrients and Goals keeps its
+existing entry point. These changes preserve the stores, API and save behavior.
+Native CI captures the real planning card in both themes and with larger text.
+
 ## Cookbook library: duplicate action and live 404 diagnosis — November 2, 2026
 
 The library now has one **New cookbook** action in its content. The duplicate

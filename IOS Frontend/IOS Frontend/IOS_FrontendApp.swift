@@ -475,6 +475,9 @@ private struct AppRootView: View {
                     .navigationTitle("Home")
                 }
             } else if let scenario = ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"],
+                      scenario.hasPrefix("meal-planner") {
+                FoodMealPlannerCardPreview(scenario: scenario)
+            } else if let scenario = ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"],
                       scenario.hasPrefix("portion") {
                 NavigationStack { FoodPortionPreview(scenario: scenario) }
             } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "meal",
