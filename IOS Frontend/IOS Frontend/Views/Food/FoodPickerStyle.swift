@@ -148,9 +148,13 @@ struct FoodDataSourcesSheet: View {
                     Link(destination: URL(string: "https://world.openfoodfacts.org")!) {
                         Text("Open Food Facts").underline()
                     }
+                    .foregroundStyle(RepbaseTactileDesign.accentText)
+                    .frame(minHeight: 44, alignment: .leading)
                     Link(destination: URL(string: "https://opendatacommons.org/licenses/odbl/1-0/")!) {
                         Text("Open Database License").underline()
                     }
+                    .foregroundStyle(RepbaseTactileDesign.accentText)
+                    .frame(minHeight: 44, alignment: .leading)
                 }
                 .foregroundStyle(RytivoSunriseDesign.secondary)
                 .padding(24)
