@@ -5,7 +5,7 @@ import XCTest
 final class FoodPortionMeasurementTests: XCTestCase {
     func testMeasurementControlsKeepSaveAndRetryGuards() throws {
         let root = URL(fileURLWithPath: try XCTUnwrap(ProcessInfo.processInfo.environment["RYTIVO_TEST_REPOSITORY"]))
-        let view = try String(contentsOf: root.appendingPathComponent("IOS Frontend/IOS Frontend/Views/Food/FoodPickerView.swift"), encoding: .utf8)
+        let view = try String(contentsOf: root.appendingPathComponent("IOS Frontend/IOS Frontend/Views/Food/FoodPortionView.swift"), encoding: .utf8)
         XCTAssertTrue(view.contains(".disabled(isSaving || lockedForRetry)"))
         XCTAssertTrue(view.contains(".disabled(isSaving || servings == nil)"))
         XCTAssertTrue(view.contains("entry.servings = servings"))
@@ -95,8 +95,9 @@ final class FoodPortionMeasurementTests: XCTestCase {
 
     func testServingMetadataAndNutrientsAreNotDroppedByThePortionUi() throws {
         let root = URL(fileURLWithPath: try XCTUnwrap(ProcessInfo.processInfo.environment["RYTIVO_TEST_REPOSITORY"]))
-        let view = try String(contentsOf: root.appendingPathComponent("IOS Frontend/IOS Frontend/Views/Food/FoodPickerView.swift"), encoding: .utf8)
-        XCTAssertTrue(view.contains("food.copyForLogging()"))
+        let picker = try String(contentsOf: root.appendingPathComponent("IOS Frontend/IOS Frontend/Views/Food/FoodPickerView.swift"), encoding: .utf8)
+        let view = try String(contentsOf: root.appendingPathComponent("IOS Frontend/IOS Frontend/Views/Food/FoodPortionView.swift"), encoding: .utf8)
+        XCTAssertTrue(picker.contains("food.copyForLogging()"))
         XCTAssertTrue(view.contains("FoodPortionReference(quantity: food.referenceQuantity"))
         XCTAssertTrue(view.contains("FoodPortionMeasurement.savedMultiplier"))
         XCTAssertFalse(view.contains("TextField(\"Grams in one serving\""))
