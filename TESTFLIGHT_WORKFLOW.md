@@ -1,5 +1,36 @@
 # TestFlight development workflow
 
+## Portion screen: simple macro summary — November 3, 2026
+
+The approved [Portion review](https://www.figma.com/design/FbMNgG8cuZfrRFzQTtIVCy?node-id=329-14182)
+uses one calorie ring and a carbs/fat/protein legend, the raised Your portion
+field, and a pinned Add to meal action. Native segmented pickers and the
+decimal text field retain their original bindings. The Portion view is moved
+out of FoodPickerView into its own file; its initializer, reference detection,
+quantity parsing, six-decimal multiplier, unit conversion and onAdd payload
+are preserved. Stores, models, API contracts and backend files are unchanged.
+The previous presentation is available in integration history at `7c5f7ff`.
+
+Only the chart's presentation is derived: its shares normalize 4/9/4 macro
+energy, with visible percentages reconciled to 100%. The calorie total remains
+the food's supplied value. Zero/invalid macro energy produces a neutral ring,
+not a complete progress indicator. Invalid quantity, save errors, a locked
+retry and the disabled Saving state retain their existing behavior. Large
+text moves the heading into the scroll area and shows a vertical text summary.
+
+The native CI build, catalog checks and regression suite include seven macro
+presentation checks and the existing portion-conversion/recovery coverage.
+Debug-only captures exercise servings, larger servings, grams, millilitres,
+zero macros, saving, retry and accessibility text in both appearances. Run
+`FOOD_PREVIEW_SCREENS='portion portion-weight portion-accessibility' bash Scripts/capture-cookbooks-preview.sh /path/to/Rytivo.app`
+to capture these locally after a Debug simulator build.
+
+Before promotion, use the signed-in simulator to edit fractional quantities,
+switch grams/ounces/servings without changing the selected amount, choose
+millilitres, expand nutrients, dismiss the keyboard, and add a food. Also
+check an invalid amount, a failed/locked retry, a narrow screen, Arabic RTL
+and VoiceOver. Preview captures use fixtures and do not verify a live save.
+
 ## Meal workspace: gentle depth — November 2, 2026
 
 The approved [Meal review](https://www.figma.com/design/FbMNgG8cuZfrRFzQTtIVCy?node-id=308-14257)

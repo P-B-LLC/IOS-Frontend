@@ -474,6 +474,9 @@ private struct AppRootView: View {
                     .repbaseScreen(.prepare)
                     .navigationTitle("Home")
                 }
+            } else if let scenario = ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"],
+                      scenario.hasPrefix("portion") {
+                NavigationStack { FoodPortionPreview(scenario: scenario) }
             } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "meal",
                       let meal = foodTrackingStore.meals(on: Date()).first {
                 NavigationStack {
