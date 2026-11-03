@@ -119,6 +119,8 @@ preview_tab=training
 capture workouts-large-text light populated '' 1
 preview_quick=food
 capture food-page-large-text dark populated '' 1
+capture food-page-german light populated '' 0 de
+capture food-page-arabic dark populated '' 0 ar
 preview_quick=''
 preview_tab=account
 capture profile-large-text light populated '' 1
@@ -133,5 +135,9 @@ if [ -n "$narrow_type" ]; then
     prepare "$device"
     capture home-narrow light populated
     capture food-narrow light populated home.food
+    preview_tab=training
+    preview_quick=food
+    capture food-page-narrow light populated
+    preview_quick=''
 fi
 echo "Illustrative Home previews: $output"

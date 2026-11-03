@@ -1,5 +1,26 @@
 # TestFlight development workflow
 
+## Food Goals button — November 3, 2026
+
+The approved [Goals proposal](https://www.figma.com/design/FbMNgG8cuZfrRFzQTtIVCy?node-id=352-14502)
+replaces the small text-only action with an outlined pill, the exact local
+target vector, and a 104 × 44-point minimum tap area. The headline keeps its
+width; the date and Goals share a row that stacks when text needs more room.
+Existing adaptive surface/accent-text tokens provide light and dark colors;
+Increase Contrast strengthens the outline and shared press feedback respects
+Reduce Motion. The existing goals full-screen editor, month action, date
+selection, stores, goal values, API and backend are unchanged. Existing copy
+and its ten-language translations are reused.
+
+Source-wiring tests guard these destinations, dimensions and the local asset.
+Mac CI also captures Food in both appearances, larger text, German and Arabic;
+the preview script captures a narrow Food page when that runtime is available.
+These fixture captures do not prove a signed-in save. Before promotion, tap
+Goals from Training and Home's pushed Food page, change/save/cancel targets,
+return to Food, and verify its date and totals remain correct. Check VoiceOver,
+large text, narrow widths, RTL, Increase Contrast and Reduce Motion. Main,
+TestFlight and the backend must remain unchanged until release approval.
+
 ## Food page follow-up
 
 The [reviewed Meal planner card](https://www.figma.com/design/FbMNgG8cuZfrRFzQTtIVCy?node-id=339-14270)
