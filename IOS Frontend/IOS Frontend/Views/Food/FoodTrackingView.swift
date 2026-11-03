@@ -42,7 +42,6 @@ struct FoodTrackingView: View {
     @State private var isFoodVisible = false
     @State private var isChoosingMeal = false
     @State private var isShowingMealPlan = false
-    @State private var showsDetailedTools = false
     @State private var fuelDisplay: FuelDisplay = .logged
 
     private enum FuelDisplay: String, CaseIterable {
@@ -172,35 +171,6 @@ struct FoodTrackingView: View {
                     }
 
                     mealsSection(timeOfDay: timeOfDay)
-                    DisclosureGroup(isExpanded: $showsDetailedTools) {
-                        VStack(alignment: .leading, spacing: 14) {
-                            Text("Plan ahead or take a closer look at your logged nutrition.")
-                                .font(.community(.subheadline))
-                                .foregroundStyle(.secondary)
-                            Button { isShowingMealPlan = true } label: {
-                                Label("Plan meals", systemImage: "calendar.badge.plus")
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .frame(minHeight: 44)
-                            }
-                            nutritionBreakdownLink(timeOfDay: timeOfDay)
-                            Button { isEditingGoals = true } label: {
-                                Label("Calorie & macro targets", systemImage: "slider.horizontal.3")
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .frame(minHeight: 44)
-                            }
-                        }
-                        .padding(.top, 12)
-                    } label: {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Planning & details")
-                                .font(.community(.headline))
-                            Text("Meal prep, targets and macro sources")
-                                .font(.community(.caption))
-                                .foregroundStyle(.secondary)
-                        }
-                        .padding(.vertical, 10)
-                    }
-                    .tint(timeOfDay.accent)
 
                     FoodDailyNutrientsCard(entries: store.meals(on: selectedDate).flatMap(\.entries),
                                            date: selectedDate)
@@ -626,34 +596,6 @@ struct FoodTrackingView: View {
                 .repbaseControlSurface(cornerRadius: 15)
             }
         }
-    }
-
-    private func nutritionBreakdownLink(timeOfDay: HomeTimeOfDay) -> some View {
-        NavigationLink {
-            ScrollView {
-                NutritionBreakdownView(meals: store.meals(on: selectedDate))
-                    .padding()
-                    // Pushed inside the tab, so the bottom bar overlays it.
-                    .padding(.bottom, RepbaseDesign.bottomBarClearance)
-            }
-            .navigationTitle("Nutrition Breakdown")
-            .navigationBarTitleDisplayMode(.inline)
-            .homeTimeScreen(timeOfDay)
-        } label: {
-            HStack(spacing: 11) {
-                Image(systemName: "chart.pie")
-                    .font(.community(.title3))
-                    .foregroundStyle(timeOfDay.accent)
-                Text("Nutrition breakdown")
-                    .font(.community(.headline))
-                Spacer()
-                Image(systemName: "chevron.forward")
-                    .font(.community(.caption, weight: .bold))
-                    .foregroundStyle(.secondary)
-            }
-            .repbaseCard(contentPadding: 14, cornerRadius: 17)
-        }
-        .buttonStyle(.plain)
     }
 
     /// Named for the day being looked at, not for today. The week strip can

@@ -63,6 +63,7 @@ struct FoodNutrientsDetailView: View {
                 Text("Known intake").font(.community(.largeTitle, weight: .bold))
                 Text("Missing nutrient data is not counted as zero. Percentages reflect known intake.")
                     .font(.community(.subheadline)).foregroundStyle(.secondary)
+                nutritionBreakdownLink(timeOfDay: HomeTimeOfDay.current)
                 FoodNutrientsList(entries: entries)
                 FoodDailyValueFootnote()
             }
@@ -72,6 +73,34 @@ struct FoodNutrientsDetailView: View {
         .navigationTitle("Daily nutrients").navigationBarTitleDisplayMode(.inline)
         .background(HomeSunriseStyle.backdropGradient.ignoresSafeArea())
         .task { store.ensureDay(date) }
+    }
+
+    private func nutritionBreakdownLink(timeOfDay: HomeTimeOfDay) -> some View {
+        NavigationLink {
+            ScrollView {
+                NutritionBreakdownView(meals: store.meals(on: date))
+                    .padding()
+                    // Pushed inside the tab, so the bottom bar overlays it.
+                    .padding(.bottom, RepbaseDesign.bottomBarClearance)
+            }
+            .navigationTitle("Nutrition Breakdown")
+            .navigationBarTitleDisplayMode(.inline)
+            .homeTimeScreen(timeOfDay)
+        } label: {
+            HStack(spacing: 11) {
+                Image(systemName: "chart.pie")
+                    .font(.community(.title3))
+                    .foregroundStyle(timeOfDay.accent)
+                Text("Nutrition breakdown")
+                    .font(.community(.headline))
+                Spacer()
+                Image(systemName: "chevron.forward")
+                    .font(.community(.caption, weight: .bold))
+                    .foregroundStyle(.secondary)
+            }
+            .repbaseCard(contentPadding: 14, cornerRadius: 17)
+        }
+        .buttonStyle(.plain)
     }
 }
 
