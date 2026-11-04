@@ -93,3 +93,18 @@ A test-branch push is not activation. Use a backend running these migrations
 and endpoints to validate the real invitation workflow; old beta backends show
 an update-needed message rather than inventing shared data.
 
+### Invitation visibility follow-up
+
+Calendar invitations now have a dedicated full-width button above the people
+filters, outside their horizontal scroll. Pending requests show an accent border
+and a localized count badge; VoiceOver announces the incoming count. The entire
+card opens the existing invitation inbox. Loading/unsupported/error states do
+not falsely say there are no requests. Nothing is sent or accepted automatically.
+This change does not add social-bell or system-push delivery.
+
+For a disconnected simulator preview, build Debug using
+`Scripts/validate-planner-refresh.sh`, then launch with
+`SIMCTL_CHILD_REPBASE_CALENDAR_SHARING_PREVIEW=shared`. The sample incoming request
+demonstrates the button/count without touching a hosted backend. Use
+`SIMCTL_CHILD_REPBASE_CALENDAR_SHARING_PREVIEW=invitations` for the sample inbox.
+

@@ -41,6 +41,7 @@ struct CalendarWorkspaceView: View {
 
     private var visibilityControls: some View {
         VStack(alignment: .leading, spacing: 8) {
+            invitationButton
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     Button { sharing.showsOwn.toggle() } label: {
@@ -59,11 +60,6 @@ struct CalendarWorkspaceView: View {
                             .background(Self.ownerColor(person.id).opacity(0.12), in: Capsule())
                         }.buttonStyle(.plain)
                     }
-                    Button { showingInvitations = true } label: {
-                        Label("Invitations", systemImage: "person.crop.circle.badge.plus")
-                            .frame(minHeight: 44)
-                        if !sharing.pendingInvitations.isEmpty { Text("\(sharing.pendingInvitations.count)") }
-                    }.buttonStyle(.bordered)
                 }.font(.community(.footnote, weight: .semibold))
             }
             if sharing.isLoading { ProgressView().controlSize(.mini) }
@@ -73,6 +69,13 @@ struct CalendarWorkspaceView: View {
                     .frame(minHeight: 44)
             }
         }
+    }
+
+    private var invitationButton: some View {
+        CalendarInvitationButton(presentation: CalendarInvitationPresentation(
+            pendingCount: sharing.pendingInvitations.count, isLoading: sharing.isLoading,
+            hasError: sharing.errorMessage != nil, isSupported: sharing.isSupported
+        )) { showingInvitations = true }
     }
 
     private func display(_ plan: SharedCalendarPlan) -> CalendarMonthItem {
@@ -95,7 +98,7 @@ struct CalendarInvitationsView: View {
     var body: some View {
         NavigationStack {
             List {
-                if sharing.pendingInvitations.isEmpty { Text("No calendar invitations.") }
+                if sharing.pendingInvitations.isEmpty { inboxStatus }
                 ForEach(sharing.pendingInvitations) { invitation in
                     VStack(alignment: .leading, spacing: 12) {
                         Text(invitation.owner.name).font(.community(.headline))
@@ -122,6 +125,29 @@ struct CalendarInvitationsView: View {
             .task { await sharing.refreshCurrent() }
             .refreshable { await sharing.refreshCurrent() }
             .tint(RepbaseTactileDesign.accentText)
+        }
+    }
+
+    @ViewBuilder private var inboxStatus: some View {
+        switch CalendarInvitationPresentation(
+            pendingCount: sharing.pendingInvitations.count, isLoading: sharing.isLoading,
+            hasError: sharing.errorMessage != nil, isSupported: sharing.isSupported
+        ) {
+        case .loading:
+            HStack(spacing: 8) {
+                ProgressView()
+                Text("Checking invitations…")
+            }
+        case .unavailable:
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Invitations could not be loaded.")
+                Button("Retry") { Task { await sharing.refreshCurrent() } }
+                    .frame(minHeight: 44)
+            }
+        case .empty:
+            Text("No calendar invitations.")
+        case .pending:
+            EmptyView()
         }
     }
 }

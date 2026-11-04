@@ -15,6 +15,8 @@ cp "$repo/IOS Frontend/IOS Frontend/Views/Planner/CalendarMonthPresentation.swif
 cp "$repo/Tests/AccountSafety/PlannerScheduledMomentTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/IOS Frontend/IOS Frontend/Services/PlannerScheduledMoment.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/Tests/AccountSafety/CalendarSharingTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/Tests/AccountSafety/CalendarInvitationPresentationTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/IOS Frontend/IOS Frontend/Models/CalendarInvitationPresentation.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/Models/CalendarSharing.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/Models/PlannerItemColor.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/API/CalendarSharingAPIRepository.swift" "$test_package/Sources/AccountSafety/"
