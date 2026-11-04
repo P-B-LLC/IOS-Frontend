@@ -37,10 +37,28 @@ struct PlannerMonthCalendar: View {
                     }
                 }
             }
+            .overlay { dayColumnSeparators }
         }
         .typeSizeCeiling()
         .accessibilityIdentifier("planner.monthGrid")
         .animation(reduceMotion ? nil : .easeOut(duration: 0.18), value: store.selectedDate)
+    }
+
+    /// Draw over the grid without adding spacing or shrinking any date's tap
+    /// target. The six internal lines are symmetric in right-to-left layouts.
+    private var dayColumnSeparators: some View {
+        GeometryReader { geometry in
+            Path { path in
+                for column in 1..<7 {
+                    let x = geometry.size.width * CGFloat(column) / 7
+                    path.move(to: CGPoint(x: x, y: 0))
+                    path.addLine(to: CGPoint(x: x, y: geometry.size.height))
+                }
+            }
+            .stroke(CalendarMonthStyle.border, lineWidth: 0.5)
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 
     private var monthControls: some View {

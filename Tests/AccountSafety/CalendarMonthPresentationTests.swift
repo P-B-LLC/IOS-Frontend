@@ -108,4 +108,45 @@ final class CalendarMonthPresentationTests: XCTestCase {
         XCTAssertTrue(schedule.contains("CalendarSharedItemRow(item: shared"))
         XCTAssertTrue(schedule.contains("calendar.timeZone = TimeZone(secondsFromGMT: 0)!"))
     }
+
+    func testSixDecorativeDayColumnSeparatorsOverlayOnlyTheWeeksGrid() throws {
+        let month = try source("IOS Frontend/IOS Frontend/Views/Planner/PlannerMonthCalendar.swift")
+        let helperRange = try sourceBlock(named: "private var dayColumnSeparators", in: month)
+        let helper = String(month[helperRange])
+        let compact = helper.filter { !$0.isWhitespace }
+        XCTAssertTrue(helper.contains("GeometryReader"))
+        XCTAssertTrue(helper.contains("Path"))
+        XCTAssertTrue(compact.contains("forcolumnin1..<7"), "Only the six interior column boundaries should be drawn")
+        XCTAssertTrue(compact.contains(".size.width*CGFloat(column)/7"))
+        XCTAssertTrue(compact.contains(".size.height"))
+        XCTAssertTrue(helper.contains(".move(to:"))
+        XCTAssertTrue(helper.contains(".addLine(to:"))
+        XCTAssertTrue(compact.contains(".stroke(CalendarMonthStyle.border,lineWidth:0.5)"))
+        XCTAssertTrue(compact.contains(".allowsHitTesting(false)"), "Decoration must not intercept date-cell taps")
+        XCTAssertTrue(compact.contains(".accessibilityHidden(true)"), "Grid lines are not additional VoiceOver elements")
+
+        let weeksRange = try sourceBlock(named: "VStack(spacing: 4)", in: month)
+        XCTAssertTrue(month[weeksRange].contains("ForEach(Array(weeks.enumerated())"))
+        let afterWeeks = String(month[weeksRange.upperBound...])
+        let overlayPattern = #"^\s*\.overlay\s*\{\s*dayColumnSeparators\s*\}"#
+        XCTAssertNotNil(afterWeeks.range(of: overlayPattern, options: .regularExpression),
+                        "Apply the overlay to the weeks only, not the month header or outer container")
+        let allOverlays = try NSRegularExpression(pattern: #"\.overlay\s*\{\s*dayColumnSeparators\s*\}"#)
+        XCTAssertEqual(allOverlays.numberOfMatches(in: month, range: NSRange(month.startIndex..., in: month)), 1)
+    }
+
+    private func sourceBlock(named name: String, in text: String) throws -> Range<String.Index> {
+        let declaration = try XCTUnwrap(text.range(of: name), "Missing source boundary: \(name)")
+        let start = try XCTUnwrap(text[declaration.upperBound...].firstIndex(of: "{"))
+        var depth = 0
+        for index in text[start...].indices {
+            if text[index] == "{" { depth += 1 }
+            if text[index] == "}" {
+                depth -= 1
+                if depth == 0 { return start..<text.index(after: index) }
+            }
+        }
+        XCTFail("Unclosed source boundary: \(name)")
+        return start..<start
+    }
 }
