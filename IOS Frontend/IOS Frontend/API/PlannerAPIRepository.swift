@@ -7,6 +7,7 @@
 
 import Foundation
 import RepbaseAPI
+import OpenAPIRuntime
 
 actor PlannerAPIRepository {
     private let configuration: APIConfiguration

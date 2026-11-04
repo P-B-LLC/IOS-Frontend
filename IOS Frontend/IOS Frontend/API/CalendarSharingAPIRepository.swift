@@ -125,12 +125,14 @@ actor CalendarSharingAPIRepository {
             let output = try await client.calendarInvitationsAcceptCreate(path: .init(id: id))
             switch output {
             case .ok: return
+            case .conflict: throw CalendarShareRequestFailure.stateConflict
             case .undocumented(let code, let payload): throw await RepbaseAPIHTTPError.decode(statusCode: code, payload: payload)
             }
         } else {
             let output = try await client.calendarInvitationsDeclineCreate(path: .init(id: id))
             switch output {
             case .ok: return
+            case .conflict: throw CalendarShareRequestFailure.stateConflict
             case .undocumented(let code, let payload): throw await RepbaseAPIHTTPError.decode(statusCode: code, payload: payload)
             }
         }
