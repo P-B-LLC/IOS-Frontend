@@ -79,7 +79,7 @@ struct CalendarWorkspaceView: View {
         CalendarMonthItem(id: plan.id, sharedID: plan.id, title: plan.title, date: plan.date,
                           time: plan.time, isComplete: plan.isComplete, color: Self.ownerColor(plan.owner.id),
                           ownerLabel: plan.owner.name, durationMinutes: plan.durationMinutes,
-                          schedulingTimezone: plan.schedulingTimezone)
+                          schedulingTimezone: plan.schedulingTimezone, category: PlannerCategory(rawValue: plan.category))
     }
 
     static func ownerColor(_ ownerID: Int) -> Color {

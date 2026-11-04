@@ -276,7 +276,7 @@ jobs:
         run: |
           if git diff --name-only HEAD^ HEAD | grep -Eq 'GuidedHomeView|FoodTrackingView|FoodGoalsTarget|PlannerView|PlannerMonthCalendar|PlannerDaySchedule|CalendarMonth|CalendarSharing|CalendarShare|CalendarWorkspace|PlannerItemColor|RytivoSunriseDesign|Training.*imageset|SunriseFoodPhoto|RepbaseTactileDesign|HomeSunrise|Sunrise.*colorset|Tactile.*colorset|capture-home-preview'; then
             bash Scripts/capture-home-preview.sh
-            for preview in home-light home-dark workouts-page-light workouts-page-dark food-page-light food-page-dark food-page-large-text food-page-german food-page-arabic calendar-page-light calendar-page-dark calendar-month-light calendar-month-dark calendar-day-light calendar-day-dark profile-page-light profile-page-dark; do
+            for preview in home-light home-dark workouts-page-light workouts-page-dark food-page-light food-page-dark food-page-large-text food-page-german food-page-arabic calendar-page-light calendar-page-dark calendar-month-light calendar-month-dark calendar-day-light calendar-day-dark calendar-shared-month-light calendar-shared-month-dark calendar-shared-day-light calendar-shared-day-dark calendar-invitations-light calendar-invitations-dark calendar-shared-large-text calendar-shared-arabic profile-page-light profile-page-dark; do
               test -s ".build/home-previews/$preview.png" || {
                 echo "Missing simulator preview: $preview"
                 exit 1

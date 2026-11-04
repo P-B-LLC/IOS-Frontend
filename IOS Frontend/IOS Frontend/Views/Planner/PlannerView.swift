@@ -284,7 +284,7 @@ struct PlannerView: View {
                 entries: store.isLoading ? [] : dayAgenda.filter { PlannerHourAgenda.hour(from: $0.time) != nil },
                 onSelect: { editor = .edit($0) },
                 onOpenWorkout: { openingDay = $0 },
-                additionalItems: sharedDayItems,
+                additionalItems: filteredSharedDayItems,
                 additionalIsLoading: sharedIsLoading,
                 onSelectShared: onSelectShared
             )
@@ -293,18 +293,18 @@ struct PlannerView: View {
             if !store.isLoading {
                 agendaGroup("Anytime", entries: dayAgenda.filter { PlannerHourAgenda.hour(from: $0.time) == nil }, timeOfDay: timeOfDay)
                 if dayAgenda.allSatisfy({ PlannerHourAgenda.hour(from: $0.time) != nil }),
-                   sharedDayItems.contains(where: {
+                   filteredSharedDayItems.contains(where: {
                        $0.date == PlannerStore.dateString(store.selectedDate) && PlannerHourAgenda.hour(from: $0.time) == nil
                    }) {
                     Text("Anytime").font(.community(.footnote, weight: .semibold))
                         .foregroundStyle(CalendarMonthStyle.secondary)
                 }
-                ForEach(sharedDayItems.filter {
+                ForEach(filteredSharedDayItems.filter {
                     $0.date == PlannerStore.dateString(store.selectedDate) && PlannerHourAgenda.hour(from: $0.time) == nil
                 }) { item in
                     CalendarSharedItemRow(item: item, onSelect: onSelectShared)
                 }
-                if categoryFilter != nil, showsOwnPlans {
+                if categoryFilter != nil {
                     Button("Clear filters") { categoryFilter = nil }
                         .font(.community(.footnote, weight: .semibold))
                         .frame(minHeight: 44)
@@ -345,8 +345,9 @@ struct PlannerView: View {
 
     @ViewBuilder
     private func categoryMenu(timeOfDay: HomeTimeOfDay) -> some View {
-        let categories = store.categories(on: store.selectedDate)
-        if showsOwnPlans && (categories.count > 1 || categoryFilter != nil) {
+        let categories = Set(showsOwnPlans ? store.categories(on: store.selectedDate) : [])
+            .union(sharedDayItems.compactMap(\.category))
+        if categories.count > 1 || categoryFilter != nil {
             Menu {
                 Picker("Filters", selection: $categoryFilter) {
                     Text("All").tag(Optional<PlannerCategory>.none)
@@ -478,6 +479,11 @@ struct PlannerView: View {
         guard let categoryFilter else { return store.entries(on: store.selectedDate) }
         return store.entries(on: store.selectedDate)
             .filter { $0.category == categoryFilter }
+    }
+
+    private var filteredSharedDayItems: [CalendarMonthItem] {
+        guard let categoryFilter else { return sharedDayItems }
+        return sharedDayItems.filter { $0.category == categoryFilter }
     }
 
     // MARK: - Other days

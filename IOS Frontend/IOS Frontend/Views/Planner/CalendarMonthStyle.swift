@@ -14,11 +14,12 @@ struct CalendarMonthItem: Identifiable {
     var ownerLabel: String? = nil
     var durationMinutes: Int? = nil
     var schedulingTimezone: String? = nil
+    var category: PlannerCategory? = nil
 
     static func own(_ entry: PlannerEntry) -> CalendarMonthItem {
         CalendarMonthItem(id: "own:" + (entry.serverID.map(String.init) ?? entry.id.uuidString),
                           title: entry.title, date: entry.date, time: entry.time,
-                          isComplete: entry.isComplete, color: entry.displayColor)
+                          isComplete: entry.isComplete, color: entry.displayColor, category: entry.category)
     }
 
     var compactTitle: String {
