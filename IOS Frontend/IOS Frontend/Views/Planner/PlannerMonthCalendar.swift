@@ -127,7 +127,8 @@ struct PlannerMonthCalendar: View {
                             else if calendar.isDateInToday(date) { Circle().strokeBorder(PlannerStyle.accentText, lineWidth: 1) }
                         }
                     if overflow > 0 {
-                        Text("+\(overflow)").font(.community(size: 9, weight: .bold))
+                        Text(verbatim: "+" + overflow.formatted(.number.grouping(.never).locale(.app)))
+                            .font(.community(size: 9, weight: .bold))
                             .foregroundStyle(CalendarMonthStyle.secondary).lineLimit(1).minimumScaleFactor(0.7)
                     }
                 }

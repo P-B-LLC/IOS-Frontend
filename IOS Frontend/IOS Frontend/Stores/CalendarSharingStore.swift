@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import RepbaseAPI
 
 private enum CalendarSharingFailure: Error {
     case notConnected
