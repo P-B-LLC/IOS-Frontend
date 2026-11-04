@@ -98,7 +98,8 @@ for appearance in light dark; do
     preview_quick=''
     preview_tab=planner
     capture "calendar-page-$appearance" "$appearance" populated
-    SIMCTL_CHILD_REPBASE_PLANNER_MONTH=1 capture "calendar-month-$appearance" "$appearance" populated
+    capture "calendar-month-$appearance" "$appearance" populated
+    SIMCTL_CHILD_REPBASE_PLANNER_DAY=1 capture "calendar-day-$appearance" "$appearance" populated
     preview_tab=account
     capture "profile-page-$appearance" "$appearance" populated
     SIMCTL_CHILD_REPBASE_SETTINGS=1 capture "profile-settings-$appearance" "$appearance" populated

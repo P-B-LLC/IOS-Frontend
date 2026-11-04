@@ -18,6 +18,7 @@ struct IOS_FrontendApp: App {
     @State private var authentication: AuthenticationStore
     @State private var workoutStore: WorkoutStore
     @State private var plannerStore: PlannerStore
+    @State private var calendarSharingStore = CalendarSharingStore()
     @State private var foodTrackingStore: FoodTrackingStore
     @State private var socialProfileStore: SocialProfileStore
     @State private var socialStore: SocialStore
@@ -133,6 +134,8 @@ struct IOS_FrontendApp: App {
                 .environment(authentication)
                 .environment(workoutStore)
                 .environment(plannerStore)
+                .environment(calendarSharingStore)
+                .environment(\.calendarSharing, calendarSharingStore)
                 .environment(foodTrackingStore)
                 .environment(socialProfileStore)
                 .environment(socialStore)
@@ -219,6 +222,7 @@ private struct AppRootView: View {
     @Environment(AuthenticationStore.self) private var authentication
     @Environment(WorkoutStore.self) private var workoutStore
     @Environment(PlannerStore.self) private var plannerStore
+    @Environment(CalendarSharingStore.self) private var calendarSharingStore
     @Environment(FoodTrackingStore.self) private var foodTrackingStore
     @Environment(SocialProfileStore.self) private var socialProfileStore
     @Environment(SocialStore.self) private var socialStore
@@ -709,6 +713,7 @@ private struct AppRootView: View {
                 token: token
             )
             guard authentication.token == token, !Task.isCancelled else { return }
+            calendarSharingStore.connect(configuration: authentication.configuration, token: token)
             await foodTrackingStore.connect(
                 configuration: authentication.configuration,
                 token: token
@@ -820,6 +825,7 @@ private struct AppRootView: View {
         NotificationScheduler.shared.setAccount(nil)
         workoutStore.disconnect()
         plannerStore.disconnect()
+        calendarSharingStore.disconnect()
         socialProfileStore.disconnect()
         socialStore.disconnect()
         activityStore.disconnect()

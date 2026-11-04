@@ -39,6 +39,7 @@ struct PlannerEntryEditorView: View {
     var onDeleted: ((PlannerEntry, Bool) -> Void)?
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.calendarSharing) private var calendarSharing
     @State private var isSaving = false
     @State private var saveError: String?
     @State private var draftSaved = false
@@ -94,6 +95,10 @@ struct PlannerEntryEditorView: View {
     @State private var isChoosingDeleteScope = false
     @State private var showsRepeatOptions = false
     @State private var showsNotes = false
+    @State private var showsColorPicker = false
+    @State private var calendarShareEntry: PlannerEntry?
+    @State private var sharedRecipients: [CalendarShareInvitation] = []
+    @State private var sharingStatusError: String?
 
     /// How often the task actually repeats, whichever way it was chosen.
     private var repeatInterval: Int {
@@ -179,6 +184,21 @@ struct PlannerEntryEditorView: View {
                     }
 
                     editorialNameAndType(timeOfDay: timeOfDay)
+                    Button { showsColorPicker = true } label: {
+                        HStack {
+                            Label("Choose a color", systemImage: "paintpalette")
+                            Spacer()
+                            if let color = draft.color { Text(color.title) }
+                            Image(systemName: "chevron.forward").accessibilityHidden(true)
+                        }
+                        .font(.community(.subheadline))
+                        .foregroundStyle(draft.displayColor)
+                        .padding(.horizontal, 16)
+                        .frame(minHeight: 44)
+                        .background(RoundedRectangle(cornerRadius: 22)
+                            .strokeBorder(draft.displayColor, lineWidth: 1))
+                    }
+                    .buttonStyle(RepbaseTactilePressStyle())
                     editorialDetails(timeOfDay: timeOfDay)
                     if draft.kind == .task {
                         editorialSteps(timeOfDay: timeOfDay)
@@ -192,6 +212,25 @@ struct PlannerEntryEditorView: View {
                         // draft has no id for a post to point at, and the
                         // edits on screen are not saved until Save.
                         if let serverID = entry.serverID {
+                            if let calendarSharing {
+                                Button { calendarShareEntry = entry } label: {
+                                    Label("Share to followers", systemImage: "person.crop.circle.badge.plus")
+                                        .frame(maxWidth: .infinity, minHeight: 44)
+                                }
+                                .buttonStyle(.bordered)
+                                .disabled(!calendarSharing.isSupported)
+                                if !sharedRecipients.filter(\.isActive).isEmpty {
+                                    Text("Sharing with").font(.community(.headline))
+                                    ForEach(sharedRecipients.filter(\.isActive)) { share in
+                                        Text(share.recipient.name).font(.community(.footnote))
+                                    }
+                                    Text("These people continue receiving shared future occurrences. Choose Share to followers to manage access.")
+                                        .font(.community(.caption)).foregroundStyle(.secondary)
+                                }
+                                if let sharingStatusError {
+                                    Text(sharingStatusError).font(.community(.caption)).foregroundStyle(.secondary)
+                                }
+                            }
                             Button {
                                 sharedEntry = SharedPostSource(id: serverID)
                             } label: {
@@ -258,6 +297,15 @@ struct PlannerEntryEditorView: View {
             }
             .saveFeedback(isSaving: isSaving, error: saveError)
             .recoverableDraft(key: "planner-\(mode.id)", value: checkpoint, saved: $draftSaved, error: $saveError)
+            .sheet(isPresented: $showsColorPicker) {
+                PlannerColorPicker(selection: $draft.color, title: draft.title, fallback: draft.category.tint)
+            }
+            .sheet(item: $calendarShareEntry, onDismiss: {
+                Task { await loadSharingStatus() }
+            }) { entry in
+                if let calendarSharing { CalendarShareSheet(entry: entry).environment(calendarSharing) }
+            }
+            .task { await loadSharingStatus() }
             .fullScreenCover(item: $sharedEntry) { shared in
                 NavigationStack {
                     PostComposerView(
@@ -301,18 +349,36 @@ struct PlannerEntryEditorView: View {
         }
     }
 
+    private func loadSharingStatus() async {
+        if case .edit(let entry) = mode, let id = entry.serverID, let calendarSharing {
+            do {
+                sharedRecipients = try await calendarSharing.sent(for: id)
+                sharingStatusError = nil
+            } catch {
+                guard !Task.isCancelled else { return }
+                sharedRecipients = []
+                sharingStatusError = String(localized: "Could not confirm who this item is shared with.", bundle: .app, locale: .app)
+            }
+        }
+    }
+
     private func advancedOptions(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            if draft.kind == .task, !isEditing {
+            if !isEditing {
                 DisclosureGroup(isExpanded: $showsRepeatOptions) {
                     editorialRepeat(timeOfDay: timeOfDay)
                 } label: {
                     settingLabel("Repeats", value: repeatSummary)
                 }
-            } else if draft.kind == .task, draft.isRepeating {
-                Text("This task repeats. Edits affect this day; use Stop repeating to end future tasks.")
+            } else if draft.isRepeating {
+                Text("This item repeats. Choose which dates receive your changes.")
                     .font(.community(.footnote))
                     .foregroundStyle(timeOfDay.canvasSecondaryText)
+                Toggle("This and future occurrences", isOn: Binding(
+                    get: { draft.editFollowing == true }, set: { draft.editFollowing = $0 }
+                ))
+                Text("Earlier dates stay unchanged. Sharing permissions are not changed by choosing a color.")
+                    .font(.community(.caption)).foregroundStyle(timeOfDay.canvasSecondaryText)
             }
             Picker("Priority", selection: $draft.priority) {
                 ForEach(PlannerPriority.offered) { priority in Text(priority.title).tag(priority) }
@@ -744,7 +810,7 @@ struct PlannerEntryEditorView: View {
         guard !draft.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
         // A custom interval outside the bounds is refused by the server, so
         // Save is not offered for one.
-        if draft.kind == .task, !isEditing {
+        if !isEditing {
             if repeatDays == customRepeatTag, !isCustomRepeatValid { return false }
             if repeatDays == weekdayRepeatTag, selectedRepeatWeekdays.isEmpty { return false }
         }
@@ -760,13 +826,16 @@ struct PlannerEntryEditorView: View {
         // time off has to take the length with it rather than leaving one
         // behind for Save to be rejected over.
         if !hasTime { saved.durationMinutes = nil }
-        // Create-only, and only for a task. Sent as the day after the last one
+        // Create-only. Sent as the day after the last one
         // wanted, because the server treats the end as the first day it no
         // longer applies.
-        if saved.kind == .task, !isEditing, repeatDays != 0 {
+        if !isEditing, repeatDays != 0 {
             saved.repeatEveryDays = repeatDays == weekdayRepeatTag ? nil : repeatInterval
             saved.repeatOnWeekdays = repeatDays == weekdayRepeatTag ? selectedRepeatWeekdays.sorted() : nil
             saved.repeatEndsOn = repeatHasEnd ? PlannerStore.dateString(repeatEnds) : nil
+        }
+        if hasTime, saved.schedulingTimezone?.isEmpty != false {
+            saved.schedulingTimezone = TimeZone.current.identifier
         }
         if saved.kind == .event { saved.isComplete = false }
         if !saved.category.suits(saved.kind) { saved.category = .other }

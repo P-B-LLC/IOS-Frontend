@@ -130,6 +130,8 @@ actor PlannerAPIRepository {
                     priority: Self.priorityPayload(draft.priority),
                     scheduledDate: draft.date,
                     scheduledTime: draft.time,
+                    color: try Self.colorPayload(draft.color),
+                    schedulingTimezone: draft.schedulingTimezone,
                     durationMinutes: draft.durationMinutes,
                     isComplete: draft.isCompletable ? draft.isComplete : nil,
                     workout: draft.workoutID,
@@ -179,6 +181,7 @@ actor PlannerAPIRepository {
         // else is exactly the point.
         let output = try await client.plannerUpdate(
             path: .init(id: serverID),
+            query: .init(scope: entry.editFollowing == true ? .following : nil),
             body: .json(
                 Components.Schemas.PlannerEntryRequest(
                     kind: Self.kindPayload(entry.kind),
@@ -187,6 +190,8 @@ actor PlannerAPIRepository {
                     priority: Self.priorityPayload(entry.priority),
                     scheduledDate: entry.date,
                     scheduledTime: entry.time,
+                    color: try Self.colorPayload(entry.color),
+                    schedulingTimezone: entry.schedulingTimezone,
                     durationMinutes: entry.durationMinutes,
                     isComplete: entry.isCompletable ? entry.isComplete : nil,
                     workout: entry.workoutID,
@@ -350,7 +355,10 @@ actor PlannerAPIRepository {
             parentID: payload.parent,
             subtasks: payload.subtasks.map(subtask(from:)),
             repeatIntervalDays: payload.repeatIntervalDays,
-            repeatWeekdays: payload.repeatWeekdays
+            repeatWeekdays: payload.repeatWeekdays,
+            color: itemColor(payload.color),
+            schedulingTimezone: payload.schedulingTimezone,
+            recurrenceID: payload.recurrenceId
         )
     }
 
@@ -363,6 +371,16 @@ actor PlannerAPIRepository {
             title: payload.title,
             isComplete: payload.isComplete
         )
+    }
+
+    private static func itemColor(_ payload: Components.Schemas.PlannerEntry.ColorPayload?) -> PlannerItemColor? {
+        if case .ColorEnum(let wire)? = payload { return PlannerItemColor(rawValue: wire.rawValue) }
+        return nil
+    }
+
+    private static func colorPayload(_ value: PlannerItemColor?) throws -> Components.Schemas.PlannerEntryRequest.ColorPayload {
+        if let value, let wire = Components.Schemas.ColorEnum(rawValue: value.rawValue) { return .ColorEnum(wire) }
+        return .BlankEnum(try .init(unvalidatedValue: ""))
     }
 
     /// Wrapped, because `kind` now carries a default in the contract and the

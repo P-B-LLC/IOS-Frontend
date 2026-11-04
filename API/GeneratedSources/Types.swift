@@ -69,6 +69,59 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/body-weight/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/body-weight/{id}//delete(body_weight_destroy)`.
     func bodyWeightDestroy(_ input: Operations.BodyWeightDestroy.Input) async throws -> Operations.BodyWeightDestroy.Output
+    /// Questions addressed only to the signed-in follower; no social push.
+    ///
+    /// - Remark: HTTP `GET /api/v1/calendar/invitations/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/invitations//get(calendar_invitations_list)`.
+    func calendarInvitationsList(_ input: Operations.CalendarInvitationsList.Input) async throws -> Operations.CalendarInvitationsList.Output
+    /// Questions addressed only to the signed-in follower; no social push.
+    ///
+    /// - Remark: HTTP `POST /api/v1/calendar/invitations/{id}/accept/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/invitations/{id}/accept//post(calendar_invitations_accept_create)`.
+    func calendarInvitationsAcceptCreate(_ input: Operations.CalendarInvitationsAcceptCreate.Input) async throws -> Operations.CalendarInvitationsAcceptCreate.Output
+    /// Questions addressed only to the signed-in follower; no social push.
+    ///
+    /// - Remark: HTTP `POST /api/v1/calendar/invitations/{id}/decline/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/invitations/{id}/decline//post(calendar_invitations_decline_create)`.
+    func calendarInvitationsDeclineCreate(_ input: Operations.CalendarInvitationsDeclineCreate.Input) async throws -> Operations.CalendarInvitationsDeclineCreate.Output
+    /// - Remark: HTTP `GET /api/v1/calendar/share-recipients/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/share-recipients//get(calendar_share_recipients_list)`.
+    func calendarShareRecipientsList(_ input: Operations.CalendarShareRecipientsList.Input) async throws -> Operations.CalendarShareRecipientsList.Output
+    /// Read-only shared items, separate from own tasks, counters and reminders.
+    ///
+    /// - Remark: HTTP `GET /api/v1/calendar/shared/day/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shared/day//get(calendar_shared_day_list)`.
+    func calendarSharedDayList(_ input: Operations.CalendarSharedDayList.Input) async throws -> Operations.CalendarSharedDayList.Output
+    /// Read-only shared items, separate from own tasks, counters and reminders.
+    ///
+    /// - Remark: HTTP `GET /api/v1/calendar/shared/month/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shared/month//get(calendar_shared_month_retrieve)`.
+    func calendarSharedMonthRetrieve(_ input: Operations.CalendarSharedMonthRetrieve.Input) async throws -> Operations.CalendarSharedMonthRetrieve.Output
+    /// Read-only shared items, separate from own tasks, counters and reminders.
+    ///
+    /// - Remark: HTTP `GET /api/v1/calendar/shared/people/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shared/people//get(calendar_shared_people_list)`.
+    func calendarSharedPeopleList(_ input: Operations.CalendarSharedPeopleList.Input) async throws -> Operations.CalendarSharedPeopleList.Output
+    /// Owner management; never reads another account's private planner row.
+    ///
+    /// - Remark: HTTP `GET /api/v1/calendar/shares/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shares//get(calendar_shares_list)`.
+    func calendarSharesList(_ input: Operations.CalendarSharesList.Input) async throws -> Operations.CalendarSharesList.Output
+    /// Invite up to 20 current followers. Default scope is only this occurrence. An old declined/revoked invitation requires explicit reinvite=true; retries never silently reactivate it.
+    ///
+    /// - Remark: HTTP `POST /api/v1/calendar/shares/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shares//post(calendar_shares_create)`.
+    func calendarSharesCreate(_ input: Operations.CalendarSharesCreate.Input) async throws -> Operations.CalendarSharesCreate.Output
+    /// Owner management; never reads another account's private planner row.
+    ///
+    /// - Remark: HTTP `POST /api/v1/calendar/shares/{id}/revoke/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shares/{id}/revoke//post(calendar_shares_revoke_create)`.
+    func calendarSharesRevokeCreate(_ input: Operations.CalendarSharesRevokeCreate.Input) async throws -> Operations.CalendarSharesRevokeCreate.Output
+    /// Make only this occurrence private, or stop sharing its entire repeating lineage. Privacy exceptions survive date moves and future-rule edits.
+    ///
+    /// - Remark: HTTP `POST /api/v1/calendar/shares/privacy/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shares/privacy//post(calendar_shares_privacy_create)`.
+    func calendarSharesPrivacyCreate(_ input: Operations.CalendarSharesPrivacyCreate.Input) async throws -> Operations.CalendarSharesPrivacyCreate.Output
     /// Rotations that repeat every N days rather than every week.
     ///
     /// - Remark: HTTP `GET /api/v1/cycles/`.
@@ -1501,6 +1554,141 @@ extension APIProtocol {
     public func bodyWeightDestroy(path: Operations.BodyWeightDestroy.Input.Path) async throws -> Operations.BodyWeightDestroy.Output {
         try await bodyWeightDestroy(Operations.BodyWeightDestroy.Input(path: path))
     }
+    /// Questions addressed only to the signed-in follower; no social push.
+    ///
+    /// - Remark: HTTP `GET /api/v1/calendar/invitations/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/invitations//get(calendar_invitations_list)`.
+    public func calendarInvitationsList(
+        query: Operations.CalendarInvitationsList.Input.Query = .init(),
+        headers: Operations.CalendarInvitationsList.Input.Headers = .init()
+    ) async throws -> Operations.CalendarInvitationsList.Output {
+        try await calendarInvitationsList(Operations.CalendarInvitationsList.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Questions addressed only to the signed-in follower; no social push.
+    ///
+    /// - Remark: HTTP `POST /api/v1/calendar/invitations/{id}/accept/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/invitations/{id}/accept//post(calendar_invitations_accept_create)`.
+    public func calendarInvitationsAcceptCreate(
+        path: Operations.CalendarInvitationsAcceptCreate.Input.Path,
+        headers: Operations.CalendarInvitationsAcceptCreate.Input.Headers = .init()
+    ) async throws -> Operations.CalendarInvitationsAcceptCreate.Output {
+        try await calendarInvitationsAcceptCreate(Operations.CalendarInvitationsAcceptCreate.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Questions addressed only to the signed-in follower; no social push.
+    ///
+    /// - Remark: HTTP `POST /api/v1/calendar/invitations/{id}/decline/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/invitations/{id}/decline//post(calendar_invitations_decline_create)`.
+    public func calendarInvitationsDeclineCreate(
+        path: Operations.CalendarInvitationsDeclineCreate.Input.Path,
+        headers: Operations.CalendarInvitationsDeclineCreate.Input.Headers = .init()
+    ) async throws -> Operations.CalendarInvitationsDeclineCreate.Output {
+        try await calendarInvitationsDeclineCreate(Operations.CalendarInvitationsDeclineCreate.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// - Remark: HTTP `GET /api/v1/calendar/share-recipients/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/share-recipients//get(calendar_share_recipients_list)`.
+    public func calendarShareRecipientsList(
+        query: Operations.CalendarShareRecipientsList.Input.Query = .init(),
+        headers: Operations.CalendarShareRecipientsList.Input.Headers = .init()
+    ) async throws -> Operations.CalendarShareRecipientsList.Output {
+        try await calendarShareRecipientsList(Operations.CalendarShareRecipientsList.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Read-only shared items, separate from own tasks, counters and reminders.
+    ///
+    /// - Remark: HTTP `GET /api/v1/calendar/shared/day/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shared/day//get(calendar_shared_day_list)`.
+    public func calendarSharedDayList(
+        query: Operations.CalendarSharedDayList.Input.Query,
+        headers: Operations.CalendarSharedDayList.Input.Headers = .init()
+    ) async throws -> Operations.CalendarSharedDayList.Output {
+        try await calendarSharedDayList(Operations.CalendarSharedDayList.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Read-only shared items, separate from own tasks, counters and reminders.
+    ///
+    /// - Remark: HTTP `GET /api/v1/calendar/shared/month/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shared/month//get(calendar_shared_month_retrieve)`.
+    public func calendarSharedMonthRetrieve(
+        query: Operations.CalendarSharedMonthRetrieve.Input.Query,
+        headers: Operations.CalendarSharedMonthRetrieve.Input.Headers = .init()
+    ) async throws -> Operations.CalendarSharedMonthRetrieve.Output {
+        try await calendarSharedMonthRetrieve(Operations.CalendarSharedMonthRetrieve.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Read-only shared items, separate from own tasks, counters and reminders.
+    ///
+    /// - Remark: HTTP `GET /api/v1/calendar/shared/people/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shared/people//get(calendar_shared_people_list)`.
+    public func calendarSharedPeopleList(
+        query: Operations.CalendarSharedPeopleList.Input.Query = .init(),
+        headers: Operations.CalendarSharedPeopleList.Input.Headers = .init()
+    ) async throws -> Operations.CalendarSharedPeopleList.Output {
+        try await calendarSharedPeopleList(Operations.CalendarSharedPeopleList.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Owner management; never reads another account's private planner row.
+    ///
+    /// - Remark: HTTP `GET /api/v1/calendar/shares/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shares//get(calendar_shares_list)`.
+    public func calendarSharesList(
+        query: Operations.CalendarSharesList.Input.Query = .init(),
+        headers: Operations.CalendarSharesList.Input.Headers = .init()
+    ) async throws -> Operations.CalendarSharesList.Output {
+        try await calendarSharesList(Operations.CalendarSharesList.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Invite up to 20 current followers. Default scope is only this occurrence. An old declined/revoked invitation requires explicit reinvite=true; retries never silently reactivate it.
+    ///
+    /// - Remark: HTTP `POST /api/v1/calendar/shares/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shares//post(calendar_shares_create)`.
+    public func calendarSharesCreate(
+        headers: Operations.CalendarSharesCreate.Input.Headers = .init(),
+        body: Operations.CalendarSharesCreate.Input.Body
+    ) async throws -> Operations.CalendarSharesCreate.Output {
+        try await calendarSharesCreate(Operations.CalendarSharesCreate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Owner management; never reads another account's private planner row.
+    ///
+    /// - Remark: HTTP `POST /api/v1/calendar/shares/{id}/revoke/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shares/{id}/revoke//post(calendar_shares_revoke_create)`.
+    public func calendarSharesRevokeCreate(
+        path: Operations.CalendarSharesRevokeCreate.Input.Path,
+        headers: Operations.CalendarSharesRevokeCreate.Input.Headers = .init()
+    ) async throws -> Operations.CalendarSharesRevokeCreate.Output {
+        try await calendarSharesRevokeCreate(Operations.CalendarSharesRevokeCreate.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Make only this occurrence private, or stop sharing its entire repeating lineage. Privacy exceptions survive date moves and future-rule edits.
+    ///
+    /// - Remark: HTTP `POST /api/v1/calendar/shares/privacy/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shares/privacy//post(calendar_shares_privacy_create)`.
+    public func calendarSharesPrivacyCreate(body: Operations.CalendarSharesPrivacyCreate.Input.Body) async throws -> Operations.CalendarSharesPrivacyCreate.Output {
+        try await calendarSharesPrivacyCreate(Operations.CalendarSharesPrivacyCreate.Input(body: body))
+    }
     /// Rotations that repeat every N days rather than every week.
     ///
     /// - Remark: HTTP `GET /api/v1/cycles/`.
@@ -2561,11 +2749,13 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//api/v1/planner/{id}//patch(planner_partial_update)`.
     public func plannerPartialUpdate(
         path: Operations.PlannerPartialUpdate.Input.Path,
+        query: Operations.PlannerPartialUpdate.Input.Query = .init(),
         headers: Operations.PlannerPartialUpdate.Input.Headers = .init(),
         body: Operations.PlannerPartialUpdate.Input.Body? = nil
     ) async throws -> Operations.PlannerPartialUpdate.Output {
         try await plannerPartialUpdate(Operations.PlannerPartialUpdate.Input(
             path: path,
+            query: query,
             headers: headers,
             body: body
         ))
@@ -2579,11 +2769,13 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//api/v1/planner/{id}//put(planner_update)`.
     public func plannerUpdate(
         path: Operations.PlannerUpdate.Input.Path,
+        query: Operations.PlannerUpdate.Input.Query = .init(),
         headers: Operations.PlannerUpdate.Input.Headers = .init(),
         body: Operations.PlannerUpdate.Input.Body
     ) async throws -> Operations.PlannerUpdate.Output {
         try await plannerUpdate(Operations.PlannerUpdate.Input(
             path: path,
+            query: query,
             headers: headers,
             body: body
         ))
@@ -4545,6 +4737,8 @@ public enum Components {
                 case user
             }
         }
+        /// - Remark: Generated from `#/components/schemas/BlankEnum`.
+        public typealias BlankEnum = OpenAPIRuntime.OpenAPIValueContainer
         /// One person the requester has blocked.
         ///
         /// `blocked_user` is nested beside the plain id because the only screen that
@@ -4756,6 +4950,266 @@ public enum Components {
                 case csrfToken = "csrf_token"
             }
         }
+        /// - Remark: Generated from `#/components/schemas/CalendarPerson`.
+        public struct CalendarPerson: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CalendarPerson/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/CalendarPerson/username`.
+            public var username: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CalendarPerson/display_name`.
+            public var displayName: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CalendarPerson/profile_photo_url`.
+            public var profilePhotoUrl: Swift.String?
+            /// Creates a new `CalendarPerson`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - username:
+            ///   - displayName:
+            ///   - profilePhotoUrl:
+            public init(
+                id: Swift.Int,
+                username: Swift.String,
+                displayName: Swift.String,
+                profilePhotoUrl: Swift.String? = nil
+            ) {
+                self.id = id
+                self.username = username
+                self.displayName = displayName
+                self.profilePhotoUrl = profilePhotoUrl
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case username
+                case displayName = "display_name"
+                case profilePhotoUrl = "profile_photo_url"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CalendarShare`.
+        public struct CalendarShare: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CalendarShare/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/CalendarShare/owner`.
+            public var owner: Components.Schemas.CalendarPerson
+            /// - Remark: Generated from `#/components/schemas/CalendarShare/recipient`.
+            public var recipient: Components.Schemas.CalendarPerson
+            /// - Remark: Generated from `#/components/schemas/CalendarShare/scope`.
+            public var scope: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CalendarShare/status`.
+            public var status: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CalendarShare/starts_on`.
+            public var startsOn: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/CalendarShare/created_at`.
+            public var createdAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/CalendarShare/responded_at`.
+            public var respondedAt: Foundation.Date?
+            /// - Remark: Generated from `#/components/schemas/CalendarShare/item`.
+            public struct ItemPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/CalendarShare/item/value1`.
+                public var value1: Components.Schemas.SharedCalendarItem
+                /// Creates a new `ItemPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.SharedCalendarItem) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/CalendarShare/item`.
+            public var item: Components.Schemas.CalendarShare.ItemPayload?
+            /// Owner management only: whether an active or pending grant covers the selected occurrence. False for a later series boundary or a private exception; acceptance is still required for recipient visibility.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CalendarShare/applies_to_selected_occurrence`.
+            public var appliesToSelectedOccurrence: Swift.Bool?
+            /// Creates a new `CalendarShare`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - owner:
+            ///   - recipient:
+            ///   - scope:
+            ///   - status:
+            ///   - startsOn:
+            ///   - createdAt:
+            ///   - respondedAt:
+            ///   - item:
+            ///   - appliesToSelectedOccurrence: Owner management only: whether an active or pending grant covers the selected occurrence. False for a later series boundary or a private exception; acceptance is still required for recipient visibility.
+            public init(
+                id: Swift.Int,
+                owner: Components.Schemas.CalendarPerson,
+                recipient: Components.Schemas.CalendarPerson,
+                scope: Swift.String,
+                status: Swift.String,
+                startsOn: Swift.String? = nil,
+                createdAt: Foundation.Date,
+                respondedAt: Foundation.Date? = nil,
+                item: Components.Schemas.CalendarShare.ItemPayload? = nil,
+                appliesToSelectedOccurrence: Swift.Bool? = nil
+            ) {
+                self.id = id
+                self.owner = owner
+                self.recipient = recipient
+                self.scope = scope
+                self.status = status
+                self.startsOn = startsOn
+                self.createdAt = createdAt
+                self.respondedAt = respondedAt
+                self.item = item
+                self.appliesToSelectedOccurrence = appliesToSelectedOccurrence
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case owner
+                case recipient
+                case scope
+                case status
+                case startsOn = "starts_on"
+                case createdAt = "created_at"
+                case respondedAt = "responded_at"
+                case item
+                case appliesToSelectedOccurrence = "applies_to_selected_occurrence"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CalendarShareBatch`.
+        public struct CalendarShareBatch: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CalendarShareBatch/shares`.
+            public var shares: [Components.Schemas.CalendarShare]
+            /// Creates a new `CalendarShareBatch`.
+            ///
+            /// - Parameters:
+            ///   - shares:
+            public init(shares: [Components.Schemas.CalendarShare]) {
+                self.shares = shares
+            }
+            public enum CodingKeys: String, CodingKey {
+                case shares
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CalendarShareConflict`.
+        public struct CalendarShareConflict: Codable, Hashable, Sendable {
+            /// reinvite_required, scope_conflict, or state_conflict. Plain string for forward compatibility.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CalendarShareConflict/code`.
+            public var code: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CalendarShareConflict/detail`.
+            public var detail: Swift.String
+            /// Creates a new `CalendarShareConflict`.
+            ///
+            /// - Parameters:
+            ///   - code: reinvite_required, scope_conflict, or state_conflict. Plain string for forward compatibility.
+            ///   - detail:
+            public init(
+                code: Swift.String,
+                detail: Swift.String
+            ) {
+                self.code = code
+                self.detail = detail
+            }
+            public enum CodingKeys: String, CodingKey {
+                case code
+                case detail
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CalendarShareCreateRequest`.
+        public struct CalendarShareCreateRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CalendarShareCreateRequest/source_entry_id`.
+            public var sourceEntryId: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/CalendarShareCreateRequest/recipient_ids`.
+            public var recipientIds: [Swift.Int]
+            /// - Remark: Generated from `#/components/schemas/CalendarShareCreateRequest/scope`.
+            public struct ScopePayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/CalendarShareCreateRequest/scope/value1`.
+                public var value1: Components.Schemas.ScopeEnum
+                /// Creates a new `ScopePayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.ScopeEnum) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try decoder.decodeFromSingleValueContainer()
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeToSingleValueContainer(self.value1)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/CalendarShareCreateRequest/scope`.
+            public var scope: Components.Schemas.CalendarShareCreateRequest.ScopePayload?
+            /// - Remark: Generated from `#/components/schemas/CalendarShareCreateRequest/reinvite`.
+            public var reinvite: Swift.Bool?
+            /// Creates a new `CalendarShareCreateRequest`.
+            ///
+            /// - Parameters:
+            ///   - sourceEntryId:
+            ///   - recipientIds:
+            ///   - scope:
+            ///   - reinvite:
+            public init(
+                sourceEntryId: Swift.Int,
+                recipientIds: [Swift.Int],
+                scope: Components.Schemas.CalendarShareCreateRequest.ScopePayload? = nil,
+                reinvite: Swift.Bool? = nil
+            ) {
+                self.sourceEntryId = sourceEntryId
+                self.recipientIds = recipientIds
+                self.scope = scope
+                self.reinvite = reinvite
+            }
+            public enum CodingKeys: String, CodingKey {
+                case sourceEntryId = "source_entry_id"
+                case recipientIds = "recipient_ids"
+                case scope
+                case reinvite
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CalendarSharePrivacyRequest`.
+        public struct CalendarSharePrivacyRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CalendarSharePrivacyRequest/source_entry_id`.
+            public var sourceEntryId: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/CalendarSharePrivacyRequest/scope`.
+            public struct ScopePayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/CalendarSharePrivacyRequest/scope/value1`.
+                public var value1: Components.Schemas.ScopeEnum
+                /// Creates a new `ScopePayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.ScopeEnum) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try decoder.decodeFromSingleValueContainer()
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeToSingleValueContainer(self.value1)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/CalendarSharePrivacyRequest/scope`.
+            public var scope: Components.Schemas.CalendarSharePrivacyRequest.ScopePayload?
+            /// Creates a new `CalendarSharePrivacyRequest`.
+            ///
+            /// - Parameters:
+            ///   - sourceEntryId:
+            ///   - scope:
+            public init(
+                sourceEntryId: Swift.Int,
+                scope: Components.Schemas.CalendarSharePrivacyRequest.ScopePayload? = nil
+            ) {
+                self.sourceEntryId = sourceEntryId
+                self.scope = scope
+            }
+            public enum CodingKeys: String, CodingKey {
+                case sourceEntryId = "source_entry_id"
+                case scope
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/Capabilities`.
         public struct Capabilities: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/Capabilities/manage_roles`.
@@ -4925,6 +5379,26 @@ public enum Components {
             public enum CodingKeys: String, CodingKey {
                 case cleared
             }
+        }
+        /// * `coral` - Coral
+        /// * `amber` - Amber
+        /// * `sage` - Sage
+        /// * `teal` - Teal
+        /// * `sky` - Sky
+        /// * `lavender` - Lavender
+        /// * `rose` - Rose
+        /// * `slate` - Slate
+        ///
+        /// - Remark: Generated from `#/components/schemas/ColorEnum`.
+        @frozen public enum ColorEnum: String, Codable, Hashable, Sendable, CaseIterable {
+            case coral = "coral"
+            case amber = "amber"
+            case sage = "sage"
+            case teal = "teal"
+            case sky = "sky"
+            case lavender = "lavender"
+            case rose = "rose"
+            case slate = "slate"
         }
         /// - Remark: Generated from `#/components/schemas/CommunitySpotlight`.
         public struct CommunitySpotlight: Codable, Hashable, Sendable {
@@ -7883,6 +8357,76 @@ public enum Components {
                 case results
             }
         }
+        /// - Remark: Generated from `#/components/schemas/PaginatedCalendarPersonList`.
+        public struct PaginatedCalendarPersonList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PaginatedCalendarPersonList/count`.
+            public var count: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PaginatedCalendarPersonList/next`.
+            public var next: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedCalendarPersonList/previous`.
+            public var previous: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedCalendarPersonList/results`.
+            public var results: [Components.Schemas.CalendarPerson]
+            /// Creates a new `PaginatedCalendarPersonList`.
+            ///
+            /// - Parameters:
+            ///   - count:
+            ///   - next:
+            ///   - previous:
+            ///   - results:
+            public init(
+                count: Swift.Int,
+                next: Swift.String? = nil,
+                previous: Swift.String? = nil,
+                results: [Components.Schemas.CalendarPerson]
+            ) {
+                self.count = count
+                self.next = next
+                self.previous = previous
+                self.results = results
+            }
+            public enum CodingKeys: String, CodingKey {
+                case count
+                case next
+                case previous
+                case results
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PaginatedCalendarShareList`.
+        public struct PaginatedCalendarShareList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PaginatedCalendarShareList/count`.
+            public var count: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PaginatedCalendarShareList/next`.
+            public var next: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedCalendarShareList/previous`.
+            public var previous: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedCalendarShareList/results`.
+            public var results: [Components.Schemas.CalendarShare]
+            /// Creates a new `PaginatedCalendarShareList`.
+            ///
+            /// - Parameters:
+            ///   - count:
+            ///   - next:
+            ///   - previous:
+            ///   - results:
+            public init(
+                count: Swift.Int,
+                next: Swift.String? = nil,
+                previous: Swift.String? = nil,
+                results: [Components.Schemas.CalendarShare]
+            ) {
+                self.count = count
+                self.next = next
+                self.previous = previous
+                self.results = results
+            }
+            public enum CodingKeys: String, CodingKey {
+                case count
+                case next
+                case previous
+                case results
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/PaginatedCookbookList`.
         public struct PaginatedCookbookList: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PaginatedCookbookList/count`.
@@ -8459,6 +9003,41 @@ public enum Components {
                 next: Swift.String? = nil,
                 previous: Swift.String? = nil,
                 results: [Components.Schemas.SetEntry]
+            ) {
+                self.count = count
+                self.next = next
+                self.previous = previous
+                self.results = results
+            }
+            public enum CodingKeys: String, CodingKey {
+                case count
+                case next
+                case previous
+                case results
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PaginatedSharedCalendarItemList`.
+        public struct PaginatedSharedCalendarItemList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PaginatedSharedCalendarItemList/count`.
+            public var count: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PaginatedSharedCalendarItemList/next`.
+            public var next: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedSharedCalendarItemList/previous`.
+            public var previous: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedSharedCalendarItemList/results`.
+            public var results: [Components.Schemas.SharedCalendarItem]
+            /// Creates a new `PaginatedSharedCalendarItemList`.
+            ///
+            /// - Parameters:
+            ///   - count:
+            ///   - next:
+            ///   - previous:
+            ///   - results:
+            public init(
+                count: Swift.Int,
+                next: Swift.String? = nil,
+                previous: Swift.String? = nil,
+                results: [Components.Schemas.SharedCalendarItem]
             ) {
                 self.count = count
                 self.next = next
@@ -9149,6 +9728,45 @@ public enum Components {
             public var scheduledDate: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/scheduled_time`.
             public var scheduledTime: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/color`.
+            @frozen public enum ColorPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/color/case1`.
+                case ColorEnum(Components.Schemas.ColorEnum)
+                /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/color/case2`.
+                case BlankEnum(Components.Schemas.BlankEnum)
+                public init(from decoder: any Swift.Decoder) throws {
+                    var errors: [any Swift.Error] = []
+                    do {
+                        self = .ColorEnum(try decoder.decodeFromSingleValueContainer())
+                        return
+                    } catch {
+                        errors.append(error)
+                    }
+                    do {
+                        self = .BlankEnum(try .init(from: decoder))
+                        return
+                    } catch {
+                        errors.append(error)
+                    }
+                    throw Swift.DecodingError.failedToDecodeOneOfSchema(
+                        type: Self.self,
+                        codingPath: decoder.codingPath,
+                        errors: errors
+                    )
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    switch self {
+                    case let .ColorEnum(value):
+                        try encoder.encodeToSingleValueContainer(value)
+                    case let .BlankEnum(value):
+                        try value.encode(to: encoder)
+                    }
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/color`.
+            public var color: Components.Schemas.PatchedPlannerEntryRequest.ColorPayload?
+            /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/scheduling_timezone`.
+            public var schedulingTimezone: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/duration_minutes`.
             public var durationMinutes: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/is_complete`.
@@ -9176,6 +9794,8 @@ public enum Components {
             ///   - priority:
             ///   - scheduledDate:
             ///   - scheduledTime:
+            ///   - color:
+            ///   - schedulingTimezone:
             ///   - durationMinutes:
             ///   - isComplete:
             ///   - workout:
@@ -9191,6 +9811,8 @@ public enum Components {
                 priority: Components.Schemas.PriorityEnum? = nil,
                 scheduledDate: Swift.String? = nil,
                 scheduledTime: Swift.String? = nil,
+                color: Components.Schemas.PatchedPlannerEntryRequest.ColorPayload? = nil,
+                schedulingTimezone: Swift.String? = nil,
                 durationMinutes: Swift.Int? = nil,
                 isComplete: Swift.Bool? = nil,
                 workout: Swift.Int? = nil,
@@ -9206,6 +9828,8 @@ public enum Components {
                 self.priority = priority
                 self.scheduledDate = scheduledDate
                 self.scheduledTime = scheduledTime
+                self.color = color
+                self.schedulingTimezone = schedulingTimezone
                 self.durationMinutes = durationMinutes
                 self.isComplete = isComplete
                 self.workout = workout
@@ -9222,6 +9846,8 @@ public enum Components {
                 case priority
                 case scheduledDate = "scheduled_date"
                 case scheduledTime = "scheduled_time"
+                case color
+                case schedulingTimezone = "scheduling_timezone"
                 case durationMinutes = "duration_minutes"
                 case isComplete = "is_complete"
                 case workout
@@ -10097,6 +10723,47 @@ public enum Components {
             public var scheduledDate: Swift.String
             /// - Remark: Generated from `#/components/schemas/PlannerEntry/scheduled_time`.
             public var scheduledTime: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/color`.
+            @frozen public enum ColorPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PlannerEntry/color/case1`.
+                case ColorEnum(Components.Schemas.ColorEnum)
+                /// - Remark: Generated from `#/components/schemas/PlannerEntry/color/case2`.
+                case BlankEnum(Components.Schemas.BlankEnum)
+                public init(from decoder: any Swift.Decoder) throws {
+                    var errors: [any Swift.Error] = []
+                    do {
+                        self = .ColorEnum(try decoder.decodeFromSingleValueContainer())
+                        return
+                    } catch {
+                        errors.append(error)
+                    }
+                    do {
+                        self = .BlankEnum(try .init(from: decoder))
+                        return
+                    } catch {
+                        errors.append(error)
+                    }
+                    throw Swift.DecodingError.failedToDecodeOneOfSchema(
+                        type: Self.self,
+                        codingPath: decoder.codingPath,
+                        errors: errors
+                    )
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    switch self {
+                    case let .ColorEnum(value):
+                        try encoder.encodeToSingleValueContainer(value)
+                    case let .BlankEnum(value):
+                        try value.encode(to: encoder)
+                    }
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/color`.
+            public var color: Components.Schemas.PlannerEntry.ColorPayload?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/scheduling_timezone`.
+            public var schedulingTimezone: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/recurrence_id`.
+            public var recurrenceId: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/PlannerEntry/duration_minutes`.
             public var durationMinutes: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/PlannerEntry/is_complete`.
@@ -10136,6 +10803,9 @@ public enum Components {
             ///   - priority:
             ///   - scheduledDate:
             ///   - scheduledTime:
+            ///   - color:
+            ///   - schedulingTimezone:
+            ///   - recurrenceId:
             ///   - durationMinutes:
             ///   - isComplete:
             ///   - completedAt:
@@ -10159,6 +10829,9 @@ public enum Components {
                 priority: Components.Schemas.PriorityEnum? = nil,
                 scheduledDate: Swift.String,
                 scheduledTime: Swift.String? = nil,
+                color: Components.Schemas.PlannerEntry.ColorPayload? = nil,
+                schedulingTimezone: Swift.String? = nil,
+                recurrenceId: Swift.Int? = nil,
                 durationMinutes: Swift.Int? = nil,
                 isComplete: Swift.Bool? = nil,
                 completedAt: Foundation.Date? = nil,
@@ -10182,6 +10855,9 @@ public enum Components {
                 self.priority = priority
                 self.scheduledDate = scheduledDate
                 self.scheduledTime = scheduledTime
+                self.color = color
+                self.schedulingTimezone = schedulingTimezone
+                self.recurrenceId = recurrenceId
                 self.durationMinutes = durationMinutes
                 self.isComplete = isComplete
                 self.completedAt = completedAt
@@ -10206,6 +10882,9 @@ public enum Components {
                 case priority
                 case scheduledDate = "scheduled_date"
                 case scheduledTime = "scheduled_time"
+                case color
+                case schedulingTimezone = "scheduling_timezone"
+                case recurrenceId = "recurrence_id"
                 case durationMinutes = "duration_minutes"
                 case isComplete = "is_complete"
                 case completedAt = "completed_at"
@@ -10268,6 +10947,45 @@ public enum Components {
             public var scheduledDate: Swift.String
             /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/scheduled_time`.
             public var scheduledTime: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/color`.
+            @frozen public enum ColorPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/color/case1`.
+                case ColorEnum(Components.Schemas.ColorEnum)
+                /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/color/case2`.
+                case BlankEnum(Components.Schemas.BlankEnum)
+                public init(from decoder: any Swift.Decoder) throws {
+                    var errors: [any Swift.Error] = []
+                    do {
+                        self = .ColorEnum(try decoder.decodeFromSingleValueContainer())
+                        return
+                    } catch {
+                        errors.append(error)
+                    }
+                    do {
+                        self = .BlankEnum(try .init(from: decoder))
+                        return
+                    } catch {
+                        errors.append(error)
+                    }
+                    throw Swift.DecodingError.failedToDecodeOneOfSchema(
+                        type: Self.self,
+                        codingPath: decoder.codingPath,
+                        errors: errors
+                    )
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    switch self {
+                    case let .ColorEnum(value):
+                        try encoder.encodeToSingleValueContainer(value)
+                    case let .BlankEnum(value):
+                        try value.encode(to: encoder)
+                    }
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/color`.
+            public var color: Components.Schemas.PlannerEntryRequest.ColorPayload?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/scheduling_timezone`.
+            public var schedulingTimezone: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/duration_minutes`.
             public var durationMinutes: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/is_complete`.
@@ -10295,6 +11013,8 @@ public enum Components {
             ///   - priority:
             ///   - scheduledDate:
             ///   - scheduledTime:
+            ///   - color:
+            ///   - schedulingTimezone:
             ///   - durationMinutes:
             ///   - isComplete:
             ///   - workout:
@@ -10310,6 +11030,8 @@ public enum Components {
                 priority: Components.Schemas.PriorityEnum? = nil,
                 scheduledDate: Swift.String,
                 scheduledTime: Swift.String? = nil,
+                color: Components.Schemas.PlannerEntryRequest.ColorPayload? = nil,
+                schedulingTimezone: Swift.String? = nil,
                 durationMinutes: Swift.Int? = nil,
                 isComplete: Swift.Bool? = nil,
                 workout: Swift.Int? = nil,
@@ -10325,6 +11047,8 @@ public enum Components {
                 self.priority = priority
                 self.scheduledDate = scheduledDate
                 self.scheduledTime = scheduledTime
+                self.color = color
+                self.schedulingTimezone = schedulingTimezone
                 self.durationMinutes = durationMinutes
                 self.isComplete = isComplete
                 self.workout = workout
@@ -10341,6 +11065,8 @@ public enum Components {
                 case priority
                 case scheduledDate = "scheduled_date"
                 case scheduledTime = "scheduled_time"
+                case color
+                case schedulingTimezone = "scheduling_timezone"
                 case durationMinutes = "duration_minutes"
                 case isComplete = "is_complete"
                 case workout
@@ -13522,6 +14248,14 @@ public enum Components {
                 case alreadySaved = "already_saved"
             }
         }
+        /// * `occurrence` - occurrence
+        /// * `series` - series
+        ///
+        /// - Remark: Generated from `#/components/schemas/ScopeEnum`.
+        @frozen public enum ScopeEnum: String, Codable, Hashable, Sendable, CaseIterable {
+            case occurrence = "occurrence"
+            case series = "series"
+        }
         /// A cardio finisher performed after a session's exercises.
         ///
         /// - Remark: Generated from `#/components/schemas/SessionCardioRequest`.
@@ -13951,6 +14685,139 @@ public enum Components {
             case warmup = "warmup"
             case drop = "drop"
             case failure = "failure"
+        }
+        /// - Remark: Generated from `#/components/schemas/SharedCalendarDaySummary`.
+        public struct SharedCalendarDaySummary: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarDaySummary/date`.
+            public var date: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarDaySummary/total`.
+            public var total: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarDaySummary/items`.
+            public var items: [Components.Schemas.SharedCalendarItem]
+            /// Creates a new `SharedCalendarDaySummary`.
+            ///
+            /// - Parameters:
+            ///   - date:
+            ///   - total:
+            ///   - items:
+            public init(
+                date: Swift.String,
+                total: Swift.Int,
+                items: [Components.Schemas.SharedCalendarItem]
+            ) {
+                self.date = date
+                self.total = total
+                self.items = items
+            }
+            public enum CodingKeys: String, CodingKey {
+                case date
+                case total
+                case items
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SharedCalendarItem`.
+        public struct SharedCalendarItem: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarItem/id`.
+            public var id: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarItem/share_id`.
+            public var shareId: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarItem/owner`.
+            public var owner: Components.Schemas.CalendarPerson
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarItem/kind`.
+            public var kind: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarItem/title`.
+            public var title: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarItem/category`.
+            public var category: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarItem/color`.
+            public var color: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarItem/scheduling_timezone`.
+            public var schedulingTimezone: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarItem/scheduled_date`.
+            public var scheduledDate: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarItem/scheduled_time`.
+            public var scheduledTime: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarItem/duration_minutes`.
+            public var durationMinutes: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarItem/is_recurring`.
+            public var isRecurring: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarItem/is_complete`.
+            public var isComplete: Swift.Bool
+            /// Creates a new `SharedCalendarItem`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - shareId:
+            ///   - owner:
+            ///   - kind:
+            ///   - title:
+            ///   - category:
+            ///   - color:
+            ///   - schedulingTimezone:
+            ///   - scheduledDate:
+            ///   - scheduledTime:
+            ///   - durationMinutes:
+            ///   - isRecurring:
+            ///   - isComplete:
+            public init(
+                id: Swift.String,
+                shareId: Swift.Int,
+                owner: Components.Schemas.CalendarPerson,
+                kind: Swift.String,
+                title: Swift.String,
+                category: Swift.String,
+                color: Swift.String,
+                schedulingTimezone: Swift.String,
+                scheduledDate: Swift.String,
+                scheduledTime: Swift.String? = nil,
+                durationMinutes: Swift.Int? = nil,
+                isRecurring: Swift.Bool,
+                isComplete: Swift.Bool
+            ) {
+                self.id = id
+                self.shareId = shareId
+                self.owner = owner
+                self.kind = kind
+                self.title = title
+                self.category = category
+                self.color = color
+                self.schedulingTimezone = schedulingTimezone
+                self.scheduledDate = scheduledDate
+                self.scheduledTime = scheduledTime
+                self.durationMinutes = durationMinutes
+                self.isRecurring = isRecurring
+                self.isComplete = isComplete
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case shareId = "share_id"
+                case owner
+                case kind
+                case title
+                case category
+                case color
+                case schedulingTimezone = "scheduling_timezone"
+                case scheduledDate = "scheduled_date"
+                case scheduledTime = "scheduled_time"
+                case durationMinutes = "duration_minutes"
+                case isRecurring = "is_recurring"
+                case isComplete = "is_complete"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SharedCalendarMonth`.
+        public struct SharedCalendarMonth: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarMonth/days`.
+            public var days: [Components.Schemas.SharedCalendarDaySummary]
+            /// Creates a new `SharedCalendarMonth`.
+            ///
+            /// - Parameters:
+            ///   - days:
+            public init(days: [Components.Schemas.SharedCalendarDaySummary]) {
+                self.days = days
+            }
+            public enum CodingKeys: String, CodingKey {
+                case days
+            }
         }
         /// * `planned` - Planned
         /// * `active` - Active
@@ -17774,6 +18641,1598 @@ public enum Operations {
             /// - Throws: An error if `self` is not `.noContent`.
             /// - SeeAlso: `.noContent`.
             public var noContent: Operations.BodyWeightDestroy.Output.NoContent {
+                get throws {
+                    switch self {
+                    case let .noContent(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "noContent",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// Questions addressed only to the signed-in follower; no social push.
+    ///
+    /// - Remark: HTTP `GET /api/v1/calendar/invitations/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/invitations//get(calendar_invitations_list)`.
+    public enum CalendarInvitationsList {
+        public static let id: Swift.String = "calendar_invitations_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/GET/query/page`.
+                public var page: Swift.Int?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - page: A page number within the paginated result set.
+                public init(page: Swift.Int? = nil) {
+                    self.page = page
+                }
+            }
+            public var query: Operations.CalendarInvitationsList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarInvitationsList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarInvitationsList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CalendarInvitationsList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.CalendarInvitationsList.Input.Query = .init(),
+                headers: Operations.CalendarInvitationsList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedCalendarShareList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedCalendarShareList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CalendarInvitationsList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CalendarInvitationsList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/invitations//get(calendar_invitations_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CalendarInvitationsList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CalendarInvitationsList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Questions addressed only to the signed-in follower; no social push.
+    ///
+    /// - Remark: HTTP `POST /api/v1/calendar/invitations/{id}/accept/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/invitations/{id}/accept//post(calendar_invitations_accept_create)`.
+    public enum CalendarInvitationsAcceptCreate {
+        public static let id: Swift.String = "calendar_invitations_accept_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/{id}/accept/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/{id}/accept/POST/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id:
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.CalendarInvitationsAcceptCreate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/{id}/accept/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarInvitationsAcceptCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarInvitationsAcceptCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CalendarInvitationsAcceptCreate.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.CalendarInvitationsAcceptCreate.Input.Path,
+                headers: Operations.CalendarInvitationsAcceptCreate.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/{id}/accept/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/{id}/accept/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.CalendarShare)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.CalendarShare {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CalendarInvitationsAcceptCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CalendarInvitationsAcceptCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/invitations/{id}/accept//post(calendar_invitations_accept_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CalendarInvitationsAcceptCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CalendarInvitationsAcceptCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct Conflict: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/{id}/accept/POST/responses/409/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/{id}/accept/POST/responses/409/content/application\/json`.
+                    case json(Components.Schemas.CalendarShareConflict)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.CalendarShareConflict {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CalendarInvitationsAcceptCreate.Output.Conflict.Body
+                /// Creates a new `Conflict`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CalendarInvitationsAcceptCreate.Output.Conflict.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/invitations/{id}/accept//post(calendar_invitations_accept_create)/responses/409`.
+            ///
+            /// HTTP response code: `409 conflict`.
+            case conflict(Operations.CalendarInvitationsAcceptCreate.Output.Conflict)
+            /// The associated value of the enum case if `self` is `.conflict`.
+            ///
+            /// - Throws: An error if `self` is not `.conflict`.
+            /// - SeeAlso: `.conflict`.
+            public var conflict: Operations.CalendarInvitationsAcceptCreate.Output.Conflict {
+                get throws {
+                    switch self {
+                    case let .conflict(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "conflict",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Questions addressed only to the signed-in follower; no social push.
+    ///
+    /// - Remark: HTTP `POST /api/v1/calendar/invitations/{id}/decline/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/invitations/{id}/decline//post(calendar_invitations_decline_create)`.
+    public enum CalendarInvitationsDeclineCreate {
+        public static let id: Swift.String = "calendar_invitations_decline_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/{id}/decline/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/{id}/decline/POST/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id:
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.CalendarInvitationsDeclineCreate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/{id}/decline/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarInvitationsDeclineCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarInvitationsDeclineCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CalendarInvitationsDeclineCreate.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.CalendarInvitationsDeclineCreate.Input.Path,
+                headers: Operations.CalendarInvitationsDeclineCreate.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/{id}/decline/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/{id}/decline/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.CalendarShare)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.CalendarShare {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CalendarInvitationsDeclineCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CalendarInvitationsDeclineCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/invitations/{id}/decline//post(calendar_invitations_decline_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CalendarInvitationsDeclineCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CalendarInvitationsDeclineCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct Conflict: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/{id}/decline/POST/responses/409/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/{id}/decline/POST/responses/409/content/application\/json`.
+                    case json(Components.Schemas.CalendarShareConflict)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.CalendarShareConflict {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CalendarInvitationsDeclineCreate.Output.Conflict.Body
+                /// Creates a new `Conflict`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CalendarInvitationsDeclineCreate.Output.Conflict.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/invitations/{id}/decline//post(calendar_invitations_decline_create)/responses/409`.
+            ///
+            /// HTTP response code: `409 conflict`.
+            case conflict(Operations.CalendarInvitationsDeclineCreate.Output.Conflict)
+            /// The associated value of the enum case if `self` is `.conflict`.
+            ///
+            /// - Throws: An error if `self` is not `.conflict`.
+            /// - SeeAlso: `.conflict`.
+            public var conflict: Operations.CalendarInvitationsDeclineCreate.Output.Conflict {
+                get throws {
+                    switch self {
+                    case let .conflict(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "conflict",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// - Remark: HTTP `GET /api/v1/calendar/share-recipients/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/share-recipients//get(calendar_share_recipients_list)`.
+    public enum CalendarShareRecipientsList {
+        public static let id: Swift.String = "calendar_share_recipients_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/calendar/share-recipients/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/calendar/share-recipients/GET/query/page`.
+                public var page: Swift.Int?
+                /// Search your followers, not the people you follow. At most 80 characters are matched.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/calendar/share-recipients/GET/query/search`.
+                public var search: Swift.String?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - page: A page number within the paginated result set.
+                ///   - search: Search your followers, not the people you follow. At most 80 characters are matched.
+                public init(
+                    page: Swift.Int? = nil,
+                    search: Swift.String? = nil
+                ) {
+                    self.page = page
+                    self.search = search
+                }
+            }
+            public var query: Operations.CalendarShareRecipientsList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/calendar/share-recipients/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarShareRecipientsList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarShareRecipientsList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CalendarShareRecipientsList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.CalendarShareRecipientsList.Input.Query = .init(),
+                headers: Operations.CalendarShareRecipientsList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/share-recipients/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/calendar/share-recipients/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedCalendarPersonList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedCalendarPersonList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CalendarShareRecipientsList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CalendarShareRecipientsList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/share-recipients//get(calendar_share_recipients_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CalendarShareRecipientsList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CalendarShareRecipientsList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Read-only shared items, separate from own tasks, counters and reminders.
+    ///
+    /// - Remark: HTTP `GET /api/v1/calendar/shared/day/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shared/day//get(calendar_shared_day_list)`.
+    public enum CalendarSharedDayList {
+        public static let id: Swift.String = "calendar_shared_day_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/calendar/shared/day/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shared/day/GET/query/date`.
+                public var date: Swift.String
+                /// Optional comma-separated visible shared owner ids (at most 250). Omit for all accepted calendars; explicit empty value hides all. Applied before counts and the two-item preview.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shared/day/GET/query/owner_ids`.
+                public var ownerIds: Swift.String?
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shared/day/GET/query/page`.
+                public var page: Swift.Int?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - date:
+                ///   - ownerIds: Optional comma-separated visible shared owner ids (at most 250). Omit for all accepted calendars; explicit empty value hides all. Applied before counts and the two-item preview.
+                ///   - page: A page number within the paginated result set.
+                public init(
+                    date: Swift.String,
+                    ownerIds: Swift.String? = nil,
+                    page: Swift.Int? = nil
+                ) {
+                    self.date = date
+                    self.ownerIds = ownerIds
+                    self.page = page
+                }
+            }
+            public var query: Operations.CalendarSharedDayList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/calendar/shared/day/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarSharedDayList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarSharedDayList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CalendarSharedDayList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.CalendarSharedDayList.Input.Query,
+                headers: Operations.CalendarSharedDayList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shared/day/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/calendar/shared/day/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedSharedCalendarItemList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedSharedCalendarItemList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CalendarSharedDayList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CalendarSharedDayList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/shared/day//get(calendar_shared_day_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CalendarSharedDayList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CalendarSharedDayList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Read-only shared items, separate from own tasks, counters and reminders.
+    ///
+    /// - Remark: HTTP `GET /api/v1/calendar/shared/month/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shared/month//get(calendar_shared_month_retrieve)`.
+    public enum CalendarSharedMonthRetrieve {
+        public static let id: Swift.String = "calendar_shared_month_retrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/calendar/shared/month/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shared/month/GET/query/end`.
+                public var end: Swift.String
+                /// Optional comma-separated visible shared owner ids (at most 250). Omit for all accepted calendars; explicit empty value hides all. Applied before counts and the two-item preview.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shared/month/GET/query/owner_ids`.
+                public var ownerIds: Swift.String?
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shared/month/GET/query/start`.
+                public var start: Swift.String
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - end:
+                ///   - ownerIds: Optional comma-separated visible shared owner ids (at most 250). Omit for all accepted calendars; explicit empty value hides all. Applied before counts and the two-item preview.
+                ///   - start:
+                public init(
+                    end: Swift.String,
+                    ownerIds: Swift.String? = nil,
+                    start: Swift.String
+                ) {
+                    self.end = end
+                    self.ownerIds = ownerIds
+                    self.start = start
+                }
+            }
+            public var query: Operations.CalendarSharedMonthRetrieve.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/calendar/shared/month/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarSharedMonthRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarSharedMonthRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CalendarSharedMonthRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.CalendarSharedMonthRetrieve.Input.Query,
+                headers: Operations.CalendarSharedMonthRetrieve.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shared/month/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/calendar/shared/month/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.SharedCalendarMonth)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.SharedCalendarMonth {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CalendarSharedMonthRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CalendarSharedMonthRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/shared/month//get(calendar_shared_month_retrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CalendarSharedMonthRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CalendarSharedMonthRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Read-only shared items, separate from own tasks, counters and reminders.
+    ///
+    /// - Remark: HTTP `GET /api/v1/calendar/shared/people/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shared/people//get(calendar_shared_people_list)`.
+    public enum CalendarSharedPeopleList {
+        public static let id: Swift.String = "calendar_shared_people_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/calendar/shared/people/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shared/people/GET/query/page`.
+                public var page: Swift.Int?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - page: A page number within the paginated result set.
+                public init(page: Swift.Int? = nil) {
+                    self.page = page
+                }
+            }
+            public var query: Operations.CalendarSharedPeopleList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/calendar/shared/people/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarSharedPeopleList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarSharedPeopleList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CalendarSharedPeopleList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.CalendarSharedPeopleList.Input.Query = .init(),
+                headers: Operations.CalendarSharedPeopleList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shared/people/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/calendar/shared/people/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedCalendarPersonList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedCalendarPersonList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CalendarSharedPeopleList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CalendarSharedPeopleList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/shared/people//get(calendar_shared_people_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CalendarSharedPeopleList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CalendarSharedPeopleList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Owner management; never reads another account's private planner row.
+    ///
+    /// - Remark: HTTP `GET /api/v1/calendar/shares/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shares//get(calendar_shares_list)`.
+    public enum CalendarSharesList {
+        public static let id: Swift.String = "calendar_shares_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/calendar/shares/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shares/GET/query/page`.
+                public var page: Swift.Int?
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shares/GET/query/source_entry_id`.
+                public var sourceEntryId: Swift.Int?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - page: A page number within the paginated result set.
+                ///   - sourceEntryId:
+                public init(
+                    page: Swift.Int? = nil,
+                    sourceEntryId: Swift.Int? = nil
+                ) {
+                    self.page = page
+                    self.sourceEntryId = sourceEntryId
+                }
+            }
+            public var query: Operations.CalendarSharesList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/calendar/shares/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarSharesList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarSharesList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CalendarSharesList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.CalendarSharesList.Input.Query = .init(),
+                headers: Operations.CalendarSharesList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shares/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/calendar/shares/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedCalendarShareList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedCalendarShareList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CalendarSharesList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CalendarSharesList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/shares//get(calendar_shares_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CalendarSharesList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CalendarSharesList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Invite up to 20 current followers. Default scope is only this occurrence. An old declined/revoked invitation requires explicit reinvite=true; retries never silently reactivate it.
+    ///
+    /// - Remark: HTTP `POST /api/v1/calendar/shares/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shares//post(calendar_shares_create)`.
+    public enum CalendarSharesCreate {
+        public static let id: Swift.String = "calendar_shares_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/calendar/shares/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarSharesCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarSharesCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CalendarSharesCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/calendar/shares/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shares/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.CalendarShareCreateRequest)
+            }
+            public var body: Operations.CalendarSharesCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.CalendarSharesCreate.Input.Headers = .init(),
+                body: Operations.CalendarSharesCreate.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Created: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shares/POST/responses/201/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/calendar/shares/POST/responses/201/content/application\/json`.
+                    case json(Components.Schemas.CalendarShareBatch)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.CalendarShareBatch {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CalendarSharesCreate.Output.Created.Body
+                /// Creates a new `Created`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CalendarSharesCreate.Output.Created.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/shares//post(calendar_shares_create)/responses/201`.
+            ///
+            /// HTTP response code: `201 created`.
+            case created(Operations.CalendarSharesCreate.Output.Created)
+            /// The associated value of the enum case if `self` is `.created`.
+            ///
+            /// - Throws: An error if `self` is not `.created`.
+            /// - SeeAlso: `.created`.
+            public var created: Operations.CalendarSharesCreate.Output.Created {
+                get throws {
+                    switch self {
+                    case let .created(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "created",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shares/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/calendar/shares/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.CalendarShareBatch)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.CalendarShareBatch {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CalendarSharesCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CalendarSharesCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/shares//post(calendar_shares_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CalendarSharesCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CalendarSharesCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct Conflict: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shares/POST/responses/409/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/calendar/shares/POST/responses/409/content/application\/json`.
+                    case json(Components.Schemas.CalendarShareConflict)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.CalendarShareConflict {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CalendarSharesCreate.Output.Conflict.Body
+                /// Creates a new `Conflict`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CalendarSharesCreate.Output.Conflict.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/shares//post(calendar_shares_create)/responses/409`.
+            ///
+            /// HTTP response code: `409 conflict`.
+            case conflict(Operations.CalendarSharesCreate.Output.Conflict)
+            /// The associated value of the enum case if `self` is `.conflict`.
+            ///
+            /// - Throws: An error if `self` is not `.conflict`.
+            /// - SeeAlso: `.conflict`.
+            public var conflict: Operations.CalendarSharesCreate.Output.Conflict {
+                get throws {
+                    switch self {
+                    case let .conflict(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "conflict",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Owner management; never reads another account's private planner row.
+    ///
+    /// - Remark: HTTP `POST /api/v1/calendar/shares/{id}/revoke/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shares/{id}/revoke//post(calendar_shares_revoke_create)`.
+    public enum CalendarSharesRevokeCreate {
+        public static let id: Swift.String = "calendar_shares_revoke_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/calendar/shares/{id}/revoke/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shares/{id}/revoke/POST/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id:
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.CalendarSharesRevokeCreate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/calendar/shares/{id}/revoke/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarSharesRevokeCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarSharesRevokeCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CalendarSharesRevokeCreate.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.CalendarSharesRevokeCreate.Input.Path,
+                headers: Operations.CalendarSharesRevokeCreate.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shares/{id}/revoke/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/calendar/shares/{id}/revoke/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.CalendarShare)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.CalendarShare {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CalendarSharesRevokeCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CalendarSharesRevokeCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/shares/{id}/revoke//post(calendar_shares_revoke_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CalendarSharesRevokeCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CalendarSharesRevokeCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Make only this occurrence private, or stop sharing its entire repeating lineage. Privacy exceptions survive date moves and future-rule edits.
+    ///
+    /// - Remark: HTTP `POST /api/v1/calendar/shares/privacy/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shares/privacy//post(calendar_shares_privacy_create)`.
+    public enum CalendarSharesPrivacyCreate {
+        public static let id: Swift.String = "calendar_shares_privacy_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/calendar/shares/privacy/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shares/privacy/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.CalendarSharePrivacyRequest)
+            }
+            public var body: Operations.CalendarSharesPrivacyCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - body:
+            public init(body: Operations.CalendarSharesPrivacyCreate.Input.Body) {
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct NoContent: Sendable, Hashable {
+                /// Creates a new `NoContent`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/shares/privacy//post(calendar_shares_privacy_create)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            case noContent(Operations.CalendarSharesPrivacyCreate.Output.NoContent)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/shares/privacy//post(calendar_shares_privacy_create)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            public static var noContent: Self {
+                .noContent(.init())
+            }
+            /// The associated value of the enum case if `self` is `.noContent`.
+            ///
+            /// - Throws: An error if `self` is not `.noContent`.
+            /// - SeeAlso: `.noContent`.
+            public var noContent: Operations.CalendarSharesPrivacyCreate.Output.NoContent {
                 get throws {
                     switch self {
                     case let .noContent(response):
@@ -28185,6 +30644,26 @@ public enum Operations {
                 }
             }
             public var path: Operations.PlannerPartialUpdate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/planner/{id}/PATCH/query`.
+            public struct Query: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/planner/{id}/PATCH/query/scope`.
+                @frozen public enum ScopePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case following = "following"
+                    case occurrence = "occurrence"
+                }
+                /// Occurrence edits one entry. Following may change repeat_every_days, repeat_on_weekdays or repeat_ends_on for this and future unfinished occurrences. Read access to a shared calendar never permits editing.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/planner/{id}/PATCH/query/scope`.
+                public var scope: Operations.PlannerPartialUpdate.Input.Query.ScopePayload?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - scope: Occurrence edits one entry. Following may change repeat_every_days, repeat_on_weekdays or repeat_ends_on for this and future unfinished occurrences. Read access to a shared calendar never permits editing.
+                public init(scope: Operations.PlannerPartialUpdate.Input.Query.ScopePayload? = nil) {
+                    self.scope = scope
+                }
+            }
+            public var query: Operations.PlannerPartialUpdate.Input.Query
             /// - Remark: Generated from `#/paths/api/v1/planner/{id}/PATCH/header`.
             public struct Headers: Sendable, Hashable {
                 public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.PlannerPartialUpdate.AcceptableContentType>]
@@ -28207,14 +30686,17 @@ public enum Operations {
             ///
             /// - Parameters:
             ///   - path:
+            ///   - query:
             ///   - headers:
             ///   - body:
             public init(
                 path: Operations.PlannerPartialUpdate.Input.Path,
+                query: Operations.PlannerPartialUpdate.Input.Query = .init(),
                 headers: Operations.PlannerPartialUpdate.Input.Headers = .init(),
                 body: Operations.PlannerPartialUpdate.Input.Body? = nil
             ) {
                 self.path = path
+                self.query = query
                 self.headers = headers
                 self.body = body
             }
@@ -28327,6 +30809,26 @@ public enum Operations {
                 }
             }
             public var path: Operations.PlannerUpdate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/planner/{id}/PUT/query`.
+            public struct Query: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/planner/{id}/PUT/query/scope`.
+                @frozen public enum ScopePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case following = "following"
+                    case occurrence = "occurrence"
+                }
+                /// Occurrence edits one entry. Following splits its repeat from this original occurrence onward; earlier and completed occurrences are unchanged.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/planner/{id}/PUT/query/scope`.
+                public var scope: Operations.PlannerUpdate.Input.Query.ScopePayload?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - scope: Occurrence edits one entry. Following splits its repeat from this original occurrence onward; earlier and completed occurrences are unchanged.
+                public init(scope: Operations.PlannerUpdate.Input.Query.ScopePayload? = nil) {
+                    self.scope = scope
+                }
+            }
+            public var query: Operations.PlannerUpdate.Input.Query
             /// - Remark: Generated from `#/paths/api/v1/planner/{id}/PUT/header`.
             public struct Headers: Sendable, Hashable {
                 public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.PlannerUpdate.AcceptableContentType>]
@@ -28349,14 +30851,17 @@ public enum Operations {
             ///
             /// - Parameters:
             ///   - path:
+            ///   - query:
             ///   - headers:
             ///   - body:
             public init(
                 path: Operations.PlannerUpdate.Input.Path,
+                query: Operations.PlannerUpdate.Input.Query = .init(),
                 headers: Operations.PlannerUpdate.Input.Headers = .init(),
                 body: Operations.PlannerUpdate.Input.Body
             ) {
                 self.path = path
+                self.query = query
                 self.headers = headers
                 self.body = body
             }
@@ -28474,15 +30979,16 @@ public enum Operations {
                 /// - Remark: Generated from `#/paths/api/v1/planner/{id}/DELETE/query/scope`.
                 @frozen public enum ScopePayload: String, Codable, Hashable, Sendable, CaseIterable {
                     case following = "following"
+                    case occurrence = "occurrence"
                 }
-                /// `following` ends a repeating task from this day on, clearing the unfinished days after it. Omitted, only this day is removed -- a delete that quietly took a year of tasks with it is the worst kind of surprise, so the wider act has to be asked for. Days already ticked off are kept either way: ending a habit is not saying it never happened.
+                /// Following ends this repeat from the addressed original occurrence and removes unfinished future projections, preserving completed history and earlier dates. A completed occurrence cannot use following scope. Occurrence (the default) deletes only the addressed entry.
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/planner/{id}/DELETE/query/scope`.
                 public var scope: Operations.PlannerDestroy.Input.Query.ScopePayload?
                 /// Creates a new `Query`.
                 ///
                 /// - Parameters:
-                ///   - scope: `following` ends a repeating task from this day on, clearing the unfinished days after it. Omitted, only this day is removed -- a delete that quietly took a year of tasks with it is the worst kind of surprise, so the wider act has to be asked for. Days already ticked off are kept either way: ending a habit is not saying it never happened.
+                ///   - scope: Following ends this repeat from the addressed original occurrence and removes unfinished future projections, preserving completed history and earlier dates. A completed occurrence cannot use following scope. Occurrence (the default) deletes only the addressed entry.
                 public init(scope: Operations.PlannerDestroy.Input.Query.ScopePayload? = nil) {
                     self.scope = scope
                 }

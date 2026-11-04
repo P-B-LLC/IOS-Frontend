@@ -277,12 +277,8 @@ final class NotificationScheduler: NSObject {
     /// nobody chose an hour for them, and inventing one to count down from
     /// would be inventing the thing the user declined to say.
     static func due(_ entry: PlannerEntry) -> Date? {
-        guard let time = entry.time, let day = entry.dayValue else { return nil }
-        let parts = time.split(separator: ":").compactMap { Int($0) }
-        guard parts.count >= 2 else { return nil }
-        return Calendar.current.date(
-            bySettingHour: parts[0], minute: parts[1], second: 0, of: day
-        )
+        PlannerScheduledMoment.resolve(day: entry.date, time: entry.time,
+                                       zoneIdentifier: entry.schedulingTimezone)
     }
 
     // MARK: - Food
