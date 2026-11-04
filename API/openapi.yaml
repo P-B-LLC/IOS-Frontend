@@ -521,6 +521,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/CalendarShare'
           description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarShareConflict'
+          description: ''
   /api/v1/calendar/invitations/{id}/decline/:
     post:
       operationId: calendar_invitations_decline_create
@@ -543,6 +549,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/CalendarShare'
           description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarShareConflict'
+          description: ''
   /api/v1/calendar/share-recipients/:
     get:
       operationId: calendar_share_recipients_list
@@ -557,8 +569,8 @@ paths:
         name: search
         schema:
           type: string
-        description: Search your followers, not the people you follow. At most80characters
-          are matched.
+        description: Search your followers, not the people you follow. At most 80
+          characters are matched.
       tags:
       - calendar
       security:
@@ -586,7 +598,7 @@ paths:
         name: owner_ids
         schema:
           type: string
-        description: Optional comma-separated visible shared owner ids (at most250).
+        description: Optional comma-separated visible shared owner ids (at most 250).
           Omit for all accepted calendars; explicit empty value hides all. Applied
           before counts and the two-item preview.
       - name: page
@@ -622,7 +634,7 @@ paths:
         name: owner_ids
         schema:
           type: string
-        description: Optional comma-separated visible shared owner ids (at most250).
+        description: Optional comma-separated visible shared owner ids (at most 250).
           Omit for all accepted calendars; explicit empty value hides all. Applied
           before counts and the two-item preview.
       - in: query
@@ -696,7 +708,7 @@ paths:
           description: ''
     post:
       operationId: calendar_shares_create
-      description: Invite up to20 current followers. Default scope is only this occurrence.
+      description: Invite up to 20 current followers. Default scope is only this occurrence.
         An old declined/revoked invitation requires explicit reinvite=true; retries
         never silently reactivate it.
       tags:
@@ -730,7 +742,11 @@ paths:
                 $ref: '#/components/schemas/CalendarShareBatch'
           description: ''
         '409':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarShareConflict'
+          description: ''
   /api/v1/calendar/shares/{id}/revoke/:
     post:
       operationId: calendar_shares_revoke_create
@@ -7318,6 +7334,11 @@ components:
           allOf:
           - $ref: '#/components/schemas/SharedCalendarItem'
           nullable: true
+        applies_to_selected_occurrence:
+          type: boolean
+          description: 'Owner management only: whether an active or pending grant
+            covers the selected occurrence. False for a later series boundary or a
+            private exception; acceptance is still required for recipient visibility.'
       required:
       - created_at
       - id
@@ -7337,6 +7358,18 @@ components:
             $ref: '#/components/schemas/CalendarShare'
       required:
       - shares
+    CalendarShareConflict:
+      type: object
+      properties:
+        code:
+          type: string
+          description: reinvite_required, scope_conflict, or state_conflict. Plain
+            string for forward compatibility.
+        detail:
+          type: string
+      required:
+      - code
+      - detail
     CalendarShareCreateRequest:
       type: object
       properties:
