@@ -309,6 +309,14 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
     var workoutID: Int?
     var workoutName: String?
     var notes: String
+    /// Optional additions keep old saved drafts and older server responses valid.
+    var color: PlannerItemColor?
+    var schedulingTimezone: String?
+    var recurrenceID: Int?
+    /// A deliberate wider edit; nil/default always means one occurrence.
+    var editFollowing: Bool?
+
+    var displayColor: Color { color?.tint ?? category.tint }
     /// The task this one is a step of, when it is one. The day's list never
     /// carries these — the server leaves them out and nests them below — so
     /// this is here for the few places that hold a step on its own.
@@ -362,7 +370,11 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
         repeatEveryDays: Int? = nil,
         repeatEndsOn: String? = nil,
         repeatWeekdays: [Int]? = nil,
-        repeatOnWeekdays: [Int]? = nil
+        repeatOnWeekdays: [Int]? = nil,
+        color: PlannerItemColor? = nil,
+        schedulingTimezone: String? = nil,
+        recurrenceID: Int? = nil,
+        editFollowing: Bool? = nil
     ) {
         self.id = id
         self.serverID = serverID
@@ -377,6 +389,10 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
         self.workoutID = workoutID
         self.workoutName = workoutName
         self.notes = notes
+        self.color = color
+        self.schedulingTimezone = schedulingTimezone
+        self.recurrenceID = recurrenceID
+        self.editFollowing = editFollowing
         self.parentID = parentID
         self.subtasks = subtasks
         self.repeatIntervalDays = repeatIntervalDays
@@ -416,7 +432,11 @@ nonisolated struct PlannerEntry: Identifiable, Hashable, Codable, Sendable {
             repeatEveryDays: repeatEveryDays,
             repeatEndsOn: repeatEndsOn,
             repeatWeekdays: repeatWeekdays,
-            repeatOnWeekdays: repeatOnWeekdays
+            repeatOnWeekdays: repeatOnWeekdays,
+            color: color,
+            schedulingTimezone: schedulingTimezone,
+            recurrenceID: recurrenceID,
+            editFollowing: editFollowing
         )
     }
 

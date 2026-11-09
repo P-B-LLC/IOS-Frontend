@@ -19,16 +19,26 @@ struct PlannerView: View {
     /// hides the navigation bar, which on a pushed copy removed the only way
     /// back, so it has to draw its own.
     var showsBackButton = false
+    var showsOwnPlans = true
+
+    /// Already-authorized display projections, held separately from own tasks.
+    /// Their visibility never changes Home progress or reminder collections.
+    var sharedMonthItems: [CalendarMonthItem] = []
+    var sharedMonthCounts: [String: Int] = [:]
+    var sharedDayItems: [CalendarMonthItem] = []
+    var sharedIsLoading = false
+    var calendarControls: AnyView? = nil
+    var onSelectShared: ((CalendarMonthItem) -> Void)? = nil
 
     @State private var editor: PlannerEntryEditorView.Mode?
     @State private var categoryFilter: PlannerCategory?
-    @State private var isMonthShown = false
     @State private var openingDay: Weekday?
     @State private var handledCompletionID: UUID?
     @State private var completedEntryID: PlannerEntry.ID?
     @State private var completionPulse = false
     @State private var completionMessage: String?
     @State private var feedbackTask: Task<Void, Never>?
+    @State private var showsBackToMonth = false
 
     var body: some View {
         let timeOfDay = HomeTimeOfDay.current
@@ -38,21 +48,6 @@ struct PlannerView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .homeTimeScreen(timeOfDay)
-#if DEBUG
-        .task {
-            if ProcessInfo.processInfo.environment["REPBASE_HOME_PREVIEW"] != nil,
-               ProcessInfo.processInfo.environment["REPBASE_PLANNER_MONTH"] == "1" {
-                isMonthShown = true
-            }
-        }
-#endif
-        .sheet(isPresented: $isMonthShown, onDismiss: {
-            // Browsing a month doesn't change the selected day. Restore its
-            // data when the sheet is dismissed without choosing another day.
-            store.select(store.selectedDate)
-        }) {
-            monthOverview(timeOfDay: timeOfDay)
-        }
         .overlay(alignment: .top) {
             if let completionMessage {
                 completionToast(completionMessage, timeOfDay: timeOfDay)
@@ -92,47 +87,90 @@ struct PlannerView: View {
     }
 
     private func plannerContent(timeOfDay: HomeTimeOfDay, timelineHeight: CGFloat) -> some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: -24) {
-                VStack(alignment: .leading, spacing: 16) {
-                    VStack(spacing: 12) {
-                        HStack {
-                            RytivoBrandLockup(size: 24)
-                            Spacer()
-                            Text("Calendar")
-                                .font(.community(.title3, weight: .bold))
-                                .foregroundStyle(timeOfDay.canvasPrimaryText)
+        ScrollViewReader { reader in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    if let error = store.persistenceError {
+                        errorCard(error, timeOfDay: timeOfDay).padding(.horizontal, 24)
+                    }
+                    PlannerMonthCalendar(clearedDate: clearedDate, completionPulse: completionPulse,
+                        showsOwn: showsOwnPlans,
+                        additionalItems: sharedMonthItems, additionalCounts: sharedMonthCounts,
+                        onSelectDate: { date in
+                            store.select(date)
+                            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.22)) {
+                                reader.scrollTo("planner.day", anchor: .top)
+                            }
+                        }, visibilityControls: calendarControls)
+                        .padding(.horizontal, 12)
+                        .id("planner.month")
+                    VStack(alignment: .leading, spacing: 20) {
+                        Divider()
+                        if showsBackToMonth { Button {
+                            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.22)) {
+                                reader.scrollTo("planner.month", anchor: .top)
+                            }
+                        } label: {
+                            HStack {
+                                Text("Back to month")
+                                Spacer()
+                                Image(systemName: "calendar").accessibilityHidden(true)
+                            }
+                            .font(.community(.subheadline))
+                            .foregroundStyle(CalendarMonthStyle.ink)
+                            .padding(.horizontal, 18).frame(minHeight: 44)
+                            .background(CalendarMonthStyle.surface, in: Capsule())
+                            .overlay { Capsule().strokeBorder(CalendarMonthStyle.border, lineWidth: 0.75) }
+                            .contentShape(Capsule())
                         }
-                        addButtons(timeOfDay: timeOfDay)
-                    }
-                    if showsBackButton {
-                        Button { dismiss() } label: {
-                            Label("Back", systemImage: "chevron.backward")
-                                .font(.community(.subheadline, weight: .semibold))
-                                .frame(minHeight: 44)
+                        .buttonStyle(RepbaseTactilePressStyle())
+                        .accessibilityIdentifier("planner.backToMonth")
                         }
-                        .buttonStyle(.plain)
-                        .foregroundStyle(timeOfDay.canvasPrimaryText)
+                        daySection(timeOfDay: timeOfDay, timelineHeight: timelineHeight)
+                        if showsOwnPlans { otherDaysSection(timeOfDay: timeOfDay) }
                     }
-                    if let error = store.persistenceError { errorCard(error, timeOfDay: timeOfDay) }
-                    PlannerWeekStrip(onToggleMonth: { isMonthShown = true })
-                    }
-                .padding(.horizontal, 24)
-                .padding(.top, 16)
-                .padding(.bottom, 44)
-                VStack(alignment: .leading, spacing: 24) {
-                    daySection(timeOfDay: timeOfDay, timelineHeight: timelineHeight)
-                    otherDaysSection(timeOfDay: timeOfDay)
-            }
-                .padding(.horizontal, 24)
-                .padding(.top, 24)
+                    .padding(.horizontal, 24)
+                    .id("planner.day")
+                }
+                .padding(.top, 8)
                 .padding(.bottom, RepbaseDesign.bottomBarClearance)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(RepbaseTactileSheetBackground())
             }
+            .background(CalendarMonthStyle.surface)
+            .safeAreaInset(edge: .top, spacing: 0) { persistentHeader(timeOfDay: timeOfDay) }
+            .scrollIndicators(.hidden)
+            .onScrollGeometryChange(for: Bool.self) { geometry in
+                geometry.contentOffset.y > 180
+            } action: { _, isPastMonth in
+                showsBackToMonth = isPastMonth
+            }
+            #if DEBUG
+            .task {
+                if ProcessInfo.processInfo.environment["REPBASE_PLANNER_DAY"] == "1" {
+                    reader.scrollTo("planner.day", anchor: .top)
+                }
+            }
+            #endif
         }
-        .background(HomeSunriseStyle.backdropGradient.ignoresSafeArea(edges: .top))
-        .scrollIndicators(.hidden)
+    }
+
+    private func persistentHeader(timeOfDay: HomeTimeOfDay) -> some View {
+        VStack(spacing: 10) {
+            HStack {
+                if showsBackButton {
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.backward").frame(width: 44, height: 44)
+                    }
+                    .accessibilityLabel("Back")
+                }
+                Text("Rytivo").font(.community(.headline, weight: .bold))
+                Spacer()
+                Text("Calendar").font(.community(size: 24, weight: .bold))
+            }
+            addButtons(timeOfDay: timeOfDay)
+        }
+        .foregroundStyle(CalendarMonthStyle.ink)
+        .padding(.horizontal, 24).padding(.top, 6).padding(.bottom, 6)
+        .background(HomeSunriseStyle.backdrop.ignoresSafeArea(edges: .top))
     }
 
     // MARK: - Adding
@@ -171,12 +209,12 @@ struct PlannerView: View {
             Label(title, systemImage: systemImage)
                 .font(.community(.footnote, weight: .semibold))
                 .foregroundStyle(primary ? timeOfDay.onPrimaryAction : timeOfDay.canvasPrimaryText)
-                .frame(maxWidth: .infinity, minHeight: 38)
+                .frame(maxWidth: .infinity, minHeight: 44)
                 .background(
-                    primary ? timeOfDay.primaryActionSurface : timeOfDay.surfaceRaised,
-                    in: RoundedRectangle(cornerRadius: 12)
+                    primary ? timeOfDay.primaryActionSurface : Color.clear,
+                    in: RoundedRectangle(cornerRadius: 14)
                 )
-                .overlay { RoundedRectangle(cornerRadius: 12).strokeBorder(primary ? Color.clear : timeOfDay.canvasBorder) }
+                .overlay { RoundedRectangle(cornerRadius: 14).strokeBorder(primary ? Color.clear : CalendarMonthStyle.border) }
                 .frame(minHeight: 44)
                 .contentShape(Rectangle())
         }
@@ -227,7 +265,7 @@ struct PlannerView: View {
                     categoryMenu(timeOfDay: timeOfDay)
                 }
             }
-            rotationStrip(timeOfDay: timeOfDay)
+            if showsOwnPlans { rotationStrip(timeOfDay: timeOfDay) }
             if let reason = store.editingBlockedReason {
                 Text(reason)
                     .font(.community(.footnote))
@@ -245,12 +283,27 @@ struct PlannerView: View {
             PlannerDaySchedule(
                 entries: store.isLoading ? [] : dayAgenda.filter { PlannerHourAgenda.hour(from: $0.time) != nil },
                 onSelect: { editor = .edit($0) },
-                onOpenWorkout: { openingDay = $0 }
+                onOpenWorkout: { openingDay = $0 },
+                additionalItems: filteredSharedDayItems,
+                additionalIsLoading: sharedIsLoading,
+                onSelectShared: onSelectShared
             )
             .frame(height: timelineHeight)
 
             if !store.isLoading {
                 agendaGroup("Anytime", entries: dayAgenda.filter { PlannerHourAgenda.hour(from: $0.time) == nil }, timeOfDay: timeOfDay)
+                if dayAgenda.allSatisfy({ PlannerHourAgenda.hour(from: $0.time) != nil }),
+                   filteredSharedDayItems.contains(where: {
+                       $0.date == PlannerStore.dateString(store.selectedDate) && PlannerHourAgenda.hour(from: $0.time) == nil
+                   }) {
+                    Text("Anytime").font(.community(.footnote, weight: .semibold))
+                        .foregroundStyle(CalendarMonthStyle.secondary)
+                }
+                ForEach(filteredSharedDayItems.filter {
+                    $0.date == PlannerStore.dateString(store.selectedDate) && PlannerHourAgenda.hour(from: $0.time) == nil
+                }) { item in
+                    CalendarSharedItemRow(item: item, onSelect: onSelectShared)
+                }
                 if categoryFilter != nil {
                     Button("Clear filters") { categoryFilter = nil }
                         .font(.community(.footnote, weight: .semibold))
@@ -270,26 +323,30 @@ struct PlannerView: View {
     private func dayHeading(timeOfDay: HomeTimeOfDay) -> some View {
         VStack(alignment: .leading, spacing: 5) {
             Text("Your day")
-                .font(.community(.title2, weight: .bold))
+                .font(.community(size: 24, weight: .bold))
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
-            if !store.isLoading, !filtered.isEmpty {
-                let tasks = filtered.filter { $0.kind == .task }
-                if !tasks.isEmpty {
-                    Text("\(completedTasks.count) of \(tasks.count) tasks done")
-                        .font(.community(.footnote))
-                        .foregroundStyle(timeOfDay.canvasSecondaryText)
-                } else {
-                    Text("\(tasks.count) tasks · \(filtered.filter { $0.kind == .event }.count) events")
-                        .font(.community(.footnote))
-                        .foregroundStyle(timeOfDay.canvasSecondaryText)
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text(store.selectedDate.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day().locale(.app)))
+                if !store.isLoading, showsOwnPlans {
+                    Text("·")
+                    let tasks = filtered.filter { $0.kind == .task }
+                    if !tasks.isEmpty {
+                        Text("\(completedTasks.count) of \(tasks.count) tasks done")
+                    } else {
+                        Text("\(tasks.count) tasks · \(filtered.filter { $0.kind == .event }.count) events")
+                    }
                 }
             }
+            .font(.community(.footnote, weight: .semibold))
+            .foregroundStyle(CalendarMonthStyle.secondary)
+            .fixedSize(horizontal: false, vertical: true)
         }
     }
 
     @ViewBuilder
     private func categoryMenu(timeOfDay: HomeTimeOfDay) -> some View {
-        let categories = store.categories(on: store.selectedDate)
+        let categories = Set(showsOwnPlans ? store.categories(on: store.selectedDate) : [])
+            .union(sharedDayItems.compactMap(\.category))
         if categories.count > 1 || categoryFilter != nil {
             Menu {
                 Picker("Filters", selection: $categoryFilter) {
@@ -338,64 +395,6 @@ struct PlannerView: View {
     private func agendaRow(_ entry: PlannerEntry) -> some View {
         PlannerEntryRow(entry: entry, onEdit: { editor = .edit(entry) },
                         onOpenWorkout: { openingDay = $0 })
-    }
-
-    private func monthOverview(timeOfDay: HomeTimeOfDay) -> some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    Text(store.visibleMonth.formatted(.dateTime.month(.wide).year().locale(.app)))
-                        .font(.community(.title2, weight: .bold))
-                    Text("Choose a date to see its tasks and events.")
-                        .font(.community(.subheadline))
-                        .foregroundStyle(timeOfDay.canvasSecondaryText)
-                    PlannerMonthCalendar(clearedDate: clearedDate, completionPulse: completionPulse)
-                    VStack(alignment: .leading, spacing: 16) {
-                        if store.isLoading {
-                            ProgressView("Loading this month…")
-                                .frame(maxWidth: .infinity, minHeight: 80)
-                        } else if PlannerStore.isSameMonth(store.selectedDate, store.visibleMonth) {
-                            Text(store.selectedDate.formatted(.dateTime.weekday(.wide).month(.abbreviated).day().locale(.app)))
-                                .font(.community(.headline, weight: .bold))
-                            let counts = store.taskCounts(on: store.selectedDate)
-                            Text("\(counts.total) tasks · \(store.entries(on: store.selectedDate).filter { $0.kind == .event }.count) events")
-                                .font(.community(.footnote))
-                                .foregroundStyle(timeOfDay.canvasSecondaryText)
-                            ForEach(store.entries(on: store.selectedDate).prefix(3)) { entry in
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(entry.title).font(.community(.headline))
-                                    Text(entry.displayTimeRange ?? String(localized: "Anytime", bundle: .app, locale: .app))
-                                        .font(.community(.footnote))
-                                        .foregroundStyle(timeOfDay.canvasSecondaryText)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .plannerSurface()
-                            }
-                        }
-                        if let error = store.persistenceError { errorCard(error, timeOfDay: timeOfDay) }
-                    }
-                    .padding(20)
-                    .background(RepbaseTactileSheetBackground())
-                    .padding(.horizontal, -24)
-                }
-                .padding(24)
-            }
-            .background(HomeSunriseStyle.backdropGradient.ignoresSafeArea())
-            .toolbarBackground(HomeSunriseStyle.backdrop, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .navigationTitle("Month overview")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { isMonthShown = false } } }
-            .safeAreaInset(edge: .bottom) {
-                Button("Open this day") { isMonthShown = false }
-                    .buttonStyle(EditorialPrimaryButtonStyle())
-                    .disabled(store.isLoading || !PlannerStore.isSameMonth(store.selectedDate, store.visibleMonth))
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
-                    .background(timeOfDay.surface)
-            }
-            .homeTimeScreen(timeOfDay)
-        }
     }
 
     /// The day on screen, when every task on it is actually done.
@@ -476,9 +475,15 @@ struct PlannerView: View {
 
 
     private var filtered: [PlannerEntry] {
+        guard showsOwnPlans else { return [] }
         guard let categoryFilter else { return store.entries(on: store.selectedDate) }
         return store.entries(on: store.selectedDate)
             .filter { $0.category == categoryFilter }
+    }
+
+    private var filteredSharedDayItems: [CalendarMonthItem] {
+        guard let categoryFilter else { return sharedDayItems }
+        return sharedDayItems.filter { $0.category == categoryFilter }
     }
 
     // MARK: - Other days
@@ -628,12 +633,16 @@ struct PlannerEntryRow: View {
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 8)
-        .background(entry.isComplete ? PlannerStyle.successSoft
-                    : (entry.category == .workout ? PlannerStyle.soft : timeOfDay.surfaceRaised),
-                    in: RoundedRectangle(cornerRadius: 18))
+        .frame(minHeight: 74)
+        .background(CalendarMonthStyle.surface, in: RoundedRectangle(cornerRadius: 16))
         .overlay {
-            RoundedRectangle(cornerRadius: 18)
-                .strokeBorder(timeOfDay.canvasBorder)
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(CalendarMonthStyle.border, lineWidth: 0.75)
+        }
+        .overlay(alignment: .leading) {
+            RoundedRectangle(cornerRadius: 2).fill(entry.displayColor)
+                .frame(width: 4).padding(.vertical, 12)
+                .allowsHitTesting(false)
         }
         .plannerWorkoutCompletionDialog(
             entry: $confirming,
@@ -677,8 +686,8 @@ struct PlannerEntryRow: View {
             Button(action: onEdit) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(entry.title)
-                        .font(.community(.headline, weight: .bold))
-                        .foregroundStyle(entry.isComplete ? PlannerStyle.success : timeOfDay.canvasPrimaryText)
+                        .font(.community(.subheadline, weight: .semibold))
+                        .foregroundStyle(entry.isComplete ? CalendarMonthStyle.secondary : CalendarMonthStyle.ink)
                         .strikethrough(entry.isComplete, color: timeOfDay.canvasSecondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                     if let badge = entry.priority.badge {
@@ -749,9 +758,9 @@ struct PlannerEntryRow: View {
     private var categoryBadge: some View {
         Image(systemName: entry.category.symbolName)
             .font(.community(size: 13, weight: .semibold))
-            .foregroundStyle(entry.category.tint)
+            .foregroundStyle(entry.displayColor)
             .frame(width: 34, height: 34)
-            .background(entry.category.tint.opacity(0.14), in: RoundedRectangle(cornerRadius: 11))
+            .background(entry.displayColor.opacity(0.14), in: RoundedRectangle(cornerRadius: 11))
     }
 
     // MARK: - Steps

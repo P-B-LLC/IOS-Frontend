@@ -98,7 +98,11 @@ for appearance in light dark; do
     preview_quick=''
     preview_tab=planner
     capture "calendar-page-$appearance" "$appearance" populated
-    SIMCTL_CHILD_REPBASE_PLANNER_MONTH=1 capture "calendar-month-$appearance" "$appearance" populated
+    capture "calendar-month-$appearance" "$appearance" populated
+    SIMCTL_CHILD_REPBASE_PLANNER_DAY=1 capture "calendar-day-$appearance" "$appearance" populated
+    SIMCTL_CHILD_REPBASE_CALENDAR_SHARING_PREVIEW=shared capture "calendar-shared-month-$appearance" "$appearance" populated
+    SIMCTL_CHILD_REPBASE_CALENDAR_SHARING_PREVIEW=shared SIMCTL_CHILD_REPBASE_PLANNER_DAY=1 capture "calendar-shared-day-$appearance" "$appearance" populated
+    SIMCTL_CHILD_REPBASE_CALENDAR_SHARING_PREVIEW=invitations capture "calendar-invitations-$appearance" "$appearance" populated
     preview_tab=account
     capture "profile-page-$appearance" "$appearance" populated
     SIMCTL_CHILD_REPBASE_SETTINGS=1 capture "profile-settings-$appearance" "$appearance" populated
@@ -115,6 +119,8 @@ preview_sport=''
 preview_tab=planner
 capture calendar-large-text dark populated '' 1
 capture calendar-arabic dark populated '' 0 ar
+SIMCTL_CHILD_REPBASE_CALENDAR_SHARING_PREVIEW=shared capture calendar-shared-large-text dark populated '' 1
+SIMCTL_CHILD_REPBASE_CALENDAR_SHARING_PREVIEW=shared capture calendar-shared-arabic dark populated '' 0 ar
 preview_tab=training
 capture workouts-large-text light populated '' 1
 preview_quick=food

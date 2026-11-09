@@ -159,7 +159,7 @@ struct RepbaseRootView: View {
             }
             .toolbar(.hidden, for: .tabBar)
             .tag(RepbaseTab.training)
-            NavigationStack { PlannerView() }
+            NavigationStack { CalendarWorkspaceView() }
                 .toolbar(.hidden, for: .tabBar)
                 .tag(RepbaseTab.planner)
             NavigationStack { SocialFeedView() }

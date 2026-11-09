@@ -1,5 +1,15 @@
 # TestFlight development workflow
 
+## Calendar month and followers-only sharing — November 4, 2026
+
+See [CALENDAR_SHARING.md](CALENDAR_SHARING.md) for the new contract, privacy
+boundaries, recurring-event migration, design reference, exact staging scope
+and validation checklist. Sharing is a separate read-only projection, never
+part of own task progress, Home Next up or reminder state. The old design's
+Following tab is intentionally omitted: only current followers can be invited.
+These changes require the matching backend test branch and fresh generated
+client. A testing-branch push is not a main merge, deployment or TestFlight release.
+
 ## Food search and results — November 3, 2026
 
 The approved [food-search proposal](https://www.figma.com/design/FbMNgG8cuZfrRFzQTtIVCy?node-id=369-14533)

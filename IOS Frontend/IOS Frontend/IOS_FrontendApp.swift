@@ -18,6 +18,12 @@ struct IOS_FrontendApp: App {
     @State private var authentication: AuthenticationStore
     @State private var workoutStore: WorkoutStore
     @State private var plannerStore: PlannerStore
+    #if DEBUG
+    @State private var calendarSharingStore = ProcessInfo.processInfo
+        .environment["REPBASE_CALENDAR_SHARING_PREVIEW"] != nil ? CalendarSharingStore.preview : CalendarSharingStore()
+    #else
+    @State private var calendarSharingStore = CalendarSharingStore()
+    #endif
     @State private var foodTrackingStore: FoodTrackingStore
     @State private var socialProfileStore: SocialProfileStore
     @State private var socialStore: SocialStore
@@ -72,8 +78,9 @@ struct IOS_FrontendApp: App {
             initialValue: isPreviewingFood || hasHomeFixture ? .preview : FoodTrackingStore()
         )
         let plannerPreview = ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"]
+        let sharingPreview = ProcessInfo.processInfo.environment["REPBASE_CALENDAR_SHARING_PREVIEW"] != nil
         _plannerStore = State(
-            initialValue: plannerPreview != nil || hasHomeFixture ? .preview : PlannerStore()
+            initialValue: plannerPreview != nil || hasHomeFixture || sharingPreview ? .preview : PlannerStore()
         )
         // The home page draws workouts too, so previewing it needs both.
         _workoutStore = State(
@@ -133,6 +140,8 @@ struct IOS_FrontendApp: App {
                 .environment(authentication)
                 .environment(workoutStore)
                 .environment(plannerStore)
+                .environment(calendarSharingStore)
+                .environment(\.calendarSharing, calendarSharingStore)
                 .environment(foodTrackingStore)
                 .environment(socialProfileStore)
                 .environment(socialStore)
@@ -195,6 +204,7 @@ private struct AppRootView: View {
     static var isPreviewing: Bool {
         let environment = ProcessInfo.processInfo.environment
         return environment["REPBASE_FOOD_PREVIEW"] != nil
+            || environment["REPBASE_CALENDAR_SHARING_PREVIEW"] != nil
             || environment["REPBASE_HOME_PREVIEW"] != nil
             || environment["REPBASE_PLANNER_PREVIEW"] != nil
             || environment["REPBASE_PROFILE_PREVIEW"] != nil
@@ -219,6 +229,7 @@ private struct AppRootView: View {
     @Environment(AuthenticationStore.self) private var authentication
     @Environment(WorkoutStore.self) private var workoutStore
     @Environment(PlannerStore.self) private var plannerStore
+    @Environment(CalendarSharingStore.self) private var calendarSharingStore
     @Environment(FoodTrackingStore.self) private var foodTrackingStore
     @Environment(SocialProfileStore.self) private var socialProfileStore
     @Environment(SocialStore.self) private var socialStore
@@ -229,7 +240,19 @@ private struct AppRootView: View {
     var body: some View {
         Group {
 #if DEBUG
-            if ProcessInfo.processInfo.environment["REPBASE_HOME_PREVIEW"] != nil {
+            if let scenario = ProcessInfo.processInfo.environment["REPBASE_CALENDAR_SHARING_PREVIEW"] {
+                Group {
+                    if scenario == "invitations" {
+                        CalendarInvitationsView()
+                    } else {
+                        // The real Calendar tab composes only disconnected,
+                        // illustrative read-only grants for this launch.
+                        RepbaseRootView(initialTab: .planner)
+                    }
+                }
+                .dynamicTypeSize(ProcessInfo.processInfo.environment["REPBASE_HOME_LARGE_TEXT"] == "1"
+                    ? .accessibility3 : .large)
+            } else if ProcessInfo.processInfo.environment["REPBASE_HOME_PREVIEW"] != nil {
                 // Uses the real tab shell and Home, with disconnected sample
                 // stores. No account, hosted API or production data is needed.
                 RepbaseRootView()
@@ -709,6 +732,7 @@ private struct AppRootView: View {
                 token: token
             )
             guard authentication.token == token, !Task.isCancelled else { return }
+            calendarSharingStore.connect(configuration: authentication.configuration, token: token)
             await foodTrackingStore.connect(
                 configuration: authentication.configuration,
                 token: token
@@ -820,6 +844,7 @@ private struct AppRootView: View {
         NotificationScheduler.shared.setAccount(nil)
         workoutStore.disconnect()
         plannerStore.disconnect()
+        calendarSharingStore.disconnect()
         socialProfileStore.disconnect()
         socialStore.disconnect()
         activityStore.disconnect()

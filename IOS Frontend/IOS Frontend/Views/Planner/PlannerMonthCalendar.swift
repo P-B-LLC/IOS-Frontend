@@ -1,238 +1,203 @@
-//
-//  PlannerMonthCalendar.swift
-//  IOS Frontend
-//
-//  The month grid at the top of the planner.
-//
-
 import Foundation
 import SwiftUI
 
+/// One aligned grid. Days are the controls; title bars are bounded previews,
+/// never completion controls or joined recurrence spans.
 struct PlannerMonthCalendar: View {
     @Environment(PlannerStore.self) private var store
+    @Environment(\.self) private var environment
     @Environment(\.homeTimeOfDay) private var timeOfDay
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    var clearedDate: String?
+    var clearedDate: String? = nil
     var completionPulse = false
+    var showsOwn = true
+    var additionalItems: [CalendarMonthItem] = []
+    var additionalCounts: [String: Int] = [:]
+    var onSelectDate: ((Date) -> Void)? = nil
+    var visibilityControls: AnyView? = nil
 
-    init(
-        clearedDate: String? = nil,
-        completionPulse: Bool = false
-    ) {
-        self.clearedDate = clearedDate
-        self.completionPulse = completionPulse
-    }
-
-    private let calendar = Calendar.current
+    private var calendar: Calendar { Calendar.current }
 
     var body: some View {
-        VStack(spacing: 18) {
-            monthControls
+        VStack(spacing: 10) {
+            monthControls.padding(.horizontal, 12)
+            if let visibilityControls { visibilityControls.padding(.horizontal, 12) }
             weekdayLabels
-            grid
-            legend
-        }
-        // A week is seven days, so this is seven columns at every text size.
-        // At the accessibility sizes the headings came apart into stacked
-        // single letters -- M, O, N -- and the dates themselves turned into
-        // ellipses, which is a calendar that has stopped saying which day
-        // anything is on. Capped because picking a day here opens that day's
-        // own screen, and that one grows the whole way.
-        .typeSizeCeiling()
-        .background {
-            if clearedDate != nil {
-                RoundedRectangle(cornerRadius: 24)
-                    .fill(
-                        LinearGradient(
-                            colors: [RepbasePalette.sage.opacity(0.13), Color.clear],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .scaleEffect(completionPulse ? 1.01 : 1)
-                    .allowsHitTesting(false)
+            VStack(spacing: 4) {
+                ForEach(Array(weeks.enumerated()), id: \.offset) { index, week in
+                    HStack(alignment: .top, spacing: 0) {
+                        ForEach(week, id: \.timeIntervalSince1970) { date in
+                            dayCell(date).frame(maxWidth: .infinity)
+                        }
+                    }
+                    if index < weeks.count - 1 {
+                        Rectangle().fill(CalendarMonthStyle.border).frame(height: 0.75)
+                            .accessibilityHidden(true)
+                    }
+                }
             }
+            .overlay { dayColumnSeparators }
         }
-        .animation(
-            reduceMotion
-                ? .easeOut(duration: 0.12)
-                : .spring(response: 0.48, dampingFraction: 0.72),
-            value: completionPulse
-        )
+        .typeSizeCeiling()
+        .accessibilityIdentifier("planner.monthGrid")
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.18), value: store.selectedDate)
     }
 
-    // MARK: - Header
+    /// Draw over the grid without adding spacing or shrinking any date's tap
+    /// target. The six internal lines are symmetric in right-to-left layouts.
+    private var dayColumnSeparators: some View {
+        GeometryReader { geometry in
+            Path { path in
+                for column in 1..<7 {
+                    let x = geometry.size.width * CGFloat(column) / 7
+                    path.move(to: CGPoint(x: x, y: 0))
+                    path.addLine(to: CGPoint(x: x, y: geometry.size.height))
+                }
+            }
+            .stroke(CalendarMonthStyle.border, lineWidth: 0.5)
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
 
     private var monthControls: some View {
-        HStack(spacing: 10) {
-            stepper(systemImage: "chevron.backward", label: "Previous month", months: -1)
-            Spacer(minLength: 0)
-            Button("Today") { store.showToday() }
-                .font(.community(.footnote, weight: .semibold))
-                .buttonStyle(.bordered)
-                .buttonBorderShape(.capsule)
-                .tint(PlannerStyle.accentText)
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 0) {
+                monthTitle
+                Spacer(minLength: 4)
+                todayButton
+                stepper("chevron.left", label: "Previous month", offset: -1)
+                stepper("chevron.right", label: "Next month", offset: 1)
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                monthTitle
+                HStack(spacing: 0) {
+                    todayButton
+                    Spacer(minLength: 0)
+                    stepper("chevron.left", label: "Previous month", offset: -1)
+                    stepper("chevron.right", label: "Next month", offset: 1)
+                }
+            }
+        }
+    }
+
+    private var monthTitle: some View {
+        Text(store.visibleMonth.formatted(.dateTime.month(.wide).year().locale(.app)))
+            .font(.community(size: 18, weight: .bold)).foregroundStyle(CalendarMonthStyle.ink)
+            .fixedSize(horizontal: true, vertical: false)
+    }
+
+    private var todayButton: some View {
+        Button { store.showToday() } label: {
+            Label("Today", systemImage: "calendar")
+                .font(.community(.footnote))
+                .padding(.horizontal, 10).padding(.vertical, 7)
+                .background(CalendarMonthStyle.surface, in: Capsule())
+                .overlay { Capsule().strokeBorder(CalendarMonthStyle.border, lineWidth: 0.75) }
                 .frame(minHeight: 44)
-            Spacer(minLength: 0)
-            stepper(systemImage: "chevron.forward", label: "Next month", months: 1)
-
         }
+        .buttonStyle(RepbaseTactilePressStyle())
+        .foregroundStyle(CalendarMonthStyle.ink)
+        .accessibilityIdentifier("planner.showToday")
     }
 
-    private var legend: some View {
-        HStack(spacing: 18) {
-            legendItem("Items planned", color: PlannerStyle.accentText)
-            legendItem("Tasks complete", color: PlannerStyle.success)
-            Spacer(minLength: 0)
+    private func stepper(_ symbol: String, label: LocalizedStringKey, offset: Int) -> some View {
+        Button { store.showMonth(offsetBy: offset) } label: {
+            Image(systemName: symbol).font(.community(.footnote))
+                .frame(width: 44, height: 44).contentShape(Rectangle())
         }
-    }
-
-    private func legendItem(_ title: LocalizedStringKey, color: Color) -> some View {
-        HStack(spacing: 4) {
-            Circle().fill(color).frame(width: 6, height: 6)
-            Text(title).font(.community(.caption)).foregroundStyle(timeOfDay.secondaryText)
-        }
-    }
-
-    private func stepper(systemImage: String, label: LocalizedStringKey, months: Int) -> some View {
-        Button {
-            store.showMonth(offsetBy: months)
-        } label: {
-            Image(systemName: systemImage)
-                .font(.community(.footnote, weight: .bold))
-                .frame(width: 44, height: 44)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .foregroundStyle(timeOfDay.secondaryText)
+        .buttonStyle(RepbaseTactilePressStyle()).foregroundStyle(CalendarMonthStyle.ink)
         .accessibilityLabel(label)
     }
 
-    // MARK: - Grid
-
     private var weekdayLabels: some View {
         HStack(spacing: 0) {
-            ForEach(Weekday.allCases) { day in
-                Text(day.shortName)
-                    .textCase(.uppercase)
-                    .font(.community(size: 10, weight: .semibold))
-                    .foregroundStyle(timeOfDay.secondaryText)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                    .frame(maxWidth: .infinity)
-            }
-        }
-    }
-
-    private var grid: some View {
-        VStack(spacing: 4) {
-            ForEach(Array(weeks.enumerated()), id: \.offset) { _, week in
-                HStack(spacing: 0) {
-                    ForEach(week, id: \.timeIntervalSince1970) { date in
-                        dayCell(date)
-                            .frame(maxWidth: .infinity)
-                    }
-                }
+            ForEach(CalendarMonthPresentation.weekdayOrder(firstWeekday: calendar.firstWeekday), id: \.self) { weekday in
+                Text(weekdaySymbols[weekday - 1])
+                    .font(.community(size: 10, weight: .semibold)).foregroundStyle(CalendarMonthStyle.secondary)
+                    .lineLimit(1).minimumScaleFactor(0.75).frame(maxWidth: .infinity)
             }
         }
     }
 
     private func dayCell(_ date: Date) -> some View {
+        let key = PlannerStore.dateString(date)
+        let own = showsOwn ? store.entries(on: date) : []
+        let shared = additionalItems.filter { $0.date == key }
+        let previews = CalendarMonthPresentation.previews(own.map(CalendarMonthItem.own) + shared, time: { $0.time })
+        let overflow = CalendarMonthPresentation.overflow(ownCount: own.count,
+            sharedTotal: additionalCounts[key] ?? shared.count, shown: previews.count)
         let inMonth = PlannerStore.isSameMonth(date, store.visibleMonth)
-        let isSelected = calendar.isDate(date, inSameDayAs: store.selectedDate)
-        let isToday = calendar.isDateInToday(date)
-        let counts = store.taskCounts(on: date)
-        let isCleared = inMonth && counts.total > 0 && counts.done == counts.total
+        let selected = calendar.isDate(date, inSameDayAs: store.selectedDate)
 
         return Button {
-            store.select(date)
+            if let onSelectDate { onSelectDate(date) } else { store.select(date) }
         } label: {
-            VStack(spacing: 3) {
-                Text("\(calendar.component(.day, from: date))")
-                    .font(.community(size: 14, weight: isSelected || isToday ? .bold : .regular))
-                    .foregroundStyle(isCleared ? PlannerStyle.success : foreground(inMonth: inMonth, isSelected: isSelected))
-                    .frame(width: 30, height: 30)
-                    .background(background(isSelected: isSelected, isToday: isToday, isCleared: isCleared))
-                    .overlay {
-                        if isCleared {
-                            Circle()
-                                .stroke(RepbasePalette.sage.opacity(0.28), lineWidth: 7)
-                                .scaleEffect(!reduceMotion && completionPulse ? 1.18 : 0.92)
-                                .opacity(!reduceMotion && completionPulse ? 0 : 1)
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 2) {
+                    Text(calendar.component(.day, from: date), format: .number.grouping(.never).locale(.app))
+                        .font(.community(size: 11, weight: .bold))
+                        .foregroundStyle(selected ? timeOfDay.onPrimaryAction : CalendarMonthStyle.ink)
+                        .frame(width: 18, height: 18)
+                        .background {
+                            if selected { Circle().fill(PlannerStyle.accentText) }
+                            else if calendar.isDateInToday(date) { Circle().strokeBorder(PlannerStyle.accentText, lineWidth: 1) }
                         }
+                    if overflow > 0 {
+                        Text(verbatim: "+" + overflow.formatted(.number.grouping(.never).locale(.app)))
+                            .font(.community(size: 9, weight: .bold))
+                            .foregroundStyle(CalendarMonthStyle.secondary).lineLimit(1).minimumScaleFactor(0.7)
                     }
-                    .scaleEffect(isCleared && completionPulse && !reduceMotion ? 1.08 : 1)
-                markers(for: date, inMonth: inMonth)
+                }
+                ForEach(previews) { item in titleBar(item) }
+                Spacer(minLength: 0)
             }
-            .frame(maxWidth: .infinity)
-            .frame(minHeight: 48)
+            .padding(2)
+            .frame(maxWidth: .infinity, minHeight: 64, alignment: .topLeading)
+            .opacity(inMonth ? 1 : 0.42)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(accessibilityLabel(for: date))
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityLabel(date, own: own, shared: shared,
+            sharedTotal: additionalCounts[key] ?? shared.count))
+        .accessibilityHint("Show this day’s tasks and events")
+        .accessibilityAddTraits(selected ? .isSelected : [])
+        .accessibilityIdentifier("planner.date.\(key)")
     }
 
-    /// One planned-item dot. The legend describes this meaning, not categories
-    /// that may not actually be present on a given day.
-    private func markers(for date: Date, inMonth: Bool) -> some View {
-        HStack(spacing: 2) {
-            if inMonth {
-                if store.hasEntries(on: date) {
-                    Circle()
-                        .fill(PlannerStyle.accentText)
-                        .frame(width: 4, height: 4)
-                }
-            }
-        }
-        .frame(height: 4)
+    private func titleBar(_ item: CalendarMonthItem) -> some View {
+        Text((item.isComplete ? "✓ " : "") + item.compactTitle)
+            .font(.community(size: 11, weight: .semibold))
+            .foregroundStyle(CalendarMonthStyle.foreground(on: item.color, environment: environment))
+            .lineLimit(1).truncationMode(.tail)
+            .padding(.horizontal, 3).padding(.vertical, 1)
+            .frame(maxWidth: .infinity, minHeight: 16, alignment: .leading)
+            .background(item.color, in: RoundedRectangle(cornerRadius: 4))
+            .accessibilityHidden(true)
     }
 
-    @ViewBuilder
-    private func background(isSelected: Bool, isToday: Bool, isCleared: Bool) -> some View {
-        if isCleared {
-            Circle().fill(PlannerStyle.success.opacity(0.14))
-                .overlay { Circle().strokeBorder(PlannerStyle.success, lineWidth: isSelected ? 2 : 0) }
-        } else if isSelected {
-            Circle().fill(timeOfDay.primaryActionSurface)
-        } else if isToday {
-            Circle().strokeBorder(timeOfDay.accent, lineWidth: 1.5)
-        }
-    }
-
-    private func foreground(inMonth: Bool, isSelected: Bool) -> Color {
-        if isSelected { return timeOfDay.onPrimaryAction }
-        return inMonth ? timeOfDay.primaryText : timeOfDay.secondaryText.opacity(0.4)
-    }
-
-    // MARK: - Dates
-
-    /// Six rows always, so the page does not jump height when a month starts on
-    /// a Sunday or runs to 31 days.
     private var weeks: [[Date]] {
-        guard let month = calendar.dateInterval(of: .month, for: store.visibleMonth)
-        else { return [] }
-        let weekday = calendar.component(.weekday, from: month.start)
-        let daysSinceMonday = (weekday + 5) % 7
-        guard let gridStart = calendar.date(
-            byAdding: .day,
-            value: -daysSinceMonday,
-            to: month.start
-        ) else { return [] }
-
-        let days = (0..<42).compactMap {
-            calendar.date(byAdding: .day, value: $0, to: gridStart)
-        }
-        return stride(from: 0, to: days.count, by: 7).map {
-            Array(days[$0..<min($0 + 7, days.count)])
-        }
+        let days = CalendarMonthPresentation.days(in: store.visibleMonth, calendar: calendar)
+        return stride(from: 0, to: days.count, by: 7).map { Array(days[$0..<min($0 + 7, days.count)]) }
     }
 
-    private func accessibilityLabel(for date: Date) -> String {
-        let day = date.formatted(.dateTime.weekday(.wide).month(.wide).day().locale(.app))
-        let counts = store.taskCounts(on: date)
-        guard counts.total > 0 else { return day }
-        return String(localized: "\(day), \(counts.done) of \(counts.total) tasks done", bundle: .app, locale: .app)
+    private var weekdaySymbols: [String] {
+        let formatter = DateFormatter()
+        formatter.locale = .app
+        formatter.calendar = calendar
+        return formatter.shortStandaloneWeekdaySymbols
+    }
+
+    private func accessibilityLabel(_ date: Date, own: [PlannerEntry], shared: [CalendarMonthItem], sharedTotal: Int) -> String {
+        var labels = [date.formatted(.dateTime.weekday(.wide).month(.wide).day().locale(.app))]
+        labels += own.map { $0.title + ($0.isComplete ? " · " + String(localized: "Complete", bundle: .app, locale: .app) : "") }
+        labels += shared.map(\.accessibilityTitle)
+        let remaining = max(0, sharedTotal - shared.count)
+        if remaining > 0 {
+            labels.append(String(localized: "\(remaining) more shared items", bundle: .app, locale: .app))
+        }
+        return labels.joined(separator: ". ")
     }
 }
