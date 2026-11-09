@@ -1026,7 +1026,7 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /api/v1/social/posts/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}//get(social_posts_retrieve)`.
     func socialPostsRetrieve(_ input: Operations.SocialPostsRetrieve.Input) async throws -> Operations.SocialPostsRetrieve.Output
-    /// Change the caption or who can see this post. The snapshot records what happened and is not editable.
+    /// Change the caption, who can see this post, who may post a take of it, its language or its topics. The snapshot records what happened and is not editable, and neither is what the post is a take of. Closing a post to takes stops new ones; takes already posted stay.
     ///
     /// - Remark: HTTP `PATCH /api/v1/social/posts/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}//patch(social_posts_partial_update)`.
@@ -1111,6 +1111,11 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /api/v1/social/posts/{id}/save-workout/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-workout//post(social_posts_save_workout_create)`.
     func socialPostsSaveWorkoutCreate(_ input: Operations.SocialPostsSaveWorkoutCreate.Input) async throws -> Operations.SocialPostsSaveWorkoutCreate.Output
+    /// The takes people have posted of this post, newest first: the ones that answer it directly, and only those the reader may see. A repost's id stands for the post it passes on.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/posts/{id}/takes/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/takes//get(social_posts_takes_list)`.
+    func socialPostsTakesList(_ input: Operations.SocialPostsTakesList.Input) async throws -> Operations.SocialPostsTakesList.Output
     /// Attach a clip to your own post, replacing any clip already on it. Send the file itself as the request body with a video Content-Type -- not base64, not multipart.
     ///
     /// Accepted: MP4 or QuickTime with H.264 or HEVC video, within the server's size, length and dimension limits. What the file is, and how it is stored, is read from its bytes; the Content-Type only has to say it is a video. Location and device metadata are removed before the clip is stored.
@@ -3463,7 +3468,7 @@ extension APIProtocol {
             headers: headers
         ))
     }
-    /// Change the caption or who can see this post. The snapshot records what happened and is not editable.
+    /// Change the caption, who can see this post, who may post a take of it, its language or its topics. The snapshot records what happened and is not editable, and neither is what the post is a take of. Closing a post to takes stops new ones; takes already posted stay.
     ///
     /// - Remark: HTTP `PATCH /api/v1/social/posts/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}//patch(social_posts_partial_update)`.
@@ -3627,6 +3632,21 @@ extension APIProtocol {
     ) async throws -> Operations.SocialPostsSaveWorkoutCreate.Output {
         try await socialPostsSaveWorkoutCreate(Operations.SocialPostsSaveWorkoutCreate.Input(
             path: path,
+            headers: headers
+        ))
+    }
+    /// The takes people have posted of this post, newest first: the ones that answer it directly, and only those the reader may see. A repost's id stands for the post it passes on.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/posts/{id}/takes/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/takes//get(social_posts_takes_list)`.
+    public func socialPostsTakesList(
+        path: Operations.SocialPostsTakesList.Input.Path,
+        query: Operations.SocialPostsTakesList.Input.Query = .init(),
+        headers: Operations.SocialPostsTakesList.Input.Headers = .init()
+    ) async throws -> Operations.SocialPostsTakesList.Output {
+        try await socialPostsTakesList(Operations.SocialPostsTakesList.Input(
+            path: path,
+            query: query,
             headers: headers
         ))
     }
@@ -4915,6 +4935,42 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CreatePostRequest/expects_video`.
             public var expectsVideo: Swift.Bool?
+            /// The post this is a take of. It must be one you can see, that everybody can see, and whose author allows takes. A repost's id stands for the post it passes on.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreatePostRequest/source_post_id`.
+            public var sourcePostId: Swift.Int64?
+            /// A sound to set this post's clip to, if it uses one.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreatePostRequest/sound_id`.
+            public var soundId: Swift.Int64?
+            /// - Remark: Generated from `#/components/schemas/CreatePostRequest/reuse_permission`.
+            public struct ReusePermissionPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/CreatePostRequest/reuse_permission/value1`.
+                public var value1: Components.Schemas.ReusePermissionEnum
+                /// Creates a new `ReusePermissionPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.ReusePermissionEnum) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try decoder.decodeFromSingleValueContainer()
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeToSingleValueContainer(self.value1)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/CreatePostRequest/reuse_permission`.
+            public var reusePermission: Components.Schemas.CreatePostRequest.ReusePermissionPayload?
+            /// The language the caption is written in, as a tag such as en or pt-BR.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreatePostRequest/language`.
+            public var language: Swift.String?
+            /// What the post is about: up to five codes for a type of training (type:running) or a discipline (discipline:powerlifting).
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreatePostRequest/topics`.
+            public var topics: [Swift.String]?
             /// Creates a new `CreatePostRequest`.
             ///
             /// - Parameters:
@@ -4927,6 +4983,11 @@ public enum Components {
             ///   - imageBase64: The image bytes, base64 encoded, without a data: prefix.
             ///   - cookingInstructions: How the meal was made, for a meal post. Ignored for other kinds.
             ///   - expectsVideo: True when a clip will be uploaded to this post next. Required for a media post without a photo, which stays visible only to its author until the clip is ready to watch.
+            ///   - sourcePostId: The post this is a take of. It must be one you can see, that everybody can see, and whose author allows takes. A repost's id stands for the post it passes on.
+            ///   - soundId: A sound to set this post's clip to, if it uses one.
+            ///   - reusePermission:
+            ///   - language: The language the caption is written in, as a tag such as en or pt-BR.
+            ///   - topics: What the post is about: up to five codes for a type of training (type:running) or a discipline (discipline:powerlifting).
             public init(
                 kind: Components.Schemas.CreatePostKindEnum,
                 sourceId: Swift.Int? = nil,
@@ -4936,7 +4997,12 @@ public enum Components {
                 contentType: Components.Schemas.ContentTypeEnum? = nil,
                 imageBase64: Swift.String? = nil,
                 cookingInstructions: Swift.String? = nil,
-                expectsVideo: Swift.Bool? = nil
+                expectsVideo: Swift.Bool? = nil,
+                sourcePostId: Swift.Int64? = nil,
+                soundId: Swift.Int64? = nil,
+                reusePermission: Components.Schemas.CreatePostRequest.ReusePermissionPayload? = nil,
+                language: Swift.String? = nil,
+                topics: [Swift.String]? = nil
             ) {
                 self.kind = kind
                 self.sourceId = sourceId
@@ -4947,6 +5013,11 @@ public enum Components {
                 self.imageBase64 = imageBase64
                 self.cookingInstructions = cookingInstructions
                 self.expectsVideo = expectsVideo
+                self.sourcePostId = sourcePostId
+                self.soundId = soundId
+                self.reusePermission = reusePermission
+                self.language = language
+                self.topics = topics
             }
             public enum CodingKeys: String, CodingKey {
                 case kind
@@ -4958,6 +5029,56 @@ public enum Components {
                 case imageBase64 = "image_base64"
                 case cookingInstructions = "cooking_instructions"
                 case expectsVideo = "expects_video"
+                case sourcePostId = "source_post_id"
+                case soundId = "sound_id"
+                case reusePermission = "reuse_permission"
+                case language
+                case topics
+            }
+        }
+        /// Whoever a credit line names: enough to print "by Mia Chen" and link to
+        /// the profile, and nothing a credit does not need. A whole public profile
+        /// here would be a second author on every card.
+        ///
+        /// - Remark: Generated from `#/components/schemas/CreditedPerson`.
+        public struct CreditedPerson: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CreditedPerson/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/CreditedPerson/username`.
+            public var username: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CreditedPerson/first_name`.
+            public var firstName: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CreditedPerson/last_name`.
+            public var lastName: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CreditedPerson/profile_photo_url`.
+            public var profilePhotoUrl: Swift.String?
+            /// Creates a new `CreditedPerson`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - username:
+            ///   - firstName:
+            ///   - lastName:
+            ///   - profilePhotoUrl:
+            public init(
+                id: Swift.Int,
+                username: Swift.String,
+                firstName: Swift.String,
+                lastName: Swift.String,
+                profilePhotoUrl: Swift.String? = nil
+            ) {
+                self.id = id
+                self.username = username
+                self.firstName = firstName
+                self.lastName = lastName
+                self.profilePhotoUrl = profilePhotoUrl
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case username
+                case firstName = "first_name"
+                case lastName = "last_name"
+                case profilePhotoUrl = "profile_photo_url"
             }
         }
         /// When the new rotation takes over.
@@ -6024,6 +6145,62 @@ public enum Components {
             public var moderationStatus: Swift.String
             /// - Remark: Generated from `#/components/schemas/ForYouPost/updated_at`.
             public var updatedAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/is_take`.
+            public var isTake: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/source`.
+            public struct SourcePayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/ForYouPost/source/value1`.
+                public var value1: Components.Schemas.PostSource
+                /// Creates a new `SourcePayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PostSource) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/source`.
+            public var source: Components.Schemas.ForYouPost.SourcePayload?
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/sound`.
+            public struct SoundPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/ForYouPost/sound/value1`.
+                public var value1: Components.Schemas.PostSound
+                /// Creates a new `SoundPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PostSound) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/sound`.
+            public var sound: Components.Schemas.ForYouPost.SoundPayload?
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/hashtags`.
+            public var hashtags: [Swift.String]?
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/topics`.
+            public var topics: [Swift.String]?
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/language`.
+            public var language: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/attachment_version`.
+            public var attachmentVersion: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/audience`.
+            public var audience: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/reuse_permission`.
+            public var reusePermission: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/viewer_can_take`.
+            public var viewerCanTake: Swift.Bool?
             /// - Remark: Generated from `#/components/schemas/ForYouPost/recommendation`.
             public struct RecommendationPayload: Codable, Hashable, Sendable {
                 /// - Remark: Generated from `#/components/schemas/ForYouPost/recommendation/value1`.
@@ -6073,6 +6250,16 @@ public enum Components {
             ///   - publishedAt:
             ///   - moderationStatus:
             ///   - updatedAt:
+            ///   - isTake:
+            ///   - source:
+            ///   - sound:
+            ///   - hashtags:
+            ///   - topics:
+            ///   - language:
+            ///   - attachmentVersion:
+            ///   - audience:
+            ///   - reusePermission:
+            ///   - viewerCanTake:
             ///   - recommendation:
             public init(
                 id: Swift.Int,
@@ -6101,6 +6288,16 @@ public enum Components {
                 publishedAt: Foundation.Date? = nil,
                 moderationStatus: Swift.String,
                 updatedAt: Foundation.Date,
+                isTake: Swift.Bool? = nil,
+                source: Components.Schemas.ForYouPost.SourcePayload? = nil,
+                sound: Components.Schemas.ForYouPost.SoundPayload? = nil,
+                hashtags: [Swift.String]? = nil,
+                topics: [Swift.String]? = nil,
+                language: Swift.String? = nil,
+                attachmentVersion: Swift.Int? = nil,
+                audience: Swift.String? = nil,
+                reusePermission: Swift.String? = nil,
+                viewerCanTake: Swift.Bool? = nil,
                 recommendation: Components.Schemas.ForYouPost.RecommendationPayload
             ) {
                 self.id = id
@@ -6129,6 +6326,16 @@ public enum Components {
                 self.publishedAt = publishedAt
                 self.moderationStatus = moderationStatus
                 self.updatedAt = updatedAt
+                self.isTake = isTake
+                self.source = source
+                self.sound = sound
+                self.hashtags = hashtags
+                self.topics = topics
+                self.language = language
+                self.attachmentVersion = attachmentVersion
+                self.audience = audience
+                self.reusePermission = reusePermission
+                self.viewerCanTake = viewerCanTake
                 self.recommendation = recommendation
             }
             public enum CodingKeys: String, CodingKey {
@@ -6158,6 +6365,16 @@ public enum Components {
                 case publishedAt = "published_at"
                 case moderationStatus = "moderation_status"
                 case updatedAt = "updated_at"
+                case isTake = "is_take"
+                case source
+                case sound
+                case hashtags
+                case topics
+                case language
+                case attachmentVersion = "attachment_version"
+                case audience
+                case reusePermission = "reuse_permission"
+                case viewerCanTake = "viewer_can_take"
                 case recommendation
             }
         }
@@ -8878,11 +9095,15 @@ public enum Components {
                 case addedTopics = "added_topics"
             }
         }
-        /// The two things about a post that can still change.
+        /// What about a post can still change: its words, and who it is for.
         ///
         /// The snapshot is not among them. It is the record of what happened, and one
         /// that could be edited into a different workout after people had read it would
-        /// be worth nothing as a record.
+        /// be worth nothing as a record. Nor is what it is a take of, or its sound:
+        /// those are what it was published as.
+        ///
+        /// Closing a post to takes stops new ones. The takes already made of it are
+        /// their authors' own posts and stay.
         ///
         /// - Remark: Generated from `#/components/schemas/PatchedUpdatePostRequest`.
         public struct PatchedUpdatePostRequest: Codable, Hashable, Sendable {
@@ -8890,21 +9111,39 @@ public enum Components {
             public var caption: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PatchedUpdatePostRequest/visibility`.
             public var visibility: Components.Schemas.VisibilityEnum?
+            /// - Remark: Generated from `#/components/schemas/PatchedUpdatePostRequest/reuse_permission`.
+            public var reusePermission: Components.Schemas.ReusePermissionEnum?
+            /// - Remark: Generated from `#/components/schemas/PatchedUpdatePostRequest/language`.
+            public var language: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedUpdatePostRequest/topics`.
+            public var topics: [Swift.String]?
             /// Creates a new `PatchedUpdatePostRequest`.
             ///
             /// - Parameters:
             ///   - caption:
             ///   - visibility:
+            ///   - reusePermission:
+            ///   - language:
+            ///   - topics:
             public init(
                 caption: Swift.String? = nil,
-                visibility: Components.Schemas.VisibilityEnum? = nil
+                visibility: Components.Schemas.VisibilityEnum? = nil,
+                reusePermission: Components.Schemas.ReusePermissionEnum? = nil,
+                language: Swift.String? = nil,
+                topics: [Swift.String]? = nil
             ) {
                 self.caption = caption
                 self.visibility = visibility
+                self.reusePermission = reusePermission
+                self.language = language
+                self.topics = topics
             }
             public enum CodingKeys: String, CodingKey {
                 case caption
                 case visibility
+                case reusePermission = "reuse_permission"
+                case language
+                case topics
             }
         }
         /// - Remark: Generated from `#/components/schemas/PatchedWorkoutCycleRequest`.
@@ -9962,6 +10201,62 @@ public enum Components {
             public var moderationStatus: Swift.String
             /// - Remark: Generated from `#/components/schemas/Post/updated_at`.
             public var updatedAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/Post/is_take`.
+            public var isTake: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/Post/source`.
+            public struct SourcePayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/Post/source/value1`.
+                public var value1: Components.Schemas.PostSource
+                /// Creates a new `SourcePayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PostSource) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/Post/source`.
+            public var source: Components.Schemas.Post.SourcePayload?
+            /// - Remark: Generated from `#/components/schemas/Post/sound`.
+            public struct SoundPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/Post/sound/value1`.
+                public var value1: Components.Schemas.PostSound
+                /// Creates a new `SoundPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PostSound) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/Post/sound`.
+            public var sound: Components.Schemas.Post.SoundPayload?
+            /// - Remark: Generated from `#/components/schemas/Post/hashtags`.
+            public var hashtags: [Swift.String]?
+            /// - Remark: Generated from `#/components/schemas/Post/topics`.
+            public var topics: [Swift.String]?
+            /// - Remark: Generated from `#/components/schemas/Post/language`.
+            public var language: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Post/attachment_version`.
+            public var attachmentVersion: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/Post/audience`.
+            public var audience: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Post/reuse_permission`.
+            public var reusePermission: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Post/viewer_can_take`.
+            public var viewerCanTake: Swift.Bool?
             /// Creates a new `Post`.
             ///
             /// - Parameters:
@@ -9991,6 +10286,16 @@ public enum Components {
             ///   - publishedAt:
             ///   - moderationStatus:
             ///   - updatedAt:
+            ///   - isTake:
+            ///   - source:
+            ///   - sound:
+            ///   - hashtags:
+            ///   - topics:
+            ///   - language:
+            ///   - attachmentVersion:
+            ///   - audience:
+            ///   - reusePermission:
+            ///   - viewerCanTake:
             public init(
                 id: Swift.Int,
                 author: Components.Schemas.Post.AuthorPayload,
@@ -10017,7 +10322,17 @@ public enum Components {
                 createdAt: Foundation.Date,
                 publishedAt: Foundation.Date? = nil,
                 moderationStatus: Swift.String,
-                updatedAt: Foundation.Date
+                updatedAt: Foundation.Date,
+                isTake: Swift.Bool? = nil,
+                source: Components.Schemas.Post.SourcePayload? = nil,
+                sound: Components.Schemas.Post.SoundPayload? = nil,
+                hashtags: [Swift.String]? = nil,
+                topics: [Swift.String]? = nil,
+                language: Swift.String? = nil,
+                attachmentVersion: Swift.Int? = nil,
+                audience: Swift.String? = nil,
+                reusePermission: Swift.String? = nil,
+                viewerCanTake: Swift.Bool? = nil
             ) {
                 self.id = id
                 self.author = author
@@ -10045,6 +10360,16 @@ public enum Components {
                 self.publishedAt = publishedAt
                 self.moderationStatus = moderationStatus
                 self.updatedAt = updatedAt
+                self.isTake = isTake
+                self.source = source
+                self.sound = sound
+                self.hashtags = hashtags
+                self.topics = topics
+                self.language = language
+                self.attachmentVersion = attachmentVersion
+                self.audience = audience
+                self.reusePermission = reusePermission
+                self.viewerCanTake = viewerCanTake
             }
             public enum CodingKeys: String, CodingKey {
                 case id
@@ -10073,6 +10398,16 @@ public enum Components {
                 case publishedAt = "published_at"
                 case moderationStatus = "moderation_status"
                 case updatedAt = "updated_at"
+                case isTake = "is_take"
+                case source
+                case sound
+                case hashtags
+                case topics
+                case language
+                case attachmentVersion = "attachment_version"
+                case audience
+                case reusePermission = "reuse_permission"
+                case viewerCanTake = "viewer_can_take"
             }
         }
         /// A comment, and the replies hanging off it.
@@ -10224,6 +10559,10 @@ public enum Components {
             public var totalCarbohydrateGrams: Swift.String
             /// - Remark: Generated from `#/components/schemas/PostMeal/total_fat_grams`.
             public var totalFatGrams: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PostMeal/entry_count`.
+            public var entryCount: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PostMeal/details_included`.
+            public var detailsIncluded: Swift.Bool?
             /// Creates a new `PostMeal`.
             ///
             /// - Parameters:
@@ -10235,6 +10574,8 @@ public enum Components {
             ///   - totalProteinGrams:
             ///   - totalCarbohydrateGrams:
             ///   - totalFatGrams:
+            ///   - entryCount:
+            ///   - detailsIncluded:
             public init(
                 name: Swift.String,
                 date: Swift.String,
@@ -10243,7 +10584,9 @@ public enum Components {
                 totalCalories: Swift.String,
                 totalProteinGrams: Swift.String,
                 totalCarbohydrateGrams: Swift.String,
-                totalFatGrams: Swift.String
+                totalFatGrams: Swift.String,
+                entryCount: Swift.Int? = nil,
+                detailsIncluded: Swift.Bool? = nil
             ) {
                 self.name = name
                 self.date = date
@@ -10253,6 +10596,8 @@ public enum Components {
                 self.totalProteinGrams = totalProteinGrams
                 self.totalCarbohydrateGrams = totalCarbohydrateGrams
                 self.totalFatGrams = totalFatGrams
+                self.entryCount = entryCount
+                self.detailsIncluded = detailsIncluded
             }
             public enum CodingKeys: String, CodingKey {
                 case name
@@ -10263,6 +10608,8 @@ public enum Components {
                 case totalProteinGrams = "total_protein_grams"
                 case totalCarbohydrateGrams = "total_carbohydrate_grams"
                 case totalFatGrams = "total_fat_grams"
+                case entryCount = "entry_count"
+                case detailsIncluded = "details_included"
             }
         }
         /// One food inside a posted meal, per serving with its servings beside it.
@@ -10512,6 +10859,146 @@ public enum Components {
                 case alreadyReported = "already_reported"
             }
         }
+        /// The sound a post's clip is set to, as its credit line.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PostSound`.
+        public struct PostSound: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PostSound/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PostSound/title`.
+            public var title: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PostSound/duration_ms`.
+            public var durationMs: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PostSound/owner`.
+            public struct OwnerPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PostSound/owner/value1`.
+                public var value1: Components.Schemas.CreditedPerson
+                /// Creates a new `OwnerPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.CreditedPerson) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/PostSound/owner`.
+            public var owner: Components.Schemas.PostSound.OwnerPayload
+            /// - Remark: Generated from `#/components/schemas/PostSound/is_original`.
+            public var isOriginal: Swift.Bool
+            /// Creates a new `PostSound`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - title:
+            ///   - durationMs:
+            ///   - owner:
+            ///   - isOriginal:
+            public init(
+                id: Swift.Int,
+                title: Swift.String,
+                durationMs: Swift.Int? = nil,
+                owner: Components.Schemas.PostSound.OwnerPayload,
+                isOriginal: Swift.Bool
+            ) {
+                self.id = id
+                self.title = title
+                self.durationMs = durationMs
+                self.owner = owner
+                self.isOriginal = isOriginal
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case title
+                case durationMs = "duration_ms"
+                case owner
+                case isOriginal = "is_original"
+            }
+        }
+        /// The post a take answers, as its credit line.
+        ///
+        /// Present on every take and null on everything else. When the reader may
+        /// not see the source -- it was deleted, taken down, made private, its
+        /// author blocked them or was suspended -- `available` is false and every
+        /// other field is null: the card can say the original is unavailable, and
+        /// nothing here says what it was or whose.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PostSource`.
+        public struct PostSource: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PostSource/available`.
+            public var available: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/PostSource/post_id`.
+            public var postId: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PostSource/original_post_id`.
+            public var originalPostId: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PostSource/kind`.
+            public var kind: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PostSource/author`.
+            public struct AuthorPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PostSource/author/value1`.
+                public var value1: Components.Schemas.CreditedPerson
+                /// Creates a new `AuthorPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.CreditedPerson) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/PostSource/author`.
+            public var author: Components.Schemas.PostSource.AuthorPayload?
+            /// - Remark: Generated from `#/components/schemas/PostSource/title`.
+            public var title: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PostSource/attachment_version`.
+            public var attachmentVersion: Swift.Int?
+            /// Creates a new `PostSource`.
+            ///
+            /// - Parameters:
+            ///   - available:
+            ///   - postId:
+            ///   - originalPostId:
+            ///   - kind:
+            ///   - author:
+            ///   - title:
+            ///   - attachmentVersion:
+            public init(
+                available: Swift.Bool,
+                postId: Swift.Int? = nil,
+                originalPostId: Swift.Int? = nil,
+                kind: Swift.String? = nil,
+                author: Components.Schemas.PostSource.AuthorPayload? = nil,
+                title: Swift.String? = nil,
+                attachmentVersion: Swift.Int? = nil
+            ) {
+                self.available = available
+                self.postId = postId
+                self.originalPostId = originalPostId
+                self.kind = kind
+                self.author = author
+                self.title = title
+                self.attachmentVersion = attachmentVersion
+            }
+            public enum CodingKeys: String, CodingKey {
+                case available
+                case postId = "post_id"
+                case originalPostId = "original_post_id"
+                case kind
+                case author
+                case title
+                case attachmentVersion = "attachment_version"
+            }
+        }
         /// A post's clip, as its reader may see it.
         ///
         /// `status` and `content_type` go out as plain strings, as `kind` does on a
@@ -10641,6 +11128,8 @@ public enum Components {
             public var totalSetCount: Swift.Int
             /// - Remark: Generated from `#/components/schemas/PostWorkout/total_volume_kg`.
             public var totalVolumeKg: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PostWorkout/details_included`.
+            public var detailsIncluded: Swift.Bool?
             /// Creates a new `PostWorkout`.
             ///
             /// - Parameters:
@@ -10659,6 +11148,7 @@ public enum Components {
             ///   - exerciseCount:
             ///   - totalSetCount:
             ///   - totalVolumeKg:
+            ///   - detailsIncluded:
             public init(
                 title: Swift.String,
                 workoutType: Swift.String? = nil,
@@ -10674,7 +11164,8 @@ public enum Components {
                 exercises: [Components.Schemas.PostWorkoutExercise],
                 exerciseCount: Swift.Int,
                 totalSetCount: Swift.Int,
-                totalVolumeKg: Swift.String? = nil
+                totalVolumeKg: Swift.String? = nil,
+                detailsIncluded: Swift.Bool? = nil
             ) {
                 self.title = title
                 self.workoutType = workoutType
@@ -10691,6 +11182,7 @@ public enum Components {
                 self.exerciseCount = exerciseCount
                 self.totalSetCount = totalSetCount
                 self.totalVolumeKg = totalVolumeKg
+                self.detailsIncluded = detailsIncluded
             }
             public enum CodingKeys: String, CodingKey {
                 case title
@@ -10708,6 +11200,7 @@ public enum Components {
                 case exerciseCount = "exercise_count"
                 case totalSetCount = "total_set_count"
                 case totalVolumeKg = "total_volume_kg"
+                case detailsIncluded = "details_included"
             }
         }
         /// One exercise inside a posted workout.
@@ -12126,6 +12619,60 @@ public enum Components {
             public var createdAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/RepostedPost/published_at`.
             public var publishedAt: Foundation.Date?
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/is_take`.
+            public var isTake: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/source`.
+            public struct SourcePayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/RepostedPost/source/value1`.
+                public var value1: Components.Schemas.PostSource
+                /// Creates a new `SourcePayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PostSource) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/source`.
+            public var source: Components.Schemas.RepostedPost.SourcePayload?
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/sound`.
+            public struct SoundPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/RepostedPost/sound/value1`.
+                public var value1: Components.Schemas.PostSound
+                /// Creates a new `SoundPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PostSound) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/sound`.
+            public var sound: Components.Schemas.RepostedPost.SoundPayload?
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/hashtags`.
+            public var hashtags: [Swift.String]?
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/topics`.
+            public var topics: [Swift.String]?
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/language`.
+            public var language: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/attachment_version`.
+            public var attachmentVersion: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/audience`.
+            public var audience: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/reuse_permission`.
+            public var reusePermission: Swift.String?
             /// Creates a new `RepostedPost`.
             ///
             /// - Parameters:
@@ -12141,6 +12688,15 @@ public enum Components {
             ///   - planner:
             ///   - createdAt:
             ///   - publishedAt:
+            ///   - isTake:
+            ///   - source:
+            ///   - sound:
+            ///   - hashtags:
+            ///   - topics:
+            ///   - language:
+            ///   - attachmentVersion:
+            ///   - audience:
+            ///   - reusePermission:
             public init(
                 id: Swift.Int,
                 author: Components.Schemas.RepostedPost.AuthorPayload,
@@ -12153,7 +12709,16 @@ public enum Components {
                 meal: Components.Schemas.RepostedPost.MealPayload? = nil,
                 planner: Components.Schemas.RepostedPost.PlannerPayload? = nil,
                 createdAt: Foundation.Date,
-                publishedAt: Foundation.Date? = nil
+                publishedAt: Foundation.Date? = nil,
+                isTake: Swift.Bool? = nil,
+                source: Components.Schemas.RepostedPost.SourcePayload? = nil,
+                sound: Components.Schemas.RepostedPost.SoundPayload? = nil,
+                hashtags: [Swift.String]? = nil,
+                topics: [Swift.String]? = nil,
+                language: Swift.String? = nil,
+                attachmentVersion: Swift.Int? = nil,
+                audience: Swift.String? = nil,
+                reusePermission: Swift.String? = nil
             ) {
                 self.id = id
                 self.author = author
@@ -12167,6 +12732,15 @@ public enum Components {
                 self.planner = planner
                 self.createdAt = createdAt
                 self.publishedAt = publishedAt
+                self.isTake = isTake
+                self.source = source
+                self.sound = sound
+                self.hashtags = hashtags
+                self.topics = topics
+                self.language = language
+                self.attachmentVersion = attachmentVersion
+                self.audience = audience
+                self.reusePermission = reusePermission
             }
             public enum CodingKeys: String, CodingKey {
                 case id
@@ -12181,7 +12755,26 @@ public enum Components {
                 case planner
                 case createdAt = "created_at"
                 case publishedAt = "published_at"
+                case isTake = "is_take"
+                case source
+                case sound
+                case hashtags
+                case topics
+                case language
+                case attachmentVersion = "attachment_version"
+                case audience
+                case reusePermission = "reuse_permission"
             }
+        }
+        /// * `everyone` - Anyone who can see it
+        /// * `followers` - People who follow me
+        /// * `nobody` - Nobody
+        ///
+        /// - Remark: Generated from `#/components/schemas/ReusePermissionEnum`.
+        @frozen public enum ReusePermissionEnum: String, Codable, Hashable, Sendable, CaseIterable {
+            case everyone = "everyone"
+            case followers = "followers"
+            case nobody = "nobody"
         }
         /// - Remark: Generated from `#/components/schemas/SafetyConsent`.
         public struct SafetyConsent: Codable, Hashable, Sendable {
@@ -33452,6 +34045,15 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/api/v1/social/feed/GET/query`.
             public struct Query: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/feed/GET/query/attachments`.
+                @frozen public enum AttachmentsPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case full = "full"
+                    case summary = "summary"
+                }
+                /// How much of each posted workout or recipe to send. `full`, the default, sends every exercise and food. `summary` sends the title and totals a card prints and leaves `exercises`, `entries` and `cooking_instructions` empty, with `details_included` false; read the post itself for the rest.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/feed/GET/query/attachments`.
+                public var attachments: Operations.SocialFeedList.Input.Query.AttachmentsPayload?
                 /// The position carried by the previous page's `next` link. Absent means start at the newest post.
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/social/feed/GET/query/cursor`.
@@ -33463,12 +34065,15 @@ public enum Operations {
                 /// Creates a new `Query`.
                 ///
                 /// - Parameters:
+                ///   - attachments: How much of each posted workout or recipe to send. `full`, the default, sends every exercise and food. `summary` sends the title and totals a card prints and leaves `exercises`, `entries` and `cooking_instructions` empty, with `details_included` false; read the post itself for the rest.
                 ///   - cursor: The position carried by the previous page's `next` link. Absent means start at the newest post.
                 ///   - pageSize: How many posts to return, at most 50. Asking for more is refused rather than reduced, so a page is always the size it was asked for.
                 public init(
+                    attachments: Operations.SocialFeedList.Input.Query.AttachmentsPayload? = nil,
                     cursor: Swift.String? = nil,
                     pageSize: Swift.Int? = nil
                 ) {
+                    self.attachments = attachments
                     self.cursor = cursor
                     self.pageSize = pageSize
                 }
@@ -33892,6 +34497,15 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/api/v1/social/for-you/GET/query`.
             public struct Query: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/for-you/GET/query/attachments`.
+                @frozen public enum AttachmentsPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case full = "full"
+                    case summary = "summary"
+                }
+                /// How much of each posted workout or recipe to send. `full`, the default, sends every exercise and food. `summary` sends the title and totals a card prints and leaves `exercises`, `entries` and `cooking_instructions` empty, with `details_included` false; read the post itself for the rest.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/for-you/GET/query/attachments`.
+                public var attachments: Operations.SocialForYouList.Input.Query.AttachmentsPayload?
                 /// The position carried by the previous page's `next` link. Absent means rank afresh and start at the top.
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/social/for-you/GET/query/cursor`.
@@ -33903,12 +34517,15 @@ public enum Operations {
                 /// Creates a new `Query`.
                 ///
                 /// - Parameters:
+                ///   - attachments: How much of each posted workout or recipe to send. `full`, the default, sends every exercise and food. `summary` sends the title and totals a card prints and leaves `exercises`, `entries` and `cooking_instructions` empty, with `details_included` false; read the post itself for the rest.
                 ///   - cursor: The position carried by the previous page's `next` link. Absent means rank afresh and start at the top.
                 ///   - pageSize: How many posts to return, at most 50. Asking for more is refused rather than reduced.
                 public init(
+                    attachments: Operations.SocialForYouList.Input.Query.AttachmentsPayload? = nil,
                     cursor: Swift.String? = nil,
                     pageSize: Swift.Int? = nil
                 ) {
+                    self.attachments = attachments
                     self.cursor = cursor
                     self.pageSize = pageSize
                 }
@@ -34868,6 +35485,15 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/api/v1/social/posts/GET/query`.
             public struct Query: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/GET/query/attachments`.
+                @frozen public enum AttachmentsPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case full = "full"
+                    case summary = "summary"
+                }
+                /// How much of each posted workout or recipe to send. `full`, the default, sends every exercise and food. `summary` sends the title and totals a card prints and leaves `exercises`, `entries` and `cooking_instructions` empty, with `details_included` false; read the post itself for the rest.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/GET/query/attachments`.
+                public var attachments: Operations.SocialPostsList.Input.Query.AttachmentsPayload?
                 /// Return only posts by this user, still filtered by what the reader is allowed to see.
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/social/posts/GET/query/author`.
@@ -34887,16 +35513,19 @@ public enum Operations {
                 /// Creates a new `Query`.
                 ///
                 /// - Parameters:
+                ///   - attachments: How much of each posted workout or recipe to send. `full`, the default, sends every exercise and food. `summary` sends the title and totals a card prints and leaves `exercises`, `entries` and `cooking_instructions` empty, with `details_included` false; read the post itself for the rest.
                 ///   - author: Return only posts by this user, still filtered by what the reader is allowed to see.
                 ///   - fromFollowing: Split the list by whether the reader follows the author. `true` is the people they follow; `false` is the people they do not, and also drops the reader's own posts, because a page for finding new people should not open with your own. Omitted, the list is everybody. Anything other than true or false is a 400 rather than a guess.
                 ///   - page: A page number within the paginated result set.
                 ///   - search: Return only posts matching this, ignoring case: the caption, the author's username or name, the title of the workout, meal or planner entry attached, or the name of a food or exercise inside it — so a meal posted as "Meal 1" is still found by the chicken in it. Narrows what the reader is already allowed to see and never widens it, so a post hidden from them stays hidden however well it matches. Combines with `author` when both are given.
                 public init(
+                    attachments: Operations.SocialPostsList.Input.Query.AttachmentsPayload? = nil,
                     author: Swift.Int? = nil,
                     fromFollowing: Swift.Bool? = nil,
                     page: Swift.Int? = nil,
                     search: Swift.String? = nil
                 ) {
+                    self.attachments = attachments
                     self.author = author
                     self.fromFollowing = fromFollowing
                     self.page = page
@@ -35280,7 +35909,7 @@ public enum Operations {
             }
         }
     }
-    /// Change the caption or who can see this post. The snapshot records what happened and is not editable.
+    /// Change the caption, who can see this post, who may post a take of it, its language or its topics. The snapshot records what happened and is not editable, and neither is what the post is a take of. Closing a post to takes stops new ones; takes already posted stay.
     ///
     /// - Remark: HTTP `PATCH /api/v1/social/posts/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}//patch(social_posts_partial_update)`.
@@ -36978,6 +37607,175 @@ public enum Operations {
                     default:
                         try throwUnexpectedResponseStatus(
                             expectedStatus: "created",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// The takes people have posted of this post, newest first: the ones that answer it directly, and only those the reader may see. A repost's id stands for the post it passes on.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/posts/{id}/takes/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/takes//get(social_posts_takes_list)`.
+    public enum SocialPostsTakesList {
+        public static let id: Swift.String = "social_posts_takes_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/takes/GET/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this post.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/takes/GET/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this post.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialPostsTakesList.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/takes/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/takes/GET/query/attachments`.
+                @frozen public enum AttachmentsPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case full = "full"
+                    case summary = "summary"
+                }
+                /// How much of each posted workout or recipe to send. `full`, the default, sends every exercise and food. `summary` sends the title and totals a card prints and leaves `exercises`, `entries` and `cooking_instructions` empty, with `details_included` false; read the post itself for the rest.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/takes/GET/query/attachments`.
+                public var attachments: Operations.SocialPostsTakesList.Input.Query.AttachmentsPayload?
+                /// The position carried by the previous page's `next` link.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/takes/GET/query/cursor`.
+                public var cursor: Swift.String?
+                /// How many takes to return, at most 50.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/takes/GET/query/page_size`.
+                public var pageSize: Swift.Int?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - attachments: How much of each posted workout or recipe to send. `full`, the default, sends every exercise and food. `summary` sends the title and totals a card prints and leaves `exercises`, `entries` and `cooking_instructions` empty, with `details_included` false; read the post itself for the rest.
+                ///   - cursor: The position carried by the previous page's `next` link.
+                ///   - pageSize: How many takes to return, at most 50.
+                public init(
+                    attachments: Operations.SocialPostsTakesList.Input.Query.AttachmentsPayload? = nil,
+                    cursor: Swift.String? = nil,
+                    pageSize: Swift.Int? = nil
+                ) {
+                    self.attachments = attachments
+                    self.cursor = cursor
+                    self.pageSize = pageSize
+                }
+            }
+            public var query: Operations.SocialPostsTakesList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/takes/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsTakesList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsTakesList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialPostsTakesList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - query:
+            ///   - headers:
+            public init(
+                path: Operations.SocialPostsTakesList.Input.Path,
+                query: Operations.SocialPostsTakesList.Input.Query = .init(),
+                headers: Operations.SocialPostsTakesList.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/takes/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/takes/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedPostList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedPostList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialPostsTakesList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialPostsTakesList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/takes//get(social_posts_takes_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialPostsTakesList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialPostsTakesList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
                             response: self
                         )
                     }

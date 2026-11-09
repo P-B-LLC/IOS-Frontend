@@ -10127,6 +10127,13 @@ public struct Client: APIProtocol {
                     in: &request,
                     style: .form,
                     explode: true,
+                    name: "attachments",
+                    value: input.query.attachments
+                )
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
                     name: "cursor",
                     value: input.query.cursor
                 )
@@ -10367,6 +10374,13 @@ public struct Client: APIProtocol {
                     method: .get
                 )
                 suppressMutabilityWarning(&request)
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "attachments",
+                    value: input.query.attachments
+                )
                 try converter.setQueryItemAsURI(
                     in: &request,
                     style: .form,
@@ -10917,6 +10931,13 @@ public struct Client: APIProtocol {
                     in: &request,
                     style: .form,
                     explode: true,
+                    name: "attachments",
+                    value: input.query.attachments
+                )
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
                     name: "author",
                     value: input.query.author
                 )
@@ -11127,7 +11148,7 @@ public struct Client: APIProtocol {
             }
         )
     }
-    /// Change the caption or who can see this post. The snapshot records what happened and is not editable.
+    /// Change the caption, who can see this post, who may post a take of it, its language or its topics. The snapshot records what happened and is not editable, and neither is what the post is a take of. Closing a post to takes stops new ones; takes already posted stay.
     ///
     /// - Remark: HTTP `PATCH /api/v1/social/posts/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}//patch(social_posts_partial_update)`.
@@ -11978,6 +11999,89 @@ public struct Client: APIProtocol {
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
                     return .created(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// The takes people have posted of this post, newest first: the ones that answer it directly, and only those the reader may see. A repost's id stands for the post it passes on.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/posts/{id}/takes/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/takes//get(social_posts_takes_list)`.
+    public func socialPostsTakesList(_ input: Operations.SocialPostsTakesList.Input) async throws -> Operations.SocialPostsTakesList.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SocialPostsTakesList.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/social/posts/{}/takes/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .get
+                )
+                suppressMutabilityWarning(&request)
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "attachments",
+                    value: input.query.attachments
+                )
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "cursor",
+                    value: input.query.cursor
+                )
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "page_size",
+                    value: input.query.pageSize
+                )
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SocialPostsTakesList.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.PaginatedPostList.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
                 default:
                     return .undocumented(
                         statusCode: response.status.code,
