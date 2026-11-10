@@ -245,7 +245,8 @@ final class SocialStore {
         wantedPostIDs = []
         impressionFlush?.cancel()
         impressionFlush = nil
-        impressions.reset()
+        attention.reset()
+        attentionQueue.reset()
         forYouPreferences = nil
         forYouPreferencesError = nil
         isSavingForYouPreferences = false
@@ -952,36 +953,93 @@ final class SocialStore {
 
     // MARK: - What was on screen
 
-    /// Viewings waiting to be sent, and the open ones.
-    private var impressions = ImpressionTracker()
+    /// The measuring: a clock per card on screen. See `AttentionMeter`.
+    private var attention = AttentionMeter()
+    /// Summaries of finished exposures, waiting to be sent.
+    private var attentionQueue = AttentionQueue()
     /// The pending send, so a burst of cards leaving the screen becomes one
     /// request rather than one each.
     private var impressionFlush: Task<Void, Never>?
+    private var isSendingAttention = false
 
-    /// A For You card is mostly on screen.
-    func impressionShown(_ postID: Int) {
-        impressions.shown(postID)
+    /// Monotonic, so a wall clock set back mid-scroll cannot shorten a dwell.
+    private var uptime: TimeInterval { ProcessInfo.processInfo.systemUptime }
+
+    /// A card is at least sixty percent on screen. `clipMilliseconds` is the
+    /// length of its clip when it has one a reader can play.
+    func impressionShown(_ postID: Int, surface: String = "for_you", clipMilliseconds: Int? = nil) {
+        attention.shown(postID, surface: surface, at: uptime)
+        if let clipMilliseconds {
+            attention.hasClip(postID, durationMilliseconds: clipMilliseconds)
+        }
     }
 
-    /// It is not any more: one viewing, queued.
+    /// It is not any more: one exposure, summed up and queued.
     func impressionHidden(_ postID: Int) {
-        impressions.hidden(postID)
-        if impressions.pending.count >= ImpressionTracker.maxBatch {
+        guard let summary = attention.hidden(postID, at: uptime) else { return }
+        attentionQueue.add(summary)
+        if attentionQueue.hasFullBatch {
             Task { await flushImpressions() }
-        } else if impressions.hasPending {
+        } else {
             scheduleImpressionFlush()
         }
     }
 
-    /// How far into a post's clip playback got, and whether it finished.
-    func noteWatched(postID: Int, milliseconds: Int, completed: Bool) {
-        impressions.watched(postID, milliseconds: milliseconds, completed: completed)
+    /// The app came to the front or left it. Clocks stop while it is away.
+    func attentionAppActive(_ active: Bool) {
+        attention.appBecameActive(active, at: uptime)
     }
 
-    /// Closes every open viewing and sends everything: the feed is leaving
+    /// A sheet or another screen went over the feed, or came off it.
+    func attentionFeedCovered(_ covered: Bool) {
+        attention.feedCovered(covered, at: uptime)
+    }
+
+    /// The reader opened, or closed, a post's workout or recipe.
+    func attentionAttachment(postID: Int, isOpen: Bool) {
+        if isOpen {
+            attention.attachmentOpened(postID, at: uptime)
+        } else {
+            attention.attachmentClosed(postID, at: uptime)
+        }
+    }
+
+    /// What a post's player is doing, as it does it.
+    func attentionPlayback(postID: Int, _ event: PlaybackEvent) {
+        let now = uptime
+        switch event {
+        case .playing(let position):
+            attention.playing(true, postID: postID, positionMilliseconds: position, at: now)
+        case .notPlaying(let position):
+            attention.playing(false, postID: postID, positionMilliseconds: position, at: now)
+        case .progress(let position):
+            attention.progress(postID, positionMilliseconds: position, at: now)
+        case .seeked(let position):
+            attention.seeked(postID, toMilliseconds: position, at: now)
+        case .ended:
+            attention.ended(postID, at: now)
+        case .failed:
+            attention.failed(postID, at: now)
+        }
+    }
+
+    enum PlaybackEvent {
+        /// Frames are moving, from this position in the clip.
+        case playing(Double)
+        /// Paused or buffering, at this position.
+        case notPlaying(Double)
+        case progress(Double)
+        case seeked(Double)
+        case ended
+        case failed
+    }
+
+    /// Ends every open exposure and sends everything: the feed is leaving
     /// the screen, or the app is going to the background.
     func finishImpressions() async {
-        impressions.closeAll()
+        for summary in attention.hideAll(at: uptime) {
+            attentionQueue.add(summary)
+        }
         await flushImpressions()
     }
 
@@ -993,7 +1051,7 @@ final class SocialStore {
     }
 
     private func scheduleImpressionFlush() {
-        guard impressionFlush == nil else { return }
+        guard impressionFlush == nil, !attentionQueue.isEmpty else { return }
         impressionFlush = Task { [weak self] in
             try? await Task.sleep(for: .seconds(10))
             guard let self, !Task.isCancelled else { return }
@@ -1004,16 +1062,34 @@ final class SocialStore {
 
     private func sendImpressions() async {
         guard let repository else {
-            impressions.reset()
+            attentionQueue.reset()
             return
         }
-        while true {
-            let batch = impressions.nextBatch()
-            guard !batch.isEmpty else { return }
-            // Dropped on failure rather than retried: these are signals for
-            // ranking, and an old batch sent later would only describe a
-            // session that is over.
-            try? await repository.recordImpressions(batch)
+        // One sender at a time: two would each take the same unacknowledged
+        // batch. The server would recognise the repeat, but it is a wasted
+        // request every time a flush and the timer coincide.
+        guard !isSendingAttention else { return }
+        isSendingAttention = true
+        defer { isSendingAttention = false }
+        let generation = connectionGeneration
+        while let batch = attentionQueue.nextBatch() {
+            do {
+                try await repository.recordAttention(batch)
+                guard connectionGeneration == generation else { return }
+                attentionQueue.acknowledge(batch.id)
+            } catch APIServiceError.undocumentedStatus(let status)
+                where (400..<500).contains(status) && ![401, 408, 429].contains(status) {
+                // Refused as it stands: sending it again would be refused
+                // again, and it must not hold up what is behind it.
+                guard connectionGeneration == generation else { return }
+                attentionQueue.discard(batch.id)
+            } catch {
+                // No answer. The batch keeps its id and goes again with the
+                // next flush; the server adds it once however many arrive.
+                guard connectionGeneration == generation else { return }
+                scheduleImpressionFlush()
+                return
+            }
         }
     }
 

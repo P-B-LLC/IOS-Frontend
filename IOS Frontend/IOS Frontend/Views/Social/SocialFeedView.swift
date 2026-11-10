@@ -52,6 +52,17 @@ struct SocialFeedView: View {
         case discover = "Discover"
         var id: String { rawValue }
 
+        /// Where a card was seen, as the server names it, so what the
+        /// ranking put in front of somebody can be told from what they went
+        /// looking for.
+        var attentionSurface: String {
+            switch self {
+            case .forYou: "for_you"
+            case .following: "following"
+            case .discover: "discover"
+            }
+        }
+
         var title: LocalizedStringKey {
             switch self {
             case .forYou: "For you"
@@ -212,10 +223,14 @@ struct SocialFeedView: View {
                                 // how For You tells a post somebody stopped
                                 // on from one they flicked past. Mostly on
                                 // screen counts, as on the web.
-                                .onScrollVisibilityChange(threshold: 0.6) { visible in
-                                    guard feedMode == .forYou, !isSearching, !isComposing else { return }
+                                .onScrollVisibilityChange(threshold: AttentionMeter.visibleFraction) { visible in
+                                    guard !isSearching, !isComposing else { return }
                                     if visible {
-                                        store.impressionShown(post.id)
+                                        store.impressionShown(
+                                            post.id,
+                                            surface: feedMode.attentionSurface,
+                                            clipMilliseconds: post.playableClipMilliseconds
+                                        )
                                     } else {
                                         store.impressionHidden(post.id)
                                     }
@@ -327,6 +342,9 @@ struct SocialFeedView: View {
         // post, the app to the background -- are closed and sent then, or
         // they would describe a reader staring at a post for an hour.
         .onChange(of: scenePhase) {
+            // The clocks stop the moment the app is not in front, before the
+            // open exposures are closed and sent.
+            store.attentionAppActive(scenePhase == .active)
             if scenePhase != .active {
                 Task { await store.finishImpressions() }
             } else {
@@ -338,6 +356,12 @@ struct SocialFeedView: View {
         }
         .onChange(of: isSearching) {
             if isSearching { Task { await store.finishImpressions() } }
+        }
+        // A sheet over the feed suspends what is under it without ending the
+        // exposure: reading the comments and coming back is one look at the
+        // post, with a gap in it.
+        .onChange(of: commenting != nil || isTuning) { _, covered in
+            store.attentionFeedCovered(covered)
         }
         .onDisappear {
             Task { await store.finishImpressions() }

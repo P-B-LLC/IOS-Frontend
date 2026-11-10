@@ -974,6 +974,8 @@ public protocol APIProtocol: Sendable {
     func socialForYouPreferencesPartialUpdate(_ input: Operations.SocialForYouPreferencesPartialUpdate.Input) async throws -> Operations.SocialForYouPreferencesPartialUpdate.Output
     /// Record a batch of views. Posts the reader cannot see, and their own posts, are ignored rather than refused, so a client does not need to know which of the posts it showed have since gone.
     ///
+    /// With `schema_version` 2 each event is a summary of one exposure measured on the device, and the batch carries a `batch_id`: sending the same batch again adds nothing and answers with `duplicate` true. Figures beyond what could have happened are brought down to it, not refused. A body over 64 kB is a 413.
+    ///
     /// - Remark: HTTP `POST /api/v1/social/impressions/`.
     /// - Remark: Generated from `#/paths//api/v1/social/impressions//post(social_impressions_create)`.
     func socialImpressionsCreate(_ input: Operations.SocialImpressionsCreate.Input) async throws -> Operations.SocialImpressionsCreate.Output
@@ -3365,6 +3367,8 @@ extension APIProtocol {
         ))
     }
     /// Record a batch of views. Posts the reader cannot see, and their own posts, are ignored rather than refused, so a client does not need to know which of the posts it showed have since gone.
+    ///
+    /// With `schema_version` 2 each event is a summary of one exposure measured on the device, and the batch carries a `batch_id`: sending the same batch again adds nothing and answers with `duplicate` true. Figures beyond what could have happened are brought down to it, not refused. A body over 64 kB is a 413.
     ///
     /// - Remark: HTTP `POST /api/v1/social/impressions/`.
     /// - Remark: Generated from `#/paths//api/v1/social/impressions//post(social_impressions_create)`.
@@ -6796,15 +6800,35 @@ public enum Components {
         public struct ImpressionBatchRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/ImpressionBatchRequest/events`.
             public var events: [Components.Schemas.ImpressionRequest]
+            /// - Remark: Generated from `#/components/schemas/ImpressionBatchRequest/schema_version`.
+            public var schemaVersion: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/ImpressionBatchRequest/batch_id`.
+            public var batchId: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/ImpressionBatchRequest/session_id`.
+            public var sessionId: Swift.String?
             /// Creates a new `ImpressionBatchRequest`.
             ///
             /// - Parameters:
             ///   - events:
-            public init(events: [Components.Schemas.ImpressionRequest]) {
+            ///   - schemaVersion:
+            ///   - batchId:
+            ///   - sessionId:
+            public init(
+                events: [Components.Schemas.ImpressionRequest],
+                schemaVersion: Swift.Int? = nil,
+                batchId: Swift.String? = nil,
+                sessionId: Swift.String? = nil
+            ) {
                 self.events = events
+                self.schemaVersion = schemaVersion
+                self.batchId = batchId
+                self.sessionId = sessionId
             }
             public enum CodingKeys: String, CodingKey {
                 case events
+                case schemaVersion = "schema_version"
+                case batchId = "batch_id"
+                case sessionId = "session_id"
             }
         }
         /// One post having been on somebody's screen.
@@ -6844,6 +6868,24 @@ public enum Components {
             }
             /// - Remark: Generated from `#/components/schemas/ImpressionRequest/surface`.
             public var surface: Components.Schemas.ImpressionRequest.SurfacePayload?
+            /// - Remark: Generated from `#/components/schemas/ImpressionRequest/sequence`.
+            public var sequence: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/ImpressionRequest/observed_at`.
+            public var observedAt: Foundation.Date?
+            /// - Remark: Generated from `#/components/schemas/ImpressionRequest/active_dwell_ms`.
+            public var activeDwellMs: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/ImpressionRequest/playback_ms`.
+            public var playbackMs: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/ImpressionRequest/coverage_ms`.
+            public var coverageMs: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/ImpressionRequest/rewatch_ms`.
+            public var rewatchMs: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/ImpressionRequest/playback_failed`.
+            public var playbackFailed: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/ImpressionRequest/attachment_opened`.
+            public var attachmentOpened: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/ImpressionRequest/attachment_read_ms`.
+            public var attachmentReadMs: Swift.Int?
             /// Creates a new `ImpressionRequest`.
             ///
             /// - Parameters:
@@ -6852,18 +6894,45 @@ public enum Components {
             ///   - watchMs:
             ///   - completed:
             ///   - surface:
+            ///   - sequence:
+            ///   - observedAt:
+            ///   - activeDwellMs:
+            ///   - playbackMs:
+            ///   - coverageMs:
+            ///   - rewatchMs:
+            ///   - playbackFailed:
+            ///   - attachmentOpened:
+            ///   - attachmentReadMs:
             public init(
                 post: Swift.Int,
                 dwellMs: Swift.Int? = nil,
                 watchMs: Swift.Int? = nil,
                 completed: Swift.Bool? = nil,
-                surface: Components.Schemas.ImpressionRequest.SurfacePayload? = nil
+                surface: Components.Schemas.ImpressionRequest.SurfacePayload? = nil,
+                sequence: Swift.Int? = nil,
+                observedAt: Foundation.Date? = nil,
+                activeDwellMs: Swift.Int? = nil,
+                playbackMs: Swift.Int? = nil,
+                coverageMs: Swift.Int? = nil,
+                rewatchMs: Swift.Int? = nil,
+                playbackFailed: Swift.Bool? = nil,
+                attachmentOpened: Swift.Bool? = nil,
+                attachmentReadMs: Swift.Int? = nil
             ) {
                 self.post = post
                 self.dwellMs = dwellMs
                 self.watchMs = watchMs
                 self.completed = completed
                 self.surface = surface
+                self.sequence = sequence
+                self.observedAt = observedAt
+                self.activeDwellMs = activeDwellMs
+                self.playbackMs = playbackMs
+                self.coverageMs = coverageMs
+                self.rewatchMs = rewatchMs
+                self.playbackFailed = playbackFailed
+                self.attachmentOpened = attachmentOpened
+                self.attachmentReadMs = attachmentReadMs
             }
             public enum CodingKeys: String, CodingKey {
                 case post
@@ -6871,21 +6940,38 @@ public enum Components {
                 case watchMs = "watch_ms"
                 case completed
                 case surface
+                case sequence
+                case observedAt = "observed_at"
+                case activeDwellMs = "active_dwell_ms"
+                case playbackMs = "playback_ms"
+                case coverageMs = "coverage_ms"
+                case rewatchMs = "rewatch_ms"
+                case playbackFailed = "playback_failed"
+                case attachmentOpened = "attachment_opened"
+                case attachmentReadMs = "attachment_read_ms"
             }
         }
         /// - Remark: Generated from `#/components/schemas/ImpressionResult`.
         public struct ImpressionResult: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/ImpressionResult/recorded`.
             public var recorded: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/ImpressionResult/duplicate`.
+            public var duplicate: Swift.Bool?
             /// Creates a new `ImpressionResult`.
             ///
             /// - Parameters:
             ///   - recorded:
-            public init(recorded: Swift.Int) {
+            ///   - duplicate:
+            public init(
+                recorded: Swift.Int,
+                duplicate: Swift.Bool? = nil
+            ) {
                 self.recorded = recorded
+                self.duplicate = duplicate
             }
             public enum CodingKeys: String, CodingKey {
                 case recorded
+                case duplicate
             }
         }
         /// - Remark: Generated from `#/components/schemas/InitialWorkoutExercise`.
@@ -34984,6 +35070,8 @@ public enum Operations {
         }
     }
     /// Record a batch of views. Posts the reader cannot see, and their own posts, are ignored rather than refused, so a client does not need to know which of the posts it showed have since gone.
+    ///
+    /// With `schema_version` 2 each event is a summary of one exposure measured on the device, and the batch carries a `batch_id`: sending the same batch again adds nothing and answers with `duplicate` true. Figures beyond what could have happened are brought down to it, not refused. A body over 64 kB is a 413.
     ///
     /// - Remark: HTTP `POST /api/v1/social/impressions/`.
     /// - Remark: Generated from `#/paths//api/v1/social/impressions//post(social_impressions_create)`.

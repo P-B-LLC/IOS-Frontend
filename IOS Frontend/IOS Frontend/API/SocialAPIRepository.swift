@@ -76,19 +76,30 @@ actor SocialAPIRepository {
     /// call -- the tracker batches them -- and posts the reader can no longer
     /// see are ignored by the server rather than refused, so a batch never
     /// fails because something in it was deleted meanwhile.
-    func recordImpressions(_ events: [ImpressionEvent]) async throws {
-        guard !events.isEmpty else { return }
+    func recordAttention(_ batch: AttentionBatch) async throws {
+        guard !batch.summaries.isEmpty else { return }
         let output = try await client.socialImpressionsCreate(
             body: .json(Components.Schemas.ImpressionBatchRequest(
-                events: events.map { event in
+                events: batch.summaries.map { summary in
                     Components.Schemas.ImpressionRequest(
-                        post: event.postID,
-                        dwellMs: event.dwellMilliseconds,
-                        watchMs: event.watchMilliseconds,
-                        completed: event.completed,
-                        surface: .init(value1: .forYou)
+                        post: summary.postID,
+                        dwellMs: summary.dwellMilliseconds,
+                        completed: summary.completed,
+                        surface: Self.surface(summary.surface),
+                        sequence: summary.sequence,
+                        observedAt: summary.observedAt,
+                        activeDwellMs: summary.activeDwellMilliseconds,
+                        playbackMs: summary.playbackMilliseconds,
+                        coverageMs: summary.coverageMilliseconds,
+                        rewatchMs: summary.rewatchMilliseconds,
+                        playbackFailed: summary.playbackFailed,
+                        attachmentOpened: summary.attachmentOpened,
+                        attachmentReadMs: summary.attachmentReadMilliseconds
                     )
-                }
+                },
+                schemaVersion: 2,
+                batchId: batch.id.uuidString.lowercased(),
+                sessionId: batch.sessionID.uuidString.lowercased()
             ))
         )
         switch output {
@@ -96,6 +107,16 @@ actor SocialAPIRepository {
             return
         case .undocumented(let statusCode, _):
             throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    private static func surface(_ name: String) -> Components.Schemas.ImpressionRequest.SurfacePayload {
+        switch name {
+        case "following": .init(value1: .following)
+        case "discover": .init(value1: .discover)
+        case "profile": .init(value1: .profile)
+        case "for_you": .init(value1: .forYou)
+        default: .init(value1: .other)
         }
     }
 

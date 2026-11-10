@@ -186,6 +186,16 @@ nonisolated struct PostVideoMedia: Equatable, Hashable, Sendable {
     var failed: Bool { processingState == "failed" }
 }
 
+extension FeedPost {
+    /// The length of this post's clip, when it has one a reader can play.
+    /// Nil is what makes a photo report no playback at all rather than none
+    /// watched.
+    var playableClipMilliseconds: Int? {
+        guard let video, video.canPlay, video.durationMilliseconds > 0 else { return nil }
+        return video.durationMilliseconds
+    }
+}
+
 nonisolated struct RepostedPost: Equatable, Hashable, Sendable {
     let id: Int
     var author: PostAuthor

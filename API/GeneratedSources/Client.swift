@@ -10633,6 +10633,8 @@ public struct Client: APIProtocol {
     }
     /// Record a batch of views. Posts the reader cannot see, and their own posts, are ignored rather than refused, so a client does not need to know which of the posts it showed have since gone.
     ///
+    /// With `schema_version` 2 each event is a summary of one exposure measured on the device, and the batch carries a `batch_id`: sending the same batch again adds nothing and answers with `duplicate` true. Figures beyond what could have happened are brought down to it, not refused. A body over 64 kB is a 413.
+    ///
     /// - Remark: HTTP `POST /api/v1/social/impressions/`.
     /// - Remark: Generated from `#/paths//api/v1/social/impressions//post(social_impressions_create)`.
     public func socialImpressionsCreate(_ input: Operations.SocialImpressionsCreate.Input) async throws -> Operations.SocialImpressionsCreate.Output {

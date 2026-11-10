@@ -45,11 +45,17 @@ backend repository). What the app does with it:
   refresh, then the `next` cursor as the last card appears. Each post carries
   `recommendation.label`, shown under the byline; `reason` is a plain string,
   so an unknown one still shows its label.
-- `POST /api/v1/social/impressions/`: which For You cards were at least 60% on
-  screen, for how long, and how far into a clip playback got. Batched by
-  `Services/ImpressionTracker.swift` (at most 50 a request, sent every ten
-  seconds, before every re-rank, and when the tab or app goes away). The
-  server records which reason each post was shown for; the app never sends it.
+- `POST /api/v1/social/impressions/`: one summary per exposure of a card,
+  measured on the device by `Services/AttentionMeter.swift` and sent as
+  `schema_version` 2. A card counts while at least 60% visible, and its
+  active and playback clocks run only with the app in front and no sheet over
+  the feed. Coverage is the union of the stretches of a clip actually played,
+  so a seek covers nothing. `Services/AttentionQueue.swift` holds at most 200
+  summaries for 24 hours, in memory, and seals them into batches of 50 whose
+  id never changes: a batch with no answer is sent again unchanged and the
+  server adds it once. Sent every ten seconds, before every re-rank, and when
+  the tab or app goes away. The server records which reason each post was
+  shown for; the app never sends it.
 - `POST`/`DELETE /api/v1/social/posts/{id}/not-interested/`: "Not interested"
   in a For You card's menu, undone from the line that replaces the card.
 - `GET`/`PATCH /api/v1/social/for-you/preferences/` and
