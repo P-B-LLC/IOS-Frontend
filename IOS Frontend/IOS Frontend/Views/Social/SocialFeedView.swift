@@ -29,6 +29,58 @@ struct SocialFeedView: View {
     /// and -- the tab never having changed -- is never asked again. The feed
     /// then sits on "Nothing here yet" while the server has posts to give
     /// it, which reads as an empty account rather than a dropped request.
+    /// The post whose workout or recipe is open in a sheet.
+    @State private var reading: CommentedPost?
+    /// The feed's one player. Made here so it lives exactly as long as the
+    /// feed does, and is let go with it.
+    @State private var playback = FeedPlaybackCoordinator()
+    @Environment(\.accessibilityReduceMotion) private var reduceMotionForPlayback
+    /// Whether this feed draws the media-first cards. Read once per
+    /// appearance: a switch flipped mid-scroll must not redraw half a page.
+    @State private var usesNewFeed = SocialFeedExperience.isEnabled
+
+    /// One card, in whichever design is switched on.
+    @ViewBuilder
+    private func card(for post: FeedPost, timeOfDay: HomeTimeOfDay) -> some View {
+        if usesNewFeed {
+            FeedPostCard(
+                post: post,
+                timeOfDay: timeOfDay,
+                openComments: { commenting = CommentedPost(id: post.id) },
+                openAuthor: { visiting = VisitedPerson(id: $0) },
+                openPost: { opened = post.id },
+                openAttachment: { reading = CommentedPost(id: post.id) }
+            )
+            // Two thresholds stand in for a fraction: enough to tell the
+            // card that fills the screen from one that merely qualifies.
+            .onScrollVisibilityChange(threshold: 0.95) { mostly in
+                guard let id = post.playableClipID else { return }
+                playback.setVisibility(mostly ? 1 : FeedPlaybackPolicy.playableFraction, postID: id)
+            }
+            .onScrollVisibilityChange(threshold: FeedPlaybackPolicy.playableFraction) { visible in
+                guard let id = post.playableClipID else { return }
+                playback.setVisibility(visible ? FeedPlaybackPolicy.playableFraction : 0, postID: id)
+            }
+        } else {
+            PostCard(
+                post: post,
+                timeOfDay: timeOfDay,
+                // The button raises the threads over the feed
+                // so a comment can be left without losing your
+                // place in it; tapping the card opens the post.
+                openComments: { commenting = CommentedPost(id: post.id) },
+                openAuthor: { visiting = VisitedPerson(id: $0) }
+            )
+            .contentShape(Rectangle())
+            .onTapGesture { opened = post.id }
+        }
+    }
+
+    /// Whether anything is over the feed: a sheet, or a screen pushed on it.
+    private var isFeedCovered: Bool {
+        commenting != nil || isTuning || reading != nil
+    }
+
     private struct FeedLoad: Equatable {
         let mode: FeedMode
         let isConnected: Bool
@@ -208,17 +260,7 @@ struct SocialFeedView: View {
                             // inside it has four of its own, and a button
                             // holding buttons swallows their taps. A tap
                             // anywhere else opens the post.
-                            PostCard(
-                                post: post,
-                                timeOfDay: timeOfDay,
-                                // The button raises the threads over the feed
-                                // so a comment can be left without losing your
-                                // place in it; tapping the card opens the post.
-                                openComments: { commenting = CommentedPost(id: post.id) },
-                                openAuthor: { visiting = VisitedPerson(id: $0) }
-                            )
-                                .contentShape(Rectangle())
-                                .onTapGesture { opened = post.id }
+                            card(for: post, timeOfDay: timeOfDay)
                                 // What was on screen, and for how long, is
                                 // how For You tells a post somebody stopped
                                 // on from one they flicked past. Mostly on
@@ -360,9 +402,47 @@ struct SocialFeedView: View {
         // A sheet over the feed suspends what is under it without ending the
         // exposure: reading the comments and coming back is one look at the
         // post, with a gap in it.
-        .onChange(of: commenting != nil || isTuning) { _, covered in
+        .onChange(of: isFeedCovered) { _, covered in
             store.attentionFeedCovered(covered)
+            playback.setFeedActive(!covered && scenePhase == .active)
         }
+        // Opening the workout or recipe is reading, and is counted as it.
+        .onChange(of: reading) { was, now in
+            if let was { store.attentionAttachment(postID: was.id, isOpen: false) }
+            if let now { store.attentionAttachment(postID: now.id, isOpen: true) }
+        }
+        .sheet(item: $reading) { target in
+            PostAttachmentSheet(postID: target.id, timeOfDay: timeOfDay)
+        }
+        .environment(playback)
+        .task(id: usesNewFeed ? displayedPosts.compactMap(\.playableClipID) : []) {
+            guard usesNewFeed else { return }
+            playback.report = { [store] postID, event in store.attentionPlayback(postID: postID, event) }
+            playback.update {
+                $0.autoplayPreferred = SocialFeedExperience.autoplayPreferred
+                $0.reduceMotion = reduceMotionForPlayback
+            }
+            playback.setClips(displayedPosts.compactMap { post in
+                guard let id = post.playableClipID, let video = post.displayed.video,
+                      let url = video.url, url.scheme == "https" else { return nil }
+                return .init(postID: id, url: url, durationMilliseconds: video.durationMilliseconds)
+            })
+        }
+        .onChange(of: reduceMotionForPlayback) { _, reduce in
+            playback.update { $0.reduceMotion = reduce }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            playback.setFeedActive(phase == .active && !isFeedCovered)
+        }
+        .onChange(of: opened) { _, post in
+            // A pushed post covers the feed as a sheet does.
+            playback.setFeedActive(post == nil && scenePhase == .active && !isFeedCovered)
+        }
+        .onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.y } action: { _, y in
+            if usesNewFeed { playback.scrolled(toOffset: y) }
+        }
+        .onDisappear { playback.stop() }
+        .onAppear { usesNewFeed = SocialFeedExperience.isEnabled }
         .onDisappear {
             Task { await store.finishImpressions() }
         }
@@ -1148,57 +1228,7 @@ struct PostCard: View {
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                 }
                 if post.viewerIsAuthor || post.offersModeration {
-                    Menu {
-                        if post.viewerIsAuthor {
-                            Button(role: .destructive) {
-                                store.delete(post)
-                            } label: {
-                                Label("Delete post", systemImage: "trash")
-                            }
-                        } else {
-                            // Only on For You, the one list the server picks.
-                            // Elsewhere a post is there because of who wrote it,
-                            // and the answer to that is unfollowing.
-                            if post.recommendation != nil {
-                                // A toggle, so the menu shows the choice and
-                                // is the way to take it back; the card stays.
-                                Toggle(isOn: Binding(
-                                    get: { store.wantedPostIDs.contains(post.id) },
-                                    set: { more in
-                                        Task { await store.setMoreLikeThis(more, post: post) }
-                                    }
-                                )) {
-                                    Label("More like this", systemImage: "hand.thumbsup")
-                                }
-                                Button {
-                                    Task { await store.setFewerLikeThis(true, post: post) }
-                                } label: {
-                                    Label("Fewer like this", systemImage: "hand.thumbsdown")
-                                }
-                                Button {
-                                    Task { await store.setNotInterested(true, post: post) }
-                                } label: {
-                                    Label("Not interested", systemImage: "eye.slash")
-                                }
-                            }
-                            // Report asks a question, so it opens a sheet.
-                            // Block does not: it acts on the tap, the way
-                            // every destructive control in this app does.
-                            Button {
-                                reportingPost = post
-                            } label: {
-                                Label("Report post", systemImage: "flag")
-                            }
-                            Button(role: .destructive) {
-                                Task { await store.block(shown.author) }
-                            } label: {
-                                Label(
-                                    "Block \(shown.author.displayName)",
-                                    systemImage: "hand.raised"
-                                )
-                            }
-                        }
-                    } label: {
+                    PostOptionsMenu(post: post, report: { reportingPost = post }) {
                         Image(systemName: "ellipsis")
                             .font(.community(size: 14, weight: .semibold))
                             .foregroundStyle(timeOfDay.canvasSecondaryText)

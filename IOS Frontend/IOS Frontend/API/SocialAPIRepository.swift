@@ -35,8 +35,13 @@ actor SocialAPIRepository {
     /// Paged by cursor rather than by number because the feed is written to
     /// while it is read: someone posts, everything slides down one, and a
     /// numbered page two would repeat a post page one already showed.
-    func feed(after cursor: String? = nil) async throws -> FeedPage {
-        let output = try await client.socialFeedList(query: .init(cursor: cursor))
+    ///
+    /// With `summaries`, workouts and recipes arrive with their totals and
+    /// without their rows; `post(withID:)` has the rows when one is opened.
+    func feed(after cursor: String? = nil, summaries: Bool = false) async throws -> FeedPage {
+        let output = try await client.socialFeedList(
+            query: .init(attachments: summaries ? .summary : nil, cursor: cursor)
+        )
         switch output {
         case .ok(let response):
             let body = try response.body.json
@@ -58,8 +63,10 @@ actor SocialAPIRepository {
     /// reflects what the reader just did. Each later page is ranked from what
     /// the first left, re-scored for whatever the reader liked, dismissed or
     /// scrolled past since -- and never repeats a post an earlier page served.
-    func forYou(after cursor: String? = nil) async throws -> FeedPage {
-        let output = try await client.socialForYouList(query: .init(cursor: cursor))
+    func forYou(after cursor: String? = nil, summaries: Bool = false) async throws -> FeedPage {
+        let output = try await client.socialForYouList(
+            query: .init(attachments: summaries ? .summary : nil, cursor: cursor)
+        )
         switch output {
         case .ok(let response):
             let body = try response.body.json
@@ -1011,7 +1018,8 @@ actor SocialAPIRepository {
             repostOf: payload.repostOf.map { reposted(from: $0.value1) },
             video: payload.video.map { video(from: $0.value1) },
             publishedAt: payload.publishedAt,
-            moderationStatus: payload.moderationStatus
+            moderationStatus: payload.moderationStatus,
+            source: payload.isTake == true ? credit(payload.source?.value1) : nil
         )
     }
 
@@ -1051,7 +1059,8 @@ actor SocialAPIRepository {
                 label: payload.recommendation.value1.label
             ),
             publishedAt: payload.publishedAt,
-            moderationStatus: payload.moderationStatus
+            moderationStatus: payload.moderationStatus,
+            source: payload.isTake == true ? credit(payload.source?.value1) : nil
         )
     }
 
@@ -1088,6 +1097,20 @@ actor SocialAPIRepository {
             person: author(from: payload.person.value1),
             reason: payload.reason,
             label: payload.label
+        )
+    }
+
+    /// The credit on a take. A take whose source the reader may not see
+    /// still has one, saying only that.
+    private static func credit(_ payload: Components.Schemas.PostSource?) -> PostSourceCredit {
+        guard let payload, payload.available, let author = payload.author?.value1 else {
+            return PostSourceCredit()
+        }
+        let name = "\(author.firstName) \(author.lastName)".trimmingCharacters(in: .whitespaces)
+        return PostSourceCredit(
+            postID: payload.postId,
+            authorName: name.isEmpty ? author.username : name,
+            title: payload.title
         )
     }
 
@@ -1174,7 +1197,8 @@ actor SocialAPIRepository {
                     topSetWeightKg: exercise.topSetWeightKg.flatMap { Decimal(string: $0) },
                     topSetReps: exercise.topSetReps
                 )
-            }
+            },
+            detailsIncluded: payload.detailsIncluded ?? true
         )
     }
 
@@ -1196,7 +1220,9 @@ actor SocialAPIRepository {
                     totalCalories: FoodDecimal.value(entry.totalCalories)
                 )
             },
-            cookingInstructions: payload.cookingInstructions ?? ""
+            cookingInstructions: payload.cookingInstructions ?? "",
+            entryCount: payload.entryCount,
+            detailsIncluded: payload.detailsIncluded ?? true
         )
     }
 

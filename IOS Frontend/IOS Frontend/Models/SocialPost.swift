@@ -118,6 +118,10 @@ nonisolated struct PostWorkoutSnapshot: Equatable, Hashable, Sendable {
     var totalVolumeKg: Decimal?
     var routeDistanceKm: Decimal?
     var exercises: [PostExerciseLine]
+    /// False when this came from a page asked for in summary: the figures
+    /// above are right, and `exercises` is empty because it was not sent,
+    /// not because there are none. The post's own read has them.
+    var detailsIncluded: Bool = true
 }
 
 nonisolated struct PostFoodLine: Identifiable, Equatable, Hashable, Sendable {
@@ -140,6 +144,25 @@ nonisolated struct PostMealSnapshot: Equatable, Hashable, Sendable {
     /// Empty for most posts. A meal is a list of foods; this is what somebody
     /// did with them, and only the ones actually cooked have anything to say.
     var cookingInstructions: String = ""
+    /// How many foods are in it, from the server. Nil from one that does not
+    /// say, where the rows themselves are the count.
+    var entryCount: Int? = nil
+    /// False when this came from a page asked for in summary; see
+    /// `PostWorkoutSnapshot.detailsIncluded`.
+    var detailsIncluded: Bool = true
+
+    var foodCount: Int { entryCount ?? entries.count }
+}
+
+/// The post a take answers, as its credit line. `author` is nil when the
+/// reader may not see the source -- deleted, taken down, made private -- and
+/// the card then says only that the original is unavailable.
+nonisolated struct PostSourceCredit: Equatable, Hashable, Sendable {
+    var postID: Int?
+    var authorName: String?
+    var title: String?
+
+    var isAvailable: Bool { postID != nil }
 }
 
 nonisolated struct PostPlannerSnapshot: Equatable, Hashable, Sendable {
@@ -193,6 +216,13 @@ extension FeedPost {
     var playableClipMilliseconds: Int? {
         guard let video, video.canPlay, video.durationMilliseconds > 0 else { return nil }
         return video.durationMilliseconds
+    }
+
+    /// The id the feed's player knows this post's clip by: the post that
+    /// owns the clip, which for a repost is the one it passes on.
+    var playableClipID: Int? {
+        guard isPublished, displayed.video?.canPlay == true else { return nil }
+        return displayed.id
     }
 }
 
@@ -280,6 +310,10 @@ nonisolated struct FeedPost: Identifiable, Equatable, Hashable, Sendable {
     var recommendation: PostRecommendation? = nil
     var publishedAt: Date? = nil
     var moderationStatus: String = "approved"
+    /// Set on a take: what it answers. Nil on everything else, and on any
+    /// post from a server that does not know about takes.
+    var source: PostSourceCredit? = nil
+    var isTake: Bool { source != nil }
 
     var isPublished: Bool { moderationStatus == "approved" }
     var publicationMessage: String? {
@@ -296,14 +330,15 @@ nonisolated struct FeedPost: Identifiable, Equatable, Hashable, Sendable {
     /// exercises recorded is nothing to save.
     var offersWorkoutToSave: Bool {
         guard !viewerIsAuthor else { return false }
-        return !(displayed.workout?.exercises.isEmpty ?? true)
+        // The count, not the rows: a summary has the one without the other.
+        return (displayed.workout?.exerciseCount ?? 0) > 0
     }
 
     /// Whether this post offers a meal the reader could keep. Their own is
     /// already theirs, and a meal with no food in it is nothing to save.
     var offersMealToSave: Bool {
         guard !viewerIsAuthor else { return false }
-        return !(displayed.meal?.entries.isEmpty ?? true)
+        return (displayed.meal?.foodCount ?? 0) > 0
     }
 
     /// Whether this post can be reported or its author blocked. Neither is

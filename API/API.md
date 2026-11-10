@@ -96,3 +96,25 @@ Valid transitions are `planned → active → completed`. Repeating or skipping 
 - Resource ownership is derived from the authentication token and cannot be assigned in request bodies.
 
 The committed [OpenAPI schema](openapi.yaml) is the source of truth for request and response shapes.
+
+## The media-first feed (off by default)
+
+`Services/SocialFeedExperience.swift` holds two switches in `UserDefaults`:
+`social.newFeed` turns on the new cards, and `social.autoplay` (on unless
+set false) lets clips start by themselves. A launch argument sets either:
+`-social.newFeed YES`.
+
+With the feed on:
+
+- Feed and For You are asked for with `?attachments=summary`. A card draws a
+  workout or recipe from its title and totals; `PostAttachmentSheet` and the
+  post's own page read the rows for that one post (`SocialStore.loadDetails`).
+- `Services/FeedPlaybackCoordinator.swift` owns the feed's one `AVPlayer`.
+  `Services/FeedPlaybackPolicy.swift` decides which clip plays and which one
+  is got ready: the card most on screen, at least 60% visible; at most the
+  next clip prepared; nothing new during rapid scrolling; no autoplay with
+  Reduce Motion, on a constrained or expensive connection, or when the
+  reader turned it off. Clips start muted.
+- What plays is reported to `AttentionMeter`, and opening a workout or
+  recipe is counted as reading it.
+

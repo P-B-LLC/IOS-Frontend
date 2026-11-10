@@ -163,7 +163,7 @@ final class SocialStore {
             self.repository = repository
 
             let readRevision = publications.revision
-            let page = try await repository.feed()
+            let page = try await repository.feed(summaries: SocialFeedExperience.isEnabled)
             guard connectionGeneration == generation else { return }
             feed = reconcilePublicPage(page.posts, readRevision: readRevision, prependOwn: true)
             nextCursor = page.nextCursor
@@ -215,6 +215,9 @@ final class SocialStore {
         comments = [:]
         locallyBlockedAuthorIDs = []
         openedPosts = [:]
+        detailedPosts = [:]
+        loadingDetailsFor = []
+        failedDetailsFor = []
         authorPosts = [:]
         loadingCommentsFor = []
         loadingPostsFor = []
@@ -266,7 +269,7 @@ final class SocialStore {
         clearError()
         let readRevision = publications.revision
         do {
-            let page = try await repository.feed()
+            let page = try await repository.feed(summaries: SocialFeedExperience.isEnabled)
             guard connectionGeneration == generation, followingReadID == readID else { return }
             feed = reconcilePublicPage(page.posts, readRevision: readRevision, prependOwn: true)
             nextCursor = page.nextCursor
@@ -297,7 +300,7 @@ final class SocialStore {
         defer { if connectionGeneration == generation { isLoadingMore = false } }
 
         do {
-            let page = try await repository.feed(after: cursor)
+            let page = try await repository.feed(after: cursor, summaries: SocialFeedExperience.isEnabled)
             guard connectionGeneration == generation, followingReadID == readID, nextCursor == cursor else { return }
             // Filtered against what is already held rather than appended
             // blindly: a post written between two page reads shifts the
@@ -830,7 +833,7 @@ final class SocialStore {
         guard connectionGeneration == generation, forYouReadID == readID else { return }
         let readRevision = publications.revision
         do {
-            let page = try await repository.forYou()
+            let page = try await repository.forYou(summaries: SocialFeedExperience.isEnabled)
             guard connectionGeneration == generation, forYouReadID == readID else { return }
             publications.acknowledgeFirstPage(readRevision: readRevision)
             forYou = ownRecommendation(reconcilePublicPage(page.posts, readRevision: readRevision, prependOwn: true))
@@ -870,7 +873,7 @@ final class SocialStore {
         // scrolled past is part of that.
         await flushImpressions()
         do {
-            let page = try await repository.forYou(after: cursor)
+            let page = try await repository.forYou(after: cursor, summaries: SocialFeedExperience.isEnabled)
             guard connectionGeneration == generation, forYouReadID == readID, forYouCursor == cursor else { return }
             // The server never repeats a post within a session; a session that
             // expired starts again from the top, and that can. A duplicate id
@@ -1957,6 +1960,61 @@ final class SocialStore {
             ?? forYou.first { $0.id == id }
             ?? discoverPosts.first { $0.id == id }
             ?? openedPosts[id]
+    }
+
+    // MARK: - Details on demand
+
+    /// Posts read whole because somebody opened their workout or recipe. A
+    /// feed page carries summaries; the rows are fetched for the one post
+    /// that was asked about, once, and kept while the account is connected.
+    private(set) var detailedPosts: [Int: FeedPost] = [:]
+    private(set) var loadingDetailsFor: Set<Int> = []
+    /// Posts whose details could not be read, so the sheet can say so and
+    /// offer to try again rather than spin.
+    private(set) var failedDetailsFor: Set<Int> = []
+
+    /// The post with its exercises or foods, when they are on hand: from the
+    /// feed if the page carried them, otherwise from a read made for them.
+    func detailed(_ post: FeedPost) -> FeedPost? {
+        let shown = post.displayed
+        if shown.workout?.detailsIncluded ?? shown.meal?.detailsIncluded ?? true { return post }
+        return detailedPosts[shown.id]
+    }
+
+    /// The post as held, with the rows of its workout or recipe put in when
+    /// they have been read. Everything else -- counts, whether the reader
+    /// liked or saved it -- stays the live copy's, which is the one that
+    /// changes as they tap.
+    func withDetails(_ post: FeedPost) -> FeedPost {
+        guard let full = detailedPosts[post.displayed.id]?.displayed else { return post }
+        var merged = post
+        if var original = merged.repostOf {
+            original.workout = full.workout ?? original.workout
+            original.meal = full.meal ?? original.meal
+            merged.repostOf = original
+        } else {
+            merged.workout = full.workout ?? merged.workout
+            merged.meal = full.meal ?? merged.meal
+        }
+        return merged
+    }
+
+    /// Reads a post's exercises or foods if they are not already on hand.
+    func loadDetails(for post: FeedPost) async {
+        let id = post.displayed.id
+        guard let repository, detailed(post) == nil, !loadingDetailsFor.contains(id) else { return }
+        let generation = connectionGeneration
+        loadingDetailsFor.insert(id)
+        failedDetailsFor.remove(id)
+        defer { if connectionGeneration == generation { loadingDetailsFor.remove(id) } }
+        do {
+            let loaded = try await repository.post(withID: id)
+            guard connectionGeneration == generation else { return }
+            detailedPosts[id] = loaded
+        } catch {
+            guard connectionGeneration == generation else { return }
+            failedDetailsFor.insert(id)
+        }
     }
 
     /// Fetches a post the feed does not have. Does nothing when it does.
