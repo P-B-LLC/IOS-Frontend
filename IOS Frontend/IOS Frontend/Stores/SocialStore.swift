@@ -746,6 +746,51 @@ final class SocialStore {
         }
     }
 
+    /// Posts whose "I tried this" is on its way, so a second tap waits.
+    private(set) var triedPending: Set<Int> = []
+
+    /// Says "I tried this" about a post, or takes it back.
+    ///
+    /// Only ever from this tap. Nothing the reader tracks -- a workout
+    /// finished from a saved copy, a meal logged -- calls this for them.
+    func toggleTried(_ post: FeedPost) async {
+        guard let repository else { return }
+        let generation = connectionGeneration
+        let id = post.id
+        guard post.repostOf == nil, !triedPending.contains(id) else { return }
+        let current = self.post(withID: id) ?? post
+        triedPending.insert(id)
+        defer { triedPending.remove(id) }
+        do {
+            let saved = try await repository.setTried(!current.viewerHasTried, postID: id)
+            guard connectionGeneration == generation else { return }
+            applyTried(tried: saved.viewerHasTried, count: saved.triedCount, originalID: id)
+        } catch {
+            guard connectionGeneration == generation else { return }
+            showFailure(error)
+        }
+    }
+
+    private func applyTried(tried: Bool, count: Int, originalID: Int) {
+        func update(_ post: inout FeedPost) {
+            guard post.id == originalID else { return }
+            post.viewerHasTried = tried
+            post.triedCount = max(0, count)
+        }
+        for index in feed.indices { update(&feed[index]) }
+        for index in forYou.indices { update(&forYou[index]) }
+        for index in discoverPosts.indices { update(&discoverPosts[index]) }
+        for index in searchedPosts.indices { update(&searchedPosts[index]) }
+        for id in Array(openedPosts.keys) {
+            if var post = openedPosts[id] { update(&post); openedPosts[id] = post }
+        }
+        for author in Array(authorPosts.keys) {
+            guard var posts = authorPosts[author] else { continue }
+            for index in posts.indices { update(&posts[index]) }
+            authorPosts[author] = posts
+        }
+    }
+
     private func applyLike(_ saved: SocialLikeCoordinator.Confirmation, originalID: Int) {
         func update(_ post: inout FeedPost) {
             guard post.id == originalID || post.repostOf?.id == originalID else { return }

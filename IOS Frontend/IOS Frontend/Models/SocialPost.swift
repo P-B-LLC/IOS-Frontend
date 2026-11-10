@@ -325,6 +325,10 @@ nonisolated struct FeedPost: Identifiable, Equatable, Hashable, Sendable {
     var takeCount: Int = 0
     /// Whether the reader could post a take of this now.
     var viewerCanTake: Bool = false
+    /// How many people have said "I tried this", and whether the reader has.
+    /// Only ever their own statement: nothing tracked sets it.
+    var triedCount: Int = 0
+    var viewerHasTried: Bool = false
     /// The sound its clip is set to, when it has one the reader may hear of.
     var sound: PostSoundCredit? = nil
 

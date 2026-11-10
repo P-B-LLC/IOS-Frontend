@@ -482,6 +482,25 @@ actor SocialAPIRepository {
         }
     }
 
+    /// Says "I tried this" about a post, or takes it back, and answers with
+    /// the card as it now stands. Idempotent in both directions.
+    func setTried(_ tried: Bool, postID: Int) async throws -> FeedPost {
+        if tried {
+            switch try await client.socialPostsTriedCreate(path: .init(id: postID)) {
+            case .ok(let response):
+                return Self.post(from: try response.body.json)
+            case .undocumented(let statusCode, _):
+                throw APIServiceError.undocumentedStatus(statusCode)
+            }
+        }
+        switch try await client.socialPostsTriedDestroy(path: .init(id: postID)) {
+        case .ok(let response):
+            return Self.post(from: try response.body.json)
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
     /// Passes the post on to the reader's followers, or takes it back.
     ///
     /// Answers with the **original**, which is not always the post asked
@@ -1025,6 +1044,8 @@ actor SocialAPIRepository {
             source: payload.isTake == true ? credit(payload.source?.value1) : nil,
             takeCount: payload.takeCount ?? 0,
             viewerCanTake: payload.viewerCanTake ?? false,
+            triedCount: payload.triedCount ?? 0,
+            viewerHasTried: payload.viewerHasTried ?? false,
             sound: (payload.sound?.value1).map(sound)
         )
     }
@@ -1069,6 +1090,8 @@ actor SocialAPIRepository {
             source: payload.isTake == true ? credit(payload.source?.value1) : nil,
             takeCount: payload.takeCount ?? 0,
             viewerCanTake: payload.viewerCanTake ?? false,
+            triedCount: payload.triedCount ?? 0,
+            viewerHasTried: payload.viewerHasTried ?? false,
             sound: (payload.sound?.value1).map(sound)
         )
     }

@@ -12103,6 +12103,130 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// Say "I tried this" about somebody else's post. It is the reader's own statement and is only ever made by this request: nothing they track -- a finished workout, a logged meal -- makes it for them. Saying it twice is not an error.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/tried/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/tried//post(social_posts_tried_create)`.
+    public func socialPostsTriedCreate(_ input: Operations.SocialPostsTriedCreate.Input) async throws -> Operations.SocialPostsTriedCreate.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SocialPostsTriedCreate.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/social/posts/{}/tried/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .post
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SocialPostsTriedCreate.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.Post.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Take back "I tried this". Answers with the post, not 204.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/tried/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/tried//delete(social_posts_tried_destroy)`.
+    public func socialPostsTriedDestroy(_ input: Operations.SocialPostsTriedDestroy.Input) async throws -> Operations.SocialPostsTriedDestroy.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SocialPostsTriedDestroy.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/social/posts/{}/tried/",
+                    parameters: [
+                        input.path.id
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .delete
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SocialPostsTriedDestroy.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.Post.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
     /// Attach a clip to your own post, replacing any clip already on it. Send the file itself as the request body with a video Content-Type -- not base64, not multipart.
     ///
     /// Accepted: MP4 or QuickTime with H.264 or HEVC video, within the server's size, length and dimension limits. What the file is, and how it is stored, is read from its bytes; the Content-Type only has to say it is a video. Location and device metadata are removed before the clip is stored.

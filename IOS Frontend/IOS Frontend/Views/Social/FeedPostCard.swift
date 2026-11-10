@@ -87,6 +87,11 @@ struct FeedPostCard: View {
             media
             if shown.workout != nil || shown.meal != nil {
                 attachmentRow
+                // On the post itself. A repost passes somebody's post on;
+                // the statement belongs on the original's own card.
+                if post.repostOf == nil && !post.viewerIsAuthor && post.isPublished {
+                    triedRow
+                }
             }
             if post.takeCount > 0 || post.viewerCanTake {
                 takesRow
@@ -428,6 +433,33 @@ struct FeedPostCard: View {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .strokeBorder(timeOfDay.border, lineWidth: 1)
         }
+    }
+
+    /// "I tried this": the reader's own word, said by this tap and nothing else.
+    private var triedRow: some View {
+        Button {
+            Task { await store.toggleTried(post) }
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: post.viewerHasTried ? "checkmark.circle.fill" : "checkmark.circle")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(post.viewerHasTried ? timeOfDay.accent : timeOfDay.canvasSecondaryText)
+                Text(post.viewerHasTried ? "You tried this" : "I tried this")
+                if post.triedCount > 0 {
+                    Text(verbatim: "·")
+                    Text("\(post.triedCount) tried this")
+                }
+                Spacer(minLength: 0)
+            }
+            .font(.community(.footnote, weight: .semibold))
+            .foregroundStyle(timeOfDay.canvasSecondaryText)
+            .padding(.horizontal, 6)
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(store.triedPending.contains(post.id))
+        .accessibilityAddTraits(post.viewerHasTried ? .isSelected : [])
     }
 
     @ViewBuilder

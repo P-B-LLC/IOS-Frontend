@@ -1118,6 +1118,16 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /api/v1/social/posts/{id}/takes/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/takes//get(social_posts_takes_list)`.
     func socialPostsTakesList(_ input: Operations.SocialPostsTakesList.Input) async throws -> Operations.SocialPostsTakesList.Output
+    /// Say "I tried this" about somebody else's post. It is the reader's own statement and is only ever made by this request: nothing they track -- a finished workout, a logged meal -- makes it for them. Saying it twice is not an error.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/tried/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/tried//post(social_posts_tried_create)`.
+    func socialPostsTriedCreate(_ input: Operations.SocialPostsTriedCreate.Input) async throws -> Operations.SocialPostsTriedCreate.Output
+    /// Take back "I tried this". Answers with the post, not 204.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/tried/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/tried//delete(social_posts_tried_destroy)`.
+    func socialPostsTriedDestroy(_ input: Operations.SocialPostsTriedDestroy.Input) async throws -> Operations.SocialPostsTriedDestroy.Output
     /// Attach a clip to your own post, replacing any clip already on it. Send the file itself as the request body with a video Content-Type -- not base64, not multipart.
     ///
     /// Accepted: MP4 or QuickTime with H.264 or HEVC video, within the server's size, length and dimension limits. What the file is, and how it is stored, is read from its bytes; the Content-Type only has to say it is a video. Location and device metadata are removed before the clip is stored.
@@ -3684,6 +3694,32 @@ extension APIProtocol {
         try await socialPostsTakesList(Operations.SocialPostsTakesList.Input(
             path: path,
             query: query,
+            headers: headers
+        ))
+    }
+    /// Say "I tried this" about somebody else's post. It is the reader's own statement and is only ever made by this request: nothing they track -- a finished workout, a logged meal -- makes it for them. Saying it twice is not an error.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/tried/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/tried//post(social_posts_tried_create)`.
+    public func socialPostsTriedCreate(
+        path: Operations.SocialPostsTriedCreate.Input.Path,
+        headers: Operations.SocialPostsTriedCreate.Input.Headers = .init()
+    ) async throws -> Operations.SocialPostsTriedCreate.Output {
+        try await socialPostsTriedCreate(Operations.SocialPostsTriedCreate.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Take back "I tried this". Answers with the post, not 204.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/tried/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/tried//delete(social_posts_tried_destroy)`.
+    public func socialPostsTriedDestroy(
+        path: Operations.SocialPostsTriedDestroy.Input.Path,
+        headers: Operations.SocialPostsTriedDestroy.Input.Headers = .init()
+    ) async throws -> Operations.SocialPostsTriedDestroy.Output {
+        try await socialPostsTriedDestroy(Operations.SocialPostsTriedDestroy.Input(
+            path: path,
             headers: headers
         ))
     }
@@ -6378,6 +6414,10 @@ public enum Components {
             public var viewerCanTake: Swift.Bool?
             /// - Remark: Generated from `#/components/schemas/ForYouPost/take_count`.
             public var takeCount: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/tried_count`.
+            public var triedCount: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/viewer_has_tried`.
+            public var viewerHasTried: Swift.Bool?
             /// - Remark: Generated from `#/components/schemas/ForYouPost/recommendation`.
             public struct RecommendationPayload: Codable, Hashable, Sendable {
                 /// - Remark: Generated from `#/components/schemas/ForYouPost/recommendation/value1`.
@@ -6439,6 +6479,8 @@ public enum Components {
             ///   - prompt:
             ///   - viewerCanTake:
             ///   - takeCount:
+            ///   - triedCount:
+            ///   - viewerHasTried:
             ///   - recommendation:
             public init(
                 id: Swift.Int,
@@ -6479,6 +6521,8 @@ public enum Components {
                 prompt: Swift.String? = nil,
                 viewerCanTake: Swift.Bool? = nil,
                 takeCount: Swift.Int? = nil,
+                triedCount: Swift.Int? = nil,
+                viewerHasTried: Swift.Bool? = nil,
                 recommendation: Components.Schemas.ForYouPost.RecommendationPayload
             ) {
                 self.id = id
@@ -6519,6 +6563,8 @@ public enum Components {
                 self.prompt = prompt
                 self.viewerCanTake = viewerCanTake
                 self.takeCount = takeCount
+                self.triedCount = triedCount
+                self.viewerHasTried = viewerHasTried
                 self.recommendation = recommendation
             }
             public enum CodingKeys: String, CodingKey {
@@ -6560,6 +6606,8 @@ public enum Components {
                 case prompt
                 case viewerCanTake = "viewer_can_take"
                 case takeCount = "take_count"
+                case triedCount = "tried_count"
+                case viewerHasTried = "viewer_has_tried"
                 case recommendation
             }
         }
@@ -10559,6 +10607,10 @@ public enum Components {
             public var viewerCanTake: Swift.Bool?
             /// - Remark: Generated from `#/components/schemas/Post/take_count`.
             public var takeCount: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/Post/tried_count`.
+            public var triedCount: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/Post/viewer_has_tried`.
+            public var viewerHasTried: Swift.Bool?
             /// Creates a new `Post`.
             ///
             /// - Parameters:
@@ -10600,6 +10652,8 @@ public enum Components {
             ///   - prompt:
             ///   - viewerCanTake:
             ///   - takeCount:
+            ///   - triedCount:
+            ///   - viewerHasTried:
             public init(
                 id: Swift.Int,
                 author: Components.Schemas.Post.AuthorPayload,
@@ -10638,7 +10692,9 @@ public enum Components {
                 reusePermission: Swift.String? = nil,
                 prompt: Swift.String? = nil,
                 viewerCanTake: Swift.Bool? = nil,
-                takeCount: Swift.Int? = nil
+                takeCount: Swift.Int? = nil,
+                triedCount: Swift.Int? = nil,
+                viewerHasTried: Swift.Bool? = nil
             ) {
                 self.id = id
                 self.author = author
@@ -10678,6 +10734,8 @@ public enum Components {
                 self.prompt = prompt
                 self.viewerCanTake = viewerCanTake
                 self.takeCount = takeCount
+                self.triedCount = triedCount
+                self.viewerHasTried = viewerHasTried
             }
             public enum CodingKeys: String, CodingKey {
                 case id
@@ -10718,6 +10776,8 @@ public enum Components {
                 case prompt
                 case viewerCanTake = "viewer_can_take"
                 case takeCount = "take_count"
+                case triedCount = "tried_count"
+                case viewerHasTried = "viewer_has_tried"
             }
         }
         /// A comment, and the replies hanging off it.
@@ -38216,6 +38276,266 @@ public enum Operations {
             /// - Throws: An error if `self` is not `.ok`.
             /// - SeeAlso: `.ok`.
             public var ok: Operations.SocialPostsTakesList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Say "I tried this" about somebody else's post. It is the reader's own statement and is only ever made by this request: nothing they track -- a finished workout, a logged meal -- makes it for them. Saying it twice is not an error.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/tried/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/tried//post(social_posts_tried_create)`.
+    public enum SocialPostsTriedCreate {
+        public static let id: Swift.String = "social_posts_tried_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/tried/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this post.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/tried/POST/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this post.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialPostsTriedCreate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/tried/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsTriedCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsTriedCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialPostsTriedCreate.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.SocialPostsTriedCreate.Input.Path,
+                headers: Operations.SocialPostsTriedCreate.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/tried/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/tried/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Post)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Post {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialPostsTriedCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialPostsTriedCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/tried//post(social_posts_tried_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialPostsTriedCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialPostsTriedCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Take back "I tried this". Answers with the post, not 204.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/tried/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/tried//delete(social_posts_tried_destroy)`.
+    public enum SocialPostsTriedDestroy {
+        public static let id: Swift.String = "social_posts_tried_destroy"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/tried/DELETE/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this post.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/tried/DELETE/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this post.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialPostsTriedDestroy.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/tried/DELETE/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsTriedDestroy.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsTriedDestroy.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialPostsTriedDestroy.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.SocialPostsTriedDestroy.Input.Path,
+                headers: Operations.SocialPostsTriedDestroy.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/tried/DELETE/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/tried/DELETE/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Post)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Post {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialPostsTriedDestroy.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialPostsTriedDestroy.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/tried//delete(social_posts_tried_destroy)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialPostsTriedDestroy.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialPostsTriedDestroy.Output.Ok {
                 get throws {
                     switch self {
                     case let .ok(response):
