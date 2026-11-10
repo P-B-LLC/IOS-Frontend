@@ -154,6 +154,13 @@ nonisolated struct PostMealSnapshot: Equatable, Hashable, Sendable {
     var foodCount: Int { entryCount ?? entries.count }
 }
 
+/// The sound a clip is set to, as its credit line.
+nonisolated struct PostSoundCredit: Equatable, Hashable, Sendable {
+    let id: Int
+    var title: String
+    var ownerName: String
+}
+
 /// The post a take answers, as its credit line. `author` is nil when the
 /// reader may not see the source -- deleted, taken down, made private -- and
 /// the card then says only that the original is unavailable.
@@ -314,6 +321,12 @@ nonisolated struct FeedPost: Identifiable, Equatable, Hashable, Sendable {
     /// post from a server that does not know about takes.
     var source: PostSourceCredit? = nil
     var isTake: Bool { source != nil }
+    /// How many takes of this anybody could see. The same for every reader.
+    var takeCount: Int = 0
+    /// Whether the reader could post a take of this now.
+    var viewerCanTake: Bool = false
+    /// The sound its clip is set to, when it has one the reader may hear of.
+    var sound: PostSoundCredit? = nil
 
     var isPublished: Bool { moderationStatus == "approved" }
     var publicationMessage: String? {

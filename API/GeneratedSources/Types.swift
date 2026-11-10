@@ -1137,6 +1137,39 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /api/v1/social/posts/{post_id}/video-upload/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{post_id}/video-upload//post(social_posts_video_upload_create)`.
     func socialPostsVideoUploadCreate(_ input: Operations.SocialPostsVideoUploadCreate.Input) async throws -> Operations.SocialPostsVideoUploadCreate.Output
+    /// The prompts a post can answer. Send a code as `prompt` when creating a post; browse one with `?prompt=` on the post list.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/prompts/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/prompts//get(social_prompts_list)`.
+    func socialPromptsList(_ input: Operations.SocialPromptsList.Input) async throws -> Operations.SocialPromptsList.Output
+    /// Publish the audio of one of your own posts as a sound others may set their clips to. The post needs an approved video with audio. Asking again for the same post answers 200 with the sound already made. The audio is prepared shortly afterwards; until then `audio_url` is null.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/sounds/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds//post(social_sounds_create)`.
+    func socialSoundsCreate(_ input: Operations.SocialSoundsCreate.Input) async throws -> Operations.SocialSoundsCreate.Output
+    /// - Remark: HTTP `GET /api/v1/social/sounds/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}//get(social_sounds_retrieve)`.
+    func socialSoundsRetrieve(_ input: Operations.SocialSoundsRetrieve.Input) async throws -> Operations.SocialSoundsRetrieve.Output
+    /// Rename your sound, or change who may use it. Closing it stops new uses; posts already set to it keep it.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/social/sounds/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}//patch(social_sounds_partial_update)`.
+    func socialSoundsPartialUpdate(_ input: Operations.SocialSoundsPartialUpdate.Input) async throws -> Operations.SocialSoundsPartialUpdate.Output
+    /// Take your sound down. Posts set to it stay and lose its credit, its audio stops being served, and nobody new can use it. `restore` puts all of that back.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/sounds/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}//delete(social_sounds_destroy)`.
+    func socialSoundsDestroy(_ input: Operations.SocialSoundsDestroy.Input) async throws -> Operations.SocialSoundsDestroy.Output
+    /// The posts set to this sound that the reader may see, newest first. A sound that has been taken down has no such list.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/sounds/{id}/posts/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}/posts//get(social_sounds_posts_list)`.
+    func socialSoundsPostsList(_ input: Operations.SocialSoundsPostsList.Input) async throws -> Operations.SocialSoundsPostsList.Output
+    /// Put back a sound you took down. Not one a moderator removed.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/sounds/{id}/restore/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}/restore//post(social_sounds_restore_create)`.
+    func socialSoundsRestoreCreate(_ input: Operations.SocialSoundsRestoreCreate.Input) async throws -> Operations.SocialSoundsRestoreCreate.Output
     /// - Remark: HTTP `GET /api/v1/social/spotlight/`.
     /// - Remark: Generated from `#/paths//api/v1/social/spotlight//get(community_spotlight_retrieve)`.
     func communitySpotlightRetrieve(_ input: Operations.CommunitySpotlightRetrieve.Input) async throws -> Operations.CommunitySpotlightRetrieve.Output
@@ -3701,6 +3734,87 @@ extension APIProtocol {
             body: body
         ))
     }
+    /// The prompts a post can answer. Send a code as `prompt` when creating a post; browse one with `?prompt=` on the post list.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/prompts/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/prompts//get(social_prompts_list)`.
+    public func socialPromptsList(headers: Operations.SocialPromptsList.Input.Headers = .init()) async throws -> Operations.SocialPromptsList.Output {
+        try await socialPromptsList(Operations.SocialPromptsList.Input(headers: headers))
+    }
+    /// Publish the audio of one of your own posts as a sound others may set their clips to. The post needs an approved video with audio. Asking again for the same post answers 200 with the sound already made. The audio is prepared shortly afterwards; until then `audio_url` is null.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/sounds/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds//post(social_sounds_create)`.
+    public func socialSoundsCreate(
+        headers: Operations.SocialSoundsCreate.Input.Headers = .init(),
+        body: Operations.SocialSoundsCreate.Input.Body
+    ) async throws -> Operations.SocialSoundsCreate.Output {
+        try await socialSoundsCreate(Operations.SocialSoundsCreate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// - Remark: HTTP `GET /api/v1/social/sounds/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}//get(social_sounds_retrieve)`.
+    public func socialSoundsRetrieve(
+        path: Operations.SocialSoundsRetrieve.Input.Path,
+        headers: Operations.SocialSoundsRetrieve.Input.Headers = .init()
+    ) async throws -> Operations.SocialSoundsRetrieve.Output {
+        try await socialSoundsRetrieve(Operations.SocialSoundsRetrieve.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Rename your sound, or change who may use it. Closing it stops new uses; posts already set to it keep it.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/social/sounds/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}//patch(social_sounds_partial_update)`.
+    public func socialSoundsPartialUpdate(
+        path: Operations.SocialSoundsPartialUpdate.Input.Path,
+        headers: Operations.SocialSoundsPartialUpdate.Input.Headers = .init(),
+        body: Operations.SocialSoundsPartialUpdate.Input.Body? = nil
+    ) async throws -> Operations.SocialSoundsPartialUpdate.Output {
+        try await socialSoundsPartialUpdate(Operations.SocialSoundsPartialUpdate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Take your sound down. Posts set to it stay and lose its credit, its audio stops being served, and nobody new can use it. `restore` puts all of that back.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/sounds/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}//delete(social_sounds_destroy)`.
+    public func socialSoundsDestroy(path: Operations.SocialSoundsDestroy.Input.Path) async throws -> Operations.SocialSoundsDestroy.Output {
+        try await socialSoundsDestroy(Operations.SocialSoundsDestroy.Input(path: path))
+    }
+    /// The posts set to this sound that the reader may see, newest first. A sound that has been taken down has no such list.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/sounds/{id}/posts/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}/posts//get(social_sounds_posts_list)`.
+    public func socialSoundsPostsList(
+        path: Operations.SocialSoundsPostsList.Input.Path,
+        query: Operations.SocialSoundsPostsList.Input.Query = .init(),
+        headers: Operations.SocialSoundsPostsList.Input.Headers = .init()
+    ) async throws -> Operations.SocialSoundsPostsList.Output {
+        try await socialSoundsPostsList(Operations.SocialSoundsPostsList.Input(
+            path: path,
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Put back a sound you took down. Not one a moderator removed.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/sounds/{id}/restore/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}/restore//post(social_sounds_restore_create)`.
+    public func socialSoundsRestoreCreate(
+        path: Operations.SocialSoundsRestoreCreate.Input.Path,
+        headers: Operations.SocialSoundsRestoreCreate.Input.Headers = .init()
+    ) async throws -> Operations.SocialSoundsRestoreCreate.Output {
+        try await socialSoundsRestoreCreate(Operations.SocialSoundsRestoreCreate.Input(
+            path: path,
+            headers: headers
+        ))
+    }
     /// - Remark: HTTP `GET /api/v1/social/spotlight/`.
     /// - Remark: Generated from `#/paths//api/v1/social/spotlight//get(community_spotlight_retrieve)`.
     public func communitySpotlightRetrieve(headers: Operations.CommunitySpotlightRetrieve.Input.Headers = .init()) async throws -> Operations.CommunitySpotlightRetrieve.Output {
@@ -4975,6 +5089,8 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CreatePostRequest/topics`.
             public var topics: [Swift.String]?
+            /// - Remark: Generated from `#/components/schemas/CreatePostRequest/prompt`.
+            public var prompt: Swift.String?
             /// Creates a new `CreatePostRequest`.
             ///
             /// - Parameters:
@@ -4992,6 +5108,7 @@ public enum Components {
             ///   - reusePermission:
             ///   - language: The language the caption is written in, as a tag such as en or pt-BR.
             ///   - topics: What the post is about: up to five codes for a type of training (type:running) or a discipline (discipline:powerlifting).
+            ///   - prompt:
             public init(
                 kind: Components.Schemas.CreatePostKindEnum,
                 sourceId: Swift.Int? = nil,
@@ -5006,7 +5123,8 @@ public enum Components {
                 soundId: Swift.Int64? = nil,
                 reusePermission: Components.Schemas.CreatePostRequest.ReusePermissionPayload? = nil,
                 language: Swift.String? = nil,
-                topics: [Swift.String]? = nil
+                topics: [Swift.String]? = nil,
+                prompt: Swift.String? = nil
             ) {
                 self.kind = kind
                 self.sourceId = sourceId
@@ -5022,6 +5140,7 @@ public enum Components {
                 self.reusePermission = reusePermission
                 self.language = language
                 self.topics = topics
+                self.prompt = prompt
             }
             public enum CodingKeys: String, CodingKey {
                 case kind
@@ -5038,6 +5157,56 @@ public enum Components {
                 case reusePermission = "reuse_permission"
                 case language
                 case topics
+                case prompt
+            }
+        }
+        /// What an author says when they make a post's audio a sound.
+        ///
+        /// - Remark: Generated from `#/components/schemas/CreateSoundRequest`.
+        public struct CreateSoundRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CreateSoundRequest/title`.
+            public var title: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/CreateSoundRequest/reuse_permission`.
+            public struct ReusePermissionPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/CreateSoundRequest/reuse_permission/value1`.
+                public var value1: Components.Schemas.ReusePermissionEnum
+                /// Creates a new `ReusePermissionPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.ReusePermissionEnum) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try decoder.decodeFromSingleValueContainer()
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeToSingleValueContainer(self.value1)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/CreateSoundRequest/reuse_permission`.
+            public var reusePermission: Components.Schemas.CreateSoundRequest.ReusePermissionPayload?
+            /// - Remark: Generated from `#/components/schemas/CreateSoundRequest/post`.
+            public var post: Swift.Int64
+            /// Creates a new `CreateSoundRequest`.
+            ///
+            /// - Parameters:
+            ///   - title:
+            ///   - reusePermission:
+            ///   - post:
+            public init(
+                title: Swift.String? = nil,
+                reusePermission: Components.Schemas.CreateSoundRequest.ReusePermissionPayload? = nil,
+                post: Swift.Int64
+            ) {
+                self.title = title
+                self.reusePermission = reusePermission
+                self.post = post
+            }
+            public enum CodingKeys: String, CodingKey {
+                case title
+                case reusePermission = "reuse_permission"
+                case post
             }
         }
         /// Whoever a credit line names: enough to print "by Mia Chen" and link to
@@ -6203,8 +6372,12 @@ public enum Components {
             public var audience: Swift.String?
             /// - Remark: Generated from `#/components/schemas/ForYouPost/reuse_permission`.
             public var reusePermission: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/prompt`.
+            public var prompt: Swift.String?
             /// - Remark: Generated from `#/components/schemas/ForYouPost/viewer_can_take`.
             public var viewerCanTake: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/take_count`.
+            public var takeCount: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/ForYouPost/recommendation`.
             public struct RecommendationPayload: Codable, Hashable, Sendable {
                 /// - Remark: Generated from `#/components/schemas/ForYouPost/recommendation/value1`.
@@ -6263,7 +6436,9 @@ public enum Components {
             ///   - attachmentVersion:
             ///   - audience:
             ///   - reusePermission:
+            ///   - prompt:
             ///   - viewerCanTake:
+            ///   - takeCount:
             ///   - recommendation:
             public init(
                 id: Swift.Int,
@@ -6301,7 +6476,9 @@ public enum Components {
                 attachmentVersion: Swift.Int? = nil,
                 audience: Swift.String? = nil,
                 reusePermission: Swift.String? = nil,
+                prompt: Swift.String? = nil,
                 viewerCanTake: Swift.Bool? = nil,
+                takeCount: Swift.Int? = nil,
                 recommendation: Components.Schemas.ForYouPost.RecommendationPayload
             ) {
                 self.id = id
@@ -6339,7 +6516,9 @@ public enum Components {
                 self.attachmentVersion = attachmentVersion
                 self.audience = audience
                 self.reusePermission = reusePermission
+                self.prompt = prompt
                 self.viewerCanTake = viewerCanTake
+                self.takeCount = takeCount
                 self.recommendation = recommendation
             }
             public enum CodingKeys: String, CodingKey {
@@ -6378,7 +6557,9 @@ public enum Components {
                 case attachmentVersion = "attachment_version"
                 case audience
                 case reusePermission = "reuse_permission"
+                case prompt
                 case viewerCanTake = "viewer_can_take"
+                case takeCount = "take_count"
                 case recommendation
             }
         }
@@ -9203,6 +9384,8 @@ public enum Components {
             public var language: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PatchedUpdatePostRequest/topics`.
             public var topics: [Swift.String]?
+            /// - Remark: Generated from `#/components/schemas/PatchedUpdatePostRequest/prompt`.
+            public var prompt: Swift.String?
             /// Creates a new `PatchedUpdatePostRequest`.
             ///
             /// - Parameters:
@@ -9211,18 +9394,21 @@ public enum Components {
             ///   - reusePermission:
             ///   - language:
             ///   - topics:
+            ///   - prompt:
             public init(
                 caption: Swift.String? = nil,
                 visibility: Components.Schemas.VisibilityEnum? = nil,
                 reusePermission: Components.Schemas.ReusePermissionEnum? = nil,
                 language: Swift.String? = nil,
-                topics: [Swift.String]? = nil
+                topics: [Swift.String]? = nil,
+                prompt: Swift.String? = nil
             ) {
                 self.caption = caption
                 self.visibility = visibility
                 self.reusePermission = reusePermission
                 self.language = language
                 self.topics = topics
+                self.prompt = prompt
             }
             public enum CodingKeys: String, CodingKey {
                 case caption
@@ -9230,6 +9416,32 @@ public enum Components {
                 case reusePermission = "reuse_permission"
                 case language
                 case topics
+                case prompt
+            }
+        }
+        /// What an author says when they make a post's audio a sound.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PatchedUpdateSoundRequest`.
+        public struct PatchedUpdateSoundRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PatchedUpdateSoundRequest/title`.
+            public var title: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedUpdateSoundRequest/reuse_permission`.
+            public var reusePermission: Components.Schemas.ReusePermissionEnum?
+            /// Creates a new `PatchedUpdateSoundRequest`.
+            ///
+            /// - Parameters:
+            ///   - title:
+            ///   - reusePermission:
+            public init(
+                title: Swift.String? = nil,
+                reusePermission: Components.Schemas.ReusePermissionEnum? = nil
+            ) {
+                self.title = title
+                self.reusePermission = reusePermission
+            }
+            public enum CodingKeys: String, CodingKey {
+                case title
+                case reusePermission = "reuse_permission"
             }
         }
         /// - Remark: Generated from `#/components/schemas/PatchedWorkoutCycleRequest`.
@@ -10341,8 +10553,12 @@ public enum Components {
             public var audience: Swift.String?
             /// - Remark: Generated from `#/components/schemas/Post/reuse_permission`.
             public var reusePermission: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Post/prompt`.
+            public var prompt: Swift.String?
             /// - Remark: Generated from `#/components/schemas/Post/viewer_can_take`.
             public var viewerCanTake: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/Post/take_count`.
+            public var takeCount: Swift.Int?
             /// Creates a new `Post`.
             ///
             /// - Parameters:
@@ -10381,7 +10597,9 @@ public enum Components {
             ///   - attachmentVersion:
             ///   - audience:
             ///   - reusePermission:
+            ///   - prompt:
             ///   - viewerCanTake:
+            ///   - takeCount:
             public init(
                 id: Swift.Int,
                 author: Components.Schemas.Post.AuthorPayload,
@@ -10418,7 +10636,9 @@ public enum Components {
                 attachmentVersion: Swift.Int? = nil,
                 audience: Swift.String? = nil,
                 reusePermission: Swift.String? = nil,
-                viewerCanTake: Swift.Bool? = nil
+                prompt: Swift.String? = nil,
+                viewerCanTake: Swift.Bool? = nil,
+                takeCount: Swift.Int? = nil
             ) {
                 self.id = id
                 self.author = author
@@ -10455,7 +10675,9 @@ public enum Components {
                 self.attachmentVersion = attachmentVersion
                 self.audience = audience
                 self.reusePermission = reusePermission
+                self.prompt = prompt
                 self.viewerCanTake = viewerCanTake
+                self.takeCount = takeCount
             }
             public enum CodingKeys: String, CodingKey {
                 case id
@@ -10493,7 +10715,9 @@ public enum Components {
                 case attachmentVersion = "attachment_version"
                 case audience
                 case reusePermission = "reuse_permission"
+                case prompt
                 case viewerCanTake = "viewer_can_take"
+                case takeCount = "take_count"
             }
         }
         /// A comment, and the replies hanging off it.
@@ -11775,6 +11999,31 @@ public enum Components {
                 case socialLinks = "social_links"
             }
         }
+        /// A prompt a post can answer, by its code and the words to show.
+        ///
+        /// - Remark: Generated from `#/components/schemas/Prompt`.
+        public struct Prompt: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/Prompt/code`.
+            public var code: Swift.String
+            /// - Remark: Generated from `#/components/schemas/Prompt/label`.
+            public var label: Swift.String
+            /// Creates a new `Prompt`.
+            ///
+            /// - Parameters:
+            ///   - code:
+            ///   - label:
+            public init(
+                code: Swift.String,
+                label: Swift.String
+            ) {
+                self.code = code
+                self.label = label
+            }
+            public enum CodingKeys: String, CodingKey {
+                case code
+                case label
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser`.
         public struct PublicRepbaseUser: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/community_label`.
@@ -12759,6 +13008,8 @@ public enum Components {
             public var audience: Swift.String?
             /// - Remark: Generated from `#/components/schemas/RepostedPost/reuse_permission`.
             public var reusePermission: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/prompt`.
+            public var prompt: Swift.String?
             /// Creates a new `RepostedPost`.
             ///
             /// - Parameters:
@@ -12783,6 +13034,7 @@ public enum Components {
             ///   - attachmentVersion:
             ///   - audience:
             ///   - reusePermission:
+            ///   - prompt:
             public init(
                 id: Swift.Int,
                 author: Components.Schemas.RepostedPost.AuthorPayload,
@@ -12804,7 +13056,8 @@ public enum Components {
                 language: Swift.String? = nil,
                 attachmentVersion: Swift.Int? = nil,
                 audience: Swift.String? = nil,
-                reusePermission: Swift.String? = nil
+                reusePermission: Swift.String? = nil,
+                prompt: Swift.String? = nil
             ) {
                 self.id = id
                 self.author = author
@@ -12827,6 +13080,7 @@ public enum Components {
                 self.attachmentVersion = attachmentVersion
                 self.audience = audience
                 self.reusePermission = reusePermission
+                self.prompt = prompt
             }
             public enum CodingKeys: String, CodingKey {
                 case id
@@ -12850,6 +13104,7 @@ public enum Components {
                 case attachmentVersion = "attachment_version"
                 case audience
                 case reusePermission = "reuse_permission"
+                case prompt
             }
         }
         /// * `everyone` - Anyone who can see it
@@ -13625,6 +13880,103 @@ public enum Components {
             case warmup = "warmup"
             case drop = "drop"
             case failure = "failure"
+        }
+        /// A sound, as anybody who may use or hear it reads it.
+        ///
+        /// - Remark: Generated from `#/components/schemas/Sound`.
+        public struct Sound: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/Sound/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/Sound/title`.
+            public var title: Swift.String
+            /// - Remark: Generated from `#/components/schemas/Sound/owner`.
+            public struct OwnerPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/Sound/owner/value1`.
+                public var value1: Components.Schemas.CreditedPerson
+                /// Creates a new `OwnerPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.CreditedPerson) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/Sound/owner`.
+            public var owner: Components.Schemas.Sound.OwnerPayload
+            /// - Remark: Generated from `#/components/schemas/Sound/duration_ms`.
+            public var durationMs: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/Sound/reuse_permission`.
+            public var reusePermission: Swift.String
+            /// - Remark: Generated from `#/components/schemas/Sound/origin_post_id`.
+            public var originPostId: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/Sound/audio_url`.
+            public var audioUrl: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Sound/use_count`.
+            public var useCount: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/Sound/viewer_is_owner`.
+            public var viewerIsOwner: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/Sound/viewer_can_use`.
+            public var viewerCanUse: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/Sound/created_at`.
+            public var createdAt: Foundation.Date
+            /// Creates a new `Sound`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - title:
+            ///   - owner:
+            ///   - durationMs:
+            ///   - reusePermission:
+            ///   - originPostId:
+            ///   - audioUrl:
+            ///   - useCount:
+            ///   - viewerIsOwner:
+            ///   - viewerCanUse:
+            ///   - createdAt:
+            public init(
+                id: Swift.Int,
+                title: Swift.String,
+                owner: Components.Schemas.Sound.OwnerPayload,
+                durationMs: Swift.Int? = nil,
+                reusePermission: Swift.String,
+                originPostId: Swift.Int? = nil,
+                audioUrl: Swift.String? = nil,
+                useCount: Swift.Int,
+                viewerIsOwner: Swift.Bool,
+                viewerCanUse: Swift.Bool,
+                createdAt: Foundation.Date
+            ) {
+                self.id = id
+                self.title = title
+                self.owner = owner
+                self.durationMs = durationMs
+                self.reusePermission = reusePermission
+                self.originPostId = originPostId
+                self.audioUrl = audioUrl
+                self.useCount = useCount
+                self.viewerIsOwner = viewerIsOwner
+                self.viewerCanUse = viewerCanUse
+                self.createdAt = createdAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case title
+                case owner
+                case durationMs = "duration_ms"
+                case reusePermission = "reuse_permission"
+                case originPostId = "origin_post_id"
+                case audioUrl = "audio_url"
+                case useCount = "use_count"
+                case viewerIsOwner = "viewer_is_owner"
+                case viewerCanUse = "viewer_can_use"
+                case createdAt = "created_at"
+            }
         }
         /// * `planned` - Planned
         /// * `active` - Active
@@ -35594,6 +35946,10 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/social/posts/GET/query/page`.
                 public var page: Swift.Int?
+                /// Return only posts answering this prompt, by its code.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/GET/query/prompt`.
+                public var prompt: Swift.String?
                 /// Return only posts matching this, ignoring case: the caption, the author's username or name, the title of the workout, meal or planner entry attached, or the name of a food or exercise inside it — so a meal posted as "Meal 1" is still found by the chicken in it. Narrows what the reader is already allowed to see and never widens it, so a post hidden from them stays hidden however well it matches. Combines with `author` when both are given.
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/social/posts/GET/query/search`.
@@ -35605,18 +35961,21 @@ public enum Operations {
                 ///   - author: Return only posts by this user, still filtered by what the reader is allowed to see.
                 ///   - fromFollowing: Split the list by whether the reader follows the author. `true` is the people they follow; `false` is the people they do not, and also drops the reader's own posts, because a page for finding new people should not open with your own. Omitted, the list is everybody. Anything other than true or false is a 400 rather than a guess.
                 ///   - page: A page number within the paginated result set.
+                ///   - prompt: Return only posts answering this prompt, by its code.
                 ///   - search: Return only posts matching this, ignoring case: the caption, the author's username or name, the title of the workout, meal or planner entry attached, or the name of a food or exercise inside it — so a meal posted as "Meal 1" is still found by the chicken in it. Narrows what the reader is already allowed to see and never widens it, so a post hidden from them stays hidden however well it matches. Combines with `author` when both are given.
                 public init(
                     attachments: Operations.SocialPostsList.Input.Query.AttachmentsPayload? = nil,
                     author: Swift.Int? = nil,
                     fromFollowing: Swift.Bool? = nil,
                     page: Swift.Int? = nil,
+                    prompt: Swift.String? = nil,
                     search: Swift.String? = nil
                 ) {
                     self.attachments = attachments
                     self.author = author
                     self.fromFollowing = fromFollowing
                     self.page = page
+                    self.prompt = prompt
                     self.search = search
                 }
             }
@@ -38276,6 +38635,912 @@ public enum Operations {
                     default:
                         try throwUnexpectedResponseStatus(
                             expectedStatus: "created",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// The prompts a post can answer. Send a code as `prompt` when creating a post; browse one with `?prompt=` on the post list.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/prompts/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/prompts//get(social_prompts_list)`.
+    public enum SocialPromptsList {
+        public static let id: Swift.String = "social_prompts_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/prompts/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPromptsList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPromptsList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialPromptsList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            public init(headers: Operations.SocialPromptsList.Input.Headers = .init()) {
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/prompts/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/prompts/GET/responses/200/content/application\/json`.
+                    case json([Components.Schemas.Prompt])
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: [Components.Schemas.Prompt] {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialPromptsList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialPromptsList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/prompts//get(social_prompts_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialPromptsList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialPromptsList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Publish the audio of one of your own posts as a sound others may set their clips to. The post needs an approved video with audio. Asking again for the same post answers 200 with the sound already made. The audio is prepared shortly afterwards; until then `audio_url` is null.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/sounds/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds//post(social_sounds_create)`.
+    public enum SocialSoundsCreate {
+        public static let id: Swift.String = "social_sounds_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/sounds/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialSoundsCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialSoundsCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialSoundsCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/social/sounds/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.CreateSoundRequest)
+            }
+            public var body: Operations.SocialSoundsCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.SocialSoundsCreate.Input.Headers = .init(),
+                body: Operations.SocialSoundsCreate.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Created: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/POST/responses/201/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/sounds/POST/responses/201/content/application\/json`.
+                    case json(Components.Schemas.Sound)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Sound {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialSoundsCreate.Output.Created.Body
+                /// Creates a new `Created`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialSoundsCreate.Output.Created.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/sounds//post(social_sounds_create)/responses/201`.
+            ///
+            /// HTTP response code: `201 created`.
+            case created(Operations.SocialSoundsCreate.Output.Created)
+            /// The associated value of the enum case if `self` is `.created`.
+            ///
+            /// - Throws: An error if `self` is not `.created`.
+            /// - SeeAlso: `.created`.
+            public var created: Operations.SocialSoundsCreate.Output.Created {
+                get throws {
+                    switch self {
+                    case let .created(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "created",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/sounds/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Sound)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Sound {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialSoundsCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialSoundsCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/sounds//post(social_sounds_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialSoundsCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialSoundsCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// - Remark: HTTP `GET /api/v1/social/sounds/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}//get(social_sounds_retrieve)`.
+    public enum SocialSoundsRetrieve {
+        public static let id: Swift.String = "social_sounds_retrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/GET/path`.
+            public struct Path: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/GET/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id:
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialSoundsRetrieve.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialSoundsRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialSoundsRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialSoundsRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.SocialSoundsRetrieve.Input.Path,
+                headers: Operations.SocialSoundsRetrieve.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Sound)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Sound {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialSoundsRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialSoundsRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}//get(social_sounds_retrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialSoundsRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialSoundsRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Rename your sound, or change who may use it. Closing it stops new uses; posts already set to it keep it.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/social/sounds/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}//patch(social_sounds_partial_update)`.
+    public enum SocialSoundsPartialUpdate {
+        public static let id: Swift.String = "social_sounds_partial_update"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/PATCH/path`.
+            public struct Path: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/PATCH/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id:
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialSoundsPartialUpdate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/PATCH/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialSoundsPartialUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialSoundsPartialUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialSoundsPartialUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/PATCH/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/PATCH/requestBody/content/application\/json`.
+                case json(Components.Schemas.PatchedUpdateSoundRequest)
+            }
+            public var body: Operations.SocialSoundsPartialUpdate.Input.Body?
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.SocialSoundsPartialUpdate.Input.Path,
+                headers: Operations.SocialSoundsPartialUpdate.Input.Headers = .init(),
+                body: Operations.SocialSoundsPartialUpdate.Input.Body? = nil
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/PATCH/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/PATCH/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Sound)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Sound {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialSoundsPartialUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialSoundsPartialUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}//patch(social_sounds_partial_update)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialSoundsPartialUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialSoundsPartialUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Take your sound down. Posts set to it stay and lose its credit, its audio stops being served, and nobody new can use it. `restore` puts all of that back.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/sounds/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}//delete(social_sounds_destroy)`.
+    public enum SocialSoundsDestroy {
+        public static let id: Swift.String = "social_sounds_destroy"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/DELETE/path`.
+            public struct Path: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/DELETE/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id:
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialSoundsDestroy.Input.Path
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            public init(path: Operations.SocialSoundsDestroy.Input.Path) {
+                self.path = path
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct NoContent: Sendable, Hashable {
+                /// Creates a new `NoContent`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}//delete(social_sounds_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            case noContent(Operations.SocialSoundsDestroy.Output.NoContent)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}//delete(social_sounds_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            public static var noContent: Self {
+                .noContent(.init())
+            }
+            /// The associated value of the enum case if `self` is `.noContent`.
+            ///
+            /// - Throws: An error if `self` is not `.noContent`.
+            /// - SeeAlso: `.noContent`.
+            public var noContent: Operations.SocialSoundsDestroy.Output.NoContent {
+                get throws {
+                    switch self {
+                    case let .noContent(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "noContent",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// The posts set to this sound that the reader may see, newest first. A sound that has been taken down has no such list.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/sounds/{id}/posts/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}/posts//get(social_sounds_posts_list)`.
+    public enum SocialSoundsPostsList {
+        public static let id: Swift.String = "social_sounds_posts_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/posts/GET/path`.
+            public struct Path: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/posts/GET/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id:
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialSoundsPostsList.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/posts/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/posts/GET/query/attachments`.
+                @frozen public enum AttachmentsPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case full = "full"
+                    case summary = "summary"
+                }
+                /// How much of each posted workout or recipe to send. `full`, the default, sends every exercise and food. `summary` sends the title and totals a card prints and leaves `exercises`, `entries` and `cooking_instructions` empty, with `details_included` false; read the post itself for the rest.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/posts/GET/query/attachments`.
+                public var attachments: Operations.SocialSoundsPostsList.Input.Query.AttachmentsPayload?
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/posts/GET/query/cursor`.
+                public var cursor: Swift.String?
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/posts/GET/query/page_size`.
+                public var pageSize: Swift.Int?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - attachments: How much of each posted workout or recipe to send. `full`, the default, sends every exercise and food. `summary` sends the title and totals a card prints and leaves `exercises`, `entries` and `cooking_instructions` empty, with `details_included` false; read the post itself for the rest.
+                ///   - cursor:
+                ///   - pageSize:
+                public init(
+                    attachments: Operations.SocialSoundsPostsList.Input.Query.AttachmentsPayload? = nil,
+                    cursor: Swift.String? = nil,
+                    pageSize: Swift.Int? = nil
+                ) {
+                    self.attachments = attachments
+                    self.cursor = cursor
+                    self.pageSize = pageSize
+                }
+            }
+            public var query: Operations.SocialSoundsPostsList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/posts/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialSoundsPostsList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialSoundsPostsList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialSoundsPostsList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - query:
+            ///   - headers:
+            public init(
+                path: Operations.SocialSoundsPostsList.Input.Path,
+                query: Operations.SocialSoundsPostsList.Input.Query = .init(),
+                headers: Operations.SocialSoundsPostsList.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/posts/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/posts/GET/responses/200/content/application\/json`.
+                    case json([Components.Schemas.Post])
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: [Components.Schemas.Post] {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialSoundsPostsList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialSoundsPostsList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}/posts//get(social_sounds_posts_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialSoundsPostsList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialSoundsPostsList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Put back a sound you took down. Not one a moderator removed.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/sounds/{id}/restore/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}/restore//post(social_sounds_restore_create)`.
+    public enum SocialSoundsRestoreCreate {
+        public static let id: Swift.String = "social_sounds_restore_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/restore/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/restore/POST/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id:
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialSoundsRestoreCreate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/restore/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialSoundsRestoreCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialSoundsRestoreCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialSoundsRestoreCreate.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.SocialSoundsRestoreCreate.Input.Path,
+                headers: Operations.SocialSoundsRestoreCreate.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/restore/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/restore/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Sound)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Sound {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialSoundsRestoreCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialSoundsRestoreCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}/restore//post(social_sounds_restore_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialSoundsRestoreCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialSoundsRestoreCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
                             response: self
                         )
                     }

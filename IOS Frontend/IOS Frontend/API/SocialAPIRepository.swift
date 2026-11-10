@@ -349,7 +349,9 @@ actor SocialAPIRepository {
         // A clip goes up next, to the post this makes. Says so, because a
         // media post with no photo is otherwise refused as empty -- and it
         // stays its author's alone until the clip is ready.
-        expectsVideo: Bool = false
+        expectsVideo: Bool = false,
+        // The post this is a take of. The server decides whether it may be.
+        takeOf sourcePostID: Int? = nil
     ) async throws -> FeedPost {
         guard let kindPayload = Components.Schemas.CreatePostKindEnum(
             rawValue: kind.apiValue
@@ -388,7 +390,8 @@ actor SocialAPIRepository {
                     cookingInstructions: cookingInstructions.isEmpty
                         ? nil
                         : cookingInstructions,
-                    expectsVideo: expectsVideo ? true : nil
+                    expectsVideo: expectsVideo ? true : nil,
+                    sourcePostId: sourcePostID.map(Int64.init)
                 )
             )
         )
@@ -406,7 +409,7 @@ actor SocialAPIRepository {
 
     /// Fields whose refusals are already sentences about the post being made.
     private static let postRefusalFields: Set<String> = [
-        "image_base64", "source_id", "video", "caption", "kind",
+        "image_base64", "source_id", "video", "caption", "kind", "source_post_id",
     ]
 
     /// The caption and who can see it. The snapshot is a record of what
@@ -1019,7 +1022,10 @@ actor SocialAPIRepository {
             video: payload.video.map { video(from: $0.value1) },
             publishedAt: payload.publishedAt,
             moderationStatus: payload.moderationStatus,
-            source: payload.isTake == true ? credit(payload.source?.value1) : nil
+            source: payload.isTake == true ? credit(payload.source?.value1) : nil,
+            takeCount: payload.takeCount ?? 0,
+            viewerCanTake: payload.viewerCanTake ?? false,
+            sound: (payload.sound?.value1).map(sound)
         )
     }
 
@@ -1060,7 +1066,10 @@ actor SocialAPIRepository {
             ),
             publishedAt: payload.publishedAt,
             moderationStatus: payload.moderationStatus,
-            source: payload.isTake == true ? credit(payload.source?.value1) : nil
+            source: payload.isTake == true ? credit(payload.source?.value1) : nil,
+            takeCount: payload.takeCount ?? 0,
+            viewerCanTake: payload.viewerCanTake ?? false,
+            sound: (payload.sound?.value1).map(sound)
         )
     }
 
@@ -1098,6 +1107,27 @@ actor SocialAPIRepository {
             reason: payload.reason,
             label: payload.label
         )
+    }
+
+    private static func sound(_ payload: Components.Schemas.PostSound) -> PostSoundCredit {
+        let owner = payload.owner.value1
+        let name = "\(owner.firstName) \(owner.lastName)".trimmingCharacters(in: .whitespaces)
+        return PostSoundCredit(id: payload.id, title: payload.title, ownerName: name.isEmpty ? owner.username : name)
+    }
+
+    /// The takes posted of a post that the reader may see, newest first, a
+    /// page at a time. Summaries: this is a list of cards.
+    func takes(ofPost postID: Int, after cursor: String? = nil) async throws -> FeedPage {
+        let output = try await client.socialPostsTakesList(
+            path: .init(id: postID), query: .init(attachments: .summary, cursor: cursor)
+        )
+        switch output {
+        case .ok(let response):
+            let body = try response.body.json
+            return FeedPage(posts: body.results.map(Self.post(from:)), nextCursor: try nextCursor(body.next))
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
     }
 
     /// The credit on a take. A take whose source the reader may not see

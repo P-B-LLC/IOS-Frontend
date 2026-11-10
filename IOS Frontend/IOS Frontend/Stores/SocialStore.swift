@@ -215,6 +215,10 @@ final class SocialStore {
         comments = [:]
         locallyBlockedAuthorIDs = []
         openedPosts = [:]
+        takesByPost = [:]
+        takeCursors = [:]
+        loadingTakesFor = []
+        failedTakesFor = []
         detailedPosts = [:]
         loadingDetailsFor = []
         failedDetailsFor = []
@@ -569,7 +573,8 @@ final class SocialStore {
         showsWeights: Bool = true,
         photo: PostPhoto? = nil,
         cookingInstructions: String = "",
-        video: PostVideoDraft? = nil
+        video: PostVideoDraft? = nil,
+        takeOf: Int? = nil
     ) async -> Bool {
         guard !isPosting else { return false }
         guard let repository else {
@@ -599,7 +604,8 @@ final class SocialStore {
                 showsWeights: showsWeights,
                 photo: photo,
                 cookingInstructions: cookingInstructions,
-                expectsVideo: video != nil
+                expectsVideo: video != nil,
+                takeOf: takeOf
             )
             guard connectionGeneration == generation else { return false }
             publications.trackSubmission(id: posted.id, awaitingAttachment: video != nil)
@@ -1960,6 +1966,39 @@ final class SocialStore {
             ?? forYou.first { $0.id == id }
             ?? discoverPosts.first { $0.id == id }
             ?? openedPosts[id]
+    }
+
+    // MARK: - Takes
+
+    /// The takes of a post, as last read, by the post they answer.
+    private(set) var takesByPost: [Int: [FeedPost]] = [:]
+    private var takeCursors: [Int: String] = [:]
+    private(set) var loadingTakesFor: Set<Int> = []
+    private(set) var failedTakesFor: Set<Int> = []
+
+    func hasMoreTakes(of postID: Int) -> Bool { takeCursors[postID] != nil }
+
+    /// Reads the first page of a post's takes, or the next when `more`.
+    func loadTakes(of postID: Int, more: Bool = false) async {
+        guard let repository, !loadingTakesFor.contains(postID) else { return }
+        let cursor = more ? takeCursors[postID] : nil
+        if more, cursor == nil { return }
+        let generation = connectionGeneration
+        loadingTakesFor.insert(postID)
+        failedTakesFor.remove(postID)
+        defer { if connectionGeneration == generation { loadingTakesFor.remove(postID) } }
+        do {
+            let page = try await repository.takes(ofPost: postID, after: cursor)
+            guard connectionGeneration == generation else { return }
+            let shown = page.posts.filter { !locallyBlockedAuthorIDs.contains($0.author.id) }
+            let known = more ? takesByPost[postID] ?? [] : []
+            let ids = Set(known.map(\.id))
+            takesByPost[postID] = known + shown.filter { !ids.contains($0.id) }
+            takeCursors[postID] = page.nextCursor
+        } catch {
+            guard connectionGeneration == generation else { return }
+            failedTakesFor.insert(postID)
+        }
     }
 
     // MARK: - Details on demand

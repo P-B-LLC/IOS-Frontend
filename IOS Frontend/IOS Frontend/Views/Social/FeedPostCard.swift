@@ -53,6 +53,8 @@ struct FeedPostCard: View {
     var openPost: () -> Void
     /// Raises the workout or recipe sheet.
     var openAttachment: () -> Void
+    /// Raises the takes of this post.
+    var openTakes: () -> Void
 
     @Environment(SocialStore.self) private var store
     @Environment(FeedPlaybackCoordinator.self) private var playback
@@ -85,6 +87,9 @@ struct FeedPostCard: View {
             media
             if shown.workout != nil || shown.meal != nil {
                 attachmentRow
+            }
+            if post.takeCount > 0 || post.viewerCanTake {
+                takesRow
             }
         }
         .padding(.horizontal, RepbaseDesign.pageInset)
@@ -264,6 +269,18 @@ struct FeedPostCard: View {
                     .opacity(0.85)
                     .lineLimit(1)
             }
+            if let sound = post.sound {
+                Label {
+                    // The sound's own name and its owner's: nothing to
+                    // translate, and nothing to build a sentence from.
+                    Text(verbatim: "\(sound.title) · \(sound.ownerName)")
+                } icon: {
+                    Image(systemName: "music.note")
+                }
+                .font(.community(.caption))
+                .lineLimit(1)
+                .opacity(0.9)
+            }
             if let source = post.source {
                 Label {
                     if let name = source.authorName {
@@ -350,6 +367,30 @@ struct FeedPostCard: View {
         .buttonStyle(.plain)
         .accessibilityLabel(label)
         .accessibilityValue(count > 0 ? Text(count, format: .number) : Text(verbatim: ""))
+    }
+
+    /// Who else made this, and the way in to making it yours.
+    private var takesRow: some View {
+        Button(action: openTakes) {
+            HStack(spacing: 8) {
+                Image(systemName: "arrow.triangle.2.circlepath")
+                    .font(.system(size: 13, weight: .semibold))
+                if post.takeCount > 0 {
+                    Text("\(post.takeCount) takes")
+                } else {
+                    Text("Post your take")
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+            }
+            .font(.community(.footnote, weight: .semibold))
+            .foregroundStyle(timeOfDay.canvasSecondaryText)
+            .padding(.horizontal, 6)
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: What can be tried

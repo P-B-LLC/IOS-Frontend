@@ -31,6 +31,10 @@ struct SocialFeedView: View {
     /// it, which reads as an empty account rather than a dropped request.
     /// The post whose workout or recipe is open in a sheet.
     @State private var reading: CommentedPost?
+    /// The post whose takes are open in a sheet.
+    @State private var answering: CommentedPost?
+    /// The post a take is being written of.
+    @State private var takingOf: PostComposerView.TakeTarget?
     /// The feed's one player. Made here so it lives exactly as long as the
     /// feed does, and is let go with it.
     @State private var playback = FeedPlaybackCoordinator()
@@ -49,7 +53,8 @@ struct SocialFeedView: View {
                 openComments: { commenting = CommentedPost(id: post.id) },
                 openAuthor: { visiting = VisitedPerson(id: $0) },
                 openPost: { opened = post.id },
-                openAttachment: { reading = CommentedPost(id: post.id) }
+                openAttachment: { reading = CommentedPost(id: post.id) },
+                openTakes: { answering = CommentedPost(id: post.displayed.id) }
             )
             // Two thresholds stand in for a fraction: enough to tell the
             // card that fills the screen from one that merely qualifies.
@@ -78,7 +83,7 @@ struct SocialFeedView: View {
 
     /// Whether anything is over the feed: a sheet, or a screen pushed on it.
     private var isFeedCovered: Bool {
-        commenting != nil || isTuning || reading != nil
+        commenting != nil || isTuning || reading != nil || answering != nil || takingOf != nil
     }
 
     private struct FeedLoad: Equatable {
@@ -413,6 +418,22 @@ struct SocialFeedView: View {
         }
         .sheet(item: $reading) { target in
             PostAttachmentSheet(postID: target.id, timeOfDay: timeOfDay)
+        }
+        .sheet(item: $answering) { target in
+            PostTakesSheet(
+                postID: target.id,
+                timeOfDay: timeOfDay,
+                openPost: { opened = $0 },
+                startTake: {
+                    let author = store.post(withID: target.id)?.displayed.author.displayName ?? ""
+                    takingOf = .init(id: target.id, authorName: author)
+                }
+            )
+        }
+        .fullScreenCover(item: $takingOf, onDismiss: {
+            Task { await store.refreshPublicationStatuses() }
+        }) { target in
+            PostComposerView(takeOf: target)
         }
         .environment(playback)
         .task(id: usesNewFeed ? displayedPosts.compactMap(\.playableClipID) : []) {
