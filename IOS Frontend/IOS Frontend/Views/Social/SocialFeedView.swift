@@ -464,6 +464,10 @@ struct SocialFeedView: View {
         }
         .onDisappear { playback.stop() }
         .onAppear { usesNewFeed = SocialFeedExperience.isEnabled }
+        .onChange(of: store.featuresRevision) { usesNewFeed = SocialFeedExperience.isEnabled }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { await store.refreshFeatures() } }
+        }
         .onDisappear {
             Task { await store.finishImpressions() }
         }

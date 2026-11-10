@@ -891,6 +891,11 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /api/v1/social/comments/{id}/report/`.
     /// - Remark: Generated from `#/paths//api/v1/social/comments/{id}/report//post(social_comments_report_create)`.
     func socialCommentsReportCreate(_ input: Operations.SocialCommentsReportCreate.Input) async throws -> Operations.SocialCommentsReportCreate.Output
+    /// Which parts of the new Social this account has been given. The app asks at launch and when it returns to the foreground, and treats a part it is not told about, or a failed request, as off. The server enforces the ones that are its to enforce -- takes, sounds, measurement and ranking -- whatever the app does.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/features/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/features//get(social_features_retrieve)`.
+    func socialFeaturesRetrieve(_ input: Operations.SocialFeaturesRetrieve.Input) async throws -> Operations.SocialFeaturesRetrieve.Output
     /// What the people you follow have posted, newest first.
     ///
     /// Fanned out on read: a page is one indexed walk over the posts of everyone
@@ -3287,6 +3292,13 @@ extension APIProtocol {
             headers: headers,
             body: body
         ))
+    }
+    /// Which parts of the new Social this account has been given. The app asks at launch and when it returns to the foreground, and treats a part it is not told about, or a failed request, as off. The server enforces the ones that are its to enforce -- takes, sounds, measurement and ranking -- whatever the app does.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/features/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/features//get(social_features_retrieve)`.
+    public func socialFeaturesRetrieve(headers: Operations.SocialFeaturesRetrieve.Input.Headers = .init()) async throws -> Operations.SocialFeaturesRetrieve.Output {
+        try await socialFeaturesRetrieve(Operations.SocialFeaturesRetrieve.Input(headers: headers))
     }
     /// What the people you follow have posted, newest first.
     ///
@@ -13940,6 +13952,62 @@ public enum Components {
             case warmup = "warmup"
             case drop = "drop"
             case failure = "failure"
+        }
+        /// Which parts of the new Social are on for the account (`core.rollout`).
+        /// Every one may be missing from an older server, and missing means off.
+        ///
+        /// - Remark: Generated from `#/components/schemas/SocialFeatures`.
+        public struct SocialFeatures: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SocialFeatures/new_feed`.
+            public var newFeed: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/SocialFeatures/autoplay`.
+            public var autoplay: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/SocialFeatures/measurement_v2`.
+            public var measurementV2: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/SocialFeatures/measured_ranking`.
+            public var measuredRanking: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/SocialFeatures/sounds`.
+            public var sounds: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/SocialFeatures/takes`.
+            public var takes: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/SocialFeatures/ranked_for_you`.
+            public var rankedForYou: Swift.Bool?
+            /// Creates a new `SocialFeatures`.
+            ///
+            /// - Parameters:
+            ///   - newFeed:
+            ///   - autoplay:
+            ///   - measurementV2:
+            ///   - measuredRanking:
+            ///   - sounds:
+            ///   - takes:
+            ///   - rankedForYou:
+            public init(
+                newFeed: Swift.Bool? = nil,
+                autoplay: Swift.Bool? = nil,
+                measurementV2: Swift.Bool? = nil,
+                measuredRanking: Swift.Bool? = nil,
+                sounds: Swift.Bool? = nil,
+                takes: Swift.Bool? = nil,
+                rankedForYou: Swift.Bool? = nil
+            ) {
+                self.newFeed = newFeed
+                self.autoplay = autoplay
+                self.measurementV2 = measurementV2
+                self.measuredRanking = measuredRanking
+                self.sounds = sounds
+                self.takes = takes
+                self.rankedForYou = rankedForYou
+            }
+            public enum CodingKeys: String, CodingKey {
+                case newFeed = "new_feed"
+                case autoplay
+                case measurementV2 = "measurement_v2"
+                case measuredRanking = "measured_ranking"
+                case sounds
+                case takes
+                case rankedForYou = "ranked_for_you"
+            }
         }
         /// A sound, as anybody who may use or hear it reads it.
         ///
@@ -34487,6 +34555,116 @@ public enum Operations {
                     default:
                         try throwUnexpectedResponseStatus(
                             expectedStatus: "created",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Which parts of the new Social this account has been given. The app asks at launch and when it returns to the foreground, and treats a part it is not told about, or a failed request, as off. The server enforces the ones that are its to enforce -- takes, sounds, measurement and ranking -- whatever the app does.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/features/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/features//get(social_features_retrieve)`.
+    public enum SocialFeaturesRetrieve {
+        public static let id: Swift.String = "social_features_retrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/features/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialFeaturesRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialFeaturesRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialFeaturesRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            public init(headers: Operations.SocialFeaturesRetrieve.Input.Headers = .init()) {
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/features/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/features/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.SocialFeatures)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.SocialFeatures {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialFeaturesRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialFeaturesRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/features//get(social_features_retrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialFeaturesRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialFeaturesRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
                             response: self
                         )
                     }

@@ -161,6 +161,10 @@ final class SocialStore {
                 token: token
             )
             self.repository = repository
+            // Before the first feed is asked for, so it is asked for in the
+            // shape this account has been given. A failure leaves the last
+            // answer standing, for at most a day.
+            await refreshFeatures()
 
             let readRevision = publications.revision
             let page = try await repository.feed(summaries: SocialFeedExperience.isEnabled)
@@ -175,7 +179,21 @@ final class SocialStore {
         }
     }
 
+    /// Bumped when the server's answer changes, so a view can follow it.
+    private(set) var featuresRevision = 0
+
+    /// Asks the server which parts of the new Social this account has.
+    func refreshFeatures() async {
+        guard let repository else { return }
+        let generation = connectionGeneration
+        guard let features = try? await repository.features(),
+              connectionGeneration == generation else { return }
+        if features != SocialFeedExperience.server() { featuresRevision += 1 }
+        SocialFeedExperience.remember(features)
+    }
+
     func disconnect() {
+        SocialFeedExperience.forget()
         likes.reset()
         publications.reset()
         publicationReceipt = nil
@@ -1128,7 +1146,9 @@ final class SocialStore {
         let generation = connectionGeneration
         while let batch = attentionQueue.nextBatch() {
             do {
-                try await repository.recordAttention(batch)
+                // Measurement is its own switch. Off, the same exposures go
+                // as the plain view events the app sent before it existed.
+                try await repository.recordAttention(batch, measured: SocialFeedExperience.measures)
                 guard connectionGeneration == generation else { return }
                 attentionQueue.acknowledge(batch.id)
             } catch APIServiceError.undocumentedStatus(let status)

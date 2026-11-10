@@ -10094,6 +10094,66 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// Which parts of the new Social this account has been given. The app asks at launch and when it returns to the foreground, and treats a part it is not told about, or a failed request, as off. The server enforces the ones that are its to enforce -- takes, sounds, measurement and ranking -- whatever the app does.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/features/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/features//get(social_features_retrieve)`.
+    public func socialFeaturesRetrieve(_ input: Operations.SocialFeaturesRetrieve.Input) async throws -> Operations.SocialFeaturesRetrieve.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SocialFeaturesRetrieve.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/social/features/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .get
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SocialFeaturesRetrieve.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.SocialFeatures.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
     /// What the people you follow have posted, newest first.
     ///
     /// Fanned out on read: a page is one indexed walk over the posts of everyone

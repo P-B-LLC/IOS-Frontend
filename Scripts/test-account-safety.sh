@@ -73,6 +73,8 @@ cp "$repo/IOS Frontend/IOS Frontend/Services/AttentionMeter.swift" "$test_packag
 cp "$repo/IOS Frontend/IOS Frontend/Services/AttentionQueue.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/Tests/AccountSafety/FeedPlaybackPolicyTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/IOS Frontend/IOS Frontend/Services/FeedPlaybackPolicy.swift" "$test_package/Sources/AccountSafety/"
+cp "$repo/Tests/AccountSafety/SocialFeedExperienceTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/IOS Frontend/IOS Frontend/Services/SocialFeedExperience.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/Tests/AccountSafety/FoodDaySyncTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/Tests/AccountSafety/FoodBarcodeTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/IOS Frontend/IOS Frontend/Services/FoodBarcode.swift" "$test_package/Sources/AccountSafety/"
