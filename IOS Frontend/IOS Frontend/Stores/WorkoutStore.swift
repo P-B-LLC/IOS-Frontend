@@ -85,6 +85,7 @@ final class WorkoutStore {
         didSet {
             checkpointActiveSession()
             publishSessionSignals()
+            scheduleRestBannerExpiry()
         }
     }
     /// Weight unit and rest settings, read by every workout screen.
@@ -97,6 +98,13 @@ final class WorkoutStore {
     private let liveActivity = WorkoutLiveActivityController()
     /// Says when a rest is over while the app is not on screen.
     private let restNotifier = RestTimerNotifier()
+    @ObservationIgnored private var restBannerExpiryTask: Task<Void, Never>?
+    @ObservationIgnored private var restBannerExpiryKey: RestBannerExpiryKey?
+    private struct RestBannerExpiryKey: Equatable {
+        let sessionID: Int
+        let generation: UUID
+        let timer: RestTimer
+    }
     /// Set while a connection is restoring the session; see
     /// `publishSessionSignals`.
     private var holdsSessionSignals = false
@@ -1063,7 +1071,8 @@ final class WorkoutStore {
                         )
                     }
                     try await repository.unlogSet(id: entryID, sessionExerciseID: exercise.sessionExerciseID, setNumber: set.setNumber)
-                    guard connectionGeneration == generation else { return }
+                    guard connectionGeneration == generation,
+                          activeSession?.serverID == session.serverID else { return }
                     mutateSet(on: day, exerciseID: exerciseID, setID: setID) {
                         $0.serverID = nil
                         $0.isLogged = false
@@ -1074,7 +1083,8 @@ final class WorkoutStore {
                         sessionExerciseID: exercise.sessionExerciseID,
                         workoutType: workoutType
                     )
-                    guard connectionGeneration == generation else { return }
+                    guard connectionGeneration == generation,
+                          activeSession?.serverID == session.serverID else { return }
                     let weight = logged.weightKilograms
                     let reps = logged.reps
                     let distance = logged.distanceKilometers
@@ -1419,6 +1429,55 @@ final class WorkoutStore {
     }
 
     // MARK: - Rest timer
+
+    /// One deadline task per timer revision, not a database write or a polling
+    /// loop. It also runs while the workout screen is not visible. Suspension
+    /// can delay the callback; the end-date check still expires it on return.
+    private func scheduleRestBannerExpiry() {
+        guard let session = activeSession,
+              let timer = session.restTimer,
+              let deadline = timer.finishedBannerDismissalDate else {
+            restBannerExpiryTask?.cancel()
+            restBannerExpiryTask = nil
+            restBannerExpiryKey = nil
+            return
+        }
+        let key = RestBannerExpiryKey(sessionID: session.serverID, generation: connectionGeneration, timer: timer)
+        guard key != restBannerExpiryKey else { return }
+        restBannerExpiryTask?.cancel()
+        restBannerExpiryKey = key
+        restBannerExpiryTask = Task { @MainActor [weak self] in
+            do {
+                // Sleep uses elapsed time; the displayed timer uses wall-clock
+                // dates. If the clock moves back, wait for the new remainder
+                // rather than abandoning this still-current expiry task.
+                while !Task.isCancelled {
+                    let delay = deadline.timeIntervalSinceNow
+                    guard delay > 0 else { break }
+                    try await Task.sleep(for: .seconds(delay))
+                }
+            } catch { return }
+            guard !Task.isCancelled, let self,
+                  self.connectionGeneration == key.generation,
+                  self.activeSession?.serverID == key.sessionID else { return }
+            self.dismissExpiredRestBanner(matching: key.timer)
+        }
+    }
+
+    /// Checkpoint the dismissal so a finished notice cannot return after
+    /// navigation, backgrounding or relaunch. Never acts on a newer timer.
+    func dismissExpiredRestBanner(matching expected: RestTimer? = nil, at now: Date = Date()) {
+        guard let timer = activeSession?.restTimer,
+              timer.canDismissFinishedBanner(matching: expected ?? timer, at: now) else { return }
+        mutateActiveSession { $0.restTimer = nil }
+    }
+
+    /// An early tap on the completion notice cannot skip a newer running rest.
+    func dismissFinishedRest(matching expected: RestTimer) {
+        guard let current = activeSession?.restTimer,
+              current == expected, current.phase() == .finished else { return }
+        mutateActiveSession { $0.restTimer = nil }
+    }
 
     /// Starts a rest by hand, for somebody whose timer does not start itself
     /// or who wants one between exercises.
@@ -2457,6 +2516,11 @@ extension WorkoutStore {
             restTimer: .start(seconds: 150, exerciseID: bench, at: Date().addingTimeInterval(-38)),
             focusedExerciseID: bench
         )
+        // Isolated visual validation only. Normal simulator builds never set
+        // this launch flag; the preview has no account, repository or writes.
+        if ProcessInfo.processInfo.environment["REPBASE_WORKOUT_PREVIEW"] == "rest-complete" {
+            session.restTimer = .start(seconds: 15, exerciseID: bench, at: Date().addingTimeInterval(-15))
+        }
         var plan = session.structure
         plan.items.removeLast()
         session.plan = plan

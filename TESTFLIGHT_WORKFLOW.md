@@ -1,5 +1,24 @@
 # TestFlight development workflow
 
+## Superset timing and rest completion — November 10, 2026
+
+This client-only candidate fixes reverse-order superset logging: every member
+owing a set in the current round is checked before automatic rest starts.
+Only a successful set save advances the round; editing a field or a failed save
+does not. Unequal set counts and independent exercises keep their behavior.
+
+The approved compact rest-complete notice expires ten seconds after the stored
+timer end date, not ten seconds after opening the screen. A cancellable store
+task, foreground reconciliation and a date-based display guard prevent stale
+notices from returning. Snapshot/session/account checks stop delayed callbacks
+or taps from clearing a newer timer. Existing pause, reset, adjustment, manual
+start and early dismissal remain available. No API or backend change is needed.
+
+See [WORKOUT_REST_TESTING.md](WORKOUT_REST_TESTING.md) for real-app Mac build
+commands and the manual verification checklist. The scope deliberately excludes
+reordering, per-set planning, units and watch connections from the other Figma
+previews. Main, live deployments and TestFlight uploads remain untouched.
+
 ## Calendar month and followers-only sharing — November 4, 2026
 
 See [CALENDAR_SHARING.md](CALENDAR_SHARING.md) for the new contract, privacy

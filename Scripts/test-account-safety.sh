@@ -45,6 +45,8 @@ cp "$repo/IOS Frontend/IOS Frontend/Services/WorkoutWeightUnit.swift" "$test_pac
 # Lifting-session rules: set kinds, rest, supersets, reshaping, following.
 # All Foundation only, so they run here without a simulator.
 cp "$repo/Tests/AccountSafety/WorkoutSessionPolicyTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/Tests/AccountSafety/SupersetRoundPolicyTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/Tests/AccountSafety/RestTimerLifecycleTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/IOS Frontend/IOS Frontend/Models/WorkoutSetType.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/Services/WorkoutSetPolicy.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/Services/RestTimer.swift" "$test_package/Sources/AccountSafety/"

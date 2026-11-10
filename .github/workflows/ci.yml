@@ -294,6 +294,34 @@ jobs:
           path: .build/home-previews/*.png
           if-no-files-found: ignore
 
+      - name: Workout rest simulator previews when timing or presentation changes
+        id: workout_rest_previews
+        if: steps.scope.outputs.code == 'true'
+        timeout-minutes: 15
+        env:
+          DOWNLOAD_WORKOUT_RUNTIME: '1'
+        run: |
+          base="${{ github.event.pull_request.base.sha || github.event.before }}"
+          if [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then base=HEAD^; fi
+          capture=false
+          if ! changes=$(git diff --name-only "$base" HEAD); then
+            capture=true
+          elif printf '%s\n' "$changes" | grep -Eq 'RestTimer|WorkoutSetPolicy|WorkoutStore|DayWorkoutView|capture-workout-rest-preview'; then
+            capture=true
+          fi
+          if [ "$capture" = true ]; then
+            echo 'requested=true' >> "$GITHUB_OUTPUT"
+            bash Scripts/capture-workout-rest-preview.sh
+          fi
+
+      - name: Save workout rest simulator previews
+        if: always() && steps.workout_rest_previews.outputs.requested == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: workout-rest-previews
+          path: .build/workout-rest-previews/*.png
+          if-no-files-found: warn
+
       # Legal/*.html is generated from the Swift the app renders, so the two
       # can drift, and one of them is published. The privacy policy is what
       # App Store Connect points at and what MODERATION_DISCLOSURE_CONFIRMED

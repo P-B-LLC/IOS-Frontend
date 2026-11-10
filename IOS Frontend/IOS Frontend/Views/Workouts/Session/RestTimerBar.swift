@@ -18,7 +18,7 @@ struct RestTimerBar: View {
     let suggestedSeconds: Int
     @Environment(WorkoutStore.self) private var store
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var finishedRestID: UUID?
+    @State private var finishedRest: RestTimer?
     private let phase = WorkoutVisualPhase.focus
 
     var body: some View {
@@ -27,14 +27,14 @@ struct RestTimerBar: View {
                 TimelineView(.periodic(from: .now, by: 0.5)) { context in
                     content(timer, now: context.date)
                 }
-                .task(id: "\(timer.id)-\(timer.endsAt?.timeIntervalSince1970 ?? 0)") {
+                .task(id: timer) {
                     await announceFinish(of: timer)
                 }
             } else if suggestedSeconds > 0 {
                 startButton
             }
         }
-        .sensoryFeedback(.success, trigger: finishedRestID)
+        .sensoryFeedback(.success, trigger: finishedRest)
         .animation(reduceMotion ? nil : .snappy(duration: 0.25), value: timer?.id)
     }
 
@@ -42,27 +42,47 @@ struct RestTimerBar: View {
     /// notification covers the same moment when the app is not in front.
     private func announceFinish(of timer: RestTimer) async {
         guard let endsAt = timer.endsAt else { return }
-        let wait = endsAt.timeIntervalSinceNow
-        if wait > 0 { try? await Task.sleep(for: .seconds(wait)) }
-        guard !Task.isCancelled, timer.phase() == .finished else { return }
-        finishedRestID = timer.id
+        do {
+            while !Task.isCancelled {
+                let wait = endsAt.timeIntervalSinceNow
+                guard wait > 0 else { break }
+                try await Task.sleep(for: .seconds(wait))
+            }
+        } catch { return }
+        guard !Task.isCancelled, timer.phase() == .finished,
+              !timer.isFinishedBannerExpired() else { return }
+        finishedRest = timer
     }
 
     @ViewBuilder
     private func content(_ timer: RestTimer, now: Date) -> some View {
+        if timer.isFinishedBannerExpired(at: now) {
+            // Do not flash an old completion notice while the store reconciles
+            // a restored checkpoint or resumes its suspended deadline task.
+            if suggestedSeconds > 0 { startButton }
+        } else if timer.phase(at: now) == .finished {
+            RestCompletionBanner(progress: timer.finishedBannerProgress(at: now)) {
+                store.dismissFinishedRest(matching: timer)
+            }
+        } else {
+            countdownContent(timer, now: now)
+        }
+    }
+
+    private func countdownContent(_ timer: RestTimer, now: Date) -> some View {
         let state = timer.phase(at: now)
-        VStack(spacing: 10) {
+        return VStack(spacing: 10) {
             HStack(alignment: .center, spacing: 8) {
                 ZStack {
                     Circle().stroke(phase.cardBorder, lineWidth: 4)
                     Circle()
-                        .trim(from: 0, to: state == .finished ? 1 : timer.progress(at: now))
-                        .stroke(state == .finished ? RepbaseDesign.success : phase.accent,
+                        .trim(from: 0, to: timer.progress(at: now))
+                        .stroke(phase.accent,
                                 style: StrokeStyle(lineWidth: 4, lineCap: .round))
                         .rotationEffect(.degrees(-90))
-                    Image(systemName: state == .finished ? "checkmark" : state == .paused ? "pause.fill" : "timer")
+                    Image(systemName: state == .paused ? "pause.fill" : "timer")
                         .font(.community(.caption, weight: .bold))
-                        .foregroundStyle(state == .finished ? RepbaseDesign.success : phase.accent)
+                        .foregroundStyle(phase.accent)
                 }
                 .frame(width: 40, height: 40)
                 .accessibilityHidden(true)
@@ -70,15 +90,11 @@ struct RestTimerBar: View {
                 VStack(alignment: .leading, spacing: 1) {
                     Text(title(for: state))
                         .font(.community(.caption2, weight: .bold))
-                        .foregroundStyle(state == .finished ? RepbaseDesign.success : phase.secondaryText)
+                        .foregroundStyle(phase.secondaryText)
                         .lineLimit(1)
                         .minimumScaleFactor(0.75)
-                    Text(state == .finished
-                         ? String(localized: "Time for your next set", bundle: .app, locale: .app)
-                         : RestTimer.clockText(timer.remaining(at: now)))
-                        .font(state == .finished
-                              ? .community(.subheadline, weight: .semibold)
-                              : .community(.title2, weight: .bold).monospacedDigit())
+                    Text(RestTimer.clockText(timer.remaining(at: now)))
+                        .font(.community(.title2, weight: .bold).monospacedDigit())
                         .contentTransition(.numericText(countsDown: true))
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
@@ -88,11 +104,7 @@ struct RestTimerBar: View {
 
                 Spacer(minLength: 4)
 
-                if state == .finished {
-                    Button("Dismiss") { store.skipRest() }
-                        .buttonStyle(.bordered)
-                        .buttonBorderShape(.capsule)
-                } else {
+                Group {
                     controlButton("-15", label: "Subtract 15 seconds") { store.adjustRest(by: -15) }
                     controlButton(state == .paused ? "play.fill" : "pause.fill",
                                   label: state == .paused ? "Resume rest" : "Pause rest",
@@ -118,7 +130,7 @@ struct RestTimerBar: View {
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .strokeBorder(state == .finished ? RepbaseDesign.success.opacity(0.5) : phase.accent.opacity(0.35), lineWidth: 1)
+                .strokeBorder(phase.accent.opacity(0.35), lineWidth: 1)
         }
         .shadow(color: phase.shadow, radius: 12, x: 0, y: 4)
         .accessibilityElement(children: .contain)
@@ -170,5 +182,54 @@ struct RestTimerBar: View {
         .foregroundStyle(phase.accent)
         .background(.regularMaterial, in: Capsule())
         .overlay { Capsule().strokeBorder(phase.cardBorder, lineWidth: 1) }
+    }
+}
+
+/// The approved compact completion notice. It never owns the timer lifetime:
+/// the store expires the persisted rest, while this view only draws its deadline.
+struct RestCompletionBanner: View {
+    let progress: Double
+    let dismiss: () -> Void
+    @Environment(\.colorSchemeContrast) private var contrast
+
+    var body: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.community(.title2, weight: .semibold))
+                    .foregroundStyle(PlannerStyle.success)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("REST IS OVER")
+                        .font(.community(.caption2, weight: .bold))
+                        .foregroundStyle(PlannerStyle.success)
+                    Text("Time for your next set")
+                        .font(.community(.footnote, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityElement(children: .combine)
+                Button(action: dismiss) {
+                    Image(systemName: "xmark")
+                        .font(.community(.footnote, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Dismiss")
+            }
+            ProgressView(value: progress)
+                .tint(PlannerStyle.success)
+                .accessibilityHidden(true)
+        }
+        .padding(16)
+        .background(PlannerStyle.successSoft, in: RoundedRectangle(cornerRadius: RepbaseTactileDesign.cardRadius))
+        .overlay {
+            RoundedRectangle(cornerRadius: RepbaseTactileDesign.cardRadius)
+                .strokeBorder(PlannerStyle.success.opacity(contrast == .increased ? 0.7 : 0.25), lineWidth: 1)
+        }
+        .accessibilityIdentifier("workout.rest.complete")
     }
 }

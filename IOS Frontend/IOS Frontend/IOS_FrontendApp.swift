@@ -685,6 +685,7 @@ private struct AppRootView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase != .active { workoutStore.checkpointActiveSession() }
             if phase == .active {
+                workoutStore.dismissExpiredRestBanner()
                 Task { await workoutStore.retryPendingWorkoutSaves() }
             }
         }
