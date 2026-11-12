@@ -352,6 +352,8 @@ private struct AppRootView: View {
                 // also starts the Lock Screen activity, which the simulator
                 // shows on its own lock screen.
                 switch workoutPreview {
+                case "builder-order", "builder-reordered", "builder-units", "session-units":
+                    WorkoutFlowPreviewScreen(scenario: workoutPreview)
                 case "builder":
                     WorkoutEditorView(mode: .edit(WorkoutStore.previewWorkouts[0]))
                         .environment(WorkoutStore.previewWithLibrary)
@@ -682,6 +684,11 @@ private struct AppRootView: View {
         }
         .font(.community(.body))
         .repbaseCelebrationOverlay()
+        .onChange(of: workoutStore.preferences.weightUnit) {
+            // Update Lock Screen weight labels too. The notifier deduplicates
+            // the unchanged rest timer; no countdown or API write is started.
+            workoutStore.refreshSessionSignals()
+        }
         .onChange(of: scenePhase) { _, phase in
             if phase != .active { workoutStore.checkpointActiveSession() }
             if phase == .active {

@@ -322,6 +322,35 @@ jobs:
           path: .build/workout-rest-previews/*.png
           if-no-files-found: warn
 
+      - name: Workout reordering and unit controls in the native simulator
+        id: workout_flow_previews
+        if: steps.scope.outputs.code == 'true'
+        timeout-minutes: 25
+        env:
+          DOWNLOAD_WORKOUT_RUNTIME: '1'
+          RUN_WORKOUT_FLOW_UI_TESTS: '1'
+        run: |
+          base="${{ github.event.pull_request.base.sha || github.event.before }}"
+          if [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then base=HEAD^; fi
+          capture=false
+          if ! changes=$(git diff --name-only "$base" HEAD); then
+            capture=true
+          elif printf '%s\n' "$changes" | grep -Eq 'GuidedWorkoutBuilder|WorkoutExerciseOrder|WorkoutWeightUnit|WorkoutUnitControls|WorkoutPreferences|ActiveLiftingSessionView|SessionExerciseCard|WorkoutFlowPreviewScreen|WorkoutFlowUITests|capture-workout-flow-preview'; then
+            capture=true
+          fi
+          if [ "$capture" = true ]; then
+            echo 'requested=true' >> "$GITHUB_OUTPUT"
+            bash Scripts/capture-workout-flow-preview.sh
+          fi
+
+      - name: Save workout flow previews and native interaction results
+        if: always() && steps.workout_flow_previews.outputs.requested == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: workout-flow-previews
+          path: .build/workout-flow-previews/
+          if-no-files-found: warn
+
       # Legal/*.html is generated from the Swift the app renders, so the two
       # can drift, and one of them is published. The privacy policy is what
       # App Store Connect points at and what MODERATION_DISCLOSURE_CONFIRMED

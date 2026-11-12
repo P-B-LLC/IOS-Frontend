@@ -46,6 +46,10 @@ cp "$repo/IOS Frontend/IOS Frontend/Services/WorkoutWeightUnit.swift" "$test_pac
 # All Foundation only, so they run here without a simulator.
 cp "$repo/Tests/AccountSafety/WorkoutSessionPolicyTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/Tests/AccountSafety/SupersetRoundPolicyTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/Tests/AccountSafety/WorkoutExerciseOrderTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/Tests/AccountSafety/WorkoutUnitPreferenceTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/IOS Frontend/IOS Frontend/Stores/WorkoutPreferences.swift" "$test_package/Sources/AccountSafety/"
+cp "$repo/IOS Frontend/IOS Frontend/Services/WorkoutExerciseOrder.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/Tests/AccountSafety/RestTimerLifecycleTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/IOS Frontend/IOS Frontend/Models/WorkoutSetType.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/Services/WorkoutSetPolicy.swift" "$test_package/Sources/AccountSafety/"

@@ -1,5 +1,22 @@
 # TestFlight development workflow
 
+## Inline exercise order and visible weight units — November 12, 2026
+
+The approved workout flow moves press-and-hold reordering onto the selected
+exercise cards in Add exercises and removes the separate reorder sheet.
+Native list movement preserves complete exercise records and supports edge
+scrolling; accessible move actions remain available. Review retains the same
+draft and existing save path. Weight controls are labelled beside entry, with
+an explicit default-saving action instead of a hidden-only context menu.
+Temporary unit changes remain display-only; stored values remain kilograms.
+
+See [WORKOUT_ORDER_UNITS_TESTING.md](WORKOUT_ORDER_UNITS_TESTING.md) for the
+Mac real-app command, privacy/scope boundaries and manual checks. Only this
+client testing branch is in scope. Per-set planning and watch integrations
+remain separate work; no API change, main merge or backend deployment is part
+of this candidate. Prior rest-fix CI run `42869563280` passed at `54ecd2e`;
+new changes require their own exact-head checks before promotion.
+
 ## Superset timing and rest completion — November 10, 2026
 
 This client-only candidate fixes reverse-order superset logging: every member

@@ -58,7 +58,12 @@ nonisolated enum WorkoutWeightUnit: String, CaseIterable, Identifiable, Sendable
     private var displayScale: Int { self == .imperial ? 1 : 2 }
 
     func display(kilograms: String) -> String {
-        guard !kilograms.isEmpty, let value = Decimal(string: kilograms) else { return kilograms }
+        // Decimal(string:) accepts a numeric prefix (for example "12junk").
+        // Invalid draft input must stay visibly invalid when units change,
+        // rather than being made to look like a valid, converted weight.
+        guard !kilograms.isEmpty,
+              kilograms.range(of: #"^-?(?:\d+(?:\.\d*)?|\.\d+)$"#, options: .regularExpression) != nil,
+              let value = Decimal(string: kilograms) else { return kilograms }
         return display(kilograms: value)
     }
 

@@ -272,8 +272,9 @@ final class WorkoutStore {
             // Read once per connection rather than by every screen that shows
             // a weight. A failure keeps kilograms, which is what the stored
             // numbers are; it is never a reason to stop a workout.
+            let unitReadRevision = preferences.accountUnitReadRevision
             if let unit = try? await repository.preferredWeightUnit(), generation == connectionGeneration {
-                preferences.adoptAccountUnit(unit)
+                preferences.adoptAccountUnit(unit, ifUnchangedSince: unitReadRevision)
             }
         } catch {
             self.repository = nil
@@ -2540,3 +2541,5 @@ extension WorkoutStore {
     static let sharedPreviewActiveSession = previewActiveSession
 #endif
 }
+
+extension WorkoutStore: WorkoutWeightUnitSaving {}

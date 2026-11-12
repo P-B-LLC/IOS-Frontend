@@ -68,6 +68,7 @@ struct ActiveLiftingSessionView: View {
             .onChange(of: store.preferences.weightUnit) {
                 // Typed text belongs to the unit it was typed in. What is
                 // shown is worked out again from the stored kilograms.
+                focusedField = nil
                 weightInputs = [:]
             }
             .onChange(of: session.loggedSetCount) {
@@ -130,7 +131,6 @@ struct ActiveLiftingSessionView: View {
                     stat(value: store.preferences.weightUnit.formatted(kilograms: session.loggedVolumeKilograms), label: "Volume")
                 }
                 Spacer(minLength: 0)
-                WeightUnitToggle(compact: true)
             }
 
             ProgressView(value: Double(session.loggedSetCount), total: Double(max(session.totalSetCount, 1)))

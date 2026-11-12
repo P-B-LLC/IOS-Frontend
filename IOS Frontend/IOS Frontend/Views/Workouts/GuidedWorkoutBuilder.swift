@@ -29,16 +29,22 @@ struct GuidedWorkoutBuilder: View {
     let startsAtReview: Bool
     let isSaving: Bool
     let onSave: () -> Void
+    var startsAtExercises = false
     /// Nil where only plans are made: the library and rotations.
     var logging: ActivityLogging? = nil
     @Environment(WorkoutStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var stage: Stage = .identity
     @State private var initialized = false
     @State private var reusing = false
     @State private var removed: (exercise: Exercise, index: Int)?
-    @State private var reordering = false
+    @State private var lastMovedExerciseID: UUID?
+    @State private var orderFeedbackID: UUID?
+    // Keep the text being typed (including a trailing decimal separator) until
+    // the unit changes. The draft itself always stores canonical kilograms.
+    @State private var targetWeightInputs: [UUID: String] = [:]
     @State private var log = ActivityLogDraft(activity: .weightlifting)
     @State private var detailsMode: DetailsMode = .log
     @State private var logProblem: ActivityLogDraft.Problem?
@@ -48,18 +54,24 @@ struct GuidedWorkoutBuilder: View {
     private var logsActivity: Bool { !isStrength && logging != nil }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                intro
-                switch stage {
-                case .identity: identity
-                case .exercises: exercisePicker
-                case .details: details
-                case .review: review
+        Group {
+            if stage == .exercises {
+                exercisePicker
+            } else {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 24) {
+                        intro
+                        switch stage {
+                        case .identity: identity
+                        case .exercises: EmptyView()
+                        case .details: details
+                        case .review: review
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 20)
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 20)
         }
         .scrollDismissesKeyboard(.interactively)
         // Each step starts at its heading, even after scrolling a long catalog.
@@ -92,6 +104,7 @@ struct GuidedWorkoutBuilder: View {
                 draft.exercises[i].sets = 1
             }
             if startsAtReview { stage = .review }
+            else if startsAtExercises { stage = .exercises }
             if let logging {
                 log = ActivityLogDraft(activity: draft.activity, endedAt: logging.defaultEnd)
                 log.distanceUnit = logging.distanceUnit
@@ -106,7 +119,20 @@ struct GuidedWorkoutBuilder: View {
             logProblem = nil
         }
         .sheet(isPresented: $reusing) { reuseSheet }
-        .sheet(isPresented: $reordering) { DraftReorderSheet(exercises: $draft.exercises) }
+        .task(id: orderFeedbackID) {
+            guard let feedbackID = orderFeedbackID else { return }
+            do { try await Task.sleep(for: .seconds(3)) } catch { return }
+            guard orderFeedbackID == feedbackID else { return }
+            lastMovedExerciseID = nil
+            orderFeedbackID = nil
+        }
+        .onChange(of: stage) { _, _ in
+            lastMovedExerciseID = nil
+            orderFeedbackID = nil
+        }
+        .onChange(of: store.preferences.weightUnit) { _, _ in
+            targetWeightInputs.removeAll()
+        }
         .onChange(of: draft.exercises) { _, _ in
             // Recovery can arrive after onAppear. Keep the visible minimum and
             // the value that will actually be saved consistent.
@@ -164,7 +190,7 @@ struct GuidedWorkoutBuilder: View {
         case .review:
             draft.tracksDistance
                 ? "Review your workout, then save it when you’re ready."
-                : "Tap Reorder to drag exercises into a new order. Tap a set to change its kind."
+                : "Review your sets and targets. Edit exercise order to rearrange your workout."
         }
     }
 
@@ -226,8 +252,30 @@ struct GuidedWorkoutBuilder: View {
     }
 
     private var exercisePicker: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        // A single native list owns the scroll and the drag. Moving rows is
+        // committed only when dropped; cancellation never leaves a floating
+        // card or a partially rewritten draft. No second reorder screen.
+        List {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("BUILD YOUR WORKOUT")
+                    .font(.community(.caption2, weight: .bold))
+                    .tracking(1)
+                    .foregroundStyle(phase.accent)
+                Text("Your order. Your flow.")
+                    .font(.community(.title, weight: .bold))
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("Hold and drag any exercise to move it.")
+                    .font(.community(.subheadline))
+                    .foregroundStyle(phase.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.vertical, 12)
+            .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 4, trailing: 20))
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
+
             selectedExercises
+
             ExerciseCatalogPicker(
                 isSelected: { option in draft.exercises.contains { option.matches(serverID: $0.serverID, name: $0.name) } },
                 onToggle: toggle,
@@ -235,60 +283,114 @@ struct GuidedWorkoutBuilder: View {
                 phase: phase,
                 pendingCustomNames: draft.exercises.filter { $0.serverID == nil }.map(\.name)
             )
+            .padding(.top, 16)
+            .padding(.bottom, 12)
+            .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .environment(\.defaultMinListRowHeight, 0)
+        .sensoryFeedback(.selection, trigger: orderFeedbackID)
     }
 
     private var selectedExercises: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .firstTextBaseline, spacing: 12) {
-                Text("Your workout").font(.community(.headline))
-                Spacer(minLength: 0)
-                Text("\(draft.exercises.count) added")
-                    .font(.community(.caption, weight: .bold))
-                    .foregroundStyle(phase.accent)
+        Section {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(alignment: .firstTextBaseline, spacing: 12) {
+                    Text(draft.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? String(localized: "Your workout", bundle: .app, locale: .app) : draft.name)
+                        .font(.community(.headline))
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
+                    Text("\(draft.exercises.count) added")
+                        .font(.community(.caption, weight: .bold))
+                        .foregroundStyle(phase.accent)
+                }
+                Text("Draft · not saved yet")
+                    .font(.community(.caption)).foregroundStyle(phase.secondaryText)
             }
-            if !draft.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                Text(draft.name).font(.community(.title3, weight: .semibold))
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Text("Draft · not saved yet")
-                .font(.community(.caption)).foregroundStyle(phase.secondaryText)
+            .padding(.vertical, 8)
+            .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 4, trailing: 20))
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
 
             if draft.exercises.isEmpty {
                 Label("No exercises added. Choose one below to start.", systemImage: "plus.circle")
                     .font(.community(.subheadline)).foregroundStyle(phase.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
+                    .padding(.vertical, 12)
+                    .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
             } else {
                 ForEach(Array(draft.exercises.enumerated()), id: \.element.id) { index, exercise in
-                    HStack(alignment: .center, spacing: 10) {
-                        Text("\(index + 1)")
-                            .font(.community(.caption, weight: .bold).monospacedDigit())
-                            .foregroundStyle(phase.accent)
-                            .frame(minWidth: 20)
-                        Text(exercise.displayName).font(.community(.subheadline, weight: .semibold))
-                            .fixedSize(horizontal: false, vertical: true)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        Button {
-                            draft.exercises.removeAll { $0.id == exercise.id }
-                        } label: {
-                            Image(systemName: "minus.circle")
-                                .font(.system(size: 20))
-                                .frame(minWidth: 44, minHeight: 44)
-                        }
-                        .buttonStyle(.plain).foregroundStyle(phase.secondaryText)
-                        .accessibilityLabel("Remove \(exercise.displayName) from your workout")
-                    }
-                    if index < draft.exercises.count - 1 { Divider() }
+                    selectedExerciseCard(exercise, index: index)
+                        .listRowInsets(EdgeInsets(top: 4, leading: 20, bottom: 4, trailing: 20))
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                        .moveDisabled(isSaving || draft.exercises.count < 2)
                 }
+                .onMove(perform: moveExercises)
             }
         }
-        .padding(16)
-        .background(
-            LinearGradient(colors: [phase.accent.opacity(0.09), phase.surfaceStart], startPoint: .topLeading, endPoint: .bottomTrailing),
-            in: RoundedRectangle(cornerRadius: 20, style: .continuous)
-        )
-        .overlay { RoundedRectangle(cornerRadius: 20).strokeBorder(phase.accent.opacity(0.25), lineWidth: 1) }
+        .listSectionSeparator(.hidden)
         .accessibilityIdentifier("workout-builder-selected-exercises")
+    }
+
+    private func selectedExerciseCard(_ exercise: Exercise, index: Int) -> some View {
+        let highlighted = lastMovedExerciseID == exercise.id
+        return HStack(alignment: .center, spacing: 12) {
+            Text(String(format: "%02d", index + 1))
+                .font(.community(.caption, weight: .bold).monospacedDigit())
+                .foregroundStyle(phase.accent)
+                .frame(minWidth: 24)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(exercise.displayName)
+                    .font(.community(.subheadline, weight: .semibold))
+                    .fixedSize(horizontal: false, vertical: true)
+                if let equipment = ExerciseLibrary.shared?.exercise(named: exercise.name)?.equipmentKind?.title {
+                    Text("\(equipment) · \(exercise.sets) sets")
+                        .font(.community(.caption)).foregroundStyle(phase.secondaryText)
+                } else {
+                    Text("\(exercise.sets) sets")
+                        .font(.community(.caption)).foregroundStyle(phase.secondaryText)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            Button {
+                draft.exercises.removeAll { $0.id == exercise.id }
+                draft.exercises = Self.withoutLoneSupersets(draft.exercises)
+            } label: {
+                Image(systemName: "minus.circle")
+                    .font(.community(.title3))
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain).foregroundStyle(phase.secondaryText)
+            .accessibilityLabel("Remove \(exercise.displayName) from your workout")
+        }
+        .frame(minHeight: 50)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(highlighted ? PlannerStyle.successSoft : phase.surfaceStart,
+                    in: RoundedRectangle(cornerRadius: RepbaseTactileDesign.cardRadius))
+        .overlay {
+            RoundedRectangle(cornerRadius: RepbaseTactileDesign.cardRadius)
+                .strokeBorder(highlighted ? PlannerStyle.success.opacity(0.5) : phase.cardBorder, lineWidth: 1)
+        }
+        .contentShape(RoundedRectangle(cornerRadius: RepbaseTactileDesign.cardRadius))
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: highlighted)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("\(index + 1). \(exercise.displayName), \(exercise.sets) sets")
+        .accessibilityValue("Position \(index + 1) of \(draft.exercises.count)")
+        .accessibilityHint("Hold and drag any exercise to move it.")
+        .accessibilityActions {
+            if index > 0 { Button("Move up") { moveExercise(exercise.id, by: -1) } }
+            if index < draft.exercises.count - 1 { Button("Move down") { moveExercise(exercise.id, by: 1) } }
+        }
+        .accessibilityIdentifier("workout-builder-exercise-\(exercise.id.uuidString)")
     }
 
     private var review: some View {
@@ -314,8 +416,8 @@ struct GuidedWorkoutBuilder: View {
                     Text("Exercises").font(.community(.headline))
                     Spacer()
                     if draft.exercises.count > 1 {
-                        Button { reordering = true } label: {
-                            Label("Reorder", systemImage: "arrow.up.arrow.down")
+                        Button { stage = .exercises } label: {
+                            Text("Edit exercise order")
                                 .font(.community(.caption, weight: .bold))
                                 .padding(.horizontal, 12)
                                 .frame(minHeight: 30)
@@ -324,7 +426,6 @@ struct GuidedWorkoutBuilder: View {
                         }
                         .buttonStyle(.plain)
                     }
-                    WeightUnitToggle(compact: true)
                 }
                 VStack(spacing: 10) {
                     ForEach(Array(draft.exercises.enumerated()), id: \.element.id) { index, exercise in
@@ -357,8 +458,8 @@ struct GuidedWorkoutBuilder: View {
 
     /// One exercise of the plan, compact enough that a whole workout fits on
     /// a screen or two, with what matters in reach: sets and their kinds, the
-    /// rest, and optional targets. Reordering is the Reorder button's list,
-    /// so no card carries a pair of arrows any more.
+    /// rest, and optional targets. The selection step owns drag reordering;
+    /// review keeps its set controls separate from the drag gesture.
     private func reviewCard(_ exercise: Exercise, index: Int) -> some View {
         let binding = exerciseBinding(exercise.id)
         let supersetColor = exercise.supersetGroup.map { SupersetPalette.color(for: $0) }
@@ -378,6 +479,10 @@ struct GuidedWorkoutBuilder: View {
                     cardMenu(exercise, index: index)
                 }
                 setChips(binding)
+                WorkoutWeightUnitControl(onWillChange: {
+                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
+                                                    to: nil, from: nil, for: nil)
+                })
                 HStack(spacing: 8) {
                     RestDurationMenu(
                         selection: exercise.restSeconds,
@@ -391,13 +496,19 @@ struct GuidedWorkoutBuilder: View {
                         set: { binding.wrappedValue.targetReps = Int(NumberInput.latinDigits($0).filter(\.isNumber).prefix(4)) }
                     ), keyboard: .numberPad, width: 46)
                     targetField(LocalizedStringKey(store.preferences.weightUnit.label), value: Binding(
-                        get: { binding.wrappedValue.targetWeightKilograms.map { store.preferences.weightUnit.display(kilograms: $0) } ?? "" },
+                        get: {
+                            targetWeightInputs[exercise.id]
+                                ?? binding.wrappedValue.targetWeightKilograms.map { store.preferences.weightUnit.display(kilograms: $0) }
+                                ?? ""
+                        },
                         set: { value in
+                            targetWeightInputs[exercise.id] = value
                             let trimmed = value.trimmingCharacters(in: .whitespaces)
                             binding.wrappedValue.targetWeightKilograms = trimmed.isEmpty
                                 ? nil : store.preferences.weightUnit.kilograms(display: trimmed)
                         }
-                    ), keyboard: .decimalPad, width: 58)
+                    ), keyboard: .decimalPad, width: 58,
+                       identifier: "workout.target-weight.\(exercise.id.uuidString)")
                 }
             }
         }
@@ -491,10 +602,12 @@ struct GuidedWorkoutBuilder: View {
         }
     }
 
-    private func targetField(_ title: LocalizedStringKey, value: Binding<String>, keyboard: UIKeyboardType, width: CGFloat) -> some View {
+    private func targetField(_ title: LocalizedStringKey, value: Binding<String>, keyboard: UIKeyboardType, width: CGFloat,
+                             identifier: String = "workout.target-reps") -> some View {
         HStack(spacing: 4) {
             TextField("—", text: value)
                 .keyboardType(keyboard)
+                .accessibilityIdentifier(identifier)
                 .multilineTextAlignment(.center)
                 .font(.community(.subheadline, weight: .bold).monospacedDigit())
                 .frame(width: width, height: 32)
@@ -537,6 +650,12 @@ struct GuidedWorkoutBuilder: View {
 
     private var footer: some View {
         VStack(alignment: .leading, spacing: 10) {
+            if stage == .exercises, orderFeedbackID != nil {
+                Label("Order updated", systemImage: "checkmark.circle.fill")
+                    .font(.community(.caption, weight: .semibold))
+                    .foregroundStyle(PlannerStyle.success)
+                    .accessibilityIdentifier("workout-builder-order-updated")
+            }
             if stage != .identity && isStrength {
                 Text("\(draft.exercises.count) exercises · \(draft.totalSets) target sets")
                     .font(.community(.subheadline, weight: .bold))
@@ -585,7 +704,7 @@ struct GuidedWorkoutBuilder: View {
         switch stage {
         case .identity:
             return isStrength ? "Next: choose exercises, then target sets." : logsActivity ? "Next: how long it took and how hard it felt." : "Next: review your session before saving."
-        case .exercises: return "Next: choose sets and arrange your workout."
+        case .exercises: return "Next: choose your sets and targets."
         case .details:
             return detailsMode == .log ? "Saved to this day’s history as \(log.displayName)." : "Start your session when you’re ready to move."
         case .review:
@@ -700,10 +819,28 @@ struct GuidedWorkoutBuilder: View {
         Text(label).font(.community(.caption2, weight: .bold)).foregroundStyle(phase.secondaryText)
     }
 
-    /// For VoiceOver, which cannot drag: the same move one place at a time.
+    /// The system calls this only for a completed move, not a cancelled lift.
+    /// The whole model travels with the row: IDs, targets and superset state.
+    private func moveExercises(fromOffsets source: IndexSet, toOffset destination: Int) {
+        guard !isSaving else { return }
+        let updated = WorkoutExerciseOrder.moving(draft.exercises, fromOffsets: source, toOffset: destination)
+        let movedID = source.first.flatMap { draft.exercises.indices.contains($0) ? draft.exercises[$0].id : nil }
+        commitOrder(updated, movedID: movedID)
+    }
+
+    /// For VoiceOver and Switch Control: the same move one place at a time.
     private func moveExercise(_ id: UUID, by offset: Int) {
-        guard let i = draft.exercises.firstIndex(where: { $0.id == id }), draft.exercises.indices.contains(i + offset) else { return }
-        draft.exercises.swapAt(i, i + offset)
+        guard !isSaving else { return }
+        commitOrder(WorkoutExerciseOrder.moving(id, by: offset, in: draft.exercises), movedID: id)
+    }
+
+    private func commitOrder(_ updated: [Exercise], movedID: UUID?) {
+        guard updated.map(\.id) != draft.exercises.map(\.id) else { return }
+        draft.exercises = updated
+        lastMovedExerciseID = movedID
+        orderFeedbackID = UUID()
+        UIAccessibility.post(notification: .announcement,
+                             argument: String(localized: "Order updated", bundle: .app, locale: .app))
     }
 
     /// Catalog identity wins over spelling: an exercise with a server id is
@@ -769,53 +906,5 @@ extension View {
     func workoutOutline(selected: Bool = false, radius: CGFloat = 14) -> some View {
         background(WorkoutVisualPhase.prepare.surfaceStart, in: RoundedRectangle(cornerRadius: radius))
             .overlay { RoundedRectangle(cornerRadius: radius).strokeBorder(selected ? WorkoutVisualPhase.prepare.accent : WorkoutVisualPhase.prepare.cardBorder, lineWidth: selected ? 1.5 : 1) }
-    }
-}
-
-/// The plan's exercises as one compact row each, to drag into a new order.
-///
-/// The system list's own drag: rows lift, the others part to make room, and
-/// a drop anywhere ends it. A drag done with SwiftUI's general drag and drop
-/// across the review cards had no way to tell when it was abandoned, which
-/// could leave a card drawn mid-drag. Sets, kinds, rests and supersets move
-/// with their exercise.
-private struct DraftReorderSheet: View {
-    @Binding var exercises: [Exercise]
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationStack {
-            List {
-                Section {
-                    ForEach(exercises) { exercise in
-                        HStack(spacing: 12) {
-                            if let group = exercise.supersetGroup {
-                                Capsule().fill(SupersetPalette.color(for: group)).frame(width: 4, height: 28)
-                            }
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(exercise.displayName).font(.community(.subheadline, weight: .semibold))
-                                Text("\(exercise.sets) sets")
-                                    .font(.community(.caption))
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        .padding(.vertical, 4)
-                        .accessibilityElement(children: .combine)
-                    }
-                    .onMove { exercises.move(fromOffsets: $0, toOffset: $1) }
-                } footer: {
-                    Text("Drag to change the order. Sets, rests and supersets move with each exercise.")
-                }
-            }
-            .environment(\.editMode, .constant(.active))
-            .sensoryFeedback(.selection, trigger: exercises.map(\.id))
-            .navigationTitle("Reorder exercises")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
-            }
-        }
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.visible)
     }
 }

@@ -53,6 +53,10 @@ struct SessionExerciseCard: View {
                     collapsedSummary
                 } else {
                     settingsRow
+                    WorkoutWeightUnitControl(
+                        onWillChange: { focusedField.wrappedValue = nil },
+                        showsDefaultAction: isFocused
+                    )
                     setTable
                     Button {
                         store.addSessionSet(on: day, exerciseID: exercise.id)
@@ -384,6 +388,7 @@ private struct SessionSetRow: View {
         .modifier(SetFieldStyle(width: 70, invalid: !set.isWeightValid, logged: set.isLogged))
         .disabled(set.isLogged || isPending)
         .accessibilityLabel("Weight in \(unit.title)")
+        .accessibilityIdentifier("workout.set-weight.\(set.id.uuidString)")
     }
 
     private var repsField: some View {
