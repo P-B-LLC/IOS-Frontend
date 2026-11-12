@@ -80,9 +80,17 @@ final class WorkoutFlowUITests: XCTestCase {
         XCTAssertLessThan(lastVisible, 12, "Fixture must overflow the viewport to test edge scrolling")
         let footer = app.buttons["workout-builder-primary"]
         XCTAssertTrue(footer.isHittable)
+        let list = app.descendants(matching: .any).matching(identifier: "workout-builder-list").firstMatch
+        XCTAssertTrue(list.exists)
+        let count = app.staticTexts["workout-builder-draft-count"]
+        XCTAssertTrue(count.exists)
         let source = row(1).coordinate(withNormalizedOffset: CGVector(dx: 0.35, dy: 0.5))
+        // Keep the hold inside the visible List, above the entire footer.
+        // Some OS versions report a scroll view frame beneath safeAreaInset;
+        // its count label is 12pt inside that footer, so clamp against it too.
+        let edgeY = min(list.frame.maxY, count.frame.minY - 12) - 8
         let edge = app.coordinate(withNormalizedOffset: .zero)
-            .withOffset(CGVector(dx: row(1).frame.midX, dy: footer.frame.minY - 22))
+            .withOffset(CGVector(dx: row(1).frame.midX, dy: edgeY))
         source.press(forDuration: 1, thenDragTo: edge, withVelocity: .slow, thenHoldForDuration: 6)
         wait("The dragged card moves beyond the original visible rows") {
             (self.position(of: self.row(1)) ?? 0) > lastVisible

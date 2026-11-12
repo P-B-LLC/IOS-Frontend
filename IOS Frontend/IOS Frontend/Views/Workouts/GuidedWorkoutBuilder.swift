@@ -290,6 +290,7 @@ struct GuidedWorkoutBuilder: View {
             .listRowBackground(Color.clear)
         }
         .listStyle(.plain)
+        .accessibilityIdentifier("workout-builder-list")
         .scrollContentBackground(.hidden)
         .environment(\.defaultMinListRowHeight, 0)
         .sensoryFeedback(.selection, trigger: orderFeedbackID)
