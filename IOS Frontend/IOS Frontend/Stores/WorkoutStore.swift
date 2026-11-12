@@ -2483,6 +2483,13 @@ extension WorkoutStore {
     /// script's reach, so this is how it is looked at in the simulator.
     static var previewActiveSession: WorkoutStore {
         let store = previewWithLibrary
+        // This disconnected unit-control fixture must not request notification
+        // permission or publish a Live Activity before its screen is captured.
+        // Keep the hold before assigning activeSession: its observer publishes
+        // immediately. Other previews and real sessions retain their behavior.
+        if ProcessInfo.processInfo.environment["REPBASE_WORKOUT_PREVIEW"] == "session-units" {
+            store.holdsSessionSignals = true
+        }
         let day = store.today ?? .monday
         let bench = UUID(), incline = UUID(), fly = UUID(), dips = UUID()
         func sets(_ types: [WorkoutSetType], logged: Int, weight: String, reps: String) -> [WorkoutSetDraft] {

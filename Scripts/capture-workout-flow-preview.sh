@@ -85,6 +85,9 @@ done
 if [ "${RUN_WORKOUT_FLOW_UI_TESTS:-0}" = 1 ]; then
     # The existing UI-test target is reused, but only the isolated fixture
     # class runs. The signed-in E2E class is neither enabled nor selected.
+    # End the simctl-owned launch before XCTest installs/launches its target.
+    # Otherwise the first test can attach to that process's old launch state.
+    xcrun simctl terminate "$device" com.pbllc.rytivo >/dev/null 2>&1 || true
     xcrun simctl spawn "$device" defaults write com.apple.Preferences DidShowContinuousPathIntroduction -bool true
     for key in KeyboardContinuousPathEnabled KeyboardPrediction KeyboardAutocorrection \
         KeyboardInlinePredictions KeyboardShowPredictionBar; do
@@ -101,6 +104,20 @@ if [ "${RUN_WORKOUT_FLOW_UI_TESTS:-0}" = 1 ]; then
         if [ -z "$xctestrun" ] || [ "$candidate" -nt "$xctestrun" ]; then xctestrun="$candidate"; fi
     done
     test -n "$xctestrun" || { echo 'No built UI test plan found.' >&2; exit 1; }
+    # Record only build paths, never launch environments or account details.
+    python3 -c '
+import json, plistlib, sys
+with open(sys.argv[1], "rb") as source:
+    plan = plistlib.load(source)
+def targets(value):
+    if isinstance(value, dict):
+        paths = {key: value[key] for key in ("TestHostPath", "TestBundlePath", "UITargetAppPath") if key in value}
+        if paths: print(json.dumps(paths, sort_keys=True))
+        for child in value.values(): targets(child)
+    elif isinstance(value, list):
+        for child in value: targets(child)
+targets(plan)
+' "$xctestrun" | tee "$output/ui-test-target-paths.log"
     result="$output/WorkoutFlow-$(date +%s).xcresult"
     if TEST_RUNNER_RYTIVO_WORKOUT_FLOW=1 \
         xcodebuild test-without-building -xctestrun "$xctestrun" \

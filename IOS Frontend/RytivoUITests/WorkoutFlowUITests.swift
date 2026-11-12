@@ -16,9 +16,15 @@ final class WorkoutFlowUITests: XCTestCase {
 
     private func launch(_ scenario: String) {
         app.terminate()
+        XCTAssertEqual(app.state, .notRunning, "A scenario starts from a terminated app, not a previous simctl preview")
         app.launchEnvironment = ["REPBASE_WORKOUT_PREVIEW": scenario, "REPBASE_APPEARANCE": "light"]
         app.launchArguments = ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
         app.launch()
+        if scenario.hasPrefix("builder-") {
+            let title = scenario == "builder-units" ? "Review workout" : "Add exercises"
+            XCTAssertTrue(app.navigationBars[title].waitForExistence(timeout: 15),
+                          "The isolated scenario must open before checking its controls")
+        }
     }
 
     private func row(_ number: Int) -> XCUIElement {

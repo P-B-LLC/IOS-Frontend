@@ -303,6 +303,7 @@ struct GuidedWorkoutBuilder: View {
                     Text(draft.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? String(localized: "Your workout", bundle: .app, locale: .app) : draft.name)
                         .font(.community(.headline))
                         .fixedSize(horizontal: false, vertical: true)
+                        .accessibilityIdentifier("workout-builder-selected-exercises")
                     Spacer(minLength: 0)
                     Text("\(draft.exercises.count) added")
                         .font(.community(.caption, weight: .bold))
@@ -336,7 +337,6 @@ struct GuidedWorkoutBuilder: View {
             }
         }
         .listSectionSeparator(.hidden)
-        .accessibilityIdentifier("workout-builder-selected-exercises")
     }
 
     private func selectedExerciseCard(_ exercise: Exercise, index: Int) -> some View {
