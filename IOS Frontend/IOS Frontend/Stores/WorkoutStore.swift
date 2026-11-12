@@ -221,7 +221,7 @@ final class WorkoutStore {
         liveActivity.sync(
             session: session,
             enabled: preferences.liveActivity,
-            unit: preferences.weightUnit,
+            unit: preferences.defaultWeightUnit,
             previous: { [weak self] exercise, index in self?.previousSet(for: exercise, at: index) }
         )
         restNotifier.sync(
@@ -275,6 +275,9 @@ final class WorkoutStore {
             let unitReadRevision = preferences.accountUnitReadRevision
             if let unit = try? await repository.preferredWeightUnit(), generation == connectionGeneration {
                 preferences.adoptAccountUnit(unit, ifUnchangedSince: unitReadRevision)
+                if preferences.hasLoadedUnit {
+                    mutateActiveSession { _ = $0.adoptDefaultDisplayUnits(preferences.defaultWeightUnit) }
+                }
             }
         } catch {
             self.repository = nil
@@ -942,11 +945,12 @@ final class WorkoutStore {
 
         Task {
             do {
-                let session = try await repository.startSession(
+                let opened = try await repository.startSession(
                     for: workout,
                     on: day
                 )
                 guard connectionGeneration == generation else { return }
+                let session = withInitialDisplayUnits(opened)
                 routeTracker.reset()
                 activeSession = session
                 if checkpointActiveSession() { try await repository.acknowledgeSessionStart(id: session.serverID) }
@@ -1246,7 +1250,8 @@ final class WorkoutStore {
                     },
                     restSeconds: exercise.restSeconds,
                     targetReps: exercise.targetReps,
-                    targetWeightKilograms: exercise.targetWeightKilograms
+                    targetWeightKilograms: exercise.targetWeightKilograms,
+                    displayUnit: preferences.hasLoadedUnit ? preferences.defaultWeightUnit : nil
                 ))
                 if session.exercises.allSatisfy({ $0.isComplete || $0.id == session.exercises.last?.id }) {
                     session.focusedExerciseID = session.exercises.last?.id
@@ -1340,6 +1345,31 @@ final class WorkoutStore {
             guard let index = session.exercises.firstIndex(where: { $0.id == exerciseID }) else { return }
             session.exercises[index].restSeconds = seconds.map { min(max($0, 0), Int(RestTimer.maximumSeconds)) }
         }
+    }
+
+    /// Local display state only: no account preference or exercise/set request
+    /// is made. The normal session assignment checkpoints the choice and updates
+    /// the Lock Screen, while an in-flight set response still edits only its set.
+    func setSessionExerciseDisplayUnit(
+        _ unit: WorkoutWeightUnit,
+        on day: Weekday,
+        sessionID: Int,
+        exerciseID: Exercise.ID
+    ) {
+        guard !isSaving, !isRecoveringWorkouts, var session = activeSession,
+              session.setExerciseDisplayUnit(unit, on: day, sessionID: sessionID, exerciseID: exerciseID) else { return }
+        activeSession = session
+    }
+
+    /// The default may still be loading during recovery. Leave missing units
+    /// nil until that read finishes; never freeze a legacy lb workout to kg just
+    /// because kg is the pre-connection placeholder. Explicit choices survive.
+    private func withInitialDisplayUnits(_ original: ActiveWorkoutSession) -> ActiveWorkoutSession {
+        var session = original
+        if preferences.hasLoadedUnit {
+            session.adoptDefaultDisplayUnits(preferences.defaultWeightUnit)
+        }
+        return session
     }
 
     /// Joins two exercises into a superset, or adds one to its partner's
@@ -1899,7 +1929,7 @@ final class WorkoutStore {
                 if let recovered = try await repository.recoverPendingSessionStart(),
                    generation == connectionGeneration, activeSession == nil {
                     routeTracker.reset()
-                    activeSession = recovered
+                    activeSession = withInitialDisplayUnits(recovered)
                     recoveredActiveSession = true
                     if checkpointActiveSession() { try await repository.acknowledgeSessionStart(id: recovered.serverID) }
                     // As startSession does: the hints and one-tap logging
@@ -1921,7 +1951,7 @@ final class WorkoutStore {
             let reconciled = try await repository.reconcileLoggedSets(saved.session)
             guard generation == connectionGeneration, activeSession == nil else { return }
             routeTracker.restore(saved.points)
-            activeSession = reconciled
+            activeSession = withInitialDisplayUnits(reconciled)
             recoveredActiveSession = true
             if checkpointActiveSession() { try await repository.acknowledgeSessionStart(id: reconciled.serverID) }
             if !reconciled.tracksDistance {

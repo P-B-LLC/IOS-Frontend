@@ -130,7 +130,7 @@ struct GuidedWorkoutBuilder: View {
             lastMovedExerciseID = nil
             orderFeedbackID = nil
         }
-        .onChange(of: store.preferences.weightUnit) { _, _ in
+        .onChange(of: store.preferences.defaultWeightUnit) { _, _ in
             targetWeightInputs.removeAll()
         }
         .onChange(of: draft.exercises) { _, _ in
@@ -480,10 +480,6 @@ struct GuidedWorkoutBuilder: View {
                     cardMenu(exercise, index: index)
                 }
                 setChips(binding)
-                WorkoutWeightUnitControl(onWillChange: {
-                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
-                                                    to: nil, from: nil, for: nil)
-                })
                 HStack(spacing: 8) {
                     RestDurationMenu(
                         selection: exercise.restSeconds,
@@ -496,17 +492,17 @@ struct GuidedWorkoutBuilder: View {
                         get: { binding.wrappedValue.targetReps.map(String.init) ?? "" },
                         set: { binding.wrappedValue.targetReps = Int(NumberInput.latinDigits($0).filter(\.isNumber).prefix(4)) }
                     ), keyboard: .numberPad, width: 46)
-                    targetField(LocalizedStringKey(store.preferences.weightUnit.label), value: Binding(
+                    targetField(LocalizedStringKey(store.preferences.defaultWeightUnit.label), value: Binding(
                         get: {
                             targetWeightInputs[exercise.id]
-                                ?? binding.wrappedValue.targetWeightKilograms.map { store.preferences.weightUnit.display(kilograms: $0) }
+                                ?? binding.wrappedValue.targetWeightKilograms.map { store.preferences.defaultWeightUnit.display(kilograms: $0) }
                                 ?? ""
                         },
                         set: { value in
                             targetWeightInputs[exercise.id] = value
                             let trimmed = value.trimmingCharacters(in: .whitespaces)
                             binding.wrappedValue.targetWeightKilograms = trimmed.isEmpty
-                                ? nil : store.preferences.weightUnit.kilograms(display: trimmed)
+                                ? nil : store.preferences.defaultWeightUnit.kilograms(display: trimmed)
                         }
                     ), keyboard: .decimalPad, width: 58,
                        identifier: "workout.target-weight.\(exercise.id.uuidString)")

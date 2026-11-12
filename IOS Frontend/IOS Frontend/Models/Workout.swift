@@ -716,6 +716,10 @@ nonisolated struct SessionExerciseDraft: Identifiable, Hashable, Codable, Sendab
     var supersetGroup: Int?
     var targetReps: Int?
     var targetWeightKilograms: String?
+    /// Display choice for this exercise in this session only. Checkpointed
+    /// locally, never sent in a workout, set or account API request. A legacy
+    /// checkpoint without a choice follows the account default until adopted.
+    var displayUnit: WorkoutWeightUnit?
 
     init(
         id: Exercise.ID,
@@ -727,7 +731,8 @@ nonisolated struct SessionExerciseDraft: Identifiable, Hashable, Codable, Sendab
         restSeconds: Int? = nil,
         supersetGroup: Int? = nil,
         targetReps: Int? = nil,
-        targetWeightKilograms: String? = nil
+        targetWeightKilograms: String? = nil,
+        displayUnit: WorkoutWeightUnit? = nil
     ) {
         self.id = id
         self.exerciseServerID = exerciseServerID
@@ -739,6 +744,11 @@ nonisolated struct SessionExerciseDraft: Identifiable, Hashable, Codable, Sendab
         self.supersetGroup = supersetGroup
         self.targetReps = targetReps
         self.targetWeightKilograms = targetWeightKilograms
+        self.displayUnit = displayUnit
+    }
+
+    func weightUnit(default defaultUnit: WorkoutWeightUnit) -> WorkoutWeightUnit {
+        displayUnit ?? defaultUnit
     }
 
     /// The target a set aims at. Targets describe the working sets, so a
@@ -767,6 +777,7 @@ nonisolated struct SessionExerciseDraft: Identifiable, Hashable, Codable, Sendab
     private enum CodingKeys: String, CodingKey {
         case id, exerciseServerID, sessionExerciseID, name, sets
         case workoutExerciseID, restSeconds, supersetGroup, targetReps, targetWeightKilograms
+        case displayUnit
     }
 
     init(from decoder: Decoder) throws {
@@ -781,6 +792,9 @@ nonisolated struct SessionExerciseDraft: Identifiable, Hashable, Codable, Sendab
         supersetGroup = try values.decodeIfPresent(Int.self, forKey: .supersetGroup)
         targetReps = try values.decodeIfPresent(Int.self, forKey: .targetReps)
         targetWeightKilograms = try values.decodeIfPresent(String.self, forKey: .targetWeightKilograms)
+        // Unknown future units fall back safely without losing the workout.
+        displayUnit = try values.decodeIfPresent(String.self, forKey: .displayUnit)
+            .flatMap(WorkoutWeightUnit.init(rawValue:))
     }
 }
 
@@ -848,6 +862,34 @@ nonisolated struct ActiveWorkoutSession: Identifiable, Hashable, Codable, Sendab
 
     /// Timed rather than logged as sets. See `Workout.tracksDistance`.
     var tracksDistance: Bool { !activity.usesSets }
+
+    /// Pin only as-yet unselected exercises to the account's loaded default.
+    /// Existing per-exercise choices are never replaced by preference reads.
+    @discardableResult
+    mutating func adoptDefaultDisplayUnits(_ unit: WorkoutWeightUnit) -> Bool {
+        var changed = false
+        for index in exercises.indices where exercises[index].displayUnit == nil {
+            exercises[index].displayUnit = unit
+            changed = true
+        }
+        return changed
+    }
+
+    /// A display-only mutation addressed by session and exercise identity,
+    /// never by a row offset or shared catalog ID. No set values are changed.
+    @discardableResult
+    mutating func setExerciseDisplayUnit(
+        _ unit: WorkoutWeightUnit,
+        on day: Weekday,
+        sessionID expectedSessionID: Int,
+        exerciseID: Exercise.ID
+    ) -> Bool {
+        guard self.day == day, serverID == expectedSessionID, !tracksDistance,
+              let index = exercises.firstIndex(where: { $0.id == exerciseID }),
+              exercises[index].displayUnit != unit else { return false }
+        exercises[index].displayUnit = unit
+        return true
+    }
 
     var totalSetCount: Int {
         exercises.reduce(0) { $0 + $1.sets.count }

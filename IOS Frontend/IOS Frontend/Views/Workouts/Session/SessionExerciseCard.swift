@@ -17,6 +17,7 @@ enum SessionField: Hashable {
 
 struct SessionExerciseCard: View {
     let day: Weekday
+    let sessionID: Int
     let exercise: SessionExerciseDraft
     let position: Int
     let count: Int
@@ -35,7 +36,7 @@ struct SessionExerciseCard: View {
     @State private var confirmingRemoval = false
     private let phase = WorkoutVisualPhase.focus
 
-    private var unit: WorkoutWeightUnit { store.preferences.weightUnit }
+    private var unit: WorkoutWeightUnit { exercise.weightUnit(default: store.preferences.defaultWeightUnit) }
     private var labels: [String] { WorkoutSetPolicy.labels(for: exercise.sets.map(\.setType)) }
     private var currentSetID: UUID? { isFocused ? exercise.currentSet?.id : nil }
     private var isCollapsed: Bool { exercise.isComplete && !isFocused && !expandedWhileComplete }
@@ -54,9 +55,14 @@ struct SessionExerciseCard: View {
                 } else {
                     settingsRow
                     WorkoutWeightUnitControl(
+                        selection: Binding(
+                            get: { unit },
+                            set: { store.setSessionExerciseDisplayUnit($0, on: day, sessionID: sessionID, exerciseID: exercise.id) }
+                        ),
                         onWillChange: { focusedField.wrappedValue = nil },
-                        showsDefaultAction: isFocused
+                        identifierPrefix: "workout.exercise-unit.\(exercise.sessionExerciseID)"
                     )
+                    .disabled(store.isSaving || store.isRecoveringWorkouts)
                     setTable
                     Button {
                         store.addSessionSet(on: day, exerciseID: exercise.id)
@@ -82,6 +88,17 @@ struct SessionExerciseCard: View {
         }
         .shadow(color: phase.shadow.opacity(isFocused ? 0.45 : 0.2), radius: isFocused ? 8 : 3, x: 0, y: 2)
         .animation(.snappy(duration: 0.22), value: isCollapsed)
+        .onChange(of: unit) {
+            // Re-render this exercise from canonical kilograms. A neighbour's
+            // partially typed number must keep its own unit and input cache.
+            if let focused = focusedField.wrappedValue {
+                switch focused {
+                case .weight(let id), .reps(let id):
+                    if exercise.sets.contains(where: { $0.id == id }) { focusedField.wrappedValue = nil }
+                }
+            }
+            for set in exercise.sets { weightInputs.removeValue(forKey: set.id) }
+        }
         .confirmationDialog(
             "Delete this logged set?",
             isPresented: Binding(get: { confirmingSetDeletion != nil }, set: { if !$0 { confirmingSetDeletion = nil } }),
@@ -264,7 +281,7 @@ private struct SessionSetRow: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     private let phase = WorkoutVisualPhase.focus
 
-    private var unit: WorkoutWeightUnit { store.preferences.weightUnit }
+    private var unit: WorkoutWeightUnit { exercise.weightUnit(default: store.preferences.defaultWeightUnit) }
     private var hint: PreviousSet? { store.previousSet(for: exercise, at: index) }
     private var isPending: Bool { store.isSetPending(set.id) }
     private var canComplete: Bool { store.canComplete(set, in: exercise) }
@@ -388,7 +405,7 @@ private struct SessionSetRow: View {
         .modifier(SetFieldStyle(width: 70, invalid: !set.isWeightValid, logged: set.isLogged))
         .disabled(set.isLogged || isPending)
         .accessibilityLabel("Weight in \(unit.title)")
-        .accessibilityIdentifier("workout.set-weight.\(set.id.uuidString)")
+        .accessibilityIdentifier("workout.set-weight.\(exercise.sessionExerciseID).\(set.setNumber)")
     }
 
     private var repsField: some View {

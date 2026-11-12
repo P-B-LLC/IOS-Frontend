@@ -1,14 +1,35 @@
 # TestFlight development workflow
 
+## Exercise-only units during training — November 12, 2026
+
+Refines the previous unit UI after simulator feedback. The builder/review and
+completed-workout pages no longer offer a kg/lb switch. The existing visual
+control now appears only inside active exercise cards, labelled "Only this
+exercise." There is no account-default checkbox on an exercise. Each choice
+is local to the session exercise, checkpointed on this device, and never
+changes canonical kilogram values or another exercise's input. The account
+default remains in Settings and seeds new sessions. No API/schema change,
+backend deployment, main merge or TestFlight upload is included.
+
+See [WORKOUT_ORDER_UNITS_TESTING.md](WORKOUT_ORDER_UNITS_TESTING.md) for updated
+mixed-equipment and recovery checks. The earlier `4077f14` builds and pure
+tests passed, but native validation exposed test lookup/scroll issues and is
+not recorded as a full pass. This revision requires its own Mac validation.
+The revision adds 17 exercise-unit model/wiring tests and a control-scope
+regression, plus four required native workout-flow cases. Local shell syntax,
+stable-ID checks, catalog parsing/ten-language coverage for the new caption,
+and diff checks passed; Swift compilation and native execution remain pending
+until the exact testing-branch head completes CI.
+
 ## Inline exercise order and visible weight units — November 12, 2026
 
 The approved workout flow moves press-and-hold reordering onto the selected
 exercise cards in Add exercises and removes the separate reorder sheet.
 Native list movement preserves complete exercise records and supports edge
 scrolling; accessible move actions remain available. Review retains the same
-draft and existing save path. Weight controls are labelled beside entry, with
-an explicit default-saving action instead of a hidden-only context menu.
-Temporary unit changes remain display-only; stored values remain kilograms.
+draft and existing save path. The first unit design placed controls beside
+entry with an explicit default-saving action. The exercise-only revision
+above supersedes that scope; stored values still remain kilograms.
 
 See [WORKOUT_ORDER_UNITS_TESTING.md](WORKOUT_ORDER_UNITS_TESTING.md) for the
 Mac real-app command, privacy/scope boundaries and manual checks. Only this

@@ -229,16 +229,17 @@ final class WorkoutUnitPreferenceTests: XCTestCase {
 
     // These guards verify that the tested conversion/preferences are wired
     // into the real editing surfaces. Native UI tests still exercise taps.
-    func testBuilderKeepsRawTypingUntilAUnitSwitchAndEndsKeyboardEditingFirst() throws {
+    func testBuilderUsesAccountTargetUnitsWithoutOfferingAnExerciseUnitSwitch() throws {
         let root = try XCTUnwrap(ProcessInfo.processInfo.environment["RYTIVO_TEST_REPOSITORY"])
         let source = try String(contentsOf: URL(fileURLWithPath: root)
             .appendingPathComponent("IOS Frontend/IOS Frontend/Views/Workouts/GuidedWorkoutBuilder.swift"), encoding: .utf8)
         XCTAssertTrue(source.contains("@State private var targetWeightInputs: [UUID: String]"))
         XCTAssertTrue(source.contains("targetWeightInputs[exercise.id] = value"))
         XCTAssertTrue(source.contains("targetWeightInputs.removeAll()"))
-        XCTAssertTrue(source.contains("WorkoutWeightUnitControl(onWillChange:"))
-        XCTAssertTrue(source.contains("#selector(UIResponder.resignFirstResponder)"))
-        XCTAssertTrue(source.contains("store.preferences.weightUnit.kilograms(display: trimmed)"))
+        XCTAssertFalse(source.contains("WorkoutWeightUnitControl("))
+        XCTAssertFalse(source.contains("WeightUnitToggle("))
+        XCTAssertTrue(source.contains("store.preferences.defaultWeightUnit.label"))
+        XCTAssertTrue(source.contains("store.preferences.defaultWeightUnit.kilograms(display: trimmed)"))
     }
 
     func testSessionUsesCanonicalWeightAndInvalidatesOnlyTheDisplayCache() throws {
@@ -247,10 +248,31 @@ final class WorkoutUnitPreferenceTests: XCTestCase {
             .appendingPathComponent("IOS Frontend/IOS Frontend/Views/Workouts/Session")
         let screen = try String(contentsOf: directory.appendingPathComponent("ActiveLiftingSessionView.swift"), encoding: .utf8)
         let card = try String(contentsOf: directory.appendingPathComponent("SessionExerciseCard.swift"), encoding: .utf8)
-        XCTAssertTrue(screen.contains(".onChange(of: store.preferences.weightUnit)"))
+        XCTAssertFalse(screen.contains(".onChange(of: store.preferences.weightUnit)"))
+        XCTAssertTrue(screen.contains(".onChange(of: session.serverID)"))
         XCTAssertTrue(screen.contains("weightInputs = [:]"))
+        XCTAssertTrue(card.contains(".onChange(of: unit)"))
+        XCTAssertTrue(card.contains("for set in exercise.sets { weightInputs.removeValue(forKey: set.id) }"))
+        XCTAssertTrue(card.contains("exercise.weightUnit(default: store.preferences.defaultWeightUnit)"))
+        XCTAssertTrue(card.contains("store.setSessionExerciseDisplayUnit($0, on: day, sessionID: sessionID, exerciseID: exercise.id)"))
         XCTAssertTrue(card.contains("onWillChange: { focusedField.wrappedValue = nil }"))
         XCTAssertTrue(card.contains("weightInputs[set.id] ?? unit.display(kilograms: set.weightKilograms)"))
         XCTAssertTrue(card.contains("weightKilograms: unit.kilograms(display: value)"))
+    }
+
+    func testActiveExerciseControlCannotWriteAccountDefaultsOrOtherExercises() throws {
+        let root = try XCTUnwrap(ProcessInfo.processInfo.environment["RYTIVO_TEST_REPOSITORY"])
+        let directory = URL(fileURLWithPath: root)
+            .appendingPathComponent("IOS Frontend/IOS Frontend/Views/Workouts")
+        let controls = try String(contentsOf: directory.appendingPathComponent("WorkoutUnitControls.swift"), encoding: .utf8)
+        XCTAssertTrue(controls.contains("@Binding var selection: WorkoutWeightUnit"))
+        XCTAssertFalse(controls.contains("makeDefault("))
+        XCTAssertFalse(controls.contains("useTemporarily("))
+        XCTAssertFalse(controls.contains("workout.weight-unit-default"))
+        for file in ["GuidedWorkoutBuilder.swift", "FocusedLiftingSession.swift", "DayWorkoutView.swift"] {
+            let source = try String(contentsOf: directory.appendingPathComponent(file), encoding: .utf8)
+            XCTAssertFalse(source.contains("WeightUnitToggle("), file)
+            XCTAssertFalse(source.contains("WorkoutWeightUnitControl("), file)
+        }
     }
 }

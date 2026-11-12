@@ -48,6 +48,7 @@ cp "$repo/Tests/AccountSafety/WorkoutSessionPolicyTests.swift" "$test_package/Te
 cp "$repo/Tests/AccountSafety/SupersetRoundPolicyTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/Tests/AccountSafety/WorkoutExerciseOrderTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/Tests/AccountSafety/WorkoutUnitPreferenceTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/Tests/AccountSafety/WorkoutExerciseUnitTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/IOS Frontend/IOS Frontend/Stores/WorkoutPreferences.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/Services/WorkoutExerciseOrder.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/Tests/AccountSafety/RestTimerLifecycleTests.swift" "$test_package/Tests/AccountSafetyTests/"

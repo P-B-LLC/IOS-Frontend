@@ -9,27 +9,26 @@ import SwiftUI
 
 /// A two-position kg | lb switch.
 ///
-/// Tapping changes the display only. The explicit default action lives in
-/// `WorkoutWeightUnitControl`, not behind a hidden long-press menu.
+/// The owner supplies the selection. This control never changes the account
+/// default or any other exercise's display unit.
 struct WeightUnitToggle: View {
-    @Environment(WorkoutStore.self) private var store
+    @Binding var selection: WorkoutWeightUnit
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.colorSchemeContrast) private var contrast
     @State private var selectionFeedback = 0
     var compact = false
     var onWillChange: () -> Void = {}
-
-    private var preferences: WorkoutPreferences { store.preferences }
+    var identifierPrefix = "workout.weight-unit"
 
     var body: some View {
         HStack(spacing: 0) {
             ForEach(WorkoutWeightUnit.allCases) { unit in
-                let selected = preferences.weightUnit == unit
+                let selected = selection == unit
                 Button {
                     guard !selected else { return }
                     onWillChange()
                     withAnimation(reduceMotion ? nil : .snappy(duration: 0.2)) {
-                        preferences.useTemporarily(unit)
+                        selection = unit
                     }
                     selectionFeedback += 1
                 } label: {
@@ -49,7 +48,7 @@ struct WeightUnitToggle: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel(unit.title)
                 .accessibilityAddTraits(selected ? [.isSelected] : [])
-                .accessibilityIdentifier("workout.weight-unit.\(unit.rawValue)")
+                .accessibilityIdentifier("\(identifierPrefix).\(unit.rawValue)")
             }
         }
         .padding(.horizontal, 3)
@@ -64,22 +63,15 @@ struct WeightUnitToggle: View {
     }
 }
 
-/// The labelled control sits immediately above the weights it changes.
-/// Its optional second row makes remembering the choice an explicit action;
-/// selecting kg/lb itself never writes the account or any recorded weight.
+/// Shown only inside an active exercise, immediately above its weight entries.
+/// No account-default action belongs here: a mixed-equipment session needs
+/// independent units without changing other exercises or future workouts.
 struct WorkoutWeightUnitControl: View {
-    @Environment(WorkoutStore.self) private var store
+    @Binding var selection: WorkoutWeightUnit
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     var onWillChange: () -> Void = {}
-    var showsDefaultAction = true
+    var identifierPrefix: String
     private let phase = WorkoutVisualPhase.focus
-
-    private var preferences: WorkoutPreferences { store.preferences }
-    private var isSavedDefault: Bool {
-        preferences.hasLoadedUnit && !preferences.isSavingUnit
-            && preferences.defaultWeightUnit == preferences.weightUnit
-            && preferences.unitError == nil
-    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -91,66 +83,16 @@ struct WorkoutWeightUnitControl: View {
                     .font(.community(.subheadline, weight: .semibold))
                     .foregroundStyle(phase.primaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                WeightUnitToggle(onWillChange: onWillChange)
+                WeightUnitToggle(selection: $selection, onWillChange: onWillChange,
+                                 identifierPrefix: identifierPrefix)
             }
-            if showsDefaultAction {
-                defaultAction
-                if let error = preferences.unitError {
-                    Text(error)
-                        .font(.community(.caption))
-                        .foregroundStyle(RepbaseDesign.danger)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .accessibilityIdentifier("workout.weight-unit-error")
-                }
-            }
+            Text("Only this exercise.")
+                .font(.community(.caption))
+                .foregroundStyle(phase.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .accessibilityElement(children: .contain)
-        .accessibilityIdentifier("workout.weight-unit-control")
-    }
-
-    private var defaultAction: some View {
-        Button {
-            onWillChange()
-            let unit = preferences.weightUnit
-            Task { await preferences.makeDefault(unit, using: store) }
-        } label: {
-            HStack(spacing: 8) {
-                if preferences.isSavingUnit {
-                    ProgressView().controlSize(.small)
-                        .frame(width: 22, height: 22)
-                } else {
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(isSavedDefault ? phase.primaryActionSurface : Color.clear)
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                .strokeBorder(isSavedDefault ? phase.primaryActionSurface : phase.cardBorder, lineWidth: 1)
-                        }
-                        .overlay {
-                            if isSavedDefault {
-                                Image(systemName: "checkmark")
-                                    .font(.community(.caption, weight: .bold))
-                                    .foregroundStyle(phase.onPrimaryAction)
-                            }
-                        }
-                        .frame(width: 22, height: 22)
-                        .accessibilityHidden(true)
-                }
-                Text(preferences.weightUnit == .metric ? "Use kg as my default" : "Use lb as my default")
-                    .fixedSize(horizontal: false, vertical: true)
-                if preferences.unitError != nil {
-                    Spacer(minLength: 8)
-                    Text("Retry").fontWeight(.bold)
-                }
-            }
-            .font(.community(.caption, weight: .semibold))
-            .foregroundStyle(isSavedDefault ? PlannerStyle.success : phase.accent)
-            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .disabled(preferences.isSavingUnit || isSavedDefault || !store.isConnected)
-        .accessibilityValue(preferences.isSavingUnit ? "Saving…" : isSavedDefault ? "Saved" : "")
-        .accessibilityIdentifier("workout.weight-unit-default")
+        .accessibilityIdentifier(identifierPrefix)
     }
 }
 

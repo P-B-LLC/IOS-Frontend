@@ -1631,7 +1631,7 @@ struct DayWorkoutView: View {
                     ? String(localized: "Logged", bundle: .app, locale: .app, comment: "A set that was logged with no weight or reps")
                     : String(localized: "\(reps) reps", bundle: .app, locale: .app)
             }
-            let unit = store.preferences.weightUnit
+            let unit = exercise.weightUnit(default: store.preferences.defaultWeightUnit)
             let shown = unit.display(kilograms: weight)
             return reps.isEmpty
                 ? (unit == .metric
@@ -1701,7 +1701,6 @@ struct DayWorkoutView: View {
                         .tracking(1)
                         .foregroundStyle(WorkoutVisualPhase.recover.accent)
                     Spacer()
-                    WeightUnitToggle(compact: true)
                 }
                 sessionOverviewLines(overview)
             } else if let session, store.loadingOverviewIDs.contains(session.sessionID) {

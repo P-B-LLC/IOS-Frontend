@@ -13,9 +13,16 @@ API/schema change or TestFlight upload is included.
 - Moving a card moves its complete exercise record. Local and server IDs,
   set kinds, targets, rest and superset membership stay attached. Reordering
   does not save until the existing Save workout action is confirmed.
-- Review checks the selected order and existing targets. Weight unit controls
-  appear beside weight entry, with a visible option to save the selected unit
-  as the account default. A temporary kg/lb switch does not make a network call.
+- Review checks the selected order and existing targets, labelled with the
+  account's default unit. It has no kg/lb switch or save-default checkbox.
+- Only active exercise cards show the kg/lb control. Each choice applies to
+  that session exercise, not another exercise (even the same catalogue lift),
+  other workouts, or the account default. It makes no network request.
+- Each exercise's choice survives the current workout's local checkpoint on
+  this device. New sessions start from the account default; choices are not
+  written to the plan or advertised as syncing to another device. Account
+  defaults remain an explicit Settings preference. The immediate completion
+  summary labels each exercise's unit; aggregate volume uses the account unit.
 - Stored weights remain kilograms; display conversion uses the existing exact
   Decimal conversion. Logged results and planned targets remain distinct.
 
@@ -33,10 +40,11 @@ git fetch origin
 git switch work/testflight-fixes-2026-10-27
 git pull --ff-only
 git log -1 --oneline
-open -a Simulator
+open -a Xcode
 ```
 
-Once one iPhone simulator is fully booted:
+In Xcode choose Open Developer Tool > Device Hub (or Simulator on older
+versions), then start an iPhone. Once one iPhone simulator is fully booted:
 
 ```bash
 REPBASE_API_URL=https://rytivo.app INSTALL_SIMULATOR=1 \
@@ -65,14 +73,17 @@ app data and reuses build storage; it rejects inherited preview launch flags.
    every step. Repeated catalog movements remain distinct planned entries.
 4. Leave without saving: the prior server plan must remain unchanged.
    Verify existing draft recovery behaves normally.
-5. In Review and during a lifting session, switch kg to lb and back. Check
-   entered weights, logged weights and previous-set hints. Repeated switches
-   must not change stored weights. Try 60 kg and 135 lb, decimal commas, empty
-   fields and a partially typed decimal before switching.
-6. A temporary switch must leave the account default unchanged. Use the
-   visible default action, confirm success, then reopen the app. Disconnect
-   before saving a default: show a retryable failure, never false success.
-   Rapid taps and signing out during a save must not change the next account.
+5. Confirm Review has no unit switch. During a lifting session, switch one
+   exercise from kg to lb and back. Check entered weights, logged weights,
+   targets and previous-set hints. Other exercises (including their partially
+   typed inputs) must not change. Try 60 kg and 135 lb, decimal commas, empty
+   fields and a partially typed decimal before switching. Stored kg must not
+   change from repeated display switches.
+6. Use kg for one exercise and lb for another. Collapse/reopen, reorder, add
+   an exercise, background/relaunch, save a set, and finish: choices stay with
+   the correct exercise. No default checkbox is offered during training.
+   Start another workout or switch accounts: choices must not carry over.
+   Exercise switching works offline; no account preference request is sent.
 7. Check light/dark, large text, VoiceOver move actions and unit labels,
    Reduce Motion and Arabic/RTL. Controls must remain reachable at small widths.
 8. Re-run the previous superset and ten-second rest-banner checks in

@@ -28,7 +28,7 @@ nonisolated enum NumberInput {
 /// again from the stored kilograms every time rather than from the last figure
 /// shown. Switching units back and forth therefore never moves a recorded
 /// weight, and rounding cannot build up.
-nonisolated enum WorkoutWeightUnit: String, CaseIterable, Identifiable, Sendable {
+nonisolated enum WorkoutWeightUnit: String, CaseIterable, Identifiable, Codable, Sendable {
     case metric, imperial
 
     var id: String { rawValue }
