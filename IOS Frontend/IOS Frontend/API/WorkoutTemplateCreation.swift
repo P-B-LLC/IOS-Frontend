@@ -23,6 +23,7 @@ nonisolated enum WorkoutTemplateCreation {
         var supersetGroup: Int? = nil
         /// Raw API values, so this file needs no app model to compile alone.
         var setTypes: [Components.Schemas.SetTypeEnum] = []
+        var plannedSets: [Components.Schemas.WorkoutPlannedSetRequest]? = nil
     }
 
     static func initialExercises(_ selections: [Selection]) -> [Components.Schemas.InitialWorkoutExerciseRequest] {
@@ -35,7 +36,8 @@ nonisolated enum WorkoutTemplateCreation {
                   supersetGroup: selection.supersetGroup,
                   // Left out rather than sent empty when there are none, so
                   // the request reads the same as one from before set kinds.
-                  setTypes: selection.setTypes.isEmpty ? nil : selection.setTypes)
+                  setTypes: selection.setTypes.isEmpty ? nil : selection.setTypes,
+                  plannedSets: selection.plannedSets)
         }
     }
 

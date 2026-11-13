@@ -1,6 +1,916 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+  "PLANNED TARGETS": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "PLANNED TARGETS"
+        }
+      },
+      "es": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "OBJETIVOS PLANIFICADOS"
+        }
+      },
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "计划目标"
+        }
+      },
+      "hi": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "नियोजित लक्ष्य"
+        }
+      },
+      "ar": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "الأهداف المخططة"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "OBJECTIFS PRÉVUS"
+        }
+      },
+      "pt-BR": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "METAS PLANEJADAS"
+        }
+      },
+      "ru": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "ПЛАНОВЫЕ ЦЕЛИ"
+        }
+      },
+      "ja": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "予定の目標"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "GEPLANTE ZIELE"
+        }
+      }
+    }
+  },
+  "Weight (%@)": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Weight (%@)"
+        }
+      },
+      "es": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Peso (%@)"
+        }
+      },
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "重量（%@）"
+        }
+      },
+      "hi": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "वज़न (%@)"
+        }
+      },
+      "ar": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "الوزن (%@)"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Charge (%@)"
+        }
+      },
+      "pt-BR": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Peso (%@)"
+        }
+      },
+      "ru": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Вес (%@)"
+        }
+      },
+      "ja": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "重量（%@）"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Gewicht (%@)"
+        }
+      }
+    }
+  },
+  "Make each set count.": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Make each set count."
+        }
+      },
+      "es": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Haz que cada serie cuente."
+        }
+      },
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "让每一组都有目标。"
+        }
+      },
+      "hi": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "हर सेट को सार्थक बनाएं।"
+        }
+      },
+      "ar": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "اجعل لكل مجموعة هدفًا."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Donnez un objectif à chaque série."
+        }
+      },
+      "pt-BR": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Faça cada série valer a pena."
+        }
+      },
+      "ru": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Пусть каждый подход имеет цель."
+        }
+      },
+      "ja": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "一つひとつのセットを大切に。"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Mach jeden Satz wertvoll."
+        }
+      }
+    }
+  },
+  "Set your targets. Adjust as you train.": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Set your targets. Adjust as you train."
+        }
+      },
+      "es": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Define tus objetivos. Ajústalos al entrenar."
+        }
+      },
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "设定目标，训练时灵活调整。"
+        }
+      },
+      "hi": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "लक्ष्य तय करें। ट्रेनिंग के दौरान बदलाव करें।"
+        }
+      },
+      "ar": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "حدد أهدافك وعدّلها أثناء التمرين."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Fixez vos objectifs. Ajustez pendant l’entraînement."
+        }
+      },
+      "pt-BR": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Defina suas metas. Ajuste durante o treino."
+        }
+      },
+      "ru": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Задайте цели. Корректируйте во время тренировки."
+        }
+      },
+      "ja": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "目標を決めて、トレーニング中に調整しましょう。"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Lege Ziele fest. Passe sie beim Training an."
+        }
+      }
+    }
+  },
+  "Apply first set targets to all": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Apply first set targets to all"
+        }
+      },
+      "es": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Aplicar los objetivos de la primera serie a todas"
+        }
+      },
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "将第一组目标应用到所有组"
+        }
+      },
+      "hi": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "पहले सेट के लक्ष्य सभी पर लागू करें"
+        }
+      },
+      "ar": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "طبّق أهداف المجموعة الأولى على الكل"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Appliquer les objectifs de la première série à toutes"
+        }
+      },
+      "pt-BR": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Aplicar as metas da primeira série a todas"
+        }
+      },
+      "ru": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Применить цели первого подхода ко всем"
+        }
+      },
+      "ja": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "最初のセットの目標をすべてに適用"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ziele des ersten Satzes für alle übernehmen"
+        }
+      }
+    }
+  },
+  "Change set type": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Change set type"
+        }
+      },
+      "es": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Cambiar tipo de serie"
+        }
+      },
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "更改组类型"
+        }
+      },
+      "hi": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "सेट का प्रकार बदलें"
+        }
+      },
+      "ar": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "تغيير نوع المجموعة"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Changer le type de série"
+        }
+      },
+      "pt-BR": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Alterar tipo de série"
+        }
+      },
+      "ru": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Изменить тип подхода"
+        }
+      },
+      "ja": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "セットの種類を変更"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Satzart ändern"
+        }
+      }
+    }
+  },
+  "Set %lld target reps": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Set %lld target reps"
+        }
+      },
+      "es": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Repeticiones objetivo de la serie %lld"
+        }
+      },
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "第 %lld 组目标次数"
+        }
+      },
+      "hi": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "सेट %lld के लक्ष्य रेप्स"
+        }
+      },
+      "ar": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "التكرارات المستهدفة للمجموعة %lld"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Répétitions prévues pour la série %lld"
+        }
+      },
+      "pt-BR": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Repetições planejadas para a série %lld"
+        }
+      },
+      "ru": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Целевые повторения для подхода %lld"
+        }
+      },
+      "ja": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "セット%lldの目標回数"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Zielwiederholungen für Satz %lld"
+        }
+      }
+    }
+  },
+  "Set %lld target weight in %@": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Set %lld target weight in %@"
+        }
+      },
+      "es": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Peso objetivo de la serie %lld en %@"
+        }
+      },
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "第 %lld 组目标重量，单位 %@"
+        }
+      },
+      "hi": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "सेट %lld का लक्ष्य वज़न %@ में"
+        }
+      },
+      "ar": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "الوزن المستهدف للمجموعة %lld بوحدة %@"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Charge prévue pour la série %lld en %@"
+        }
+      },
+      "pt-BR": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Peso planejado para a série %lld em %@"
+        }
+      },
+      "ru": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Целевой вес для подхода %lld в %@"
+        }
+      },
+      "ja": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "セット%lldの目標重量（%@）"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Zielgewicht für Satz %lld in %@"
+        }
+      }
+    }
+  },
+  "Remove set %lld": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Remove set %lld"
+        }
+      },
+      "es": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Eliminar serie %lld"
+        }
+      },
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "移除第 %lld 组"
+        }
+      },
+      "hi": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "सेट %lld हटाएं"
+        }
+      },
+      "ar": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "إزالة المجموعة %lld"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Supprimer la série %lld"
+        }
+      },
+      "pt-BR": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Remover série %lld"
+        }
+      },
+      "ru": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Удалить подход %lld"
+        }
+      },
+      "ja": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "セット%lldを削除"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Satz %lld entfernen"
+        }
+      }
+    }
+  },
+  "Use 1–1,000 reps and a valid weight, or leave targets blank.": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Use 1–1,000 reps and a valid weight, or leave targets blank."
+        }
+      },
+      "es": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Usa entre 1 y 1.000 repeticiones y un peso válido, o deja los objetivos en blanco."
+        }
+      },
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "输入 1–1,000 次和有效重量，或将目标留空。"
+        }
+      },
+      "hi": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "1–1,000 रेप्स और मान्य वज़न डालें, या लक्ष्य खाली छोड़ें।"
+        }
+      },
+      "ar": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "أدخل من 1 إلى 1,000 تكرار ووزنًا صالحًا، أو اترك الأهداف فارغة."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Indiquez 1 à 1 000 répétitions et une charge valide, ou laissez les objectifs vides."
+        }
+      },
+      "pt-BR": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Use de 1 a 1.000 repetições e um peso válido, ou deixe as metas em branco."
+        }
+      },
+      "ru": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Укажите от 1 до 1 000 повторений и допустимый вес или оставьте цели пустыми."
+        }
+      },
+      "ja": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "1～1,000回と有効な重量を入力するか、目標を空欄にしてください。"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Gib 1–1.000 Wiederholungen und ein gültiges Gewicht ein oder lass die Ziele leer."
+        }
+      }
+    }
+  },
+  "Changed planned targets for %@": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Changed planned targets for %@"
+        }
+      },
+      "es": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Se cambiaron los objetivos planificados de %@"
+        }
+      },
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "已更改 %@ 的计划目标"
+        }
+      },
+      "hi": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%@ के नियोजित लक्ष्य बदले"
+        }
+      },
+      "ar": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "تم تغيير الأهداف المخططة لـ %@"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Objectifs prévus modifiés pour %@"
+        }
+      },
+      "pt-BR": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Metas planejadas de %@ alteradas"
+        }
+      },
+      "ru": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Изменены плановые цели для %@"
+        }
+      },
+      "ja": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%@の予定目標を変更しました"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Geplante Ziele für %@ geändert"
+        }
+      }
+    }
+  },
+  "Per-set planning is not available on this server yet. Your draft is kept. Try again after the backend is updated.": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Per-set planning is not available on this server yet. Your draft is kept. Try again after the backend is updated."
+        }
+      },
+      "es": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "La planificación por serie aún no está disponible en este servidor. Tu borrador se conserva. Reinténtalo cuando se actualice el servidor."
+        }
+      },
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "此服务器尚不支持逐组计划。草稿已保留，请在后端更新后重试。"
+        }
+      },
+      "hi": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "इस सर्वर पर अभी हर सेट की योजना उपलब्ध नहीं है। आपका ड्राफ़्ट सुरक्षित है। बैकएंड अपडेट होने पर फिर कोशिश करें।"
+        }
+      },
+      "ar": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "التخطيط لكل مجموعة غير متاح على هذا الخادم بعد. تم الاحتفاظ بمسودتك. حاول مجددًا بعد تحديث الخادم."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "La planification par série n’est pas encore disponible sur ce serveur. Votre brouillon est conservé. Réessayez après la mise à jour du serveur."
+        }
+      },
+      "pt-BR": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "O planejamento por série ainda não está disponível neste servidor. Seu rascunho foi mantido. Tente novamente após a atualização do servidor."
+        }
+      },
+      "ru": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "На этом сервере пока нет планирования по подходам. Черновик сохранён. Повторите после обновления сервера."
+        }
+      },
+      "ja": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "このサーバーはセット別の計画にまだ対応していません。下書きは保持されています。サーバーの更新後に再試行してください。"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Dieser Server unterstützt noch keine Planung je Satz. Dein Entwurf bleibt erhalten. Versuche es nach der Serveraktualisierung erneut."
+        }
+      }
+    }
+  },
+  "Check your planned sets. Use 1–1000 reps and a valid weight for each set.": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Check your planned sets. Use 1–1000 reps and a valid weight for each set."
+        }
+      },
+      "es": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Revisa las series planificadas. Usa entre 1 y 1000 repeticiones y un peso válido en cada serie."
+        }
+      },
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "检查计划的组数。每组使用 1–1000 次和有效重量。"
+        }
+      },
+      "hi": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "नियोजित सेट जांचें। हर सेट में 1–1000 रेप्स और मान्य वज़न डालें।"
+        }
+      },
+      "ar": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "راجع مجموعاتك المخططة. استخدم من 1 إلى 1000 تكرار ووزنًا صالحًا لكل مجموعة."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Vérifiez les séries prévues. Utilisez 1 à 1 000 répétitions et une charge valide par série."
+        }
+      },
+      "pt-BR": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Confira as séries planejadas. Use de 1 a 1000 repetições e um peso válido em cada série."
+        }
+      },
+      "ru": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Проверьте план подходов. Укажите от 1 до 1000 повторений и допустимый вес для каждого."
+        }
+      },
+      "ja": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "予定のセットを確認してください。各セットは1～1000回と有効な重量を指定してください。"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Prüfe deine geplanten Sätze. Verwende 1–1000 Wiederholungen und ein gültiges Gewicht je Satz."
+        }
+      }
+    }
+  },
+  "Your planned sets could not be confirmed. Your draft is kept; retry to reload them safely.": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Your planned sets could not be confirmed. Your draft is kept; retry to reload them safely."
+        }
+      },
+      "es": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "No se pudieron confirmar las series planificadas. Tu borrador se conserva; reintenta para volver a cargarlas de forma segura."
+        }
+      },
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "无法确认计划的各组。草稿已保留，请重试以安全地重新加载。"
+        }
+      },
+      "hi": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "नियोजित सेट की पुष्टि नहीं हो सकी। आपका ड्राफ़्ट सुरक्षित है; उन्हें सुरक्षित रूप से दोबारा लोड करने के लिए फिर कोशिश करें।"
+        }
+      },
+      "ar": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "تعذّر تأكيد مجموعاتك المخططة. تم الاحتفاظ بمسودتك؛ حاول مجددًا لإعادة تحميلها بأمان."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Impossible de confirmer vos séries prévues. Votre brouillon est conservé ; réessayez pour les recharger sans risque."
+        }
+      },
+      "pt-BR": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Não foi possível confirmar suas séries planejadas. Seu rascunho foi mantido; tente novamente para recarregá-las com segurança."
+        }
+      },
+      "ru": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Не удалось подтвердить план подходов. Черновик сохранён; повторите, чтобы безопасно загрузить его снова."
+        }
+      },
+      "ja": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "予定のセットを確認できませんでした。下書きは保持されています。安全に再読み込みするには再試行してください。"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Deine geplanten Sätze konnten nicht bestätigt werden. Dein Entwurf bleibt erhalten. Versuche es erneut, um sie sicher neu zu laden."
+        }
+      }
+    }
+  },
   "Only this exercise.": {
     "extractionState": "manual",
     "localizations": {

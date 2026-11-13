@@ -8970,8 +8970,8 @@ components:
           items:
             $ref: '#/components/schemas/WorkoutPlannedSet'
           description: Ordered explicit targets. Nonempty rows define target_sets
-            and set_types. Empty uses legacy aggregate targets; omission preserves
-            existing rows.
+            and set_types and clear aggregate target_reps/target_weight_kg. Empty
+            uses legacy aggregate targets; omission preserves existing rows.
       required:
       - exercise
     InitialWorkoutExerciseRequest:
@@ -9030,8 +9030,8 @@ components:
           items:
             $ref: '#/components/schemas/WorkoutPlannedSetRequest'
           description: Ordered explicit targets. Nonempty rows define target_sets
-            and set_types. Empty uses legacy aggregate targets; omission preserves
-            existing rows.
+            and set_types and clear aggregate target_reps/target_weight_kg. Empty
+            uses legacy aggregate targets; omission preserves existing rows.
       required:
       - exercise
     Interest:
@@ -10527,8 +10527,8 @@ components:
           items:
             $ref: '#/components/schemas/WorkoutPlannedSetRequest'
           description: Ordered explicit targets. Nonempty rows define target_sets
-            and set_types. Empty uses legacy aggregate targets; omission preserves
-            existing rows.
+            and set_types and clear aggregate target_reps/target_weight_kg. Empty
+            uses legacy aggregate targets; omission preserves existing rows.
     PatchedWorkoutScheduleRequest:
       type: object
       properties:
@@ -13655,8 +13655,8 @@ components:
           items:
             $ref: '#/components/schemas/WorkoutPlannedSet'
           description: Ordered explicit targets. Nonempty rows define target_sets
-            and set_types. Empty uses legacy aggregate targets; omission preserves
-            existing rows.
+            and set_types and clear aggregate target_reps/target_weight_kg. Empty
+            uses legacy aggregate targets; omission preserves existing rows.
       required:
       - exercise
       - exercise_name
@@ -13721,8 +13721,8 @@ components:
           items:
             $ref: '#/components/schemas/WorkoutPlannedSetRequest'
           description: Ordered explicit targets. Nonempty rows define target_sets
-            and set_types. Empty uses legacy aggregate targets; omission preserves
-            existing rows.
+            and set_types and clear aggregate target_reps/target_weight_kg. Empty
+            uses legacy aggregate targets; omission preserves existing rows.
       required:
       - exercise
       - workout
@@ -13784,8 +13784,8 @@ components:
           items:
             $ref: '#/components/schemas/WorkoutPlannedSet'
           description: Ordered explicit targets. Nonempty rows define target_sets
-            and set_types. Empty uses legacy aggregate targets; omission preserves
-            existing rows.
+            and set_types and clear aggregate target_reps/target_weight_kg. Empty
+            uses legacy aggregate targets; omission preserves existing rows.
       required:
       - exercise
       - order
@@ -13847,8 +13847,8 @@ components:
           items:
             $ref: '#/components/schemas/WorkoutPlannedSetRequest'
           description: Ordered explicit targets. Nonempty rows define target_sets
-            and set_types. Empty uses legacy aggregate targets; omission preserves
-            existing rows.
+            and set_types and clear aggregate target_reps/target_weight_kg. Empty
+            uses legacy aggregate targets; omission preserves existing rows.
       required:
       - exercise
       - order

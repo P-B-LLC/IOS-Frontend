@@ -1,5 +1,23 @@
 # TestFlight development workflow
 
+## Durable per-set planning — November 12, 2026
+
+The testing candidate adds a set-by-set target table to Review workout, using
+the approved design with the later active-workout-only unit control decision.
+Reps, canonical kilogram weight, set type and stable row identity persist with
+the template. Starting a workout reads the backend's immutable target snapshot;
+actual logged weights/reps never silently overwrite planned targets. Existing
+legacy plans remain readable. The app checks server capability before any
+planned-set write and verifies saved targets on readback.
+
+This requires the matching backend testing branch and additive migration 0093.
+Neither live backend nor main is updated. See
+[WORKOUT_PER_SET_TESTING.md](WORKOUT_PER_SET_TESTING.md) for the implementation
+and checks, and [WORKOUT_LOCAL_TESTING.md](WORKOUT_LOCAL_TESTING.md) for a real,
+durable, isolated local backend and simulator setup (not sample-data previews).
+Generated client, build and native results must be checked on the exact current
+head before promotion; prior branch successes are not evidence for this change.
+
 ## Exercise-only units during training — November 12, 2026
 
 Refines the previous unit UI after simulator feedback. The builder/review and

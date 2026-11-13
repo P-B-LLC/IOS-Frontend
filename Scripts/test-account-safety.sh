@@ -72,6 +72,8 @@ cp "$repo/Tests/AccountSafety/EffortHapticsTests.swift" "$test_package/Tests/Acc
 cp "$repo/IOS Frontend/IOS Frontend/Services/EffortHaptics.swift" "$test_package/Sources/AccountSafety/"
 # The workout models themselves, for checkpoint compatibility across updates.
 cp "$repo/Tests/AccountSafety/WorkoutCheckpointTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/Tests/AccountSafety/WorkoutPlannedSetTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/IOS Frontend/IOS Frontend/Models/WorkoutPlannedSet.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/Models/Workout.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/Models/Nutrition.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/Models/ImperialUnits.swift" "$test_package/Sources/AccountSafety/"

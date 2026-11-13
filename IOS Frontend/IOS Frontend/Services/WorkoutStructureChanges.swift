@@ -5,9 +5,8 @@ import Foundation
 ///
 /// Taken from the saved workout when a session starts, so finishing can tell
 /// whether today's session was trained to the plan or reshaped along the way.
-/// Weights and reps are deliberately not part of it: changing those is what a
-/// session is for, and asking about them after every workout would turn a
-/// useful question into one people learn to dismiss.
+/// Planned targets are part of the reusable shape; performed weights/reps
+/// deliberately are not. Training differently today must not rewrite a plan.
 nonisolated struct WorkoutStructure: Codable, Hashable, Sendable {
     nonisolated struct Item: Codable, Hashable, Sendable {
         /// The saved row this came from. Nil for an exercise added during the
@@ -18,6 +17,8 @@ nonisolated struct WorkoutStructure: Codable, Hashable, Sendable {
         let setTypes: [WorkoutSetType]
         let restSeconds: Int?
         let supersetGroup: Int?
+        /// Optional for checkpoints written before per-set planning existed.
+        var plannedSets: [WorkoutPlannedSet]? = nil
     }
 
     var items: [Item]
@@ -31,6 +32,7 @@ nonisolated enum WorkoutStructureChange: Hashable, Sendable {
     case setTypes(String)
     case rest(String)
     case superset(String)
+    case targets(String)
 }
 
 nonisolated enum WorkoutStructureDiff {
@@ -65,6 +67,11 @@ nonisolated enum WorkoutStructureDiff {
                 changes.append(.setTypes(item.name))
             }
             if item.restSeconds != before.restSeconds { changes.append(.rest(item.name)) }
+            if let previousTargets = before.plannedSets, let currentTargets = item.plannedSets,
+               !WorkoutPlannedSetPolicy.sameTargets(previousTargets, currentTargets),
+               item.setTypes == before.setTypes {
+                changes.append(.targets(item.name))
+            }
             // Compared by who an exercise is grouped with, not by the group's
             // number: numbers only mean "these belong together", and a group
             // renumbered after another was removed is still the same group.

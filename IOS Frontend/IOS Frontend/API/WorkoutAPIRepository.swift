@@ -16,6 +16,19 @@ actor WorkoutAPIRepository {
     private let configuration: APIConfiguration
     private let client: Client
     private let recoveryScope: EditorDraftRecovery.Scope?
+    enum PlannedSetFailure: LocalizedError {
+        case unsupported, invalid, unconfirmed
+        var errorDescription: String? {
+            switch self {
+            case .unsupported:
+                return String(localized: "Per-set planning is not available on this server yet. Your draft is kept. Try again after the backend is updated.", bundle: .app, locale: .app)
+            case .invalid:
+                return String(localized: "Check your planned sets. Use 1–1000 reps and a valid weight for each set.", bundle: .app, locale: .app)
+            case .unconfirmed:
+                return String(localized: "Your planned sets could not be confirmed. Your draft is kept; retry to reload them safely.", bundle: .app, locale: .app)
+            }
+        }
+    }
     private struct SessionStartContext: Codable, Sendable {
         let workout: Workout
         let day: Weekday
@@ -107,7 +120,7 @@ actor WorkoutAPIRepository {
                 continue
             }
 
-            let exercises = template.exercises
+            let exercises = try template.exercises
                 .sorted {
                     ($0.order ?? 1, $0.id) < ($1.order ?? 1, $1.id)
                 }
@@ -141,7 +154,7 @@ actor WorkoutAPIRepository {
         // Built from the templates already in hand. This used to be a second
         // call to workoutLibrary(), which paged the whole workout table a
         // second time, sequentially, for data this function had already read.
-        let library = templates
+        let library = try templates
             .map(Self.summary(from:))
             .sorted {
                 $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
@@ -153,8 +166,8 @@ actor WorkoutAPIRepository {
     /// One workout as the name-suggestion list wants it.
     private static func summary(
         from template: Components.Schemas.WorkoutTemplate
-    ) -> WorkoutSummary {
-        WorkoutSummary(
+    ) throws -> WorkoutSummary {
+        try WorkoutSummary(
             serverID: template.id,
             name: template.name,
             type: workoutType(from: template.workoutType),
@@ -178,8 +191,10 @@ actor WorkoutAPIRepository {
     /// planned", which is what they meant before they existed.
     private static func plannedExercise(
         from relation: Components.Schemas.WorkoutExercise
-    ) -> Exercise {
-        Exercise(
+    ) throws -> Exercise {
+        let plan = try (relation.plannedSets ?? []).map(Self.plannedSet(from:))
+        guard WorkoutPlannedSetPolicy.isValid(plan) else { throw APIServiceError.malformedResponse }
+        return Exercise(
             id: .stable(forServerID: relation.id),
             serverID: relation.exercise,
             workoutExerciseID: relation.id,
@@ -190,8 +205,63 @@ actor WorkoutAPIRepository {
             restSeconds: relation.restSeconds,
             supersetGroup: relation.supersetGroup,
             targetReps: relation.targetReps.flatMap { Int(exactly: $0) },
-            targetWeightKilograms: relation.targetWeightKg
+            targetWeightKilograms: relation.targetWeightKg,
+            plannedSets: plan
         )
+    }
+
+    nonisolated static func plannedSet(from row: Components.Schemas.WorkoutPlannedSet) throws -> WorkoutPlannedSet {
+        guard let id = UUID(uuidString: row.id) else { throw APIServiceError.malformedResponse }
+        let result = WorkoutPlannedSet(id: id, setType: setType(from: row.setType),
+                                      targetReps: row.targetReps, targetWeightKilograms: row.targetWeightKg)
+        guard WorkoutPlannedSetPolicy.isValid([result]) else { throw APIServiceError.malformedResponse }
+        return result
+    }
+
+    nonisolated static func plannedSetPayloads(_ rows: [WorkoutPlannedSet]) throws -> [Components.Schemas.WorkoutPlannedSetRequest] {
+        guard WorkoutPlannedSetPolicy.isValid(rows) else { throw PlannedSetFailure.invalid }
+        return rows.map { row in
+            .init(id: row.id.uuidString.lowercased(), setType: setTypePayload(row.setType), targetReps: row.targetReps,
+                  targetWeightKg: WorkoutPlannedSetPolicy.canonicalWeight(row.targetWeightKilograms))
+        }
+    }
+
+    /// Probe before resolving/creating exercises or submitting any write. A
+    /// pre-feature backend may silently discard unknown fields; readback alone
+    /// would detect that only after a partial save had already happened.
+    private func requirePlannedSetSupport() async throws {
+        let output = try await client.workoutsCapabilitiesRetrieve()
+        switch output {
+        case .ok(let response):
+            guard try response.body.json.plannedSetsVersion >= 1 else { throw PlannedSetFailure.unsupported }
+        case .undocumented(404, _): throw PlannedSetFailure.unsupported
+        case .undocumented(let statusCode, _): throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    private func confirmPlan(_ expected: [Exercise], templateID: Int) async throws {
+        let output = try await client.workoutsRetrieve(path: .init(id: templateID))
+        let template: Components.Schemas.WorkoutTemplate
+        switch output {
+        case .ok(let response): template = try response.body.json
+        case .undocumented(let status, _): throw APIServiceError.undocumentedStatus(status)
+        }
+        let actual = template.exercises.sorted { ($0.order ?? 1, $0.id) < ($1.order ?? 1, $1.id) }
+        guard template.id == templateID, expected.count == actual.count else { throw PlannedSetFailure.unconfirmed }
+        for (draft, row) in zip(expected, actual) {
+            let reloaded = try Self.plannedExercise(from: row)
+            guard (draft.serverID == nil || Self.normalized(draft.serverName ?? draft.name) != Self.normalized(draft.name) || draft.serverID == row.exercise),
+                  (draft.workoutExerciseID == nil || draft.workoutExerciseID == row.id),
+                  Self.normalized(draft.name) == Self.normalized(row.exerciseName),
+                  draft.plannedSetTypes == reloaded.plannedSetTypes,
+                  WorkoutPlannedSetPolicy.sameTargets(draft.plannedSets, reloaded.plannedSets)
+            else { throw PlannedSetFailure.unconfirmed }
+            if draft.plannedSets.isEmpty {
+                guard draft.targetSets == reloaded.targetSets, draft.targetReps == reloaded.targetReps,
+                      draft.targetWeightKilograms.flatMap({ Decimal(string: $0) }) == reloaded.targetWeightKilograms.flatMap({ Decimal(string: $0) })
+                else { throw PlannedSetFailure.unconfirmed }
+            }
+        }
     }
 
     nonisolated static func setType(from value: Components.Schemas.SetTypeEnum) -> WorkoutSetType {
@@ -372,6 +442,8 @@ actor WorkoutAPIRepository {
     /// day the cycle did not choose, and the cycle would then write its own
     /// alongside it.
     func createTemplate(_ draft: Workout, initialDate: String? = nil) async throws -> Int {
+        try await requirePlannedSetSupport()
+        for exercise in draft.exercises { _ = try Self.plannedSetPayloads(exercise.plannedSets) }
         let operationKey = WorkoutTemplateCreation.recoveryKey(for: draft.id)
         var intent: TemplateCreateIntent?
         if let recoveryScope {
@@ -389,7 +461,8 @@ actor WorkoutAPIRepository {
                     exerciseID: exerciseID, targetSets: exercise.targetSets,
                     targetReps: exercise.targetReps, targetWeightKilograms: exercise.targetWeightKilograms,
                     restSeconds: exercise.restSeconds, supersetGroup: superset,
-                    setTypes: WorkoutStructureDiff.storedSetTypes(exercise.plannedSetTypes).map(Self.setTypePayload)
+                    setTypes: WorkoutStructureDiff.storedSetTypes(exercise.plannedSetTypes).map(Self.setTypePayload),
+                    plannedSets: try Self.plannedSetPayloads(exercise.plannedSets)
                 ))
             }
             let request = try Components.Schemas.WorkoutTemplateRequest(
@@ -398,7 +471,8 @@ actor WorkoutAPIRepository {
                 cardioMachine: draft.cardioMachine.flatMap(Self.cardioEnum)
                     .map { .CardioMachineEnum($0) } ?? .NullEnum(.init()),
                 cardioTargetMinutes: draft.cardioTargetMinutes.map(Int64.init),
-                initialExercises: WorkoutTemplateCreation.initialExercises(selections), initialDate: initialDate
+                initialExercises: WorkoutTemplateCreation.initialExercises(selections), initialDate: initialDate,
+                plannedSetsVersion: 1
             )
             let snapshot = TemplateCreateIntent(draft: draft, request: request)
             if let recoveryScope {
@@ -422,6 +496,7 @@ actor WorkoutAPIRepository {
         if intent.draft != draft {
             try await updateWorkout(draft, existing: intent.draft, workoutID: template.id)
         }
+        try await confirmPlan(draft.exercises, templateID: template.id)
         // Keep the original request until the store confirms the saved
         // template/date by ID. A failed readback must remain retry-safe.
         return template.id
@@ -466,13 +541,14 @@ actor WorkoutAPIRepository {
     /// Replaces only a workout's exercise plan, leaving its name, kind and
     /// finisher alone. Used when a reshaped session is kept as the plan.
     func replacePlan(workoutID: Int, exercises: [Exercise]) async throws {
+        try await requirePlannedSetSupport()
         let plan = try await planRequest(for: exercises)
         let output = try await client.workoutsPartialUpdate(
             path: .init(id: workoutID),
-            body: .json(.init(exercisePlan: plan))
+            body: .json(.init(exercisePlan: plan, plannedSetsVersion: 1))
         )
         switch output {
-        case .ok: return
+        case .ok: try await confirmPlan(exercises, templateID: workoutID)
         case .undocumented(let statusCode, let payload):
             throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload)
         }
@@ -482,6 +558,7 @@ actor WorkoutAPIRepository {
     /// names its `relation_id`, so the server updates it in place and its
     /// history stays attached; a new one is created.
     private func planRequest(for exercises: [Exercise]) async throws -> [Components.Schemas.WorkoutPlanExerciseRequest] {
+        for exercise in exercises { _ = try Self.plannedSetPayloads(exercise.plannedSets) }
         var resolved: [String: Int] = [:]
         var plan: [Components.Schemas.WorkoutPlanExerciseRequest] = []
         let supersets = WorkoutStructureDiff.normalizedSupersets(exercises.map(\.supersetGroup))
@@ -497,7 +574,8 @@ actor WorkoutAPIRepository {
                 supersetGroup: superset,
                 // Always sent, even empty: on an edit, leaving it out would
                 // keep the old kinds, and clearing them is a real change.
-                setTypes: WorkoutStructureDiff.storedSetTypes(exercise.plannedSetTypes).map(Self.setTypePayload)
+                setTypes: WorkoutStructureDiff.storedSetTypes(exercise.plannedSetTypes).map(Self.setTypePayload),
+                plannedSets: try Self.plannedSetPayloads(exercise.plannedSets)
             ))
         }
         return plan
@@ -508,6 +586,7 @@ actor WorkoutAPIRepository {
         existing: Workout,
         workoutID: Int
     ) async throws {
+        try await requirePlannedSetSupport()
         let plan = try await planRequest(for: draft.exercises)
         let output = try await client.workoutsPartialUpdate(
             path: .init(id: workoutID),
@@ -518,11 +597,12 @@ actor WorkoutAPIRepository {
                 cardioMachine: draft.cardioMachine.flatMap(Self.cardioEnum)
                     .map { .CardioMachineEnum($0) } ?? .NullEnum(.init()),
                 cardioTargetMinutes: draft.cardioTargetMinutes.map(Int64.init),
-                exercisePlan: plan
+                exercisePlan: plan,
+                plannedSetsVersion: 1
             ))
         )
         switch output {
-        case .ok: return
+        case .ok: try await confirmPlan(draft.exercises, templateID: workoutID)
         case .undocumented(let statusCode, _):
             throw APIServiceError.undocumentedStatus(statusCode)
         }
@@ -716,33 +796,51 @@ actor WorkoutAPIRepository {
 
         guard started.id == createdID,
               WorkoutSelectionPolicy.sameTemplate(expected: workoutServerID, actual: started.workout),
-              sessionRelations.allSatisfy({ $0.session == createdID }),
-              let relationIndices = WorkoutSelectionPolicy.sessionRelationIndices(
-                planned: workout.exercises.map(\.serverID), actual: sessionRelations.map(\.exercise)
-              ) else {
+              sessionRelations.allSatisfy({ $0.session == createdID }) else {
             throw APIServiceError.malformedResponse
         }
 
         var exercises: [SessionExerciseDraft] = []
-        let supersets = WorkoutStructureDiff.normalizedSupersets(workout.exercises.map(\.supersetGroup))
-        for ((exercise, relationIndex), superset) in zip(zip(workout.exercises, relationIndices), supersets) {
-            let relation = sessionRelations[relationIndex]
-            exercises.append(
-                SessionExerciseDraft(
-                    id: exercise.id,
-                    exerciseServerID: relation.exercise,
+        if sessionRelations.allSatisfy({ $0.plannedSets != nil }) {
+            // Creation snapshots are authoritative, including row order. A
+            // template may have changed on another device since the local list
+            // loaded; never overwrite the frozen plan with that stale list.
+            exercises = try sessionRelations.map { relation in
+                let plan = try (relation.plannedSets ?? []).map(Self.plannedSet(from:))
+                guard WorkoutPlannedSetPolicy.isValid(plan) else { throw APIServiceError.malformedResponse }
+                return SessionExerciseDraft.fromPlanSnapshot(
                     sessionExerciseID: relation.id,
+                    exerciseServerID: relation.exercise,
                     name: relation.exerciseName,
-                    sets: Self.makeSetDrafts(types: exercise.plannedSetTypes),
-                    workoutExerciseID: exercise.workoutExerciseID,
-                    restSeconds: exercise.restSeconds,
-                    supersetGroup: superset,
-                    targetReps: exercise.targetReps,
-                    targetWeightKilograms: exercise.targetWeightKilograms
+                    workoutExerciseID: relation.workoutExerciseId,
+                    restSeconds: relation.restSeconds,
+                    supersetGroup: relation.supersetGroup,
+                    plannedSets: plan
                 )
-            )
+            }
+        } else {
+            // Backward-compatible start/recovery of a legacy session. A saved
+            // explicit per-set plan may never degrade to shared targets.
+            guard workout.exercises.allSatisfy({ $0.plannedSets.isEmpty }),
+                  let relationIndices = WorkoutSelectionPolicy.sessionRelationIndices(
+                    planned: workout.exercises.map(\.serverID), actual: sessionRelations.map(\.exercise)
+                  ) else { throw APIServiceError.malformedResponse }
+            let supersets = WorkoutStructureDiff.normalizedSupersets(workout.exercises.map(\.supersetGroup))
+            for ((exercise, relationIndex), superset) in zip(zip(workout.exercises, relationIndices), supersets) {
+                let relation = sessionRelations[relationIndex]
+                exercises.append(SessionExerciseDraft(
+                    id: exercise.id, exerciseServerID: relation.exercise, sessionExerciseID: relation.id,
+                    name: relation.exerciseName, sets: Self.makeSetDrafts(types: exercise.plannedSetTypes),
+                    workoutExerciseID: exercise.workoutExerciseID, restSeconds: exercise.restSeconds,
+                    supersetGroup: superset, targetReps: exercise.targetReps,
+                    targetWeightKilograms: exercise.targetWeightKilograms
+                ))
+            }
         }
 
+        let serverFamily = started.workoutType.flatMap { WorkoutType(rawValue: $0) } ?? workout.type
+        let serverActivity = started.activity.map { WorkoutActivity(serverValue: $0, family: serverFamily) }
+            ?? (serverFamily == workout.type ? workout.activity : .legacyDefault(for: serverFamily))
         let session = ActiveWorkoutSession(
             id: .stable(forServerID: started.id),
             serverID: started.id,
@@ -753,8 +851,8 @@ actor WorkoutAPIRepository {
             // one was just started from a template, so the local name is both
             // known and authoritative.
             workoutName: started.workoutName ?? workout.name,
-            workoutType: workout.type,
-            activity: workout.activity,
+            workoutType: serverFamily,
+            activity: serverActivity,
             startedAt: started.startedAt ?? Date(),
             exercises: exercises,
             focusedExerciseID: exercises.first?.id
@@ -871,6 +969,7 @@ actor WorkoutAPIRepository {
         /// Whether it was added by name rather than from the catalogue, so the
         /// catalogue knows to read the account's exercises again.
         let created: Bool
+        let plannedSets: [WorkoutPlannedSet]?
     }
 
     /// Adds an exercise to a session in progress, after the ones it has.
@@ -898,7 +997,8 @@ actor WorkoutAPIRepository {
                 exerciseID: row.exercise,
                 name: row.exerciseName,
                 // A name typed rather than chosen may have just been created.
-                created: !known
+                created: !known,
+                plannedSets: try row.plannedSets.map { try $0.map(Self.plannedSet(from:)) }
             )
         case .undocumented(let statusCode, let payload):
             throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload)
@@ -965,6 +1065,20 @@ actor WorkoutAPIRepository {
     func reconcileLoggedSets(_ saved: ActiveWorkoutSession) async throws -> ActiveWorkoutSession {
         let entries = try await fetchSetEntries(session: saved.serverID)
         var session = saved
+        // A checkpoint from an older app can acquire the immutable server
+        // snapshot. Bind by server set number, never the compacted visible
+        // position; removing set 2 must not give set 3 the second target.
+        if saved.exercises.contains(where: { $0.plannedSets == nil }) {
+            let relations = try await fetchSessionExercises(session: saved.serverID)
+            for index in session.exercises.indices where session.exercises[index].plannedSets == nil {
+                guard let relation = relations.first(where: { $0.id == session.exercises[index].sessionExerciseID }),
+                      let rows = relation.plannedSets else { continue }
+                let snapshot = try rows.map(Self.plannedSet(from:))
+                guard WorkoutPlannedSetPolicy.isValid(snapshot) else { throw APIServiceError.malformedResponse }
+                session.exercises[index].adoptPlanSnapshot(snapshot)
+                session.exercises[index].workoutExerciseID = relation.workoutExerciseId
+            }
+        }
         for exerciseIndex in session.exercises.indices {
             let relation = session.exercises[exerciseIndex].sessionExerciseID
             for setIndex in session.exercises[exerciseIndex].sets.indices {

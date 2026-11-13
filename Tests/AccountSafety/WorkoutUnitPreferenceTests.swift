@@ -233,13 +233,19 @@ final class WorkoutUnitPreferenceTests: XCTestCase {
         let root = try XCTUnwrap(ProcessInfo.processInfo.environment["RYTIVO_TEST_REPOSITORY"])
         let source = try String(contentsOf: URL(fileURLWithPath: root)
             .appendingPathComponent("IOS Frontend/IOS Frontend/Views/Workouts/GuidedWorkoutBuilder.swift"), encoding: .utf8)
-        XCTAssertTrue(source.contains("@State private var targetWeightInputs: [UUID: String]"))
-        XCTAssertTrue(source.contains("targetWeightInputs[exercise.id] = value"))
+        XCTAssertTrue(source.contains("@State private var targetWeightInputs: [UUID: [UUID: String]]"))
+        XCTAssertTrue(source.contains("targetWeightInputs[exercise.id] = $0"))
+        XCTAssertTrue(source.contains("targetRepsInputs[exercise.id] = $0"))
+        XCTAssertTrue(source.contains("WorkoutPlannedSetTable("))
         XCTAssertTrue(source.contains("targetWeightInputs.removeAll()"))
         XCTAssertFalse(source.contains("WorkoutWeightUnitControl("))
         XCTAssertFalse(source.contains("WeightUnitToggle("))
-        XCTAssertTrue(source.contains("store.preferences.defaultWeightUnit.label"))
-        XCTAssertTrue(source.contains("store.preferences.defaultWeightUnit.kilograms(display: trimmed)"))
+        XCTAssertTrue(source.contains("unit: store.preferences.defaultWeightUnit"))
+        let table = try String(contentsOf: URL(fileURLWithPath: root)
+            .appendingPathComponent("IOS Frontend/IOS Frontend/Views/Workouts/WorkoutPlannedSetTable.swift"), encoding: .utf8)
+        XCTAssertTrue(table.contains("weightInputs[row.id] = text"))
+        XCTAssertTrue(table.contains("unit.kilograms(display: trimmed)"))
+        XCTAssertFalse(table.contains("WeightUnitToggle("))
     }
 
     func testSessionUsesCanonicalWeightAndInvalidatesOnlyTheDisplayCache() throws {

@@ -44,7 +44,9 @@ struct GuidedWorkoutBuilder: View {
     @State private var orderFeedbackID: UUID?
     // Keep the text being typed (including a trailing decimal separator) until
     // the unit changes. The draft itself always stores canonical kilograms.
-    @State private var targetWeightInputs: [UUID: String] = [:]
+    // Server row IDs are unique within an exercise, not across the workout.
+    @State private var targetWeightInputs: [UUID: [UUID: String]] = [:]
+    @State private var targetRepsInputs: [UUID: [UUID: String]] = [:]
     @State private var log = ActivityLogDraft(activity: .weightlifting)
     @State private var detailsMode: DetailsMode = .log
     @State private var logProblem: ActivityLogDraft.Problem?
@@ -190,7 +192,7 @@ struct GuidedWorkoutBuilder: View {
         case .review:
             draft.tracksDistance
                 ? "Review your workout, then save it when you’re ready."
-                : "Review your sets and targets. Edit exercise order to rearrange your workout."
+                : "Set your targets. Adjust as you train."
         }
     }
 
@@ -396,6 +398,11 @@ struct GuidedWorkoutBuilder: View {
 
     private var review: some View {
         VStack(alignment: .leading, spacing: 16) {
+            if isStrength {
+                Text("Make each set count.")
+                    .font(.community(.title2, weight: .bold))
+                    .foregroundStyle(phase.primaryText)
+            }
             VStack(alignment: .leading, spacing: 10) {
                 eyebrow("YOUR WORKOUT · READY TO REVIEW")
                 TextField("Workout name", text: $draft.name, axis: .vertical)
@@ -428,7 +435,7 @@ struct GuidedWorkoutBuilder: View {
                         .buttonStyle(.plain)
                     }
                 }
-                VStack(spacing: 10) {
+                LazyVStack(spacing: 16) {
                     ForEach(Array(draft.exercises.enumerated()), id: \.element.id) { index, exercise in
                         reviewCard(exercise, index: index)
                     }
@@ -479,7 +486,18 @@ struct GuidedWorkoutBuilder: View {
                     Spacer(minLength: 0)
                     cardMenu(exercise, index: index)
                 }
-                setChips(binding)
+                WorkoutPlannedSetTable(
+                    exercise: binding,
+                    unit: store.preferences.defaultWeightUnit,
+                    weightInputs: Binding(
+                        get: { targetWeightInputs[exercise.id] ?? [:] },
+                        set: { targetWeightInputs[exercise.id] = $0 }
+                    ),
+                    repsInputs: Binding(
+                        get: { targetRepsInputs[exercise.id] ?? [:] },
+                        set: { targetRepsInputs[exercise.id] = $0 }
+                    )
+                )
                 HStack(spacing: 8) {
                     RestDurationMenu(
                         selection: exercise.restSeconds,
@@ -488,37 +506,18 @@ struct GuidedWorkoutBuilder: View {
                         RestChip(seconds: exercise.restSeconds, defaultSeconds: store.preferences.defaultRestSeconds, phase: phase)
                     }
                     Spacer(minLength: 0)
-                    targetField("Reps", value: Binding(
-                        get: { binding.wrappedValue.targetReps.map(String.init) ?? "" },
-                        set: { binding.wrappedValue.targetReps = Int(NumberInput.latinDigits($0).filter(\.isNumber).prefix(4)) }
-                    ), keyboard: .numberPad, width: 46)
-                    targetField(LocalizedStringKey(store.preferences.defaultWeightUnit.label), value: Binding(
-                        get: {
-                            targetWeightInputs[exercise.id]
-                                ?? binding.wrappedValue.targetWeightKilograms.map { store.preferences.defaultWeightUnit.display(kilograms: $0) }
-                                ?? ""
-                        },
-                        set: { value in
-                            targetWeightInputs[exercise.id] = value
-                            let trimmed = value.trimmingCharacters(in: .whitespaces)
-                            binding.wrappedValue.targetWeightKilograms = trimmed.isEmpty
-                                ? nil : store.preferences.defaultWeightUnit.kilograms(display: trimmed)
-                        }
-                    ), keyboard: .decimalPad, width: 58,
-                       identifier: "workout.target-weight.\(exercise.id.uuidString)")
                 }
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background(phase.surfaceStart, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .padding(16)
+        .background(phase.surfaceStart, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
         .overlay(alignment: .leading) {
             if let supersetColor {
                 Capsule().fill(supersetColor).frame(width: 3).padding(.vertical, 10)
             }
         }
         .overlay {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
                 .strokeBorder(phase.cardBorder, lineWidth: 1)
         }
         .accessibilityElement(children: .contain)
@@ -554,66 +553,6 @@ struct GuidedWorkoutBuilder: View {
                 .contentShape(Rectangle())
         }
         .accessibilityLabel("Options for \(exercise.displayName)")
-    }
-
-    /// The planned sets as small badges, one per set, each opening a menu of
-    /// kinds; with the count's minus and plus beside them.
-    private func setChips(_ exercise: Binding<Exercise>) -> some View {
-        let types = exercise.wrappedValue.plannedSetTypes
-        let labels = WorkoutSetPolicy.labels(for: types)
-        return HStack(spacing: 6) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 5) {
-                    ForEach(Array(types.enumerated()), id: \.offset) { index, type in
-                        Menu {
-                            ForEach(WorkoutSetType.allCases) { kind in
-                                Button { exercise.wrappedValue.setType(kind, at: index) } label: {
-                                    Label(kind.title, systemImage: kind == type ? "checkmark" : kind.symbol)
-                                }
-                            }
-                        } label: {
-                            SetTypeBadge(type: type, label: labels[index])
-                                .scaleEffect(0.9)
-                                .frame(minWidth: 32, minHeight: 36)
-                        }
-                        .accessibilityLabel("Set \(index + 1): \(type.title)")
-                    }
-                }
-            }
-            Text("\(types.count) sets")
-                .font(.community(.caption, weight: .semibold).monospacedDigit())
-                .foregroundStyle(phase.secondaryText)
-                .fixedSize()
-            Stepper("", value: Binding(
-                get: { max(exercise.wrappedValue.sets, 1) },
-                set: { count in
-                    exercise.wrappedValue.sets = count
-                    exercise.wrappedValue.setTypes = WorkoutStructureDiff.storedSetTypes(
-                        Array(exercise.wrappedValue.plannedSetTypes.prefix(count))
-                    )
-                }
-            ), in: 1...50)
-            .labelsHidden()
-            .fixedSize()
-            .accessibilityLabel("\(exercise.wrappedValue.name) target sets")
-        }
-    }
-
-    private func targetField(_ title: LocalizedStringKey, value: Binding<String>, keyboard: UIKeyboardType, width: CGFloat,
-                             identifier: String = "workout.target-reps") -> some View {
-        HStack(spacing: 4) {
-            TextField("—", text: value)
-                .keyboardType(keyboard)
-                .accessibilityIdentifier(identifier)
-                .multilineTextAlignment(.center)
-                .font(.community(.subheadline, weight: .bold).monospacedDigit())
-                .frame(width: width, height: 32)
-                .background(phase.cardBorder.opacity(0.45), in: RoundedRectangle(cornerRadius: 8))
-            Text(title).font(.community(.caption2, weight: .semibold)).foregroundStyle(phase.secondaryText)
-        }
-        .frame(minHeight: 44)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(Text("Target \(Text(title))"))
     }
 
     private func exerciseBinding(_ id: Exercise.ID) -> Binding<Exercise> {
@@ -712,6 +651,9 @@ struct GuidedWorkoutBuilder: View {
     /// The plan, named after its activity when nobody named it.
     private func savePlan() {
         guard canSave else { return }
+        if isStrength {
+            for index in draft.exercises.indices { draft.exercises[index].materializePlannedSets() }
+        }
         if !isStrength {
             if draft.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 draft.name = draft.activity.title
@@ -772,6 +714,7 @@ struct GuidedWorkoutBuilder: View {
         let name = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
         return (!name.isEmpty || !isStrength) && plannedName.unicodeScalars.count <= 150 && (draft.tracksDistance || !draft.exercises.isEmpty)
             && draft.exercises.allSatisfy { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && $0.name.count <= 150 && $0.sets >= 1 }
+            && draft.exercises.allSatisfy { WorkoutPlannedSetPolicy.isValid($0.effectivePlannedSets) }
             && !WorkoutNamePolicy.blocksCreate(name: plannedName, savedNames: suggestions.map(\.name),
                                                serverID: draft.serverID, hasPendingSave: hasPendingTemplateSave)
     }
@@ -886,7 +829,11 @@ struct GuidedWorkoutBuilder: View {
                             serverID: $0.serverID, serverName: $0.serverName ?? $0.name, name: $0.name,
                             sets: max($0.sets, 1), setTypes: $0.setTypes, restSeconds: $0.restSeconds,
                             supersetGroup: $0.supersetGroup, targetReps: $0.targetReps,
-                            targetWeightKilograms: $0.targetWeightKilograms
+                            targetWeightKilograms: $0.targetWeightKilograms,
+                            plannedSets: $0.effectivePlannedSets.map { set in
+                                WorkoutPlannedSet(setType: set.setType, targetReps: set.targetReps,
+                                                  targetWeightKilograms: set.targetWeightKilograms)
+                            }
                         )
                     }
                     reusing = false

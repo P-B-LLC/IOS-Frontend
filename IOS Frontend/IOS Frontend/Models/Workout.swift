@@ -95,8 +95,11 @@ nonisolated struct Exercise: Identifiable, Hashable, Codable, Sendable {
     /// Optional OAS target_sets value. Nil and zero remain distinct.
     var targetSets: Int?
     var sets: Int {
-        get { targetSets ?? 0 }
-        set { targetSets = newValue }
+        get { plannedSets.isEmpty ? targetSets ?? 0 : plannedSets.count }
+        set {
+            if plannedSets.isEmpty { targetSets = newValue }
+            else { resizePlannedSets(to: newValue) }
+        }
     }
     /// The kind of each planned set, in order. Shorter than the set count
     /// when the last sets are normal, which is how the backend stores it.
@@ -109,6 +112,8 @@ nonisolated struct Exercise: Identifiable, Hashable, Codable, Sendable {
     var targetReps: Int?
     /// Decimal-string kilograms, like every weight on the wire.
     var targetWeightKilograms: String?
+    /// Empty is the legacy exercise-wide plan, not an explicit empty workout.
+    var plannedSets: [WorkoutPlannedSet]
 
     init(
         id: UUID = UUID(),
@@ -121,7 +126,8 @@ nonisolated struct Exercise: Identifiable, Hashable, Codable, Sendable {
         restSeconds: Int? = nil,
         supersetGroup: Int? = nil,
         targetReps: Int? = nil,
-        targetWeightKilograms: String? = nil
+        targetWeightKilograms: String? = nil,
+        plannedSets: [WorkoutPlannedSet] = []
     ) {
         self.id = id
         self.serverID = serverID
@@ -134,14 +140,56 @@ nonisolated struct Exercise: Identifiable, Hashable, Codable, Sendable {
         self.supersetGroup = supersetGroup
         self.targetReps = targetReps
         self.targetWeightKilograms = targetWeightKilograms
+        self.plannedSets = plannedSets
+        if !plannedSets.isEmpty { synchronizePlannedSets() }
     }
 
     /// The kind of every planned set, one per set.
     var plannedSetTypes: [WorkoutSetType] {
-        (0..<max(sets, 0)).map { setTypes.indices.contains($0) ? setTypes[$0] : .normal }
+        if !plannedSets.isEmpty { return plannedSets.map(\.setType) }
+        return (0..<max(sets, 0)).map { setTypes.indices.contains($0) ? setTypes[$0] : .normal }
+    }
+
+    var effectivePlannedSets: [WorkoutPlannedSet] {
+        plannedSets.isEmpty
+            ? WorkoutPlannedSet.legacy(exerciseID: id, types: plannedSetTypes, reps: targetReps, weight: targetWeightKilograms)
+            : plannedSets
+    }
+
+    mutating func materializePlannedSets() {
+        if plannedSets.isEmpty { plannedSets = effectivePlannedSets }
+        synchronizePlannedSets()
+    }
+
+    mutating func replacePlannedSets(_ rows: [WorkoutPlannedSet]) {
+        plannedSets = rows
+        synchronizePlannedSets()
+    }
+
+    mutating func resizePlannedSets(to count: Int) {
+        materializePlannedSets()
+        let count = min(max(count, 1), WorkoutPlannedSetPolicy.maximumCount)
+        if plannedSets.count > count { plannedSets.removeLast(plannedSets.count - count) }
+        while plannedSets.count < count { plannedSets.append(WorkoutPlannedSet()) }
+        synchronizePlannedSets()
+    }
+
+    private mutating func synchronizePlannedSets() {
+        targetSets = plannedSets.count
+        setTypes = WorkoutStructureDiff.storedSetTypes(plannedSets.map(\.setType))
+        if !plannedSets.isEmpty {
+            targetReps = nil
+            targetWeightKilograms = nil
+        }
     }
 
     mutating func setType(_ type: WorkoutSetType, at index: Int) {
+        if !plannedSets.isEmpty {
+            guard plannedSets.indices.contains(index) else { return }
+            plannedSets[index].setType = type
+            synchronizePlannedSets()
+            return
+        }
         var types = plannedSetTypes
         guard types.indices.contains(index) else { return }
         types[index] = type
@@ -150,7 +198,7 @@ nonisolated struct Exercise: Identifiable, Hashable, Codable, Sendable {
 
     private enum CodingKeys: String, CodingKey {
         case id, serverID, workoutExerciseID, serverName, name, targetSets
-        case setTypes, restSeconds, supersetGroup, targetReps, targetWeightKilograms
+        case setTypes, restSeconds, supersetGroup, targetReps, targetWeightKilograms, plannedSets
     }
 
     // Written out so a draft saved before set kinds, rests and supersets
@@ -169,6 +217,8 @@ nonisolated struct Exercise: Identifiable, Hashable, Codable, Sendable {
         supersetGroup = try values.decodeIfPresent(Int.self, forKey: .supersetGroup)
         targetReps = try values.decodeIfPresent(Int.self, forKey: .targetReps)
         targetWeightKilograms = try values.decodeIfPresent(String.self, forKey: .targetWeightKilograms)
+        plannedSets = try values.decodeIfPresent([WorkoutPlannedSet].self, forKey: .plannedSets) ?? []
+        if !plannedSets.isEmpty { synchronizePlannedSets() }
     }
 }
 
@@ -296,6 +346,9 @@ nonisolated struct WorkoutSetDraft: Identifiable, Hashable, Codable, Sendable {
     var isLogged: Bool
     /// What this set is for. Logged with it, so history keeps the kind.
     var setType: WorkoutSetType
+    /// Immutable plan-row identity. Not a SetEntry ID and never inferred from
+    /// the visible row index after a deletion or reorder.
+    var plannedSetID: UUID?
 
     init(
         id: UUID = UUID(),
@@ -305,7 +358,8 @@ nonisolated struct WorkoutSetDraft: Identifiable, Hashable, Codable, Sendable {
         reps: String = "",
         distanceKilometers: String = "",
         isLogged: Bool = false,
-        setType: WorkoutSetType = .normal
+        setType: WorkoutSetType = .normal,
+        plannedSetID: UUID? = nil
     ) {
         self.id = id
         self.serverID = serverID
@@ -315,10 +369,11 @@ nonisolated struct WorkoutSetDraft: Identifiable, Hashable, Codable, Sendable {
         self.distanceKilometers = distanceKilometers
         self.isLogged = isLogged
         self.setType = setType
+        self.plannedSetID = plannedSetID
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, serverID, setNumber, weightKilograms, reps, distanceKilometers, isLogged, setType
+        case id, serverID, setNumber, weightKilograms, reps, distanceKilometers, isLogged, setType, plannedSetID
     }
 
     // A session checkpointed by an earlier build has no set kinds. Reading
@@ -334,6 +389,7 @@ nonisolated struct WorkoutSetDraft: Identifiable, Hashable, Codable, Sendable {
         distanceKilometers = try values.decodeIfPresent(String.self, forKey: .distanceKilometers) ?? ""
         isLogged = try values.decode(Bool.self, forKey: .isLogged)
         setType = try values.decodeIfPresent(WorkoutSetType.self, forKey: .setType) ?? .normal
+        plannedSetID = try values.decodeIfPresent(UUID.self, forKey: .plannedSetID)
     }
 
     /// Matches the OAS decimal-string contract (up to five integer digits and
@@ -716,6 +772,9 @@ nonisolated struct SessionExerciseDraft: Identifiable, Hashable, Codable, Sendab
     var supersetGroup: Int?
     var targetReps: Int?
     var targetWeightKilograms: String?
+    /// Immutable server plan snapshot. Nil means a legacy session without a
+    /// snapshot; [] is known to have no planned targets. Actual logs never edit it.
+    var plannedSets: [WorkoutPlannedSet]?
     /// Display choice for this exercise in this session only. Checkpointed
     /// locally, never sent in a workout, set or account API request. A legacy
     /// checkpoint without a choice follows the account default until adopted.
@@ -732,7 +791,8 @@ nonisolated struct SessionExerciseDraft: Identifiable, Hashable, Codable, Sendab
         supersetGroup: Int? = nil,
         targetReps: Int? = nil,
         targetWeightKilograms: String? = nil,
-        displayUnit: WorkoutWeightUnit? = nil
+        displayUnit: WorkoutWeightUnit? = nil,
+        plannedSets: [WorkoutPlannedSet]? = nil
     ) {
         self.id = id
         self.exerciseServerID = exerciseServerID
@@ -745,23 +805,64 @@ nonisolated struct SessionExerciseDraft: Identifiable, Hashable, Codable, Sendab
         self.targetReps = targetReps
         self.targetWeightKilograms = targetWeightKilograms
         self.displayUnit = displayUnit
+        self.plannedSets = plannedSets
     }
 
     func weightUnit(default defaultUnit: WorkoutWeightUnit) -> WorkoutWeightUnit {
         displayUnit ?? defaultUnit
     }
 
-    /// The target a set aims at. Targets describe the working sets, so a
-    /// warm-up has none: offering 60 kg × 8 on a warm-up row would log a full
-    /// working set as preparation with one tap.
+    /// Build from the server's frozen creation snapshot, with no local
+    /// template argument that could substitute stale targets or row order.
+    static func fromPlanSnapshot(sessionExerciseID: Int, exerciseServerID: Int,
+                                 name: String, workoutExerciseID: Int?, restSeconds: Int?,
+                                 supersetGroup: Int?, plannedSets: [WorkoutPlannedSet]) -> Self {
+        Self(id: .stable(forServerID: sessionExerciseID), exerciseServerID: exerciseServerID,
+             sessionExerciseID: sessionExerciseID, name: name,
+             sets: plannedSets.enumerated().map { index, row in
+                 WorkoutSetDraft(setNumber: index + 1, setType: row.setType, plannedSetID: row.id)
+             }, workoutExerciseID: workoutExerciseID, restSeconds: restSeconds,
+             supersetGroup: supersetGroup, plannedSets: plannedSets)
+    }
+
+    /// Explicit per-set targets include intentionally planned warmups. Only
+    /// the legacy exercise-wide fallback excludes warmups, so a generic
+    /// working weight is never offered as an unplanned warmup target.
     func targetReps(for set: WorkoutSetDraft) -> Int? {
-        set.setType.countsAsWorkingSet ? targetReps : nil
+        if let plannedSets {
+            return plannedSets.first(where: { $0.id == set.plannedSetID })?.targetReps
+        }
+        return set.setType.countsAsWorkingSet ? targetReps.flatMap { $0 > 0 ? $0 : nil } : nil
     }
 
     func targetWeightKilograms(for set: WorkoutSetDraft) -> String? {
+        if let plannedSets {
+            return plannedSets.first(where: { $0.id == set.plannedSetID })?.targetWeightKilograms
+        }
         guard set.setType.countsAsWorkingSet,
               let weight = targetWeightKilograms, !weight.isEmpty else { return nil }
         return weight
+    }
+
+    /// The current shape with its original planned targets, never numbers
+    /// entered/logged today. A newly added set starts without a target.
+    var reusablePlannedSets: [WorkoutPlannedSet] {
+        sets.map { set in
+            WorkoutPlannedSet(id: set.plannedSetID ?? set.id, setType: set.setType,
+                              targetReps: targetReps(for: set),
+                              targetWeightKilograms: targetWeightKilograms(for: set))
+        }
+    }
+
+    /// Upgrade an old checkpoint only once, using stable server set numbers.
+    /// Existing explicit snapshots/targets are never rewritten on refresh.
+    mutating func adoptPlanSnapshot(_ rows: [WorkoutPlannedSet]) {
+        guard plannedSets == nil else { return }
+        plannedSets = rows
+        for index in sets.indices where sets[index].plannedSetID == nil {
+            let position = sets[index].setNumber - 1
+            if rows.indices.contains(position) { sets[index].plannedSetID = rows[position].id }
+        }
     }
 
     var loggedCount: Int { sets.filter(\.isLogged).count }
@@ -777,7 +878,7 @@ nonisolated struct SessionExerciseDraft: Identifiable, Hashable, Codable, Sendab
     private enum CodingKeys: String, CodingKey {
         case id, exerciseServerID, sessionExerciseID, name, sets
         case workoutExerciseID, restSeconds, supersetGroup, targetReps, targetWeightKilograms
-        case displayUnit
+        case displayUnit, plannedSets
     }
 
     init(from decoder: Decoder) throws {
@@ -795,6 +896,7 @@ nonisolated struct SessionExerciseDraft: Identifiable, Hashable, Codable, Sendab
         // Unknown future units fall back safely without losing the workout.
         displayUnit = try values.decodeIfPresent(String.self, forKey: .displayUnit)
             .flatMap(WorkoutWeightUnit.init(rawValue:))
+        plannedSets = try values.decodeIfPresent([WorkoutPlannedSet].self, forKey: .plannedSets)
     }
 }
 
@@ -912,7 +1014,8 @@ nonisolated struct ActiveWorkoutSession: Identifiable, Hashable, Codable, Sendab
                 name: $0.name,
                 setTypes: $0.sets.map(\.setType),
                 restSeconds: $0.restSeconds,
-                supersetGroup: $0.supersetGroup
+                supersetGroup: $0.supersetGroup,
+                plannedSets: $0.reusablePlannedSets
             )
         })
     }

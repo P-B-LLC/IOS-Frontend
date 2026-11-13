@@ -1362,6 +1362,9 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/workouts/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/workouts/{id}//delete(workouts_destroy)`.
     func workoutsDestroy(_ input: Operations.WorkoutsDestroy.Input) async throws -> Operations.WorkoutsDestroy.Output
+    /// - Remark: HTTP `GET /api/v1/workouts/capabilities/`.
+    /// - Remark: Generated from `#/paths//api/v1/workouts/capabilities//get(workouts_capabilities_retrieve)`.
+    func workoutsCapabilitiesRetrieve(_ input: Operations.WorkoutsCapabilitiesRetrieve.Input) async throws -> Operations.WorkoutsCapabilitiesRetrieve.Output
 }
 
 /// Convenience overloads for operation inputs.
@@ -4358,6 +4361,11 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//api/v1/workouts/{id}//delete(workouts_destroy)`.
     public func workoutsDestroy(path: Operations.WorkoutsDestroy.Input.Path) async throws -> Operations.WorkoutsDestroy.Output {
         try await workoutsDestroy(Operations.WorkoutsDestroy.Input(path: path))
+    }
+    /// - Remark: HTTP `GET /api/v1/workouts/capabilities/`.
+    /// - Remark: Generated from `#/paths//api/v1/workouts/capabilities//get(workouts_capabilities_retrieve)`.
+    public func workoutsCapabilitiesRetrieve(headers: Operations.WorkoutsCapabilitiesRetrieve.Input.Headers = .init()) async throws -> Operations.WorkoutsCapabilitiesRetrieve.Output {
+        try await workoutsCapabilitiesRetrieve(Operations.WorkoutsCapabilitiesRetrieve.Input(headers: headers))
     }
 }
 
@@ -7742,6 +7750,10 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/InitialWorkoutExercise/set_types`.
             public var setTypes: [Components.Schemas.SetTypeEnum]?
+            /// Ordered explicit targets. Nonempty rows define target_sets and set_types. Empty uses legacy aggregate targets; omission preserves existing rows.
+            ///
+            /// - Remark: Generated from `#/components/schemas/InitialWorkoutExercise/planned_sets`.
+            public var plannedSets: [Components.Schemas.WorkoutPlannedSet]?
             /// Creates a new `InitialWorkoutExercise`.
             ///
             /// - Parameters:
@@ -7754,6 +7766,7 @@ public enum Components {
             ///   - restSeconds: Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
             ///   - supersetGroup: Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
             ///   - setTypes: The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
+            ///   - plannedSets: Ordered explicit targets. Nonempty rows define target_sets and set_types. Empty uses legacy aggregate targets; omission preserves existing rows.
             public init(
                 exercise: Swift.Int,
                 order: Swift.Int64? = nil,
@@ -7763,7 +7776,8 @@ public enum Components {
                 notes: Swift.String? = nil,
                 restSeconds: Swift.Int? = nil,
                 supersetGroup: Swift.Int? = nil,
-                setTypes: [Components.Schemas.SetTypeEnum]? = nil
+                setTypes: [Components.Schemas.SetTypeEnum]? = nil,
+                plannedSets: [Components.Schemas.WorkoutPlannedSet]? = nil
             ) {
                 self.exercise = exercise
                 self.order = order
@@ -7774,6 +7788,7 @@ public enum Components {
                 self.restSeconds = restSeconds
                 self.supersetGroup = supersetGroup
                 self.setTypes = setTypes
+                self.plannedSets = plannedSets
             }
             public enum CodingKeys: String, CodingKey {
                 case exercise
@@ -7785,6 +7800,7 @@ public enum Components {
                 case restSeconds = "rest_seconds"
                 case supersetGroup = "superset_group"
                 case setTypes = "set_types"
+                case plannedSets = "planned_sets"
             }
         }
         /// - Remark: Generated from `#/components/schemas/InitialWorkoutExerciseRequest`.
@@ -7813,6 +7829,10 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/InitialWorkoutExerciseRequest/set_types`.
             public var setTypes: [Components.Schemas.SetTypeEnum]?
+            /// Ordered explicit targets. Nonempty rows define target_sets and set_types. Empty uses legacy aggregate targets; omission preserves existing rows.
+            ///
+            /// - Remark: Generated from `#/components/schemas/InitialWorkoutExerciseRequest/planned_sets`.
+            public var plannedSets: [Components.Schemas.WorkoutPlannedSetRequest]?
             /// Creates a new `InitialWorkoutExerciseRequest`.
             ///
             /// - Parameters:
@@ -7825,6 +7845,7 @@ public enum Components {
             ///   - restSeconds: Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
             ///   - supersetGroup: Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
             ///   - setTypes: The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
+            ///   - plannedSets: Ordered explicit targets. Nonempty rows define target_sets and set_types. Empty uses legacy aggregate targets; omission preserves existing rows.
             public init(
                 exercise: Swift.Int,
                 order: Swift.Int64? = nil,
@@ -7834,7 +7855,8 @@ public enum Components {
                 notes: Swift.String? = nil,
                 restSeconds: Swift.Int? = nil,
                 supersetGroup: Swift.Int? = nil,
-                setTypes: [Components.Schemas.SetTypeEnum]? = nil
+                setTypes: [Components.Schemas.SetTypeEnum]? = nil,
+                plannedSets: [Components.Schemas.WorkoutPlannedSetRequest]? = nil
             ) {
                 self.exercise = exercise
                 self.order = order
@@ -7845,6 +7867,7 @@ public enum Components {
                 self.restSeconds = restSeconds
                 self.supersetGroup = supersetGroup
                 self.setTypes = setTypes
+                self.plannedSets = plannedSets
             }
             public enum CodingKeys: String, CodingKey {
                 case exercise
@@ -7856,6 +7879,7 @@ public enum Components {
                 case restSeconds = "rest_seconds"
                 case supersetGroup = "superset_group"
                 case setTypes = "set_types"
+                case plannedSets = "planned_sets"
             }
         }
         /// One topic the For You page has picked up about the reader.
@@ -10283,6 +10307,10 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PatchedWorkoutExerciseRequest/set_types`.
             public var setTypes: [Components.Schemas.SetTypeEnum]?
+            /// Ordered explicit targets. Nonempty rows define target_sets and set_types. Empty uses legacy aggregate targets; omission preserves existing rows.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PatchedWorkoutExerciseRequest/planned_sets`.
+            public var plannedSets: [Components.Schemas.WorkoutPlannedSetRequest]?
             /// Creates a new `PatchedWorkoutExerciseRequest`.
             ///
             /// - Parameters:
@@ -10296,6 +10324,7 @@ public enum Components {
             ///   - restSeconds: Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
             ///   - supersetGroup: Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
             ///   - setTypes: The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
+            ///   - plannedSets: Ordered explicit targets. Nonempty rows define target_sets and set_types. Empty uses legacy aggregate targets; omission preserves existing rows.
             public init(
                 workout: Swift.Int? = nil,
                 exercise: Swift.Int? = nil,
@@ -10306,7 +10335,8 @@ public enum Components {
                 notes: Swift.String? = nil,
                 restSeconds: Swift.Int? = nil,
                 supersetGroup: Swift.Int? = nil,
-                setTypes: [Components.Schemas.SetTypeEnum]? = nil
+                setTypes: [Components.Schemas.SetTypeEnum]? = nil,
+                plannedSets: [Components.Schemas.WorkoutPlannedSetRequest]? = nil
             ) {
                 self.workout = workout
                 self.exercise = exercise
@@ -10318,6 +10348,7 @@ public enum Components {
                 self.restSeconds = restSeconds
                 self.supersetGroup = supersetGroup
                 self.setTypes = setTypes
+                self.plannedSets = plannedSets
             }
             public enum CodingKeys: String, CodingKey {
                 case workout
@@ -10330,6 +10361,7 @@ public enum Components {
                 case restSeconds = "rest_seconds"
                 case supersetGroup = "superset_group"
                 case setTypes = "set_types"
+                case plannedSets = "planned_sets"
             }
         }
         /// - Remark: Generated from `#/components/schemas/PatchedWorkoutScheduleRequest`.
@@ -10507,6 +10539,10 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PatchedWorkoutTemplateRequest/exercise_plan`.
             public var exercisePlan: [Components.Schemas.WorkoutPlanExerciseRequest]?
+            /// Send 1 after checking workouts/capabilities/ when intentionally replacing/removing explicit per-set exercise plans.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PatchedWorkoutTemplateRequest/planned_sets_version`.
+            public var plannedSetsVersion: Swift.Int?
             /// Creates a new `PatchedWorkoutTemplateRequest`.
             ///
             /// - Parameters:
@@ -10519,6 +10555,7 @@ public enum Components {
             ///   - initialExercises: Create-only: save all initial exercises in the same transaction as the template.
             ///   - initialDate: Create-only: optionally schedule the new template in the same transaction.
             ///   - exercisePlan: Update-only: atomically replace the exercise plan, preserving supplied relation IDs.
+            ///   - plannedSetsVersion: Send 1 after checking workouts/capabilities/ when intentionally replacing/removing explicit per-set exercise plans.
             public init(
                 name: Swift.String? = nil,
                 workoutType: Components.Schemas.WorkoutTypeEnum? = nil,
@@ -10528,7 +10565,8 @@ public enum Components {
                 description: Swift.String? = nil,
                 initialExercises: [Components.Schemas.InitialWorkoutExerciseRequest]? = nil,
                 initialDate: Swift.String? = nil,
-                exercisePlan: [Components.Schemas.WorkoutPlanExerciseRequest]? = nil
+                exercisePlan: [Components.Schemas.WorkoutPlanExerciseRequest]? = nil,
+                plannedSetsVersion: Swift.Int? = nil
             ) {
                 self.name = name
                 self.workoutType = workoutType
@@ -10539,6 +10577,7 @@ public enum Components {
                 self.initialExercises = initialExercises
                 self.initialDate = initialDate
                 self.exercisePlan = exercisePlan
+                self.plannedSetsVersion = plannedSetsVersion
             }
             public enum CodingKeys: String, CodingKey {
                 case name
@@ -10550,6 +10589,7 @@ public enum Components {
                 case initialExercises = "initial_exercises"
                 case initialDate = "initial_date"
                 case exercisePlan = "exercise_plan"
+                case plannedSetsVersion = "planned_sets_version"
             }
         }
         /// A best set during a session that beat everything logged before it.
@@ -14301,6 +14341,16 @@ public enum Components {
             public var order: Swift.Int64?
             /// - Remark: Generated from `#/components/schemas/SessionExercise/notes`.
             public var notes: Swift.String?
+            /// Immutable plan snapshot at session creation. Null is unknown historical data; [] is a known empty plan. Never completed sets.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SessionExercise/planned_sets`.
+            public var plannedSets: [Components.Schemas.WorkoutPlannedSet]?
+            /// - Remark: Generated from `#/components/schemas/SessionExercise/workout_exercise_id`.
+            public var workoutExerciseId: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/SessionExercise/rest_seconds`.
+            public var restSeconds: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/SessionExercise/superset_group`.
+            public var supersetGroup: Swift.Int?
             /// Creates a new `SessionExercise`.
             ///
             /// - Parameters:
@@ -14310,13 +14360,21 @@ public enum Components {
             ///   - exerciseName:
             ///   - order:
             ///   - notes:
+            ///   - plannedSets: Immutable plan snapshot at session creation. Null is unknown historical data; [] is a known empty plan. Never completed sets.
+            ///   - workoutExerciseId:
+            ///   - restSeconds:
+            ///   - supersetGroup:
             public init(
                 id: Swift.Int,
                 session: Swift.Int,
                 exercise: Swift.Int,
                 exerciseName: Swift.String,
                 order: Swift.Int64? = nil,
-                notes: Swift.String? = nil
+                notes: Swift.String? = nil,
+                plannedSets: [Components.Schemas.WorkoutPlannedSet]? = nil,
+                workoutExerciseId: Swift.Int? = nil,
+                restSeconds: Swift.Int? = nil,
+                supersetGroup: Swift.Int? = nil
             ) {
                 self.id = id
                 self.session = session
@@ -14324,6 +14382,10 @@ public enum Components {
                 self.exerciseName = exerciseName
                 self.order = order
                 self.notes = notes
+                self.plannedSets = plannedSets
+                self.workoutExerciseId = workoutExerciseId
+                self.restSeconds = restSeconds
+                self.supersetGroup = supersetGroup
             }
             public enum CodingKeys: String, CodingKey {
                 case id
@@ -14332,6 +14394,10 @@ public enum Components {
                 case exerciseName = "exercise_name"
                 case order
                 case notes
+                case plannedSets = "planned_sets"
+                case workoutExerciseId = "workout_exercise_id"
+                case restSeconds = "rest_seconds"
+                case supersetGroup = "superset_group"
             }
         }
         /// - Remark: Generated from `#/components/schemas/SessionExerciseRequest`.
@@ -15154,6 +15220,21 @@ public enum Components {
             case _5 = 5
             case _6 = 6
         }
+        /// - Remark: Generated from `#/components/schemas/WorkoutCapabilities`.
+        public struct WorkoutCapabilities: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/WorkoutCapabilities/planned_sets_version`.
+            public var plannedSetsVersion: Swift.Int
+            /// Creates a new `WorkoutCapabilities`.
+            ///
+            /// - Parameters:
+            ///   - plannedSetsVersion:
+            public init(plannedSetsVersion: Swift.Int) {
+                self.plannedSetsVersion = plannedSetsVersion
+            }
+            public enum CodingKeys: String, CodingKey {
+                case plannedSetsVersion = "planned_sets_version"
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/WorkoutCycle`.
         public struct WorkoutCycle: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/WorkoutCycle/id`.
@@ -15392,6 +15473,10 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/WorkoutExercise/set_types`.
             public var setTypes: [Components.Schemas.SetTypeEnum]?
+            /// Ordered explicit targets. Nonempty rows define target_sets and set_types. Empty uses legacy aggregate targets; omission preserves existing rows.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutExercise/planned_sets`.
+            public var plannedSets: [Components.Schemas.WorkoutPlannedSet]?
             /// Creates a new `WorkoutExercise`.
             ///
             /// - Parameters:
@@ -15407,6 +15492,7 @@ public enum Components {
             ///   - restSeconds: Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
             ///   - supersetGroup: Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
             ///   - setTypes: The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
+            ///   - plannedSets: Ordered explicit targets. Nonempty rows define target_sets and set_types. Empty uses legacy aggregate targets; omission preserves existing rows.
             public init(
                 id: Swift.Int,
                 workout: Swift.Int,
@@ -15419,7 +15505,8 @@ public enum Components {
                 notes: Swift.String? = nil,
                 restSeconds: Swift.Int? = nil,
                 supersetGroup: Swift.Int? = nil,
-                setTypes: [Components.Schemas.SetTypeEnum]? = nil
+                setTypes: [Components.Schemas.SetTypeEnum]? = nil,
+                plannedSets: [Components.Schemas.WorkoutPlannedSet]? = nil
             ) {
                 self.id = id
                 self.workout = workout
@@ -15433,6 +15520,7 @@ public enum Components {
                 self.restSeconds = restSeconds
                 self.supersetGroup = supersetGroup
                 self.setTypes = setTypes
+                self.plannedSets = plannedSets
             }
             public enum CodingKeys: String, CodingKey {
                 case id
@@ -15447,6 +15535,7 @@ public enum Components {
                 case restSeconds = "rest_seconds"
                 case supersetGroup = "superset_group"
                 case setTypes = "set_types"
+                case plannedSets = "planned_sets"
             }
         }
         /// - Remark: Generated from `#/components/schemas/WorkoutExerciseRequest`.
@@ -15477,6 +15566,10 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/WorkoutExerciseRequest/set_types`.
             public var setTypes: [Components.Schemas.SetTypeEnum]?
+            /// Ordered explicit targets. Nonempty rows define target_sets and set_types. Empty uses legacy aggregate targets; omission preserves existing rows.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutExerciseRequest/planned_sets`.
+            public var plannedSets: [Components.Schemas.WorkoutPlannedSetRequest]?
             /// Creates a new `WorkoutExerciseRequest`.
             ///
             /// - Parameters:
@@ -15490,6 +15583,7 @@ public enum Components {
             ///   - restSeconds: Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
             ///   - supersetGroup: Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
             ///   - setTypes: The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
+            ///   - plannedSets: Ordered explicit targets. Nonempty rows define target_sets and set_types. Empty uses legacy aggregate targets; omission preserves existing rows.
             public init(
                 workout: Swift.Int,
                 exercise: Swift.Int,
@@ -15500,7 +15594,8 @@ public enum Components {
                 notes: Swift.String? = nil,
                 restSeconds: Swift.Int? = nil,
                 supersetGroup: Swift.Int? = nil,
-                setTypes: [Components.Schemas.SetTypeEnum]? = nil
+                setTypes: [Components.Schemas.SetTypeEnum]? = nil,
+                plannedSets: [Components.Schemas.WorkoutPlannedSetRequest]? = nil
             ) {
                 self.workout = workout
                 self.exercise = exercise
@@ -15512,6 +15607,7 @@ public enum Components {
                 self.restSeconds = restSeconds
                 self.supersetGroup = supersetGroup
                 self.setTypes = setTypes
+                self.plannedSets = plannedSets
             }
             public enum CodingKeys: String, CodingKey {
                 case workout
@@ -15524,6 +15620,7 @@ public enum Components {
                 case restSeconds = "rest_seconds"
                 case supersetGroup = "superset_group"
                 case setTypes = "set_types"
+                case plannedSets = "planned_sets"
             }
         }
         /// - Remark: Generated from `#/components/schemas/WorkoutPlanExercise`.
@@ -15554,6 +15651,10 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/WorkoutPlanExercise/set_types`.
             public var setTypes: [Components.Schemas.SetTypeEnum]?
+            /// Ordered explicit targets. Nonempty rows define target_sets and set_types. Empty uses legacy aggregate targets; omission preserves existing rows.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlanExercise/planned_sets`.
+            public var plannedSets: [Components.Schemas.WorkoutPlannedSet]?
             /// Creates a new `WorkoutPlanExercise`.
             ///
             /// - Parameters:
@@ -15567,6 +15668,7 @@ public enum Components {
             ///   - restSeconds: Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
             ///   - supersetGroup: Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
             ///   - setTypes: The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
+            ///   - plannedSets: Ordered explicit targets. Nonempty rows define target_sets and set_types. Empty uses legacy aggregate targets; omission preserves existing rows.
             public init(
                 relationId: Swift.Int? = nil,
                 exercise: Swift.Int,
@@ -15577,7 +15679,8 @@ public enum Components {
                 notes: Swift.String? = nil,
                 restSeconds: Swift.Int? = nil,
                 supersetGroup: Swift.Int? = nil,
-                setTypes: [Components.Schemas.SetTypeEnum]? = nil
+                setTypes: [Components.Schemas.SetTypeEnum]? = nil,
+                plannedSets: [Components.Schemas.WorkoutPlannedSet]? = nil
             ) {
                 self.relationId = relationId
                 self.exercise = exercise
@@ -15589,6 +15692,7 @@ public enum Components {
                 self.restSeconds = restSeconds
                 self.supersetGroup = supersetGroup
                 self.setTypes = setTypes
+                self.plannedSets = plannedSets
             }
             public enum CodingKeys: String, CodingKey {
                 case relationId = "relation_id"
@@ -15601,6 +15705,7 @@ public enum Components {
                 case restSeconds = "rest_seconds"
                 case supersetGroup = "superset_group"
                 case setTypes = "set_types"
+                case plannedSets = "planned_sets"
             }
         }
         /// - Remark: Generated from `#/components/schemas/WorkoutPlanExerciseRequest`.
@@ -15631,6 +15736,10 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/WorkoutPlanExerciseRequest/set_types`.
             public var setTypes: [Components.Schemas.SetTypeEnum]?
+            /// Ordered explicit targets. Nonempty rows define target_sets and set_types. Empty uses legacy aggregate targets; omission preserves existing rows.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlanExerciseRequest/planned_sets`.
+            public var plannedSets: [Components.Schemas.WorkoutPlannedSetRequest]?
             /// Creates a new `WorkoutPlanExerciseRequest`.
             ///
             /// - Parameters:
@@ -15644,6 +15753,7 @@ public enum Components {
             ///   - restSeconds: Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
             ///   - supersetGroup: Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
             ///   - setTypes: The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
+            ///   - plannedSets: Ordered explicit targets. Nonempty rows define target_sets and set_types. Empty uses legacy aggregate targets; omission preserves existing rows.
             public init(
                 relationId: Swift.Int? = nil,
                 exercise: Swift.Int,
@@ -15654,7 +15764,8 @@ public enum Components {
                 notes: Swift.String? = nil,
                 restSeconds: Swift.Int? = nil,
                 supersetGroup: Swift.Int? = nil,
-                setTypes: [Components.Schemas.SetTypeEnum]? = nil
+                setTypes: [Components.Schemas.SetTypeEnum]? = nil,
+                plannedSets: [Components.Schemas.WorkoutPlannedSetRequest]? = nil
             ) {
                 self.relationId = relationId
                 self.exercise = exercise
@@ -15666,6 +15777,7 @@ public enum Components {
                 self.restSeconds = restSeconds
                 self.supersetGroup = supersetGroup
                 self.setTypes = setTypes
+                self.plannedSets = plannedSets
             }
             public enum CodingKeys: String, CodingKey {
                 case relationId = "relation_id"
@@ -15678,6 +15790,81 @@ public enum Components {
                 case restSeconds = "rest_seconds"
                 case supersetGroup = "superset_group"
                 case setTypes = "set_types"
+                case plannedSets = "planned_sets"
+            }
+        }
+        /// One ordered target, not a completed/logged set. Null means unspecified.
+        ///
+        /// - Remark: Generated from `#/components/schemas/WorkoutPlannedSet`.
+        public struct WorkoutPlannedSet: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlannedSet/id`.
+            public var id: Swift.String
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlannedSet/set_type`.
+            public var setType: Components.Schemas.SetTypeEnum
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlannedSet/target_reps`.
+            public var targetReps: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlannedSet/target_weight_kg`.
+            public var targetWeightKg: Swift.String?
+            /// Creates a new `WorkoutPlannedSet`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - setType:
+            ///   - targetReps:
+            ///   - targetWeightKg:
+            public init(
+                id: Swift.String,
+                setType: Components.Schemas.SetTypeEnum,
+                targetReps: Swift.Int? = nil,
+                targetWeightKg: Swift.String? = nil
+            ) {
+                self.id = id
+                self.setType = setType
+                self.targetReps = targetReps
+                self.targetWeightKg = targetWeightKg
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case setType = "set_type"
+                case targetReps = "target_reps"
+                case targetWeightKg = "target_weight_kg"
+            }
+        }
+        /// One ordered target, not a completed/logged set. Null means unspecified.
+        ///
+        /// - Remark: Generated from `#/components/schemas/WorkoutPlannedSetRequest`.
+        public struct WorkoutPlannedSetRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlannedSetRequest/id`.
+            public var id: Swift.String
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlannedSetRequest/set_type`.
+            public var setType: Components.Schemas.SetTypeEnum
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlannedSetRequest/target_reps`.
+            public var targetReps: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlannedSetRequest/target_weight_kg`.
+            public var targetWeightKg: Swift.String?
+            /// Creates a new `WorkoutPlannedSetRequest`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - setType:
+            ///   - targetReps:
+            ///   - targetWeightKg:
+            public init(
+                id: Swift.String,
+                setType: Components.Schemas.SetTypeEnum,
+                targetReps: Swift.Int? = nil,
+                targetWeightKg: Swift.String? = nil
+            ) {
+                self.id = id
+                self.setType = setType
+                self.targetReps = targetReps
+                self.targetWeightKg = targetWeightKg
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case setType = "set_type"
+                case targetReps = "target_reps"
+                case targetWeightKg = "target_weight_kg"
             }
         }
         /// A workout repeating weekly.
@@ -16350,6 +16537,8 @@ public enum Components {
             public var createdAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/WorkoutTemplate/updated_at`.
             public var updatedAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/WorkoutTemplate/supports_planned_sets`.
+            public var supportsPlannedSets: Swift.Bool?
             /// Creates a new `WorkoutTemplate`.
             ///
             /// - Parameters:
@@ -16365,6 +16554,7 @@ public enum Components {
             ///   - lastPerformedAt:
             ///   - createdAt:
             ///   - updatedAt:
+            ///   - supportsPlannedSets:
             public init(
                 id: Swift.Int,
                 owner: Swift.Int,
@@ -16377,7 +16567,8 @@ public enum Components {
                 exercises: [Components.Schemas.WorkoutExercise],
                 lastPerformedAt: Foundation.Date? = nil,
                 createdAt: Foundation.Date,
-                updatedAt: Foundation.Date
+                updatedAt: Foundation.Date,
+                supportsPlannedSets: Swift.Bool? = nil
             ) {
                 self.id = id
                 self.owner = owner
@@ -16391,6 +16582,7 @@ public enum Components {
                 self.lastPerformedAt = lastPerformedAt
                 self.createdAt = createdAt
                 self.updatedAt = updatedAt
+                self.supportsPlannedSets = supportsPlannedSets
             }
             public enum CodingKeys: String, CodingKey {
                 case id
@@ -16405,6 +16597,7 @@ public enum Components {
                 case lastPerformedAt = "last_performed_at"
                 case createdAt = "created_at"
                 case updatedAt = "updated_at"
+                case supportsPlannedSets = "supports_planned_sets"
             }
         }
         /// - Remark: Generated from `#/components/schemas/WorkoutTemplateRequest`.
@@ -16470,6 +16663,10 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/WorkoutTemplateRequest/exercise_plan`.
             public var exercisePlan: [Components.Schemas.WorkoutPlanExerciseRequest]?
+            /// Send 1 after checking workouts/capabilities/ when intentionally replacing/removing explicit per-set exercise plans.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutTemplateRequest/planned_sets_version`.
+            public var plannedSetsVersion: Swift.Int?
             /// Creates a new `WorkoutTemplateRequest`.
             ///
             /// - Parameters:
@@ -16482,6 +16679,7 @@ public enum Components {
             ///   - initialExercises: Create-only: save all initial exercises in the same transaction as the template.
             ///   - initialDate: Create-only: optionally schedule the new template in the same transaction.
             ///   - exercisePlan: Update-only: atomically replace the exercise plan, preserving supplied relation IDs.
+            ///   - plannedSetsVersion: Send 1 after checking workouts/capabilities/ when intentionally replacing/removing explicit per-set exercise plans.
             public init(
                 name: Swift.String,
                 workoutType: Components.Schemas.WorkoutTypeEnum? = nil,
@@ -16491,7 +16689,8 @@ public enum Components {
                 description: Swift.String? = nil,
                 initialExercises: [Components.Schemas.InitialWorkoutExerciseRequest]? = nil,
                 initialDate: Swift.String? = nil,
-                exercisePlan: [Components.Schemas.WorkoutPlanExerciseRequest]? = nil
+                exercisePlan: [Components.Schemas.WorkoutPlanExerciseRequest]? = nil,
+                plannedSetsVersion: Swift.Int? = nil
             ) {
                 self.name = name
                 self.workoutType = workoutType
@@ -16502,6 +16701,7 @@ public enum Components {
                 self.initialExercises = initialExercises
                 self.initialDate = initialDate
                 self.exercisePlan = exercisePlan
+                self.plannedSetsVersion = plannedSetsVersion
             }
             public enum CodingKeys: String, CodingKey {
                 case name
@@ -16513,6 +16713,7 @@ public enum Components {
                 case initialExercises = "initial_exercises"
                 case initialDate = "initial_date"
                 case exercisePlan = "exercise_plan"
+                case plannedSetsVersion = "planned_sets_version"
             }
         }
         /// * `lifting` - Lifting
@@ -45763,6 +45964,114 @@ public enum Operations {
             ///
             /// A response with a code that is not documented in the OpenAPI document.
             case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// - Remark: HTTP `GET /api/v1/workouts/capabilities/`.
+    /// - Remark: Generated from `#/paths//api/v1/workouts/capabilities//get(workouts_capabilities_retrieve)`.
+    public enum WorkoutsCapabilitiesRetrieve {
+        public static let id: Swift.String = "workouts_capabilities_retrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/workouts/capabilities/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.WorkoutsCapabilitiesRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.WorkoutsCapabilitiesRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.WorkoutsCapabilitiesRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            public init(headers: Operations.WorkoutsCapabilitiesRetrieve.Input.Headers = .init()) {
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/workouts/capabilities/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/workouts/capabilities/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.WorkoutCapabilities)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.WorkoutCapabilities {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.WorkoutsCapabilitiesRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.WorkoutsCapabilitiesRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/workouts/capabilities//get(workouts_capabilities_retrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.WorkoutsCapabilitiesRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.WorkoutsCapabilitiesRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
         }
     }
 }

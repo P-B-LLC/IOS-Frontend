@@ -122,7 +122,7 @@ targets(plan)
     if TEST_RUNNER_RYTIVO_WORKOUT_FLOW=1 \
         xcodebuild test-without-building -xctestrun "$xctestrun" \
         -destination "platform=iOS Simulator,id=$device" -parallel-testing-enabled NO \
-        -test-timeouts-enabled YES -default-test-execution-time-allowance 180 \
+        -test-timeouts-enabled YES -default-test-execution-time-allowance 240 \
         -resultBundlePath "$result" \
         -only-testing:RytivoUITests/WorkoutFlowUITests 2>&1 | tee "$output/ui-tests.log"; then
         ui_status=0
@@ -130,7 +130,7 @@ targets(plan)
         ui_status=$?
     fi
     # xcodebuild can succeed when an opt-in class was entirely skipped. Grade
-    # the four distinct native cases as well as the process exit status.
+    # the five distinct native cases as well as the process exit status.
     if ! python3 -c '
 import re,sys
 expected={
@@ -138,6 +138,7 @@ expected={
     "testWholeCardDragCanAutoscrollPastInitiallyVisibleExercises",
     "testBuilderUsesAccountUnitWithoutAnExerciseUnitSwitch",
     "testActiveExercisesKeepIndependentUnitsAndTypedWeights",
+    "testPerSetPlanKeepsDistinctTargetsAndSupportsExplicitCopy",
 }
 passed=set()
 bad=[]
@@ -150,12 +151,12 @@ for line in sys.stdin:
         name=re.search(r"\bWorkoutFlowUITests(?:\.|\s+)(test\w+)\b",line)
         if name: passed.add(name.group(1))
 if passed != expected or bad:
-    print("Native workout checks incomplete: expected 4 distinct passing cases, zero skipped/failed.",file=sys.stderr)
+    print("Native workout checks incomplete: expected 5 distinct passing cases, zero skipped/failed.",file=sys.stderr)
     print("Missing: "+", ".join(sorted(expected-passed)),file=sys.stderr)
     print("Unexpected: "+", ".join(sorted(passed-expected)),file=sys.stderr)
     for line in bad: print(line,file=sys.stderr)
     sys.exit(1)
-print("All 4 native workout-flow cases executed and passed; none skipped or failed.")
+print("All 5 native workout-flow cases executed and passed; none skipped or failed.")
 ' < "$output/ui-tests.log"; then
         ui_status=1
     fi

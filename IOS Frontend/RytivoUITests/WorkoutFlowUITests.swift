@@ -45,6 +45,14 @@ final class WorkoutFlowUITests: XCTestCase {
         add(attachment)
     }
 
+    private func hierarchy(_ name: String) {
+        // This class only launches isolated, accountless fixtures.
+        let attachment = XCTAttachment(string: app.debugDescription)
+        attachment.name = name
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+
     private func position(of element: XCUIElement) -> Int? {
         guard element.exists else { return nil }
         guard let value = element.value as? String else { return nil }
@@ -85,7 +93,11 @@ final class WorkoutFlowUITests: XCTestCase {
         // Start on the card's text area, not a system reorder handle.
         let source = row(3).coordinate(withNormalizedOffset: CGVector(dx: 0.35, dy: 0.5))
         let target = row(1).coordinate(withNormalizedOffset: CGVector(dx: 0.35, dy: 0.15))
-        source.press(forDuration: 1, thenDragTo: target)
+        // Release after the native insertion gap settles, not at the exact
+        // timestamp the pointer first reaches its destination.
+        source.press(forDuration: 1, thenDragTo: target, withVelocity: .slow, thenHoldForDuration: 0.5)
+        shot("order-immediately-after-short-drag")
+        hierarchy("order-after-short-drag-hierarchy")
         wait("The dragged card becomes first") { self.position(of: self.row(3)) == 1 }
         XCTAssertEqual(position(of: row(1)), 2)
         shot("order-after-real-drag")
@@ -93,10 +105,7 @@ final class WorkoutFlowUITests: XCTestCase {
         let review = app.buttons["workout-builder-primary"]
         XCTAssertTrue(review.isHittable)
         review.tap()
-        // SwiftUI exposes this combined target input as an accessibility
-        // group with the value, not a TextField carrying the identifier.
-        let weight = element("workout.target-weight.00000000-0000-4000-8000-000000000003")
-        XCTAssertTrue(weight.waitForExistence(timeout: 8))
+        let weight = app.textFields["workout.plan-set.00000000-0000-4000-8000-000000000003.1.weight"]
         reveal(weight, scrollingUp: true)
         XCTAssertEqual(weight.value as? String, "10", "Reordering retains the exercise's target, not its former neighbour's")
         assertBuilderHasNoUnitSwitch()
@@ -124,8 +133,11 @@ final class WorkoutFlowUITests: XCTestCase {
         let edgeY = min(list.frame.maxY, count.frame.minY - 12) - 8
         let edge = app.coordinate(withNormalizedOffset: .zero)
             .withOffset(CGVector(dx: row(1).frame.midX, dy: edgeY))
-        source.press(forDuration: 1, thenDragTo: edge, withVelocity: .slow, thenHoldForDuration: 6)
+        // Six seconds scrolled all the way into the catalog, where no plan
+        // row can be dropped. Exercise edge scrolling inside the plan instead.
+        source.press(forDuration: 1, thenDragTo: edge, withVelocity: .slow, thenHoldForDuration: 1)
         shot("order-after-edge-drag-before-reveal")
+        hierarchy("order-after-edge-drag-hierarchy")
         // Native List virtualizes rows after edge scrolling. Find the moved
         // card again before reading its value; scrolling does not reorder it.
         for _ in 0..<6 where !row(1).exists { app.swipeDown() }
@@ -139,8 +151,7 @@ final class WorkoutFlowUITests: XCTestCase {
 
     func testBuilderUsesAccountUnitWithoutAnExerciseUnitSwitch() {
         launch("builder-units")
-        let target = element("workout.target-weight.00000000-0000-4000-8000-000000000001")
-        XCTAssertTrue(target.waitForExistence(timeout: 15))
+        let target = app.textFields["workout.plan-set.00000000-0000-4000-8000-000000000001.1.weight"]
         reveal(target, scrollingUp: true)
         XCTAssertEqual(target.value as? String, "60")
         assertBuilderHasNoUnitSwitch()
@@ -204,5 +215,62 @@ final class WorkoutFlowUITests: XCTestCase {
         XCTAssertTrue(inclinePounds.isSelected)
         XCTAssertEqual(inclinePending.value as? String, "48.5")
         shot("incline-keeps-its-own-pounds-choice")
+    }
+
+    /// Actual editing of the real table in an in-memory draft. A separate
+    /// real-API save/reopen test is required to establish server persistence.
+    func testPerSetPlanKeepsDistinctTargetsAndSupportsExplicitCopy() {
+        launch("builder-units")
+        let prefix = "workout.plan-set.00000000-0000-4000-8000-000000000001"
+        func weight(_ number: Int) -> XCUIElement { app.textFields["\(prefix).\(number).weight"] }
+        func reps(_ number: Int) -> XCUIElement { app.textFields["\(prefix).\(number).reps"] }
+        func replace(_ field: XCUIElement, with text: String) {
+            reveal(field, scrollingUp: true)
+            field.tap()
+            let current = field.value as? String ?? ""
+            if current != field.placeholderValue {
+                field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count))
+            }
+            field.typeText(text)
+            app.buttons["Done"].firstMatch.tap()
+        }
+        replace(reps(1), with: "6")
+        replace(weight(1), with: "40")
+        replace(reps(2), with: "8")
+        replace(weight(2), with: "60")
+        XCTAssertEqual(reps(1).value as? String, "6")
+        XCTAssertEqual(weight(1).value as? String, "40")
+        XCTAssertEqual(reps(2).value as? String, "8")
+        XCTAssertEqual(weight(2).value as? String, "60")
+        assertBuilderHasNoUnitSwitch()
+        shot("planned-sets-have-distinct-targets")
+
+        let add = app.buttons["\(prefix).add"]
+        reveal(add, scrollingUp: true)
+        add.tap()
+        reveal(weight(4), scrollingUp: true)
+        XCTAssertTrue(reps(4).exists, "Add set creates another independent target row")
+        let remove = app.buttons["\(prefix).3.remove"]
+        reveal(remove, scrollingUp: false)
+        remove.tap()
+        XCTAssertFalse(weight(4).exists)
+        XCTAssertEqual(weight(1).value as? String, "40")
+        XCTAssertEqual(weight(2).value as? String, "60", "Removing another set must preserve existing targets")
+
+        let copy = app.buttons["\(prefix).copy-first"]
+        reveal(copy, scrollingUp: true)
+        copy.tap()
+        reveal(weight(1), scrollingUp: false)
+        for index in 1...3 {
+            XCTAssertEqual(reps(index).value as? String, "6")
+            XCTAssertEqual(weight(index).value as? String, "40")
+        }
+        shot("planned-targets-copy-only-when-requested")
+        app.buttons["Back"].firstMatch.tap()
+        XCTAssertTrue(app.navigationBars["Add exercises"].waitForExistence(timeout: 8))
+        app.buttons["workout-builder-primary"].tap()
+        reveal(weight(2), scrollingUp: true)
+        XCTAssertEqual(reps(2).value as? String, "6")
+        XCTAssertEqual(weight(2).value as? String, "40", "Returning to review retains the edited draft")
     }
 }

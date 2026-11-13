@@ -335,7 +335,7 @@ jobs:
           capture=false
           if ! changes=$(git diff --name-only "$base" HEAD); then
             capture=true
-          elif printf '%s\n' "$changes" | grep -Eq 'GuidedWorkoutBuilder|WorkoutExerciseOrder|WorkoutWeightUnit|WorkoutUnitControls|WorkoutPreferences|ActiveLiftingSessionView|SessionExerciseCard|WorkoutFlowPreviewScreen|WorkoutFlowUITests|capture-workout-flow-preview'; then
+          elif printf '%s\n' "$changes" | grep -Eq 'GuidedWorkoutBuilder|WorkoutPlannedSet|WorkoutExerciseOrder|WorkoutWeightUnit|WorkoutUnitControls|WorkoutPreferences|ActiveLiftingSessionView|SessionExerciseCard|WorkoutFlowPreviewScreen|WorkoutFlowUITests|capture-workout-flow-preview'; then
             capture=true
           fi
           if [ "$capture" = true ]; then

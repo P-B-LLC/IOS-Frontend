@@ -1251,7 +1251,8 @@ final class WorkoutStore {
                     restSeconds: exercise.restSeconds,
                     targetReps: exercise.targetReps,
                     targetWeightKilograms: exercise.targetWeightKilograms,
-                    displayUnit: preferences.hasLoadedUnit ? preferences.defaultWeightUnit : nil
+                    displayUnit: preferences.hasLoadedUnit ? preferences.defaultWeightUnit : nil,
+                    plannedSets: added.plannedSets
                 ))
                 if session.exercises.allSatisfy({ $0.isComplete || $0.id == session.exercises.last?.id }) {
                     session.focusedExerciseID = session.exercises.last?.id
@@ -1609,7 +1610,8 @@ final class WorkoutStore {
                 restSeconds: exercise.restSeconds,
                 supersetGroup: superset,
                 targetReps: exercise.targetReps,
-                targetWeightKilograms: exercise.targetWeightKilograms
+                targetWeightKilograms: exercise.targetWeightKilograms,
+                plannedSets: exercise.reusablePlannedSets
             )
         }
         do {
@@ -2163,7 +2165,11 @@ final class WorkoutStore {
                 Exercise(
                     serverID: $0.serverID, serverName: $0.serverName, name: $0.name, sets: $0.sets,
                     setTypes: $0.setTypes, restSeconds: $0.restSeconds, supersetGroup: $0.supersetGroup,
-                    targetReps: $0.targetReps, targetWeightKilograms: $0.targetWeightKilograms
+                    targetReps: $0.targetReps, targetWeightKilograms: $0.targetWeightKilograms,
+                    plannedSets: $0.plannedSets.map { row in
+                        WorkoutPlannedSet(setType: row.setType, targetReps: row.targetReps,
+                                          targetWeightKilograms: row.targetWeightKilograms)
+                    }
                 )
             }
         )

@@ -15513,4 +15513,62 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// - Remark: HTTP `GET /api/v1/workouts/capabilities/`.
+    /// - Remark: Generated from `#/paths//api/v1/workouts/capabilities//get(workouts_capabilities_retrieve)`.
+    public func workoutsCapabilitiesRetrieve(_ input: Operations.WorkoutsCapabilitiesRetrieve.Input) async throws -> Operations.WorkoutsCapabilitiesRetrieve.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.WorkoutsCapabilitiesRetrieve.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/api/v1/workouts/capabilities/",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .get
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.WorkoutsCapabilitiesRetrieve.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.WorkoutCapabilities.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
 }
