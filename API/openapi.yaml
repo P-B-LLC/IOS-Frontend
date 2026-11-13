@@ -7125,18 +7125,6 @@ components:
       required:
       - accepted
       - version
-    ActivityEnum:
-      enum:
-      - lifting
-      - running
-      - biking
-      - swimming
-      type: string
-      description: |-
-        * `lifting` - lifting
-        * `running` - running
-        * `biking` - biking
-        * `swimming` - swimming
     ActivityLogRequest:
       type: object
       description: |-
@@ -8960,7 +8948,7 @@ components:
           minLength: 1
           maxLength: 64
         activity:
-          $ref: '#/components/schemas/ActivityEnum'
+          $ref: '#/components/schemas/WorkoutTypeEnum'
         workout_activity:
           type: string
           minLength: 1
