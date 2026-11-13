@@ -20,6 +20,9 @@ final class ActivityStore {
     private let health: any HealthDataReading
     private let defaults: UserDefaults
     private var scope: HealthIntegrationScope?
+    // Keep the device choice observable; reading UserDefaults alone would
+    // leave connection badges stale when an offline pause changes it.
+    private var deviceHealthSyncEnabled = false
     private var connectionGeneration = UUID()
     private var celebrationGate = StepGoalCelebrationGate()
 
@@ -52,9 +55,9 @@ final class ActivityStore {
     var hasMoreWorkouts: Bool { nextWorkoutPage != nil }
     var hasMoreGarminWorkouts: Bool { nextGarminPage != nil }
     var healthSyncEnabled: Bool {
-        guard let scope else { return false }
+        guard scope != nil else { return false }
         return serverHealthSyncEnabled && isIntegrationSupported == true
-            && defaults.bool(forKey: scope.preferenceKey)
+            && deviceHealthSyncEnabled && !isHealthPausePending
     }
 
     /// How far back the widget reads and sends.
@@ -119,6 +122,7 @@ final class ActivityStore {
             apply(enabled)
             guard enabled.enabled else { throw HealthIntegrationFailure.consentRequired }
             defaults.set(true, forKey: scope.preferenceKey)
+            deviceHealthSyncEnabled = true
             await syncFromHealth(generation: generation)
         } catch {
             if isCurrent(generation) { report(error) }
@@ -141,6 +145,7 @@ final class ActivityStore {
     func pauseHealthSync() async {
         guard let repository, let scope else { return }
         defaults.set(false, forKey: scope.preferenceKey)
+        deviceHealthSyncEnabled = false
         defaults.set(true, forKey: scope.preferenceKey + ".pendingPause")
         isHealthPausePending = true
         connectionGeneration = UUID()
@@ -252,6 +257,7 @@ final class ActivityStore {
         if let scope {
             lastSyncedAt = defaults.object(forKey: scope.preferenceKey + ".lastSync") as? Date
             isHealthPausePending = defaults.bool(forKey: scope.preferenceKey + ".pendingPause")
+            deviceHealthSyncEnabled = defaults.bool(forKey: scope.preferenceKey) && !isHealthPausePending
         }
 
         do {
@@ -281,6 +287,7 @@ final class ActivityStore {
         connectionGeneration = UUID()
         repository = nil
         scope = nil
+        deviceHealthSyncEnabled = false
         // One user's steps must never be shown to the next.
         recentDays = []
         lastImport = nil
@@ -437,7 +444,7 @@ final class ActivityStore {
     private func requireUploadPermission(_ generation: UUID) throws {
         guard HealthSyncPolicy.canUpload(generation: generation, currentGeneration: connectionGeneration,
                                          serverEnabled: serverHealthSyncEnabled,
-                                         deviceEnabled: scope.map { defaults.bool(forKey: $0.preferenceKey) } ?? false,
+                                         deviceEnabled: deviceHealthSyncEnabled && !isHealthPausePending,
                                          schemaSupported: isIntegrationSupported == true,
                                          cancelled: Task.isCancelled) else { throw CancellationError() }
     }

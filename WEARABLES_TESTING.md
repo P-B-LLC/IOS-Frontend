@@ -81,6 +81,14 @@ directory if Simulator is unavailable; do not delete existing simulators.
 
 ## Validation checklist before activation
 
+Backend candidate `0951d05` passed its 1,740-test suite on both SQLite and
+PostgreSQL, schema freshness, production configuration and dependency audit:
+[backend CI](https://github.com/P-B-LLC/repbase/actions/runs/43363526529).
+The new Apple Health suite includes two PostgreSQL-only locking cases.
+The iOS candidate requires its own Mac result; the prior branch had an
+unresolved workout-reorder edge-autoscroll UI test. Do not treat an individual
+build/test step as a green full workflow or proof of physical watch delivery.
+
 1. Connect explicitly; deny or allow only some types. Empty data must not be
    described as proof that permission was granted or refused.
 2. Import a run, a walk and a Watch strength workout. Inspect actual available

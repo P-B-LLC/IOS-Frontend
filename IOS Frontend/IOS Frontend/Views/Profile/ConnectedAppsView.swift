@@ -147,7 +147,7 @@ struct HealthConnectionDashboard: View {
         .navigationBarTitleDisplayMode(.inline)
         .homeTimeScreen(.current)
         .task { await activity.loadIntegrationStatus() }
-        .confirmationDialog("Pause Health sync?", isPresented: $confirmsPause, titleVisibility: .visible) {
+        .confirmationDialog("Pause Health sync", isPresented: $confirmsPause, titleVisibility: .visible) {
             Button("Pause Health sync", role: .destructive) { Task { await activity.pauseHealthSync() } }
             Button("Cancel", role: .cancel) {}
         } message: {
@@ -206,6 +206,7 @@ struct GarminConnectionView: View {
 /// Shared owner-only readback. Opening a row reveals metrics, not editable logs.
 private struct HealthWorkoutList: View {
     @Environment(ActivityStore.self) private var activity
+    @Environment(WorkoutStore.self) private var workoutsStore
     var garminOnly: Bool
 
     private var workouts: [HealthWorkoutSummary] {
@@ -225,7 +226,8 @@ private struct HealthWorkoutList: View {
             }
             ForEach(workouts) { summary in
                 DisclosureGroup {
-                    HealthWorkoutMetricsView(summary: summary).padding(.top, 12)
+                    HealthWorkoutMetricsView(summary: summary, unit: workoutsStore.preferences.weightUnit == .imperial ? .miles : .kilometers)
+                        .padding(.top, 12)
                 } label: {
                     VStack(alignment: .leading, spacing: 5) {
                         Text(summary.activity.title)

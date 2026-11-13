@@ -225,5 +225,7 @@ final class HealthIntegrationTests: XCTestCase {
         XCTAssertTrue(source.contains("try requireUploadPermission(generation)\n                    summary = summary.adding"))
         XCTAssertTrue(source.contains("guard await reload(generation: generation, showsLoadingState: false) else { return }"))
         XCTAssertTrue(source.contains(".pendingPause"))
+        XCTAssertTrue(source.contains("private var deviceHealthSyncEnabled = false"))
+        XCTAssertTrue(source.contains("&& deviceHealthSyncEnabled && !isHealthPausePending"))
     }
 }
