@@ -1157,11 +1157,11 @@ private struct ProfileSettingsView: View {
                             Rectangle().fill(timeOfDay.border).frame(height: 1)
 
                             NavigationLink {
-                                AppleHealthConnectionView()
+                                ConnectedAppsView()
                             } label: {
                                 settingsRow(
-                                    "Apple Health",
-                                    detail: "Steps and completed workout imports",
+                                    "Connected apps",
+                                    detail: "Apple Watch, Health and Garmin",
                                     symbol: "heart.text.square"
                                 )
                             }
@@ -1642,7 +1642,7 @@ private struct PrivacyAndPermissionsView: View {
                     "Apple Health",
                     detail: "Read-only access to steps and completed workouts. Rytivo never writes to Health.",
                     symbol: "heart.text.square",
-                    status: activity.hasAskedHealth ? "Access requested" : "Not connected"
+                    status: activity.healthSyncEnabled ? "Sync enabled" : "Not connected"
                 )
                 permissionExplanation(
                     "Notifications",

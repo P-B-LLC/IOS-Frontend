@@ -1,5 +1,17 @@
 # TestFlight development workflow
 
+## Connected watch workouts — November 12, 2026
+
+The testing candidate adds Connected apps in Training and Settings, explicit
+account/device Health consent, private source-aware workout summaries, bounded
+imports and retryable pause/status controls. Watch-only strength sessions remain
+visible without invented sets. Garmin direct access is not configured; the
+dashboard supports clearly labelled Garmin-via-Apple-Health records while the
+owner applies for program access. See [WEARABLES_TESTING.md](WEARABLES_TESTING.md).
+Requires backend migration 0094 and the matching testing API. Main, live and
+TestFlight are untouched. Exact-head Mac/CI and physical-watch validation remain
+required; do not treat the generated client or source tests as device proof.
+
 ## Durable per-set planning — November 12, 2026
 
 The testing candidate adds a set-by-set target table to Review workout, using

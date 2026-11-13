@@ -480,6 +480,15 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /api/v1/gyms/{id}/members/`.
     /// - Remark: Generated from `#/paths//api/v1/gyms/{id}/members//get(gyms_members_list)`.
     func gymsMembersList(_ input: Operations.GymsMembersList.Input) async throws -> Operations.GymsMembersList.Output
+    /// - Remark: HTTP `GET /api/v1/integrations/apple-health/`.
+    /// - Remark: Generated from `#/paths//api/v1/integrations/apple-health//get(integrations_apple_health_retrieve)`.
+    func integrationsAppleHealthRetrieve(_ input: Operations.IntegrationsAppleHealthRetrieve.Input) async throws -> Operations.IntegrationsAppleHealthRetrieve.Output
+    /// - Remark: HTTP `PATCH /api/v1/integrations/apple-health/`.
+    /// - Remark: Generated from `#/paths//api/v1/integrations/apple-health//patch(integrations_apple_health_partial_update)`.
+    func integrationsAppleHealthPartialUpdate(_ input: Operations.IntegrationsAppleHealthPartialUpdate.Input) async throws -> Operations.IntegrationsAppleHealthPartialUpdate.Output
+    /// - Remark: HTTP `GET /api/v1/integrations/workouts/`.
+    /// - Remark: Generated from `#/paths//api/v1/integrations/workouts//get(integrations_workouts_list)`.
+    func integrationsWorkoutsList(_ input: Operations.IntegrationsWorkoutsList.Input) async throws -> Operations.IntegrationsWorkoutsList.Output
     /// - Remark: HTTP `GET /api/v1/me/`.
     /// - Remark: Generated from `#/paths//api/v1/me//get(me_retrieve)`.
     func meRetrieve(_ input: Operations.MeRetrieve.Input) async throws -> Operations.MeRetrieve.Output
@@ -2515,6 +2524,33 @@ extension APIProtocol {
     ) async throws -> Operations.GymsMembersList.Output {
         try await gymsMembersList(Operations.GymsMembersList.Input(
             path: path,
+            headers: headers
+        ))
+    }
+    /// - Remark: HTTP `GET /api/v1/integrations/apple-health/`.
+    /// - Remark: Generated from `#/paths//api/v1/integrations/apple-health//get(integrations_apple_health_retrieve)`.
+    public func integrationsAppleHealthRetrieve(headers: Operations.IntegrationsAppleHealthRetrieve.Input.Headers = .init()) async throws -> Operations.IntegrationsAppleHealthRetrieve.Output {
+        try await integrationsAppleHealthRetrieve(Operations.IntegrationsAppleHealthRetrieve.Input(headers: headers))
+    }
+    /// - Remark: HTTP `PATCH /api/v1/integrations/apple-health/`.
+    /// - Remark: Generated from `#/paths//api/v1/integrations/apple-health//patch(integrations_apple_health_partial_update)`.
+    public func integrationsAppleHealthPartialUpdate(
+        headers: Operations.IntegrationsAppleHealthPartialUpdate.Input.Headers = .init(),
+        body: Operations.IntegrationsAppleHealthPartialUpdate.Input.Body? = nil
+    ) async throws -> Operations.IntegrationsAppleHealthPartialUpdate.Output {
+        try await integrationsAppleHealthPartialUpdate(Operations.IntegrationsAppleHealthPartialUpdate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// - Remark: HTTP `GET /api/v1/integrations/workouts/`.
+    /// - Remark: Generated from `#/paths//api/v1/integrations/workouts//get(integrations_workouts_list)`.
+    public func integrationsWorkoutsList(
+        query: Operations.IntegrationsWorkoutsList.Input.Query = .init(),
+        headers: Operations.IntegrationsWorkoutsList.Input.Headers = .init()
+    ) async throws -> Operations.IntegrationsWorkoutsList.Output {
+        try await integrationsWorkoutsList(Operations.IntegrationsWorkoutsList.Input(
+            query: query,
             headers: headers
         ))
     }
@@ -4658,6 +4694,59 @@ public enum Components {
             case owner = "owner"
             case analytics = "analytics"
             case moderator = "moderator"
+        }
+        /// - Remark: Generated from `#/components/schemas/AppleHealthConnection`.
+        public struct AppleHealthConnection: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/AppleHealthConnection/enabled`.
+            public var enabled: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/AppleHealthConnection/consent_version`.
+            public var consentVersion: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/AppleHealthConnection/last_sync_at`.
+            public var lastSyncAt: Foundation.Date?
+            /// - Remark: Generated from `#/components/schemas/AppleHealthConnection/last_sync_imported_count`.
+            public var lastSyncImportedCount: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/AppleHealthConnection/last_sync_updated_count`.
+            public var lastSyncUpdatedCount: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/AppleHealthConnection/schema_version`.
+            public var schemaVersion: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/AppleHealthConnection/garmin_direct_available`.
+            public var garminDirectAvailable: Swift.Bool?
+            /// Creates a new `AppleHealthConnection`.
+            ///
+            /// - Parameters:
+            ///   - enabled:
+            ///   - consentVersion:
+            ///   - lastSyncAt:
+            ///   - lastSyncImportedCount:
+            ///   - lastSyncUpdatedCount:
+            ///   - schemaVersion:
+            ///   - garminDirectAvailable:
+            public init(
+                enabled: Swift.Bool,
+                consentVersion: Swift.String? = nil,
+                lastSyncAt: Foundation.Date? = nil,
+                lastSyncImportedCount: Swift.Int,
+                lastSyncUpdatedCount: Swift.Int,
+                schemaVersion: Swift.Int? = nil,
+                garminDirectAvailable: Swift.Bool? = nil
+            ) {
+                self.enabled = enabled
+                self.consentVersion = consentVersion
+                self.lastSyncAt = lastSyncAt
+                self.lastSyncImportedCount = lastSyncImportedCount
+                self.lastSyncUpdatedCount = lastSyncUpdatedCount
+                self.schemaVersion = schemaVersion
+                self.garminDirectAvailable = garminDirectAvailable
+            }
+            public enum CodingKeys: String, CodingKey {
+                case enabled
+                case consentVersion = "consent_version"
+                case lastSyncAt = "last_sync_at"
+                case lastSyncImportedCount = "last_sync_imported_count"
+                case lastSyncUpdatedCount = "last_sync_updated_count"
+                case schemaVersion = "schema_version"
+                case garminDirectAvailable = "garmin_direct_available"
+            }
         }
         /// Which days to copy a saved meal into, and which meal on each of them.
         ///
@@ -7536,11 +7625,6 @@ public enum Components {
                 case country
             }
         }
-        /// What the import did, counted rather than described.
-        ///
-        /// Three numbers rather than one, because "nothing happened" has three very
-        /// different causes and a user who imported nothing deserves to know which.
-        ///
         /// - Remark: Generated from `#/components/schemas/HealthImportResult`.
         public struct HealthImportResult: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/HealthImportResult/imported`.
@@ -7549,25 +7633,37 @@ public enum Components {
             public var skippedOverlapping: Swift.Int
             /// - Remark: Generated from `#/components/schemas/HealthImportResult/already_imported`.
             public var alreadyImported: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/HealthImportResult/updated`.
+            public var updated: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/HealthImportResult/linked`.
+            public var linked: Swift.Int?
             /// Creates a new `HealthImportResult`.
             ///
             /// - Parameters:
             ///   - imported:
             ///   - skippedOverlapping:
             ///   - alreadyImported:
+            ///   - updated:
+            ///   - linked:
             public init(
                 imported: Swift.Int,
                 skippedOverlapping: Swift.Int,
-                alreadyImported: Swift.Int
+                alreadyImported: Swift.Int,
+                updated: Swift.Int? = nil,
+                linked: Swift.Int? = nil
             ) {
                 self.imported = imported
                 self.skippedOverlapping = skippedOverlapping
                 self.alreadyImported = alreadyImported
+                self.updated = updated
+                self.linked = linked
             }
             public enum CodingKeys: String, CodingKey {
                 case imported
                 case skippedOverlapping = "skipped_overlapping"
                 case alreadyImported = "already_imported"
+                case updated
+                case linked
             }
         }
         /// - Remark: Generated from `#/components/schemas/HealthWorkoutImportRequest`.
@@ -7585,47 +7681,206 @@ public enum Components {
                 case workouts
             }
         }
-        /// One finished workout on its way in from Apple Health.
-        ///
         /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest`.
         public struct HealthWorkoutRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest/external_id`.
             public var externalId: Swift.String
             /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest/activity`.
             public var activity: Components.Schemas.WorkoutTypeEnum
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest/workout_activity`.
+            public var workoutActivity: Swift.String?
             /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest/started_at`.
             public var startedAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest/ended_at`.
             public var endedAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest/duration_seconds`.
+            public var durationSeconds: Swift.Double?
             /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest/distance_km`.
             public var distanceKm: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest/active_energy_kcal`.
+            public var activeEnergyKcal: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest/average_heart_rate_bpm`.
+            public var averageHeartRateBpm: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest/max_heart_rate_bpm`.
+            public var maxHeartRateBpm: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest/source_name`.
+            public var sourceName: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest/source_bundle_id`.
+            public var sourceBundleId: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest/device_name`.
+            public var deviceName: Swift.String?
             /// Creates a new `HealthWorkoutRequest`.
             ///
             /// - Parameters:
             ///   - externalId:
             ///   - activity:
+            ///   - workoutActivity:
             ///   - startedAt:
             ///   - endedAt:
+            ///   - durationSeconds:
             ///   - distanceKm:
+            ///   - activeEnergyKcal:
+            ///   - averageHeartRateBpm:
+            ///   - maxHeartRateBpm:
+            ///   - sourceName:
+            ///   - sourceBundleId:
+            ///   - deviceName:
             public init(
                 externalId: Swift.String,
                 activity: Components.Schemas.WorkoutTypeEnum,
+                workoutActivity: Swift.String? = nil,
                 startedAt: Foundation.Date,
                 endedAt: Foundation.Date,
-                distanceKm: Swift.String? = nil
+                durationSeconds: Swift.Double? = nil,
+                distanceKm: Swift.String? = nil,
+                activeEnergyKcal: Swift.String? = nil,
+                averageHeartRateBpm: Swift.String? = nil,
+                maxHeartRateBpm: Swift.String? = nil,
+                sourceName: Swift.String? = nil,
+                sourceBundleId: Swift.String? = nil,
+                deviceName: Swift.String? = nil
             ) {
                 self.externalId = externalId
                 self.activity = activity
+                self.workoutActivity = workoutActivity
                 self.startedAt = startedAt
                 self.endedAt = endedAt
+                self.durationSeconds = durationSeconds
                 self.distanceKm = distanceKm
+                self.activeEnergyKcal = activeEnergyKcal
+                self.averageHeartRateBpm = averageHeartRateBpm
+                self.maxHeartRateBpm = maxHeartRateBpm
+                self.sourceName = sourceName
+                self.sourceBundleId = sourceBundleId
+                self.deviceName = deviceName
             }
             public enum CodingKeys: String, CodingKey {
                 case externalId = "external_id"
                 case activity
+                case workoutActivity = "workout_activity"
                 case startedAt = "started_at"
                 case endedAt = "ended_at"
+                case durationSeconds = "duration_seconds"
                 case distanceKm = "distance_km"
+                case activeEnergyKcal = "active_energy_kcal"
+                case averageHeartRateBpm = "average_heart_rate_bpm"
+                case maxHeartRateBpm = "max_heart_rate_bpm"
+                case sourceName = "source_name"
+                case sourceBundleId = "source_bundle_id"
+                case deviceName = "device_name"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary`.
+        public struct HealthWorkoutSummary: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/session`.
+            public var session: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/external_id`.
+            public var externalId: Swift.String
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/provider`.
+            public var provider: Swift.String
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/source`.
+            public var source: Swift.String
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/source_name`.
+            public var sourceName: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/source_bundle_id`.
+            public var sourceBundleId: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/device_name`.
+            public var deviceName: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/workout_activity`.
+            public var workoutActivity: Swift.String
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/started_at`.
+            public var startedAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/ended_at`.
+            public var endedAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/duration_seconds`.
+            public var durationSeconds: Swift.Double
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/distance_km`.
+            public var distanceKm: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/active_energy_kcal`.
+            public var activeEnergyKcal: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/average_heart_rate_bpm`.
+            public var averageHeartRateBpm: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/max_heart_rate_bpm`.
+            public var maxHeartRateBpm: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/updated_at`.
+            public var updatedAt: Foundation.Date
+            /// Creates a new `HealthWorkoutSummary`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - session:
+            ///   - externalId:
+            ///   - provider:
+            ///   - source:
+            ///   - sourceName:
+            ///   - sourceBundleId:
+            ///   - deviceName:
+            ///   - workoutActivity:
+            ///   - startedAt:
+            ///   - endedAt:
+            ///   - durationSeconds:
+            ///   - distanceKm:
+            ///   - activeEnergyKcal:
+            ///   - averageHeartRateBpm:
+            ///   - maxHeartRateBpm:
+            ///   - updatedAt:
+            public init(
+                id: Swift.Int,
+                session: Swift.Int,
+                externalId: Swift.String,
+                provider: Swift.String,
+                source: Swift.String,
+                sourceName: Swift.String? = nil,
+                sourceBundleId: Swift.String? = nil,
+                deviceName: Swift.String? = nil,
+                workoutActivity: Swift.String,
+                startedAt: Foundation.Date,
+                endedAt: Foundation.Date,
+                durationSeconds: Swift.Double,
+                distanceKm: Swift.String? = nil,
+                activeEnergyKcal: Swift.String? = nil,
+                averageHeartRateBpm: Swift.String? = nil,
+                maxHeartRateBpm: Swift.String? = nil,
+                updatedAt: Foundation.Date
+            ) {
+                self.id = id
+                self.session = session
+                self.externalId = externalId
+                self.provider = provider
+                self.source = source
+                self.sourceName = sourceName
+                self.sourceBundleId = sourceBundleId
+                self.deviceName = deviceName
+                self.workoutActivity = workoutActivity
+                self.startedAt = startedAt
+                self.endedAt = endedAt
+                self.durationSeconds = durationSeconds
+                self.distanceKm = distanceKm
+                self.activeEnergyKcal = activeEnergyKcal
+                self.averageHeartRateBpm = averageHeartRateBpm
+                self.maxHeartRateBpm = maxHeartRateBpm
+                self.updatedAt = updatedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case session
+                case externalId = "external_id"
+                case provider
+                case source
+                case sourceName = "source_name"
+                case sourceBundleId = "source_bundle_id"
+                case deviceName = "device_name"
+                case workoutActivity = "workout_activity"
+                case startedAt = "started_at"
+                case endedAt = "ended_at"
+                case durationSeconds = "duration_seconds"
+                case distanceKm = "distance_km"
+                case activeEnergyKcal = "active_energy_kcal"
+                case averageHeartRateBpm = "average_heart_rate_bpm"
+                case maxHeartRateBpm = "max_heart_rate_bpm"
+                case updatedAt = "updated_at"
             }
         }
         /// - Remark: Generated from `#/components/schemas/ImpressionBatchRequest`.
@@ -8731,6 +8986,41 @@ public enum Components {
                 case results
             }
         }
+        /// - Remark: Generated from `#/components/schemas/PaginatedHealthWorkoutSummaryList`.
+        public struct PaginatedHealthWorkoutSummaryList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PaginatedHealthWorkoutSummaryList/count`.
+            public var count: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PaginatedHealthWorkoutSummaryList/next`.
+            public var next: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedHealthWorkoutSummaryList/previous`.
+            public var previous: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedHealthWorkoutSummaryList/results`.
+            public var results: [Components.Schemas.HealthWorkoutSummary]
+            /// Creates a new `PaginatedHealthWorkoutSummaryList`.
+            ///
+            /// - Parameters:
+            ///   - count:
+            ///   - next:
+            ///   - previous:
+            ///   - results:
+            public init(
+                count: Swift.Int,
+                next: Swift.String? = nil,
+                previous: Swift.String? = nil,
+                results: [Components.Schemas.HealthWorkoutSummary]
+            ) {
+                self.count = count
+                self.next = next
+                self.previous = previous
+                self.results = results
+            }
+            public enum CodingKeys: String, CodingKey {
+                case count
+                case next
+                case previous
+                case results
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/PaginatedNotificationList`.
         public struct PaginatedNotificationList: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PaginatedNotificationList/count`.
@@ -9339,6 +9629,29 @@ public enum Components {
             }
             public enum CodingKeys: String, CodingKey {
                 case email
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PatchedAppleHealthConnectionUpdateRequest`.
+        public struct PatchedAppleHealthConnectionUpdateRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PatchedAppleHealthConnectionUpdateRequest/enabled`.
+            public var enabled: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/PatchedAppleHealthConnectionUpdateRequest/consent_version`.
+            public var consentVersion: Swift.String?
+            /// Creates a new `PatchedAppleHealthConnectionUpdateRequest`.
+            ///
+            /// - Parameters:
+            ///   - enabled:
+            ///   - consentVersion:
+            public init(
+                enabled: Swift.Bool? = nil,
+                consentVersion: Swift.String? = nil
+            ) {
+                self.enabled = enabled
+                self.consentVersion = consentVersion
+            }
+            public enum CodingKeys: String, CodingKey {
+                case enabled
+                case consentVersion = "consent_version"
             }
         }
         /// - Remark: Generated from `#/components/schemas/PatchedBodyWeightEntryRequest`.
@@ -16095,6 +16408,26 @@ public enum Components {
         }
         /// - Remark: Generated from `#/components/schemas/WorkoutSession`.
         public struct WorkoutSession: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/health_summary`.
+            public struct HealthSummaryPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/WorkoutSession/health_summary/value1`.
+                public var value1: Components.Schemas.HealthWorkoutSummary
+                /// Creates a new `HealthSummaryPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.HealthWorkoutSummary) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/health_summary`.
+            public var healthSummary: Components.Schemas.WorkoutSession.HealthSummaryPayload?
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/id`.
             public var id: Swift.Int
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/repbase_user`.
@@ -16249,6 +16582,7 @@ public enum Components {
             /// Creates a new `WorkoutSession`.
             ///
             /// - Parameters:
+            ///   - healthSummary:
             ///   - id:
             ///   - repbaseUser:
             ///   - workout:
@@ -16284,6 +16618,7 @@ public enum Components {
             ///   - createdAt:
             ///   - updatedAt:
             public init(
+                healthSummary: Components.Schemas.WorkoutSession.HealthSummaryPayload? = nil,
                 id: Swift.Int,
                 repbaseUser: Swift.Int,
                 workout: Swift.Int? = nil,
@@ -16319,6 +16654,7 @@ public enum Components {
                 createdAt: Foundation.Date,
                 updatedAt: Foundation.Date
             ) {
+                self.healthSummary = healthSummary
                 self.id = id
                 self.repbaseUser = repbaseUser
                 self.workout = workout
@@ -16355,6 +16691,7 @@ public enum Components {
                 self.updatedAt = updatedAt
             }
             public enum CodingKeys: String, CodingKey {
+                case healthSummary = "health_summary"
                 case id
                 case repbaseUser = "repbase_user"
                 case workout
@@ -28138,6 +28475,380 @@ public enum Operations {
             /// - Throws: An error if `self` is not `.ok`.
             /// - SeeAlso: `.ok`.
             public var ok: Operations.GymsMembersList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// - Remark: HTTP `GET /api/v1/integrations/apple-health/`.
+    /// - Remark: Generated from `#/paths//api/v1/integrations/apple-health//get(integrations_apple_health_retrieve)`.
+    public enum IntegrationsAppleHealthRetrieve {
+        public static let id: Swift.String = "integrations_apple_health_retrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/integrations/apple-health/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.IntegrationsAppleHealthRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.IntegrationsAppleHealthRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.IntegrationsAppleHealthRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            public init(headers: Operations.IntegrationsAppleHealthRetrieve.Input.Headers = .init()) {
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/integrations/apple-health/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/integrations/apple-health/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.AppleHealthConnection)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.AppleHealthConnection {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.IntegrationsAppleHealthRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.IntegrationsAppleHealthRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/integrations/apple-health//get(integrations_apple_health_retrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.IntegrationsAppleHealthRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.IntegrationsAppleHealthRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// - Remark: HTTP `PATCH /api/v1/integrations/apple-health/`.
+    /// - Remark: Generated from `#/paths//api/v1/integrations/apple-health//patch(integrations_apple_health_partial_update)`.
+    public enum IntegrationsAppleHealthPartialUpdate {
+        public static let id: Swift.String = "integrations_apple_health_partial_update"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/integrations/apple-health/PATCH/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.IntegrationsAppleHealthPartialUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.IntegrationsAppleHealthPartialUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.IntegrationsAppleHealthPartialUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/integrations/apple-health/PATCH/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/integrations/apple-health/PATCH/requestBody/content/application\/json`.
+                case json(Components.Schemas.PatchedAppleHealthConnectionUpdateRequest)
+            }
+            public var body: Operations.IntegrationsAppleHealthPartialUpdate.Input.Body?
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.IntegrationsAppleHealthPartialUpdate.Input.Headers = .init(),
+                body: Operations.IntegrationsAppleHealthPartialUpdate.Input.Body? = nil
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/integrations/apple-health/PATCH/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/integrations/apple-health/PATCH/responses/200/content/application\/json`.
+                    case json(Components.Schemas.AppleHealthConnection)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.AppleHealthConnection {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.IntegrationsAppleHealthPartialUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.IntegrationsAppleHealthPartialUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/integrations/apple-health//patch(integrations_apple_health_partial_update)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.IntegrationsAppleHealthPartialUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.IntegrationsAppleHealthPartialUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// - Remark: HTTP `GET /api/v1/integrations/workouts/`.
+    /// - Remark: Generated from `#/paths//api/v1/integrations/workouts//get(integrations_workouts_list)`.
+    public enum IntegrationsWorkoutsList {
+        public static let id: Swift.String = "integrations_workouts_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/integrations/workouts/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/integrations/workouts/GET/query/page`.
+                public var page: Swift.Int?
+                /// Inclusive start date, YYYY-MM-DD.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/integrations/workouts/GET/query/since`.
+                public var since: Swift.String?
+                /// - Remark: Generated from `#/paths/api/v1/integrations/workouts/GET/query/source`.
+                @frozen public enum SourcePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case appleHealth = "apple_health"
+                    case garmin = "garmin"
+                }
+                /// - Remark: Generated from `#/paths/api/v1/integrations/workouts/GET/query/source`.
+                public var source: Operations.IntegrationsWorkoutsList.Input.Query.SourcePayload?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - page: A page number within the paginated result set.
+                ///   - since: Inclusive start date, YYYY-MM-DD.
+                ///   - source:
+                public init(
+                    page: Swift.Int? = nil,
+                    since: Swift.String? = nil,
+                    source: Operations.IntegrationsWorkoutsList.Input.Query.SourcePayload? = nil
+                ) {
+                    self.page = page
+                    self.since = since
+                    self.source = source
+                }
+            }
+            public var query: Operations.IntegrationsWorkoutsList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/integrations/workouts/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.IntegrationsWorkoutsList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.IntegrationsWorkoutsList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.IntegrationsWorkoutsList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.IntegrationsWorkoutsList.Input.Query = .init(),
+                headers: Operations.IntegrationsWorkoutsList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/integrations/workouts/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/integrations/workouts/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedHealthWorkoutSummaryList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedHealthWorkoutSummaryList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.IntegrationsWorkoutsList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.IntegrationsWorkoutsList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/integrations/workouts//get(integrations_workouts_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.IntegrationsWorkoutsList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.IntegrationsWorkoutsList.Output.Ok {
                 get throws {
                     switch self {
                     case let .ok(response):

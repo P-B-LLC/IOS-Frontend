@@ -60,6 +60,10 @@ cp "$repo/IOS Frontend/IOS Frontend/Services/FollowRelationship.swift" "$test_pa
 # Activities, logging after the fact, effort, and the exercise library. The
 # library test also reads the copy of the library the app ships.
 cp "$repo/Tests/AccountSafety/WorkoutActivityTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/Tests/AccountSafety/HealthIntegrationTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/Tests/AccountSafety/WearableWorkoutSummaryTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/IOS Frontend/IOS Frontend/Models/HealthIntegration.swift" "$test_package/Sources/AccountSafety/"
+cp "$repo/IOS Frontend/IOS Frontend/API/ActivityAPIRepository.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/Tests/AccountSafety/ExerciseLibraryTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/IOS Frontend/IOS Frontend/Models/WorkoutActivity.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/Models/ActivityLog.swift" "$test_package/Sources/AccountSafety/"

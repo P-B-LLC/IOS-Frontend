@@ -58,7 +58,14 @@ struct HealthKitProbeView: View {
         // reading broken? "No steps" looks identical either way from the UI.
         let service = HealthKitService()
         let since = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
-        let days = await service.dailySteps(since: since)
+        let days: [DailyStepCount]
+        do {
+            days = try await service.dailySteps(since: since)
+        } catch {
+            found.append("Health query failed; no success recorded")
+            lines = found
+            return
+        }
         found.append("days with steps in the last 7: \(days.count)")
         for day in days.prefix(7) {
             found.append("  \(day.day.formatted(.dateTime.month().day())): \(day.steps)")

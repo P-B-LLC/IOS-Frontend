@@ -91,7 +91,7 @@ struct StepsWidget: View {
         }
         .padding(16)
         .sunriseCard(tint: RytivoSunriseDesign.sageTint)
-        .task { await store.refresh() }
+        .task { await store.refreshIfNeeded() }
         // Not combined into one element, or the goal button disappears from
         // VoiceOver along with everything else on the row.
         .accessibilityLabel("\(steps.formatted(.number)) steps today, \(progress.formatted(.percent)) of goal")
@@ -122,27 +122,21 @@ struct StepsWidget: View {
 
     /// Shown when there are no steps to draw.
     ///
-    /// Tappable only before Apple's sheet has been shown. Afterwards iOS shows
-    /// nothing at all on a second request, so a button would be a control that
-    /// visibly does nothing; the text points at Settings instead.
+    /// Opens the same explicit setup/status page as Training and Settings.
     @ViewBuilder
     private var connectCard: some View {
-        if store.hasAskedHealth {
+        NavigationLink { AppleHealthConnectionView() } label: {
             connectBody(
-                message: "No steps from Health yet. Turn Rytivo on under Settings, Privacy & Security, Health.",
-                action: nil
-            )
-        } else {
-            connectBody(
-                message: "Connect to Apple Health to see steps.",
-                action: { Task { await store.connectHealth() } }
+                message: store.healthSyncEnabled
+                    ? "No steps from Health yet. Turn Rytivo on under Settings, Privacy & Security, Health."
+                    : "Connect to Apple Health to see steps."
             )
         }
+        .buttonStyle(.plain)
     }
 
     private func connectBody(
-        message: LocalizedStringKey,
-        action: (() -> Void)?
+        message: LocalizedStringKey
     ) -> some View {
         HStack(spacing: 10) {
             Image(systemName: "figure.walk")
@@ -163,7 +157,7 @@ struct StepsWidget: View {
 
             if store.isRequestingHealthAccess {
                 ProgressView().controlSize(.small)
-            } else if action != nil {
+            } else {
                 Image(systemName: "chevron.forward")
                     .font(.community(.caption, weight: .bold))
                     .foregroundStyle(timeOfDay.accent)
@@ -178,14 +172,12 @@ struct StepsWidget: View {
                 .allowsHitTesting(false)
         }
         .contentShape(Rectangle())
-        .onTapGesture { action?() }
         .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(action == nil ? [] : .isButton)
         .task {
             // The card with steps in it refreshes on appear; this one has to
             // as well, or access granted in Settings would never be noticed
             // and the card would keep asking for something already given.
-            await store.refresh()
+            await store.refreshIfNeeded()
         }
     }
 
@@ -209,7 +201,7 @@ struct StepsWidget: View {
             // Health backfills: a watch that synced late changes yesterday's
             // total too, so returning to Home asks again rather than trusting
             // whatever was true when the app launched.
-            await store.refresh()
+            await store.refreshIfNeeded()
         }
     }
 

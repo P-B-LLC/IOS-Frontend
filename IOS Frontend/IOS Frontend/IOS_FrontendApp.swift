@@ -280,11 +280,11 @@ private struct AppRootView: View {
                             Text("Health not connected")
                                 .font(.community(.caption, weight: .bold))
                             StepsWidget(explainsWhenEmpty: true)
-                                .environment(ActivityStore(health: .previewNeverAsked()))
+                                .environment(ActivityStore(health: HealthKitService.previewNeverAsked()))
                             Text("Asked already, still nothing")
                                 .font(.community(.caption, weight: .bold))
                             StepsWidget(explainsWhenEmpty: true)
-                                .environment(ActivityStore(health: .previewAlreadyAsked()))
+                                .environment(ActivityStore(health: HealthKitService.previewAlreadyAsked()))
                         }
                         .padding(RepbaseDesign.pageInset)
                     }
@@ -694,6 +694,12 @@ private struct AppRootView: View {
             if phase == .active {
                 workoutStore.dismissExpiredRestBanner()
                 Task { await workoutStore.retryPendingWorkoutSaves() }
+                Task {
+#if DEBUG
+                    guard Self.isPreviewing == false else { return }
+#endif
+                    await activityStore.refreshIfNeeded()
+                }
             }
         }
         .task {
@@ -704,6 +710,7 @@ private struct AppRootView: View {
 #endif
             authentication.onSessionEnded = { clearAccountState() }
             authentication.onAccountDeleted = { ownerID in
+                activityStore.deleteHealthConnectionPreferences(accountID: ownerID, origin: authentication.configuration.serverURL.absoluteString)
                 workoutStore.deleteAccountRecovery(ownerID: ownerID, origin: authentication.configuration.serverURL.absoluteString)
                 try? EditorDraftRecovery.shared.removeAccount(scope: .init(ownerID: ownerID, origin: authentication.configuration.serverURL.absoluteString))
             }
@@ -761,9 +768,15 @@ private struct AppRootView: View {
                 token: token
             )
             guard authentication.token == token, !Task.isCancelled else { return }
+            activityStore.onWorkoutsChanged = { [workoutStore, plannerStore] in
+                await workoutStore.loadDashboardSessions()
+                await workoutStore.reloadSchedule()
+                await plannerStore.refreshScheduledWorkouts()
+            }
             await activityStore.connect(
                 configuration: authentication.configuration,
-                token: token
+                token: token,
+                accountID: user.id
             )
             guard authentication.token == token, !Task.isCancelled else { return }
             await gearStore.connect(

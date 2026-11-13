@@ -74,6 +74,22 @@ struct TrainingDashboardContent: View {
                     workoutPlanCard
                     VStack(alignment: .leading, spacing: 20) {
                         focusCard
+                        NavigationLink { ConnectedAppsView() } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "applewatch").font(.title2)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Connected apps").font(.community(.headline))
+                                    Text("Apple Watch, Health and Garmin")
+                                        .font(.community(.caption)).foregroundStyle(.secondary)
+                                }
+                                Spacer(minLength: 8)
+                                Image(systemName: "chevron.forward").font(.caption.weight(.semibold))
+                            }
+                            .padding(16)
+                            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20))
+                            .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(Color.primary.opacity(0.12)))
+                        }
+                        .buttonStyle(.plain)
                         StepsWidget(explainsWhenEmpty: true, compact: true)
                         if metrics != .empty || (store.isConnected && store.persistenceError == nil) {
                             momentumSection

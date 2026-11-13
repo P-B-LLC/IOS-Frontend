@@ -1665,7 +1665,7 @@ struct DayWorkoutView: View {
 
             // A match or a class has no sets to list: its time, effort and
             // details are the record.
-            if let session, workout.tracksDistance {
+            if let session, workout.tracksDistance || session.isImportedWithoutSets {
                 Label("Finished at \(session.performedAt.formatted(Date.FormatStyle(date: .omitted, time: .shortened).locale(.app)))", systemImage: "checkmark.seal")
                     .font(.community(.caption, weight: .semibold))
                     .foregroundStyle(visualPhase.secondaryText)
@@ -1703,6 +1703,12 @@ struct DayWorkoutView: View {
                     Spacer()
                 }
                 sessionOverviewLines(overview)
+                if let health = session?.healthSummary {
+                    HealthWorkoutMetricsView(
+                        summary: health,
+                        unit: store.preferences.weightUnit == .imperial ? .miles : .kilometers
+                    )
+                }
             } else if let session, store.loadingOverviewIDs.contains(session.sessionID) {
                 ProgressView()
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -1765,7 +1771,7 @@ struct DayWorkoutView: View {
         .modifier(DayWorkoutCardSurface(highlighted: workout.id == highlightedWorkoutID))
         .id(workout.id)
         .task(id: session?.sessionID) {
-            guard let session else { return }
+            guard let session, !session.isImportedWithoutSets else { return }
             await store.loadOverview(for: session)
         }
     }

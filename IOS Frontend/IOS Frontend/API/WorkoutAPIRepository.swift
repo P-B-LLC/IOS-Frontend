@@ -1486,7 +1486,8 @@ actor WorkoutAPIRepository {
                     workoutType: session.workoutType
                         .flatMap { WorkoutType(rawValue: $0) },
                     loggedSetCount: session.loggedSetCount,
-                    activitySummary: Self.activitySummary(of: session)
+                    activitySummary: Self.activitySummary(of: session),
+                    healthSummary: session.healthSummary.map { HealthWorkoutSummary(api: $0.value1) }
                 )
             }
             .sorted { $0.performedAt > $1.performedAt }
