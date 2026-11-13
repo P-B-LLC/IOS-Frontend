@@ -7750,7 +7750,7 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/InitialWorkoutExercise/set_types`.
             public var setTypes: [Components.Schemas.SetTypeEnum]?
-            /// Ordered explicit targets. Nonempty rows define target_sets and set_types. Empty uses legacy aggregate targets; omission preserves existing rows.
+            /// Ordered explicit targets. Nonempty rows define target_sets and set_types and clear aggregate target_reps/target_weight_kg. Empty uses legacy aggregate targets; omission preserves existing rows.
             ///
             /// - Remark: Generated from `#/components/schemas/InitialWorkoutExercise/planned_sets`.
             public var plannedSets: [Components.Schemas.WorkoutPlannedSet]?
@@ -7766,7 +7766,7 @@ public enum Components {
             ///   - restSeconds: Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
             ///   - supersetGroup: Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
             ///   - setTypes: The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
-            ///   - plannedSets: Ordered explicit targets. Nonempty rows define target_sets and set_types. Empty uses legacy aggregate targets; omission preserves existing rows.
+            ///   - plannedSets: Ordered explicit targets. Nonempty rows define target_sets and set_types and clear aggregate target_reps/target_weight_kg. Empty uses legacy aggregate targets; omission preserves existing rows.
             public init(
                 exercise: Swift.Int,
                 order: Swift.Int64? = nil,
@@ -7829,7 +7829,7 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/InitialWorkoutExerciseRequest/set_types`.
             public var setTypes: [Components.Schemas.SetTypeEnum]?
-            /// Ordered explicit targets. Nonempty rows define target_sets and set_types. Empty uses legacy aggregate targets; omission preserves existing rows.
+            /// Ordered explicit targets. Nonempty rows define target_sets and set_types and clear aggregate target_reps/target_weight_kg. Empty uses legacy aggregate targets; omission preserves existing rows.
             ///
             /// - Remark: Generated from `#/components/schemas/InitialWorkoutExerciseRequest/planned_sets`.
             public var plannedSets: [Components.Schemas.WorkoutPlannedSetRequest]?
@@ -7845,7 +7845,7 @@ public enum Components {
             ///   - restSeconds: Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
             ///   - supersetGroup: Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
             ///   - setTypes: The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
-            ///   - plannedSets: Ordered explicit targets. Nonempty rows define target_sets and set_types. Empty uses legacy aggregate targets; omission preserves existing rows.
+            ///   - plannedSets: Ordered explicit targets. Nonempty rows define target_sets and set_types and clear aggregate target_reps/target_weight_kg. Empty uses legacy aggregate targets; omission preserves existing rows.
             public init(
                 exercise: Swift.Int,
                 order: Swift.Int64? = nil,
@@ -10307,7 +10307,7 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PatchedWorkoutExerciseRequest/set_types`.
             public var setTypes: [Components.Schemas.SetTypeEnum]?
-            /// Ordered explicit targets. Nonempty rows define target_sets and set_types. Empty uses legacy aggregate targets; omission preserves existing rows.
+            /// Ordered explicit targets. Nonempty rows define target_sets and set_types and clear aggregate target_reps/target_weight_kg. Empty uses legacy aggregate targets; omission preserves existing rows.
             ///
             /// - Remark: Generated from `#/components/schemas/PatchedWorkoutExerciseRequest/planned_sets`.
             public var plannedSets: [Components.Schemas.WorkoutPlannedSetRequest]?
@@ -10324,7 +10324,7 @@ public enum Components {
             ///   - restSeconds: Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
             ///   - supersetGroup: Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
             ///   - setTypes: The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
-            ///   - plannedSets: Ordered explicit targets. Nonempty rows define target_sets and set_types. Empty uses legacy aggregate targets; omission preserves existing rows.
+            ///   - plannedSets: Ordered explicit targets. Nonempty rows define target_sets and set_types and clear aggregate target_reps/target_weight_kg. Empty uses legacy aggregate targets; omission preserves existing rows.
             public init(
                 workout: Swift.Int? = nil,
                 exercise: Swift.Int? = nil,
@@ -15473,7 +15473,7 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/WorkoutExercise/set_types`.
             public var setTypes: [Components.Schemas.SetTypeEnum]?
-            /// Ordered explicit targets. Nonempty rows define target_sets and set_types. Empty uses legacy aggregate targets; omission preserves existing rows.
+            /// Ordered explicit targets. Nonempty rows define target_sets and set_types and clear aggregate target_reps/target_weight_kg. Empty uses legacy aggregate targets; omission preserves existing rows.
             ///
             /// - Remark: Generated from `#/components/schemas/WorkoutExercise/planned_sets`.
             public var plannedSets: [Components.Schemas.WorkoutPlannedSet]?
@@ -15492,7 +15492,7 @@ public enum Components {
             ///   - restSeconds: Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
             ///   - supersetGroup: Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
             ///   - setTypes: The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
-            ///   - plannedSets: Ordered explicit targets. Nonempty rows define target_sets and set_types. Empty uses legacy aggregate targets; omission preserves existing rows.
+            ///   - plannedSets: Ordered explicit targets. Nonempty rows define target_sets and set_types and clear aggregate target_reps/target_weight_kg. Empty uses legacy aggregate targets; omission preserves existing rows.
             public init(
                 id: Swift.Int,
                 workout: Swift.Int,
@@ -15566,7 +15566,7 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/WorkoutExerciseRequest/set_types`.
             public var setTypes: [Components.Schemas.SetTypeEnum]?
-            /// Ordered explicit targets. Nonempty rows define target_sets and set_types. Empty uses legacy aggregate targets; omission preserves existing rows.
+            /// Ordered explicit targets. Nonempty rows define target_sets and set_types and clear aggregate target_reps/target_weight_kg. Empty uses legacy aggregate targets; omission preserves existing rows.
             ///
             /// - Remark: Generated from `#/components/schemas/WorkoutExerciseRequest/planned_sets`.
             public var plannedSets: [Components.Schemas.WorkoutPlannedSetRequest]?
@@ -15583,7 +15583,7 @@ public enum Components {
             ///   - restSeconds: Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
             ///   - supersetGroup: Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
             ///   - setTypes: The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
-            ///   - plannedSets: Ordered explicit targets. Nonempty rows define target_sets and set_types. Empty uses legacy aggregate targets; omission preserves existing rows.
+            ///   - plannedSets: Ordered explicit targets. Nonempty rows define target_sets and set_types and clear aggregate target_reps/target_weight_kg. Empty uses legacy aggregate targets; omission preserves existing rows.
             public init(
                 workout: Swift.Int,
                 exercise: Swift.Int,
@@ -15651,7 +15651,7 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/WorkoutPlanExercise/set_types`.
             public var setTypes: [Components.Schemas.SetTypeEnum]?
-            /// Ordered explicit targets. Nonempty rows define target_sets and set_types. Empty uses legacy aggregate targets; omission preserves existing rows.
+            /// Ordered explicit targets. Nonempty rows define target_sets and set_types and clear aggregate target_reps/target_weight_kg. Empty uses legacy aggregate targets; omission preserves existing rows.
             ///
             /// - Remark: Generated from `#/components/schemas/WorkoutPlanExercise/planned_sets`.
             public var plannedSets: [Components.Schemas.WorkoutPlannedSet]?
@@ -15668,7 +15668,7 @@ public enum Components {
             ///   - restSeconds: Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
             ///   - supersetGroup: Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
             ///   - setTypes: The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
-            ///   - plannedSets: Ordered explicit targets. Nonempty rows define target_sets and set_types. Empty uses legacy aggregate targets; omission preserves existing rows.
+            ///   - plannedSets: Ordered explicit targets. Nonempty rows define target_sets and set_types and clear aggregate target_reps/target_weight_kg. Empty uses legacy aggregate targets; omission preserves existing rows.
             public init(
                 relationId: Swift.Int? = nil,
                 exercise: Swift.Int,
@@ -15736,7 +15736,7 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/WorkoutPlanExerciseRequest/set_types`.
             public var setTypes: [Components.Schemas.SetTypeEnum]?
-            /// Ordered explicit targets. Nonempty rows define target_sets and set_types. Empty uses legacy aggregate targets; omission preserves existing rows.
+            /// Ordered explicit targets. Nonempty rows define target_sets and set_types and clear aggregate target_reps/target_weight_kg. Empty uses legacy aggregate targets; omission preserves existing rows.
             ///
             /// - Remark: Generated from `#/components/schemas/WorkoutPlanExerciseRequest/planned_sets`.
             public var plannedSets: [Components.Schemas.WorkoutPlannedSetRequest]?
@@ -15753,7 +15753,7 @@ public enum Components {
             ///   - restSeconds: Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
             ///   - supersetGroup: Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
             ///   - setTypes: The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
-            ///   - plannedSets: Ordered explicit targets. Nonempty rows define target_sets and set_types. Empty uses legacy aggregate targets; omission preserves existing rows.
+            ///   - plannedSets: Ordered explicit targets. Nonempty rows define target_sets and set_types and clear aggregate target_reps/target_weight_kg. Empty uses legacy aggregate targets; omission preserves existing rows.
             public init(
                 relationId: Swift.Int? = nil,
                 exercise: Swift.Int,

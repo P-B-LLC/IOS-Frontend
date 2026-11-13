@@ -333,7 +333,11 @@ jobs:
           base="${{ github.event.pull_request.base.sha || github.event.before }}"
           if [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then base=HEAD^; fi
           capture=false
-          if ! changes=$(git diff --name-only "$base" HEAD); then
+          # A final generator-only commit must not skip the UI being validated
+          # by an explicit full testing-head run.
+          if [ "${{ github.event_name }}" = workflow_dispatch ]; then
+            capture=true
+          elif ! changes=$(git diff --name-only "$base" HEAD); then
             capture=true
           elif printf '%s\n' "$changes" | grep -Eq 'GuidedWorkoutBuilder|WorkoutPlannedSet|WorkoutExerciseOrder|WorkoutWeightUnit|WorkoutUnitControls|WorkoutPreferences|ActiveLiftingSessionView|SessionExerciseCard|WorkoutFlowPreviewScreen|WorkoutFlowUITests|capture-workout-flow-preview'; then
             capture=true
