@@ -57,3 +57,24 @@ parent template and reject ambiguous destructive writes by older clients.
 Do not point this test at the live API expecting new persistence. The live server
 is not deployed by this work. No watch integration or automatic target progression
 is added.
+
+## Recorded validation — November 12, 2026
+
+- Backend `646fe55`: [full CI passed](https://github.com/P-B-LLC/repbase/actions/runs/43342090609).
+  Both 1,710-test suites (SQLite/PostgreSQL), schema freshness, production
+  settings and dependency audit passed, including the new lock-order race.
+- iOS `2a8ad2f`: [full CI evidence](https://github.com/P-B-LLC/IOS-Frontend/actions/runs/43341914649).
+  Debug and Release builds, generated-client consistency, localization and
+  all 551 regression tests passed. Native results were **3/5**, not a full pass:
+  exercise-only units, builder scope and short whole-card drag/target retention
+  passed; per-set editing and edge-autoscroll cases failed.
+- The per-set test's caret-based deletion inserted `612` instead of replacing
+  `12` with `6`. Follow-up uses the actual Select All menu and immediately
+  asserts the exact replacement. Edge screenshots show the drag overshooting
+  into the nonmovable catalog; the follow-up bounds its hold while retaining
+  the original beyond-initial-visible-position assertion. These are test
+  interaction changes, not evidence of an app fix or of a passing rerun.
+- Light/dark review previews were inspected. The large-text initial preview
+  does not show the full table; a scrolled large-text manual check remains.
+  Current-head native rerun and real local save/reopen/start checks are still
+  required. Do not promote this branch based only on successful compilation.

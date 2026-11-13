@@ -133,9 +133,11 @@ final class WorkoutFlowUITests: XCTestCase {
         let edgeY = min(list.frame.maxY, count.frame.minY - 12) - 8
         let edge = app.coordinate(withNormalizedOffset: .zero)
             .withOffset(CGVector(dx: row(1).frame.midX, dy: edgeY))
-        // Six seconds scrolled all the way into the catalog, where no plan
-        // row can be dropped. Exercise edge scrolling inside the plan instead.
-        source.press(forDuration: 1, thenDragTo: edge, withVelocity: .slow, thenHoldForDuration: 1)
+        // Both six-second and one-second holds reached the nonmovable catalog
+        // in recorded screenshots. Briefly engage edge scrolling, then drop
+        // inside the plan. The assertion still requires moving past the
+        // originally visible rows; mere scrolling cannot satisfy it.
+        source.press(forDuration: 1, thenDragTo: edge, withVelocity: .slow, thenHoldForDuration: 0.25)
         shot("order-after-edge-drag-before-reveal")
         hierarchy("order-after-edge-drag-hierarchy")
         // Native List virtualizes rows after edge scrolling. Find the moved
@@ -228,10 +230,22 @@ final class WorkoutFlowUITests: XCTestCase {
             reveal(field, scrollingUp: true)
             field.tap()
             let current = field.value as? String ?? ""
-            if current != field.placeholderValue {
-                field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count))
+            if !current.isEmpty && current != field.placeholderValue {
+                // A centre tap can leave the caret before the existing number.
+                // Backspacing there does nothing (the previous run typed 612
+                // instead of 6). Use the real edit menu to select the value.
+                let end = field.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5))
+                end.tap()
+                end.press(forDuration: 1)
+                let selectAllButton = app.buttons["Select All"].firstMatch
+                let selectAllMenu = app.menuItems["Select All"].firstMatch
+                wait("The text-edit menu offers Select All") {
+                    selectAllButton.exists || selectAllMenu.exists
+                }
+                if selectAllButton.exists { selectAllButton.tap() } else { selectAllMenu.tap() }
             }
             field.typeText(text)
+            wait("Replace enters exactly the requested planned target") { (field.value as? String) == text }
             app.buttons["Done"].firstMatch.tap()
         }
         replace(reps(1), with: "6")
