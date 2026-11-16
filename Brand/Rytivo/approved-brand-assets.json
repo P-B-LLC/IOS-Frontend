@@ -1,0 +1,16 @@
+{
+  "design": "https://www.figma.com/design/FbMNgG8cuZfrRFzQTtIVCy?node-id=527-17415",
+  "approved_on": "2026-11-16",
+  "name": "Essential Runner",
+  "mark_node": "527:17391",
+  "wordmark_node": "527:17400",
+  "app_icon_node": "527:17424",
+  "production_exports": {"light": "535:17443", "dark": "535:17448", "icon": "535:17453", "preview": "535:17455"},
+  "wordmark": {"text": "rytivo", "font": "NunitoSans-SemiBold", "tracking_em": -0.01, "mark_size": 112, "gap": 8, "font_size": 66},
+  "sha256": {
+    "IOS Frontend/IOS Frontend/Assets.xcassets/RytivoLogoMark.imageset/RytivoLogoMark.svg": "c6642de5138aa4efdc77efd694c648e4b58eeacf6f319d0483de4b13fc7d676a",
+    "IOS Frontend/IOS Frontend/Assets.xcassets/RytivoLogoMark.imageset/RytivoLogoMarkDark.svg": "f8e20b2d1d6e889c76cd028d734a4c6bfba59a3294e1e29a2d46f15c7202d207",
+    "IOS Frontend/IOS Frontend/Assets.xcassets/AppIcon.appiconset/Rytivo-AppIcon-1024.png": "8f982cb695ea0c754e434f644195057d42201db82e48b564b9eabe9eb65832f2",
+    "Brand/Rytivo/rytivo-essential-runner-icon-preview.png": "1baa299b0f21280b10f2bdd41b1de5e9a560af76cc4d8d968a3043a07e9e20cd"
+  }
+}

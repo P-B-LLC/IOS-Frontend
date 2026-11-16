@@ -175,6 +175,7 @@ jobs:
         run: |
           python3 Scripts/check-stable-ids.py
           python3 Scripts/check-sunrise-assets.py
+          python3 Scripts/check-brand-assets.py
 
       # The catalog tests only see strings already in the catalog, and
       # xcodebuild never adds new ones, so a string written from the command
@@ -276,7 +277,7 @@ jobs:
         run: |
           # Invitation components and translated copy need the same native
           # light/dark, large-text and RTL review as the surrounding calendar.
-          if git diff --name-only HEAD^ HEAD | grep -Eq 'GuidedHomeView|FoodTrackingView|FoodGoalsTarget|PlannerView|PlannerMonthCalendar|PlannerDaySchedule|CalendarMonth|CalendarSharing|CalendarShare|CalendarInvitation|CalendarWorkspace|PlannerItemColor|Localizable.xcstrings|RytivoSunriseDesign|Training.*imageset|SunriseFoodPhoto|RepbaseTactileDesign|HomeSunrise|Sunrise.*colorset|Tactile.*colorset|capture-home-preview'; then
+          if git diff --name-only HEAD^ HEAD | grep -Eq 'GuidedHomeView|FoodTrackingView|FoodGoalsTarget|PlannerView|PlannerMonthCalendar|PlannerDaySchedule|CalendarMonth|CalendarSharing|CalendarShare|CalendarInvitation|CalendarWorkspace|PlannerItemColor|Localizable.xcstrings|RytivoSunriseDesign|Training.*imageset|SunriseFoodPhoto|RepbaseTactileDesign|HomeSunrise|Sunrise.*colorset|Tactile.*colorset|capture-home-preview|RytivoLogoMark|RytivoBrandInk|AppIcon.appiconset|EditorialFormComponents|AuthenticationView'; then
             bash Scripts/capture-home-preview.sh
             for preview in home-light home-dark workouts-page-light workouts-page-dark food-page-light food-page-dark food-page-large-text food-page-german food-page-arabic calendar-page-light calendar-page-dark calendar-month-light calendar-month-dark calendar-day-light calendar-day-dark calendar-shared-month-light calendar-shared-month-dark calendar-shared-day-light calendar-shared-day-dark calendar-invitations-light calendar-invitations-dark calendar-shared-large-text calendar-shared-arabic profile-page-light profile-page-dark; do
               test -s ".build/home-previews/$preview.png" || {

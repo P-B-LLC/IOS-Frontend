@@ -162,7 +162,7 @@ struct PlannerView: View {
                     }
                     .accessibilityLabel("Back")
                 }
-                Text("Rytivo").font(.community(.headline, weight: .bold))
+                RytivoBrandLockup(size: 24)
                 Spacer()
                 Text("Calendar").font(.community(size: 24, weight: .bold))
             }

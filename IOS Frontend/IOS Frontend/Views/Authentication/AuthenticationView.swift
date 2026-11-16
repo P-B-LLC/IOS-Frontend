@@ -153,20 +153,7 @@ struct AuthenticationView: View {
         VStack(alignment: .leading, spacing: 0) {
             Spacer(minLength: 70)
 
-            HStack(spacing: 10) {
-                Image("RytivoLogoMark")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 38, height: 38)
-                    .accessibilityHidden(true)
-
-                Text("Rytivo")
-                    .font(.community(size: 24, weight: .bold))
-                    .tracking(-0.5)
-                    .foregroundStyle(timeOfDay.primaryText)
-            }
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel("Rytivo")
+            RytivoBrandLockup(size: 38)
 
             Text("Plan. Execute. Inspire.")
                 .font(.community(size: 11, weight: .bold))
@@ -228,9 +215,7 @@ struct AuthenticationView: View {
                     .font(.community(size: 10, weight: .bold))
                     .tracking(1.4)
                     .foregroundStyle(timeOfDay.accent)
-                Text("Rytivo")
-                    .font(.community(size: 29, weight: .bold))
-                    .tracking(-0.58)
+                RytivoWordmark(fontSize: 29)
             }
             Spacer(minLength: 0)
         }
