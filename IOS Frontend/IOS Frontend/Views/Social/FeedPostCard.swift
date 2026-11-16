@@ -233,7 +233,8 @@ struct FeedPostCard: View {
     }
 
     private var kindLabel: LocalizedStringKey? {
-        if post.isTake { return "Your take" }
+        // "Your" only for the reader's own: somebody else's take is theirs.
+        if post.isTake { return post.viewerIsAuthor ? "Your take" : "Take" }
         if shown.workout != nil { return "Workout" }
         if shown.meal != nil { return "Recipe" }
         return nil
@@ -289,7 +290,7 @@ struct FeedPostCard: View {
             if let source = post.source {
                 Label {
                     if let name = source.authorName {
-                        Text("Your take on \(name)")
+                        Text(post.viewerIsAuthor ? "Your take on \(name)" : "Take on \(name)")
                     } else {
                         Text("Original no longer available")
                     }
