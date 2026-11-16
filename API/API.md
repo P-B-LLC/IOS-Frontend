@@ -45,11 +45,17 @@ backend repository). What the app does with it:
   refresh, then the `next` cursor as the last card appears. Each post carries
   `recommendation.label`, shown under the byline; `reason` is a plain string,
   so an unknown one still shows its label.
-- `POST /api/v1/social/impressions/`: which For You cards were at least 60% on
-  screen, for how long, and how far into a clip playback got. Batched by
-  `Services/ImpressionTracker.swift` (at most 50 a request, sent every ten
-  seconds, before every re-rank, and when the tab or app goes away). The
-  server records which reason each post was shown for; the app never sends it.
+- `POST /api/v1/social/impressions/`: one summary per exposure of a card,
+  measured on the device by `Services/AttentionMeter.swift` and sent as
+  `schema_version` 2. A card counts while at least 60% visible, and its
+  active and playback clocks run only with the app in front and no sheet over
+  the feed. Coverage is the union of the stretches of a clip actually played,
+  so a seek covers nothing. `Services/AttentionQueue.swift` holds at most 200
+  summaries for 24 hours, in memory, and seals them into batches of 50 whose
+  id never changes: a batch with no answer is sent again unchanged and the
+  server adds it once. Sent every ten seconds, before every re-rank, and when
+  the tab or app goes away. The server records which reason each post was
+  shown for; the app never sends it.
 - `POST`/`DELETE /api/v1/social/posts/{id}/not-interested/`: "Not interested"
   in a For You card's menu, undone from the line that replaces the card.
 - `GET`/`PATCH /api/v1/social/for-you/preferences/` and
@@ -90,3 +96,25 @@ Valid transitions are `planned → active → completed`. Repeating or skipping 
 - Resource ownership is derived from the authentication token and cannot be assigned in request bodies.
 
 The committed [OpenAPI schema](openapi.yaml) is the source of truth for request and response shapes.
+
+## The media-first feed (off by default)
+
+`Services/SocialFeedExperience.swift` holds two switches in `UserDefaults`:
+`social.newFeed` turns on the new cards, and `social.autoplay` (on unless
+set false) lets clips start by themselves. A launch argument sets either:
+`-social.newFeed YES`.
+
+With the feed on:
+
+- Feed and For You are asked for with `?attachments=summary`. A card draws a
+  workout or recipe from its title and totals; `PostAttachmentSheet` and the
+  post's own page read the rows for that one post (`SocialStore.loadDetails`).
+- `Services/FeedPlaybackCoordinator.swift` owns the feed's one `AVPlayer`.
+  `Services/FeedPlaybackPolicy.swift` decides which clip plays and which one
+  is got ready: the card most on screen, at least 60% visible; at most the
+  next clip prepared; nothing new during rapid scrolling; no autoplay with
+  Reduce Motion, on a constrained or expensive connection, or when the
+  reader turned it off. Clips start muted.
+- What plays is reported to `AttentionMeter`, and opening a workout or
+  recipe is counted as reading it.
+

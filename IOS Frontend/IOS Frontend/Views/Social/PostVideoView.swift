@@ -159,14 +159,24 @@ struct PostVideoView: View {
                         if status == .failed {
                             loading = false
                             failure = String(localized: "This video could not play. Please try again.", bundle: .app, locale: .app)
+                            // Said to the measurement too, so a clip that
+                            // would not play is never read as one skipped.
+                            social.attentionPlayback(postID: postID, .failed)
                             await social.recordVideoPlayback(postID: postID, failed: true)
                         }
                     }
                 }
                 playbackObservation = next.observe(\.timeControlStatus, options: [.new]) { next, _ in
                     let status = next.timeControlStatus
+                    let position = Self.milliseconds(next.currentTime())
                     Task { @MainActor in
                         guard generation == requestGeneration else { return }
+                        // Only frames moving is watching: buffering and
+                        // pausing both stop the playback clock.
+                        social.attentionPlayback(
+                            postID: postID,
+                            status == .playing ? .playing(position) : .notPlaying(position)
+                        )
                         loading = status == .waitingToPlayAtSpecifiedRate
                         if status == .playing && !didRecordStart {
                             didRecordStart = true
@@ -174,17 +184,18 @@ struct PostVideoView: View {
                         }
                     }
                 }
-                // Once a second rather than continuously: what For You learns
-                // from is how far somebody got, not the frame they stopped on.
+                // Twice a second. Each report extends the stretch of the clip
+                // that was played, and one that could not have been reached
+                // by playing -- the reader dragged the playhead -- starts a
+                // new stretch instead, so a seek covers nothing.
                 progressObserver = next.addPeriodicTimeObserver(
-                    forInterval: CMTime(seconds: 1, preferredTimescale: 2),
+                    forInterval: CMTime(seconds: 0.5, preferredTimescale: 600),
                     queue: .main
                 ) { time in
-                    guard time.isValid, time.seconds.isFinite, time.seconds > 0 else { return }
-                    let milliseconds = Int((time.seconds * 1000).rounded())
+                    let position = Self.milliseconds(time)
                     Task { @MainActor in
                         guard generation == requestGeneration else { return }
-                        social.noteWatched(postID: postID, milliseconds: milliseconds, completed: false)
+                        social.attentionPlayback(postID: postID, .progress(position))
                     }
                 }
                 endObserver = NotificationCenter.default.addObserver(
@@ -194,11 +205,7 @@ struct PostVideoView: View {
                 ) { _ in
                     Task { @MainActor in
                         guard generation == requestGeneration else { return }
-                        social.noteWatched(
-                            postID: postID,
-                            milliseconds: current.durationMilliseconds,
-                            completed: true
-                        )
+                        social.attentionPlayback(postID: postID, .ended)
                     }
                 }
                 next.play()
@@ -210,21 +217,19 @@ struct PostVideoView: View {
         }
     }
 
+    private static func milliseconds(_ time: CMTime) -> Double {
+        guard time.isValid, time.seconds.isFinite else { return 0 }
+        return max(0, time.seconds * 1000)
+    }
+
     private func stop() {
         requestGeneration = UUID()
         observation?.invalidate(); observation = nil
         playbackObservation?.invalidate(); playbackObservation = nil
         if let player {
-            // The last of the progress, which the once-a-second report can
-            // be up to a second behind.
-            let seconds = player.currentTime().seconds
-            if seconds.isFinite, seconds > 0 {
-                social.noteWatched(
-                    postID: postID,
-                    milliseconds: Int((seconds * 1000).rounded()),
-                    completed: false
-                )
-            }
+            // The last of the progress, which the periodic report can be
+            // half a second behind.
+            social.attentionPlayback(postID: postID, .notPlaying(Self.milliseconds(player.currentTime())))
             if let progressObserver { player.removeTimeObserver(progressObserver) }
         }
         progressObserver = nil

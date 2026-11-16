@@ -15,6 +15,7 @@ struct TrainingDashboardContent: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var isConfirmingClear = false
+    @State private var showsNextWeek = false
     @State private var displayedCompletedThisWeek: Int?
     @State private var displayedTotalWorkouts: Int?
     @State private var hiddenCompletedDay: Weekday?
@@ -137,26 +138,42 @@ struct TrainingDashboardContent: View {
             AdaptiveRow(spacing: 8) {
                 Text("Workout plan").font(.community(.headline))
             } trailing: {
-                Text("Tap a day")
-                    .font(.community(.footnote))
-                    .foregroundStyle(phase.secondaryText)
+                // This week ends on Sunday, which from a Friday is two days
+                // away. Next week holds the rest of the seven days a workout
+                // can be planned on.
+                Picker("Workout plan", selection: $showsNextWeek) {
+                    Text("This week").tag(false)
+                    Text("Next week").tag(true)
+                }
+                .pickerStyle(.segmented)
+                .fixedSize()
+                .accessibilityIdentifier("workout-plan-week")
             }
 
             HStack(alignment: .top, spacing: 4) {
-                ForEach(Weekday.allCases) { day in
-                    NavigationLink {
-                        DayWorkoutView(day: day)
-                    } label: {
-                        DashboardDayItem(
-                            day: day,
-                            date: store.workoutDate(for: day),
-                            workouts: store.workouts(on: day),
-                            isToday: store.today == day,
-                            isSessionActive: store.activeSession?.day == day,
-                            isCompleted: isCompleted(day) && hiddenCompletedDay != day
-                        )
+                if showsNextWeek {
+                    ForEach(store.nextWeekDates, id: \.self) { date in
+                        nextWeekDay(date)
                     }
-                    .buttonStyle(.plain)
+                } else {
+                    ForEach(Weekday.allCases) { day in
+                        NavigationLink {
+                            DayWorkoutView(day: day)
+                        } label: {
+                            DashboardDayItem(
+                                day: day,
+                                date: store.workoutDate(for: day),
+                                workouts: store.workouts(on: day),
+                                isToday: store.today == day,
+                                isSessionActive: store.activeSession?.day == day,
+                                isCompleted: isCompleted(day) && hiddenCompletedDay != day
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        // The same key as next week's days, by date: a label
+                        // starting with the weekday also matches Home's dates.
+                        .accessibilityIdentifier("plan-day-\(WorkoutStore.dateString(store.workoutDate(for: day)))")
+                    }
                 }
             }
             // Seven days across, like every other week row in the app. Left
@@ -164,6 +181,10 @@ struct TrainingDashboardContent: View {
             // N -- and the workout names under them truncated to "P...", so
             // the row said neither which day nor which workout.
             .typeSizeCeiling()
+
+            Text(showsNextWeek ? "Plan up to 7 days ahead." : "Tap a day")
+                .font(.community(.footnote))
+                .foregroundStyle(phase.secondaryText)
 
             // Without a rotation, the week is whatever was put there by hand,
             // and changing your mind about all of it should not mean opening
@@ -199,6 +220,32 @@ struct TrainingDashboardContent: View {
             Button("Keep it", role: .cancel) {}
         } message: {
             Text("Every workout you have planned is removed, past days included, so you can start again. Workouts you have already done stay in your history.")
+        }
+    }
+
+    /// A day of next week: open for planning while it is within a week of
+    /// today, shown but closed after that.
+    @ViewBuilder
+    private func nextWeekDay(_ date: Date) -> some View {
+        let item = DashboardDayItem(
+            day: Weekday(calendarWeekday: Calendar.current.component(.weekday, from: date)) ?? .monday,
+            date: date,
+            workouts: store.workouts(onDate: date),
+            isToday: false,
+            isSessionActive: false,
+            isCompleted: false,
+            isAvailable: store.canPlan(on: date)
+        )
+        if store.canPlan(on: date) {
+            NavigationLink {
+                UpcomingDayView(date: date)
+            } label: {
+                item
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("plan-day-\(WorkoutStore.dateString(date))")
+        } else {
+            item
         }
     }
 
@@ -530,6 +577,8 @@ private struct DashboardDayItem: View {
     let isToday: Bool
     let isSessionActive: Bool
     let isCompleted: Bool
+    /// False for a day further ahead than a workout can be planned.
+    var isAvailable = true
 
     private var isPlanned: Bool { !workouts.isEmpty }
 
@@ -566,11 +615,15 @@ private struct DashboardDayItem: View {
                 .strokeBorder(isToday ? RepbaseDesign.warning : dayBorder, lineWidth: isToday ? 1.5 : 1)
         }
         .contentShape(Rectangle())
+        .opacity(isAvailable ? 1 : 0.4)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel)
     }
 
     private var accessibilityLabel: String {
+        guard isAvailable else {
+            return String(localized: "\(day.fullName), more than 7 days away", bundle: .app, locale: .app, comment: "A weekday that is too far ahead to plan yet")
+        }
         guard isPlanned else { return String(localized: "\(day.fullName), add workout", bundle: .app, locale: .app) }
         let names = workouts.map(\.name).joined(separator: ", ")
         return isCompleted
@@ -579,6 +632,7 @@ private struct DashboardDayItem: View {
     }
 
     private var dayMarkerSymbol: String {
+        if !isAvailable { return "ellipsis" }
         if isCompleted { return "checkmark" }
         if isSessionActive { return "bolt.fill" }
         return isPlanned ? "minus" : "plus"
