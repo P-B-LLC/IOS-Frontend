@@ -69,6 +69,10 @@ final class NavigationRoutingTests: XCTestCase {
         }
     }
 
+    func testTheBarStartsWithSocial() {
+        XCTAssertEqual(RepbaseTab.allCases, [.social, .home, .training, .planner, .account])
+    }
+
     func testATabIsIdentifiedByItsNameSoTheLaunchFlagCanNameOne() {
         // REPBASE_TAB is read with RepbaseTab(rawValue:), which is how a
         // screen several taps in gets looked at without a tap.

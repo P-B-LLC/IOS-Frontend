@@ -19,13 +19,16 @@
 import Foundation
 
 /// The five areas the bottom bar switches between.
+///
+/// The order of the cases is the order of the bar. Social comes first because it
+/// is where the app opens.
 nonisolated enum RepbaseTab: String, CaseIterable, Identifiable {
+    case social
     case home
     /// Workouts and food together. They were a slot each, which is two of five
     /// spent on the two halves of the same day, and left none for the feed.
     case training
     case planner
-    case social
     case account
 
     var id: String { rawValue }

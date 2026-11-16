@@ -255,7 +255,7 @@ private struct AppRootView: View {
             } else if ProcessInfo.processInfo.environment["REPBASE_HOME_PREVIEW"] != nil {
                 // Uses the real tab shell and Home, with disconnected sample
                 // stores. No account, hosted API or production data is needed.
-                RepbaseRootView()
+                RepbaseRootView(initialTab: .home)
                     .dynamicTypeSize(ProcessInfo.processInfo.environment["REPBASE_HOME_LARGE_TEXT"] == "1"
                         ? .accessibility3 : .large)
             } else if ProcessInfo.processInfo.environment["REPBASE_ROUTE_CHECK"] != nil {
@@ -465,7 +465,7 @@ private struct AppRootView: View {
             } else if ProcessInfo.processInfo.environment["REPBASE_HEALTH_PREVIEW"] != nil {
                 // The widget with days behind it. The simulator has no Watch,
                 // so this is the only way to see the populated state.
-                RepbaseRootView()
+                RepbaseRootView(initialTab: .home)
             } else if ProcessInfo.processInfo.environment["REPBASE_KEYCHAIN_CHECK"] != nil {
                 // Whether a signed-in session survives relaunching depends on
                 // whether this build can reach the Keychain, which no amount
@@ -638,7 +638,7 @@ private struct AppRootView: View {
             } else if ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"] == "home" {
                 // The shell, not the page: the bottom bar lives on the shell,
                 // so previewing the page alone would show it without one.
-                RepbaseRootView()
+                RepbaseRootView(initialTab: .home)
             } else if ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"] == "shell-planner" {
                 RepbaseRootView(initialTab: .planner)
             } else if ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"] == "shell-workouts" {
