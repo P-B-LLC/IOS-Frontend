@@ -28,6 +28,14 @@ enum SaveFailure {
     static var alreadySaving: String {
         String(localized: "Another save is still finishing. Try again in a moment.", bundle: .app, locale: .app)
     }
+    static var beyondPlanningWindow: String {
+        String(localized: "Workouts can be planned up to 7 days ahead. Choose a closer day.", bundle: .app, locale: .app)
+    }
+    /// What a server from before logging after the fact answers with: it
+    /// reads `sessions/log/` as a session called "log" and refuses the POST.
+    static var logNotSupported: String {
+        String(localized: "Your Rytivo server can’t save logged activities yet. Update the server, then try again.", bundle: .app, locale: .app)
+    }
 
     /// The last resort, for a save that failed with nothing saying why.
     ///

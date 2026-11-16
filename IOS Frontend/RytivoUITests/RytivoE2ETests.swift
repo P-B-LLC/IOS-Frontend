@@ -128,6 +128,22 @@ final class RytivoE2ETests: XCTestCase {
         if app.keyboards.count > 0, app.buttons["Done"].firstMatch.exists { app.buttons["Done"].firstMatch.tap() }
     }
 
+    /// Taps once the element has stopped moving. A bar kept above the
+    /// keyboard slides with it, and a tap aimed while it moves lands where
+    /// the bar was a moment before.
+    func tapWhenSettled(_ element: XCUIElement) {
+        XCTAssertTrue(element.waitForExistence(timeout: 10))
+        var last = element.frame
+        let end = Date().addingTimeInterval(5)
+        repeat {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.3))
+            let now = element.frame
+            if now == last { break }
+            last = now
+        } while Date() < end
+        element.tap()
+    }
+
     /// Against a backend from before set kinds, rests and supersets: the plan
     /// arrives without them, and nothing new may break the old flow.
     private var legacyBackend: Bool { ProcessInfo.processInfo.environment["RYTIVO_E2E_LEGACY"] == "1" }
@@ -506,15 +522,11 @@ final class RytivoE2ETests: XCTestCase {
         let calories = app.textFields["Calories, your estimate"]
         for _ in 0..<4 where !calories.isHittable { app.swipeUp() }
         type("540", into: calories)
+        waitUntil(5, "calories typed") { (calories.value as? String) == "540" }
         dismissKeyboard()
-        // The number pad has no Done key. On a slow simulator it is still
-        // sliding up when the tap is aimed, and the tap lands on the keyboard.
-        waitUntil(10, "the save bar stopped moving") {
-            let before = saveBar.frame
-            RunLoop.current.run(until: Date().addingTimeInterval(0.5))
-            return saveBar.isHittable && saveBar.frame == before
-        }
-        saveBar.tap()
+        // A number pad has no key to put it away, so the Save bar rides up
+        // above it; tapped mid-slide, the tap landed where the bar had been.
+        tapWhenSettled(app.buttons["workout-builder-primary"])
         XCTAssertTrue(element(labelContaining: "saved to your history").waitForExistence(timeout: 20), "saved")
         XCTAssertTrue(element(labelContaining: "540 kcal").waitForExistence(timeout: 10), "the day shows it")
         XCTAssertTrue(element(labelContaining: "Your estimate").exists, "calories are labelled as an estimate")
@@ -791,5 +803,311 @@ final class RytivoE2ETests: XCTestCase {
         confirm.tap()
         waitUntil(15, "the cookbook is gone") { !row.exists }
         shot("04 deleted")
+    }
+
+    /// `YYYY-MM-DD` in the simulator's own zone, as the app's tiles are keyed.
+    func dateKey(_ date: Date) -> String {
+        let parts = Calendar.current.dateComponents([.year, .month, .day], from: date)
+        return String(format: "%04d-%02d-%02d", parts.year!, parts.month!, parts.day!)
+    }
+
+    func openTraining() {
+        signInIfNeeded()
+        XCTAssertTrue(app.buttons["Training"].waitForExistence(timeout: 20))
+        app.buttons["Training"].tap()
+        XCTAssertTrue(app.buttons["This week"].waitForExistence(timeout: 20), "the workout plan's week switch")
+    }
+
+    /// In the builder: picks an activity, names the workout and saves it as a
+    /// plan. On today or a past day the builder offers logging first, and
+    /// planning is the other half of that switch.
+    func planActivity(_ identifier: String, named name: String) {
+        let activity = app.buttons[identifier]
+        XCTAssertTrue(activity.waitForExistence(timeout: 10), identifier)
+        activity.tap()
+        type(name, into: app.textFields.firstMatch)
+        dismissKeyboard()
+        tapWhenSettled(app.buttons["workout-builder-primary"])
+        let plan = app.buttons["Plan for later"]
+        if plan.waitForExistence(timeout: 3) { plan.tap() }
+        let save = app.buttons["workout-builder-primary"]
+        waitUntil(10, "\(name) can be saved") { save.isEnabled && save.label.contains("Save workout") }
+        tapWhenSettled(save)
+    }
+
+    /// Planning ahead. Next week's days open from the plan's week switch, as
+    /// far as a week from today and no further, and take a workout like any
+    /// other day. A day of this week takes two new workouts in a row from its
+    /// "Create a workout": the second used to be refused with HTTP 409,
+    /// because the screen gave both the same draft id, which is the save's
+    /// idempotency key. Everything is still there after a restart.
+    func test13PlanAhead() throws {
+        openTraining()
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let weekAway = calendar.date(byAdding: .day, value: 7, to: today)!
+        let tooFar = calendar.date(byAdding: .day, value: 8, to: today)!
+
+        app.buttons["Next week"].tap()
+        let weekAwayTile = app.buttons["plan-day-\(dateKey(weekAway))"]
+        XCTAssertTrue(weekAwayTile.waitForExistence(timeout: 10), "a week from today can be planned")
+        XCTAssertFalse(app.buttons["plan-day-\(dateKey(tooFar))"].exists, "eight days away cannot")
+        shot("01 next week")
+        weekAwayTile.tap()
+        app.buttons["upcoming-day-create"].tap()
+        planActivity("activity-cycling", named: "Ride a week out")
+        XCTAssertTrue(element(labelContaining: "Ride a week out saved for").waitForExistence(timeout: 20), "planned a week out")
+        XCTAssertFalse(element(labelContaining: "HTTP").exists, "no server error")
+
+        // A saved workout goes on the same day as it is.
+        app.buttons["upcoming-day-add-saved"].tap()
+        let pushDay = button(labelStartingWith: "Push Day")
+        XCTAssertTrue(pushDay.waitForExistence(timeout: 10), "saved workouts are offered")
+        pushDay.tap()
+        XCTAssertTrue(element(labelContaining: "Push Day added to").waitForExistence(timeout: 20), "added a week out")
+        shot("02 a week out planned")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+
+        // An empty day of this week, twice from its first "Create a workout".
+        app.buttons["This week"].tap()
+        let emptyDay = app.buttons.matching(NSPredicate(format: "label ENDSWITH ', add workout'")).firstMatch
+        XCTAssertTrue(emptyDay.waitForExistence(timeout: 10), "an empty day this week")
+        let dayName = emptyDay.label.replacingOccurrences(of: ", add workout", with: "")
+        emptyDay.tap()
+        for name in ["Twice A", "Twice B"] {
+            let create = app.buttons["Create a workout"]
+            XCTAssertTrue(create.waitForExistence(timeout: 15), "\(dayName) is empty")
+            create.tap()
+            planActivity("activity-tennis", named: name)
+            XCTAssertTrue(element(labelContaining: "\(name) saved for").waitForExistence(timeout: 20), "\(name) saved")
+            XCTAssertFalse(element(labelContaining: "HTTP 409").exists, "no key reuse")
+            guard name == "Twice A" else { break }
+            let options = app.buttons["Schedule & options"].firstMatch
+            for _ in 0..<6 where !options.isHittable { app.swipeUp() }
+            options.tap()
+            let remove = app.buttons["Remove from this day"].firstMatch
+            for _ in 0..<4 where !remove.isHittable { app.swipeUp() }
+            remove.tap()
+        }
+        shot("03 second workout saved")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+
+        // Still there after the app restarts.
+        app.terminate()
+        app.launch()
+        openTraining()
+        let thisWeekDay = button(labelStartingWith: "\(dayName), ")
+        XCTAssertTrue(thisWeekDay.waitForExistence(timeout: 20))
+        waitUntil(10, "\(dayName) kept its workout") { thisWeekDay.label.contains("Twice B") }
+        XCTAssertFalse(thisWeekDay.label.contains("Twice A"), "the removed one stays removed")
+        app.buttons["Next week"].tap()
+        let reloaded = app.buttons["plan-day-\(dateKey(weekAway))"]
+        XCTAssertTrue(reloaded.waitForExistence(timeout: 10))
+        waitUntil(10, "a week out kept both") {
+            reloaded.label.contains("Ride a week out") && reloaded.label.contains("Push Day")
+        }
+        reloaded.tap()
+        XCTAssertTrue(element(labelContaining: "Ride a week out").waitForExistence(timeout: 10), "the day lists it")
+        shot("04 after restart")
+    }
+
+    /// An activity logged after the fact is on the server, not only on the
+    /// screen: it is still in the history after the app restarts.
+    func test14LoggedActivityOutlivesRestart() throws {
+        openTraining()
+        let today = button(labelStartingWith: "TODAY")
+        XCTAssertTrue(today.waitForExistence(timeout: 10))
+        today.tap()
+        let another = app.buttons["Add another workout"]
+        for _ in 0..<6 where !another.isHittable { app.swipeUp() }
+        another.tap()
+        app.buttons["activity-cycling"].tap()
+        app.buttons["workout-builder-primary"].tap()
+        XCTAssertTrue(element(labelContaining: "HOW LONG?").waitForExistence(timeout: 10), "asks how long")
+        app.buttons["45 min"].tap()
+        app.buttons["workout-builder-primary"].tap()
+        XCTAssertTrue(element(labelContaining: "saved to your history").waitForExistence(timeout: 20), "saved")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+
+        app.terminate()
+        app.launch()
+        openTraining()
+        let recent = element(labelContaining: "Recent activity")
+        for _ in 0..<10 where !recent.isHittable { app.swipeUp() }
+        XCTAssertTrue(button(labelStartingWith: "Cycling").waitForExistence(timeout: 10), "in recent history after a restart")
+        shot("01 ride after restart")
+    }
+
+    /// The Lock Screen banner during a rest. Notification Center draws the
+    /// same presentation and can be opened from a test, so it is captured
+    /// there. Not in the default run: the script runs it on each screen size
+    /// with RYTIVO_E2E_ONLY, and the screenshots are the result.
+    func test15LiveActivityLayout() throws {
+        openTodayAndStart()
+        type("40", into: weightFields.element(boundBy: 0))
+        type("10", into: repsFields.element(boundBy: 0))
+        dismissKeyboard()
+        logButtons.element(boundBy: 0).tap()
+        waitUntil(15, "a set logged") { self.loggedButtons.count == 1 }
+        waitUntil(5, "resting") { self.element(labelContaining: "RESTING").exists }
+
+        XCUIDevice.shared.press(.home)
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.005))
+            .press(forDuration: 0.1, thenDragTo: springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.75)))
+        let banner = springboard.descendants(matching: .any)
+            .matching(NSPredicate(format: "label CONTAINS 'Push Day'")).firstMatch
+        XCTAssertTrue(banner.waitForExistence(timeout: 15), "the Live Activity is on the Lock Screen")
+        let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        attachment.name = "lock screen live activity"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+
+    // MARK: - One plan behind every screen
+
+    /// A day Home, the calendar and Training can all open, with nothing
+    /// planned on it yet, nearest first. Never today, which holds the seed's
+    /// workout. Home's strip is the locale's week and Training's is
+    /// Monday-first plus the week ahead, so some days are out of reach.
+    func emptyDayEveryScreenShows() -> Date? {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        var mondayFirst = Calendar(identifier: .gregorian)
+        mondayFirst.firstWeekday = 2
+        guard let strip = calendar.dateInterval(of: .weekOfYear, for: today),
+              let planStart = mondayFirst.dateInterval(of: .weekOfYear, for: today)?.start,
+              let planEnd = calendar.date(byAdding: .day, value: 7, to: today) else { return nil }
+        let days = (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: strip.start) }
+            .filter { $0 != today && $0 >= planStart && $0 <= planEnd }
+        let nearestFirst = days.filter { $0 > today } + days.filter { $0 < today }.reversed()
+        return nearestFirst.first { trainingTile(for: $0).label.hasSuffix(", add workout") }
+    }
+
+    /// Training's tile for `date`, after switching to the week that holds it.
+    func trainingTile(for date: Date) -> XCUIElement {
+        var mondayFirst = Calendar(identifier: .gregorian)
+        mondayFirst.firstWeekday = 2
+        let thisWeek = mondayFirst.isDate(date, equalTo: Date(), toGranularity: .weekOfYear)
+        app.buttons[thisWeek ? "This week" : "Next week"].tap()
+        let tile = app.buttons["plan-day-\(dateKey(date))"]
+        XCTAssertTrue(tile.waitForExistence(timeout: 10), "Training shows \(dateKey(date))")
+        return tile
+    }
+
+    /// Plans a new workout on `date` from Training and returns to the week.
+    func planOnTraining(_ name: String, on date: Date) {
+        trainingTile(for: date).tap()
+        let create = app.buttons["Create a workout"].firstMatch
+        let upcomingCreate = app.buttons["upcoming-day-create"]
+        waitUntil(15, "the day offers a new workout") { create.exists || upcomingCreate.exists }
+        (upcomingCreate.exists ? upcomingCreate : create).tap()
+        planActivity("activity-cycling", named: name)
+        XCTAssertTrue(element(labelContaining: "\(name) saved for").waitForExistence(timeout: 20), "\(name) planned")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+    }
+
+    /// Removes the only workout on `date` from that day, in Training.
+    func removeOnTraining(_ name: String, on date: Date) {
+        trainingTile(for: date).tap()
+        XCTAssertTrue(element(labelContaining: name).waitForExistence(timeout: 15), "\(name) is on its day")
+        let remove = app.buttons["Remove from this day"].firstMatch
+        if !remove.exists {
+            let options = app.buttons["Schedule & options"].firstMatch
+            for _ in 0..<6 where !options.isHittable { app.swipeUp() }
+            options.tap()
+        }
+        for _ in 0..<4 where !remove.isHittable { app.swipeUp() }
+        remove.tap()
+        waitUntil(15, "\(name) left its day") { !self.element(labelContaining: name).exists }
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+    }
+
+    /// Waits until `row` exists, or stays gone for a few seconds -- long
+    /// enough for a refresh already under way to land and bring it back.
+    func expect(_ row: XCUIElement, present: Bool, _ message: String, reveal: () -> Void = {}) {
+        var goneSince: Date?
+        waitUntil(25, message) {
+            reveal()
+            if present { return row.exists }
+            if row.exists { goneSince = nil; return false }
+            goneSince = goneSince ?? Date()
+            return Date().timeIntervalSince(goneSince!) > 3
+        }
+    }
+
+    /// Opens the calendar on `date` and checks whether `name` is on its agenda.
+    func expectOnCalendar(_ name: String, on date: Date, present: Bool) {
+        app.buttons["tab.planner"].tap()
+        let day = app.buttons["planner.day.\(dateKey(date))"]
+        if !day.waitForExistence(timeout: 10) { app.buttons["planner.previousWeek"].tap() }
+        if !day.waitForExistence(timeout: 3) {
+            app.buttons["planner.nextWeek"].tap()
+            app.buttons["planner.nextWeek"].tap()
+        }
+        XCTAssertTrue(day.waitForExistence(timeout: 5), "the calendar shows \(dateKey(date))")
+        day.tap()
+        let actions = app.buttons["Actions for \(name)"].firstMatch
+        // Untimed entries sit under the hourly schedule in a lazy stack that
+        // builds rows once scrolled to; dragged from below the schedule.
+        expect(actions, present: present, "\(name) \(present ? "is" : "is not") on the calendar") {
+            for _ in 0..<3 where !actions.exists {
+                self.app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8))
+                    .press(forDuration: 0.05, thenDragTo: self.app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.4)))
+            }
+        }
+    }
+
+    /// Opens Home on `date` and checks whether `name` is in its day.
+    func expectOnHome(_ name: String, on date: Date, present: Bool) {
+        app.buttons["tab.home"].tap()
+        let label = date.formatted(Date.FormatStyle(date: .complete, time: .omitted).locale(Locale(identifier: "en_US")))
+        let day = app.buttons[label].firstMatch
+        XCTAssertTrue(day.waitForExistence(timeout: 15), "Home shows \(label)")
+        day.tap()
+        expect(element(labelContaining: name), present: present, "\(name) \(present ? "is" : "is not") on Home")
+    }
+
+    /// Removing a workout in one place removes it everywhere. Planned in
+    /// Training, it is on the calendar and Home; removed from its day in
+    /// Training, it leaves both, and a restart does not bring it back.
+    /// Deleted from the calendar instead, it leaves Training and Home.
+    func test16RemovalReachesEveryScreen() throws {
+        openTraining()
+        guard let date = emptyDayEveryScreenShows() else {
+            throw XCTSkip("No empty day that Home, the calendar and Training all show")
+        }
+        planOnTraining("Sync Check", on: date)
+        expectOnCalendar("Sync Check", on: date, present: true)
+        expectOnHome("Sync Check", on: date, present: true)
+        shot("01 planned everywhere")
+
+        app.buttons["tab.training"].tap()
+        removeOnTraining("Sync Check", on: date)
+        expectOnHome("Sync Check", on: date, present: false)
+        expectOnCalendar("Sync Check", on: date, present: false)
+        shot("02 removed in Training, gone everywhere")
+
+        app.terminate()
+        app.launch()
+        openTraining()
+        XCTAssertFalse(trainingTile(for: date).label.contains("Sync Check"), "still removed after a restart")
+        expectOnCalendar("Sync Check", on: date, present: false)
+        expectOnHome("Sync Check", on: date, present: false)
+
+        app.buttons["tab.training"].tap()
+        planOnTraining("Calendar Check", on: date)
+        expectOnCalendar("Calendar Check", on: date, present: true)
+        let actions = app.buttons["Actions for Calendar Check"].firstMatch
+        actions.tap()
+        let delete = app.buttons["Delete"].firstMatch
+        XCTAssertTrue(delete.waitForExistence(timeout: 5), "delete is offered")
+        delete.tap()
+        expect(actions, present: false, "the calendar let it go")
+        app.buttons["tab.training"].tap()
+        let tile = trainingTile(for: date)
+        waitUntil(20, "Training lost Calendar Check") { !tile.label.contains("Calendar Check") }
+        expectOnHome("Calendar Check", on: date, present: false)
+        shot("03 deleted on the calendar, gone from Training")
     }
 }

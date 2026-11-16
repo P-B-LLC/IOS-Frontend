@@ -68,6 +68,10 @@ cp "$repo/Tests/AccountSafety/ExerciseLibraryTests.swift" "$test_package/Tests/A
 cp "$repo/IOS Frontend/IOS Frontend/Models/WorkoutActivity.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/Models/ActivityLog.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/IOS Frontend/IOS Frontend/Models/ExerciseLibrary.swift" "$test_package/Sources/AccountSafety/"
+# Which days a workout can be planned on, in any zone, and every activity
+# logged the same way.
+cp "$repo/Tests/AccountSafety/WorkoutSchedulingTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/IOS Frontend/IOS Frontend/Services/WorkoutPlanningWindow.swift" "$test_package/Sources/AccountSafety/"
 # The library in every language: reads ExerciseLibrary.xcstrings and compiles
 # it with xcstringstool, as the catalog tests do for Localizable.
 cp "$repo/Tests/AccountSafety/ExerciseLibraryLocalizationTests.swift" "$test_package/Tests/AccountSafetyTests/"
@@ -99,8 +103,14 @@ cp "$repo/Tests/AccountSafety/SocialSearchTests.swift" "$test_package/Tests/Acco
 cp "$repo/IOS Frontend/IOS Frontend/Services/SocialSearchPolicy.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/Tests/AccountSafety/SocialPublicationTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/IOS Frontend/IOS Frontend/Services/SocialPublicationCoordinator.swift" "$test_package/Sources/AccountSafety/"
-cp "$repo/Tests/AccountSafety/ImpressionTrackerTests.swift" "$test_package/Tests/AccountSafetyTests/"
-cp "$repo/IOS Frontend/IOS Frontend/Services/ImpressionTracker.swift" "$test_package/Sources/AccountSafety/"
+cp "$repo/Tests/AccountSafety/AttentionMeterTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/Tests/AccountSafety/AttentionQueueTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/IOS Frontend/IOS Frontend/Services/AttentionMeter.swift" "$test_package/Sources/AccountSafety/"
+cp "$repo/IOS Frontend/IOS Frontend/Services/AttentionQueue.swift" "$test_package/Sources/AccountSafety/"
+cp "$repo/Tests/AccountSafety/FeedPlaybackPolicyTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/IOS Frontend/IOS Frontend/Services/FeedPlaybackPolicy.swift" "$test_package/Sources/AccountSafety/"
+cp "$repo/Tests/AccountSafety/SocialFeedExperienceTests.swift" "$test_package/Tests/AccountSafetyTests/"
+cp "$repo/IOS Frontend/IOS Frontend/Services/SocialFeedExperience.swift" "$test_package/Sources/AccountSafety/"
 cp "$repo/Tests/AccountSafety/FoodDaySyncTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/Tests/AccountSafety/FoodBarcodeTests.swift" "$test_package/Tests/AccountSafetyTests/"
 cp "$repo/Tests/AccountSafety/FoodCatalogueTests.swift" "$test_package/Tests/AccountSafetyTests/"

@@ -35,7 +35,10 @@ struct PostDetailView: View {
     /// The author's profile, when it has been opened from the card.
     @State private var visitingAuthor: Int?
 
-    private var post: FeedPost? { store.post(withID: postID) }
+    /// The post as the feed has it, with its exercises or foods filled in
+    /// once they have been read: a feed page asked for in summary carries
+    /// the totals and not the rows, and this page is where the rows are for.
+    private var post: FeedPost? { store.post(withID: postID).map(store.withDetails) }
 
     var body: some View {
         Group {
@@ -73,6 +76,7 @@ struct PostDetailView: View {
             // profile, or from a card that has since paged out.
             await store.loadPost(id: postID)
             isFetching = false
+            if let held = store.post(withID: postID) { await store.loadDetails(for: held) }
 #if DEBUG
             // Arrives with the threads already raised. They open on a tap now,
             // and simctl cannot tap.
