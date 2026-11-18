@@ -235,7 +235,7 @@ jobs:
 
       - name: Cookbook simulator previews when related screens change
         if: steps.scope.outputs.code == 'true'
-        timeout-minutes: 15
+        timeout-minutes: 25
         env:
           DOWNLOAD_COOKBOOK_RUNTIME: '1'
         run: |
@@ -271,7 +271,8 @@ jobs:
 
       - name: Home simulator previews when its presentation changes
         if: steps.scope.outputs.code == 'true'
-        timeout-minutes: 20
+        # Took 19.6 min and then timed out at 20 on macos-26 runners (2026-11-18).
+        timeout-minutes: 35
         env:
           DOWNLOAD_HOME_RUNTIME: '1'
         run: |
@@ -298,7 +299,7 @@ jobs:
       - name: Workout rest simulator previews when timing or presentation changes
         id: workout_rest_previews
         if: steps.scope.outputs.code == 'true'
-        timeout-minutes: 15
+        timeout-minutes: 20
         env:
           DOWNLOAD_WORKOUT_RUNTIME: '1'
         run: |
@@ -326,7 +327,7 @@ jobs:
       - name: Workout reordering and unit controls in the native simulator
         id: workout_flow_previews
         if: steps.scope.outputs.code == 'true'
-        timeout-minutes: 25
+        timeout-minutes: 40
         env:
           DOWNLOAD_WORKOUT_RUNTIME: '1'
           RUN_WORKOUT_FLOW_UI_TESTS: '1'
