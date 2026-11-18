@@ -248,29 +248,24 @@ struct RepbaseBottomNavigation: View {
 
     /// Keep the existing tab destinations and scroll behavior; only the
     /// chrome changes to the connected-flow pill treatment.
+    ///
+    /// Icon only. The name is still the button's accessibility label, so
+    /// VoiceOver reads it; nothing is drawn for it, so no localization can
+    /// bring it back. The frame below keeps the old height, which centers the
+    /// icon in the space the label used to share and keeps the tap target.
     private func itemLabel(_ item: RepbaseTab, isSelected: Bool) -> some View {
-        VStack(spacing: isMinimized ? 3 : 4) {
-            Group {
-                if item == .training {
-                    Image(systemName: "dumbbell")
-                        .font(.system(size: isMinimized ? 18 : 20, weight: .medium))
-                        .symbolRenderingMode(.monochrome)
-                } else {
-                    Image(item.iconAsset)
-                        .resizable()
-                        .scaledToFit()
-                }
-            }
-                .foregroundStyle(Color.white)
-                .frame(width: isMinimized ? 21 : 24, height: isMinimized ? 21 : 24)
-
-            if !isMinimized {
-                Text(item.title)
-                    .font(.community(.caption2, weight: .bold))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.75)
+        Group {
+            if item == .training {
+                Image(systemName: "dumbbell")
+                    .font(.system(size: isMinimized ? 18 : 20, weight: .medium))
+                    .symbolRenderingMode(.monochrome)
+            } else {
+                Image(item.iconAsset)
+                    .resizable()
+                    .scaledToFit()
             }
         }
+        .frame(width: isMinimized ? 21 : 24, height: isMinimized ? 21 : 24)
         .foregroundStyle(Color.white)
         // Keep every destination tappable even while scroll chrome is minimized.
         .frame(maxWidth: .infinity, minHeight: isMinimized ? 44 : 52)
