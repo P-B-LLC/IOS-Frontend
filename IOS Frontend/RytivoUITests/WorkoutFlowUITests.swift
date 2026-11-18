@@ -126,25 +126,34 @@ final class WorkoutFlowUITests: XCTestCase {
         XCTAssertTrue(list.exists)
         let count = app.staticTexts["workout-builder-draft-count"]
         XCTAssertTrue(count.exists)
-        let source = row(1).coordinate(withNormalizedOffset: CGVector(dx: 0.35, dy: 0.5))
-        // Keep the hold inside the visible List, above the entire footer.
-        // Some OS versions report a scroll view frame beneath safeAreaInset;
-        // its count label is 12pt inside that footer, so clamp against it too.
-        let edgeY = min(list.frame.maxY, count.frame.minY - 12) - 8
-        let edge = app.coordinate(withNormalizedOffset: .zero)
-            .withOffset(CGVector(dx: row(1).frame.midX, dy: edgeY))
-        // Both six-second and one-second holds reached the nonmovable catalog
-        // in recorded screenshots. Briefly engage edge scrolling, then drop
-        // inside the plan. The assertion still requires moving past the
-        // originally visible rows; mere scrolling cannot satisfy it.
-        source.press(forDuration: 1, thenDragTo: edge, withVelocity: .slow, thenHoldForDuration: 0.25)
-        shot("order-after-edge-drag-before-reveal")
-        hierarchy("order-after-edge-drag-hierarchy")
-        // Native List virtualizes rows after edge scrolling. Find the moved
-        // card again before reading its value; scrolling does not reorder it.
-        for _ in 0..<6 where !row(1).exists { app.swipeDown() }
-        for _ in 0..<6 where !row(1).exists { app.swipeUp() }
-        XCTAssertTrue(row(1).exists, "The moved exercise must still be in the draft")
+        // A slow simulator (CI's macOS runners) sometimes takes the press as
+        // the start of a scroll rather than a pickup: the list moves and the
+        // card stays first. Each attempt starts again from the top, so a
+        // scroll-only attempt cannot count, and the check below is unchanged.
+        for attempt in 1...3 {
+            for _ in 0..<6 where !row(1).isHittable { app.swipeDown() }
+            XCTAssertTrue(row(1).isHittable, "Each attempt starts with the first card on screen")
+            let source = row(1).coordinate(withNormalizedOffset: CGVector(dx: 0.35, dy: 0.5))
+            // Keep the hold inside the visible List, above the entire footer.
+            // Some OS versions report a scroll view frame beneath safeAreaInset;
+            // its count label is 12pt inside that footer, so clamp against it too.
+            let edgeY = min(list.frame.maxY, count.frame.minY - 12) - 8
+            let edge = app.coordinate(withNormalizedOffset: .zero)
+                .withOffset(CGVector(dx: row(1).frame.midX, dy: edgeY))
+            // Both six-second and one-second holds reached the nonmovable catalog
+            // in recorded screenshots. Briefly engage edge scrolling, then drop
+            // inside the plan. The assertion still requires moving past the
+            // originally visible rows; mere scrolling cannot satisfy it.
+            source.press(forDuration: 1.5, thenDragTo: edge, withVelocity: .slow, thenHoldForDuration: 0.25)
+            shot("order-after-edge-drag-before-reveal-\(attempt)")
+            hierarchy("order-after-edge-drag-hierarchy-\(attempt)")
+            // Native List virtualizes rows after edge scrolling. Find the moved
+            // card again before reading its value; scrolling does not reorder it.
+            for _ in 0..<6 where !row(1).exists { app.swipeDown() }
+            for _ in 0..<6 where !row(1).exists { app.swipeUp() }
+            XCTAssertTrue(row(1).exists, "The moved exercise must still be in the draft")
+            if (position(of: row(1)) ?? 0) > lastVisible { break }
+        }
         wait("The dragged card moves beyond the original visible rows") {
             (self.position(of: self.row(1)) ?? 0) > lastVisible
         }
