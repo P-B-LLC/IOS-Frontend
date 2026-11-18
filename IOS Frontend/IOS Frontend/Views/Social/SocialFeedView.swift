@@ -205,7 +205,18 @@ struct SocialFeedView: View {
         }
     }
 
+    // The feed is split into a few builders so the compiler type-checks
+    // each modifier chain separately; as one chain it timed out on CI.
     private func screen(timeOfDay: HomeTimeOfDay) -> some View {
+        withPlayback(
+            withAttention(
+                withPresentation(feedScroll(timeOfDay: timeOfDay), timeOfDay: timeOfDay),
+                timeOfDay: timeOfDay
+            )
+        )
+    }
+
+    private func feedScroll(timeOfDay: HomeTimeOfDay) -> some View {
         ScrollView {
             LazyVStack(spacing: 0) {
                 if feedMode == .discover, !store.suggestedPeople.isEmpty {
@@ -334,6 +345,10 @@ struct SocialFeedView: View {
                 await store.loadSuggestedPeople()
             }
         }
+    }
+
+    private func withPresentation(_ content: some View, timeOfDay: HomeTimeOfDay) -> some View {
+        content
         .toolbar(.hidden, for: .navigationBar)
         .homeTimeScreen(timeOfDay)
         .repbaseToast(saveConfirmation) { destination in
@@ -385,6 +400,10 @@ struct SocialFeedView: View {
                 await store.loadRelationships(for: viewerID)
             }
         }
+    }
+
+    private func withAttention(_ content: some View, timeOfDay: HomeTimeOfDay) -> some View {
+        content
         // Viewings still open when the page goes -- another tab, a pushed
         // post, the app to the background -- are closed and sent then, or
         // they would describe a reader staring at a post for an hour.
@@ -435,6 +454,10 @@ struct SocialFeedView: View {
         }) { target in
             PostComposerView(takeOf: target)
         }
+    }
+
+    private func withPlayback(_ content: some View) -> some View {
+        content
         .environment(playback)
         .task(id: usesNewFeed ? displayedPosts.compactMap(\.playableClipID) : []) {
             guard usesNewFeed else { return }
