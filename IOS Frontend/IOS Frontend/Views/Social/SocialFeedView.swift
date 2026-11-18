@@ -457,43 +457,64 @@ struct SocialFeedView: View {
     }
 
     private func withPlayback(_ content: some View) -> some View {
+        withFeedLifecycle(
+            content
+                .environment(playback)
+                .task(id: playbackClipIDs) { startPlayback() }
+                .onChange(of: reduceMotionForPlayback) { (_: Bool, reduce: Bool) in
+                    playback.update { $0.reduceMotion = reduce }
+                }
+                .onChange(of: scenePhase) { (_: ScenePhase, phase: ScenePhase) in
+                    playback.setFeedActive(phase == .active && !isFeedCovered)
+                }
+                .onChange(of: opened) { (_: Int?, post: Int?) in
+                    // A pushed post covers the feed as a sheet does.
+                    playback.setFeedActive(post == nil && scenePhase == .active && !isFeedCovered)
+                }
+        )
+    }
+
+    private func withFeedLifecycle(_ content: some View) -> some View {
         content
-        .environment(playback)
-        .task(id: usesNewFeed ? displayedPosts.compactMap(\.playableClipID) : []) {
-            guard usesNewFeed else { return }
-            playback.report = { [store] postID, event in store.attentionPlayback(postID: postID, event) }
-            playback.update {
-                $0.autoplayPreferred = SocialFeedExperience.autoplayPreferred
-                $0.reduceMotion = reduceMotionForPlayback
+            .onScrollGeometryChange(for: CGFloat.self, of: Self.verticalOffset, action: scrolled)
+            .onDisappear { playback.stop() }
+            .onAppear { usesNewFeed = SocialFeedExperience.isEnabled }
+            .onChange(of: store.featuresRevision) { usesNewFeed = SocialFeedExperience.isEnabled }
+            .onChange(of: scenePhase) { (_: ScenePhase, phase: ScenePhase) in
+                if phase == .active { Task { await store.refreshFeatures() } }
             }
-            playback.setClips(displayedPosts.compactMap { post in
-                guard let id = post.playableClipID, let video = post.displayed.video,
-                      let url = video.url, url.scheme == "https" else { return nil }
-                return .init(postID: id, url: url, durationMilliseconds: video.durationMilliseconds)
-            })
+            .onDisappear {
+                Task { await store.finishImpressions() }
+            }
+    }
+
+    private static func verticalOffset(_ geometry: ScrollGeometry) -> CGFloat {
+        geometry.contentOffset.y
+    }
+
+    private func scrolled(_ old: CGFloat, _ y: CGFloat) {
+        if usesNewFeed { playback.scrolled(toOffset: y) }
+    }
+
+    /// The clips the playback task is keyed on; none while the old feed shows.
+    private var playbackClipIDs: [Int] {
+        guard usesNewFeed else { return [] }
+        return displayedPosts.compactMap(\.playableClipID)
+    }
+
+    private func startPlayback() {
+        guard usesNewFeed else { return }
+        playback.report = { [store] postID, event in store.attentionPlayback(postID: postID, event) }
+        playback.update {
+            $0.autoplayPreferred = SocialFeedExperience.autoplayPreferred
+            $0.reduceMotion = reduceMotionForPlayback
         }
-        .onChange(of: reduceMotionForPlayback) { _, reduce in
-            playback.update { $0.reduceMotion = reduce }
+        let clips: [FeedPlaybackCoordinator.Clip] = displayedPosts.compactMap { post in
+            guard let id = post.playableClipID, let video = post.displayed.video,
+                  let url = video.url, url.scheme == "https" else { return nil }
+            return FeedPlaybackCoordinator.Clip(postID: id, url: url, durationMilliseconds: video.durationMilliseconds)
         }
-        .onChange(of: scenePhase) { _, phase in
-            playback.setFeedActive(phase == .active && !isFeedCovered)
-        }
-        .onChange(of: opened) { _, post in
-            // A pushed post covers the feed as a sheet does.
-            playback.setFeedActive(post == nil && scenePhase == .active && !isFeedCovered)
-        }
-        .onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.y } action: { _, y in
-            if usesNewFeed { playback.scrolled(toOffset: y) }
-        }
-        .onDisappear { playback.stop() }
-        .onAppear { usesNewFeed = SocialFeedExperience.isEnabled }
-        .onChange(of: store.featuresRevision) { usesNewFeed = SocialFeedExperience.isEnabled }
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .active { Task { await store.refreshFeatures() } }
-        }
-        .onDisappear {
-            Task { await store.finishImpressions() }
-        }
+        playback.setClips(clips)
     }
 
     private func socialHeader(timeOfDay: HomeTimeOfDay) -> some View {
